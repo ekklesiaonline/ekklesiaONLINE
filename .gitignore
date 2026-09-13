@@ -1,188 +1,59 @@
-#-------------------------
-# Operating Specific Junk Files
-#-------------------------
-
-# OS X
+# macOS metadata
 .DS_Store
-.AppleDouble
-.LSOverride
-
-# OS X Thumbnails
 ._*
 
-# Windows image file caches
-Thumbs.db
-ehthumbs.db
-Desktop.ini
-
-# Recycle Bin used on file shares
-$RECYCLE.BIN/
-
-# Windows Installer files
-*.cab
-*.msi
-*.msm
-*.msp
-
-# Windows shortcuts
-*.lnk
-
-# Linux
-*~
-
-# KDE directory preferences
-.directory
-
-# Linux trash folder which might appear on any partition or disk
-.Trash-*
-
-#-------------------------
-# Environment & Secrets
-#-------------------------
-# These should never be under version control,
-# as they pose a security risk.
-# NOTE: the `env` template file (no dot) IS committed.
+# Local environment and secrets
 .env
-.env.local
-.env.*.local
 .env.*
 !.env.example
-.vagrant
-Vagrantfile
+.devin/config.local.json
 
-#-------------------------
-# CodeIgniter writable/ (runtime artifacts)
-#-------------------------
-writable/cache/*
-!writable/cache/index.html
+# Composer dependencies
+/vendor/
+composer.phar
 
-writable/logs/*
-!writable/logs/index.html
+# CodeIgniter runtime data
+/writable/cache/*
+!/writable/cache/index.html
+/writable/logs/*
+!/writable/logs/index.html
+/writable/session/*
+!/writable/session/index.html
+/writable/debugbar/*
+!/writable/debugbar/index.html
+/writable/uploads/*
+!/writable/uploads/.gitignore
+/writable/mail_queue/
+/writable/backups/
+/writable/restore_points/
+/writable/reports/
+/writable/parochial-report/
+/writable/*.db
+/writable/*.sqlite
+/writable/*.sqlite3
 
-writable/session/*
-!writable/session/index.html
+# User-generated public uploads
+/public/uploads/
 
-writable/uploads/*
-!writable/uploads/index.html
-
-writable/debugbar/*
-!writable/debugbar/index.html
-
-# DB backups, restore points, generated reports
-writable/backups/*
-writable/restore_points/*
-writable/reports/*
-writable/parochial-report/*
-
-# Local SQLite database (contains real dev data)
-writable/*.db
-writable/*.sqlite
-writable/*.sqlite3
-
-# Local database dumps and backups (including CI4/Shield test databases)
+# Database backups and dumps
 *.sql.bak
 *.sql.gz
 *.dump
+*.db
 *.sqlite
 *.sqlite3
-*.db
 
-php_errors.log
-
-#-------------------------
-# Public uploads (user/generated files served by the app)
-#-------------------------
-public/uploads/*
-!public/uploads/index.html
-!public/uploads/.gitkeep
-
-#-------------------------
-# Test & Build Artifacts
-#-------------------------
-tests/coverage*
-
-# PHPUnit 10 cache + reports (paths configured in phpunit.xml.dist)
-.phpunit.result.cache
+# PHPUnit-generated files
 /build/.phpunit.cache/
 /build/logs/
-
-# SQL dumps produced by build/backup_database.sh
 /build/backups/
-
-# Don't save phpunit under version control.
-phpunit
-
-/results/
-/phpunit*.xml
+.phpunit.result.cache
 .phpunit.cache/
 phpunit.xml
 phpunit.xml.bak
 
-#-------------------------
-# Composer
-#-------------------------
-vendor/
-composer.phar
-# NOTE: composer.lock IS committed (application, not library)
-
-#-------------------------
-# IDE / Development Files
-#-------------------------
-
-# Modules Testing
-_modules/*
-
-# phpenv local config
-.php-version
-
-# Jetbrains editors (PHPStorm, etc)
-.idea/
-*.iml
-
-# NetBeans
-/nbproject/
-/nbbuild/
-/dist/
-/nbdist/
-/nbactions.xml
-/nb-configuration.xml
-/.nb-gradle/
-
-# Sublime Text
-*.tmlanguage.cache
-*.tmPreferences.cache
-*.stTheme.cache
-*.sublime-workspace
-*.sublime-project
-.phpintel
-/api/
-
-# Visual Studio Code
+# Local editor settings
 .vscode/
-.fleet/
 
-#-------------------------
-# Agent / tooling local config
-#-------------------------
-# Machine-local Devin config; .devin/workflows etc. stay tracked.
-.devin/config.local.json
-
-#-------------------------
-# Ad hoc debug/session artifacts
-#-------------------------
-# One-off command output and analysis dumps left at the project root from
-# interactive debugging sessions. These should never be committed; if a
-# report needs to persist, put it under docs/ instead.
-/*.log
-/cmd_output.txt
-/output.log
-/last_run.log
-/phpunit_output.txt
-/test_output*.txt
-/test_results.log
-/test_summary.txt
-/changed_files.txt
-/recently_changed.txt
-/controller_files.txt
-/parse_failing_tests.py
-/parse_failures.py
+# PHP runtime errors
+php_errors.log
