@@ -1,0 +1,341 @@
+<?php
+
+/**
+ * Members / Profiles strings — English
+ */
+return [
+    // -------------------------------------------------------------------------
+    // Page titles
+    // -------------------------------------------------------------------------
+    'pageTitle'           => 'Members',
+    'pageTitleAdd'        => 'Add Member',
+    'pageTitleEdit'       => 'Edit Member',
+    'pageTitleView'       => 'Member Detail',
+
+    // -------------------------------------------------------------------------
+    // Table columns
+    // -------------------------------------------------------------------------
+    'colName'             => 'Name',
+    'colEmail'            => 'Email',
+    'colPhone'            => 'Phone',
+    'colStatus'           => 'Status',
+    'colFamily'           => 'Family',
+    'colBaptismDate'      => 'Baptism Date',
+    'colConfirmationDate' => 'Confirmation Date',
+    'colJoined'           => 'Joined',
+
+    // -------------------------------------------------------------------------
+    // Form fields
+    // -------------------------------------------------------------------------
+    'firstName'           => 'First name',
+    'middleName'          => 'Middle name',
+    'lastName'            => 'Last name',
+    'email'               => 'Email address',
+    'phone'               => 'Phone',
+    'address'             => 'Address',
+    'city'                => 'City',
+    'state'               => 'State / Province',
+    'zip'                 => 'ZIP / Postal code',
+    'country'             => 'Country',
+    'phoneCountryCode'    => 'Country code',
+    'phoneNumber'         => 'Phone number',
+    'addressLine2'        => 'Apartment, suite, unit, etc. (optional)',
+    'selectCountry'       => 'Select country',
+    'birthDate'           => 'Date of birth',
+    'baptismDate'         => 'Baptism date',
+    'confirmationDate'    => 'Confirmation date',
+    'isConfirmed'         => 'Confirmed (Sacrament)',
+    'isBaptized'          => 'Baptized',
+    'isCommunicant'       => 'Communicant',
+    'isDependent'         => 'Dependent',
+    'hasPledge'           => 'Has Pledge',
+    'goodStandingOverride' => 'Good Standing Override',
+    'membershipStatus'    => 'Membership status',
+    'spiritualGifts'      => 'Spiritual gifts',
+    'socialMedia'         => 'Social media links',
+    'profilePicture'      => 'Profile picture',
+    'membershipDetails'   => 'Membership Details',
+    'statusReason'          => 'Reason / notes',
+    'statusReasonPlaceholder' => 'Enter a reason for this change…',
+    'statusHistory'           => 'Status History',
+    'statusHistoryDate'       => 'Date',
+    'statusHistoryBy'         => 'By',
+    'statusHistoryReason'     => 'Reason',
+    'statusHistorySystem'     => 'System',
+
+    // -------------------------------------------------------------------------
+    // Membership statuses
+    // -------------------------------------------------------------------------
+    'statusActive'           => 'Active',
+    'statusInactive'         => 'Inactive',
+    'statusVisitor'          => 'Visitor',
+    'statusPending'          => 'Pending',
+    'statusRegularAttender'  => 'Regular Attender',
+    'profilePendingBadge'    => 'Profile Pending',
+    'profilePendingHelp'     => 'This user still needs to complete profile setup.',
+
+    // -------------------------------------------------------------------------
+    // Flash / toast messages
+    // -------------------------------------------------------------------------
+    'createSuccess'       => 'Member added successfully.',
+    'updateSuccess'       => 'Member updated successfully.',
+    'deleteSuccess'       => 'Member removed successfully.',
+    'deleteConfirm'       => 'Are you sure you want to remove this member?',
+    'deleted'             => 'Member deleted successfully',
+    'deleteError'         => 'An error occurred while deleting the member',
+    'selectMembersRequired' => 'Please select at least one member to transfer.',
+
+    // -------------------------------------------------------------------------
+    // Search / filters
+    // -------------------------------------------------------------------------
+    'searchPlaceholder'   => 'Search by name, email or phone…',
+    'filterStatus'        => 'Filter by status',
+    'filterFamily'        => 'Filter by family',
+    'noMembersFound'      => 'No members found matching your criteria.',
+
+    // -------------------------------------------------------------------------
+    // Standing / leadership
+    // -------------------------------------------------------------------------
+    'standing'            => 'Standing',
+    'leadership'          => 'Leadership',
+    'role'                => 'Role',
+    'since'               => 'Since',
+
+    // -------------------------------------------------------------------------
+    // Member view page (tabs, sections)
+    // -------------------------------------------------------------------------
+    'tabInfo'             => 'Information',
+    'tabAttendance'       => 'Attendance',
+    'tabGiving'           => 'Giving',
+    'contactInfo'         => 'Contact Information',
+    'spiritualGiftsLabel' => 'Spiritual Gifts',
+    'recentAttendance'    => 'Recent Attendance',
+    'recentDonations'     => 'Recent Donations',
+    'notProvided'         => 'Not provided',
+    'noAttendanceRecords' => 'No attendance records yet.',
+    'noDonationRecords'   => 'No donation records yet.',
+    'totalLastItems'      => 'Total (Last 10)',
+    'colCommunion'        => 'Communion',
+    'colMethod'           => 'Method',
+
+    // -------------------------------------------------------------------------
+    // Parish affiliation section
+    // -------------------------------------------------------------------------
+    'parishAffiliations'  => 'Parish Affiliations',
+    'attachParish'        => 'Attach Parish',
+    'parishLabel'         => 'Parish',
+    'membershipStatusLabel' => 'Membership Status',
+    'setAsHomeParish'     => 'Set as home parish',
+    'setHome'             => 'Set Home',
+    'detach'              => 'Detach',
+    'detachParishConfirm' => 'Detach this parish from the member?',
+    'noParishAffiliations' => 'No parish affiliations found.',
+    'homeLabel'           => 'Home',
+    'selectParish'        => 'Select parish…',
+
+    // -------------------------------------------------------------------------
+    // Bulk transfer
+    // -------------------------------------------------------------------------
+    'bulkTransferSelected'      => 'Transfer Selected',
+    'bulkDeleteSelected'        => 'Delete Selected',
+    'bulkDeleteConfirm'         => 'Delete {count} selected users? This action cannot be undone.',
+    'bulkDeleteRecommendedHint' => 'Recommended: review selected members before delete to avoid accidental removals.',
+    'bulkDeleteSelectAtLeastOne' => 'Select at least one user to delete.',
+    'bulkDeleteResult'          => 'Bulk user delete completed. Deleted: {0}, Skipped: {1}.',
+    'bulkTransferLabel'         => 'Bulk Transfer',
+    'bulkTransferDesc'          => 'Select members and move them to another parish with a required reason.',
+    'bulkTransferTitle'         => 'Bulk Transfer Members',
+    'bulkTransferWarning'       => 'This will move selected members from the current parish to another parish.',
+    'destinationChurch'         => 'Destination Parish',
+    'selectDestination'         => 'Select destination...',
+    'reasonForTransfer'         => 'Reason for transfer',
+    'transferReasonPlaceholder' => 'Explain why these members are being transferred...',
+    'membersSelected'           => 'member(s) selected.',
+    'transferMembers'           => 'Transfer Members',
+    'colMemberSince'            => 'Member Since',
+    'createPortalMember'        => 'Add Portal Member',
+    'createFirstPortalMember'   => 'Add First Portal Member',
+    'createStandaloneNonPortal' => 'Create Standalone Non-Portal Member',
+    'createStandaloneNonPortalSubmit' => 'Create Non-Portal Member',
+    'usernameOptional'          => 'Username (optional)',
+    'autoGenerateIfEmpty'       => 'Leave blank to auto-generate',
+    'nicknameOptional'          => 'Nickname (optional)',
+    'nonPortalPersonModalHint'  => 'This person will be created without portal access and will not be counted as a formal member.',
+    'nonPortalMemberModalHint'  => 'This person will be created as a member without portal access.',
+    'nonPortalCreateSuccess'    => 'Standalone non-portal member created successfully.',
+    'nonPortalCreateFailed'     => 'Failed to create standalone non-portal member.',
+    'pendingRegistrationsTitle' => 'Pending Parish Registrations',
+    'registrationApplicant'     => 'Applicant',
+    'registrationEmail'         => 'Email',
+    'registrationSubmitted'     => 'Submitted',
+    'registrationActions'       => 'Actions',
+    'registrationAuthorize'     => 'Authorize',
+    'registrationBan'           => 'Ban',
+    'registrationBanConfirm'    => 'Ban this registration request?',
+    'noPendingRegistrations'    => 'No pending registrations for this parish.',
+
+    // -------------------------------------------------------------------------
+    // Create / Edit form
+    // -------------------------------------------------------------------------
+    'backToMembers'             => 'Back to Members',
+    'createAccountTitle'        => 'Create Account',
+    'uploadPicture'             => 'Upload Picture',
+    'uploadNewPicture'          => 'Upload New Picture',
+    'picAcceptedFormats'        => 'Accepted formats: JPG, PNG, GIF. Max size: 2MB',
+    'sectionAccountInfo'        => 'Account Information',
+    'emailUsedForLogin'         => 'Used for login',
+    'password'                  => 'Password',
+    'sectionPersonalInfo'       => 'Personal Information',
+    'editCanonicalHint'         => 'Changes to these identity fields also update the canonical person record.',
+    'sectionAddressInfo'        => 'Address Information',
+    'streetAddress'             => 'Street Address',
+    'sectionAdditionalInfo'     => 'Additional Information',
+    'spiritualGiftsHint'        => 'e.g., Teaching, Music, Hospitality',
+    'updateMember'              => 'Update Member',
+    'emailCannotChange'         => 'Email cannot be changed',
+
+    // -------------------------------------------------------------------------
+    // Member view page — additional
+    // -------------------------------------------------------------------------
+    'headPrefix'                => 'Head',
+    'noHeadAssigned'            => 'No head assigned',
+    'colServiceType'            => 'Service Type',
+    'colLiturgicalDay'          => 'Liturgical Day',
+    'colCategory'               => 'Category',
+    'colAmount'                 => 'Amount',
+
+    // -------------------------------------------------------------------------
+    // Flash messages (Clergy module specific)
+    // -------------------------------------------------------------------------
+    'transferSuccess'           => '{0} member(s) transferred successfully.',
+    'noChurchSelected'          => 'No parish selected for member management.',
+    'noSourceChurch'            => 'No source parish is selected.',
+    'selectMembers'             => 'Select at least one member to transfer.',
+    'chooseDestination'         => 'Choose a valid destination parish.',
+    'sameChurch'                => 'Destination parish must be different from the current parish.',
+    'reasonTooShort'            => 'Transfer reason must be at least 8 characters.',
+    'transferFailed'            => 'Transfer could not be completed.',
+    'affiliationFailed'         => 'Failed to create member affiliation for the selected parish.',
+    'confirmationDateMissing'   => 'This member is marked as confirmed but no confirmation date has been recorded. Please update the record.',
+    'notAllowed'                => 'You are not allowed to create user accounts.',
+    'provinceAdminRestriction'  => 'Province admins must use Quick Create Admin from the dashboard to assign accounts to specific parishes.',
+    'unableResolveProvince'     => 'Unable to resolve your province scope for staff management.',
+    'transferMissingSelected'   => 'Some selected members could not be transferred from the current parish.',
+    'transferNoLongerAffiliated' => 'Some selected members are no longer affiliated with the source parish.',
+    'transferResolveSourceFailed' => 'Could not resolve source affiliation for one or more members.',
+    'transferDetachFailed'      => 'Failed to detach one or more members from source parish.',
+    'transferAttachFailed'      => 'Failed to attach one or more members to destination parish.',
+    'transferMirrorSyncFailed'  => 'Failed to update compatibility profile mirror.',
+    'guestAdded'                => 'Guest added successfully.',
+    'guestUpdated'              => 'Guest updated successfully.',
+    'guestStatusUpdated'        => 'Guest status updated. You can now create a member profile.',
+    'failedAddGuest'            => 'Failed to add guest.',
+    'failedUpdateGuest'         => 'Failed to update guest.',
+    'guestNotFound'             => 'Guest not found.',
+    'invalidGuest'              => 'Invalid guest.',
+    'followUpTaskCreated'       => 'Follow-up task created.',
+    'failedCreateTask'          => 'Failed to create task.',
+    'eventNotFound'             => 'Event not found.',
+    'endDateAfterStart'         => 'End date and time must be after start date and time.',
+    'eventCreated'              => 'Event created successfully.',
+    'eventUpdated'              => 'Event updated successfully.',
+    'failedEvent'               => 'Failed to create event.',
+    'failedUpdateEvent'         => 'Failed to update event.',
+    'registrationNotRequired'   => 'This event does not require registration.',
+    'selectMemberOrGuest'       => 'Select a member or provide guest details to register.',
+    'memberOutsideScope'        => 'Selected member is outside your parish scope.',
+    'alreadyRegistered'         => 'This member is already registered for the event.',
+    'capacityReached'           => 'Event capacity has been reached.',
+    'registrationSaved'         => 'Registration saved successfully.',
+    'failedSaveRegistration'    => 'Failed to save registration.',
+    'registrationNotFound'      => 'Registration not found.',
+    'unauthorizedAction'        => 'Unauthorized registration action.',
+    'invalidStatus'             => 'Invalid registration status.',
+    'cannotCheckIn'             => 'Cannot check in. Event capacity has been reached.',
+    'registrationUpdated'       => 'Registration status updated.',
+    'failedUpdateStatus'        => 'Failed to update registration status.',
+
+    // -------------------------------------------------------------------------
+    // Province admin staff management
+    // -------------------------------------------------------------------------
+    'provinceAdministrators' => 'Province Administrators',
+    'provinceAdminsManagedDesc' => 'Province-level admin accounts you manage directly.',
+    'addProvinceAdmin' => 'Add Province Admin',
+    'youLabel' => 'You',
+    'noProvinceAdminsFound' => 'No province administrators found.',
+    'addFirstOne' => 'Add the first one.',
+    'diocesanStaffTitle' => 'Diocesan Staff',
+    'diocesanStaffReadonlyDesc' => 'Read-only view. Diocesan and parish staff are managed by their diocese administrators.',
+    'filterByDiocese' => 'Filter by Diocese:',
+    'allDiocesesOption' => 'All Dioceses',
+    'provinceAdminsCannotManageDiocesanStaff' => 'Province administrators cannot create, edit, delete, or transfer diocesan and parish staff.',
+    'showingSelectedDioceseOnly' => 'Showing staff from the selected diocese only.',
+    'showingAllDiocesanStaffInProvince' => 'Showing all diocesan staff within your province.',
+    'noDiocesanStaffFound' => 'No diocesan staff found',
+    'forSelectedDiocese' => 'for the selected diocese.',
+    'withinYourProvince' => 'within your province.',
+    'unassigned' => 'Unassigned',
+    'addProvinceAdministrator' => 'Add Province Administrator',
+    'editProvinceAdministrator' => 'Edit Province Administrator',
+    'createAdmin' => 'Create Admin',
+    'provinceAdminDeleteWarning' => 'This removes the province admin account and cannot be undone.',
+
+    // Dedup / merge / hard-delete
+    'dedupTitle'              => 'Duplicate Members',
+    'dedupPairsFound'         => 'duplicate pair(s) found',
+    'dedupNoDuplicates'       => 'No duplicate members detected in this parish.',
+    'dedupColPersonA'         => 'Person A',
+    'dedupColPersonB'         => 'Person B',
+    'dedupColMatchReason'     => 'Match Reason',
+    'dedupColActions'         => 'Actions',
+    'matchByName'             => 'Same name',
+    'matchByPhone'            => 'Same phone',
+    'mergeReview'             => 'Review & Merge',
+    'swapCanonicalHint'       => 'Swap canonical / duplicate',
+    'backToDedup'             => 'Back to Duplicates',
+    'dedupSuggestedCanonical' => 'Suggested canonical',
+    'dedupOldestFirst'        => 'Sorted oldest first. Person A is the older record and is pre-selected as canonical.',
+
+    'mergePreviewTitle'       => 'Merge Preview',
+    'mergePreviewHint'        => 'All transactional data (attendance, donations, affiliations, etc.) will be moved to the',
+    'mergePreviewHint2'       => 'record. The duplicate will be permanently deleted.',
+    'mergeCanonicalLabel'     => 'Canonical (keep)',
+    'mergeDuplicateLabel'     => 'Duplicate (delete)',
+    'mergeField'              => 'Field',
+    'mergeKeep'               => 'Keep',
+    'mergeSame'               => 'same value',
+    'mergeFieldDiffers'       => 'Values differ',
+    'mergePortalWarning'      => 'Portal access note:',
+    'mergePortalWarningBody'  => 'The duplicate has a login account but the canonical does not. After merging, the duplicate\u2019s portal credentials will be deleted. Re-provision portal access separately if needed.',
+    'mergeConfirmSection'     => 'Confirm merge',
+    'mergeConfirmBody'        => 'This action is irreversible. The duplicate profile and its login credentials will be permanently removed.',
+    'mergeReasonLabel'        => 'Reason for merge',
+    'mergeReasonPlaceholder'  => 'e.g. Duplicate entry created on import',
+    'mergeReasonRequired'     => 'Please provide a reason (min 8 characters).',
+    'mergeConfirmPrompt'      => 'Merge {0} (keep) \u2190 {1} (delete)? This cannot be undone.',
+    'executeMerge'            => 'Execute Merge',
+
+    'hardDeleteTitle'               => 'Permanently Delete Member',
+    'hardDeleteWillDelete'          => 'The following will be permanently deleted:',
+    'hardDeleteListProfile'         => 'Profile, login credentials, and group memberships',
+    'hardDeleteListAuth'            => 'All session and remember tokens',
+    'hardDeleteListAttendance'      => 'Attendance and pledge records',
+    'hardDeleteListAffiliations'    => 'Parish affiliations and team memberships',
+    'hardDeleteListVolunteer'       => 'Volunteer schedule entries',
+    'hardDeleteListAuditRoles'      => 'Role audit log entries (actor and target)',
+    'hardDeleteWillNull'            => 'The following will be anonymised (set to NULL):',
+    'hardDeleteListDonations'       => 'Donation records (become anonymous)',
+    'hardDeleteListExpenses'        => 'Expense approvals',
+    'hardDeleteListAuditLogs'       => 'General audit log entries',
+    'hardDeleteIrreversibleTitle'   => 'This action is irreversible.',
+    'hardDeleteIrreversibleBody'    => 'There is no undo. Ensure you have reviewed the member profile completely before proceeding.',
+    'hardDeleteTypeNameLabel'       => 'Type the member\u0027s full name to confirm',
+    'hardDeleteTypeNameHint'        => 'Type exactly:',
+    'hardDeleteReasonLabel'         => 'Reason for permanent deletion',
+    'hardDeleteReasonPlaceholder'   => 'e.g. Duplicate resolved; original record kept as profile #42',
+    'hardDeleteAckLabel'            => 'I understand this will permanently remove all data for this member and cannot be undone.',
+    'hardDeleteExecuteBtn'          => 'Permanently Delete',
+    'noPortalEmail'                 => 'No portal account',
+
+    'navDedup'                      => 'Dedup Members',
+];

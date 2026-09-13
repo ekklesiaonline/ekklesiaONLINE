@@ -1,0 +1,232 @@
+<?= $this->extend('Clergy\Views\layouts/main') ?>
+
+<?= $this->section('content') ?>
+
+<div class="d-flex justify-content-start align-items-center flex-wrap gap-2 mb-3">
+    <?php if (auth()->user()->can('guest.edit')): ?>
+        <a href="<?= base_url('followup-workflow/sequences/create') ?>" class="btn btn-outline-primary">
+            <i class="bi bi-plus-circle"></i> <?= lang('Guests.seqNewBtn') ?>
+        </a>
+    <?php endif; ?>
+    <a href="<?= base_url('followup-workflow/templates') ?>" class="btn btn-outline-secondary">
+        <i class="bi bi-file-text"></i> <?= lang('Guests.seqMsgTemplatesBtn') ?>
+    </a>
+    <a href="<?= base_url('guests/dashboard') ?>" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left"></i> <?= lang('Guests.backToGuests') ?>
+    </a>
+</div>
+
+<?php
+$translateSequenceName = static function (array $sequence): string {
+    $name = (string) ($sequence['name'] ?? '');
+
+    if (
+        ($sequence['parish_id'] ?? null) === null
+        && $name === '6-Week First-Time Guest Journey'
+    ) {
+        return lang('Guests.sequenceDefaultSixWeekName');
+    }
+
+    return $name;
+};
+
+$translateSequenceDescription = static function (array $sequence): string {
+    $description = (string) ($sequence['description'] ?? '');
+
+    if (
+        ($sequence['parish_id'] ?? null) === null
+        && $description === 'System default: a structured 6-week touchpoint cadence for first-time guests, combining automated emails/texts with personal volunteer calls and a welcome gift.'
+    ) {
+        return lang('Guests.sequenceDefaultSixWeekDescription');
+    }
+
+    return $description;
+};
+?>
+
+<div class="card">
+    <div class="card-body p-0">
+        <?php if (empty($sequences)): ?>
+            <div class="text-center py-5 text-muted">
+                <i class="bi bi-diagram-3 fs-2 d-block mb-2"></i>
+                <?= lang('Guests.seqEmpty') ?>
+                <?php if (auth()->user()->can('guest.edit')): ?>
+                    <a href="<?= base_url('followup-workflow/sequences/create') ?>"><?= lang('Guests.seqCreateNow') ?></a>
+                <?php endif; ?>
+            </div>
+        <?php else: ?>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th><?= lang('Guests.seqColName') ?></th>
+                            <th><?= lang('Guests.seqColDescription') ?></th>
+                            <th class="text-center"><?= lang('Guests.seqColSteps') ?></th>
+                            <th class="text-center"><?= lang('Guests.seqColStatus') ?></th>
+                            <th><?= lang('Guests.seqColScope') ?></th>
+                            <?php if (auth()->user()->can('guest.edit')): ?>
+                                <th class="text-end"><?= lang('App.colActions') ?></th>
+                            <?php endif; ?>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach ($sequences as $seq): ?>
+                            <?php $isGlobal = ($seq['parish_id'] === null); ?>
+                            <?php $displayName = $translateSequenceName($seq); ?>
+                            <?php $displayDescription = $translateSequenceDescription($seq); ?>
+                            <tr data-sequence-id="<?= (int) $seq['id'] ?>">
+                                <td>
+                                    <?php if (!$isGlobal && auth()->user()->can('guest.edit')): ?>
+                                        <a href="<?= base_url('followup-workflow/sequences/edit/' . $seq['id']) ?>"
+                                            class="fw-semibold text-decoration-none">
+                                            <?= esc($displayName) ?>
+                                        </a>
+                                    <?php else: ?>
+                                        <span class="fw-semibold"><?= esc($displayName) ?></span>
+                                    <?php endif; ?>
+                                </td>
+                                <td class="text-muted small"><?= esc($displayDescription !== '' ? $displayDescription : '—') ?></td>
+                                <td class="text-center">
+                                    <span class="badge border border-secondary text-secondary fw-normal rounded-pill"><?= (int) $seq['action_count'] ?></span>
+                                </td>
+                                <td class="text-center">
+                                    <?php if ($seq['is_active']): ?>
+                                        <span class="badge border border-success text-success fw-normal seq-status-badge"><?= lang('App.statusActive') ?></span>
+                                    <?php else: ?>
+                                        <span class="badge border border-secondary text-secondary fw-normal seq-status-badge"><?= lang('App.statusInactive') ?></span>
+                                    <?php endif; ?>
+                                </td>
+                                <td>
+                                    <?php if ($isGlobal): ?>
+                                        <span class="badge border border-info text-info fw-normal"><?= lang('Guests.seqScopeGlobal') ?></span>
+                                    <?php else: ?>
+                                        <span class="badge border border-secondary text-body fw-normal"><?= lang('Guests.seqScopeChurch') ?></span>
+                                    <?php endif; ?>
+                                </td>
+                                <?php if (auth()->user()->can('guest.edit')): ?>
+                                    <td class="text-end">
+                                        <?php if (!$isGlobal): ?>
+                                            <div class="dropdown">
+                                                <button class="btn btn-sm btn-outline-secondary"
+                                                    type="button"
+                                                    data-bs-toggle="dropdown"
+                                                    aria-expanded="false"
+                                                    title="<?= esc(lang('App.colActions')) ?>">
+                                                    <i class="bi bi-three-dots-vertical"></i>
+                                                </button>
+                                                <ul class="dropdown-menu dropdown-menu-end shadow-sm">
+                                                    <li>
+                                                        <a class="dropdown-item" href="<?= base_url('followup-workflow/sequences/edit/' . $seq['id']) ?>">
+                                                            <i class="bi bi-pencil me-2"></i><?= lang('App.edit') ?>
+                                                        </a>
+                                                    </li>
+                                                    <li>
+                                                        <button class="dropdown-item btn-toggle-sequence"
+                                                            type="button"
+                                                            data-id="<?= (int) $seq['id'] ?>"
+                                                            data-active="<?= (int) $seq['is_active'] ?>">
+                                                            <i class="bi <?= $seq['is_active'] ? 'bi-toggle-on' : 'bi-toggle-off' ?> me-2"></i><?= $seq['is_active'] ? lang('Guests.seqDeactivateTitle') : lang('Guests.seqActivateTitle') ?>
+                                                        </button>
+                                                    </li>
+                                                    <li>
+                                                        <hr class="dropdown-divider">
+                                                    </li>
+                                                    <li>
+                                                        <button class="dropdown-item text-danger btn-delete-sequence"
+                                                            type="button"
+                                                            data-id="<?= (int) $seq['id'] ?>"
+                                                            data-name="<?= esc($seq['name'], 'attr') ?>">
+                                                            <i class="bi bi-trash me-2"></i><?= lang('App.delete') ?>
+                                                        </button>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                        <?php else: ?>
+                                            <span class="text-muted small">—</span>
+                                        <?php endif; ?>
+                                    </td>
+                                <?php endif; ?>
+                            </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
+        <?php endif; ?>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const csrfName = document.querySelector('meta[name="csrf-token"]')?.getAttribute('name') ?? 'csrf_token';
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ?? '';
+
+        // ── Toggle active ──────────────────────────────────────────────────
+        document.querySelectorAll('.btn-toggle-sequence').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                const id = btn.dataset.id;
+                const active = parseInt(btn.dataset.active, 10);
+                const label = active ? '<?= esc(lang('Guests.seqDeactivateVerb'), 'js') ?>' : '<?= esc(lang('Guests.seqActivateVerb'), 'js') ?>';
+
+                showAppConfirm(
+                    '<?= esc(lang('App.confirm'), 'js') ?>',
+                    '<?= esc(lang('Guests.seqToggleConfirm'), 'js') ?>'.replace('{0}', label),
+                    function() {
+                        fetch('<?= base_url('followup-workflow/sequences/toggle/') ?>' + id, {
+                                method: 'POST',
+                                headers: {
+                                    'X-Requested-With': 'XMLHttpRequest',
+                                    'Content-Type': 'application/x-www-form-urlencoded',
+                                },
+                                body: csrfName + '=' + encodeURIComponent(csrfToken),
+                            })
+                            .then(r => r.json())
+                            .then(data => {
+                                if (data.success) {
+                                    location.reload();
+                                } else {
+                                    showAppToast(data.message ?? '<?= esc(lang('Guests.seqToggleFailed'), 'js') ?>', 'danger');
+                                }
+                            })
+                            .catch(() => showAppToast('<?= esc(lang('App.networkError'), 'js') ?>', 'danger'));
+                    }
+                );
+            });
+        });
+
+        // ── Delete ─────────────────────────────────────────────────────────
+        document.querySelectorAll('.btn-delete-sequence').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                const id = btn.dataset.id;
+                const name = btn.dataset.name;
+
+                showAppConfirm(
+                    '<?= esc(lang('Guests.seqDeleteTitle'), 'js') ?>',
+                    '<?= esc(lang('Guests.seqDeleteConfirm'), 'js') ?>'.replace('{0}', '<strong>' + name + '</strong>'),
+                    function() {
+                        fetch('<?= base_url('followup-workflow/sequences/delete/') ?>' + id, {
+                                method: 'POST',
+                                headers: {
+                                    'X-Requested-With': 'XMLHttpRequest',
+                                    'Content-Type': 'application/x-www-form-urlencoded',
+                                },
+                                body: csrfName + '=' + encodeURIComponent(csrfToken),
+                            })
+                            .then(r => r.json())
+                            .then(data => {
+                                if (data.success) {
+                                    showAppToast('<?= esc(lang('Guests.seqDeleteSuccess'), 'js') ?>', 'primary');
+                                    setTimeout(() => location.reload(), 800);
+                                } else {
+                                    showAppToast(data.message ?? '<?= esc(lang('Guests.seqDeleteFailed'), 'js') ?>', 'danger');
+                                }
+                            })
+                            .catch(() => showAppToast('<?= esc(lang('App.networkError'), 'js') ?>', 'danger'));
+                    },
+                    '<?= esc(lang('Guests.seqDeleteBtn'), 'js') ?>'
+                );
+            });
+        });
+    });
+</script>
+
+<?= $this->endSection() ?>

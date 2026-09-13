@@ -1,0 +1,308 @@
+<?php
+
+use App\Models\MemberChurchAffiliationModel;
+use CodeIgniter\Test\CIUnitTestCase;
+use CodeIgniter\Test\DatabaseTestTrait;
+
+/**
+ * @internal
+ */
+final class MemberAffiliationScopeTest extends CIUnitTestCase
+{
+    use DatabaseTestTrait;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->rebuildSchema();
+    }
+
+    public function testGetChurchMembersExcludesProvinceAdmins(): void
+    {
+        $dioceseId = $this->insertDiocese('Central Diocese');
+        $churchId  = $this->insertChurch($dioceseId, 'St. Mark');
+
+        $memberUserId = $this->insertUser('member.user');
+        $adminUserId  = $this->insertUser('province.admin');
+
+        $this->insertProfile($memberUserId, $churchId, 'Maria', 'Member');
+        $this->insertProfile($adminUserId, $churchId, 'Peter', 'Admin');
+
+        $this->db->table('auth_groups_users')->insert([
+            'group' => 'provinceadmin',
+            'user_id' => $adminUserId,
+            'created_at' => date('Y-m-d H:i:s'),
+        ]);
+
+        $this->insertAffiliation($memberUserId, $churchId, $dioceseId, 'member');
+        $this->insertAffiliation($adminUserId, $churchId, $dioceseId, 'member');
+
+        $rows = model(MemberChurchAffiliationModel::class)->getParishMembers($churchId);
+
+        $this->assertCount(1, $rows);
+        $this->assertSame($memberUserId, (int) $rows[0]['user_id']);
+    }
+
+    public function testCountDistinctMembersDefaultsToActiveAndInactiveOnly(): void
+    {
+        $dioceseId = $this->insertDiocese('North Diocese');
+        $churchId  = $this->insertChurch($dioceseId, 'St. Luke');
+
+        $activeUserId   = $this->insertUser('active.user');
+        $inactiveUserId = $this->insertUser('inactive.user');
+        $visitorUserId  = $this->insertUser('visitor.user');
+
+        $this->insertProfile($activeUserId, $churchId, 'A', 'Active');
+        $this->insertProfile($inactiveUserId, $churchId, 'I', 'Inactive');
+        $this->insertProfile($visitorUserId, $churchId, 'V', 'Visitor');
+
+        $this->insertAffiliation($activeUserId, $churchId, $dioceseId, 'member');
+        $this->insertAffiliation($inactiveUserId, $churchId, $dioceseId, 'inactive');
+        $this->insertAffiliation($visitorUserId, $churchId, $dioceseId, 'guest');
+
+        $count = model(MemberChurchAffiliationModel::class)->countDistinctMembers($churchId);
+
+        $this->assertSame(2, $count);
+    }
+
+    public function testAttachToChurchReactivatesExistingAffiliationAndSetsDiocese(): void
+    {
+        $dioceseId = $this->insertDiocese('South Diocese');
+        $churchId  = $this->insertChurch($dioceseId, 'St. John');
+        $userId    = $this->insertUser('reactivate.user');
+
+        $this->insertProfile($userId, $churchId, 'Re', 'Activate');
+
+        $this->db->table('parish_affiliation')->insert([
+            'linked_user_id' => $userId,
+            'parish_id' => $churchId,
+            'person_id' => null,
+            'affiliation_type' => 'member',
+            'membership_status' => 'inactive',
+            'canonical_status' => 'inactive',
+            'is_member' => 0,
+            'is_good_standing' => 0,
+            'source' => 'system',
+            'start_date' => '2026-01-01',
+            'end_date' => '2026-02-01',
+            'created_at' => date('Y-m-d H:i:s'),
+            'updated_at' => date('Y-m-d H:i:s'),
+        ]);
+
+        $ok = model(MemberChurchAffiliationModel::class)->attachToParish($userId, $churchId, true, 'member');
+        $this->assertTrue($ok);
+
+        $row = $this->db->table('parish_affiliation')
+            ->where('linked_user_id', $userId)
+            ->where('parish_id', $churchId)
+            ->get()
+            ->getRowArray();
+
+        $this->assertNotNull($row);
+        $this->assertSame(1, (int) ($row['is_member'] ?? 0));
+        $this->assertSame('member', (string) ($row['membership_status'] ?? ''));
+        $this->assertNull($row['end_date']);
+    }
+
+    private function rebuildSchema(): void
+    {
+        $forge = \Config\Database::forge();
+
+        $forge->dropTable('parish_affiliation', true);
+        $forge->dropTable('user_person', true);
+        $forge->dropTable('person', true);
+        $forge->dropTable('auth_groups_users', true);
+        $forge->dropTable('auth_identities', true);
+        $forge->dropTable('profile', true);
+        $forge->dropTable('users', true);
+        $forge->dropTable('parish', true);
+        $forge->dropTable('dioceses', true);
+
+        $forge->addField([
+            'id' => ['type' => 'INTEGER', 'auto_increment' => true],
+            'name' => ['type' => 'VARCHAR', 'constraint' => 255],
+            'created_at' => ['type' => 'DATETIME', 'null' => true],
+            'updated_at' => ['type' => 'DATETIME', 'null' => true],
+            'deleted_at' => ['type' => 'DATETIME', 'null' => true],
+        ]);
+        $forge->addKey('id', true);
+        $forge->createTable('dioceses', true);
+
+        $forge->addField([
+            'id' => ['type' => 'INTEGER', 'auto_increment' => true],
+            'first_name' => ['type' => 'VARCHAR', 'constraint' => 100, 'null' => true],
+            'last_name' => ['type' => 'VARCHAR', 'constraint' => 100, 'null' => true],
+            'email' => ['type' => 'VARCHAR', 'constraint' => 255, 'null' => true],
+            'created_at' => ['type' => 'DATETIME', 'null' => true],
+            'updated_at' => ['type' => 'DATETIME', 'null' => true],
+            'deleted_at' => ['type' => 'DATETIME', 'null' => true],
+        ]);
+        $forge->addKey('id', true);
+        $forge->createTable('person', true);
+
+        $forge->addField([
+            'id' => ['type' => 'INTEGER', 'auto_increment' => true],
+            'user_id' => ['type' => 'INTEGER'],
+            'person_id' => ['type' => 'INTEGER'],
+            'is_primary' => ['type' => 'INTEGER', 'constraint' => 1, 'default' => 0],
+            'linked_at' => ['type' => 'DATETIME', 'null' => true],
+            'created_at' => ['type' => 'DATETIME', 'null' => true],
+            'updated_at' => ['type' => 'DATETIME', 'null' => true],
+        ]);
+        $forge->addKey('id', true);
+        $forge->createTable('user_person', true);
+
+        $forge->addField([
+            'id' => ['type' => 'INTEGER', 'auto_increment' => true],
+            'diocese_id' => ['type' => 'INTEGER', 'null' => true],
+            'name' => ['type' => 'VARCHAR', 'constraint' => 255],
+            'created_at' => ['type' => 'DATETIME', 'null' => true],
+            'updated_at' => ['type' => 'DATETIME', 'null' => true],
+            'deleted_at' => ['type' => 'DATETIME', 'null' => true],
+        ]);
+        $forge->addKey('id', true);
+        $forge->createTable('parish', true);
+
+        $forge->addField([
+            'id' => ['type' => 'INTEGER', 'auto_increment' => true],
+            'username' => ['type' => 'VARCHAR', 'constraint' => 255, 'null' => true],
+            'active' => ['type' => 'INTEGER', 'constraint' => 1, 'default' => 1],
+            'created_at' => ['type' => 'DATETIME', 'null' => true],
+            'updated_at' => ['type' => 'DATETIME', 'null' => true],
+            'deleted_at' => ['type' => 'DATETIME', 'null' => true],
+        ]);
+        $forge->addKey('id', true);
+        $forge->createTable('users', true);
+
+        $forge->addField([
+            'id' => ['type' => 'INTEGER', 'auto_increment' => true],
+            'user_id' => ['type' => 'INTEGER'],
+            'church_id' => ['type' => 'INTEGER', 'null' => true],
+            'first_name' => ['type' => 'VARCHAR', 'constraint' => 100, 'null' => true],
+            'nickname' => ['type' => 'VARCHAR', 'constraint' => 100, 'null' => true],
+            'last_name' => ['type' => 'VARCHAR', 'constraint' => 100, 'null' => true],
+            'phone' => ['type' => 'TEXT', 'null' => true],
+            'phone_hash' => ['type' => 'VARCHAR', 'constraint' => 64, 'null' => true],
+            'address' => ['type' => 'TEXT', 'null' => true],
+            'membership_status' => ['type' => 'VARCHAR', 'constraint' => 20, 'default' => 'pending'],
+            'created_at' => ['type' => 'DATETIME', 'null' => true],
+            'updated_at' => ['type' => 'DATETIME', 'null' => true],
+            'deleted_at' => ['type' => 'DATETIME', 'null' => true],
+        ]);
+        $forge->addKey('id', true);
+        $forge->createTable('profile', true);
+
+        $forge->addField([
+            'id' => ['type' => 'INTEGER', 'auto_increment' => true],
+            'type' => ['type' => 'VARCHAR', 'constraint' => 63],
+            'secret' => ['type' => 'VARCHAR', 'constraint' => 255, 'null' => true],
+            'force_reset' => ['type' => 'INTEGER', 'constraint' => 1, 'default' => 0],
+            'user_id' => ['type' => 'INTEGER'],
+            'created_at' => ['type' => 'DATETIME', 'null' => true],
+            'updated_at' => ['type' => 'DATETIME', 'null' => true],
+            'deleted_at' => ['type' => 'DATETIME', 'null' => true],
+        ]);
+        $forge->addKey('id', true);
+        $forge->createTable('auth_identities', true);
+
+        $forge->addField([
+            'id' => ['type' => 'INTEGER', 'auto_increment' => true],
+            'group' => ['type' => 'VARCHAR', 'constraint' => 255],
+            'user_id' => ['type' => 'INTEGER'],
+            'created_at' => ['type' => 'DATETIME', 'null' => true],
+            'deleted_at' => ['type' => 'DATETIME', 'null' => true],
+        ]);
+        $forge->addKey('id', true);
+        $forge->createTable('auth_groups_users', true);
+
+        $forge->addField([
+            'id' => ['type' => 'INTEGER', 'auto_increment' => true],
+            'linked_user_id' => ['type' => 'INTEGER', 'null' => true],
+            'parish_id' => ['type' => 'INTEGER'],
+            'person_id' => ['type' => 'INTEGER', 'null' => true],
+            'affiliation_type' => ['type' => 'VARCHAR', 'constraint' => 32, 'default' => 'member'],
+            'membership_status' => ['type' => 'VARCHAR', 'constraint' => 20, 'default' => 'guest'],
+            'canonical_status' => ['type' => 'VARCHAR', 'constraint' => 32, 'null' => true],
+            'is_member' => ['type' => 'INTEGER', 'constraint' => 1, 'default' => 0],
+            'is_good_standing' => ['type' => 'INTEGER', 'constraint' => 1, 'default' => 0],
+            'source' => ['type' => 'VARCHAR', 'constraint' => 32, 'default' => 'system'],
+            'start_date' => ['type' => 'DATE', 'null' => true],
+            'is_primary' => ['type' => 'INTEGER', 'constraint' => 1, 'default' => 0],
+            'end_date' => ['type' => 'DATE', 'null' => true],
+            'created_at' => ['type' => 'DATETIME', 'null' => true],
+            'updated_at' => ['type' => 'DATETIME', 'null' => true],
+            'deleted_at' => ['type' => 'DATETIME', 'null' => true],
+        ]);
+        $forge->addKey('id', true);
+        $forge->createTable('parish_affiliation', true);
+    }
+
+    private function insertDiocese(string $name): int
+    {
+        $this->db->table('dioceses')->insert([
+            'name' => $name,
+            'created_at' => date('Y-m-d H:i:s'),
+            'updated_at' => date('Y-m-d H:i:s'),
+        ]);
+
+        return (int) $this->db->insertID();
+    }
+
+    private function insertChurch(int $dioceseId, string $name): int
+    {
+        $this->db->table('parish')->insert([
+            'diocese_id' => $dioceseId,
+            'name' => $name,
+            'created_at' => date('Y-m-d H:i:s'),
+            'updated_at' => date('Y-m-d H:i:s'),
+        ]);
+
+        return (int) $this->db->insertID();
+    }
+
+    private function insertUser(string $username): int
+    {
+        $this->db->table('users')->insert([
+            'username' => $username,
+            'active' => 1,
+            'created_at' => date('Y-m-d H:i:s'),
+            'updated_at' => date('Y-m-d H:i:s'),
+        ]);
+
+        $userId = (int) $this->db->insertID();
+
+        $this->db->table('auth_identities')->insert([
+            'type' => 'email_password',
+            'secret' => $username . '@example.com',
+            'user_id' => $userId,
+            'created_at' => date('Y-m-d H:i:s'),
+            'updated_at' => date('Y-m-d H:i:s'),
+        ]);
+
+        return $userId;
+    }
+
+    private function insertProfile(int $userId, int $churchId, string $firstName, string $lastName): void
+    {
+        $this->db->table('profile')->insert([
+            'user_id' => $userId,
+            'church_id' => $churchId,
+            'first_name' => $firstName,
+            'last_name' => $lastName,
+            'membership_status' => 'member',
+            'created_at' => date('Y-m-d H:i:s'),
+            'updated_at' => date('Y-m-d H:i:s'),
+        ]);
+    }
+
+    private function insertAffiliation(int $userId, int $churchId, int $dioceseId, string $status): void
+    {
+        model(MemberChurchAffiliationModel::class)->attachToParish(
+            $userId,
+            $churchId,
+            false,
+            $status,
+            in_array($status, ['member', 'inactive'], true)
+        );
+    }
+}
