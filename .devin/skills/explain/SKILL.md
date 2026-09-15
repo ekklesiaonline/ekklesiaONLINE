@@ -1,40 +1,29 @@
 ---
-description: Explain the ekklesiaRD project and its components in detail
 name: explain
+description: Explain the ekklesiaRD project, a module, or a specific file
+argument-hint: "[topic]"
+triggers:
+  - user
+  - model
+allowed-tools:
+  - read
+  - grep
+  - find_file_by_name
 ---
 
-Use this skill to explain the ekklesiaRD project and its components in detail.
-Refer to the README.md and other documentation files for more information.
-Also refer to the .github/ekklesiaRD_overview.md file for a high-level overview of the project.
-When explaining, focus on the following areas:
-- Project overview and goals
-- Key features and functionality
-- Technology stack and architecture
-- Database schema and relationships
-- Pending modules and future enhancements
-- Development workflow and best practices
-- Testing strategies and coverage
-- Deployment and production considerations
-- Security considerations and best practices
-- Performance optimization techniques
-- Code quality standards and conventions
-- Team collaboration and communication practices
-- Common pitfalls and how to avoid them
-- Lessons learned and best practices
-- Future roadmap and upcoming features
-- Contact information and support resources
-- Additional resources and references
-- Frequently asked questions and answers
-- Glossary of terms and acronyms
-- References to external documentation and resources
-- Acknowledgments and credits
-- License and attribution information
-- Version history and changelog
-- Contributing guidelines and code of conduct
-- Project timeline and milestones
-- Success metrics and key performance indicators
-- Case studies and real-world examples
-- Community contributions and feedback
-- Known issues and limitations
-- Contact information and support resources
-- Additional context and background information
+Explain the requested aspect of ekklesiaRD clearly and concisely.
+
+Context sources:
+- `.github/ekklesiaRD_overview.md` for high-level project overview.
+- `.github/copilot-instructions.md` for features, stack, schema, and conventions.
+- `AGENTS.md` for current architecture and domain rules.
+- `docs/MIGRATIONS_AND_SEEDERS.md` for migration status.
+
+Guidelines:
+1. State what the topic is and which module(s) it belongs to.
+2. Cite specific files and line ranges using `<ref_file ... />` and `<ref_snippet ... />`.
+3. If the topic involves data flow, trace the controller → service → model path.
+4. Mention related rules/skills when relevant (`views.md`, `church-domain.md`, etc.).
+5. Note any known gaps or pending implementation.
+
+Do not make up file paths. Verify with `read`, `grep`, or `find_file_by_name` before citing.
