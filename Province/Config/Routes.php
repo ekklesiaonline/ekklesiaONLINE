@@ -45,6 +45,6 @@ $routes->group('', ['filter' => 'session'], function ($routes) {
         $routes->post('diocese-admins/resend-invitation/(:num)', '\\App\\Controllers\\ProvinceDioceseAdmins::resendInvitation/$1', ['filter' => 'permission:province.diocese_admin.manage']);
         $routes->post('diocese-admins/deactivate/(:num)', '\\App\\Controllers\\ProvinceDioceseAdmins::deactivate/$1', ['filter' => 'permission:province.diocese_admin.manage']);
         $routes->post('quick-create-parish', '\\Province\\Controllers\\Dashboard::quickCreateParish');
-        $routes->post('quick-create-church', '\\Province\\Controllers\\Dashboard::quickCreateParish');
+        $routes->post('quick-create-parish', '\\Province\\Controllers\\Dashboard::quickCreateParish');
     });
 });

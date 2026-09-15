@@ -92,7 +92,7 @@ final class PermissionRoleSyncSeederTest extends CIUnitTestCase
 
         $provinceForbidden = [
             'member.edit',
-            'churches.edit',
+            'parishes.edit',
             'donation.view',
             'expense.view',
             'finance.view',

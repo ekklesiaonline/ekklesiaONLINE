@@ -24,21 +24,21 @@ class Dashboard extends BaseController
             return redirect()->to('/profile')->with('error', lang('Auth.notEnoughPrivilege'));
         }
 
-        $churchId = $this->getOperationalParishId();
+        $parishId = $this->getOperationalParishId();
 
-        if (!$churchId) {
+        if (!$parishId) {
             return view('Parish\Views\Dashboard\no_parish');
         }
 
         $canModerateRegistrations = $user->inGroup('parishadmin') && $user->can('member.edit');
 
         $service = new ParishDashboardDataService();
-        $data    = $service->assemble((int) $churchId, (int) $user->id, $canModerateRegistrations);
+        $data    = $service->assemble((int) $parishId, (int) $user->id, $canModerateRegistrations);
         $metrics = $data['people_metrics'];
 
         // Sunday attendance trend
         $sundayAttendanceTrend = $this->getParishSundayAttendanceAverageTrend(
-            (int) $churchId,
+            (int) $parishId,
             'this_year',
             null,
             null,
@@ -77,7 +77,7 @@ class Dashboard extends BaseController
      * Parish Sunday attendance trend from service_metric data.
      */
     protected function getParishSundayAttendanceAverageTrend(
-        int $churchId,
+        int $parishId,
         string $period = 'this_year',
         ?string $customStartDate = null,
         ?string $customEndDate = null,
@@ -112,7 +112,7 @@ class Dashboard extends BaseController
               AND DAYOFWEEK(s.service_date) = 1
             ORDER BY s.service_date ASC
             ",
-            [$churchId, $range['start_date'], $range['end_date']]
+            [$parishId, $range['start_date'], $range['end_date']]
         )->getResultArray();
 
         return $this->buildParishSundayRawSeriesFromServiceRows($serviceRows);

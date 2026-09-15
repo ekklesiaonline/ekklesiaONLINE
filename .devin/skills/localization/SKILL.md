@@ -17,7 +17,7 @@ Key facts:
 - Resolution order: cookie → session → `profile.locale` → `Accept-Language` header → default (`en`).
 - Supported locales are defined in `Config\App::$supportedLocales`.
 - Locale aliases normalize variants: `sp`, `es-do`, `es_mx`, `es-mx` → `es`; `fr-ca`, `fr_fr`, `fr-fr` → `fr`.
-- Common lang namespaces: `App`, `Dashboard`, `Diocesan`, `Services`, `Churches`, etc.
+- Common lang namespaces: `App`, `Dashboard`, `Diocesan`, `Services`, `Parishes`, etc.
 
 When asked:
 1. Explain how the current locale is chosen for a request.

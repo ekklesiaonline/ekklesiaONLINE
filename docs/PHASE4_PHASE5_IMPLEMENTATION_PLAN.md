@@ -13,11 +13,11 @@
 
 | Old Class Name | Old $table | New Class Name | New $table | File |
 |---|---|---|---|---|
-| `ChurchModel` | `churches` | `ParishModel` | `parish` | `app/Models/ChurchModel.php` → `app/Models/ParishModel.php` |
-| `ChurchSettingModel` | `church_settings` | `ParishSettingModel` | `parish_setting` | Rename file |
-| `ChurchIntegrationModel` | `church_integrations` | `ParishIntegrationModel` | `parish_integration` | Rename file |
-| `ChurchProviderCredentialModel` | `church_provider_credentials` | `ParishProviderCredentialModel` | `parish_provider_credential` | Rename file |
-| `ChurchRoleAuditModel` | `church_role_audit_logs` | `ParishRoleAuditModel` | `parish_role_audit_log` | Rename file |
+| `ParishModel` | `parishes` | `ParishModel` | `parish` | `app/Models/ParishModel.php` → `app/Models/ParishModel.php` |
+| `ParishSettingModel` | `parish_settings` | `ParishSettingModel` | `parish_setting` | Rename file |
+| `ParishIntegrationModel` | `parish_integrations` | `ParishIntegrationModel` | `parish_integration` | Rename file |
+| `ParishProviderCredentialModel` | `parish_provider_credentials` | `ParishProviderCredentialModel` | `parish_provider_credential` | Rename file |
+| `ParishRoleAuditModel` | `parish_role_audit_logs` | `ParishRoleAuditModel` | `parish_role_audit_log` | Rename file |
 | `AuditLogModel` | `audit_logs` | `AuditLogModel` | `audit_log` | Keep name, change $table |
 | `UserSessionModel` | `user_sessions` | `UserSessionModel` | `user_session` | Keep name, change $table |
 | `VolunteerTeamModel` | `volunteer_teams` | `TeamModel` | `team` | `app/Models/VolunteerTeamModel.php` → `app/Models/TeamModel.php` |
@@ -36,11 +36,11 @@
 **Files requiring updates (non-exhaustive):**
 
 - **Controllers:**
-  - `Pastor/Controllers/Members.php` — ChurchModel → ParishModel, FamilyModel references
+  - `Pastor/Controllers/Members.php` — ParishModel → ParishModel, FamilyModel references
   - `Pastor/Controllers/Services.php` — ServiceModel references
   - `Pastor/Controllers/Donations.php` — DonationModel references
   - `Pastor/Controllers/FollowupWorkflow.php` — GuestFollowupLogModel → FollowupLogModel
-  - All Diocesan controllers that reference church-level data
+  - All Diocesan controllers that reference parish-level data
   - All other module controllers
 
 - **Models:**
@@ -51,8 +51,8 @@
   - Search `@extends`, `@include` for partials that reference old model names
 
 - **Services:**
-  - `app/Services/ChurchPeopleRegistryService.php` → uses ChurchModel, FamilyModel
-  - `app/Services/MemberMergeService.php` → uses ChurchRoleAuditModel
+  - `app/Services/ParishPeopleRegistryService.php` → uses ParishModel, FamilyModel
+  - `app/Services/MemberMergeService.php` → uses ParishRoleAuditModel
   - Any service that queries old table names directly
 
 ---
@@ -61,8 +61,8 @@
 
 ### Changes Required
 
-1. **MemberChurchAffiliationModel** → Rename to **ParishAffiliationModel**
-   - Table: `member_church_affiliations` → `parish_affiliation`
+1. **MemberParishAffiliationModel** → Rename to **ParishAffiliationModel**
+   - Table: `member_parish_affiliations` → `parish_affiliation`
    - Status enum map (OLD → NEW):
      - `active` → `member`
      - `inactive` → `inactive`
@@ -71,7 +71,7 @@
      - `regular_attender` → `attendee`
 
 2. **Code Updates:**
-   - All references to `$memberChurchAffiliationModel` → `$parishAffiliationModel`
+   - All references to `$memberParishAffiliationModel` → `$parishAffiliationModel`
    - All status value checks (e.g., `'active'` → `'member'`)
    - All queries filtering on status
 
@@ -92,7 +92,7 @@
 4. Commit code changes (migrations NOT run yet)
 
 ### Stage 2: Controller/Service Updates (0 Downtime)
-1. Update all ChurchModel → ParishModel references
+1. Update all ParishModel → ParishModel references
 2. Update all ServiceModel queries for date/time columns
 3. Update all other table references
 4. Commit code changes (migrations still NOT run)
@@ -122,7 +122,7 @@
   - Drop/re-add FKs if needed
 
 - `2026_05_08_050000_Phase5_MigrateAffiliationsV2.php`
-  - INSERT INTO parish_affiliation from member_church_affiliations
+  - INSERT INTO parish_affiliation from member_parish_affiliations
   - Status enum mapping
   - Drop old table
 

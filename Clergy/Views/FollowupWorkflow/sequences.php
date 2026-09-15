@@ -100,7 +100,7 @@ $translateSequenceDescription = static function (array $sequence): string {
                                     <?php if ($isGlobal): ?>
                                         <span class="badge border border-info text-info fw-normal"><?= lang('Guests.seqScopeGlobal') ?></span>
                                     <?php else: ?>
-                                        <span class="badge border border-secondary text-body fw-normal"><?= lang('Guests.seqScopeChurch') ?></span>
+                                        <span class="badge border border-secondary text-body fw-normal"><?= lang('Guests.seqScopeParish') ?></span>
                                     <?php endif; ?>
                                 </td>
                                 <?php if (auth()->user()->can('guest.edit')): ?>

@@ -18,13 +18,13 @@ class Members extends BaseController
     use AdminHierarchyGuard;
 
     protected $profileModel;
-    protected $churchModel;
-    protected $memberChurchAffiliationModel;
+    protected $parishModel;
+    protected $memberParishAffiliationModel;
     protected $nonPortalProvisioningService;
 
     public function __construct()
     {
-        $this->churchModel = model('ParishModel');
+        $this->parishModel = model('ParishModel');
     }
 
     protected function getProfileModel()
@@ -38,11 +38,11 @@ class Members extends BaseController
 
     protected function getMemberParishAffiliationModel()
     {
-        if ($this->memberChurchAffiliationModel === null) {
-            $this->memberChurchAffiliationModel = model('MemberParishAffiliationModel');
+        if ($this->memberParishAffiliationModel === null) {
+            $this->memberParishAffiliationModel = model('MemberParishAffiliationModel');
         }
 
-        return $this->memberChurchAffiliationModel;
+        return $this->memberParishAffiliationModel;
     }
 
     protected function getNonPortalProvisioningService(): NonPortalMemberProvisioningService
@@ -124,7 +124,7 @@ class Members extends BaseController
             }, $provinceStaff);
             $provinceStaff = $this->annotateRowsWithProfilePending($provinceStaff, 'user_id', 'profile_id');
 
-            // --- Diocesan staff: diocesanadmin, churchadmin, clergy — read-only for province admin ---
+            // --- Diocesan staff: diocesanadmin, parishadmin, clergy — read-only for province admin ---
             $diocesanStaffBuilder = $db->table($profileTable . ' p')
                 ->select('p.id as profile_id, p.user_id, p.first_name, p.last_name, p.phone, ai.secret as email, agu.group as role, c.id as parish_id, c.name as parish_name, d.id as diocese_id, d.name as diocese_name')
                 ->join('users u', 'u.id = p.user_id')
@@ -182,10 +182,10 @@ class Members extends BaseController
         }
 
         // Non-ProvinceAdmin: delegated to unified People directory with members scope.
-        $churchId = (int) ($this->getOperationalParishId() ?? 0);
+        $parishId = (int) ($this->getOperationalParishId() ?? 0);
 
-        if ($churchId <= 0) {
-            return redirect()->to('/dashboard')->with('error', lang('Members.noChurchSelected'));
+        if ($parishId <= 0) {
+            return redirect()->to('/dashboard')->with('error', lang('Members.noParishSelected'));
         }
 
         $status = $this->request->getGet('status');
@@ -233,7 +233,7 @@ class Members extends BaseController
             return $redirect;
         }
 
-        // Province admins must use Quick Create Admin from dashboard for explicit church selection
+        // Province admins must use Quick Create Admin from dashboard for explicit parish selection
         if ($this->isProvinceAdmin()) {
             return redirect()->to('/province/dashboard')
                 ->with('error', lang('Members.provinceAdminRestriction'));
@@ -269,7 +269,7 @@ class Members extends BaseController
             return $redirect;
         }
 
-        // Province admins must use Quick Create Admin from dashboard for explicit church selection
+        // Province admins must use Quick Create Admin from dashboard for explicit parish selection
         if ($this->isProvinceAdmin()) {
             return redirect()->to('/province/dashboard')
                 ->with('error', lang('Members.provinceAdminRestriction'));
@@ -331,24 +331,24 @@ class Members extends BaseController
             $user->addGroup($this->request->getPost('role'));
 
             // Create profile
-            $assignedChurchId = (int) ($this->getOperationalParishId() ?? 0);
-            $assignedChurch = $assignedChurchId > 0 ? $this->churchModel->findWithHierarchy($assignedChurchId) : null;
+            $assignedParishId = (int) ($this->getOperationalParishId() ?? 0);
+            $assignedParish = $assignedParishId > 0 ? $this->parishModel->findWithHierarchy($assignedParishId) : null;
 
             $callingCode = $this->request->getPost('phone_country_code');
             $localPhone = $this->request->getPost('phone');
             $e164Phone = PhoneHelper::toE164($callingCode, $localPhone);
 
             // Ensure the canonical person row exists and link the profile to it.
-            $personId = $assignedChurchId > 0
+            $personId = $assignedParishId > 0
                 ? $this->getMemberParishAffiliationModel()->getOrCreatePersonIdForUser((int) $user->id)
                 : null;
 
             $profileData = [
                 'user_id' => $user->id,
                 'person_id' => $personId > 0 ? $personId : null,
-                'parish_id' => $assignedChurchId > 0 ? $assignedChurchId : null,
-                'province_id' => isset($assignedChurch['province_id']) ? (int) $assignedChurch['province_id'] : null,
-                'diocese_id' => isset($assignedChurch['diocese_id']) ? (int) $assignedChurch['diocese_id'] : null,
+                'parish_id' => $assignedParishId > 0 ? $assignedParishId : null,
+                'province_id' => isset($assignedParish['province_id']) ? (int) $assignedParish['province_id'] : null,
+                'diocese_id' => isset($assignedParish['diocese_id']) ? (int) $assignedParish['diocese_id'] : null,
                 'first_name' => $this->request->getPost('first_name'),
                 'middle_name' => $this->request->getPost('middle_name'),
                 'last_name' => $this->request->getPost('last_name'),
@@ -386,7 +386,7 @@ class Members extends BaseController
                 (new \App\Services\PersonProfileSyncService())->syncFromProfile($profileId);
             }
 
-            if ($assignedChurchId > 0 && !$this->getMemberParishAffiliationModel()->attachToParish($user->id, $assignedChurchId, true, 'member', true, $personId > 0 ? $personId : null)) {
+            if ($assignedParishId > 0 && !$this->getMemberParishAffiliationModel()->attachToParish($user->id, $assignedParishId, true, 'member', true, $personId > 0 ? $personId : null)) {
                 $db->transRollback();
                 return redirect()->back()->withInput()->with('error', lang('Members.affiliationFailed'));
             }
@@ -398,19 +398,19 @@ class Members extends BaseController
             }
 
             $this->audit()->log('member.create', [
-                'parish_id' => $assignedChurchId > 0 ? $assignedChurchId : null,
+                'parish_id' => $assignedParishId > 0 ? $assignedParishId : null,
                 'entity_type' => 'member',
                 'entity_id' => $profileId > 0 ? $profileId : $user->id,
                 'new_values' => [
                     'user_id' => (int) $user->id,
                     'role' => (string) $this->request->getPost('role'),
                     'membership_status' => 'member',
-                    'parish_id' => $assignedChurchId > 0 ? $assignedChurchId : null,
+                    'parish_id' => $assignedParishId > 0 ? $assignedParishId : null,
                 ],
             ]);
 
-            if ($assignedChurchId > 0) {
-                (new ParishPeopleRegistryService())->syncParish($assignedChurchId);
+            if ($assignedParishId > 0) {
+                (new ParishPeopleRegistryService())->syncParish($assignedParishId);
             }
 
             return redirect()->to('/members')->with('success', lang('App.successCreated'));
@@ -509,7 +509,7 @@ class Members extends BaseController
             return $this->response->setJSON(['success' => false, 'message' => $this->hierarchyGuardMessage($code)])->setStatusCode(403);
         }
 
-        $result = $this->getNonPortalProvisioningService()->revokePortalAccess($userId, $this->churchId);
+        $result = $this->getNonPortalProvisioningService()->revokePortalAccess($userId, $this->parishId);
 
         if (!$result['ok']) {
             $httpStatus = $result['http_status'] ?? 500;
@@ -520,11 +520,11 @@ class Members extends BaseController
             ])->setStatusCode($httpStatus);
         }
 
-        (new ParishPeopleRegistryService())->syncParish($this->churchId);
+        (new ParishPeopleRegistryService())->syncParish($this->parishId);
 
         $this->audit()->log('member.revoke_portal_access', array_merge(
             ['profile_id' => $id, 'user_id' => $userId],
-            $this->buildParishContextMeta($this->churchId, self::ATTRIBUTION_POLICY_OPERATIONAL_DEFAULT)
+            $this->buildParishContextMeta($this->parishId, self::ATTRIBUTION_POLICY_OPERATIONAL_DEFAULT)
         ));
 
         return $this->response->setJSON(['success' => true, 'message' => 'Portal access revoked successfully.']);
@@ -546,11 +546,11 @@ class Members extends BaseController
             return $this->redirectMembersError('Member not found');
         }
 
-        // Keep edit form status aligned to the active affiliation in operational church.
-        $churchId = (int) ($this->getOperationalParishId() ?? 0);
-        if ($churchId > 0) {
+        // Keep edit form status aligned to the active affiliation in operational parish.
+        $parishId = (int) ($this->getOperationalParishId() ?? 0);
+        if ($parishId > 0) {
             $affiliation = $this->getMemberParishAffiliationModel()
-                ->getActiveAffiliationForParish((int) ($profile['user_id'] ?? 0), $churchId);
+                ->getActiveAffiliationForParish((int) ($profile['user_id'] ?? 0), $parishId);
             if (is_array($affiliation) && isset($affiliation['membership_status'])) {
                 $profile['membership_status'] = (string) $affiliation['membership_status'];
             }
@@ -642,19 +642,19 @@ class Members extends BaseController
 
         // Update the canonical profile's membership_status only when editing the home parish.
         // The operational per-parish status lives in parish_affiliation.
-        $churchId = (int) ($this->getOperationalParishId() ?? 0);
+        $parishId = (int) ($this->getOperationalParishId() ?? 0);
         $homeParishId = (int) ($profile['parish_id'] ?? 0);
-        if ($churchId > 0 && $churchId === $homeParishId) {
+        if ($parishId > 0 && $parishId === $homeParishId) {
             $this->getProfileModel()->update($id, ['membership_status' => $submittedStatus]);
         }
 
-        // Sync affiliation status for current church so /members, /people, and detail
+        // Sync affiliation status for current parish so /members, /people, and detail
         // views stay consistent with the status chosen in this edit form.
-        if ($churchId > 0) {
+        if ($parishId > 0) {
             $affiliationStatus = \App\Services\MembershipStatusService::profileToAffiliation($submittedStatus);
 
             $affiliation = $this->getMemberParishAffiliationModel()
-                ->getActiveAffiliationForParish((int) ($profile['user_id'] ?? 0), $churchId);
+                ->getActiveAffiliationForParish((int) ($profile['user_id'] ?? 0), $parishId);
 
             if (is_array($affiliation)) {
                 $fromStatus = (string) ($affiliation['membership_status'] ?? '');
@@ -673,15 +673,15 @@ class Members extends BaseController
                         'affiliation',
                         $fromStatus,
                         $affiliationStatus,
-                        $churchId,
+                        $parishId,
                         auth()->loggedIn() ? (int) auth()->id() : null,
                         (string) ($this->request->getPost('status_reason') ?? 'Manual status update')
                     );
                 }
             }
 
-            // Refresh church_people snapshot immediately instead of waiting for cron.
-            (new ParishPeopleRegistryService())->syncParish($churchId);
+            // Refresh parish_people snapshot immediately instead of waiting for cron.
+            (new ParishPeopleRegistryService())->syncParish($parishId);
         }
 
         $this->audit()->log('member.update', [
@@ -702,7 +702,7 @@ class Members extends BaseController
     }
 
     /**
-     * Bulk transfer members to another church with reason logging
+     * Bulk transfer members to another parish with reason logging
      */
     public function transfer()
     {
@@ -740,7 +740,7 @@ class Members extends BaseController
             ],
         ]);
 
-        $affectedChurchIds = $this->deactivateActiveAffiliationsForUser((int) ($profile['user_id'] ?? 0));
+        $affectedParishIds = $this->deactivateActiveAffiliationsForUser((int) ($profile['user_id'] ?? 0));
 
         if (!$this->getProfileModel()->delete($id)) {
             return $this->jsonResponse(['success' => false, 'message' => lang('Members.deleteError')], 500);
@@ -750,10 +750,10 @@ class Members extends BaseController
         // person record as inactive.
         $this->deactivatePersonsForUser((int) ($profile['user_id'] ?? 0));
 
-        if ($affectedChurchIds !== []) {
+        if ($affectedParishIds !== []) {
             $registryService = new ParishPeopleRegistryService();
-            foreach ($affectedChurchIds as $affectedChurchId) {
-                $registryService->syncParish($affectedChurchId);
+            foreach ($affectedParishIds as $affectedParishId) {
+                $registryService->syncParish($affectedParishId);
             }
         }
 
@@ -796,7 +796,7 @@ class Members extends BaseController
                 continue;
             }
 
-            $affectedChurchIds = $this->deactivateActiveAffiliationsForUser((int) ($profile['user_id'] ?? 0));
+            $affectedParishIds = $this->deactivateActiveAffiliationsForUser((int) ($profile['user_id'] ?? 0));
 
             $this->audit()->log('member.delete', [
                 'parish_id' => (int) ($this->getOperationalParishId() ?? 0),
@@ -819,10 +819,10 @@ class Members extends BaseController
             if ($this->getProfileModel()->delete($memberId)) {
                 $this->deactivatePersonsForUser((int) ($profile['user_id'] ?? 0));
 
-                if ($affectedChurchIds !== []) {
+                if ($affectedParishIds !== []) {
                     $registryService = new ParishPeopleRegistryService();
-                    foreach ($affectedChurchIds as $affectedChurchId) {
-                        $registryService->syncParish($affectedChurchId);
+                    foreach ($affectedParishIds as $affectedParishId) {
+                        $registryService->syncParish($affectedParishId);
                     }
                 }
                 $deleted++;
@@ -840,7 +840,7 @@ class Members extends BaseController
     }
 
     /**
-     * Deactivate all active affiliations for a user and return impacted church IDs.
+     * Deactivate all active affiliations for a user and return impacted parish IDs.
      *
      * @return array<int,int>
      */
@@ -857,13 +857,13 @@ class Members extends BaseController
             ->get()
             ->getResultArray();
 
-        $churchIds = array_values(array_unique(array_map(
+        $parishIds = array_values(array_unique(array_map(
             static fn(array $row): int => (int) ($row['parish_id'] ?? 0),
             $rows
         )));
-        $churchIds = array_values(array_filter($churchIds, static fn(int $id): bool => $id > 0));
+        $parishIds = array_values(array_filter($parishIds, static fn(int $id): bool => $id > 0));
 
-        if ($churchIds === []) {
+        if ($parishIds === []) {
             return [];
         }
 
@@ -876,7 +876,7 @@ class Members extends BaseController
                 'updated_at' => date('Y-m-d H:i:s'),
             ]);
 
-        return $churchIds;
+        return $parishIds;
     }
 
     /**
@@ -939,13 +939,13 @@ class Members extends BaseController
         }
 
         if ($redirect = $this->requireParish()) {
-            return $this->jsonResponse($this->apiErrorPayload(lang('App.errorNoParishScope'), 403, 'CHURCH_SCOPE_REQUIRED'), 403);
+            return $this->jsonResponse($this->apiErrorPayload(lang('App.errorNoParishScope'), 403, 'PARISH_SCOPE_REQUIRED'), 403);
         }
 
         $keyword = $this->request->getGet('q');
-        $churchId = $this->getOperationalParishId();
+        $parishId = $this->getOperationalParishId();
 
-        $members = $this->getMemberParishAffiliationModel()->searchParishMembers((int) $churchId, (string) $keyword);
+        $members = $this->getMemberParishAffiliationModel()->searchParishMembers((int) $parishId, (string) $keyword);
 
         return $this->jsonResponse($members);
     }
@@ -957,7 +957,7 @@ class Members extends BaseController
         }
 
         $profileId = (int) $this->request->getPost('profile_id');
-        $churchId = (int) $this->request->getPost('parish_id');
+        $parishId = (int) $this->request->getPost('parish_id');
         $allowedStatuses = ['visitor', 'regular_attender', 'member', 'inactive', 'transferred', 'deceased'];
         $status = MembershipStatusService::normalizeAffiliationStatus((string) ($this->request->getPost('membership_status') ?? 'member'));
         if (!in_array($status, $allowedStatuses, true)) {
@@ -975,25 +975,25 @@ class Members extends BaseController
             return $this->jsonResponse($this->apiErrorPayload($this->hierarchyGuardMessage($code), 403, 'TARGET_OUTRANKS_ACTOR'), 403);
         }
 
-        $targetChurch = $this->churchModel->findWithHierarchy($churchId);
-        if (!$targetChurch || !$this->isParishWithinCurrentDioceseScope((int) ($targetChurch['diocese_id'] ?? 0))) {
+        $targetParish = $this->parishModel->findWithHierarchy($parishId);
+        if (!$targetParish || !$this->isParishWithinCurrentDioceseScope((int) ($targetParish['diocese_id'] ?? 0))) {
             return $this->jsonResponse($this->apiErrorPayload(lang('Clergy.targetParishOutsideDiocesan'), 403, 'PARISH_OUTSIDE_DIOCESAN_SCOPE'), 403);
         }
 
-        if (!service('parishScopeValidator')->canActorAccessParish(auth()->user(), $churchId)) {
+        if (!service('parishScopeValidator')->canActorAccessParish(auth()->user(), $parishId)) {
             return $this->jsonResponse($this->apiErrorPayload(lang('Clergy.targetParishOutsideScope'), 403, 'PARISH_OUTSIDE_SCOPE'), 403);
         }
 
         $db = db_connect();
         $db->transStart();
 
-        $ok = $this->getMemberParishAffiliationModel()->attachToParish((int) $profile['user_id'], $churchId, false, $status);
+        $ok = $this->getMemberParishAffiliationModel()->attachToParish((int) $profile['user_id'], $parishId, false, $status);
         if (!$ok) {
             $db->transRollback();
             return $this->jsonResponse($this->apiErrorPayload(lang('Clergy.unableAttachParish'), 500, 'PARISH_ATTACH_FAILED'), 500);
         }
 
-        if ($isHome && !$this->getMemberParishAffiliationModel()->setHomeParish((int) $profile['user_id'], $churchId)) {
+        if ($isHome && !$this->getMemberParishAffiliationModel()->setHomeParish((int) $profile['user_id'], $parishId)) {
             $db->transRollback();
             return $this->jsonResponse($this->apiErrorPayload(lang('Clergy.unableSetHomeParish'), 500, 'HOME_PARISH_UPDATE_FAILED'), 500);
         }
@@ -1009,18 +1009,18 @@ class Members extends BaseController
         }
 
         $this->audit()->log('member.parish_attached', [
-            'parish_id' => $churchId,
+            'parish_id' => $parishId,
             'entity_type' => 'parish_affiliation',
             'entity_id' => (int) $profile['user_id'],
             'new_values' => [
                 'profile_id' => $profileId,
-                'parish_id' => $churchId,
+                'parish_id' => $parishId,
                 'membership_status' => $status,
                 'is_primary' => $isHome,
             ],
         ]);
 
-        (new ParishPeopleRegistryService())->syncParish($churchId);
+        (new ParishPeopleRegistryService())->syncParish($parishId);
 
         return $this->jsonResponse(['success' => true, 'message' => lang('Clergy.parishAttachedSuccess')]);
     }
@@ -1032,7 +1032,7 @@ class Members extends BaseController
         }
 
         $profileId = (int) $this->request->getPost('profile_id');
-        $churchId = (int) $this->request->getPost('parish_id');
+        $parishId = (int) $this->request->getPost('parish_id');
 
         $operationalParishId = (int) ($this->getOperationalParishId() ?? 0);
         $profile = service('profileLookup')->findProfileInParishScope($profileId, $operationalParishId);
@@ -1049,19 +1049,19 @@ class Members extends BaseController
             return $this->jsonResponse($this->apiErrorPayload(lang('Clergy.memberMustRemainAttached'), 400, 'MEMBER_LAST_PARISH_CONSTRAINT'), 400);
         }
 
-        $targetChurch = $this->churchModel->findWithHierarchy($churchId);
-        if (!$targetChurch || !$this->isParishWithinCurrentDioceseScope((int) ($targetChurch['diocese_id'] ?? 0))) {
+        $targetParish = $this->parishModel->findWithHierarchy($parishId);
+        if (!$targetParish || !$this->isParishWithinCurrentDioceseScope((int) ($targetParish['diocese_id'] ?? 0))) {
             return $this->jsonResponse($this->apiErrorPayload(lang('Clergy.targetParishOutsideDiocesan'), 403, 'PARISH_OUTSIDE_DIOCESAN_SCOPE'), 403);
         }
 
-        if (!service('parishScopeValidator')->canActorAccessParish(auth()->user(), $churchId)) {
+        if (!service('parishScopeValidator')->canActorAccessParish(auth()->user(), $parishId)) {
             return $this->jsonResponse($this->apiErrorPayload(lang('Clergy.targetParishOutsideScope'), 403, 'PARISH_OUTSIDE_SCOPE'), 403);
         }
 
         $db = db_connect();
         $db->transStart();
 
-        $ok = $this->getMemberParishAffiliationModel()->detachFromParish((int) $profile['user_id'], $churchId);
+        $ok = $this->getMemberParishAffiliationModel()->detachFromParish((int) $profile['user_id'], $parishId);
         if (!$ok) {
             $db->transRollback();
             return $this->jsonResponse($this->apiErrorPayload(lang('Clergy.unableDetachParish'), 500, 'PARISH_DETACH_FAILED'), 500);
@@ -1078,16 +1078,16 @@ class Members extends BaseController
         }
 
         $this->audit()->log('member.parish_detached', [
-            'parish_id' => $churchId,
+            'parish_id' => $parishId,
             'entity_type' => 'parish_affiliation',
             'entity_id' => (int) $profile['user_id'],
             'old_values' => [
                 'profile_id' => $profileId,
-                'parish_id' => $churchId,
+                'parish_id' => $parishId,
             ],
         ]);
 
-        (new ParishPeopleRegistryService())->syncParish($churchId);
+        (new ParishPeopleRegistryService())->syncParish($parishId);
 
         return $this->jsonResponse(['success' => true, 'message' => lang('Clergy.parishDetachedSuccess')]);
     }
@@ -1099,7 +1099,7 @@ class Members extends BaseController
         }
 
         $profileId = (int) $this->request->getPost('profile_id');
-        $churchId = (int) $this->request->getPost('parish_id');
+        $parishId = (int) $this->request->getPost('parish_id');
 
         $operationalParishId = (int) ($this->getOperationalParishId() ?? 0);
         $profile = service('profileLookup')->findProfileInParishScope($profileId, $operationalParishId);
@@ -1111,24 +1111,24 @@ class Members extends BaseController
             return $this->jsonResponse($this->apiErrorPayload($this->hierarchyGuardMessage($code), 403, 'TARGET_OUTRANKS_ACTOR'), 403);
         }
 
-        $affiliated = $this->getMemberParishAffiliationModel()->isUserAffiliatedWithParish((int) $profile['user_id'], $churchId, true);
+        $affiliated = $this->getMemberParishAffiliationModel()->isUserAffiliatedWithParish((int) $profile['user_id'], $parishId, true);
         if (!$affiliated) {
             return $this->jsonResponse($this->apiErrorPayload(lang('Clergy.memberNotAffiliatedParish'), 400, 'PARISH_AFFILIATION_REQUIRED'), 400);
         }
 
-        $targetChurch = $this->churchModel->findWithHierarchy($churchId);
-        if (!$targetChurch || !$this->isParishWithinCurrentDioceseScope((int) ($targetChurch['diocese_id'] ?? 0))) {
+        $targetParish = $this->parishModel->findWithHierarchy($parishId);
+        if (!$targetParish || !$this->isParishWithinCurrentDioceseScope((int) ($targetParish['diocese_id'] ?? 0))) {
             return $this->jsonResponse($this->apiErrorPayload(lang('Clergy.targetParishOutsideDiocesan'), 403, 'PARISH_OUTSIDE_DIOCESAN_SCOPE'), 403);
         }
 
-        if (!service('parishScopeValidator')->canActorAccessParish(auth()->user(), $churchId)) {
+        if (!service('parishScopeValidator')->canActorAccessParish(auth()->user(), $parishId)) {
             return $this->jsonResponse($this->apiErrorPayload(lang('Clergy.targetParishOutsideScope'), 403, 'PARISH_OUTSIDE_SCOPE'), 403);
         }
 
         $db = db_connect();
         $db->transStart();
 
-        $ok = $this->getMemberParishAffiliationModel()->setHomeParish((int) $profile['user_id'], $churchId);
+        $ok = $this->getMemberParishAffiliationModel()->setHomeParish((int) $profile['user_id'], $parishId);
         if (!$ok) {
             $db->transRollback();
             return $this->jsonResponse($this->apiErrorPayload(lang('Clergy.unableSetHomeParish'), 500, 'HOME_PARISH_UPDATE_FAILED'), 500);
@@ -1145,24 +1145,24 @@ class Members extends BaseController
         }
 
         $this->audit()->log('member.home_parish_changed', [
-            'parish_id' => $churchId,
+            'parish_id' => $parishId,
             'entity_type' => 'parish_affiliation',
             'entity_id' => (int) $profile['user_id'],
             'new_values' => [
                 'profile_id' => $profileId,
-                'parish_id' => $churchId,
+                'parish_id' => $parishId,
             ],
         ]);
 
-        (new ParishPeopleRegistryService())->syncParish($churchId);
+        (new ParishPeopleRegistryService())->syncParish($parishId);
 
         return $this->jsonResponse(['success' => true, 'message' => lang('Clergy.homeParishUpdatedSuccess')]);
     }
 
     /**
-     * Reassign diocesan staff to another church (ProvinceAdmin only, AJAX).
+     * Reassign diocesan staff to another parish (ProvinceAdmin only, AJAX).
      * Province admins may only reassign provinceadmin-role users within their province.
-     * Diocesan/church staff (diocesanadmin, churchadmin, clergy) are managed by their diocese.
+     * Diocesan/parish staff (diocesanadmin, parishadmin, clergy) are managed by their diocese.
      */
     public function reassign()
     {
@@ -1186,11 +1186,11 @@ class Members extends BaseController
         }
 
         if ($provinceId === null) {
-            $churchId = (int) ($this->getOperationalParishId() ?? 0);
-            if ($churchId > 0) {
-                $church = $this->churchModel->findWithHierarchy($churchId);
-                if (!empty($church['province_id'])) {
-                    $provinceId = (int) $church['province_id'];
+            $parishId = (int) ($this->getOperationalParishId() ?? 0);
+            if ($parishId > 0) {
+                $parish = $this->parishModel->findWithHierarchy($parishId);
+                if (!empty($parish['province_id'])) {
+                    $provinceId = (int) $parish['province_id'];
                 }
             }
         }
@@ -1211,7 +1211,7 @@ class Members extends BaseController
             return [];
         }
 
-        $currentParish = $this->churchModel->findWithHierarchy($currentParishId);
+        $currentParish = $this->parishModel->findWithHierarchy($currentParishId);
         $dioceseId = (int) ($currentParish['diocese_id'] ?? 0);
         if ($dioceseId <= 0) {
             return [];
@@ -1239,7 +1239,7 @@ class Members extends BaseController
         }
 
         $currentParishId = (int) ($this->getOperationalParishId() ?? 0);
-        $currentParish = $currentParishId > 0 ? $this->churchModel->findWithHierarchy($currentParishId) : null;
+        $currentParish = $currentParishId > 0 ? $this->parishModel->findWithHierarchy($currentParishId) : null;
         $currentDioceseId = (int) ($currentParish['diocese_id'] ?? 0);
 
         if ($currentDioceseId > 0) {
@@ -1264,15 +1264,15 @@ class Members extends BaseController
             ->get()
             ->getFirstRow('array');
 
-        $churchId = isset($affiliation['parish_id']) ? (int) $affiliation['parish_id'] : null;
+        $parishId = isset($affiliation['parish_id']) ? (int) $affiliation['parish_id'] : null;
         $dioceseId = isset($affiliation['diocese_id']) ? (int) $affiliation['diocese_id'] : null;
         $provinceId = $fallbackProvinceId;
 
-        if ($churchId) {
-            $church = $this->churchModel->findWithHierarchy($churchId);
-            if ($church) {
-                $provinceId = isset($church['province_id']) ? (int) $church['province_id'] : $provinceId;
-                $dioceseId = isset($church['diocese_id']) ? (int) $church['diocese_id'] : $dioceseId;
+        if ($parishId) {
+            $parish = $this->parishModel->findWithHierarchy($parishId);
+            if ($parish) {
+                $provinceId = isset($parish['province_id']) ? (int) $parish['province_id'] : $provinceId;
+                $dioceseId = isset($parish['diocese_id']) ? (int) $parish['diocese_id'] : $dioceseId;
             }
         }
 
@@ -1281,7 +1281,7 @@ class Members extends BaseController
         }
 
         return $this->getProfileModel()->update($profileId, [
-            'parish_id' => $churchId,
+            'parish_id' => $parishId,
             'diocese_id' => $dioceseId,
             'province_id' => $provinceId,
         ]);
@@ -1411,7 +1411,7 @@ class Members extends BaseController
 
     // -------------------------------------------------------------------------
     // Province Staff CRUD  (province admin only — manages provinceadmin accounts
-    // that are scoped to the same province; cannot touch diocesan/church staff)
+    // that are scoped to the same province; cannot touch diocesan/parish staff)
     // -------------------------------------------------------------------------
 
     /**

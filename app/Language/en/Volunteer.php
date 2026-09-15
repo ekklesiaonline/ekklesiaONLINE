@@ -62,7 +62,7 @@ return [
     'filterAllStatuses' => 'All Statuses',
     'filterDateFrom' => 'From Date',
     'filterDateTo' => 'To Date',
-    'noChurchScope' => 'No parish scope found for this user.',
+    'noParishScope' => 'No parish scope found for this user.',
     'invalidMemberSelection' => 'Please select valid team and member values.',
     'teamCreated' => 'Team created successfully',
     'teamCreateFailed' => 'Failed to create team',

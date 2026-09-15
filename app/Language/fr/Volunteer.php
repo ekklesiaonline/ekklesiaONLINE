@@ -62,7 +62,7 @@ return [
     'filterAllStatuses' => 'Tous les statuts',
     'filterDateFrom' => 'Date de début',
     'filterDateTo' => 'Date de fin',
-    'noChurchScope' => 'Aucun perimetre de paroisse trouve pour cet utilisateur.',
+    'noParishScope' => 'Aucun perimetre de paroisse trouve pour cet utilisateur.',
     'invalidMemberSelection' => 'Veuillez selectionner des valeurs d\'equipe et de membre valides.',
     'teamCreated' => 'Equipe creee avec succes',
     'teamCreateFailed' => 'Impossible de creer l\'equipe',

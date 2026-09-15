@@ -28,7 +28,7 @@ final class PersonMergeServiceTest extends CIUnitTestCase
 
     public function testMergeReassignsProfileAndAffiliationAndRemovesSourcePerson(): void
     {
-        $churchId = $this->insertChurch();
+        $parishId = $this->insertParish();
         $userA    = $this->insertUser('merge.source');
         $userB    = $this->insertUser('merge.target');
 
@@ -37,7 +37,7 @@ final class PersonMergeServiceTest extends CIUnitTestCase
 
         $this->db->table('profile')->insert([
             'user_id'    => $userA,
-            'parish_id'  => $churchId,
+            'parish_id'  => $parishId,
             'person_id'  => $sourcePersonId,
             'first_name' => 'Dup',
             'last_name'  => 'Person',
@@ -48,7 +48,7 @@ final class PersonMergeServiceTest extends CIUnitTestCase
 
         $this->db->table('profile')->insert([
             'user_id'    => $userB,
-            'parish_id'  => $churchId,
+            'parish_id'  => $parishId,
             'person_id'  => $targetPersonId,
             'first_name' => 'Target',
             'last_name'  => 'Person',
@@ -58,7 +58,7 @@ final class PersonMergeServiceTest extends CIUnitTestCase
 
         $this->db->table('parish_affiliation')->insert([
             'linked_user_id'    => $userA,
-            'parish_id'         => $churchId,
+            'parish_id'         => $parishId,
             'person_id'         => $sourcePersonId,
             'affiliation_type'  => 'member',
             'membership_status' => 'member',
@@ -68,7 +68,7 @@ final class PersonMergeServiceTest extends CIUnitTestCase
         ]);
         $this->db->table('parish_affiliation')->insert([
             'linked_user_id'    => $userB,
-            'parish_id'         => $churchId,
+            'parish_id'         => $parishId,
             'person_id'         => $targetPersonId,
             'affiliation_type'  => 'member',
             'membership_status' => 'member',
@@ -77,7 +77,7 @@ final class PersonMergeServiceTest extends CIUnitTestCase
             'updated_at'        => date('Y-m-d H:i:s'),
         ]);
 
-        $result = $this->service->merge($sourcePersonId, $targetPersonId, $churchId, 1, [], false);
+        $result = $this->service->merge($sourcePersonId, $targetPersonId, $parishId, 1, [], false);
 
         $this->assertTrue($result['ok'], $result['message'] ?? 'merge failed');
 
@@ -101,7 +101,7 @@ final class PersonMergeServiceTest extends CIUnitTestCase
 
     public function testMergeDetectsConflictsForCommonUser(): void
     {
-        $churchId = $this->insertChurch();
+        $parishId = $this->insertParish();
         $userId   = $this->insertUser('merge.conflict');
 
         $sourcePersonId = $this->insertPerson($userId, 'Dup', 'Person');
@@ -115,7 +115,7 @@ final class PersonMergeServiceTest extends CIUnitTestCase
             'updated_at' => date('Y-m-d H:i:s'),
         ]);
 
-        $preview = $this->service->getPreview($sourcePersonId, $targetPersonId, $churchId);
+        $preview = $this->service->getPreview($sourcePersonId, $targetPersonId, $parishId);
 
         $this->assertFalse($preview['ok']);
         $this->assertNotEmpty($preview['conflicts']);
@@ -123,17 +123,17 @@ final class PersonMergeServiceTest extends CIUnitTestCase
 
     public function testFindCandidatesReturnsDuplicatePairsByName(): void
     {
-        $churchId = $this->insertChurch();
+        $parishId = $this->insertParish();
         $userA    = $this->insertUser('cand.a');
         $userB    = $this->insertUser('cand.b');
 
         $personA = $this->insertPerson($userA, 'John', 'Doe');
         $personB = $this->insertPerson($userB, 'John', 'Doe');
 
-        $this->insertAffiliation($userA, $churchId, $personA);
-        $this->insertAffiliation($userB, $churchId, $personB);
+        $this->insertAffiliation($userA, $parishId, $personA);
+        $this->insertAffiliation($userB, $parishId, $personB);
 
-        $candidates = $this->service->findCandidates($churchId);
+        $candidates = $this->service->findCandidates($parishId);
 
         $this->assertCount(1, $candidates);
     }
@@ -315,10 +315,10 @@ final class PersonMergeServiceTest extends CIUnitTestCase
         $forge->createTable('parish_people', true);
     }
 
-    private function insertChurch(): int
+    private function insertParish(): int
     {
         $this->db->table('parish')->insert([
-            'name'       => 'Merge Church',
+            'name'       => 'Merge Parish',
             'created_at' => date('Y-m-d H:i:s'),
             'updated_at' => date('Y-m-d H:i:s'),
         ]);
@@ -355,11 +355,11 @@ final class PersonMergeServiceTest extends CIUnitTestCase
         return $personId;
     }
 
-    private function insertAffiliation(int $userId, int $churchId, int $personId): void
+    private function insertAffiliation(int $userId, int $parishId, int $personId): void
     {
         $this->db->table('parish_affiliation')->insert([
             'linked_user_id'    => $userId,
-            'parish_id'         => $churchId,
+            'parish_id'         => $parishId,
             'person_id'         => $personId,
             'affiliation_type'  => 'member',
             'membership_status' => 'member',

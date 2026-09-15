@@ -9,7 +9,7 @@ class Attendance extends BaseController
     protected $attendanceModel;
     protected $serviceModel;
     protected $profileModel;
-    protected $memberChurchAffiliationModel;
+    protected $memberParishAffiliationModel;
     protected $serviceMetricsModel;
 
     public function __construct()
@@ -30,11 +30,11 @@ class Attendance extends BaseController
 
     protected function getMemberParishAffiliationModel()
     {
-        if ($this->memberChurchAffiliationModel === null) {
-            $this->memberChurchAffiliationModel = model('MemberParishAffiliationModel');
+        if ($this->memberParishAffiliationModel === null) {
+            $this->memberParishAffiliationModel = model('MemberParishAffiliationModel');
         }
 
-        return $this->memberChurchAffiliationModel;
+        return $this->memberParishAffiliationModel;
     }
 
     /**
@@ -56,7 +56,7 @@ class Attendance extends BaseController
             return redirect()->to('/services')->with('error', lang('Services.serviceNotFound'));
         }
 
-        // Get active members based on church affiliations.
+        // Get active members based on parish affiliations.
         $members = $this->getMemberParishAffiliationModel()->getParishMembers((int) $this->getOperationalParishId(), 'active');
 
         // Get attendance records for this service
@@ -85,7 +85,7 @@ class Attendance extends BaseController
         }
 
         if ($redirect = $this->requireParish()) {
-            return $this->jsonResponse(['success' => false, 'message' => lang('Services.noChurchScopeAssigned')], 403);
+            return $this->jsonResponse(['success' => false, 'message' => lang('Services.noParishScopeAssigned')], 403);
         }
 
         $serviceId = $this->request->getPost('service_id');
@@ -98,7 +98,7 @@ class Attendance extends BaseController
             $communicant = false;
         }
 
-        // Verify service belongs to church
+        // Verify service belongs to parish
         $service = $this->serviceModel->find($serviceId);
         if (!$service || $service['parish_id'] != $this->getOperationalParishId()) {
             return $this->jsonResponse(['success' => false, 'message' => lang('Services.invalidService')], 404);
@@ -148,13 +148,13 @@ class Attendance extends BaseController
         $attendedUsers = $this->request->getPost('attended') ?? [];
         $communicants = $this->request->getPost('communicant') ?? [];
 
-        // Verify service belongs to church
+        // Verify service belongs to parish
         $service = $this->serviceModel->find($serviceId);
         if (!$service || $service['parish_id'] != $this->getOperationalParishId()) {
             return redirect()->back()->with('error', lang('Services.invalidService'));
         }
 
-        // Get active members for this church via affiliation records.
+        // Get active members for this parish via affiliation records.
         $members = $this->getMemberParishAffiliationModel()->getParishMembers((int) $this->getOperationalParishId(), 'active');
 
         $db = \Config\Database::connect();
@@ -223,7 +223,7 @@ class Attendance extends BaseController
             return $redirect;
         }
 
-        $churchId = $this->getOperationalParishId();
+        $parishId = $this->getOperationalParishId();
 
         // Get date range from query params (default: current year-to-date).
         $startDateInput = $this->request->getGet('start_date');
@@ -234,7 +234,7 @@ class Attendance extends BaseController
             || ($endDateInput !== null && $endDateInput !== '');
 
         // Use the same service feed as /services so ordering and displayed values match.
-        $detailedStats = $this->serviceModel->getParishServices($churchId, null, $startDate, $endDate);
+        $detailedStats = $this->serviceModel->getParishServices($parishId, null, $startDate, $endDate);
 
         // Load service metrics when available so report tiles reflect form-submitted values.
         $metricsByServiceId = [];

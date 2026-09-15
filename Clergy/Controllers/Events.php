@@ -10,7 +10,7 @@ class Events extends BaseController
 {
     protected $eventModel;
     protected $eventRegistrationModel;
-    protected $memberChurchAffiliationModel;
+    protected $memberParishAffiliationModel;
     protected $eventCalendarModel;
     protected $eventAttachmentModel;
     protected $eventVisibilityService;
@@ -22,7 +22,7 @@ class Events extends BaseController
     {
         $this->eventModel = model('EventModel');
         $this->eventRegistrationModel = model('EventRegistrationModel');
-        $this->memberChurchAffiliationModel = model('MemberParishAffiliationModel');
+        $this->memberParishAffiliationModel = model('MemberParishAffiliationModel');
         $this->eventCalendarModel = model('EventCalendarModel');
         $this->eventAttachmentModel = model('EventAttachmentModel');
         $this->eventVisibilityService = Services::eventVisibility();
@@ -166,7 +166,7 @@ class Events extends BaseController
             return redirect()->to('/events')->with('error', lang('Members.eventNotFound'));
         }
 
-        $members = $this->memberChurchAffiliationModel->getParishMembers((int) ($this->getOperationalParishId() ?? 0), 'active');
+        $members = $this->memberParishAffiliationModel->getParishMembers((int) ($this->getOperationalParishId() ?? 0), 'active');
         $registrations = $this->eventRegistrationModel->getEventRegistrations((int) $id);
 
         return view('Clergy\Views\Events/view', array_merge($this->getCommonViewData(lang('Events.pageTitleEventDetails')), [
@@ -391,7 +391,7 @@ class Events extends BaseController
         }
 
         if ($memberUserId > 0) {
-            $isAffiliated = $this->memberChurchAffiliationModel
+            $isAffiliated = $this->memberParishAffiliationModel
                 ->isUserAffiliatedWithParish($memberUserId, (int) ($this->getOperationalParishId() ?? 0), true);
 
             if (!$isAffiliated) {
@@ -496,9 +496,9 @@ class Events extends BaseController
         return $this->eventVisibilityService->canManageEvent($event, $this->getEventVisibilityContext());
     }
 
-    private function canManageRegistrationForEvent(array $event, int $registrationChurchId): bool
+    private function canManageRegistrationForEvent(array $event, int $registrationParishId): bool
     {
-        return $this->eventVisibilityService->canManageRegistrationForEvent($event, $registrationChurchId, $this->getEventVisibilityContext());
+        return $this->eventVisibilityService->canManageRegistrationForEvent($event, $registrationParishId, $this->getEventVisibilityContext());
     }
 
     /**
@@ -526,7 +526,7 @@ class Events extends BaseController
 
     private function getAudienceMembers(): array
     {
-        return $this->memberChurchAffiliationModel->getParishMembers((int) ($this->getOperationalParishId() ?? 0));
+        return $this->memberParishAffiliationModel->getParishMembers((int) ($this->getOperationalParishId() ?? 0));
     }
 
     private function getAudienceTeams(): array
@@ -610,7 +610,7 @@ class Events extends BaseController
             'calendar_id' => $calendarId,
             // Organizer abstraction
             'organizer_type' => $scopeLevel,
-            'organizer_church_id' => null,
+            'organizer_parish_id' => null,
             'organizer_province_id' => null,
             'organizer_diocese_id' => $scopeLevel === 'diocese' && $dioceseId > 0 ? $dioceseId : null,
             'organizer_parish_id' => $scopeLevel === 'parish' && $parishId > 0 ? $parishId : null,

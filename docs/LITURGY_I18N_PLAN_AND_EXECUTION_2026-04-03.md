@@ -166,7 +166,7 @@ Phase 3 completed in this iteration:
 Phase 3 matrix summary:
 
 - Read flows (`GET /liturgical-source`, `GET /liturgical-source/edit/{id}`) returned HTTP 200 and matched html `lang` in en/es/fr for tested accounts.
-- Church admin management POST flows returned HTTP 403 for store/update/delete.
+- Parish admin management POST flows returned HTTP 403 for store/update/delete.
 - Diocesan admin management POST flows returned HTTP 303 redirect to `/session/device-verify`, indicating step-up device verification is enforced before mutation.
 - This confirms role/flow hardening behavior while preserving multilingual read rendering.
 

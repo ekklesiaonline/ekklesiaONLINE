@@ -1,11 +1,11 @@
-# Church ID to Parish ID Migration - COMPLETION REPORT
+# Parish ID to Parish ID Migration - COMPLETION REPORT
 
 **Date**: May 9, 2026  
 **Status**: ✅ **MIGRATION COMPLETE - Phase 1-3 FULLY DONE**
 
 ## 🎯 Executive Summary
 
-Successfully standardized terminology across the entire ekklesiaRD codebase from `church_id` (legacy) to `parish_id` (episcopal standard). All database columns, model properties, controller query methods, and view bindings have been migrated.
+Successfully standardized terminology across the entire ekklesiaRD codebase from `parish_id` (legacy) to `parish_id` (episcopal standard). All database columns, model properties, controller query methods, and view bindings have been migrated.
 
 ### Final Statistics
 
@@ -13,7 +13,7 @@ Successfully standardized terminology across the entire ekklesiaRD codebase from
 - ✅ **Models**: 49 files - 100% updated and syntax-validated
 - ✅ **Controllers**: 38 controller files - 100% updated and syntax-validated
 - ✅ **Total Code Files Updated**: 87 PHP files
-- ✅ **Remaining church_id References**: 0 in app code
+- ✅ **Remaining parish_id References**: 0 in app code
 - ✅ **Syntax Errors**: 0
 - ✅ **Phase 1-3 Complete**: YES
 
@@ -45,7 +45,7 @@ All 28 Phase 2 models completely migrated:
 - ✅ VolunteerScheduleModel.php (8 refs)
 - ✅ FollowupTemplateModel.php (7 refs)
 - ✅ ParishIntegrationModel.php (6 refs)
-- ✅ ChurchFinancialSummaryModel.php (6 refs)
+- ✅ ParishFinancialSummaryModel.php (6 refs)
 - ✅ AttendanceModel.php (6 refs)
 - ✅ AnnualPledgeModel.php (5 refs)
 
@@ -56,7 +56,7 @@ All 28 Phase 2 models completely migrated:
 - ✅ UserRegistrationRequestModel.php (5 refs)
 - ✅ ParishSettingModel.php (5 refs)
 - ✅ LeadershipPositionModel.php (5 refs)
-- ✅ ChurchBudgetModel.php (4 refs)
+- ✅ ParishBudgetModel.php (4 refs)
 - ✅ DiocesanAttendanceMonthlyModel.php (4 refs)
 - ✅ FollowupLogModel.php (4 refs)
 - ✅ ParishRoleAuditModel.php (4 refs)
@@ -70,7 +70,7 @@ All 28 Phase 2 models completely migrated:
 - ✅ SmsQueueModel.php (2 refs)
 - ✅ EventModel.php (partial - from Phase 1)
 - ✅ FundModel.php (3 refs)
-- ✅ ChurchPeopleModel.php (3 refs)
+- ✅ ParishPeopleModel.php (3 refs)
 - ✅ DiocesesModel.php (1 ref)
 - ✅ ParishModel.php (2 refs)
 - ✅ WorshipSongModel.php (3 refs)
@@ -92,7 +92,7 @@ All critical controller files updated with complete standardization:
 
 **Tier 3 (15+ occurrences):**
 
-- ✅ Diocesan/Controllers/Churches.php (20 refs)
+- ✅ Diocesan/Controllers/Parishes.php (20 refs)
 - ✅ Worship/Controllers/ParochialReport.php (17 refs)
 - ✅ Diocesan/Controllers/RegistrationRequests.php (15 refs)
 
@@ -140,7 +140,7 @@ All critical controller files updated with complete standardization:
 | Files Syntax-Validated         | 87                        |
 | Models Checked                 | 49                        |
 | Controllers Checked            | 38                        |
-| Remaining church_id References | 0                         |
+| Remaining parish_id References | 0                         |
 | Database Columns Updated       | 31 tables × 1 column each |
 
 ---
@@ -151,7 +151,7 @@ All critical controller files updated with complete standardization:
 
 ```php
 // BEFORE
-protected $allowedFields = ['user_id', 'church_id', 'amount'];
+protected $allowedFields = ['user_id', 'parish_id', 'amount'];
 
 // AFTER
 protected $allowedFields = ['user_id', 'parish_id', 'amount'];
@@ -161,7 +161,7 @@ protected $allowedFields = ['user_id', 'parish_id', 'amount'];
 
 ```php
 // BEFORE
-'church_id' => 'required|is_not_unique[parish.id]'
+'parish_id' => 'required|is_not_unique[parish.id]'
 
 // AFTER
 'parish_id' => 'required|is_not_unique[parish.id]'
@@ -171,31 +171,31 @@ protected $allowedFields = ['user_id', 'parish_id', 'amount'];
 
 ```php
 // BEFORE
-->where('church_id', $churchId)
-->whereIn('church_id', $churchIds)
+->where('parish_id', $parishId)
+->whereIn('parish_id', $parishIds)
 
 // AFTER
-->where('parish_id', $churchId)
-->whereIn('parish_id', $churchIds)
+->where('parish_id', $parishId)
+->whereIn('parish_id', $parishIds)
 ```
 
 ### Pattern 4: Data Access in Controllers
 
 ```php
 // BEFORE
-$guest['church_id']
-$data['church_id'] = $operationalChurchId
+$guest['parish_id']
+$data['parish_id'] = $operationalParishId
 
 // AFTER
 $guest['parish_id']
-$data['parish_id'] = $operationalChurchId
+$data['parish_id'] = $operationalParishId
 ```
 
 ### Pattern 5: JOIN Statements
 
 ```php
 // BEFORE
-->join('parish c', 'c.id = d.church_id')
+->join('parish c', 'c.id = d.parish_id')
 
 // AFTER
 ->join('parish c', 'c.id = d.parish_id')
@@ -205,10 +205,10 @@ $data['parish_id'] = $operationalChurchId
 
 ```php
 // BEFORE
-->select('c.id as church_id, c.name as church_name')
+->select('c.id as parish_id, c.name as parish_name')
 
 // AFTER
-->select('c.id as parish_id, c.name as church_name')
+->select('c.id as parish_id, c.name as parish_name')
 ```
 
 ---
@@ -217,7 +217,7 @@ $data['parish_id'] = $operationalChurchId
 
 ### Database Verification
 
-✅ Old `church_id` columns completely removed
+✅ Old `parish_id` columns completely removed
 ✅ New `parish_id` columns exist in all 31 tables
 ✅ Foreign key constraints maintained and verified
 ✅ Data migration successful (no data loss)
@@ -232,7 +232,7 @@ $data['parish_id'] = $operationalChurchId
 
 ### Search Verification
 
-✅ 0 remaining `church_id` references in:
+✅ 0 remaining `parish_id` references in:
 
 - app/Models/\* (all 49 files)
 - Pastor/Controllers/\* (all files)
@@ -249,11 +249,11 @@ $data['parish_id'] = $operationalChurchId
 
 ### Phase 4: Forms/Views (Status: ⏳ Not Started)
 
-**Scope**: Update form field names from `church_id` to `parish_id` in view templates
+**Scope**: Update form field names from `parish_id` to `parish_id` in view templates
 **Expected Changes**:
 
-- `<input name="church_id"` → `<input name="parish_id"`
-- `<input type="hidden" name="church_id"` → `<input type="hidden" name="parish_id"`
+- `<input name="parish_id"` → `<input name="parish_id"`
+- `<input type="hidden" name="parish_id"` → `<input type="hidden" name="parish_id"`
 - Data binding in form pre-fills
 
 **Estimated Effort**: 30-50 form updates across Pastor, Treasurer, Worship, Diocesan, MemberPortal views
@@ -342,6 +342,6 @@ cp -r Pastor/Controllers.backup/* Pastor/Controllers/
 
 ## ✨ Conclusion
 
-The church_id → parish_id migration is **95% complete**. Core database and code layers (Phases 1-3) are fully updated, tested, and validated. Forms/views and application testing remain but should be straightforward given the solid foundation now in place.
+The parish_id → parish_id migration is **95% complete**. Core database and code layers (Phases 1-3) are fully updated, tested, and validated. Forms/views and application testing remain but should be straightforward given the solid foundation now in place.
 
 **Status**: Ready for Phase 4 and Phase 5 work.

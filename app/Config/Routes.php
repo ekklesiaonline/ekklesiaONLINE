@@ -12,8 +12,10 @@ service('auth')->routes($routes, ['except' => ['register']]);
 // Backward-compatible password recovery aliases.
 $routes->addRedirect('forgot-password', 'login/magic-link');
 $routes->addRedirect('reset-password', 'login/magic-link');
+// Legacy URL redirects for the old "churches" path.
 $routes->addRedirect('churches', 'parish_list');
 $routes->addRedirect('churches/(:any)', 'parish_list/$1');
+// Canonical parish-list URLs.
 $routes->addRedirect('parishes', 'parish_list');
 $routes->addRedirect('parishes/(:any)', 'parish_list/$1');
 $routes->addRedirect('parish', 'parish_list');

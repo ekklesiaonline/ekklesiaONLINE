@@ -38,9 +38,9 @@ final class FamiliesEndpointContractIntegrationTest extends CIUnitTestCase
 
     public function testAddMemberNonPortalMalformedJsonReturnsBadRequestJsonContract(): void
     {
-        $churchId = $this->insertChurch('Malformed JSON Church');
+        $parishId = $this->insertParish('Malformed JSON Parish');
         $userId = $this->insertUser('family.contract.malformed');
-        $this->upsertProfile($userId, $churchId);
+        $this->upsertProfile($userId, $parishId);
         $this->injectFamiliesManageAuth($userId);
 
         $response = $this->withHeaders($this->withCsrfHeaders([
@@ -59,9 +59,9 @@ final class FamiliesEndpointContractIntegrationTest extends CIUnitTestCase
 
     public function testAddMemberNonPortalValidationPriorityWinsOverNotFoundAndScopeChecks(): void
     {
-        $churchId = $this->insertChurch('Validation Priority Church');
+        $parishId = $this->insertParish('Validation Priority Parish');
         $userId = $this->insertUser('family.contract.validation');
-        $this->upsertProfile($userId, $churchId);
+        $this->upsertProfile($userId, $parishId);
         $this->injectFamiliesManageAuth($userId);
 
         $response = $this->withHeaders($this->withCsrfHeaders([
@@ -81,14 +81,14 @@ final class FamiliesEndpointContractIntegrationTest extends CIUnitTestCase
         $this->assertSame('VALIDATION_FAILED', (string) ($payload['code'] ?? ''));
     }
 
-    public function testAddMemberNonPortalReturnsOutOfScopeForCrossChurchFamily(): void
+    public function testAddMemberNonPortalReturnsOutOfScopeForCrossParishFamily(): void
     {
-        $churchA = $this->insertChurch('Scope Church A');
-        $churchB = $this->insertChurch('Scope Church B');
-        $familyInB = $this->insertFamily($churchB, 'Family B');
+        $parishA = $this->insertParish('Scope Parish A');
+        $parishB = $this->insertParish('Scope Parish B');
+        $familyInB = $this->insertFamily($parishB, 'Family B');
 
         $userId = $this->insertUser('family.contract.scope');
-        $this->upsertProfile($userId, $churchA);
+        $this->upsertProfile($userId, $parishA);
         $this->injectFamiliesManageAuth($userId);
 
         $response = $this->withHeaders($this->withCsrfHeaders([
@@ -110,9 +110,9 @@ final class FamiliesEndpointContractIntegrationTest extends CIUnitTestCase
 
     public function testAddMemberNonPortalReturnsFamilyNotFoundWhenFamilyMissingInScope(): void
     {
-        $churchId = $this->insertChurch('Family Missing Church');
+        $parishId = $this->insertParish('Family Missing Parish');
         $userId = $this->insertUser('family.contract.notfound');
-        $this->upsertProfile($userId, $churchId);
+        $this->upsertProfile($userId, $parishId);
         $this->injectFamiliesManageAuth($userId);
 
         $response = $this->withHeaders($this->withCsrfHeaders([
@@ -134,9 +134,9 @@ final class FamiliesEndpointContractIntegrationTest extends CIUnitTestCase
 
     public function testAddMemberNonPortalRequiresFamilyIdWhenOmitted(): void
     {
-        $churchId = $this->insertChurch('Standalone Non Portal Church');
+        $parishId = $this->insertParish('Standalone Non Portal Parish');
         $adminId = $this->insertUser('family.contract.standalone.admin');
-        $this->upsertProfile($adminId, $churchId);
+        $this->upsertProfile($adminId, $parishId);
         $this->injectFamiliesManageAuth($adminId);
 
         $response = $this->withHeaders($this->withCsrfHeaders([
@@ -157,15 +157,15 @@ final class FamiliesEndpointContractIntegrationTest extends CIUnitTestCase
 
     public function testEnablePortalReturnsConflictForAlreadyEnabledIdentity(): void
     {
-        $churchId = $this->insertChurch('Conflict Church');
-        $familyId = $this->insertFamily($churchId, 'Conflict Family');
+        $parishId = $this->insertParish('Conflict Parish');
+        $familyId = $this->insertFamily($parishId, 'Conflict Family');
 
         $adminId = $this->insertUser('family.contract.conflict.admin');
-        $this->upsertProfile($adminId, $churchId);
+        $this->upsertProfile($adminId, $parishId);
 
         $memberId = $this->insertUser('family.contract.conflict.member');
-        $this->upsertProfile($memberId, $churchId, 'none');
-        $this->insertAffiliation($memberId, $churchId);
+        $this->upsertProfile($memberId, $parishId, 'none');
+        $this->insertAffiliation($memberId, $parishId);
         $this->insertFamilyMember($familyId, $memberId, 'Child');
         $this->insertEmailIdentity($memberId, 'already@enabled.test');
 
@@ -188,11 +188,11 @@ final class FamiliesEndpointContractIntegrationTest extends CIUnitTestCase
 
     public function testEnablePortalReturnsUserNotFoundWhenUserDoesNotExist(): void
     {
-        $churchId = $this->insertChurch('User Missing Church');
-        $familyId = $this->insertFamily($churchId, 'User Missing Family');
+        $parishId = $this->insertParish('User Missing Parish');
+        $familyId = $this->insertFamily($parishId, 'User Missing Family');
 
         $adminId = $this->insertUser('family.contract.missing.admin');
-        $this->upsertProfile($adminId, $churchId);
+        $this->upsertProfile($adminId, $parishId);
         $this->injectFamiliesManageAuth($adminId);
 
         $requestId = 'req-enable-user-not-found';
@@ -211,20 +211,20 @@ final class FamiliesEndpointContractIntegrationTest extends CIUnitTestCase
         $this->assertEnvelope($payload, false);
         $this->assertSame('USER_NOT_FOUND', (string) ($payload['code'] ?? ''));
         $this->assertSame($requestId, (string) ($payload['meta']['request_id'] ?? ''));
-        $this->assertSame($churchId, (int) ($payload['meta']['parish_id'] ?? 0));
+        $this->assertSame($parishId, (int) ($payload['meta']['parish_id'] ?? 0));
     }
 
     public function testAddMemberNonPortalReturnsInternalErrorWhenServiceFailsUnexpectedly(): void
     {
-        $churchId = $this->insertChurch('Internal Error Church');
-        $familyId = $this->insertFamily($churchId, 'Internal Error Family');
+        $parishId = $this->insertParish('Internal Error Parish');
+        $familyId = $this->insertFamily($parishId, 'Internal Error Family');
 
         $adminId = $this->insertUser('family.contract.internal.admin');
-        $this->upsertProfile($adminId, $churchId);
+        $this->upsertProfile($adminId, $parishId);
         $this->injectFamiliesManageAuth($adminId);
 
         $failingService = new class($this->db) extends MemberAccessService {
-            public function createNonPortalUser(array $payload, int $churchId): array
+            public function createNonPortalUser(array $payload, int $parishId): array
             {
                 return [
                     'ok' => false,
@@ -417,7 +417,7 @@ final class FamiliesEndpointContractIntegrationTest extends CIUnitTestCase
         Services::injectMock('auth', $auth);
     }
 
-    private function insertChurch(string $name): int
+    private function insertParish(string $name): int
     {
         $this->db->table('parish')->insert([
             'name' => $name,
@@ -428,10 +428,10 @@ final class FamiliesEndpointContractIntegrationTest extends CIUnitTestCase
         return (int) $this->db->insertID();
     }
 
-    private function insertFamily(int $churchId, string $familyName): int
+    private function insertFamily(int $parishId, string $familyName): int
     {
         $this->db->table('family')->insert([
-            'parish_id' => $churchId,
+            'parish_id' => $parishId,
             'family_name' => $familyName,
             'head_of_household_id' => null,
             'address' => null,
@@ -457,11 +457,11 @@ final class FamiliesEndpointContractIntegrationTest extends CIUnitTestCase
         return $userId;
     }
 
-    private function upsertProfile(int $userId, int $churchId, string $portalAccess = 'none'): void
+    private function upsertProfile(int $userId, int $parishId, string $portalAccess = 'none'): void
     {
         $existing = $this->db->table('profile')->where('user_id', $userId)->get()->getRowArray();
         $data = [
-            'parish_id' => $churchId,
+            'parish_id' => $parishId,
             'first_name' => 'Test',
             'last_name' => 'User',
             'membership_status' => 'active',
@@ -478,11 +478,11 @@ final class FamiliesEndpointContractIntegrationTest extends CIUnitTestCase
         $this->db->table('profile')->where('user_id', $userId)->update($data);
     }
 
-    private function insertAffiliation(int $userId, int $churchId): void
+    private function insertAffiliation(int $userId, int $parishId): void
     {
         $existing = $this->db->table('parish_affiliation')
             ->where('linked_user_id', $userId)
-            ->where('parish_id', $churchId)
+            ->where('parish_id', $parishId)
             ->get()
             ->getRowArray();
 
@@ -498,7 +498,7 @@ final class FamiliesEndpointContractIntegrationTest extends CIUnitTestCase
 
         $this->db->table('parish_affiliation')->insert([
             'linked_user_id' => $userId,
-            'parish_id' => $churchId,
+            'parish_id' => $parishId,
             'person_id' => null,
             'affiliation_type' => 'member',
             'membership_status' => 'member',
@@ -714,7 +714,7 @@ final class FamiliesEndpointContractIntegrationTest extends CIUnitTestCase
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 user_id INTEGER NOT NULL,
                 status TEXT NULL,
-                requested_church_id INTEGER NULL,
+                requested_parish_id INTEGER NULL,
                 requested_diocese_id INTEGER NULL,
                 requested_province_id INTEGER NULL,
                 reviewed_by INTEGER NULL,

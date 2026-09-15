@@ -16,7 +16,7 @@ This delegates to Sunday service-metrics aggregate sync logic and supports the s
 - `--to YYYY-MM-DD`
 - `--rolling-days N`
 - `--diocese ID`
-- `--church ID`
+- `--parish ID`
 - `--rebuild-period-buckets`
 
 ## Recommended Schedule (Cron)
@@ -33,9 +33,9 @@ Diocese-only refresh:
 
 `php spark service-metrics:refresh --rolling-days 35 --diocese 2 --rebuild-period-buckets`
 
-Church-only refresh (does not rebuild diocesan period buckets):
+Parish-only refresh (does not rebuild diocesan period buckets):
 
-`php spark service-metrics:refresh --rolling-days 35 --church 9`
+`php spark service-metrics:refresh --rolling-days 35 --parish 9`
 
 Backfill by fixed range:
 

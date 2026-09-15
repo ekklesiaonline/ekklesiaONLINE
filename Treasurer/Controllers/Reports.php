@@ -36,7 +36,7 @@ class Reports extends BaseController
             return redirect()->to('/dashboard')->with('error', lang('Treasurer.reportProvinceScopeFailed'));
         }
 
-        $scope = $isProvinceAdmin ? 'diocese' : 'church';
+        $scope = $isProvinceAdmin ? 'diocese' : 'parish';
         $selectedParishId = $isProvinceAdmin ? 0 : (int) ($this->getOperationalParishId() ?? 0);
 
         if (!$isProvinceAdmin && $selectedParishId <= 0) {
@@ -86,7 +86,7 @@ class Reports extends BaseController
             return redirect()->to('/reports')->with('error', lang('Treasurer.reportProvinceScopeFailed'));
         }
 
-        $scope = $isProvinceAdmin ? 'diocese' : 'church';
+        $scope = $isProvinceAdmin ? 'diocese' : 'parish';
         $selectedParishId = $isProvinceAdmin ? 0 : (int) ($this->getOperationalParishId() ?? 0);
 
         if (!$isProvinceAdmin && $selectedParishId <= 0) {
@@ -98,7 +98,7 @@ class Reports extends BaseController
 
         $rows = [];
         $rows[] = [lang('Treasurer.reportDateRange'), $startDate . ' ' . lang('Treasurer.reportTo') . ' ' . $endDate];
-        $rows[] = [lang('Treasurer.reportTotalChurches'), (string) ($summary['church_count'] ?? 0)];
+        $rows[] = [lang('Treasurer.reportTotalParishes'), (string) ($summary['parish_count'] ?? 0)];
         $rows[] = [lang('Treasurer.reportTotalPeople'), (string) ($summary['people_count'] ?? 0)];
         $rows[] = [lang('Treasurer.reportTotalGuestsUnconverted'), (string) ($summary['guest_count'] ?? 0)];
         $rows[] = [lang('Treasurer.reportTotalMembers'), (string) ($summary['member_count'] ?? 0)];
@@ -113,7 +113,7 @@ class Reports extends BaseController
             $rows[] = [];
             $rows[] = [
                 lang('Treasurer.reportDiocese'),
-                lang('Treasurer.reportChurches'),
+                lang('Treasurer.reportParishes'),
                 lang('Treasurer.reportPeople'),
                 lang('Treasurer.reportGuests'),
                 lang('Treasurer.reportMembers'),
@@ -127,7 +127,7 @@ class Reports extends BaseController
             foreach ($dioceseBreakdown as $item) {
                 $rows[] = [
                     (string) ($item['diocese_name'] ?? ''),
-                    (string) ($item['church_count'] ?? 0),
+                    (string) ($item['parish_count'] ?? 0),
                     (string) ($item['people_count'] ?? 0),
                     (string) ($item['guest_count'] ?? 0),
                     (string) ($item['member_count'] ?? 0),
@@ -195,7 +195,7 @@ class Reports extends BaseController
             return redirect()->to('/reports')->with('error', lang('Treasurer.reportProvinceScopeFailed'));
         }
 
-        $scope = $isProvinceAdmin ? 'diocese' : 'church';
+        $scope = $isProvinceAdmin ? 'diocese' : 'parish';
         $selectedParishId = $isProvinceAdmin ? 0 : (int) ($this->getOperationalParishId() ?? 0);
 
         if (!$isProvinceAdmin && $selectedParishId <= 0) {
@@ -238,7 +238,7 @@ class Reports extends BaseController
         }
 
         if ($redirect = $this->requireParish()) {
-            return $this->jsonResponse($this->apiErrorPayload(lang('App.errorNoParishScope'), 403, 'CHURCH_SCOPE_REQUIRED'), 403);
+            return $this->jsonResponse($this->apiErrorPayload(lang('App.errorNoParishScope'), 403, 'PARISH_SCOPE_REQUIRED'), 403);
         }
 
         $isProvinceAdmin = $this->isProvinceAdmin();
@@ -257,10 +257,10 @@ class Reports extends BaseController
             return $this->jsonResponse($this->apiErrorPayload(lang('Treasurer.reportProvinceScopeFailed'), 422, 'REPORT_PROVINCE_SCOPE_FAILED'), 422);
         }
 
-        $scope = $isProvinceAdmin ? 'diocese' : 'church';
+        $scope = $isProvinceAdmin ? 'diocese' : 'parish';
         $selectedParishId = $isProvinceAdmin ? 0 : (int) ($this->getOperationalParishId() ?? 0);
         if (!$isProvinceAdmin && $selectedParishId <= 0) {
-            return $this->jsonResponse($this->apiErrorPayload(lang('App.errorNoParishScope'), 422, 'CHURCH_SCOPE_REQUIRED'), 422);
+            return $this->jsonResponse($this->apiErrorPayload(lang('App.errorNoParishScope'), 422, 'PARISH_SCOPE_REQUIRED'), 422);
         }
 
         $summary = $this->buildSummary($scope, $selectedParishId, $startDate, $endDate, $provinceScopeId);
@@ -277,15 +277,15 @@ class Reports extends BaseController
         ]);
     }
 
-    private function buildPdfHtml(string $scope, int $churchId, string $startDate, string $endDate, array $summary, array $breakdown): string
+    private function buildPdfHtml(string $scope, int $parishId, string $startDate, string $endDate, array $summary, array $breakdown): string
     {
-        $scopeLabel = $scope === 'diocese' ? lang('Treasurer.scopeDiocese') : lang('Treasurer.scopeChurch');
-        $churchModel = model('ParishModel');
-        $churchName = '';
+        $scopeLabel = $scope === 'diocese' ? lang('Treasurer.scopeDiocese') : lang('Treasurer.scopeParish');
+        $parishModel = model('ParishModel');
+        $parishName = '';
 
-        if ($scope === 'church' && $churchId > 0) {
-            $church = $churchModel->find($churchId);
-            $churchName = $church['name'] ?? lang('Treasurer.unknownChurch');
+        if ($scope === 'parish' && $parishId > 0) {
+            $parish = $parishModel->find($parishId);
+            $parishName = $parish['name'] ?? lang('Treasurer.unknownParish');
         }
 
         $tableRows = '';
@@ -293,7 +293,7 @@ class Reports extends BaseController
             foreach ($breakdown as $row) {
                 $tableRows .= '<tr>
                     <td style="padding: 8px; border: 1px solid #ddd;">' . htmlspecialchars($row['diocese_name']) . '</td>
-                    <td style="padding: 8px; border: 1px solid #ddd; text-align: center;">' . number_format((int) $row['church_count']) . '</td>
+                    <td style="padding: 8px; border: 1px solid #ddd; text-align: center;">' . number_format((int) $row['parish_count']) . '</td>
                     <td style="padding: 8px; border: 1px solid #ddd; text-align: center;">' . number_format((int) $row['people_count']) . '</td>
                     <td style="padding: 8px; border: 1px solid #ddd; text-align: center;">' . number_format((int) $row['guest_count']) . '</td>
                     <td style="padding: 8px; border: 1px solid #ddd; text-align: center;">' . number_format((int) $row['member_count']) . '</td>
@@ -314,7 +314,7 @@ class Reports extends BaseController
                 <thead>
                     <tr style="background-color: #f5f5f5;">
                         <th style="padding: 8px; border: 1px solid #ddd; text-align: left;">' . htmlspecialchars(lang('Treasurer.reportDiocese')) . '</th>
-                        <th style="padding: 8px; border: 1px solid #ddd; text-align: center;">' . htmlspecialchars(lang('Treasurer.reportChurches')) . '</th>
+                        <th style="padding: 8px; border: 1px solid #ddd; text-align: center;">' . htmlspecialchars(lang('Treasurer.reportParishes')) . '</th>
                         <th style="padding: 8px; border: 1px solid #ddd; text-align: center;">' . htmlspecialchars(lang('Treasurer.reportPeople')) . '</th>
                         <th style="padding: 8px; border: 1px solid #ddd; text-align: center;">' . htmlspecialchars(lang('Treasurer.reportGuests')) . '</th>
                         <th style="padding: 8px; border: 1px solid #ddd; text-align: center;">' . htmlspecialchars(lang('Treasurer.reportMembers')) . '</th>
@@ -358,7 +358,7 @@ class Reports extends BaseController
                 <div class="summary-info">
                     <strong>' . htmlspecialchars(lang('Treasurer.reportPeriod')) . ':</strong> ' . htmlspecialchars($startDate) . ' ' . htmlspecialchars(lang('Treasurer.reportTo')) . ' ' . htmlspecialchars($endDate) . '<br>
                     <strong>' . htmlspecialchars(lang('Treasurer.generatedLabel')) . ':</strong> ' . date('F j, Y \a\t g:i A') . '<br>' .
-            ($scope === 'church' && $churchName ? '<strong>' . htmlspecialchars(lang('Treasurer.churchLabel')) . ':</strong> ' . htmlspecialchars($churchName) . '<br>' : '') .
+            ($scope === 'parish' && $parishName ? '<strong>' . htmlspecialchars(lang('Treasurer.parishLabel')) . ':</strong> ' . htmlspecialchars($parishName) . '<br>' : '') .
             '</div>
             </div>
 
@@ -366,8 +366,8 @@ class Reports extends BaseController
             <div class="kpi-section">
                 <div class="kpi-row">
                     <div class="kpi-item">
-                        <div class="kpi-label">' . htmlspecialchars(lang('Treasurer.reportChurches')) . '</div>
-                        <div class="kpi-value">' . (int) ($summary['church_count'] ?? 0) . '</div>
+                        <div class="kpi-label">' . htmlspecialchars(lang('Treasurer.reportParishes')) . '</div>
+                        <div class="kpi-value">' . (int) ($summary['parish_count'] ?? 0) . '</div>
                     </div>
                     <div class="kpi-item">
                         <div class="kpi-label">' . htmlspecialchars(lang('Treasurer.reportPeople')) . '</div>
@@ -429,16 +429,16 @@ class Reports extends BaseController
         return $html;
     }
 
-    private function buildSummary(string $scope, int $churchId, string $startDate, string $endDate, int $provinceScopeId = 0): array
+    private function buildSummary(string $scope, int $parishId, string $startDate, string $endDate, int $provinceScopeId = 0): array
     {
         $db = db_connect();
 
-        $churchIds = [];
-        if ($scope === 'church' && $churchId > 0) {
-            $churchIds = [$churchId];
-        } elseif ($scope === 'church') {
+        $parishIds = [];
+        if ($scope === 'parish' && $parishId > 0) {
+            $parishIds = [$parishId];
+        } elseif ($scope === 'parish') {
             return [
-                'church_count' => 0,
+                'parish_count' => 0,
                 'people_count' => 0,
                 'guest_count' => 0,
                 'member_count' => 0,
@@ -454,7 +454,7 @@ class Reports extends BaseController
 
             if ($provinceMembership !== null) {
                 return [
-                    'church_count' => (int) ($provinceMembership['church_count'] ?? 0),
+                    'parish_count' => (int) ($provinceMembership['parish_count'] ?? 0),
                     'people_count' => (int) ($provinceMembership['people_count'] ?? 0),
                     'guest_count' => (int) ($provinceMembership['guest_count'] ?? 0),
                     'member_count' => (int) ($provinceMembership['member_count'] ?? 0),
@@ -467,22 +467,22 @@ class Reports extends BaseController
                 ];
             }
 
-            $churchQuery = $db->table('parish c')->select('c.id');
+            $parishQuery = $db->table('parish c')->select('c.id');
             if ($provinceScopeId > 0) {
-                $churchQuery
+                $parishQuery
                     ->join('diocese d', 'd.id = c.diocese_id', 'inner')
                     ->where('d.province_id', $provinceScopeId);
             }
 
-            $churchIds = array_map(
+            $parishIds = array_map(
                 static fn($row) => (int) $row['id'],
-                $churchQuery->get()->getResultArray()
+                $parishQuery->get()->getResultArray()
             );
         }
 
-        if (empty($churchIds)) {
+        if (empty($parishIds)) {
             return [
-                'church_count' => 0,
+                'parish_count' => 0,
                 'people_count' => 0,
                 'guest_count' => 0,
                 'member_count' => 0,
@@ -495,13 +495,13 @@ class Reports extends BaseController
             ];
         }
 
-        $churchCount = count($churchIds);
+        $parishCount = count($parishIds);
 
         $peopleRow = $db->table('parish_affiliation mca')
             ->select('COUNT(DISTINCT mca.linked_user_id) as count', false)
             ->join('users u', 'u.id = mca.linked_user_id')
             ->join('auth_groups_users agu', 'agu.user_id = u.id AND agu.group IN ("provinceadmin","diocesanadmin")', 'left')
-            ->whereIn('mca.parish_id', $churchIds)
+            ->whereIn('mca.parish_id', $parishIds)
             ->where('mca.is_member', 1)
             ->where('agu.id IS NULL')
             ->get()
@@ -511,7 +511,7 @@ class Reports extends BaseController
             ->select('COUNT(DISTINCT mca.linked_user_id) as count', false)
             ->join('users u', 'u.id = mca.linked_user_id')
             ->join('auth_groups_users agu', 'agu.user_id = u.id AND agu.group IN ("provinceadmin","diocesanadmin")', 'left')
-            ->whereIn('mca.parish_id', $churchIds)
+            ->whereIn('mca.parish_id', $parishIds)
             ->where('mca.is_member', 1)
             ->whereIn('mca.membership_status', ['member', 'attendee'])
             ->where('agu.id IS NULL')
@@ -520,7 +520,7 @@ class Reports extends BaseController
 
         $guestRow = $db->table('guest')
             ->select('COUNT(*) AS guest_count')
-            ->whereIn('parish_id', $churchIds)
+            ->whereIn('parish_id', $parishIds)
             ->where('converted_to_member_at IS NULL', null, false)
             ->get()
             ->getRowArray();
@@ -531,7 +531,7 @@ class Reports extends BaseController
             ->join('parish_affiliation mca', 'mca.linked_user_id = mss.user_id', 'inner')
             ->join('users u', 'u.id = mss.user_id', 'inner')
             ->join('auth_groups_users agu', 'agu.user_id = u.id AND agu.group IN ("provinceadmin","diocesanadmin")', 'left')
-            ->whereIn('mca.parish_id', $churchIds)
+            ->whereIn('mca.parish_id', $parishIds)
             ->where('mca.is_member', 1)
             ->where('mca.membership_status', 'member')
             ->where('mss.year', $goodStandingYear)
@@ -541,24 +541,24 @@ class Reports extends BaseController
             ->getRowArray();
 
         $serviceCount = (int) $db->table('service')
-            ->whereIn('parish_id', $churchIds)
+            ->whereIn('parish_id', $parishIds)
             ->where('service_date >=', $startDate)
             ->where('service_date <=', $endDate)
             ->countAllResults();
 
         $attendanceCount = (int) $db->table('attendance a')
             ->join('service s', 's.id = a.service_id')
-            ->whereIn('s.parish_id', $churchIds)
+            ->whereIn('s.parish_id', $parishIds)
             ->where('a.attended', 1)
             ->where('s.service_date >=', $startDate)
             ->where('s.service_date <=', $endDate)
             ->countAllResults();
 
-        $donationsTotal = model(DonationModel::class)->getAllParishesTotalDonations($startDate, $endDate, $churchIds, false);
+        $donationsTotal = model(DonationModel::class)->getAllParishesTotalDonations($startDate, $endDate, $parishIds, false);
 
         $expenseRow = $db->table('expense')
             ->select('COALESCE(SUM(amount), 0) AS total_amount')
-            ->whereIn('parish_id', $churchIds)
+            ->whereIn('parish_id', $parishIds)
             ->where('date >=', $startDate)
             ->where('date <=', $endDate)
             ->get()
@@ -567,7 +567,7 @@ class Reports extends BaseController
         $expensesTotal = (float) ($expenseRow['total_amount'] ?? 0);
 
         return [
-            'church_count' => $churchCount,
+            'parish_count' => $parishCount,
             'people_count' => (int) ($peopleRow['count'] ?? 0) + (int) ($guestRow['guest_count'] ?? 0),
             'guest_count' => (int) ($guestRow['guest_count'] ?? 0),
             'member_count' => (int) ($memberRow['count'] ?? 0),
@@ -594,7 +594,7 @@ class Reports extends BaseController
             return [];
         }
 
-        // OPTIMIZATION: Fetch all churches in one query, then group by diocese (N+1 prevention)
+        // OPTIMIZATION: Fetch all parishes in one query, then group by diocese (N+1 prevention)
         $dioceseIds = array_map(static fn(array $d) => (int) $d['id'], $dioceses);
         $allParishes = $db->table('parish')
             ->select('id, diocese_id')
@@ -602,26 +602,26 @@ class Reports extends BaseController
             ->get()
             ->getResultArray();
 
-        // Group churches by diocese in memory
-        $churchesByDiocese = [];
-        foreach ($allParishes as $church) {
-            $dioId = (int) $church['diocese_id'];
-            if (!isset($churchesByDiocese[$dioId])) {
-                $churchesByDiocese[$dioId] = [];
+        // Group parishes by diocese in memory
+        $parishesByDiocese = [];
+        foreach ($allParishes as $parish) {
+            $dioId = (int) $parish['diocese_id'];
+            if (!isset($parishesByDiocese[$dioId])) {
+                $parishesByDiocese[$dioId] = [];
             }
-            $churchesByDiocese[$dioId][] = (int) $church['id'];
+            $parishesByDiocese[$dioId][] = (int) $parish['id'];
         }
 
         $rows = [];
         foreach ($dioceses as $diocese) {
             $dioceseId = (int) $diocese['id'];
-            $churchIds = $churchesByDiocese[$dioceseId] ?? [];
+            $parishIds = $parishesByDiocese[$dioceseId] ?? [];
 
-            if (empty($churchIds)) {
+            if (empty($parishIds)) {
                 $rows[] = [
                     'diocese_id' => $dioceseId,
                     'diocese_name' => (string) $diocese['name'],
-                    'church_count' => 0,
+                    'parish_count' => 0,
                     'people_count' => 0,
                     'guest_count' => 0,
                     'member_count' => 0,
@@ -635,12 +635,12 @@ class Reports extends BaseController
                 continue;
             }
 
-            // Build summary for the whole diocese church set.
+            // Build summary for the whole diocese parish set.
             $peopleRow = $db->table('parish_affiliation mca')
                 ->select('COUNT(DISTINCT mca.linked_user_id) as count', false)
                 ->join('users u', 'u.id = mca.linked_user_id')
                 ->join('auth_groups_users agu', 'agu.user_id = u.id AND agu.group IN ("provinceadmin","diocesanadmin")', 'left')
-                ->whereIn('mca.parish_id', $churchIds)
+                ->whereIn('mca.parish_id', $parishIds)
                 ->where('mca.is_member', 1)
                 ->where('agu.id IS NULL')
                 ->get()
@@ -650,7 +650,7 @@ class Reports extends BaseController
                 ->select('COUNT(DISTINCT mca.linked_user_id) as count', false)
                 ->join('users u', 'u.id = mca.linked_user_id')
                 ->join('auth_groups_users agu', 'agu.user_id = u.id AND agu.group IN ("provinceadmin","diocesanadmin")', 'left')
-                ->whereIn('mca.parish_id', $churchIds)
+                ->whereIn('mca.parish_id', $parishIds)
                 ->where('mca.is_member', 1)
                 ->whereIn('mca.membership_status', ['member', 'attendee'])
                 ->where('agu.id IS NULL')
@@ -659,7 +659,7 @@ class Reports extends BaseController
 
             $guestRow = $db->table('guest')
                 ->select('COUNT(*) AS guest_count')
-                ->whereIn('parish_id', $churchIds)
+                ->whereIn('parish_id', $parishIds)
                 ->where('converted_to_member_at IS NULL', null, false)
                 ->get()
                 ->getRowArray();
@@ -670,7 +670,7 @@ class Reports extends BaseController
                 ->join('parish_affiliation mca', 'mca.linked_user_id = mss.user_id', 'inner')
                 ->join('users u', 'u.id = mss.user_id', 'inner')
                 ->join('auth_groups_users agu', 'agu.user_id = u.id AND agu.group IN ("provinceadmin","diocesanadmin")', 'left')
-                ->whereIn('mca.parish_id', $churchIds)
+                ->whereIn('mca.parish_id', $parishIds)
                 ->where('mca.is_member', 1)
                 ->where('mca.membership_status', 'member')
                 ->where('mss.year', $goodStandingYear)
@@ -680,24 +680,24 @@ class Reports extends BaseController
                 ->getRowArray();
 
             $serviceCount = (int) $db->table('service')
-                ->whereIn('parish_id', $churchIds)
+                ->whereIn('parish_id', $parishIds)
                 ->where('service_date >=', $startDate)
                 ->where('service_date <=', $endDate)
                 ->countAllResults();
 
             $attendanceCount = (int) $db->table('attendance a')
                 ->join('service s', 's.id = a.service_id')
-                ->whereIn('s.parish_id', $churchIds)
+                ->whereIn('s.parish_id', $parishIds)
                 ->where('a.attended', 1)
                 ->where('s.service_date >=', $startDate)
                 ->where('s.service_date <=', $endDate)
                 ->countAllResults();
 
-            $donationsTotal = model(DonationModel::class)->getAllParishesTotalDonations($startDate, $endDate, $churchIds, false);
+            $donationsTotal = model(DonationModel::class)->getAllParishesTotalDonations($startDate, $endDate, $parishIds, false);
 
             $expenseRow = $db->table('expense')
                 ->select('COALESCE(SUM(amount), 0) AS total_amount')
-                ->whereIn('parish_id', $churchIds)
+                ->whereIn('parish_id', $parishIds)
                 ->where('date >=', $startDate)
                 ->where('date <=', $endDate)
                 ->get()
@@ -708,7 +708,7 @@ class Reports extends BaseController
             $rows[] = [
                 'diocese_id' => (int) $diocese['id'],
                 'diocese_name' => (string) $diocese['name'],
-                'church_count' => count($churchIds),
+                'parish_count' => count($parishIds),
                 'people_count' => (int) ($peopleRow['count'] ?? 0) + (int) ($guestRow['guest_count'] ?? 0),
                 'guest_count' => (int) ($guestRow['guest_count'] ?? 0),
                 'member_count' => (int) ($memberRow['count'] ?? 0),
@@ -734,7 +734,7 @@ class Reports extends BaseController
 
         if ($breakdown === []) {
             return [
-                'church_count' => 0,
+                'parish_count' => 0,
                 'people_count' => 0,
                 'guest_count' => 0,
                 'member_count' => 0,
@@ -748,7 +748,7 @@ class Reports extends BaseController
         }
 
         $summary = [
-            'church_count' => 0,
+            'parish_count' => 0,
             'people_count' => 0,
             'guest_count' => 0,
             'member_count' => 0,
@@ -761,7 +761,7 @@ class Reports extends BaseController
         ];
 
         foreach ($breakdown as $row) {
-            $summary['church_count'] += (int) ($row['church_count'] ?? 0);
+            $summary['parish_count'] += (int) ($row['parish_count'] ?? 0);
             $summary['people_count'] += (int) ($row['people_count'] ?? 0);
             $summary['guest_count'] += (int) ($row['guest_count'] ?? 0);
             $summary['member_count'] += (int) ($row['member_count'] ?? 0);

@@ -119,7 +119,7 @@ return [
     'bulkTransferDesc'          => 'Seleccione miembros y muévalos a otra parroquia con una razón requerida.',
     'bulkTransferTitle'         => 'Transferencia masiva de miembros',
     'bulkTransferWarning'       => 'Esto moverá a los miembros seleccionados de la parroquia actual a otra parroquia.',
-    'destinationChurch'         => 'Parroquia de destino',
+    'destinationParish'         => 'Parroquia de destino',
     'selectDestination'         => 'Seleccionar destino...',
     'reasonForTransfer'         => 'Razón para la transferencia',
     'transferReasonPlaceholder' => 'Explique por qué se están transfiriendo estos miembros...',
@@ -180,11 +180,11 @@ return [
     // Mensajes flash (módulo Clergy específico)
     // -------------------------------------------------------------------------
     'transferSuccess'           => '{0} miembro(s) transferido(s) exitosamente.',
-    'noChurchSelected'          => 'No se seleccionó parroquia para la gestión de miembros.',
-    'noSourceChurch'            => 'No se seleccionó parroquia de origen.',
+    'noParishSelected'          => 'No se seleccionó parroquia para la gestión de miembros.',
+    'noSourceParish'            => 'No se seleccionó parroquia de origen.',
     'selectMembers'             => 'Selecciona al menos un miembro para transferir.',
     'chooseDestination'         => 'Elige una parroquia de destino válida.',
-    'sameChurch'                => 'La parroquia de destino debe ser diferente de la parroquia actual.',
+    'sameParish'                => 'La parroquia de destino debe ser diferente de la parroquia actual.',
     'reasonTooShort'            => 'El motivo de la transferencia debe tener al menos 8 caracteres.',
     'transferFailed'            => 'No se pudo completar la transferencia.',
     'affiliationFailed'         => 'No se pudo crear la afiliación de miembros a la parroquia seleccionada.',

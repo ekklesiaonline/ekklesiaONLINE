@@ -106,7 +106,7 @@ class ParishPeopleIntegrityCheck extends BaseCommand
      */
     private function detectDrift(int $parishId): array
     {
-        $snapshotTable = $this->resolveExistingTable(['parish_people', 'church_people']);
+        $snapshotTable = $this->resolveExistingTable(['parish_people', 'parish_people']);
         $affiliationTable = $this->resolveExistingTable(['parish_affiliation']);
 
         if ($snapshotTable === null || $affiliationTable === null) {
@@ -114,7 +114,7 @@ class ParishPeopleIntegrityCheck extends BaseCommand
         }
 
         $columns = $this->db()->getFieldNames($snapshotTable);
-        $scopeColumn = in_array('parish_id', array_map('strtolower', $columns), true) ? 'parish_id' : 'church_id';
+        $scopeColumn = in_array('parish_id', array_map('strtolower', $columns), true) ? 'parish_id' : 'parish_id';
 
         $sql = 'SELECT pp.profile_id, mca.membership_status AS affiliation_status, pp.membership_status AS snapshot_status';
         $sql .= ' FROM ' . $snapshotTable . ' pp';
@@ -132,14 +132,14 @@ class ParishPeopleIntegrityCheck extends BaseCommand
      */
     private function detectMissingDetails(int $parishId): array
     {
-        $snapshotTable = $this->resolveExistingTable(['parish_people', 'church_people']);
+        $snapshotTable = $this->resolveExistingTable(['parish_people', 'parish_people']);
 
         if ($snapshotTable === null) {
             return [];
         }
 
         $columns = $this->db()->getFieldNames($snapshotTable);
-        $scopeColumn = in_array('parish_id', array_map('strtolower', $columns), true) ? 'parish_id' : 'church_id';
+        $scopeColumn = in_array('parish_id', array_map('strtolower', $columns), true) ? 'parish_id' : 'parish_id';
 
         $sql = 'SELECT pp.profile_id';
         $sql .= ' FROM ' . $snapshotTable . ' pp';

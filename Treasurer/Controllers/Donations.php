@@ -214,7 +214,7 @@ class Donations extends BaseController
 
         $member = $this->getParishMemberProfile($parishId, $memberUserId);
         if ($member === null) {
-            return redirect()->to('/donations')->with('error', lang('Treasurer.memberOutsideChurchScope'));
+            return redirect()->to('/donations')->with('error', lang('Treasurer.memberOutsideParishScope'));
         }
 
         $donations = $this->buildFilteredDonationsQuery($parishId, [
@@ -309,7 +309,7 @@ class Donations extends BaseController
             return $redirect;
         }
 
-        // Get members for dropdown (church-scoped, excludes provinceadmin users)
+        // Get members for dropdown (parish-scoped, excludes provinceadmin users)
         $members = $this->getParishProfileRows((int) $this->getOperationalParishId(), 'active');
         $chartOfAccountModel = model('ChartOfAccountModel');
         $chartAccounts = $chartOfAccountModel->getActiveByType('income');
@@ -350,8 +350,8 @@ class Donations extends BaseController
         }
 
         $attributionPolicy = self::ATTRIBUTION_POLICY_OPERATIONAL_DEFAULT;
-        $attributionChurchId = (int) ($this->resolveAttributionParishId($attributionPolicy) ?? 0);
-        if ($attributionChurchId <= 0) {
+        $attributionParishId = (int) ($this->resolveAttributionParishId($attributionPolicy) ?? 0);
+        if ($attributionParishId <= 0) {
             return redirect()->back()->withInput()->with('error', lang('App.errorNoParishScope'));
         }
 
@@ -367,7 +367,7 @@ class Donations extends BaseController
 
         $fundId = (int) $this->request->getPost('fund_id');
         $fund = $this->getFundModel()->find($fundId);
-        if (!$fund || (int) ($fund['parish_id'] ?? 0) !== $attributionChurchId) {
+        if (!$fund || (int) ($fund['parish_id'] ?? 0) !== $attributionParishId) {
             return redirect()->back()->withInput()->with('error', lang('Treasurer.validFundRequired'));
         }
 
@@ -376,7 +376,7 @@ class Donations extends BaseController
         }
 
         $data = [
-            'parish_id' => $attributionChurchId,
+            'parish_id' => $attributionParishId,
             'fund_id' => $fundId,
             'user_id' => $this->request->getPost('user_id') ?: null,
             'date' => $this->request->getPost('date'),
@@ -394,7 +394,7 @@ class Donations extends BaseController
             $receipt = $this->donationModel->issueReceipt($donationId);
 
             $this->audit()->log('donation.create', [
-                'parish_id' => $attributionChurchId,
+                'parish_id' => $attributionParishId,
                 'entity_type' => 'donation',
                 'entity_id' => $donationId,
                 'new_values' => [
@@ -406,7 +406,7 @@ class Donations extends BaseController
                     'chart_account_id' => (int) ($data['chart_account_id'] ?? 0),
                     'receipt_number' => (string) ($receipt['receipt_number'] ?? ''),
                 ],
-                'meta' => $this->buildParishContextMeta($attributionChurchId, $attributionPolicy),
+                'meta' => $this->buildParishContextMeta($attributionParishId, $attributionPolicy),
             ]);
 
             return redirect()->to('/donations')->with('success', lang('Treasurer.donationRecorded'));
@@ -435,9 +435,9 @@ class Donations extends BaseController
         }
 
         if ($this->donationModel->delete($id)) {
-            $attributionChurchId = (int) ($donation['parish_id'] ?? 0);
+            $attributionParishId = (int) ($donation['parish_id'] ?? 0);
             $this->audit()->log('donation.delete', [
-                'parish_id' => $attributionChurchId,
+                'parish_id' => $attributionParishId,
                 'entity_type' => 'donation',
                 'entity_id' => (int) $id,
                 'old_values' => [
@@ -448,7 +448,7 @@ class Donations extends BaseController
                     'category' => (string) ($donation['category'] ?? ''),
                     'chart_account_id' => isset($donation['chart_account_id']) ? (int) $donation['chart_account_id'] : null,
                 ],
-                'meta' => $this->buildParishContextMeta($attributionChurchId, self::ATTRIBUTION_POLICY_OPERATIONAL_DEFAULT),
+                'meta' => $this->buildParishContextMeta($attributionParishId, self::ATTRIBUTION_POLICY_OPERATIONAL_DEFAULT),
             ]);
 
             return $this->jsonResponse(['success' => true, 'message' => lang('Treasurer.donationDeleted')]);
@@ -536,9 +536,9 @@ class Donations extends BaseController
 
     private function getParishName(int $parishId): string
     {
-        $church = model('ParishModel')->find($parishId);
+        $parish = model('ParishModel')->find($parishId);
 
-        return (string) ($church['name'] ?? lang('Treasurer.unknownChurch'));
+        return (string) ($parish['name'] ?? lang('Treasurer.unknownParish'));
     }
 
     private function getParishMemberProfile(int $parishId, int $memberUserId): ?array
@@ -663,7 +663,7 @@ class Donations extends BaseController
         <body>
             <h1>' . htmlspecialchars(lang('Treasurer.donationsExportTitle')) . '</h1>
             <div class="meta">
-                <strong>' . htmlspecialchars(lang('Treasurer.churchLabel')) . ':</strong> ' . htmlspecialchars($this->getParishName($parishId)) . '<br>
+                <strong>' . htmlspecialchars(lang('Treasurer.parishLabel')) . ':</strong> ' . htmlspecialchars($this->getParishName($parishId)) . '<br>
                 <strong>' . htmlspecialchars(lang('Treasurer.generatedLabel')) . ':</strong> ' . htmlspecialchars($this->formatLocalizedDateTime(date('Y-m-d H:i:s'))) . '<br>
                 <strong>' . htmlspecialchars(lang('Treasurer.filtersLabel')) . ':</strong> ' . htmlspecialchars($filterParts !== [] ? implode(' | ', $filterParts) : lang('Treasurer.noneLabel')) . '
             </div>

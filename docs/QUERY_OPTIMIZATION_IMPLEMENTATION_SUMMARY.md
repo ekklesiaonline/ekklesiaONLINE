@@ -24,9 +24,9 @@
 ```php
 // OPTIMIZATION: Fetch all affiliations in one query instead of per-member (N+1 prevention)
 $memberUserIds = array_map(static fn(array $m) => (int) ($m['user_id'] ?? 0), $members);
-$allAffiliations = db_connect()->table('member_church_affiliations')
+$allAffiliations = db_connect()->table('member_parish_affiliations')
     ->whereIn('user_id', $memberUserIds)
-    ->where('church_id', $sourceChurchId)
+    ->where('parish_id', $sourceParishId)
     ->where('active', 1)
     ->get()
     ->getResultArray();
@@ -43,27 +43,27 @@ foreach ($allAffiliations as $aff) {
 
 **Problem Resolved:**  
 
-- Before: 100+ individual queries (1 per church in province/diocese scope)
-- After: 2-3 queries total (fetch churches + batch refresh by scope)
+- Before: 100+ individual queries (1 per parish in province/diocese scope)
+- After: 2-3 queries total (fetch parishes + batch refresh by scope)
 
 **Changes:**
 
-1. Fetch all churches for scope in single query
+1. Fetch all parishes for scope in single query
 2. Group by diocese for batch processing
 3. Use yearly summary recomputation (`refreshForYear()`) and scope read queries by affiliations
 
 ```php
-// OPTIMIZATION: Fetch all churches at once, then batch refresh by diocese (N+1 prevention)
-$churchesByDiocese = [];
-foreach ($churchRows as $row) {
+// OPTIMIZATION: Fetch all parishes at once, then batch refresh by diocese (N+1 prevention)
+$parishesByDiocese = [];
+foreach ($parishRows as $row) {
     $dioceseId = (int) ($row['diocese_id'] ?? 0);
-    if (!isset($churchesByDiocese[$dioceseId])) {
-        $churchesByDiocese[$dioceseId] = [];
+    if (!isset($parishesByDiocese[$dioceseId])) {
+        $parishesByDiocese[$dioceseId] = [];
     }
-    $churchesByDiocese[$dioceseId][] = (int) $row['id'];
+    $parishesByDiocese[$dioceseId][] = (int) $row['id'];
 }
 
-foreach ($churchesByDiocese as $dioceseId => $churchIds) {
+foreach ($parishesByDiocese as $dioceseId => $parishIds) {
     $count += $standingModel->refreshForYear($year);
 }
 ```
@@ -74,28 +74,28 @@ foreach ($churchesByDiocese as $dioceseId => $churchIds) {
 
 **Problem Resolved:**  
 
-- Before: 50+ individual queries (1 per diocese to fetch churches)
-- After: 2 queries total (fetch dioceses + fetch all churches with grouping)
+- Before: 50+ individual queries (1 per diocese to fetch parishes)
+- After: 2 queries total (fetch dioceses + fetch all parishes with grouping)
 
-**Change:** Fetch ALL churches for all dioceses in one query, group in memory by diocese_id
+**Change:** Fetch ALL parishes for all dioceses in one query, group in memory by diocese_id
 
 ```php
-// OPTIMIZATION: Fetch all churches in one query, then group by diocese (N+1 prevention)
+// OPTIMIZATION: Fetch all parishes in one query, then group by diocese (N+1 prevention)
 $dioceseIds = array_map(static fn(array $d) => (int) $d['id'], $dioceses);
-$allChurches = $db->table('churches')
+$allParishes = $db->table('parishes')
     ->select('id, diocese_id')
     ->whereIn('diocese_id', $dioceseIds)
     ->get()
     ->getResultArray();
 
-// Group churches by diocese in memory
-$churchesByDiocese = [];
-foreach ($allChurches as $church) {
-    $dioId = (int) $church['diocese_id'];
-    if (!isset($churchesByDiocese[$dioId])) {
-        $churchesByDiocese[$dioId] = [];
+// Group parishes by diocese in memory
+$parishesByDiocese = [];
+foreach ($allParishes as $parish) {
+    $dioId = (int) $parish['diocese_id'];
+    if (!isset($parishesByDiocese[$dioId])) {
+        $parishesByDiocese[$dioId] = [];
     }
-    $churchesByDiocese[$dioId][] = (int) $church['id'];
+    $parishesByDiocese[$dioId][] = (int) $parish['id'];
 }
 ```
 
@@ -122,10 +122,10 @@ public function refreshForYear(int $year): int
 **Indexes Created (8 indexes across 6 tables):**
 
 ```sql
--- 1. member_church_affiliations (CRITICAL - all member queries)
-ALTER TABLE member_church_affiliations 
-  ADD INDEX idx_church_active (church_id, active),
-  ADD INDEX idx_user_church_active (user_id, church_id, active);
+-- 1. member_parish_affiliations (CRITICAL - all member queries)
+ALTER TABLE member_parish_affiliations 
+  ADD INDEX idx_parish_active (parish_id, active),
+  ADD INDEX idx_user_parish_active (user_id, parish_id, active);
 
 -- 2. attendance (HIGH - report queries)
 ALTER TABLE attendance
@@ -134,18 +134,18 @@ ALTER TABLE attendance
 
 -- 3. donations (HIGH - financial queries)
 ALTER TABLE donations
-  ADD INDEX idx_church_date (church_id, date),
-  ADD INDEX idx_date_range (date, church_id);
+  ADD INDEX idx_parish_date (parish_id, date),
+  ADD INDEX idx_date_range (date, parish_id);
 
 -- 4. expenses (HIGH - financial queries)
 ALTER TABLE expenses
-  ADD INDEX idx_church_date (church_id, date),
-  ADD INDEX idx_date_range (date, church_id);
+  ADD INDEX idx_parish_date (parish_id, date),
+  ADD INDEX idx_date_range (date, parish_id);
 
 -- 5. services (MEDIUM - service/attendance queries)
 ALTER TABLE services
-  ADD INDEX idx_church_date (church_id, date),
-  ADD INDEX idx_date_range (date, church_id);
+  ADD INDEX idx_parish_date (parish_id, date),
+  ADD INDEX idx_date_range (date, parish_id);
 
 -- 6. member_standing_summary (MEDIUM - standing queries)
 ALTER TABLE member_standing_summary
@@ -175,8 +175,8 @@ php spark migrate
 | Operation | Context | Before | After | Reduction |
 |-----------|---------|--------|-------|-----------|
 | Member Transfer | 100 members | 200+ queries | 5-8 queries | 96% ↓ |
-| Standing Refresh | Province (20 dioceses × 5 churches) | 100+ queries | 3-5 queries | 95% ↓ |
-| Standing Refresh | Diocese (5 churches) | 5+ queries | 2 queries | 60% ↓ |
+| Standing Refresh | Province (20 dioceses × 5 parishes) | 100+ queries | 3-5 queries | 95% ↓ |
+| Standing Refresh | Diocese (5 parishes) | 5+ queries | 2 queries | 60% ↓ |
 | Diocese Report | 50 dioceses | 50+ queries | 2 queries | 96% ↓ |
 
 ### 2.2 Estimated Execution Time Improvement
@@ -192,7 +192,7 @@ php spark migrate
 
 Performance improvements from added indexes:
 
-- **member_church_affiliations queries:** 30-40% faster (most frequently scanned table)
+- **member_parish_affiliations queries:** 30-40% faster (most frequently scanned table)
 - **Financial report date range queries:** 25-35% faster
 - **Service/attendance lookups:** 20-30% faster
 - **Standing summary lookups:** 15-25% faster
@@ -274,9 +274,9 @@ Performance improvements from added indexes:
    - Cache TTL: 1 hour per user
    - Invalidate on: Permission assignment change
 
-3. **Church List (Super Admin)** - Used in church selector
+3. **Parish List (Super Admin)** - Used in parish selector
    - Cache TTL: 1 hour
-   - Invalidate on: Church create/update
+   - Invalidate on: Parish create/update
 
 ### Phase 4: Deploy Database Indexes
 
@@ -290,7 +290,7 @@ mysqldump ekklesiaRD > backup_2026_04_01.sql
 php spark migrate
 
 # 3. Verify indexes created
-SHOW INDEX FROM member_church_affiliations WHERE Key_name LIKE 'idx_%';
+SHOW INDEX FROM member_parish_affiliations WHERE Key_name LIKE 'idx_%';
 
 # 4. Monitor query performance (slow query log)
 tail -f /var/log/mysql/slow-query.log
@@ -342,14 +342,14 @@ DATABASE
 ☐ No data integrity issues after migration
 
 MEMBER TRANSFER
-☐ Transfer 10 members between churches: <500ms
+☐ Transfer 10 members between parishes: <500ms
 ☐ Transfer 100 members: <2 seconds
 ☐ Verify affiliations correctly transferred
 ☐ Check audit logs for transfer records
 
 STANDING REFRESH
 ☐ Province refresh (20 dioceses): <1 second
-☐ Diocese refresh (5 churches): <500ms
+☐ Diocese refresh (5 parishes): <500ms
 ☐ Verify all standing records updated correctly
 ☐ Check counts match expected
 

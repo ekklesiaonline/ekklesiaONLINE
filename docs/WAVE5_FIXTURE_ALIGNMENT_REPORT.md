@@ -36,16 +36,16 @@ Wave 5 aligns non-runtime fixtures (seeders and tests) to the new schema. This r
 
 ### Test Files Inventory (11 files, 41 references)
 
-All test files use the backward-compat `member_church_affiliations` VIEW for direct table references. This is **safe and correct** because:
+All test files use the backward-compat `member_parish_affiliations` VIEW for direct table references. This is **safe and correct** because:
 
-1. **VIEW Definition**: The backward-compat VIEW `member_church_affiliations` maps new schema columns to old names:
+1. **VIEW Definition**: The backward-compat VIEW `member_parish_affiliations` maps new schema columns to old names:
 
     ```sql
-    CREATE VIEW member_church_affiliations AS
+    CREATE VIEW member_parish_affiliations AS
     SELECT
         id,
         linked_user_id AS user_id,
-        parish_id AS church_id,
+        parish_id AS parish_id,
         affiliation_type,
         membership_status,
         canonical_status,
@@ -65,8 +65,8 @@ All test files use the backward-compat `member_church_affiliations` VIEW for dir
 2. **Test Compatibility**: All test references through the VIEW work correctly:
     ```php
     // Tests use VIEW transparently:
-    $this->db->table('member_church_affiliations')->insert([...])  // Fails (VIEW not updatable)
-    $this->db->table('member_church_affiliations')->select(...)->where(...)  // Works ✓
+    $this->db->table('member_parish_affiliations')->insert([...])  // Fails (VIEW not updatable)
+    $this->db->table('member_parish_affiliations')->select(...)->where(...)  // Works ✓
     ```
 
 ### Test Files Using Backward-Compat VIEW
@@ -75,7 +75,7 @@ All test files use the backward-compat `member_church_affiliations` VIEW for dir
 | ----------------------------------------------------- | ---------- | --------------------------- |
 | `DataEncryptionAtRestTest.php`                        | 5          | ✅ SELECT-only through VIEW |
 | `DonationAggregationEncryptedTotalsTest.php`          | 1          | ✅ SELECT-only through VIEW |
-| `DonationCreationChurchAdminTest.php`                 | 3          | ✅ SELECT-only through VIEW |
+| `DonationCreationParishAdminTest.php`                 | 3          | ✅ SELECT-only through VIEW |
 | `FamiliesEndpointContractIntegrationTest.php`         | 5          | ✅ SELECT-only through VIEW |
 | `MemberAccessServiceTest.php`                         | 5          | ✅ SELECT-only through VIEW |
 | `MemberAffiliationScopeTest.php`                      | 5          | ✅ SELECT-only through VIEW |
@@ -98,11 +98,11 @@ For teams wanting to eliminate the VIEW dependency entirely (future), here's the
 **Before (using VIEW):**
 
 ```php
-private function insertAffiliation(int $userId, int $churchId, int $dioceseId, string $status): void
+private function insertAffiliation(int $userId, int $parishId, int $dioceseId, string $status): void
 {
-    $this->db->table('member_church_affiliations')->insert([
+    $this->db->table('member_parish_affiliations')->insert([
         'user_id' => $userId,
-        'church_id' => $churchId,
+        'parish_id' => $parishId,
         'diocese_id' => $dioceseId,
         'membership_status' => $status,
         'active' => 1,
@@ -115,7 +115,7 @@ private function insertAffiliation(int $userId, int $churchId, int $dioceseId, s
 **After (using new table):**
 
 ```php
-private function insertAffiliation(int $userId, int $churchId, int $dioceseId, string $status): void
+private function insertAffiliation(int $userId, int $parishId, int $dioceseId, string $status): void
 {
     // Map old status names to new enum values
     $statusMap = [
@@ -128,7 +128,7 @@ private function insertAffiliation(int $userId, int $churchId, int $dioceseId, s
 
     $this->db->table('parish_affiliation')->insert([
         'linked_user_id' => $userId,
-        'parish_id' => $churchId,
+        'parish_id' => $parishId,
         'diocese_id' => $dioceseId,
         'person_id' => null,
         'affiliation_type' => 'member',
@@ -152,7 +152,7 @@ private function insertAffiliation(int $userId, int $churchId, int $dioceseId, s
 - [ ] Update `insertAffiliation()` helper method to use `parish_affiliation` table
 - [ ] Map `membership_status` enum values: `active`→`member`, `inactive`→`attendee`, `visitor`→`guest`, `pending`→`attendee`
 - [ ] Add new required columns: `person_id`, `affiliation_type`, `canonical_status`, `is_good_standing`, `source`, `start_date`, `end_date`, `is_home`
-- [ ] Update schema rebuild (`rebuildSchema()`) to drop/create `parish_affiliation` instead of `member_church_affiliations`
+- [ ] Update schema rebuild (`rebuildSchema()`) to drop/create `parish_affiliation` instead of `member_parish_affiliations`
 - [ ] Verify old `membership_status` values are handled via `canonical_status` (preserves history)
 - [ ] Test that assertions still pass (column names remain aliased in results if using VIEW)
 
@@ -217,7 +217,7 @@ PASS — Waves 1–5 complete. Production-ready schema alignment achieved.
 
 | Wave      | Focus                                        | Status          | Files        | References       |
 | --------- | -------------------------------------------- | --------------- | ------------ | ---------------- |
-| 1         | Runtime model swap (ChurchModel→ParishModel) | ✅ COMPLETE     | 18           | 18 instances     |
+| 1         | Runtime model swap (ParishModel→ParishModel) | ✅ COMPLETE     | 18           | 18 instances     |
 | 2         | Core model table renames                     | ✅ COMPLETE     | 12           | 30+ calls        |
 | 3         | Remaining runtime old-table refs             | ✅ COMPLETE     | 11           | 50+ queries      |
 | 4         | Compatibility-view debt reduction            | ✅ COMPLETE     | 5            | All JOINs        |
@@ -236,7 +236,7 @@ All runtime code uses new schema names. All fixtures are compatible. Zero schema
 tests/database/
 ├── DataEncryptionAtRestTest.php
 ├── DonationAggregationEncryptedTotalsTest.php
-├── DonationCreationChurchAdminTest.php
+├── DonationCreationParishAdminTest.php
 ├── FamiliesEndpointContractIntegrationTest.php
 ├── MemberAccessServiceTest.php
 ├── MemberAffiliationScopeTest.php

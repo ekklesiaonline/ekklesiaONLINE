@@ -169,7 +169,7 @@ Events::on('register', static function (User $user): void {
 
     $registrationParishColumn = null;
     if ($registrationRequestTable !== null) {
-        foreach (['requested_parish_id', 'parish_id', 'requested_church_id', 'church_id'] as $candidateColumn) {
+        foreach (['requested_parish_id', 'parish_id', 'requested_parish_id', 'parish_id'] as $candidateColumn) {
             try {
                 if ($db->fieldExists($candidateColumn, $registrationRequestTable)) {
                     $registrationParishColumn = $candidateColumn;

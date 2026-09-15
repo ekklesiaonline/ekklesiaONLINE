@@ -5,7 +5,7 @@
  */
 return [
     'selectMemberForStatement' => 'Select a member to generate a contribution statement.',
-    'memberOutsideChurchScope' => 'The selected member is not available in your parish scope.',
+    'memberOutsideParishScope' => 'The selected member is not available in your parish scope.',
 
     'validIncomeAccountRequired' => 'Please select a valid active income account.',
     'validExpenseAccountRequired' => 'Please select a valid active expense account.',
@@ -49,8 +49,8 @@ return [
     'fundTypePermanent' => 'Permanent',
     'fundTypeUnrestricted' => 'Unrestricted',
     'expensesExportTitle' => 'Expenses Export',
-    'churchLabel' => 'Parish',
-    'unknownChurch' => 'Unknown Parish',
+    'parishLabel' => 'Parish',
+    'unknownParish' => 'Unknown Parish',
     'generatedLabel' => 'Generated',
     'filtersLabel' => 'Filters',
     'noneLabel' => 'None',
@@ -61,7 +61,7 @@ return [
     'noExpensesForFilters' => 'No expenses found for the selected filters.',
 
     'provinceBudgetRestriction' => 'Province admins cannot manage parish budgets. Use diocesan/parish scope.',
-    'noChurchForBudgeting' => 'No parish selected for budgeting.',
+    'noParishForBudgeting' => 'No parish selected for budgeting.',
     'noParishForBudgeting' => 'No parish selected for budgeting.',
     'invalidBudgetRequest' => 'Invalid budget request.',
     'budgetSaveFailed' => 'Budget lines could not be saved.',
@@ -99,7 +99,7 @@ return [
     'reportEndDate' => 'End Date',
     'reportApply' => 'Apply',
     'scopeDiocese' => 'Diocese',
-    'scopeChurch' => 'Parish',
+    'scopeParish' => 'Parish',
     'reportDiocese' => 'Diocese',
     'reportParishes' => 'Parishes',
     'reportPeople' => 'People',

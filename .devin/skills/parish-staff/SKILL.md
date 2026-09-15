@@ -1,6 +1,6 @@
 ---
 name: parish-staff
-description: Explain parish/church staff role assignment, promotion, demotion, and primary admin rules
+description: Explain parish staff role assignment, promotion, demotion, and primary admin rules
 triggers:
   - user
   - model
@@ -10,7 +10,7 @@ allowed-tools:
   - find_file_by_name
 ---
 
-Help with parish/church staff management.
+Help with parish staff management.
 
 Key rules:
 - Staff routes live under `/parish_list/{id}/staff/*` in `app/Config/Routes.php`.

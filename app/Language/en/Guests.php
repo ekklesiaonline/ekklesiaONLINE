@@ -81,7 +81,7 @@ return [
     'tplColScope'                => 'Scope',
     'tplColActions'              => 'Actions',
     'tplScopeGlobal'             => 'Global',
-    'tplScopeChurch'             => 'Parish',
+    'tplScopeParish'             => 'Parish',
     'tplEmpty'                   => 'No message templates yet.',
     'tplEmptyCreate'             => 'Create one now',
     // Templates modal
@@ -392,7 +392,7 @@ return [
     'seqColStatus'                => 'Status',
     'seqColScope'                 => 'Scope',
     'seqScopeGlobal'              => 'Global',
-    'seqScopeChurch'              => 'Parish',
+    'seqScopeParish'              => 'Parish',
     'seqActivateTitle'            => 'Activate',
     'seqDeactivateTitle'          => 'Deactivate',
     'seqActivateVerb'             => 'activate',

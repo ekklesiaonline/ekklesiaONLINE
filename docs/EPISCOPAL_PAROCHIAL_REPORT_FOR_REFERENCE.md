@@ -5,8 +5,8 @@
 This file is the authoritative source for the ekklesiaRD parochial report implementation.
 
 - Controller/view contract: `Worship/Controllers/ParochialReport.php` and `Worship/Views/ParochialReport/index.php`
-- Report-year persistence: `church_financial_summary`
-- Computed autofill sources: `churches`, `service_metrics`, `services`, `attendance`, `member_standing_summary`, `annual_pledges`, `donations`, and `expenses`
+- Report-year persistence: `parish_financial_summary`
+- Computed autofill sources: `parishes`, `service_metrics`, `services`, `attendance`, `member_standing_summary`, `annual_pledges`, `donations`, and `expenses`
 
 Implementation rule:
 
@@ -69,7 +69,7 @@ Page | 2
 (Page header) Congregation                         City                                      Diocese                                    Page 2
 
 Attendance and Impact:
-Lines 1 through 5 helps us measure the scope and reach of all churches while acknowledging that not every participant or person is impacted by the church is a member. In addition, our hope is that these questions also capture long distance (virtual) engagement.
+Lines 1 through 5 helps us measure the scope and reach of all parishes while acknowledging that not every participant or person is impacted by the parish is a member. In addition, our hope is that these questions also capture long distance (virtual) engagement.
 
 To calculate “viewership” for online or streamed services please use the combined totals across all streaming platforms (e.g., 5 Zoom
 viewers, 10 Facebook viewers, 25 YouTube viewers would be 40 total live viewers). Viewership should measure “unique” viewers (rather
@@ -123,7 +123,7 @@ than using viewers as a proxy for household) and includes all viewers, no matter
   is connected to your parish.
 
 8.-  Total Impact:___________
-  Total average impact of church. (Calculate lines 1 through 7)
+  Total average impact of parish. (Calculate lines 1 through 7)
 
 Page footer
 (Align left)Reports are due to your diocese by March 1, 20___and to the General Convention Office by May 1, 20___       (Align right)To file online visit: <https://reports.dfms.org>
@@ -149,7 +149,7 @@ M__Total Members from 20__(previous year)   _________________
  All members added to the baptized members section of the congregation's Membership Register during 20___ by: baptism, confirmation/  reception, or transfer; and those persons restored from inactive status, or not counted in last year's membership count.
 
 13.- Decreases during year:___________
- All active baptized members lost by death, transferred to another congregation, removed to inactive status in the Register of Church    Membership and Rites, removed for other reasons, or not removed from last year's membership count.
+ All active baptized members lost by death, transferred to another congregation, removed to inactive status in the Register of Parish    Membership and Rites, removed for other reasons, or not removed from last year's membership count.
 
 M___Total Members for 20____ :_________________
  Add the increases entered in line 12 to Box M___. Then subtract the decreases entered in line 13 for the total active membership as of
@@ -169,7 +169,7 @@ For lines 15 and 16, enter the total in-person attendance. Please do not include
  Record the combined in-person attendance for all services held on Christmas Eve and Christmas Day.
 
 Clergy serving this congregation:
-This question helps us understand how many individuals undertake work on behalf of the church, recognizing in particular the contributions of lay staff (paid or unpaid). Unpaid lay staff may include, but is not limited to, nursery workers, Sunday school facilitators, parish administrators, lay preachers, etc. If you had transitions in staff over the course of the calendar year, please simply count the roles in place, not the individuals. For example, if you had a different supply priest every month, enter 1 under part-time clergy, not 12.
+This question helps us understand how many individuals undertake work on behalf of the parish, recognizing in particular the contributions of lay staff (paid or unpaid). Unpaid lay staff may include, but is not limited to, nursery workers, Sunday school facilitators, parish administrators, lay preachers, etc. If you had transitions in staff over the course of the calendar year, please simply count the roles in place, not the individuals. For example, if you had a different supply priest every month, enter 1 under part-time clergy, not 12.
 
 17.- Total amount of Clergy and Staff serving this congregation:
 
@@ -198,8 +198,8 @@ Page | 4
 (Page header) Congregation                         City                                      Diocese                                    Page 4
 
 Sacraments & Services:
-20.-  How many of the following did your church provide? (Numeric responses)
- This information should be easily accessed through your parish register. This helps us measure the vitality of your church through the   provision of sacraments and other lifecycle services. Definitions to guide your entries:: Baptisms: Count each person baptized.;     Confirmations, Receptions: Count each individual confirmed or received into the church.; Marriages: Count each marriage service    conducted (not each individual).; Burials: Count each burial service, whether held at the church or elsewhere.; Eucharists: Total number of
+20.-  How many of the following did your parish provide? (Numeric responses)
+ This information should be easily accessed through your parish register. This helps us measure the vitality of your parish through the   provision of sacraments and other lifecycle services. Definitions to guide your entries:: Baptisms: Count each person baptized.;     Confirmations, Receptions: Count each individual confirmed or received into the parish.; Marriages: Count each marriage service    conducted (not each individual).; Burials: Count each burial service, whether held at the parish or elsewhere.; Eucharists: Total number of
  Eucharistic worship services offered, including weekdays and special services.; Daily Office Services: Total number of Morning Prayer,   Evening Prayer, Compline, etc., held as public services (in person or online).
 
 Num. of Individuals:    Num. of services:       Num. of services
@@ -208,8 +208,8 @@ Num. of Individuals:    Num. of services:       Num. of services
  ____Confirmations      ____Burials Daily       ____Office Services
  ____Receptions
 
-21.- Which of the following services/programs/initiatives does your church have? (Select all that apply).
- This question allows us to measure the vitality of the church through provision of services and initiatives that help engage the parish and   larger community. Please use the ''Other'' category for categories not listed here (such as international partnerships, interfaith     collaborations, collaboration with community organizations, etc). You can expand on any of these initiatives in questions 24-26.
+21.- Which of the following services/programs/initiatives does your parish have? (Select all that apply).
+ This question allows us to measure the vitality of the parish through provision of services and initiatives that help engage the parish and   larger community. Please use the ''Other'' category for categories not listed here (such as international partnerships, interfaith     collaborations, collaboration with community organizations, etc). You can expand on any of these initiatives in questions 24-26.
 
  [ ] Sunday Morning Eucharist    [ ] Streamed Service     [ ] Children’s Choir       [ ] EcumenicalCollaboration
  [ ] Sunday Morning Prayer     [ ] Interactive Virtual Service   [ ] Sunday School    [ ] Virtual Formation
@@ -219,13 +219,13 @@ Num. of Individuals:    Num. of services:       Num. of services
       Morning/Noonday/Evening Prayer                      (e.g. food pantry, shelter)
  [ ] Other:______________
 
-22.- Does your church have any subsidiary or associated organizations? (Select all that apply).
+22.- Does your parish have any subsidiary or associated organizations? (Select all that apply).
  [ ] Preschool or Nursery Program  [ ] K-8 School  [ ] 9-12 School  [ ] Outreach Ministry
  [ ] Other_________________________________________________________________________________________________________
 
 Demographics:
 23.-  For which of the following languages do you offer services? (Select all that apply)
- This question allows us to better understand the distribution of languages of worship within the church.
+ This question allows us to better understand the distribution of languages of worship within the parish.
  It also helps us highlight parishes which multilingual programs and services.
 
  [ ] English   [ ] French    [ ] Mandarin   [ ] American Sign Language (ASL)
@@ -261,14 +261,14 @@ Example A: On January 1, 20___, St. Paul's had received 84 pledge cards. Five ad
  Enter the total dollar amount of all confirmed pledges reported in line 1 above. This line reflects what members promised to give, not what  was actually paid.
 
 Revenue:
-Revenue helps us understand the types and sources of financial resources received. A church may use either cash-basis or accrual-basis reporting, but should apply the same method to both revenue and expense sections.
-Example B: A parishioner of St. James Church makes two contributions to the church: a $1,000 contribution to fulfill their pledge to the general
+Revenue helps us understand the types and sources of financial resources received. A parish may use either cash-basis or accrual-basis reporting, but should apply the same method to both revenue and expense sections.
+Example B: A parishioner of St. James Parish makes two contributions to the parish: a $1,000 contribution to fulfill their pledge to the general
 fund and a $200 contribution restricted to the Endowment Fund. The $1,000 contribution is reported on line 3, and the $200 contribution is
 reported on line 4.
-Example C: St. Stephen's Church leases a portion of their campus to an outside group on weekday mornings, and they receive $2,000 a month
+Example C: St. Stephen's Parish leases a portion of their campus to an outside group on weekday mornings, and they receive $2,000 a month
 in rental fees. The rental fees are reported on line 5.
 
-3.- Plate, pledge, and other contributions to the general support of the church    (3)  USD :______________    OTHER :______________
+3.- Plate, pledge, and other contributions to the general support of the parish    (3)  USD :______________    OTHER :______________
  Enter all giving actually received during the year. Report all unrestricted
  contributions only. Examples include: loose plate offerings, payments toward
  pledges to the general/operating fund, and general gifts not designated for a
@@ -308,11 +308,11 @@ Page | 6
 
 Expenses:
 Expenses help us understand the cost of ministry and operations. Use the same accounting method used for the revenue section.
-Example D: St. Bart's Church has a well-known music program. The church employs a Director of Music, maintains a pipe organ, and
+Example D: St. Bart's Parish has a well-known music program. The parish employs a Director of Music, maintains a pipe organ, and
 purchases sheet music to perform. The salary of the Director of Music, the maintenance costs of the pipe organ, and the cost of sheet music
-are reported on line 6. If the church were to expand the pipe organ, that expense would be reported on line 7.
+are reported on line 6. If the parish were to expand the pipe organ, that expense would be reported on line 7.
 
-6.- Church non-capital expenses            (6)   USD :______________    OTHER :______________
+6.- Parish non-capital expenses            (6)   USD :______________    OTHER :______________
  Report all operating expenses. Examples include: utility costs, insurance,
  clergy and staff salaries, wages, and benefits, office and administrative costs,
  diocesan assessments/apportionment, ministry and program costs, charitable
@@ -329,7 +329,7 @@ are reported on line 6. If the church were to expand the pipe organ, that expens
            Total Expenses (6+7) = B   USD :______________  OTHER :______________
 
 Year End (as of December 31):
-Questions about your year-end account balances help us determine the financial assets at the church's disposal.
+Questions about your year-end account balances help us determine the financial assets at the parish's disposal.
 
 8.- All cash, checking, and savings balances          (8)   USD :______________    OTHER :______________
  Enter the total year-end balance of all congregation-held cash accounts. Include: checking
@@ -340,12 +340,12 @@ funds if held under the congregation’s EIN (federal tax id number)
 Year End (as of December 31) Supplemental Information:
 Question 9 provides information about how your congregation manages and utilizes its endowment and investment accounts. The following
 definitions may assist you as you complete this section:
-• "Dollar amount drawn for use" = how much money the church took out for operations in the reporting year.
+• "Dollar amount drawn for use" = how much money the parish took out for operations in the reporting year.
 • "Percentage draw" = amount withdrawn / market value at end of prior year.
 • Net gains/losses = dividends + interest + realized + unrealized gains/losses - investment fees.
 
 9.- Does your congregation have an endowment or other investment account(s)?  [ ] Yes   [ ] No
- Select Yes if your church holds any endowments or investment accounts—restricted or unrestricted—that
+ Select Yes if your parish holds any endowments or investment accounts—restricted or unrestricted—that
  generate income, gains, or dividends. Select No if you do not have any such accounts.
 
  9a. List your financial assets. (Numeric responses)
@@ -365,7 +365,7 @@ definitions may assist you as you complete this section:
                                              ______________ Total Investments
 
 9b. What was the percentage draw (the percentage withdrawn for use) i n 20__?   ______________
- Enter the percentage of the investment balance (from the end of 2024) that the church withdrew during 2025.
+ Enter the percentage of the investment balance (from the end of 2024) that the parish withdrew during 2025.
  Formula:
   (Dollar amount withdrawn / market value at end of prior year) Å~ 100
   If nothing was withdrawn, enter 0.
@@ -382,7 +382,7 @@ Page | 7
        Operating             ______________
         Funds used for day-to-day ministry or operating expenses.
         This amount should have been reported on Line 6
-        (Church Non-Capital Expenses).
+        (Parish Non-Capital Expenses).
        Non-operating/capital           ______________
         Funds used for capital projects, property improvements,
         or other non-operating purposes.
@@ -398,18 +398,18 @@ Page | 7
   • Minus investment fees
   This number may be positive or negative.
 
-Example E: St. Francis Church has an endowment fund whose market value at the end of 2024 was $100,000.
-The church has no other endowments or investment accounts. In 2025, the church withdrew and used $5,000
-from the endowment fund. The church reports $5,000 on line 9c. The church's percentage draw reported on line
+Example E: St. Francis Parish has an endowment fund whose market value at the end of 2024 was $100,000.
+The parish has no other endowments or investment accounts. In 2025, the parish withdrew and used $5,000
+from the endowment fund. The parish reports $5,000 on line 9c. The parish's percentage draw reported on line
 9b is 5% ($5,000 ÷ $100,000).
 
 Example E (continued): In 2025, St. Francis' endowment fund receives dividends of $500 and interest payments
-of $250. Total realized gains on investments were $1,000, and unrealized gains were $1,500. The church paid
-investment fees of $100. The church's net gain/loss on investments, reported on line 9d, is $3,150 ($500 + $250 + $1,000 + $1,500 - $100).
+of $250. Total realized gains on investments were $1,000, and unrealized gains were $1,500. The parish paid
+investment fees of $100. The parish's net gain/loss on investments, reported on line 9d, is $3,150 ($500 + $250 + $1,000 + $1,500 - $100).
 
 10.- Does your congregation have any outstanding debt, including credit card debt?    [ ] YES  [ ] NO
- Select Yes if your church owes money to any lender (bank loans, mortgages, lines of credit, etc.). Select No if the
- church has no debt.
+ Select Yes if your parish owes money to any lender (bank loans, mortgages, lines of credit, etc.). Select No if the
+ parish has no debt.
 
 10a. How much?                     ______________
  Enter the total outstanding principal owed at year-end (numeric only).
@@ -421,7 +421,7 @@ investment fees of $100. The church's net gain/loss on investments, reported on 
  _________________________________________________________________________________________________
 
 11.- Does your congregation own buildings and/or land?              [ ] Yes              [ ] No
- Select Yes if the church owns any property—buildings or land—whether used for worship, ministry, rental, or
+ Select Yes if the parish owns any property—buildings or land—whether used for worship, ministry, rental, or
  other purposes. Select No only if the congregation rents or borrows all of its space. Note: Property legally held in
  trust by your diocese should still be considered owned.
 
@@ -433,7 +433,7 @@ investment fees of $100. The church's net gain/loss on investments, reported on 
  outside groups. Report only direct rental or leasing activities here. Do not include fundraising events or unrelated
  use of space.
 
- 12a. How much revenue did your church earn from renting/leasing to outside groups?       ______________
+ 12a. How much revenue did your parish earn from renting/leasing to outside groups?       ______________
   Enter the total amount received during the reporting year from rental or leasing arrangements with outside
   groups. This includes:
    • Rental fees
@@ -451,7 +451,7 @@ Page | 8
                           _______________________________________________________________________________
 (Page header) Congregation                         City                                      Diocese                                    Page 8
 
- 12b. What expenses did your church incur from renting/leasing to outside groups?      ______________
+ 12b. What expenses did your parish incur from renting/leasing to outside groups?      ______________
   Enter the total expenses your congregation incurred specifically because of rental or leasing activities.
   Examples include:
    • Cleaning or janitorial services
@@ -461,7 +461,7 @@ Page | 8
    • Administrative costs tied to managing rentals
   If the rental activity required major repairs or improvements, include those capital expenses here as well.
   Where this amount is reported elsewhere:
-   • Operating (non-capital) rental expenses → Line 6 - Church Non-Capital Expenses
+   • Operating (non-capital) rental expenses → Line 6 - Parish Non-Capital Expenses
    • Capital expenses related to rental activity → Line 7 - Capital Expenses
 
 Page footer
@@ -481,8 +481,8 @@ ________________________________________________________________________________
 _________________________________________________________________________________________________
 _________________________________________________________________________________________________
 
-14.- What is one program or initiative at your Church that you feel best exemplifies your congregation?
- This short answer question helps us recognize the church at work every day. This question is optional.
+14.- What is one program or initiative at your Parish that you feel best exemplifies your congregation?
+ This short answer question helps us recognize the parish at work every day. This question is optional.
 
 _________________________________________________________________________________________________
 _________________________________________________________________________________________________
@@ -490,7 +490,7 @@ ________________________________________________________________________________
 _________________________________________________________________________________________________
 _________________________________________________________________________________________________
 
-15.-  What is one program or initiative at your Church that represents your hope for the future of your congregation or the
+15.-  What is one program or initiative at your Parish that represents your hope for the future of your congregation or the
  greater Episcopal Church?
  This short answer question helps us celebrate your accomplishments and goals. This question is optional.
 

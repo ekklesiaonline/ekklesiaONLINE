@@ -13,18 +13,18 @@ The target schema (`ekklesiaonline.sql`) represents a **v2 architectural overhau
 
 | Change | Details |
 |--------|---------|
-| `churches` → `parish` | Rename + expanded address fields, logo, tax_id |
+| `parishes` → `parish` | Rename + expanded address fields, logo, tax_id |
 | `profile` → `person` | Massive restructure: address → `person_address`, contacts → `person_contact`, membership → `parish_affiliation` |
-| `member_church_affiliations` → `parish_affiliation` | New status enum, new fields |
-| `families` → `family` | Rename, soft-delete, remove `church_id` |
+| `member_parish_affiliations` → `parish_affiliation` | New status enum, new fields |
+| `families` → `family` | Rename, soft-delete, remove `parish_id` |
 | `family_members` → `family_member` | Rename, `user_id` → `person_id` |
 | `services` → `service` | Rename, `date` → `service_date`, `time` → `service_time` |
 | `donations` → `donation` | Rename, add `person_id` |
 | `attendance` | Same name, adds `parish_id` + `person_id` |
-| All `church_*` tables | Renamed to `parish_*` |
+| All `parish_*` tables | Renamed to `parish_*` |
 | New user–person bridge | New `user_person` table (was implicit via `profile.user_id`) |
 | ~50 new tables | Banking, clergy, communication, facilities, governance, reporting |
-| ~20 tables dropped | `church_people`, `service_metrics`, `worship_songs`, old followup tables, etc. |
+| ~20 tables dropped | `parish_people`, `service_metrics`, `worship_songs`, old followup tables, etc. |
 
 **Critical invariant:** The application code (controllers, models, views) must be updated **in lockstep** with each phase — the database alone cannot be migrated atomically.
 
@@ -36,11 +36,11 @@ The target schema (`ekklesiaonline.sql`) represents a **v2 architectural overhau
 
 | Current Table | Target Table | Breaking Changes |
 |--------------|-------------|-----------------|
-| `churches` | `parish` | Add: logo, image, street, mailing_*, county, tax_id; Remove: none |
-| `church_settings` | `parish_setting` | Minor: schema compatible |
-| `church_integrations` | `parish_integration` | Compatible |
-| `church_provider_credentials` | `parish_provider_credential` | Compatible |
-| `church_role_audit_logs` | `parish_role_audit_log` | Compatible |
+| `parishes` | `parish` | Add: logo, image, street, mailing_*, county, tax_id; Remove: none |
+| `parish_settings` | `parish_setting` | Minor: schema compatible |
+| `parish_integrations` | `parish_integration` | Compatible |
+| `parish_provider_credentials` | `parish_provider_credential` | Compatible |
+| `parish_role_audit_logs` | `parish_role_audit_log` | Compatible |
 | `audit_logs` | `audit_log` | Significant field changes |
 | `user_sessions` | `user_session` | Compatible |
 | `call_tasks` | `call_task` | Compatible (minor) |
@@ -53,26 +53,26 @@ The target schema (`ekklesiaonline.sql`) represents a **v2 architectural overhau
 | `event_calendars` | `event_calendar` | Add `diocese_id`, `scope_level` |
 | `event_registrations` | `event_registration` | Add `person_id`, `guest_id`; restructured status fields |
 | `event_attachments` | `event_attachment` | Compatible (minor field changes) |
-| `families` | `family` | Remove `church_id`; add `deleted_at` |
+| `families` | `family` | Remove `parish_id`; add `deleted_at` |
 | `family_members` | `family_member` | `user_id` → `person_id`; add `updated_at` |
 | `services` | `service` | `date` → `service_date`; `time` → `service_time`; many fields removed |
 | `donations` | `donation` | Add `person_id`; rename table |
 | `funds` | `fund` | Compatible |
-| `church_budgets` | `parish_budget` | Restructured around `chart_account_id` |
-| `church_report_storage` | `parish_report` | Restructured |
+| `parish_budgets` | `parish_budget` | Restructured around `chart_account_id` |
+| `parish_report_storage` | `parish_report` | Restructured |
 
 ### 2.2 Heavily Restructured Tables (require data migration)
 
 | Current | Target | Migration Notes |
 |---------|--------|----------------|
 | `profile` | `person` + `person_address` + `person_contact` | First/last name, email, phone, birthdate stay. Address → `person_address`. Additional contacts → `person_contact`. |
-| `member_church_affiliations` | `parish_affiliation` | Status enum changes: `active/inactive/visitor/pending/regular_attender` → `guest/attendee/member/inactive/transferred/deceased` |
+| `member_parish_affiliations` | `parish_affiliation` | Status enum changes: `active/inactive/visitor/pending/regular_attender` → `guest/attendee/member/inactive/transferred/deceased` |
 
 ### 2.3 Tables Removed (no target equivalent)
 
 | Dropped Table | Reason |
 |--------------|--------|
-| `church_people` | Replaced by `parish_affiliation` + `person` |
+| `parish_people` | Replaced by `parish_affiliation` + `person` |
 | `service_metrics` | Replaced by `diocesan_sunday_service_metric` aggregates |
 | `service_people` | Functionality absorbed into attendance |
 | `service_sacramental_counts` | Replaced by `sacramental_record` |
@@ -103,7 +103,7 @@ The target schema (`ekklesiaonline.sql`) represents a **v2 architectural overhau
 | `bank_transaction` | Raw bank transactions |
 | `bank_transaction_journal_link` | Transaction ↔ journal linkage |
 | `campaign_delivery_event` | Communication delivery events |
-| `church_role_catalog` | Role definitions catalog |
+| `parish_role_catalog` | Role definitions catalog |
 | `clergy_appointment` | Clergy appointment tracking |
 | `clergy_license_document` | License documents |
 | `communication_campaign` | Email/SMS campaigns |
@@ -126,7 +126,7 @@ The target schema (`ekklesiaonline.sql`) represents a **v2 architectural overhau
 | `ministry` + `ministry_role` | Ministry teams |
 | `notification` + `notification_recipient` | In-app notifications |
 | `organisation_setting` | Org-wide settings |
-| `parish_affiliation` | Replaces `member_church_affiliations` (new) |
+| `parish_affiliation` | Replaces `member_parish_affiliations` (new) |
 | `parish_user_role` | Explicit role ↔ parish ↔ user mapping |
 | `password_reset` | Password reset tokens |
 | `period_close_batch` | Accounting period close |
@@ -238,7 +238,7 @@ SELECT user_id, id, 1, created_at FROM profile;
 -- Backfill attendance.person_id
 UPDATE attendance a
 INNER JOIN profile p ON p.user_id = a.user_id
-SET a.person_id = p.id, a.parish_id = p.church_id;
+SET a.person_id = p.id, a.parish_id = p.parish_id;
 ```
 
 Migration file: `app/Database/Migrations/2026_05_08_030000_Phase3_CreatePersonAndBackfill.php`
@@ -253,18 +253,18 @@ Migration file: `app/Database/Migrations/2026_05_08_030000_Phase3_CreatePersonAn
 
 **Execution order (rename one at a time with code updates):**
 
-#### 4a. `churches` → `parish`
-- Update: `ChurchModel`, `ProfileModel`, `ChurchPeopleModel`, all controllers using church queries
-- Rename table; update all `church_id` references that need to become `parish_id`
+#### 4a. `parishes` → `parish`
+- Update: `ParishModel`, `ProfileModel`, `ParishPeopleModel`, all controllers using parish queries
+- Rename table; update all `parish_id` references that need to become `parish_id`
 
-#### 4b. `church_settings` → `parish_setting`
-- Update: `ChurchSettingModel`, all settings-reading code
+#### 4b. `parish_settings` → `parish_setting`
+- Update: `ParishSettingModel`, all settings-reading code
 
-#### 4c. `church_integrations` → `parish_integration`
-- Update: `ChurchIntegrationModel`
+#### 4c. `parish_integrations` → `parish_integration`
+- Update: `ParishIntegrationModel`
 
-#### 4d. `church_role_audit_logs` → `parish_role_audit_log`
-- Update: `ChurchRoleAuditLogModel`, `MemberMergeService`
+#### 4d. `parish_role_audit_logs` → `parish_role_audit_log`
+- Update: `ParishRoleAuditLogModel`, `MemberMergeService`
 
 #### 4e. `audit_logs` → `audit_log`
 - Update: `AuditLogModel`, all audit logging calls
@@ -297,9 +297,9 @@ Migration file: `app/Database/Migrations/2026_05_08_030000_Phase3_CreatePersonAn
 
 **Use MySQL RENAME TABLE (atomic):**
 ```sql
-RENAME TABLE churches TO parish,
-             church_settings TO parish_setting,
-             church_integrations TO parish_integration,
+RENAME TABLE parishes TO parish,
+             parish_settings TO parish_setting,
+             parish_integrations TO parish_integration,
              ...;
 ```
 
@@ -307,11 +307,11 @@ Migration file: `app/Database/Migrations/2026_05_08_040000_Phase4_RenameCoreTabl
 
 ---
 
-### Phase 5 — Migrate `member_church_affiliations` → `parish_affiliation` (HIGH RISK)
+### Phase 5 — Migrate `member_parish_affiliations` → `parish_affiliation` (HIGH RISK)
 
 **Risk:** 🔴 High — status enum changes break existing membership logic  
 **Downtime:** Required  
-**Code changes:** All code referencing `member_church_affiliations` and its status values
+**Code changes:** All code referencing `member_parish_affiliations` and its status values
 
 Status enum mapping:
 | Old status | New status |
@@ -327,7 +327,7 @@ INSERT INTO parish_affiliation
   (parish_id, person_id, linked_user_id, affiliation_type, membership_status, 
    is_member, is_good_standing, start_date, created_at, updated_at)
 SELECT 
-  mca.church_id,
+  mca.parish_id,
   p.id AS person_id,
   mca.user_id,
   CASE 
@@ -347,7 +347,7 @@ SELECT
   mca.start_date,
   mca.created_at,
   mca.updated_at
-FROM member_church_affiliations mca
+FROM member_parish_affiliations mca
 INNER JOIN profile p ON p.user_id = mca.user_id;
 ```
 
@@ -363,8 +363,8 @@ Migration file: `app/Database/Migrations/2026_05_08_050000_Phase5_MigrateAffilia
 
 Tables to drop:
 - `profile` (data in `person` + `person_address` + `person_contact`)
-- `member_church_affiliations` (data in `parish_affiliation`)
-- `church_people` (data in `parish_affiliation`)
+- `member_parish_affiliations` (data in `parish_affiliation`)
+- `parish_people` (data in `parish_affiliation`)
 - `service_metrics`, `service_people`, `service_sacramental_counts`
 - `worship_songs`, `service_worship_items`
 - `followup_sequences`, `followup_templates`, `followup_actions`
@@ -420,7 +420,7 @@ Before executing Phase 4, grep the codebase for every reference to renamed table
 
 ```bash
 # Tables being renamed
-grep -r "churches\|church_settings\|church_integrations\|audit_logs\|user_sessions\|volunteer_teams\|team_members\|family_members\|annual_pledges\|call_tasks\|guest_followup_log\|member_church_affiliations" \
+grep -r "parishes\|parish_settings\|parish_integrations\|audit_logs\|user_sessions\|volunteer_teams\|team_members\|family_members\|annual_pledges\|call_tasks\|guest_followup_log\|member_parish_affiliations" \
   app/ Pastor/ MemberPortal/ Diocesan/ Province/ Worship/ Treasurer/ Volunteer/ \
   --include="*.php" -l | sort -u
 ```

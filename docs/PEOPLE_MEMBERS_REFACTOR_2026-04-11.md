@@ -4,17 +4,17 @@
 
 This refactor separates the domain of **People** from **Members**:
 
-- **People** = every church-affiliated user profile (portal and non-portal).
-- **Members** = people explicitly tagged as church members (`is_member = 1`).
-- Attendance registration is restricted to active church members only.
+- **People** = every parish-affiliated user profile (portal and non-portal).
+- **Members** = people explicitly tagged as parish members (`is_member = 1`).
+- Attendance registration is restricted to active parish members only.
 
 ## Data Model Changes
 
 ### 1) Member Tag at Affiliation Level
 
-Migration: `app/Database/Migrations/2026_04_11_000003_AddIsMemberToMemberChurchAffiliations.php`
+Migration: `app/Database/Migrations/2026_04_11_000003_AddIsMemberToMemberParishAffiliations.php`
 
-Added to `member_church_affiliations`:
+Added to `member_parish_affiliations`:
 
 - `is_member TINYINT(1) NOT NULL DEFAULT 1`
 
@@ -24,20 +24,20 @@ Backfill:
 
 Index:
 
-- `idx_mca_church_member_active (church_id, is_member, active)`
+- `idx_mca_parish_member_active (parish_id, is_member, active)`
 
-### 2) Church People Registry Table
+### 2) Parish People Registry Table
 
-Migration: `app/Database/Migrations/2026_04_11_000004_CreateChurchPeople.php`
+Migration: `app/Database/Migrations/2026_04_11_000004_CreateParishPeople.php`
 
-Created table: `church_people`
+Created table: `parish_people`
 
-- church-scoped registry snapshot for users/profile/affiliation status and portal/member badges
-- unique key on `(church_id, user_id)`
+- parish-scoped registry snapshot for users/profile/affiliation status and portal/member badges
+- unique key on `(parish_id, user_id)`
 
 Primary fields:
 
-- identity: `church_id`, `user_id`, `profile_id`
+- identity: `parish_id`, `user_id`, `profile_id`
 - display/profile: `first_name`, `last_name`, `email`, `phone`
 - classification: `portal_access`, `membership_status`, `is_member`, `is_good_standing`
 - sync metadata: `source`, `synced_at`, `created_at`, `updated_at`
@@ -46,7 +46,7 @@ Primary fields:
 
 ### 1) Affiliation Model Enhanced
 
-File: `app/Models/MemberChurchAffiliationModel.php`
+File: `app/Models/MemberParishAffiliationModel.php`
 
 Added capabilities:
 
@@ -54,8 +54,8 @@ Added capabilities:
 - member-only filtering by default in member-focused queries
 - explicit methods:
 
-  - `setMemberTag(int $userId, int $churchId, bool $isMember)`
-  - `isRecordableMember(int $userId, int $churchId)`
+  - `setMemberTag(int $userId, int $parishId, bool $isMember)`
+  - `isRecordableMember(int $userId, int $parishId)`
 
 ### 2) Non-Portal Provisioning Classification
 
@@ -73,11 +73,11 @@ Result:
 
 ### 3) People Registry Sync Service
 
-File: `app/Services/ChurchPeopleRegistryService.php`
+File: `app/Services/ParishPeopleRegistryService.php`
 
 Purpose:
 
-- refresh `church_people` from shield users + profile + affiliations + standing summary.
+- refresh `parish_people` from shield users + profile + affiliations + standing summary.
 - used by People MVC to keep view state current.
 
 ## New MVC: People
@@ -88,7 +88,7 @@ File: `Pastor/Controllers/People.php`
 
 Implemented:
 
-- `index()` list/filter/paginate all people from `church_people`
+- `index()` list/filter/paginate all people from `parish_people`
 - `toggleMemberTag($userId)` marks or removes member tag on active affiliation
 
 ### View
@@ -161,7 +161,7 @@ File: `app/Controllers/AttendanceController.php`
 Search and recordability now enforce member-tag rules:
 
 - search list includes only active tagged members
-- record validation uses `MemberChurchAffiliationModel::isRecordableMember()`
+- record validation uses `MemberParishAffiliationModel::isRecordableMember()`
 
 ## Metrics Alignment
 
@@ -169,7 +169,7 @@ File: `app/Libraries/PeopleMetricsService.php`
 
 Adjusted semantics:
 
-- `total_people` now reflects church-affiliated users only (portal + non-portal users)
+- `total_people` now reflects parish-affiliated users only (portal + non-portal users)
 - members counts remain member-tag driven
 - good standing counts restricted to tagged active members
 
@@ -181,12 +181,12 @@ Adjusted semantics:
 
 1. Run on-demand sync when needed:
 
-- `php spark church-people:sync`
-- `php spark church-people:sync --church 9`
+- `php spark parish-people:sync`
+- `php spark parish-people:sync --parish 9`
 
 1. Configure background schedule (cron):
 
-- use `build/cron_sync_church_people.sh` from your scheduler (recommended every 5-10 minutes).
+- use `build/cron_sync_parish_people.sh` from your scheduler (recommended every 5-10 minutes).
 
 1. Validate flows:
 

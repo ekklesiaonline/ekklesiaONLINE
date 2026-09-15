@@ -63,7 +63,7 @@ $mailingDiffersOffUrl = base_url('parish_list?' . http_build_query($chipParams))
         <i class="bi bi-signpost-split"></i> <?= lang('Parishes.filterChipMailingDiffers') ?>
     </a>
     <?php if (($isDiocesanAdmin ?? false)): ?>
-        <button type="button" class="btn btn-outline-danger" id="bulkDeleteChurchesBtn" disabled title="<?= esc(lang('Parishes.bulkDeleteSelected')) ?>">
+        <button type="button" class="btn btn-outline-danger" id="bulkDeleteParishesBtn" disabled title="<?= esc(lang('Parishes.bulkDeleteSelected')) ?>">
             <i class="bi bi-trash3"></i>
         </button>
     <?php endif; ?>
@@ -74,12 +74,12 @@ $mailingDiffersOffUrl = base_url('parish_list?' . http_build_query($chipParams))
     <div class="card-header d-flex align-items-center justify-content-end filter-panel-header">
         <button class="btn btn-outline-secondary btn-sm" type="button"
             data-bs-toggle="collapse"
-            data-bs-target="#churchFilterPanel"
+            data-bs-target="#parishFilterPanel"
             aria-expanded="<?= $filtersActive ? 'true' : 'false' ?>">
             <i class="bi bi-funnel"></i> <?= lang('App.filter') ?>
         </button>
     </div>
-    <div id="churchFilterPanel" class="collapse <?= $filtersActive ? 'show' : '' ?>">
+    <div id="parishFilterPanel" class="collapse <?= $filtersActive ? 'show' : '' ?>">
         <div class="card-body border-top">
             <form method="get" action="<?= base_url('parish_list') ?>" class="row g-2 align-items-end">
                 <!-- Search -->
@@ -221,15 +221,15 @@ $mailingDiffersOffUrl = base_url('parish_list?' . http_build_query($chipParams))
 
 <div class="card">
     <div class="card-body">
-        <?php if (empty($churches)): ?>
-            <p class="text-muted mb-0"><?= lang('Parishes.textNoChurchesFound') ?></p>
+        <?php if (empty($parishes)): ?>
+            <p class="text-muted mb-0"><?= lang('Parishes.textNoParishesFound') ?></p>
         <?php else: ?>
             <div class="table-responsive">
                 <table class="table table-hover align-middle">
                     <thead>
                         <tr>
                             <?php if (($isDiocesanAdmin ?? false)): ?>
-                                <th style="width: 40px;"><input type="checkbox" id="selectAllChurches" class="form-check-input"></th>
+                                <th style="width: 40px;"><input type="checkbox" id="selectAllParishes" class="form-check-input"></th>
                             <?php endif; ?>
                             <th><?= lang('App.colName') ?></th>
                             <th><?= lang('App.colParishUeid') ?></th>
@@ -240,21 +240,21 @@ $mailingDiffersOffUrl = base_url('parish_list?' . http_build_query($chipParams))
                         </tr>
                     </thead>
                     <tbody>
-                        <?php foreach ($churches as $parish): ?>
+                        <?php foreach ($parishes as $parish): ?>
                             <tr>
                                 <?php if (($isDiocesanAdmin ?? false)): ?>
                                     <td>
                                         <input
                                             type="checkbox"
-                                            class="form-check-input church-checkbox"
+                                            class="form-check-input parish-checkbox"
                                             value="<?= (int) $parish['id'] ?>"
-                                            data-church-name="<?= esc((string) ($parish['name'] ?? ''), 'attr') ?>"
-                                            <?= (int) $parish['id'] === $selectedChurchId ? 'disabled' : '' ?>>
+                                            data-parish-name="<?= esc((string) ($parish['name'] ?? ''), 'attr') ?>"
+                                            <?= (int) $parish['id'] === $selectedParishId ? 'disabled' : '' ?>>
                                     </td>
                                 <?php endif; ?>
                                 <td>
                                     <strong><?= esc((string) ($parish['name'] ?? '')) ?></strong>
-                                    <?php if ((int) $parish['id'] === $selectedChurchId): ?>
+                                    <?php if ((int) $parish['id'] === $selectedParishId): ?>
                                         <span class="badge border border-primary text-primary fw-normal ms-2"><?= lang('Parishes.textCurrent') ?></span>
                                     <?php endif; ?>
                                     <?php if ($isSystemAdmin && !empty($parish['diocese_name'])): ?>
@@ -290,14 +290,14 @@ $mailingDiffersOffUrl = base_url('parish_list?' . http_build_query($chipParams))
                                                     <i class="bi bi-people me-2"></i><?= lang('Parishes.btn_staff') ?>
                                                 </a>
                                             </li>
-                                            <?php if (($isDiocesanAdmin ?? false) && (int) $parish['id'] !== $selectedChurchId): ?>
+                                            <?php if (($isDiocesanAdmin ?? false) && (int) $parish['id'] !== $selectedParishId): ?>
                                                 <li>
                                                     <hr class="dropdown-divider">
                                                 </li>
                                                 <li>
                                                     <button class="dropdown-item text-danger"
                                                         type="button"
-                                                        onclick="deleteChurch(<?= (int) $parish['id'] ?>, '<?= esc((string) ($parish['name'] ?? ''), 'js') ?>')">
+                                                        onclick="deleteParish(<?= (int) $parish['id'] ?>, '<?= esc((string) ($parish['name'] ?? ''), 'js') ?>')">
                                                         <i class="bi bi-trash3 me-2"></i><?= lang('Parishes.btn_delete') ?>
                                                     </button>
                                                 </li>
@@ -347,20 +347,20 @@ if ($filterMailingDiffers)   $paginationBase .= '&mailing_differs=1';
     </nav>
 <?php endif; ?>
 <?php if (($isDiocesanAdmin ?? false)): ?>
-    <div class="modal fade" id="deleteChurchImpactModal" tabindex="-1" aria-hidden="true">
+    <div class="modal fade" id="deleteParishImpactModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="deleteChurchImpactTitle"><?= lang('Parishes.textDeleteImpactTitle') ?></h5>
+                    <h5 class="modal-title" id="deleteParishImpactTitle"><?= lang('Parishes.textDeleteImpactTitle') ?></h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <p class="mb-2" id="deleteChurchImpactIntro"></p>
-                    <div id="deleteChurchImpactLoading" class="text-muted small mb-2"><?= lang('Parishes.textLoadingDeleteImpact') ?></div>
-                    <ul class="list-group list-group-flush" id="deleteChurchImpactList"></ul>
+                    <p class="mb-2" id="deleteParishImpactIntro"></p>
+                    <div id="deleteParishImpactLoading" class="text-muted small mb-2"><?= lang('Parishes.textLoadingDeleteImpact') ?></div>
+                    <ul class="list-group list-group-flush" id="deleteParishImpactList"></ul>
                     <div class="form-check mt-3">
-                        <input class="form-check-input" type="checkbox" id="deleteChurchPurgeNullableRefs">
-                        <label class="form-check-label" for="deleteChurchPurgeNullableRefs">
+                        <input class="form-check-input" type="checkbox" id="deleteParishPurgeNullableRefs">
+                        <label class="form-check-label" for="deleteParishPurgeNullableRefs">
                             <?= lang('Parishes.textDeletePurgeNullableRefsOption') ?>
                         </label>
                         <div class="small text-muted mt-1"><?= lang('Parishes.textDeletePurgeNullableRefsHelp') ?></div>
@@ -372,13 +372,13 @@ if ($filterMailingDiffers)   $paginationBase .= '&mailing_differs=1';
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal"><?= lang('Parishes.btn_cancel') ?></button>
-                    <button type="button" class="btn btn-danger" id="confirmDeleteChurchBtn"><?= lang('Parishes.btn_confirmDeleteChurch') ?></button>
+                    <button type="button" class="btn btn-danger" id="confirmDeleteParishBtn"><?= lang('Parishes.btn_confirmDeleteParish') ?></button>
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="modal fade" id="bulkDeleteChurchesModal" tabindex="-1" aria-hidden="true">
+    <div class="modal fade" id="bulkDeleteParishesModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-lg modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
@@ -386,37 +386,37 @@ if ($filterMailingDiffers)   $paginationBase .= '&mailing_differs=1';
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <p class="fw-semibold mb-2" id="bulkDeleteChurchesSummary"></p>
+                    <p class="fw-semibold mb-2" id="bulkDeleteParishesSummary"></p>
                     <div class="alert alert-warning py-2 mb-3"><?= lang('Parishes.textDeleteImpactWarning') ?></div>
                     <div class="form-check mb-3">
-                        <input class="form-check-input" type="checkbox" id="bulkDeleteChurchesPurgeNullableRefs">
-                        <label class="form-check-label" for="bulkDeleteChurchesPurgeNullableRefs"><?= lang('Parishes.textDeletePurgeNullableRefsOption') ?></label>
+                        <input class="form-check-input" type="checkbox" id="bulkDeleteParishesPurgeNullableRefs">
+                        <label class="form-check-label" for="bulkDeleteParishesPurgeNullableRefs"><?= lang('Parishes.textDeletePurgeNullableRefsOption') ?></label>
                         <div class="small text-muted mt-1"><?= lang('Parishes.textDeletePurgeNullableRefsHelp') ?></div>
                         <div class="small text-info mt-1"><?= lang('Parishes.textDeletePurgeNullableRefsRecommended') ?></div>
                     </div>
-                    <label class="form-label" for="bulkDeleteChurchesReasonInput"><?= lang('App.bulkDeleteReasonLabel') ?></label>
-                    <textarea id="bulkDeleteChurchesReasonInput" class="form-control" rows="3" maxlength="500" placeholder="<?= esc(lang('App.bulkDeleteReasonPlaceholder')) ?>" aria-describedby="bulkDeleteChurchesReasonFeedback"></textarea>
-                    <div id="bulkDeleteChurchesReasonFeedback" class="invalid-feedback"></div>
+                    <label class="form-label" for="bulkDeleteParishesReasonInput"><?= lang('App.bulkDeleteReasonLabel') ?></label>
+                    <textarea id="bulkDeleteParishesReasonInput" class="form-control" rows="3" maxlength="500" placeholder="<?= esc(lang('App.bulkDeleteReasonPlaceholder')) ?>" aria-describedby="bulkDeleteParishesReasonFeedback"></textarea>
+                    <div id="bulkDeleteParishesReasonFeedback" class="invalid-feedback"></div>
                     <div class="small text-muted mt-1"><?= lang('App.bulkDeleteReasonHelp') ?></div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><?= lang('App.cancel') ?></button>
-                    <button type="button" class="btn btn-danger" id="confirmBulkDeleteChurchesBtn"><?= lang('App.delete') ?></button>
+                    <button type="button" class="btn btn-danger" id="confirmBulkDeleteParishesBtn"><?= lang('App.delete') ?></button>
                 </div>
             </div>
         </div>
     </div>
 
     <script>
-        const deleteChurchUnableLabel = <?= json_encode(lang('Parishes.textUnableDeleteChurch')) ?>;
-        const deleteChurchUnexpectedLabel = <?= json_encode(lang('Parishes.textUnexpectedError')) ?>;
-        const deleteChurchImpactIntroTemplate = <?= json_encode(lang('Parishes.textDeleteImpactIntro', ['{name}'])) ?>;
+        const deleteParishUnableLabel = <?= json_encode(lang('Parishes.textUnableDeleteParish')) ?>;
+        const deleteParishUnexpectedLabel = <?= json_encode(lang('Parishes.textUnexpectedError')) ?>;
+        const deleteParishImpactIntroTemplate = <?= json_encode(lang('Parishes.textDeleteImpactIntro', ['{name}'])) ?>;
         const deleteImpactLoadFailedLabel = <?= json_encode(lang('Parishes.textUnableLoadDeleteImpact')) ?>;
         const impactLabelMembers = <?= json_encode(lang('Parishes.impactMembers')) ?>;
         const impactLabelProfilesSetNull = <?= json_encode(lang('Parishes.impactProfilesSetNull')) ?>;
         const impactLabelProfilesDeleted = <?= json_encode(lang('Parishes.impactProfilesDeleted')) ?>;
-        const impactLabelRoleAuditLogsSetNull = <?= json_encode(lang('Parishes.impactChurchRoleAuditLogsSetNull')) ?>;
-        const impactLabelRoleAuditLogsDeleted = <?= json_encode(lang('Parishes.impactChurchRoleAuditLogsDeleted')) ?>;
+        const impactLabelRoleAuditLogsSetNull = <?= json_encode(lang('Parishes.impactParishRoleAuditLogsSetNull')) ?>;
+        const impactLabelRoleAuditLogsDeleted = <?= json_encode(lang('Parishes.impactParishRoleAuditLogsDeleted')) ?>;
         const impactLabelDonations = <?= json_encode(lang('Parishes.impactDonations')) ?>;
         const impactLabelServices = <?= json_encode(lang('Parishes.impactServices')) ?>;
         const impactLabelAttendance = <?= json_encode(lang('Parishes.impactAttendance')) ?>;
@@ -426,8 +426,8 @@ if ($filterMailingDiffers)   $paginationBase .= '&mailing_differs=1';
         const impactLabelExpenses = <?= json_encode(lang('Parishes.impactExpenses')) ?>;
         const impactLabelFamilies = <?= json_encode(lang('Parishes.impactFamilies')) ?>;
         const impactLabelTeams = <?= json_encode(lang('Parishes.impactVolunteerTeams')) ?>;
-        const bulkDeleteChurchesConfirm = <?= json_encode(lang('Parishes.bulkDeleteConfirm')) ?>;
-        const bulkDeleteChurchesEmpty = <?= json_encode(lang('Diocesan.bulkDeleteSelectAtLeastOne')) ?>;
+        const bulkDeleteParishesConfirm = <?= json_encode(lang('Parishes.bulkDeleteConfirm')) ?>;
+        const bulkDeleteParishesEmpty = <?= json_encode(lang('Diocesan.bulkDeleteSelectAtLeastOne')) ?>;
         const bulkDeleteReasonRequiredMsg = <?= json_encode(lang('App.bulkDeleteReasonRequired')) ?>;
 
         function contractErrorMessage(data, fallback) {
@@ -444,22 +444,22 @@ if ($filterMailingDiffers)   $paginationBase .= '&mailing_differs=1';
             return code ? `${message} (${code})` : message;
         }
 
-        const deleteImpactModalEl = document.getElementById('deleteChurchImpactModal');
+        const deleteImpactModalEl = document.getElementById('deleteParishImpactModal');
         let deleteImpactModal = null;
-        const deleteImpactList = document.getElementById('deleteChurchImpactList');
-        const deleteImpactIntro = document.getElementById('deleteChurchImpactIntro');
-        const deleteImpactLoading = document.getElementById('deleteChurchImpactLoading');
-        const confirmDeleteChurchBtn = document.getElementById('confirmDeleteChurchBtn');
-        const deleteChurchPurgeNullableRefs = document.getElementById('deleteChurchPurgeNullableRefs');
-        const bulkDeleteChurchesModalEl = document.getElementById('bulkDeleteChurchesModal');
-        const bulkDeleteChurchesReasonInput = document.getElementById('bulkDeleteChurchesReasonInput');
-        const bulkDeleteChurchesPurgeNullableRefs = document.getElementById('bulkDeleteChurchesPurgeNullableRefs');
-        const bulkDeleteChurchesSummary = document.getElementById('bulkDeleteChurchesSummary');
+        const deleteImpactList = document.getElementById('deleteParishImpactList');
+        const deleteImpactIntro = document.getElementById('deleteParishImpactIntro');
+        const deleteImpactLoading = document.getElementById('deleteParishImpactLoading');
+        const confirmDeleteParishBtn = document.getElementById('confirmDeleteParishBtn');
+        const deleteParishPurgeNullableRefs = document.getElementById('deleteParishPurgeNullableRefs');
+        const bulkDeleteParishesModalEl = document.getElementById('bulkDeleteParishesModal');
+        const bulkDeleteParishesReasonInput = document.getElementById('bulkDeleteParishesReasonInput');
+        const bulkDeleteParishesPurgeNullableRefs = document.getElementById('bulkDeleteParishesPurgeNullableRefs');
+        const bulkDeleteParishesSummary = document.getElementById('bulkDeleteParishesSummary');
 
-        let pendingDeleteChurchId = null;
-        let pendingDeleteChurchName = '';
+        let pendingDeleteParishId = null;
+        let pendingDeleteParishName = '';
         let currentDeleteImpact = null;
-        let pendingBulkDeleteChurchIds = [];
+        let pendingBulkDeleteParishIds = [];
 
         function getDeleteImpactModal() {
             if (deleteImpactModal) {
@@ -497,11 +497,11 @@ if ($filterMailingDiffers)   $paginationBase .= '&mailing_differs=1';
                 deleteImpactLoading.style.display = 'block';
                 deleteImpactLoading.textContent = <?= json_encode(lang('Parishes.textLoadingDeleteImpact')) ?>;
             }
-            if (confirmDeleteChurchBtn) {
-                confirmDeleteChurchBtn.disabled = true;
+            if (confirmDeleteParishBtn) {
+                confirmDeleteParishBtn.disabled = true;
             }
-            if (deleteChurchPurgeNullableRefs) {
-                deleteChurchPurgeNullableRefs.checked = false;
+            if (deleteParishPurgeNullableRefs) {
+                deleteParishPurgeNullableRefs.checked = false;
             }
             currentDeleteImpact = null;
         }
@@ -515,14 +515,14 @@ if ($filterMailingDiffers)   $paginationBase .= '&mailing_differs=1';
                 return;
             }
 
-            const purgeNullableRefs = !!(deleteChurchPurgeNullableRefs && deleteChurchPurgeNullableRefs.checked);
+            const purgeNullableRefs = !!(deleteParishPurgeNullableRefs && deleteParishPurgeNullableRefs.checked);
             const profileLabel = purgeNullableRefs ? impactLabelProfilesDeleted : impactLabelProfilesSetNull;
             const roleAuditLabel = purgeNullableRefs ? impactLabelRoleAuditLogsDeleted : impactLabelRoleAuditLogsSetNull;
 
             const html = [
                 impactItem(impactLabelMembers, impact.members),
                 impactItem(profileLabel, impact.profile_unscoped),
-                impactItem(roleAuditLabel, impact.church_role_audit_logs_unscoped),
+                impactItem(roleAuditLabel, impact.parish_role_audit_logs_unscoped),
                 impactItem(impactLabelDonations, impact.donations),
                 impactItem(impactLabelServices, impact.services),
                 impactItem(impactLabelAttendance, impact.attendance),
@@ -537,25 +537,25 @@ if ($filterMailingDiffers)   $paginationBase .= '&mailing_differs=1';
             deleteImpactList.innerHTML = html.join('');
         }
 
-        function loadDeleteImpact(churchId, churchName) {
-            pendingDeleteChurchId = churchId;
-            pendingDeleteChurchName = churchName;
+        function loadDeleteImpact(parishId, parishName) {
+            pendingDeleteParishId = parishId;
+            pendingDeleteParishName = parishName;
             resetDeleteImpactModal();
 
             if (deleteImpactIntro) {
-                deleteImpactIntro.textContent = deleteChurchImpactIntroTemplate.replace('{name}', churchName);
+                deleteImpactIntro.textContent = deleteParishImpactIntroTemplate.replace('{name}', parishName);
             }
 
             const modal = getDeleteImpactModal();
             if (!modal) {
                 // Fallback for pages where Bootstrap modal JS is not yet available.
-                deleteChurchLegacyConfirm(churchId, churchName);
+                deleteParishLegacyConfirm(parishId, parishName);
                 return;
             }
 
             modal.show();
 
-            fetch(`<?= base_url('parish_list/delete-impact/') ?>${churchId}`, {
+            fetch(`<?= base_url('parish_list/delete-impact/') ?>${parishId}`, {
                     method: 'GET',
                     headers: {
                         'X-Requested-With': 'XMLHttpRequest'
@@ -572,8 +572,8 @@ if ($filterMailingDiffers)   $paginationBase .= '&mailing_differs=1';
                     if (deleteImpactLoading) {
                         deleteImpactLoading.style.display = 'none';
                     }
-                    if (confirmDeleteChurchBtn) {
-                        confirmDeleteChurchBtn.disabled = false;
+                    if (confirmDeleteParishBtn) {
+                        confirmDeleteParishBtn.disabled = false;
                     }
                 })
                 .catch(error => {
@@ -583,15 +583,15 @@ if ($filterMailingDiffers)   $paginationBase .= '&mailing_differs=1';
                 });
         }
 
-        function deleteChurch(id, name) {
+        function deleteParish(id, name) {
             loadDeleteImpact(id, name);
         }
 
-        const churchSelectionStorageKey = `${window.location.pathname}:bulkDeleteChurchesSelection`;
+        const parishSelectionStorageKey = `${window.location.pathname}:bulkDeleteParishesSelection`;
 
-        function loadStoredChurchSelection() {
+        function loadStoredParishSelection() {
             try {
-                const raw = sessionStorage.getItem(churchSelectionStorageKey);
+                const raw = sessionStorage.getItem(parishSelectionStorageKey);
                 if (!raw) {
                     return new Set();
                 }
@@ -607,127 +607,127 @@ if ($filterMailingDiffers)   $paginationBase .= '&mailing_differs=1';
             }
         }
 
-        function saveStoredChurchSelection() {
-            sessionStorage.setItem(churchSelectionStorageKey, JSON.stringify(Array.from(selectedChurchIdsSet)));
+        function saveStoredParishSelection() {
+            sessionStorage.setItem(parishSelectionStorageKey, JSON.stringify(Array.from(selectedParishIdsSet)));
         }
 
-        function syncChurchCheckboxesFromSelection() {
-            document.querySelectorAll('.church-checkbox').forEach((el) => {
+        function syncParishCheckboxesFromSelection() {
+            document.querySelectorAll('.parish-checkbox').forEach((el) => {
                 if (el.disabled) {
                     el.checked = false;
-                    selectedChurchIdsSet.delete(String(el.value));
+                    selectedParishIdsSet.delete(String(el.value));
                     return;
                 }
 
-                el.checked = selectedChurchIdsSet.has(String(el.value));
+                el.checked = selectedParishIdsSet.has(String(el.value));
             });
-            saveStoredChurchSelection();
+            saveStoredParishSelection();
         }
 
-        function getSelectedChurchIds() {
-            return Array.from(selectedChurchIdsSet);
+        function getSelectedParishIds() {
+            return Array.from(selectedParishIdsSet);
         }
 
-        function updateSelectAllChurchesState() {
-            if (!selectAllChurches) {
+        function updateSelectAllParishesState() {
+            if (!selectAllParishes) {
                 return;
             }
 
-            const all = Array.from(document.querySelectorAll('.church-checkbox')).filter((el) => !el.disabled);
-            selectAllChurches.checked = all.length > 0 && all.every((el) => selectedChurchIdsSet.has(String(el.value)));
+            const all = Array.from(document.querySelectorAll('.parish-checkbox')).filter((el) => !el.disabled);
+            selectAllParishes.checked = all.length > 0 && all.every((el) => selectedParishIdsSet.has(String(el.value)));
         }
 
-        let selectedChurchIdsSet = loadStoredChurchSelection();
+        let selectedParishIdsSet = loadStoredParishSelection();
 
-        function refreshBulkDeleteChurchesState() {
-            const btn = document.getElementById('bulkDeleteChurchesBtn');
+        function refreshBulkDeleteParishesState() {
+            const btn = document.getElementById('bulkDeleteParishesBtn');
             if (!btn) {
                 return;
             }
 
-            const selected = getSelectedChurchIds();
+            const selected = getSelectedParishIds();
             btn.disabled = selected.length === 0;
             btn.title = selected.length > 0 ?
                 `<?= esc(lang('Parishes.bulkDeleteSelected')) ?> (${selected.length})` :
                 `<?= esc(lang('Parishes.bulkDeleteSelected')) ?>`;
         }
 
-        const selectAllChurches = document.getElementById('selectAllChurches');
-        if (selectAllChurches) {
-            selectAllChurches.addEventListener('change', function() {
-                document.querySelectorAll('.church-checkbox').forEach((el) => {
+        const selectAllParishes = document.getElementById('selectAllParishes');
+        if (selectAllParishes) {
+            selectAllParishes.addEventListener('change', function() {
+                document.querySelectorAll('.parish-checkbox').forEach((el) => {
                     if (!el.disabled) {
                         const id = String(el.value);
-                        if (selectAllChurches.checked) {
-                            selectedChurchIdsSet.add(id);
+                        if (selectAllParishes.checked) {
+                            selectedParishIdsSet.add(id);
                             el.checked = true;
                         } else {
-                            selectedChurchIdsSet.delete(id);
+                            selectedParishIdsSet.delete(id);
                             el.checked = false;
                         }
                     }
                 });
-                saveStoredChurchSelection();
-                updateSelectAllChurchesState();
-                refreshBulkDeleteChurchesState();
+                saveStoredParishSelection();
+                updateSelectAllParishesState();
+                refreshBulkDeleteParishesState();
             });
 
-            document.querySelectorAll('.church-checkbox').forEach((el) => {
+            document.querySelectorAll('.parish-checkbox').forEach((el) => {
                 el.addEventListener('change', function() {
                     const id = String(el.value);
                     if (el.checked) {
-                        selectedChurchIdsSet.add(id);
+                        selectedParishIdsSet.add(id);
                     } else {
-                        selectedChurchIdsSet.delete(id);
+                        selectedParishIdsSet.delete(id);
                     }
 
-                    saveStoredChurchSelection();
-                    updateSelectAllChurchesState();
-                    refreshBulkDeleteChurchesState();
+                    saveStoredParishSelection();
+                    updateSelectAllParishesState();
+                    refreshBulkDeleteParishesState();
                 });
             });
 
-            syncChurchCheckboxesFromSelection();
-            updateSelectAllChurchesState();
-            refreshBulkDeleteChurchesState();
+            syncParishCheckboxesFromSelection();
+            updateSelectAllParishesState();
+            refreshBulkDeleteParishesState();
         }
 
-        const bulkDeleteChurchesBtn = document.getElementById('bulkDeleteChurchesBtn');
-        if (bulkDeleteChurchesBtn) {
-            bulkDeleteChurchesBtn.addEventListener('click', function() {
-                const selected = getSelectedChurchIds();
+        const bulkDeleteParishesBtn = document.getElementById('bulkDeleteParishesBtn');
+        if (bulkDeleteParishesBtn) {
+            bulkDeleteParishesBtn.addEventListener('click', function() {
+                const selected = getSelectedParishIds();
                 if (selected.length === 0) {
-                    showAppToast(bulkDeleteChurchesEmpty, 'warning');
+                    showAppToast(bulkDeleteParishesEmpty, 'warning');
                     return;
                 }
 
                 if (selected.length === 1) {
                     const oneId = String(selected[0]);
-                    const oneCheckbox = document.querySelector(`.church-checkbox[value="${oneId}"]`);
-                    const oneName = oneCheckbox ? (oneCheckbox.getAttribute('data-church-name') || `Church #${oneId}`) : `Church #${oneId}`;
+                    const oneCheckbox = document.querySelector(`.parish-checkbox[value="${oneId}"]`);
+                    const oneName = oneCheckbox ? (oneCheckbox.getAttribute('data-parish-name') || `Parish #${oneId}`) : `Parish #${oneId}`;
                     loadDeleteImpact(Number(oneId), oneName);
                     return;
                 }
 
-                const modal = getModalInstance(bulkDeleteChurchesModalEl);
-                if (!modal || !bulkDeleteChurchesReasonInput) {
+                const modal = getModalInstance(bulkDeleteParishesModalEl);
+                if (!modal || !bulkDeleteParishesReasonInput) {
                     showAppToast('<?= esc(lang('App.errorGeneric'), 'js') ?>', 'warning');
                     return;
                 }
 
-                pendingBulkDeleteChurchIds = selected;
-                bulkDeleteChurchesReasonInput.value = '';
-                if (bulkDeleteChurchesPurgeNullableRefs) {
-                    bulkDeleteChurchesPurgeNullableRefs.checked = false;
+                pendingBulkDeleteParishIds = selected;
+                bulkDeleteParishesReasonInput.value = '';
+                if (bulkDeleteParishesPurgeNullableRefs) {
+                    bulkDeleteParishesPurgeNullableRefs.checked = false;
                 }
-                if (bulkDeleteChurchesSummary) {
-                    bulkDeleteChurchesSummary.textContent = `Delete ${selected.length} selected churches?`;
+                if (bulkDeleteParishesSummary) {
+                    bulkDeleteParishesSummary.textContent = `Delete ${selected.length} selected parishes?`;
                 }
                 modal.show();
             });
         }
 
-        const confirmBulkDeleteChurchesBtn = document.getElementById('confirmBulkDeleteChurchesBtn');
+        const confirmBulkDeleteParishesBtn = document.getElementById('confirmBulkDeleteParishesBtn');
 
         function setReasonFieldError(input, feedbackId, message) {
             if (!input) return;
@@ -736,22 +736,22 @@ if ($filterMailingDiffers)   $paginationBase .= '&mailing_differs=1';
             if (feedback) feedback.textContent = message || '';
         }
 
-        if (confirmBulkDeleteChurchesBtn) {
-            confirmBulkDeleteChurchesBtn.addEventListener('click', function() {
-                const reason = (bulkDeleteChurchesReasonInput ? bulkDeleteChurchesReasonInput.value : '').trim();
-                setReasonFieldError(bulkDeleteChurchesReasonInput, 'bulkDeleteChurchesReasonFeedback', '');
+        if (confirmBulkDeleteParishesBtn) {
+            confirmBulkDeleteParishesBtn.addEventListener('click', function() {
+                const reason = (bulkDeleteParishesReasonInput ? bulkDeleteParishesReasonInput.value : '').trim();
+                setReasonFieldError(bulkDeleteParishesReasonInput, 'bulkDeleteParishesReasonFeedback', '');
                 if (reason.length < 8) {
-                    setReasonFieldError(bulkDeleteChurchesReasonInput, 'bulkDeleteChurchesReasonFeedback', bulkDeleteReasonRequiredMsg);
-                    if (bulkDeleteChurchesReasonInput) bulkDeleteChurchesReasonInput.focus();
+                    setReasonFieldError(bulkDeleteParishesReasonInput, 'bulkDeleteParishesReasonFeedback', bulkDeleteReasonRequiredMsg);
+                    if (bulkDeleteParishesReasonInput) bulkDeleteParishesReasonInput.focus();
                     return;
                 }
 
                 const body = new URLSearchParams();
-                pendingBulkDeleteChurchIds.forEach((id) => body.append('church_ids[]', id));
-                body.append('purge_nullable_refs', bulkDeleteChurchesPurgeNullableRefs && bulkDeleteChurchesPurgeNullableRefs.checked ? '1' : '0');
+                pendingBulkDeleteParishIds.forEach((id) => body.append('parish_ids[]', id));
+                body.append('purge_nullable_refs', bulkDeleteParishesPurgeNullableRefs && bulkDeleteParishesPurgeNullableRefs.checked ? '1' : '0');
                 body.append('delete_reason', reason);
 
-                confirmBulkDeleteChurchesBtn.disabled = true;
+                confirmBulkDeleteParishesBtn.disabled = true;
                 fetch('<?= base_url('parish_list/bulk-delete') ?>', {
                         method: 'POST',
                         body,
@@ -763,39 +763,39 @@ if ($filterMailingDiffers)   $paginationBase .= '&mailing_differs=1';
                     .then(response => response.json())
                     .then(data => {
                         if (data && data.errors && data.errors.delete_reason) {
-                            setReasonFieldError(bulkDeleteChurchesReasonInput, 'bulkDeleteChurchesReasonFeedback', data.errors.delete_reason);
-                            if (bulkDeleteChurchesReasonInput) bulkDeleteChurchesReasonInput.focus();
-                            confirmBulkDeleteChurchesBtn.disabled = false;
+                            setReasonFieldError(bulkDeleteParishesReasonInput, 'bulkDeleteParishesReasonFeedback', data.errors.delete_reason);
+                            if (bulkDeleteParishesReasonInput) bulkDeleteParishesReasonInput.focus();
+                            confirmBulkDeleteParishesBtn.disabled = false;
                             return;
                         }
-                        setReasonFieldError(bulkDeleteChurchesReasonInput, 'bulkDeleteChurchesReasonFeedback', '');
+                        setReasonFieldError(bulkDeleteParishesReasonInput, 'bulkDeleteParishesReasonFeedback', '');
                         if (data && (data.success || Number(data.deleted || 0) > 0)) {
-                            selectedChurchIdsSet.clear();
-                            saveStoredChurchSelection();
+                            selectedParishIdsSet.clear();
+                            saveStoredParishSelection();
                             location.reload();
                             return;
                         }
-                        confirmBulkDeleteChurchesBtn.disabled = false;
-                        showAppToast(contractErrorMessage(data, deleteChurchUnableLabel), 'danger');
+                        confirmBulkDeleteParishesBtn.disabled = false;
+                        showAppToast(contractErrorMessage(data, deleteParishUnableLabel), 'danger');
                     })
                     .catch(() => {
-                        confirmBulkDeleteChurchesBtn.disabled = false;
-                        setReasonFieldError(bulkDeleteChurchesReasonInput, 'bulkDeleteChurchesReasonFeedback', '');
-                        showAppToast(deleteChurchUnexpectedLabel, 'danger');
+                        confirmBulkDeleteParishesBtn.disabled = false;
+                        setReasonFieldError(bulkDeleteParishesReasonInput, 'bulkDeleteParishesReasonFeedback', '');
+                        showAppToast(deleteParishUnexpectedLabel, 'danger');
                     });
             });
         }
 
-        if (confirmDeleteChurchBtn) {
-            confirmDeleteChurchBtn.addEventListener('click', function() {
-                if (!pendingDeleteChurchId) {
+        if (confirmDeleteParishBtn) {
+            confirmDeleteParishBtn.addEventListener('click', function() {
+                if (!pendingDeleteParishId) {
                     return;
                 }
 
-                confirmDeleteChurchBtn.disabled = true;
-                const purgeNullableRefs = !!(deleteChurchPurgeNullableRefs && deleteChurchPurgeNullableRefs.checked);
+                confirmDeleteParishBtn.disabled = true;
+                const purgeNullableRefs = !!(deleteParishPurgeNullableRefs && deleteParishPurgeNullableRefs.checked);
 
-                fetch(`<?= base_url('parish_list/delete/') ?>${pendingDeleteChurchId}`, {
+                fetch(`<?= base_url('parish_list/delete/') ?>${pendingDeleteParishId}`, {
                         method: 'POST',
                         body: new URLSearchParams({
                             purge_nullable_refs: purgeNullableRefs ? '1' : '0'
@@ -812,18 +812,18 @@ if ($filterMailingDiffers)   $paginationBase .= '&mailing_differs=1';
                             location.reload();
                             return;
                         }
-                        confirmDeleteChurchBtn.disabled = false;
-                        showAppToast(contractErrorMessage(data, deleteChurchUnableLabel), 'danger');
+                        confirmDeleteParishBtn.disabled = false;
+                        showAppToast(contractErrorMessage(data, deleteParishUnableLabel), 'danger');
                     })
                     .catch(() => {
-                        confirmDeleteChurchBtn.disabled = false;
-                        showAppToast(deleteChurchUnexpectedLabel, 'danger');
+                        confirmDeleteParishBtn.disabled = false;
+                        showAppToast(deleteParishUnexpectedLabel, 'danger');
                     });
             });
         }
 
-        if (deleteChurchPurgeNullableRefs) {
-            deleteChurchPurgeNullableRefs.addEventListener('change', function() {
+        if (deleteParishPurgeNullableRefs) {
+            deleteParishPurgeNullableRefs.addEventListener('change', function() {
                 if (currentDeleteImpact) {
                     renderImpactCounts(currentDeleteImpact);
                 }
@@ -832,14 +832,14 @@ if ($filterMailingDiffers)   $paginationBase .= '&mailing_differs=1';
 
         if (deleteImpactModalEl) {
             deleteImpactModalEl.addEventListener('hidden.bs.modal', function() {
-                pendingDeleteChurchId = null;
-                pendingDeleteChurchName = '';
+                pendingDeleteParishId = null;
+                pendingDeleteParishName = '';
                 resetDeleteImpactModal();
             });
         }
 
-        function deleteChurchLegacyConfirm(id, name) {
-            const confirmMessage = <?= json_encode(lang('Parishes.textDeleteChurchConfirm', ['{name}'])) ?>.replace('{name}', name);
+        function deleteParishLegacyConfirm(id, name) {
+            const confirmMessage = <?= json_encode(lang('Parishes.textDeleteParishConfirm', ['{name}'])) ?>.replace('{name}', name);
             showAppConfirm(
                 '<?= esc(lang('App.confirm'), 'js') ?>',
                 confirmMessage,
@@ -857,9 +857,9 @@ if ($filterMailingDiffers)   $paginationBase .= '&mailing_differs=1';
                                 location.reload();
                                 return;
                             }
-                            showAppToast(contractErrorMessage(data, deleteChurchUnableLabel), 'danger');
+                            showAppToast(contractErrorMessage(data, deleteParishUnableLabel), 'danger');
                         })
-                        .catch(() => showAppToast(deleteChurchUnexpectedLabel, 'danger'));
+                        .catch(() => showAppToast(deleteParishUnexpectedLabel, 'danger'));
                 }
             );
         }

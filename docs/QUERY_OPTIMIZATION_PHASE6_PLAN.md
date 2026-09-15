@@ -67,7 +67,7 @@ Optional authenticated HTTP baseline:
 
 ```bash
 BASE_URL=http://127.0.0.1:8181 \
-LOGIN_EMAIL=church@admin.com \
+LOGIN_EMAIL=parish@admin.com \
 LOGIN_PASSWORD='Change@me' \
 sh build/phase6_review.sh
 ```

@@ -135,8 +135,8 @@ class FollowupLogModel extends Model
             return $this->sequenceScopeColumn;
         }
 
-        if ($this->tableColumnSelectable($sequenceTable, 'church_id')) {
-            $this->sequenceScopeColumn = 'church_id';
+        if ($this->tableColumnSelectable($sequenceTable, 'parish_id')) {
+            $this->sequenceScopeColumn = 'parish_id';
             return $this->sequenceScopeColumn;
         }
 

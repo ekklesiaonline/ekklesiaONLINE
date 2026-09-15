@@ -10,9 +10,9 @@
                     <h6 class="text-muted mb-1"><?= lang('Standing.goodStandingMembers') ?></h6>
                     <h3 class="mb-0"><?= number_format((int) ($summary['good_standing'] ?? 0)) ?></h3>
                     <?php
-                    $scopeKey = ($scope ?? 'church') === 'province'
+                    $scopeKey = ($scope ?? 'parish') === 'province'
                         ? lang('App.scopeProvince')
-                        : (($scope ?? 'church') === 'diocese' ? lang('App.scopeDiocese') : lang('App.scopeParish'));
+                        : (($scope ?? 'parish') === 'diocese' ? lang('App.scopeDiocese') : lang('App.scopeParish'));
                     ?>
                     <small class="text-muted"><?= lang('Standing.scopeLabel') ?>: <?= esc($scopeKey) ?></small>
                 </div>

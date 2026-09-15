@@ -48,7 +48,7 @@ final class ReportsFinanceBoundaryIntegrationTest extends CIUnitTestCase
         $error = (string) session('error');
         $this->assertContains($error, [
             lang('App.errorUnauthorized'),
-            lang('Scope.noChurchScopeAssigned'),
+            lang('Scope.noParishScopeAssigned'),
             'No parish scope is assigned to your account.',
         ]);
     }
@@ -65,7 +65,7 @@ final class ReportsFinanceBoundaryIntegrationTest extends CIUnitTestCase
         $error = (string) session('error');
         $this->assertContains($error, [
             lang('App.errorUnauthorized'),
-            lang('Scope.noChurchScopeAssigned'),
+            lang('Scope.noParishScopeAssigned'),
             'No parish scope is assigned to your account.',
         ]);
     }
@@ -82,8 +82,8 @@ final class ReportsFinanceBoundaryIntegrationTest extends CIUnitTestCase
         $error = (string) session('error');
         $this->assertContains($error, [
             lang('Auth.notEnoughPrivilege'),
-            lang('Scope.churchOutsideProvinceScope'),
-            lang('Diocesan.churchManagementAccessDenied'),
+            lang('Scope.parishOutsideProvinceScope'),
+            lang('Diocesan.parishManagementAccessDenied'),
             'Diocesan.parishManagementAccessDenied',
             'Parish is outside your province scope.',
             'Not enough privilege to access this resource.',
@@ -102,7 +102,7 @@ final class ReportsFinanceBoundaryIntegrationTest extends CIUnitTestCase
         $error = (string) session('error');
         $this->assertContains($error, [
             lang('Auth.notEnoughPrivilege'),
-            lang('Diocesan.churchManagementAccessDenied'),
+            lang('Diocesan.parishManagementAccessDenied'),
             'Diocesan.parishManagementAccessDenied',
             'Not enough privilege to access this resource.',
         ]);
@@ -110,7 +110,7 @@ final class ReportsFinanceBoundaryIntegrationTest extends CIUnitTestCase
 
     private function insertProfileScope(int $userId, ?int $provinceId, ?int $dioceseId): void
     {
-        $churchId = $this->profileScopeChurchId();
+        $parishId = $this->profileScopeParishId();
         $profileTable = $this->createTableName('profile');
         if (!$this->db->tableExists($profileTable)) {
             $profileTable = $this->resolveTableName('profile');
@@ -128,9 +128,9 @@ final class ReportsFinanceBoundaryIntegrationTest extends CIUnitTestCase
         }
 
         if (in_array('parish_id', $profileColumns, true)) {
-            $payload['parish_id'] = $churchId;
-        } elseif (in_array('church_id', $profileColumns, true)) {
-            $payload['church_id'] = $churchId;
+            $payload['parish_id'] = $parishId;
+        } elseif (in_array('parish_id', $profileColumns, true)) {
+            $payload['parish_id'] = $parishId;
         }
 
         $payload = $this->filterPayloadByColumns($profileTable, $payload);
@@ -140,7 +140,7 @@ final class ReportsFinanceBoundaryIntegrationTest extends CIUnitTestCase
         } catch (\Throwable $e) {
             if (array_key_exists('parish_id', $payload)) {
                 unset($payload['parish_id']);
-                $payload['church_id'] = $churchId;
+                $payload['parish_id'] = $parishId;
                 $payload = $this->filterPayloadByColumns($profileTable, $payload);
                 $this->db->table($profileTable)->insert($payload);
                 return;
@@ -150,7 +150,7 @@ final class ReportsFinanceBoundaryIntegrationTest extends CIUnitTestCase
         }
     }
 
-    private function profileScopeChurchId(): ?int
+    private function profileScopeParishId(): ?int
     {
         return 0;
     }
@@ -469,7 +469,7 @@ final class ReportsFinanceBoundaryIntegrationTest extends CIUnitTestCase
                 locale TEXT NULL,
                 province_id INTEGER NULL,
                 diocese_id INTEGER NULL,
-                church_id INTEGER NULL,
+                parish_id INTEGER NULL,
                 parish_id INTEGER NULL,
                 created_at TEXT NULL,
                 updated_at TEXT NULL,
@@ -481,12 +481,12 @@ final class ReportsFinanceBoundaryIntegrationTest extends CIUnitTestCase
         $this->ensureColumnExists($resolvedProfiles, 'locale', 'TEXT NULL');
         $this->ensureColumnExists($resolvedProfiles, 'province_id', 'INTEGER NULL');
         $this->ensureColumnExists($resolvedProfiles, 'diocese_id', 'INTEGER NULL');
-        $this->ensureColumnExists($resolvedProfiles, 'church_id', 'INTEGER NULL');
+        $this->ensureColumnExists($resolvedProfiles, 'parish_id', 'INTEGER NULL');
         $this->ensureColumnExists($resolvedProfiles, 'parish_id', 'INTEGER NULL');
         $prefixedProfiles = $this->createTableName('profile');
         $this->ensureColumnExists($prefixedProfiles, 'province_id', 'INTEGER NULL');
         $this->ensureColumnExists($prefixedProfiles, 'diocese_id', 'INTEGER NULL');
-        $this->ensureColumnExists($prefixedProfiles, 'church_id', 'INTEGER NULL');
+        $this->ensureColumnExists($prefixedProfiles, 'parish_id', 'INTEGER NULL');
         $this->ensureColumnExists($prefixedProfiles, 'parish_id', 'INTEGER NULL');
         $this->ensureColumnExists($prefixedProfiles, 'locale', 'TEXT NULL');
 

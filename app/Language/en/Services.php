@@ -147,7 +147,7 @@ return [
     'pleaseFixFollowing'  => 'Please fix the following:',
     'serviceNotFound'     => 'Service not found',
     'forbidden'           => 'Forbidden',
-    'noChurchScopeAssigned' => 'No parish scope is assigned to your account.',
+    'noParishScopeAssigned' => 'No parish scope is assigned to your account.',
     'validationLiveViewsRequired' => 'Total Live Viewership is required for Hybrid/Online services.',
     'validationCommunionExceedsPresent' => 'Communion count cannot be greater than present count.',
     'validationPrivateOnlyHolyCommunion' => 'Private services are only allowed for Holy Communion.',

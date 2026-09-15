@@ -146,7 +146,7 @@ return [
     'bulkTransferDesc'          => 'Select members and move them to another parish with a required reason.',
     'bulkTransferTitle'         => 'Bulk Transfer Members',
     'bulkTransferWarning'       => 'This will move selected members from the current parish to another parish.',
-    'destinationChurch'         => 'Destination Parish',
+    'destinationParish'         => 'Destination Parish',
     'selectDestination'         => 'Select destination...',
     'reasonForTransfer'         => 'Reason for transfer',
     'transferReasonPlaceholder' => 'Explain why these members are being transferred...',
@@ -208,11 +208,11 @@ return [
     // Flash messages (Clergy module specific)
     // -------------------------------------------------------------------------
     'transferSuccess'           => '{0} member(s) transferred successfully.',
-    'noChurchSelected'          => 'No parish selected for member management.',
-    'noSourceChurch'            => 'No source parish is selected.',
+    'noParishSelected'          => 'No parish selected for member management.',
+    'noSourceParish'            => 'No source parish is selected.',
     'selectMembers'             => 'Select at least one member to transfer.',
     'chooseDestination'         => 'Choose a valid destination parish.',
-    'sameChurch'                => 'Destination parish must be different from the current parish.',
+    'sameParish'                => 'Destination parish must be different from the current parish.',
     'reasonTooShort'            => 'Transfer reason must be at least 8 characters.',
     'transferFailed'            => 'Transfer could not be completed.',
     'affiliationFailed'         => 'Failed to create member affiliation for the selected parish.',

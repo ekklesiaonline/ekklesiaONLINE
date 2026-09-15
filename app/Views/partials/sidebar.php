@@ -2,7 +2,7 @@
 <nav class="col-md-3 col-lg-2 d-md-block sidebar p-3">
     <div class="position-sticky">
         <h4 class="text-center mb-4">
-            <i class="bi bi-church"></i> EkklesiaRD
+            <i class="bi bi-parish"></i> EkklesiaRD
         </h4>
 
         <?php $isProvinceAdminSidebar = auth()->user()->inGroup('provinceadmin') || auth()->user()->can('province.admin'); ?>
@@ -171,7 +171,7 @@
                 <?php endif; ?>
             <?php endif; ?>
 
-            <?php if (!$isSystemAdminSidebar && !$isProvinceAdminSidebar && (auth()->user()->can('parishes.edit') || auth()->user()->can('churches.edit'))): ?>
+            <?php if (!$isSystemAdminSidebar && !$isProvinceAdminSidebar && (auth()->user()->can('parishes.edit') || auth()->user()->can('parishes.edit'))): ?>
                 <li class="nav-item">
                     <a class="nav-link <?= (str_starts_with(uri_string(), 'parish_list')) ? 'active' : '' ?>" href="<?= base_url('parish_list') ?>">
                         <i class="bi bi-building"></i> <?= lang('App.navParishList') ?>

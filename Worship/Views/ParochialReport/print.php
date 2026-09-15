@@ -1,6 +1,6 @@
 <?php
 $summary = $summary ?? [];
-$church = $church ?? [];
+$parish = $parish ?? [];
 $attendance = $attendance ?? [];
 $membership = $membership ?? [];
 $clergy = $clergy ?? [];
@@ -58,9 +58,9 @@ $totalStaff = $totalClergy + $totalLay;
 $dueYear = $year + 1;
 $paperCss = $paperSize === 'a4' ? 'A4' : 'letter';
 $reportIdentity = implode(' • ', array_values(array_filter([
-    trim((string) ($church['name'] ?? '')),
-    trim((string) ($church['city'] ?? '')),
-    trim((string) ($church['diocese'] ?? '')),
+    trim((string) ($parish['name'] ?? '')),
+    trim((string) ($parish['city'] ?? '')),
+    trim((string) ($parish['diocese'] ?? '')),
 ], static fn(string $part): bool => $part !== '')));
 $reportDueText = 'Reports are due to your diocese by March 1, ' . $dueYear . ' and to the General Convention Office by May 1, ' . $dueYear;
 $pageLabel = static fn(int $page): string => 'Page ' . $page . ' of 9';
@@ -70,7 +70,7 @@ $pageLabel = static fn(int $page): string => 'Page ' . $page . ' of 9';
 
 <head>
     <meta charset="UTF-8">
-    <title><?= esc(($church['name'] ?? 'Church') . ' Parochial Report ' . $year) ?></title>
+    <title><?= esc(($parish['name'] ?? 'Parish') . ' Parochial Report ' . $year) ?></title>
     <style>
         @page {
             size: <?= $paperCss ?> portrait;
@@ -264,7 +264,7 @@ $pageLabel = static fn(int $page): string => 'Page ' . $page . ' of 9';
         <?php $pdfEngineLabel = lang('App.prPdfEngineDompdf'); ?>
         <div class="toolbar">
             <div>
-                <strong><?= esc($church['name'] ?? 'Church') ?></strong>
+                <strong><?= esc($parish['name'] ?? 'Parish') ?></strong>
                 <span class="small">Parochial Report <?= $year ?> • <?= strtoupper(esc($paperSize)) ?> • <?= esc(lang('App.prPdfEngineLabel')) ?>: <?= esc($pdfEngineLabel) ?></span>
             </div>
             <button type="button" onclick="window.print()">Print</button>
@@ -285,12 +285,12 @@ $pageLabel = static fn(int $page): string => 'Page ' . $page . ' of 9';
             <div class="row">
                 <div class="cell">
                     <div class="field"><span class="label"><?= esc(lang('App.prFieldCongregationName')) ?></span>
-                        <div class="value"><?= esc($display($church['name'] ?? '')) ?></div>
+                        <div class="value"><?= esc($display($parish['name'] ?? '')) ?></div>
                     </div>
                 </div>
                 <div class="cell">
                     <div class="field"><span class="label"><?= esc(lang('App.prFieldDiocese')) ?></span>
-                        <div class="value"><?= esc($display($church['diocese'] ?? '')) ?></div>
+                        <div class="value"><?= esc($display($parish['diocese'] ?? '')) ?></div>
                     </div>
                 </div>
             </div>
@@ -299,17 +299,17 @@ $pageLabel = static fn(int $page): string => 'Page ' . $page . ' of 9';
             <div class="row">
                 <div class="cell">
                     <div class="field"><span class="label"><?= esc(lang('App.prFieldStreetAddress1')) ?></span>
-                        <div class="value"><?= esc($display($church['street'] ?? '')) ?></div>
+                        <div class="value"><?= esc($display($parish['street'] ?? '')) ?></div>
                     </div>
                 </div>
                 <div class="cell">
                     <div class="field"><span class="label"><?= esc(lang('App.prFieldCity')) ?></span>
-                        <div class="value"><?= esc($display($church['city'] ?? '')) ?></div>
+                        <div class="value"><?= esc($display($parish['city'] ?? '')) ?></div>
                     </div>
                 </div>
                 <div class="cell">
                     <div class="field"><span class="label"><?= esc(lang('App.prFieldState')) ?></span>
-                        <div class="value"><?= esc($display($church['state'] ?? '')) ?></div>
+                        <div class="value"><?= esc($display($parish['state'] ?? '')) ?></div>
                     </div>
                 </div>
             </div>
@@ -321,41 +321,41 @@ $pageLabel = static fn(int $page): string => 'Page ' . $page . ' of 9';
                 </div>
                 <div class="cell">
                     <div class="field"><span class="label"><?= esc(lang('App.prFieldZipPlus4')) ?></span>
-                        <div class="value"><?= esc($display($church['zip'] ?? '')) ?></div>
+                        <div class="value"><?= esc($display($parish['zip'] ?? '')) ?></div>
                     </div>
                 </div>
                 <div class="cell">
                     <div class="field"><span class="label"><?= esc(lang('App.prFieldCounty')) ?></span>
-                        <div class="value"><?= esc($display($church['county'] ?? '')) ?></div>
+                        <div class="value"><?= esc($display($parish['county'] ?? '')) ?></div>
                     </div>
                 </div>
             </div>
             <div class="row">
                 <div class="cell">
                     <div class="field"><span class="label"><?= esc(lang('App.prFieldCountry')) ?></span>
-                        <div class="value"><?= esc($display($church['country'] ?? '')) ?></div>
+                        <div class="value"><?= esc($display($parish['country'] ?? '')) ?></div>
                     </div>
                 </div>
                 <div class="cell">
                     <div class="field"><span class="label"><?= esc(lang('App.prFieldCongregationEmailAddress')) ?></span>
-                        <div class="value"><?= esc($display($church['email'] ?? '')) ?></div>
+                        <div class="value"><?= esc($display($parish['email'] ?? '')) ?></div>
                     </div>
                 </div>
                 <div class="cell">
                     <div class="field"><span class="label"><?= esc(lang('App.prFieldCongregationWebAddress')) ?></span>
-                        <div class="value"><?= esc($display($church['website'] ?? '')) ?></div>
+                        <div class="value"><?= esc($display($parish['website'] ?? '')) ?></div>
                     </div>
                 </div>
             </div>
             <div class="row">
                 <div class="cell">
                     <div class="field"><span class="label"><?= esc(lang('App.prFieldPhone')) ?></span>
-                        <div class="value"><?= esc($display($church['phone'] ?? '')) ?></div>
+                        <div class="value"><?= esc($display($parish['phone'] ?? '')) ?></div>
                     </div>
                 </div>
                 <div class="cell">
                     <div class="field"><span class="label"><?= esc(lang('App.prFieldTaxId')) ?></span>
-                        <div class="value"><?= esc($display($church['tax_id'] ?? '')) ?></div>
+                        <div class="value"><?= esc($display($parish['tax_id'] ?? '')) ?></div>
                     </div>
                 </div>
                 <div class="cell"></div>

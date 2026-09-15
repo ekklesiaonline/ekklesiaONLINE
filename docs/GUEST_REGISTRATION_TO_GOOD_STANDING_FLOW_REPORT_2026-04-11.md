@@ -2,7 +2,7 @@
 
 ## Objective
 
-Document the end-to-end operational flow from guest intake through guest conversion and into church member good-standing status, including:
+Document the end-to-end operational flow from guest intake through guest conversion and into parish member good-standing status, including:
 
 - Controller and route entry points
 - Table-level writes and reads per phase
@@ -12,9 +12,9 @@ Document the end-to-end operational flow from guest intake through guest convers
 
 ## Scope and Assumptions
 
-- Scope is church-level operational flow (pastor/church-admin/member-portal interfaces).
+- Scope is parish-level operational flow (pastor/parish-admin/member-portal interfaces).
 - Good standing source of truth is member_standing_summary.
-- Church scoping for standing is enforced through member_church_affiliations joins (member_standing_summary is user/year scoped, not church scoped).
+- Parish scoping for standing is enforced through member_parish_affiliations joins (member_standing_summary is user/year scoped, not parish scoped).
 - Two conversion branches are supported:
   - Branch A: link guest to an existing user/member account.
   - Branch B: move guest into member account creation flow (prefilled handoff).
@@ -44,14 +44,14 @@ Document the end-to-end operational flow from guest intake through guest convers
 - GET /standing, GET /standing/api/summary
   - MemberPortal/Controllers/Standing::index/summaryApi
 - Dashboard KPI read path
-  - App/Libraries/PeopleMetricsService::getChurchSummary
+  - App/Libraries/PeopleMetricsService::getParishSummary
 
 ## End-to-End Flow
 
 ```mermaid
 sequenceDiagram
     autonumber
-    actor Staff as Pastor/Church Admin
+    actor Staff as Pastor/Parish Admin
     participant G as GuestsController
     participant GC as GuestConversionsController
     participant M as MembersController
@@ -68,7 +68,7 @@ sequenceDiagram
 
     alt Branch A: Link to existing user
         Staff->>GC: POST /guest-conversions/convert/{guest}
-        GC->>DB: UPSERT member_church_affiliations (attach if missing)
+        GC->>DB: UPSERT member_parish_affiliations (attach if missing)
         GC->>DB: UPDATE guests.converted_* fields
     else Branch B: Create new member account
         Staff->>G: GET /guests/convertToMember/{guest}
@@ -78,14 +78,14 @@ sequenceDiagram
         M->>DB: INSERT users/auth_identities (Shield)
         M->>DB: INSERT auth_groups_users
         M->>DB: INSERT profile
-        M->>DB: INSERT member_church_affiliations
+        M->>DB: INSERT member_parish_affiliations
     end
 
     Staff->>S: standing:refresh (web or CLI)
     S->>DB: DELETE member_standing_summary for year
     S->>DB: INSERT recomputed member_standing_summary rows
 
-    KPI->>DB: JOIN member_standing_summary + member_church_affiliations
+    KPI->>DB: JOIN member_standing_summary + member_parish_affiliations
     KPI-->>Staff: good_standing_members KPI
 ```
 
@@ -93,12 +93,12 @@ sequenceDiagram
 
 | Phase | Primary Writes | Primary Reads | Core Keys / Filters |
 | --- | --- | --- | --- |
-| Guest intake | guests, follow_up_tasks | churches, users (assignee), profile (assignee names) | guests.church_id, follow_up_tasks.guest_id |
+| Guest intake | guests, follow_up_tasks | parishes, users (assignee), profile (assignee names) | guests.parish_id, follow_up_tasks.guest_id |
 | Guest follow-up | follow_up_tasks (status/notes), guests.followed_up (optional via guest edit) | guests, follow_up_tasks, profile | follow_up_tasks.status, guests.followed_up |
-| Conversion A (existing user link) | guests.converted_to_member_at, guests.converted_user_id, guests.converted_by_user_id; member_church_affiliations (attach/reactivate) | guests, member_church_affiliations | guests.id, guests.church_id, mca.user_id+church_id |
-| Conversion B (new account) | users, auth_identities, auth_groups_users, profile, member_church_affiliations | churches (for hierarchy), existing identities (uniqueness checks) | users.id, profile.user_id, mca.user_id+church_id |
+| Conversion A (existing user link) | guests.converted_to_member_at, guests.converted_user_id, guests.converted_by_user_id; member_parish_affiliations (attach/reactivate) | guests, member_parish_affiliations | guests.id, guests.parish_id, mca.user_id+parish_id |
+| Conversion B (new account) | users, auth_identities, auth_groups_users, profile, member_parish_affiliations | parishes (for hierarchy), existing identities (uniqueness checks) | users.id, profile.user_id, mca.user_id+parish_id |
 | Standing recompute | member_standing_summary (year snapshot rebuild) | users, attendance, services, annual_pledges, member_discipline | mss.user_id+year, services.date range, pledges year |
-| Standing display/API | none | member_standing_summary joined with member_church_affiliations (+church/diocese/province scope joins) | mss.year, mss.is_good_standing, mca.active, mca.membership_status |
+| Standing display/API | none | member_standing_summary joined with member_parish_affiliations (+parish/diocese/province scope joins) | mss.year, mss.is_good_standing, mca.active, mca.membership_status |
 
 ## Status and State Transitions
 
@@ -116,10 +116,10 @@ sequenceDiagram
   - converted_user_id set to users.id
   - converted_by_user_id set to actor users.id
 
-### Member Affiliation Lifecycle (member_church_affiliations)
+### Member Affiliation Lifecycle (member_parish_affiliations)
 
-- attachToChurch guarantees one affiliation per user/church key.
-- Conversion to member in church scope requires active affiliation:
+- attachToParish guarantees one affiliation per user/parish key.
+- Conversion to member in parish scope requires active affiliation:
   - active = 1
   - membership_status typically active
   - is_home set according to path (new member creation sets true in current flow)
@@ -154,8 +154,8 @@ Formally:
 
 ## Data Model Notes (Important)
 
-- member_standing_summary has no church_id.
-- Church-level good-standing outputs are derived by joining summary rows to member_church_affiliations for active church membership.
+- member_standing_summary has no parish_id.
+- Parish-level good-standing outputs are derived by joining summary rows to member_parish_affiliations for active parish membership.
 - Conversion writes do not directly write member_standing_summary; summary is refreshed by:
   - standing:refresh yearly recompute, and
   - per-user sync when users.active changes (UserModel hook to updateSingleUserStanding).
@@ -166,19 +166,19 @@ Formally:
 
 ```sql
 -- 1) Guests converted without linked user (should be zero)
-SELECT id, church_id, converted_to_member_at, converted_user_id
+SELECT id, parish_id, converted_to_member_at, converted_user_id
 FROM guests
 WHERE converted_to_member_at IS NOT NULL
   AND converted_user_id IS NULL;
 ```
 
 ```sql
--- 2) Converted users without active church affiliation in guest church (should be zero)
-SELECT g.id AS guest_id, g.church_id, g.converted_user_id
+-- 2) Converted users without active parish affiliation in guest parish (should be zero)
+SELECT g.id AS guest_id, g.parish_id, g.converted_user_id
 FROM guests g
-LEFT JOIN member_church_affiliations mca
+LEFT JOIN member_parish_affiliations mca
   ON mca.user_id = g.converted_user_id
- AND mca.church_id = g.church_id
+ AND mca.parish_id = g.parish_id
  AND mca.active = 1
 WHERE g.converted_to_member_at IS NOT NULL
   AND g.converted_user_id IS NOT NULL
@@ -209,13 +209,13 @@ HAVING COUNT(*) > 1;
 ```
 
 ```sql
--- 5) Church-scoped good standing count (authoritative pattern)
--- Replace :church_id and :year
+-- 5) Parish-scoped good standing count (authoritative pattern)
+-- Replace :parish_id and :year
 SELECT COUNT(*) AS good_standing_count
 FROM member_standing_summary mss
-JOIN member_church_affiliations mca
+JOIN member_parish_affiliations mca
   ON mca.user_id = mss.user_id
- AND mca.church_id = :church_id
+ AND mca.parish_id = :parish_id
  AND mca.active = 1
  AND mca.membership_status = 'active'
 WHERE mss.year = :year
@@ -234,8 +234,8 @@ WHERE mss.year = :year
 
 ## Operational Risks and Controls
 
-- Risk: guest converted_user_id points to a user not affiliated to guest church.
-  - Control: conversion path enforces attachToChurch when needed.
+- Risk: guest converted_user_id points to a user not affiliated to guest parish.
+  - Control: conversion path enforces attachToParish when needed.
 - Risk: standing KPI appears stale after membership/pledge/attendance changes.
   - Control: run standing:refresh for target year as part of reconciliation window.
 - Risk: affiliation status drifts to inactive while guest remains marked converted.
@@ -251,7 +251,7 @@ WHERE mss.year = :year
 - MemberPortal/Controllers/Standing.php
 - app/Libraries/PeopleMetricsService.php
 - app/Models/GuestModel.php
-- app/Models/MemberChurchAffiliationModel.php
+- app/Models/MemberParishAffiliationModel.php
 - app/Models/MemberStandingSummaryModel.php
 - app/Models/UserModel.php
 - app/Commands/RefreshGoodStanding.php
@@ -259,7 +259,7 @@ WHERE mss.year = :year
 - app/Database/Migrations/2026_03_26_000001_AddGuestConversionFields.php
 - app/Database/Migrations/2025_01_01_000008_CreateFollowUpTasks.php
 - app/Database/Migrations/2025_01_01_000002_CreateProfiles.php
-- app/Database/Migrations/2026_03_18_000005_CreateMemberChurchAffiliations.php
+- app/Database/Migrations/2026_03_18_000005_CreateMemberParishAffiliations.php
 - app/Database/Migrations/2025_01_01_000005_CreateServices.php
 - app/Database/Migrations/2025_01_01_000006_CreateAttendance.php
 - app/Database/Migrations/2026_03_26_000002_CreateAnnualPledges.php

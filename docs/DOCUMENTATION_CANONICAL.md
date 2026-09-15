@@ -32,7 +32,7 @@ This file is the single source of truth for which documentation should be retain
 - `docs/EPISCOPAL_PAROCHIAL_REPORT_FOR_REFERENCE.md`
   Canonical field contract and implementation authority for the TEC Parochial Report screen.
 - `docs/CHURCH_MANAGEMENT_PERMISSIONS_2026-04-23.md`
-  Canonical rules and implementation details for church editing, Tax ID access, and staff management permission constraints across all administrative roles.
+  Canonical rules and implementation details for parish editing, Tax ID access, and staff management permission constraints across all administrative roles.
 - `docs/PROFILE_PICTURE_SECURITY_AND_DELIVERY.md`
   Canonical private profile picture model (per-user folders, random names, guarded delivery, path hardening, and cache behavior).
 

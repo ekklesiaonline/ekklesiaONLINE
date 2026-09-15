@@ -306,8 +306,8 @@ class Events extends BaseController
             ->get()->getResultArray();
 
         $national = $db->table('event e')
-            ->select("{$columns}, 'national' AS source_scope, e.organizer_church_id AS source_id, c.name AS source_name")
-            ->join('church c', 'c.id = e.organizer_church_id', 'inner')
+            ->select("{$columns}, 'national' AS source_scope, e.organizer_parish_id AS source_id, c.name AS source_name")
+            ->join('parish c', 'c.id = e.organizer_parish_id', 'inner')
             ->where('e.organizer_type', 'national')
             ->where('e.status !=', 'cancelled')
             ->groupStart()
@@ -526,7 +526,7 @@ class Events extends BaseController
             'organizer_province_id' => $provinceId,
             'organizer_diocese_id' => null,
             'organizer_parish_id' => null,
-            'organizer_church_id' => null,
+            'organizer_parish_id' => null,
             'host_parish_id' => null,
             'title' => trim((string) $this->request->getPost('title')),
             'description' => trim((string) $this->request->getPost('description')),

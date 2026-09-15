@@ -8,7 +8,7 @@ class AddLeaderFieldsToParishPeopleAndSyncAll extends Migration
 {
     public function up()
     {
-        $tables = ['parish_people', 'church_people'];
+        $tables = ['parish_people', 'parish_people'];
 
         foreach ($tables as $table) {
             if (!$this->db->tableExists($table)) {
@@ -46,7 +46,7 @@ class AddLeaderFieldsToParishPeopleAndSyncAll extends Migration
 
     public function down()
     {
-        $tables = ['parish_people', 'church_people'];
+        $tables = ['parish_people', 'parish_people'];
 
         foreach ($tables as $table) {
             if (!$this->db->tableExists($table)) {

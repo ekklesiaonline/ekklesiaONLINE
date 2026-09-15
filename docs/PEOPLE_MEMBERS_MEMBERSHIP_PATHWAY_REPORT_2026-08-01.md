@@ -8,7 +8,7 @@ The codebase currently separates identity, relationship, and governance concerns
 
 - `profile` (or `profiles` in the wider schema) is the personal identity record.
 - `parish_affiliation` is the parish membership/relationship record.
-- `parish_people` / `church_people` is a denormalized snapshot used by list and dashboard views.
+- `parish_people` / `parish_people` is a denormalized snapshot used by list and dashboard views.
 - `member_standing_summary` and `leadership_position` are governance and pathway enforcement tables.
 
 This is a strong foundation for a secure, scoped pastoral registry, but the current implementation still mixes:
@@ -157,7 +157,7 @@ In practice, the real leadership eligibility is derived from `member_standing_su
 
 - Strong separation of auth identity from profile identity.
 - Separate parish relationship model instead of storing a single parish status on the main profile row.
-- Snapshot table (`parish_people` / `church_people`) for fast listing and UX.
+- Snapshot table (`parish_people` / `parish_people`) for fast listing and UX.
 - Computed good-standing snapshot for reporting and governance.
 - Explicit onboarding gate for profile completion.
 - Leadership stored in a dedicated assignment table rather than embedding leadership into a simple status field.
@@ -417,7 +417,7 @@ The safest and cleanest model for this codebase is:
 In short:
 
 - store identity in `people`
-- store church relationship in `person_parish_affiliation`
+- store parish relationship in `person_parish_affiliation`
 - store spiritual / sacramental / covenant attributes in `person_membership_details`
 - store leadership in `leadership_assignment`
 - store transitions in `person_status_history`

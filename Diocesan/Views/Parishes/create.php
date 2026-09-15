@@ -14,7 +14,7 @@
             <h5 class="mb-3"><?= lang('Parishes.sectionCongregationId') ?></h5>
             <div class="row g-3 mb-4">
                 <div class="col-md-8">
-                    <label for="name" class="form-label"><?= lang('Parishes.labelChurchName') ?> *</label>
+                    <label for="name" class="form-label"><?= lang('Parishes.labelParishName') ?> *</label>
                     <input type="text" class="form-control" id="name" name="name" value="<?= old('name') ?>" minlength="3" maxlength="255" required>
                 </div>
                 <div class="col-md-4">
@@ -113,7 +113,7 @@
             </div>
 
             <div class="d-flex gap-2 mt-4">
-                <button type="submit" class="btn btn-primary"><?= lang('Parishes.btn_createChurch') ?></button>
+                <button type="submit" class="btn btn-primary"><?= lang('Parishes.btn_createParish') ?></button>
                 <a href="<?= base_url('parish_list') ?>" class="btn btn-outline-secondary"><?= lang('Parishes.btn_cancel') ?></a>
             </div>
         </form>

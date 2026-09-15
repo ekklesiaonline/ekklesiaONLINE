@@ -65,7 +65,7 @@ return [
     'filterAllStatuses' => 'Todos los estados',
     'filterDateFrom' => 'Desde fecha',
     'filterDateTo' => 'Hasta fecha',
-    'noChurchScope' => 'No se encontro alcance de parroquia para este usuario.',
+    'noParishScope' => 'No se encontro alcance de parroquia para este usuario.',
     'invalidMemberSelection' => 'Por favor selecciona valores validos de equipo y miembro.',
     'teamCreated' => 'Equipo creado exitosamente',
     'teamCreateFailed' => 'No se pudo crear el equipo',

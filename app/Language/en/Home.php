@@ -16,7 +16,7 @@ return [
     'featureGuestBody' => 'Capture visitor information and automate follow-up workflows',
     'featureVolunteerTitle' => 'Volunteer Management',
     'featureVolunteerBody' => 'Schedule volunteers, manage teams, and optimize service assignments',
-    'featureMultiChurchTitle' => 'Multi-Parish Support',
-    'featureMultiChurchBody' => 'Perfect for diocese and parish networks with centralized oversight',
+    'featureMultiParishTitle' => 'Multi-Parish Support',
+    'featureMultiParishBody' => 'Perfect for diocese and parish networks with centralized oversight',
     'footerRights' => 'All rights reserved.',
 ];

@@ -4,7 +4,7 @@
 
 <?php
 $summary = $summary ?? [];
-$church = $church ?? [];
+$parish = $parish ?? [];
 $attendance = $attendance ?? [];
 $membership = $membership ?? [];
 $clergy = $clergy ?? [];
@@ -113,7 +113,7 @@ $clergySituationOptions = [
 $totalClergy = (int) ($clergy['fulltime_clergy'] ?? 0) + (int) ($clergy['parttime_clergy'] ?? 0) + (int) ($clergy['nonstipendiary_clergy'] ?? 0);
 $totalLay = (int) ($clergy['fulltime_lay'] ?? 0) + (int) ($clergy['parttime_lay'] ?? 0) + (int) ($clergy['unpaid_lay'] ?? 0);
 $totalStaff = $totalClergy + $totalLay;
-$emailRecipient = trim((string) (old('recipient_email', $summary['report_prepared_by_email'] ?? ($church['email'] ?? ''))));
+$emailRecipient = trim((string) (old('recipient_email', $summary['report_prepared_by_email'] ?? ($parish['email'] ?? ''))));
 ?>
 
 <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-3">
@@ -219,51 +219,51 @@ $emailRecipient = trim((string) (old('recipient_email', $summary['report_prepare
             <div class="row g-3">
                 <div class="col-md-4">
                     <label class="form-label"><?= lang('App.prFieldCongregationName') ?></label>
-                    <input type="text" class="form-control form-control-sm" value="<?= esc($church['name'] ?? '') ?>" readonly>
+                    <input type="text" class="form-control form-control-sm" value="<?= esc($parish['name'] ?? '') ?>" readonly>
                 </div>
                 <div class="col-md-4">
                     <label class="form-label"><?= lang('App.prFieldDiocese') ?></label>
-                    <input type="text" class="form-control form-control-sm" value="<?= esc($church['diocese'] ?? '') ?>" readonly>
+                    <input type="text" class="form-control form-control-sm" value="<?= esc($parish['diocese'] ?? '') ?>" readonly>
                 </div>
                 <div class="col-md-4">
                     <label class="form-label"><?= lang('App.prFieldTaxId') ?></label>
-                    <input type="text" class="form-control form-control-sm" value="<?= esc($church['tax_id'] ?? '') ?>" readonly>
+                    <input type="text" class="form-control form-control-sm" value="<?= esc($parish['tax_id'] ?? '') ?>" readonly>
                 </div>
                 <div class="col-md-4">
                     <label class="form-label"><?= lang('App.prFieldStreetAddress1') ?></label>
-                    <input type="text" class="form-control form-control-sm" value="<?= esc($church['street'] ?? '') ?>" readonly>
+                    <input type="text" class="form-control form-control-sm" value="<?= esc($parish['street'] ?? '') ?>" readonly>
                 </div>
                 <div class="col-md-4">
                     <label class="form-label"><?= lang('App.prFieldCity') ?></label>
-                    <input type="text" class="form-control form-control-sm" value="<?= esc($church['city'] ?? '') ?>" readonly>
+                    <input type="text" class="form-control form-control-sm" value="<?= esc($parish['city'] ?? '') ?>" readonly>
                 </div>
                 <div class="col-md-2">
                     <label class="form-label"><?= lang('App.prFieldState') ?></label>
-                    <input type="text" class="form-control form-control-sm" value="<?= esc($church['state'] ?? '') ?>" readonly>
+                    <input type="text" class="form-control form-control-sm" value="<?= esc($parish['state'] ?? '') ?>" readonly>
                 </div>
                 <div class="col-md-2">
                     <label class="form-label"><?= lang('App.prFieldZipPlus4') ?></label>
-                    <input type="text" class="form-control form-control-sm" value="<?= esc($church['zip'] ?? '') ?>" readonly>
+                    <input type="text" class="form-control form-control-sm" value="<?= esc($parish['zip'] ?? '') ?>" readonly>
                 </div>
                 <div class="col-md-4">
                     <label class="form-label"><?= lang('App.prFieldCounty') ?></label>
-                    <input type="text" class="form-control form-control-sm" value="<?= esc($church['county'] ?? '') ?>" readonly>
+                    <input type="text" class="form-control form-control-sm" value="<?= esc($parish['county'] ?? '') ?>" readonly>
                 </div>
                 <div class="col-md-4">
                     <label class="form-label"><?= lang('App.prFieldCountry') ?></label>
-                    <input type="text" class="form-control form-control-sm" value="<?= esc($church['country'] ?? '') ?>" readonly>
+                    <input type="text" class="form-control form-control-sm" value="<?= esc($parish['country'] ?? '') ?>" readonly>
                 </div>
                 <div class="col-md-4">
                     <label class="form-label"><?= lang('App.prFieldCongregationEmailAddress') ?></label>
-                    <input type="text" class="form-control form-control-sm" value="<?= esc($church['email'] ?? '') ?>" readonly>
+                    <input type="text" class="form-control form-control-sm" value="<?= esc($parish['email'] ?? '') ?>" readonly>
                 </div>
                 <div class="col-md-4">
                     <label class="form-label"><?= lang('App.prFieldCongregationWebAddress') ?></label>
-                    <input type="text" class="form-control form-control-sm" value="<?= esc($church['website'] ?? '') ?>" readonly>
+                    <input type="text" class="form-control form-control-sm" value="<?= esc($parish['website'] ?? '') ?>" readonly>
                 </div>
                 <div class="col-md-4">
                     <label class="form-label"><?= lang('App.prFieldPhone') ?></label>
-                    <input type="text" class="form-control form-control-sm" value="<?= esc($church['phone'] ?? '') ?>" readonly>
+                    <input type="text" class="form-control form-control-sm" value="<?= esc($parish['phone'] ?? '') ?>" readonly>
                 </div>
             </div>
 

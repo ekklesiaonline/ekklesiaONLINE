@@ -26,31 +26,31 @@ A user could show as `visitor` in the edit form but as `active/member` in member
 Different pages were reading status from different sources:
 
 - Some views used `profile.membership_status`
-- Others used `member_church_affiliations.membership_status`
-- People list depended on `church_people` snapshot, which updates on sync
+- Others used `member_parish_affiliations.membership_status`
+- People list depended on `parish_people` snapshot, which updates on sync
 
-This allowed status drift between profile-level data and church affiliation data.
+This allowed status drift between profile-level data and parish affiliation data.
 
 ### Fix 1 Resolution
 
-Standardized behavior around church affiliation status for the operational church.
+Standardized behavior around parish affiliation status for the operational parish.
 
 #### Controller Changes
 
 Updated [Pastor/Controllers/Members.php](Pastor/Controllers/Members.php):
 
-- `edit($id)` now resolves default form status from the active affiliation in operational church.
-- `update($id)` now also updates active affiliation status in operational church.
+- `edit($id)` now resolves default form status from the active affiliation in operational parish.
+- `update($id)` now also updates active affiliation status in operational parish.
 - `update($id)` aligns `is_member` with status.
 - `active` and `inactive` map to `is_member = 1`.
 - `visitor` and `pending` map to `is_member = 0`.
-- `update($id)` triggers immediate `ChurchPeopleRegistryService::syncChurch($churchId)` so listing snapshots are refreshed without waiting for cron.
+- `update($id)` triggers immediate `ParishPeopleRegistryService::syncParish($parishId)` so listing snapshots are refreshed without waiting for cron.
 
 #### Detail Page Alignment
 
 Updated [Pastor/Views/Members/view.php](Pastor/Views/Members/view.php):
 
-- Main status badge now displays operational-church affiliation status (through controller normalization).
+- Main status badge now displays operational-parish affiliation status (through controller normalization).
 - Status labels localized through `App.status*` keys instead of hardcoded `ucfirst(...)`.
 
 ### Fix 1 Outcome
@@ -76,7 +76,7 @@ Implemented effective portal-access determination using both profile flag and id
 
 #### Sync-Layer Normalization
 
-Updated [app/Services/ChurchPeopleRegistryService.php](app/Services/ChurchPeopleRegistryService.php):
+Updated [app/Services/ParishPeopleRegistryService.php](app/Services/ParishPeopleRegistryService.php):
 
 - Normalizes `portal_access` to allowed values: `none`, `invited`, `enabled`.
 - If a valid auth identity or email is present, forces effective `portal_access` to `enabled` when stale flag says `none`.
@@ -116,11 +116,11 @@ False Non-Portal labels are removed for portal-enabled users.
 - [Pastor/Views/Members/view.php](Pastor/Views/Members/view.php)
 - [Pastor/Views/Members/index.php](Pastor/Views/Members/index.php)
 - [Pastor/Views/People/index.php](Pastor/Views/People/index.php)
-- [app/Services/ChurchPeopleRegistryService.php](app/Services/ChurchPeopleRegistryService.php)
+- [app/Services/ParishPeopleRegistryService.php](app/Services/ParishPeopleRegistryService.php)
 
 - Immediate snapshot refresh executed:
 
-- `php spark church-people:sync`
+- `php spark parish-people:sync`
 
 - Focused tests previously run and green:
 
@@ -131,6 +131,6 @@ False Non-Portal labels are removed for portal-enabled users.
 
 ## Notes for Future Changes
 
-- Treat `member_church_affiliations` as membership status authority for church-scoped views.
-- Use `church_people` only as derived snapshot and ensure post-write sync when immediate consistency is required.
+- Treat `member_parish_affiliations` as membership status authority for parish-scoped views.
+- Use `parish_people` only as derived snapshot and ensure post-write sync when immediate consistency is required.
 - For Non-Portal classification, do not rely solely on `profile.portal_access`; include identity presence as tie-breaker.

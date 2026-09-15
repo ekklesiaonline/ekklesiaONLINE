@@ -170,9 +170,9 @@ class People extends BaseController
             return redirect()->to('/members');
         }
 
-        $churchId = (int) ($this->getOperationalParishId() ?? 0);
-        if ($churchId <= 0) {
-            return redirect()->to('/dashboard')->with('error', lang('Members.noChurchSelected'));
+        $parishId = (int) ($this->getOperationalParishId() ?? 0);
+        if ($parishId <= 0) {
+            return redirect()->to('/dashboard')->with('error', lang('Members.noParishSelected'));
         }
 
         $scope = (string) ($this->request->getGet('scope') ?? 'all');
@@ -197,7 +197,7 @@ class People extends BaseController
         }
 
         $offset = ($page - 1) * $perPage;
-        $peoplePage = (new PeopleDirectoryService())->listForParish($churchId, [
+        $peoplePage = (new PeopleDirectoryService())->listForParish($parishId, [
             'scope'         => $scope,
             'status'        => $status !== '' ? $status : null,
             'search'        => (string) ($this->request->getGet('search') ?? ''),
@@ -214,7 +214,7 @@ class People extends BaseController
         $canModerateRegistrations = auth()->user()->inGroup('parishadmin') && auth()->user()->can('member.edit');
         $pendingRegistrations = [];
         if ($canModerateRegistrations) {
-            $pendingRegistrations = model('UserRegistrationRequestModel')->getPendingByParish($churchId, 50);
+            $pendingRegistrations = model('UserRegistrationRequestModel')->getPendingByParish($parishId, 50);
         }
         $pendingRegistrationsCount = count($pendingRegistrations);
         $showProfilePendingIndicator = auth()->user()->can('member.edit')
@@ -227,7 +227,7 @@ class People extends BaseController
             $this->getCommonViewData(lang('People.pageTitle')),
             [
                 'people' => $peopleRows,
-                'status_counts' => $this->parishPeopleModel->getStatusCounts($churchId, $scope),
+                'status_counts' => $this->parishPeopleModel->getStatusCounts($parishId, $scope),
                 'selected_scope' => $scope,
                 'selected_status' => $status,
                 'extra_filters' => $extraFilters,
@@ -262,12 +262,12 @@ class People extends BaseController
             return $this->jsonResponse($this->apiErrorPayload($this->hierarchyGuardMessage($code), 403, 'TARGET_OUTRANKS_ACTOR'), 403);
         }
 
-        $churchId = (int) ($this->getOperationalParishId() ?? 0);
+        $parishId = (int) ($this->getOperationalParishId() ?? 0);
         $isMember = (bool) ((int) $this->request->getPost('is_member') === 1);
 
         $this->ensureProfilePersonLink(0, $userId);
 
-        $ok = $this->affiliationModel->setMemberTag($userId, $churchId, $isMember);
+        $ok = $this->affiliationModel->setMemberTag($userId, $parishId, $isMember);
         if (!$ok) {
             return $this->jsonResponse([
                 'success' => false,
@@ -275,10 +275,10 @@ class People extends BaseController
             ], 422);
         }
 
-        $this->registryService->syncParish($churchId);
+        $this->registryService->syncParish($parishId);
 
         $this->audit()->log('people.member_tag.update', [
-            'parish_id' => $churchId,
+            'parish_id' => $parishId,
             'entity_type' => 'person',
             'entity_id' => $userId,
             'new_values' => [
@@ -299,14 +299,14 @@ class People extends BaseController
         }
 
         if ($redirect = $this->requireParish()) {
-            return $this->jsonResponse($this->apiErrorPayload(lang('App.errorUnauthorized'), 403, 'NO_CHURCH'), 403);
+            return $this->jsonResponse($this->apiErrorPayload(lang('App.errorUnauthorized'), 403, 'NO_PARISH'), 403);
         }
 
         if ($this->isProvinceAdmin()) {
             return $this->jsonResponse($this->apiErrorPayload(lang('App.errorUnauthorized'), 403, 'PROVINCE_WRITE_DISABLED'), 403);
         }
 
-        $churchId = (int) ($this->getOperationalParishId() ?? 0);
+        $parishId = (int) ($this->getOperationalParishId() ?? 0);
         $isMember = (bool) ((int) $this->request->getPost('is_member') === 1);
         $userIds = $this->request->getPost('user_ids');
 
@@ -328,16 +328,16 @@ class People extends BaseController
                 continue;
             }
             $this->ensureProfilePersonLink(0, $uid);
-            if ($this->affiliationModel->setMemberTag($uid, $churchId, $isMember)) {
+            if ($this->affiliationModel->setMemberTag($uid, $parishId, $isMember)) {
                 $updated++;
             }
         }
 
         if ($updated > 0) {
-            $this->registryService->syncParish($churchId);
+            $this->registryService->syncParish($parishId);
 
             $this->audit()->log('people.member_tag.bulk_update', [
-                'parish_id' => $churchId,
+                'parish_id' => $parishId,
                 'entity_type' => 'person',
                 'new_values' => ['is_member' => $isMember ? 1 : 0, 'count' => $updated],
             ]);
@@ -357,7 +357,7 @@ class People extends BaseController
         }
 
         if ($redirect = $this->requireParish()) {
-            return $this->jsonResponse($this->apiErrorPayload(lang('App.errorNoParishScope'), 403, 'CHURCH_SCOPE_REQUIRED'), 403);
+            return $this->jsonResponse($this->apiErrorPayload(lang('App.errorNoParishScope'), 403, 'PARISH_SCOPE_REQUIRED'), 403);
         }
 
         if ($this->isProvinceAdmin()) {
@@ -385,9 +385,9 @@ class People extends BaseController
             return $this->jsonResponse($this->apiErrorPayload($this->hierarchyGuardMessage($code), 403, 'TARGET_OUTRANKS_ACTOR'), 403);
         }
 
-        $churchId = (int) ($this->getOperationalParishId() ?? 0);
-        if ($churchId <= 0) {
-            return $this->jsonResponse($this->apiErrorPayload(lang('App.errorNoParishScope'), 403, 'CHURCH_SCOPE_REQUIRED'), 403);
+        $parishId = (int) ($this->getOperationalParishId() ?? 0);
+        if ($parishId <= 0) {
+            return $this->jsonResponse($this->apiErrorPayload(lang('App.errorNoParishScope'), 403, 'PARISH_SCOPE_REQUIRED'), 403);
         }
 
         $payload = $this->request->getJSON(true);
@@ -418,7 +418,7 @@ class People extends BaseController
 
         $result = $this->memberAccessService->enablePortalAccess($userId, [
             'email' => $email,
-        ], $churchId);
+        ], $parishId);
 
         if (!($result['ok'] ?? false)) {
             return $this->jsonResponse([
@@ -429,10 +429,10 @@ class People extends BaseController
             ], (int) ($result['http_status'] ?? 500));
         }
 
-        $this->registryService->syncParish($churchId);
+        $this->registryService->syncParish($parishId);
 
         $this->audit()->log('portal_access.enable', [
-            'parish_id' => $churchId,
+            'parish_id' => $parishId,
             'entity_type' => 'person',
             'entity_id' => $userId,
             'new_values' => [
@@ -460,8 +460,8 @@ class People extends BaseController
             return $redirect;
         }
 
-        $churchId = (int) ($this->getOperationalParishId() ?? 0);
-        if ($churchId <= 0) {
+        $parishId = (int) ($this->getOperationalParishId() ?? 0);
+        if ($parishId <= 0) {
             return redirect()->to('/people');
         }
 
@@ -472,7 +472,7 @@ class People extends BaseController
 
         $userIds = array_map('intval', $userIds);
 
-        $rows = $this->parishPeopleModel->getPeopleForExport($churchId, $userIds);
+        $rows = $this->parishPeopleModel->getPeopleForExport($parishId, $userIds);
 
         $csvLines = [];
         $csvLines[] = implode(',', ['First Name', 'Last Name', 'Email', 'Phone', 'Membership Status', 'Is Member', 'Good Standing', 'Portal Access']);
@@ -532,13 +532,13 @@ class People extends BaseController
             return $redirect;
         }
 
-        $churchId = (int) ($this->getOperationalParishId() ?? 0);
-        if ($churchId <= 0) {
-            return redirect()->to('/people')->with('error', lang('Members.noChurchSelected'));
+        $parishId = (int) ($this->getOperationalParishId() ?? 0);
+        if ($parishId <= 0) {
+            return redirect()->to('/people')->with('error', lang('Members.noParishSelected'));
         }
 
         $person = $this->parishPeopleModel
-            ->where('parish_id', $churchId)
+            ->where('parish_id', $parishId)
             ->where('profile_id', (int) $id)
             ->first();
 
@@ -571,14 +571,14 @@ class People extends BaseController
             'person' => $person,
             'is_person' => true,
             'affiliations' => $affiliations,
-            'membership_details' => (new \App\Services\PersonMembershipDetailsService())->forPerson($personId, $churchId),
-            'status_history' => $this->enrichStatusHistory((new \App\Services\PersonStatusHistoryService())->historyForPerson($personId, null, $churchId)),
+            'membership_details' => (new \App\Services\PersonMembershipDetailsService())->forPerson($personId, $parishId),
+            'status_history' => $this->enrichStatusHistory((new \App\Services\PersonStatusHistoryService())->historyForPerson($personId, null, $parishId)),
             'leadership' => $userId > 0 ? (new \App\Models\LeadershipPositionModel())->getAllPositionsForUser($userId) : [],
-            'onboarding' => (new \App\Services\PersonOnboardingService())->forPerson($personId, $churchId),
+            'onboarding' => (new \App\Services\PersonOnboardingService())->forPerson($personId, $parishId),
             'family' => [],
             'family_members' => [],
             'parish_families' => auth()->user()->can('family.manage')
-                ? (new \App\Models\FamilyModel())->getParishFamilies($churchId)
+                ? (new \App\Models\FamilyModel())->getParishFamilies($parishId)
                 : [],
         ]);
 
@@ -587,7 +587,7 @@ class People extends BaseController
         $sacraments = [];
         $sacramentParticipants = [];
         if ($personId > 0 && auth()->user()->can('member.edit')) {
-            $sacraments = (new \App\Models\SacramentalRecordModel())->getRecordsForPerson($personId, $churchId);
+            $sacraments = (new \App\Models\SacramentalRecordModel())->getRecordsForPerson($personId, $parishId);
             $participantModel = new \App\Models\SacramentalParticipantModel();
             foreach ($sacraments as $sr) {
                 $srId = (int) ($sr['id'] ?? 0);
@@ -602,7 +602,7 @@ class People extends BaseController
             $userFamily = $familyMemberModel->getUserFamily($userId);
             if (!empty($userFamily)) {
                 $fullFamily = (new \App\Models\FamilyModel())->getFamilyWithMembers((int) $userFamily['id']);
-                if ($fullFamily !== null && (int) ($fullFamily['parish_id'] ?? 0) === $churchId) {
+                if ($fullFamily !== null && (int) ($fullFamily['parish_id'] ?? 0) === $parishId) {
                     $family = $fullFamily;
                     $familyMembers = $fullFamily['members'] ?? [];
                 }
@@ -615,21 +615,21 @@ class People extends BaseController
         return view('Clergy\Views\People/view', array_merge($data, [
             'profile' => $profile,
             'donations' => ($userId > 0 && auth()->user()->can('donation.view'))
-                ? (new \App\Models\DonationModel())->getMemberDonationsForParish($userId, $churchId)
+                ? (new \App\Models\DonationModel())->getMemberDonationsForParish($userId, $parishId)
                 : [],
             'pledges' => ($userId > 0 && (auth()->user()->can('finance.manage') || auth()->user()->can('annual_pledge.manage')))
-                ? (new \App\Models\AnnualPledgeModel())->getMemberPledges($userId, $churchId)
+                ? (new \App\Models\AnnualPledgeModel())->getMemberPledges($userId, $parishId)
                 : [],
             'sacraments' => $sacraments,
             'sacrament_participants' => $sacramentParticipants,
             'sacrament_discrepancies' => $personId > 0
-                ? (new \App\Services\SacramentFlagSyncService())->discrepanciesForPerson($personId, $churchId)
+                ? (new \App\Services\SacramentFlagSyncService())->discrepanciesForPerson($personId, $parishId)
                 : [],
             'parish_people_for_dropdown' => auth()->user()->can('member.edit')
                 ? db_connect()->table('parish_people pp')
                     ->select('pp.user_id, pp.profile_id, pp.first_name, pp.last_name, p.person_id')
                     ->join('profile p', 'p.user_id = pp.user_id', 'inner')
-                    ->where('pp.parish_id', $churchId)
+                    ->where('pp.parish_id', $parishId)
                     ->where('pp.deleted_at', null)
                     ->orderBy('pp.last_name', 'ASC')
                     ->orderBy('pp.first_name', 'ASC')
@@ -637,7 +637,7 @@ class People extends BaseController
                     ->getResultArray()
                 : [],
             'funds' => auth()->user()->can('donation.view')
-                ? (new \App\Models\FundModel())->getParishFunds($churchId)
+                ? (new \App\Models\FundModel())->getParishFunds($parishId)
                 : [],
             'chart_accounts' => auth()->user()->can('donation.view')
                 ? (new \App\Models\ChartOfAccountModel())->getGroupedActiveAccountsForType('income')
@@ -659,12 +659,12 @@ class People extends BaseController
         }
 
         if ($redirect = $this->requireParish()) {
-            return $this->jsonResponse($this->apiErrorPayload(lang('App.errorNoParishScope'), 403, 'NO_CHURCH'), 403);
+            return $this->jsonResponse($this->apiErrorPayload(lang('App.errorNoParishScope'), 403, 'NO_PARISH'), 403);
         }
 
-        $churchId = (int) ($this->getOperationalParishId() ?? 0);
-        if ($churchId <= 0) {
-            return $this->jsonResponse($this->apiErrorPayload(lang('App.errorNoParishScope'), 403, 'NO_CHURCH'), 403);
+        $parishId = (int) ($this->getOperationalParishId() ?? 0);
+        if ($parishId <= 0) {
+            return $this->jsonResponse($this->apiErrorPayload(lang('App.errorNoParishScope'), 403, 'NO_PARISH'), 403);
         }
 
         // Ensure the target person belongs to the current parish.
@@ -672,7 +672,7 @@ class People extends BaseController
             ->select('p.id')
             ->join('parish_people pp', 'pp.user_id = p.user_id', 'inner')
             ->where('p.person_id', $personId)
-            ->where('pp.parish_id', $churchId)
+            ->where('pp.parish_id', $parishId)
             ->where('pp.deleted_at', null)
             ->get()
             ->getRowArray();
@@ -694,7 +694,7 @@ class People extends BaseController
         ];
 
         $service = new PersonMembershipDetailsService();
-        $saved = $service->saveForPerson($personId, $payload, $churchId, (string) ($this->request->getPost('reason') ?? ''));
+        $saved = $service->saveForPerson($personId, $payload, $parishId, (string) ($this->request->getPost('reason') ?? ''));
 
         if (!$saved) {
             return $this->jsonResponse([
@@ -703,10 +703,10 @@ class People extends BaseController
             ], 500);
         }
 
-        $this->registryService->syncParish($churchId);
+        $this->registryService->syncParish($parishId);
 
         $this->audit()->log('people.membership_details.update', [
-            'parish_id' => $churchId,
+            'parish_id' => $parishId,
             'entity_type' => 'person',
             'entity_id' => $personId,
             'new_values' => $payload,
@@ -728,7 +728,7 @@ class People extends BaseController
         }
 
         if ($redirect = $this->requireParish()) {
-            return $this->jsonResponse($this->apiErrorPayload(lang('App.errorNoParishScope'), 403, 'NO_CHURCH'), 403);
+            return $this->jsonResponse($this->apiErrorPayload(lang('App.errorNoParishScope'), 403, 'NO_PARISH'), 403);
         }
 
         if ($this->isProvinceAdmin()) {
@@ -771,9 +771,9 @@ class People extends BaseController
         }
 
         $scopeType = (string) $this->request->getPost('scope_type');
-        $churchId = (int) ($this->getOperationalParishId() ?? 0);
+        $parishId = (int) ($this->getOperationalParishId() ?? 0);
 
-        $scopeIds = $this->resolveLeadershipScopeIds($scopeType, $churchId);
+        $scopeIds = $this->resolveLeadershipScopeIds($scopeType, $parishId);
         if ($scopeIds === null) {
             return $this->jsonResponse($this->apiErrorPayload(lang('App.errorNoParishScope'), 400, 'SCOPE_NOT_FOUND'), 400);
         }
@@ -807,10 +807,10 @@ class People extends BaseController
 
         $positionId = (int) $model->getInsertID();
 
-        $this->registryService->syncParish($churchId);
+        $this->registryService->syncParish($parishId);
 
         $this->audit()->log('leadership_position.create', [
-            'parish_id' => $churchId,
+            'parish_id' => $parishId,
             'entity_type' => 'leadership_position',
             'entity_id' => $positionId,
             'new_values' => $payload,
@@ -833,16 +833,16 @@ class People extends BaseController
         }
 
         if ($redirect = $this->requireParish()) {
-            return $this->jsonResponse($this->apiErrorPayload(lang('App.errorNoParishScope'), 403, 'NO_CHURCH'), 403);
+            return $this->jsonResponse($this->apiErrorPayload(lang('App.errorNoParishScope'), 403, 'NO_PARISH'), 403);
         }
 
         if ($this->isProvinceAdmin()) {
             return $this->jsonResponse($this->apiErrorPayload(lang('App.errorUnauthorized'), 403, 'PROVINCE_WRITE_DISABLED'), 403);
         }
 
-        $churchId = (int) ($this->getOperationalParishId() ?? 0);
-        if ($churchId <= 0) {
-            return $this->jsonResponse($this->apiErrorPayload(lang('App.errorNoParishScope'), 403, 'NO_CHURCH'), 403);
+        $parishId = (int) ($this->getOperationalParishId() ?? 0);
+        if ($parishId <= 0) {
+            return $this->jsonResponse($this->apiErrorPayload(lang('App.errorNoParishScope'), 403, 'NO_PARISH'), 403);
         }
 
         $model = model('LeadershipPositionModel');
@@ -851,7 +851,7 @@ class People extends BaseController
             return $this->jsonResponse($this->apiErrorPayload(lang('App.errorNotFound'), 404, 'POSITION_NOT_FOUND'), 404);
         }
 
-        if (!$this->canManageLeadershipPosition($position, $churchId)) {
+        if (!$this->canManageLeadershipPosition($position, $parishId)) {
             return $this->jsonResponse($this->apiErrorPayload(lang('App.errorUnauthorized'), 403, 'POSITION_OUT_OF_SCOPE'), 403);
         }
 
@@ -897,10 +897,10 @@ class People extends BaseController
             ], 500);
         }
 
-        $this->registryService->syncParish($churchId);
+        $this->registryService->syncParish($parishId);
 
         $this->audit()->log('leadership_position.update', [
-            'parish_id' => $churchId,
+            'parish_id' => $parishId,
             'entity_type' => 'leadership_position',
             'entity_id' => $positionId,
             'old_values' => $position,
@@ -923,16 +923,16 @@ class People extends BaseController
         }
 
         if ($redirect = $this->requireParish()) {
-            return $this->jsonResponse($this->apiErrorPayload(lang('App.errorNoParishScope'), 403, 'NO_CHURCH'), 403);
+            return $this->jsonResponse($this->apiErrorPayload(lang('App.errorNoParishScope'), 403, 'NO_PARISH'), 403);
         }
 
         if ($this->isProvinceAdmin()) {
             return $this->jsonResponse($this->apiErrorPayload(lang('App.errorUnauthorized'), 403, 'PROVINCE_WRITE_DISABLED'), 403);
         }
 
-        $churchId = (int) ($this->getOperationalParishId() ?? 0);
-        if ($churchId <= 0) {
-            return $this->jsonResponse($this->apiErrorPayload(lang('App.errorNoParishScope'), 403, 'NO_CHURCH'), 403);
+        $parishId = (int) ($this->getOperationalParishId() ?? 0);
+        if ($parishId <= 0) {
+            return $this->jsonResponse($this->apiErrorPayload(lang('App.errorNoParishScope'), 403, 'NO_PARISH'), 403);
         }
 
         $model = model('LeadershipPositionModel');
@@ -941,7 +941,7 @@ class People extends BaseController
             return $this->jsonResponse($this->apiErrorPayload(lang('App.errorNotFound'), 404, 'POSITION_NOT_FOUND'), 404);
         }
 
-        if (!$this->canManageLeadershipPosition($position, $churchId)) {
+        if (!$this->canManageLeadershipPosition($position, $parishId)) {
             return $this->jsonResponse($this->apiErrorPayload(lang('App.errorUnauthorized'), 403, 'POSITION_OUT_OF_SCOPE'), 403);
         }
 
@@ -956,10 +956,10 @@ class People extends BaseController
             ], 500);
         }
 
-        $this->registryService->syncParish($churchId);
+        $this->registryService->syncParish($parishId);
 
         $this->audit()->log('leadership_position.delete', [
-            'parish_id' => $churchId,
+            'parish_id' => $parishId,
             'entity_type' => 'leadership_position',
             'entity_id' => $positionId,
             'old_values' => $position,
@@ -976,12 +976,12 @@ class People extends BaseController
      *
      * @return array<string, int|null>|null
      */
-    private function resolveLeadershipScopeIds(string $scopeType, int $churchId): ?array
+    private function resolveLeadershipScopeIds(string $scopeType, int $parishId): ?array
     {
         $result = ['parish_id' => null, 'diocese_id' => null, 'province_id' => null];
 
         if ($scopeType === 'parish') {
-            $result['parish_id'] = $churchId;
+            $result['parish_id'] = $parishId;
             return $result;
         }
 
@@ -1009,10 +1009,10 @@ class People extends BaseController
     /**
      * Determine whether the current admin can manage a leadership position.
      */
-    private function canManageLeadershipPosition(array $position, int $churchId): bool
+    private function canManageLeadershipPosition(array $position, int $parishId): bool
     {
         if ($position['scope_type'] === 'parish') {
-            return (int) ($position['parish_id'] ?? 0) === $churchId;
+            return (int) ($position['parish_id'] ?? 0) === $parishId;
         }
 
         if ($position['scope_type'] === 'diocese') {
@@ -1038,19 +1038,19 @@ class People extends BaseController
         }
 
         if ($redirect = $this->requireParish()) {
-            return $this->jsonResponse($this->apiErrorPayload(lang('App.errorNoParishScope'), 403, 'NO_CHURCH'), 403);
+            return $this->jsonResponse($this->apiErrorPayload(lang('App.errorNoParishScope'), 403, 'NO_PARISH'), 403);
         }
 
         if ($this->isProvinceAdmin()) {
             return $this->jsonResponse($this->apiErrorPayload(lang('App.errorUnauthorized'), 403, 'PROVINCE_WRITE_DISABLED'), 403);
         }
 
-        $churchId = (int) ($this->getOperationalParishId() ?? 0);
-        if ($churchId <= 0) {
-            return $this->jsonResponse($this->apiErrorPayload(lang('App.errorNoParishScope'), 403, 'NO_CHURCH'), 403);
+        $parishId = (int) ($this->getOperationalParishId() ?? 0);
+        if ($parishId <= 0) {
+            return $this->jsonResponse($this->apiErrorPayload(lang('App.errorNoParishScope'), 403, 'NO_PARISH'), 403);
         }
 
-        $profile = $this->getProfileForPersonManagement($profileId, $churchId);
+        $profile = $this->getProfileForPersonManagement($profileId, $parishId);
         if (!$profile) {
             return $this->jsonResponse($this->apiErrorPayload(lang('App.errorNotFound'), 404, 'PROFILE_NOT_FOUND'), 404);
         }
@@ -1085,7 +1085,7 @@ class People extends BaseController
 
         $fundId = (int) $this->request->getPost('fund_id');
         $fund = model('FundModel')->find($fundId);
-        if (!$fund || (int) ($fund['parish_id'] ?? 0) !== $churchId || (int) ($fund['is_locked'] ?? 0) === 1) {
+        if (!$fund || (int) ($fund['parish_id'] ?? 0) !== $parishId || (int) ($fund['is_locked'] ?? 0) === 1) {
             return $this->jsonResponse($this->apiErrorPayload(lang('Treasurer.validFundRequired'), 400, 'INVALID_FUND'), 400);
         }
 
@@ -1100,7 +1100,7 @@ class People extends BaseController
         }
 
         $data = [
-            'parish_id' => $churchId,
+            'parish_id' => $parishId,
             'fund_id' => $fundId,
             'user_id' => $userId,
             'date' => (string) $this->request->getPost('date'),
@@ -1125,7 +1125,7 @@ class People extends BaseController
         $receipt = $donationModel->issueReceipt($donationId);
 
         $this->audit()->log('donation.create', [
-            'parish_id' => $churchId,
+            'parish_id' => $parishId,
             'entity_type' => 'donation',
             'entity_id' => $donationId,
             'new_values' => [
@@ -1137,7 +1137,7 @@ class People extends BaseController
                 'chart_account_id' => $data['chart_account_id'],
                 'receipt_number' => (string) ($receipt['receipt_number'] ?? ''),
             ],
-            'meta' => $this->buildParishContextMeta($churchId, self::ATTRIBUTION_POLICY_OPERATIONAL_DEFAULT),
+            'meta' => $this->buildParishContextMeta($parishId, self::ATTRIBUTION_POLICY_OPERATIONAL_DEFAULT),
         ]);
 
         return $this->jsonResponse([
@@ -1157,21 +1157,21 @@ class People extends BaseController
         }
 
         if ($redirect = $this->requireParish()) {
-            return $this->jsonResponse($this->apiErrorPayload(lang('App.errorNoParishScope'), 403, 'NO_CHURCH'), 403);
+            return $this->jsonResponse($this->apiErrorPayload(lang('App.errorNoParishScope'), 403, 'NO_PARISH'), 403);
         }
 
         if ($this->isProvinceAdmin()) {
             return $this->jsonResponse($this->apiErrorPayload(lang('App.errorUnauthorized'), 403, 'PROVINCE_WRITE_DISABLED'), 403);
         }
 
-        $churchId = (int) ($this->getOperationalParishId() ?? 0);
-        if ($churchId <= 0) {
-            return $this->jsonResponse($this->apiErrorPayload(lang('App.errorNoParishScope'), 403, 'NO_CHURCH'), 403);
+        $parishId = (int) ($this->getOperationalParishId() ?? 0);
+        if ($parishId <= 0) {
+            return $this->jsonResponse($this->apiErrorPayload(lang('App.errorNoParishScope'), 403, 'NO_PARISH'), 403);
         }
 
         $donationModel = new \App\Models\DonationModel();
         $donation = $donationModel->find($donationId);
-        if (!$donation || (int) ($donation['parish_id'] ?? 0) !== $churchId) {
+        if (!$donation || (int) ($donation['parish_id'] ?? 0) !== $parishId) {
             return $this->jsonResponse($this->apiErrorPayload(lang('Treasurer.donationNotFound'), 404, 'DONATION_NOT_FOUND'), 404);
         }
 
@@ -1200,7 +1200,7 @@ class People extends BaseController
 
         $fundId = (int) $this->request->getPost('fund_id');
         $fund = model('FundModel')->find($fundId);
-        if (!$fund || (int) ($fund['parish_id'] ?? 0) !== $churchId || (int) ($fund['is_locked'] ?? 0) === 1) {
+        if (!$fund || (int) ($fund['parish_id'] ?? 0) !== $parishId || (int) ($fund['is_locked'] ?? 0) === 1) {
             return $this->jsonResponse($this->apiErrorPayload(lang('Treasurer.validFundRequired'), 400, 'INVALID_FUND'), 400);
         }
 
@@ -1234,12 +1234,12 @@ class People extends BaseController
         }
 
         $this->audit()->log('donation.update', [
-            'parish_id' => $churchId,
+            'parish_id' => $parishId,
             'entity_type' => 'donation',
             'entity_id' => $donationId,
             'old_values' => $donation,
             'new_values' => $data,
-            'meta' => $this->buildParishContextMeta($churchId, self::ATTRIBUTION_POLICY_OPERATIONAL_DEFAULT),
+            'meta' => $this->buildParishContextMeta($parishId, self::ATTRIBUTION_POLICY_OPERATIONAL_DEFAULT),
         ]);
 
         return $this->jsonResponse([
@@ -1258,21 +1258,21 @@ class People extends BaseController
         }
 
         if ($redirect = $this->requireParish()) {
-            return $this->jsonResponse($this->apiErrorPayload(lang('App.errorNoParishScope'), 403, 'NO_CHURCH'), 403);
+            return $this->jsonResponse($this->apiErrorPayload(lang('App.errorNoParishScope'), 403, 'NO_PARISH'), 403);
         }
 
         if ($this->isProvinceAdmin()) {
             return $this->jsonResponse($this->apiErrorPayload(lang('App.errorUnauthorized'), 403, 'PROVINCE_WRITE_DISABLED'), 403);
         }
 
-        $churchId = (int) ($this->getOperationalParishId() ?? 0);
-        if ($churchId <= 0) {
-            return $this->jsonResponse($this->apiErrorPayload(lang('App.errorNoParishScope'), 403, 'NO_CHURCH'), 403);
+        $parishId = (int) ($this->getOperationalParishId() ?? 0);
+        if ($parishId <= 0) {
+            return $this->jsonResponse($this->apiErrorPayload(lang('App.errorNoParishScope'), 403, 'NO_PARISH'), 403);
         }
 
         $donationModel = new \App\Models\DonationModel();
         $donation = $donationModel->find($donationId);
-        if (!$donation || (int) ($donation['parish_id'] ?? 0) !== $churchId) {
+        if (!$donation || (int) ($donation['parish_id'] ?? 0) !== $parishId) {
             return $this->jsonResponse($this->apiErrorPayload(lang('Treasurer.donationNotFound'), 404, 'DONATION_NOT_FOUND'), 404);
         }
 
@@ -1288,11 +1288,11 @@ class People extends BaseController
         }
 
         $this->audit()->log('donation.delete', [
-            'parish_id' => $churchId,
+            'parish_id' => $parishId,
             'entity_type' => 'donation',
             'entity_id' => $donationId,
             'old_values' => $donation,
-            'meta' => $this->buildParishContextMeta($churchId, self::ATTRIBUTION_POLICY_OPERATIONAL_DEFAULT),
+            'meta' => $this->buildParishContextMeta($parishId, self::ATTRIBUTION_POLICY_OPERATIONAL_DEFAULT),
         ]);
 
         return $this->jsonResponse([
@@ -1311,19 +1311,19 @@ class People extends BaseController
         }
 
         if ($redirect = $this->requireParish()) {
-            return $this->jsonResponse($this->apiErrorPayload(lang('App.errorNoParishScope'), 403, 'NO_CHURCH'), 403);
+            return $this->jsonResponse($this->apiErrorPayload(lang('App.errorNoParishScope'), 403, 'NO_PARISH'), 403);
         }
 
         if ($this->isProvinceAdmin()) {
             return $this->jsonResponse($this->apiErrorPayload(lang('App.errorUnauthorized'), 403, 'PROVINCE_WRITE_DISABLED'), 403);
         }
 
-        $churchId = (int) ($this->getOperationalParishId() ?? 0);
-        if ($churchId <= 0) {
-            return $this->jsonResponse($this->apiErrorPayload(lang('App.errorNoParishScope'), 403, 'NO_CHURCH'), 403);
+        $parishId = (int) ($this->getOperationalParishId() ?? 0);
+        if ($parishId <= 0) {
+            return $this->jsonResponse($this->apiErrorPayload(lang('App.errorNoParishScope'), 403, 'NO_PARISH'), 403);
         }
 
-        $profile = $this->getProfileForPersonManagement($profileId, $churchId);
+        $profile = $this->getProfileForPersonManagement($profileId, $parishId);
         if (!$profile) {
             return $this->jsonResponse($this->apiErrorPayload(lang('App.errorNotFound'), 404, 'PROFILE_NOT_FOUND'), 404);
         }
@@ -1358,7 +1358,7 @@ class People extends BaseController
         $model = model('AnnualPledgeModel');
         $payload = [
             'user_id' => $userId,
-            'parish_id' => $churchId,
+            'parish_id' => $parishId,
             'pledge_year' => (int) $this->request->getPost('pledge_year'),
             'pledged_amount' => $this->request->getPost('pledged_amount') !== '' ? (float) $this->request->getPost('pledged_amount') : null,
             'fulfilled_amount' => $this->request->getPost('fulfilled_amount') !== '' ? (float) $this->request->getPost('fulfilled_amount') : 0,
@@ -1377,11 +1377,11 @@ class People extends BaseController
         $pledgeId = (int) $model->getInsertID();
 
         $this->audit()->log('annual_pledge.create', [
-            'parish_id' => $churchId,
+            'parish_id' => $parishId,
             'entity_type' => 'annual_pledge',
             'entity_id' => $pledgeId,
             'new_values' => $payload,
-            'meta' => $this->buildParishContextMeta($churchId, self::ATTRIBUTION_POLICY_OPERATIONAL_DEFAULT),
+            'meta' => $this->buildParishContextMeta($parishId, self::ATTRIBUTION_POLICY_OPERATIONAL_DEFAULT),
         ]);
 
         return $this->jsonResponse([
@@ -1401,21 +1401,21 @@ class People extends BaseController
         }
 
         if ($redirect = $this->requireParish()) {
-            return $this->jsonResponse($this->apiErrorPayload(lang('App.errorNoParishScope'), 403, 'NO_CHURCH'), 403);
+            return $this->jsonResponse($this->apiErrorPayload(lang('App.errorNoParishScope'), 403, 'NO_PARISH'), 403);
         }
 
         if ($this->isProvinceAdmin()) {
             return $this->jsonResponse($this->apiErrorPayload(lang('App.errorUnauthorized'), 403, 'PROVINCE_WRITE_DISABLED'), 403);
         }
 
-        $churchId = (int) ($this->getOperationalParishId() ?? 0);
-        if ($churchId <= 0) {
-            return $this->jsonResponse($this->apiErrorPayload(lang('App.errorNoParishScope'), 403, 'NO_CHURCH'), 403);
+        $parishId = (int) ($this->getOperationalParishId() ?? 0);
+        if ($parishId <= 0) {
+            return $this->jsonResponse($this->apiErrorPayload(lang('App.errorNoParishScope'), 403, 'NO_PARISH'), 403);
         }
 
         $model = model('AnnualPledgeModel');
         $pledge = $model->find($pledgeId);
-        if (!$pledge || (int) ($pledge['parish_id'] ?? 0) !== $churchId) {
+        if (!$pledge || (int) ($pledge['parish_id'] ?? 0) !== $parishId) {
             return $this->jsonResponse($this->apiErrorPayload(lang('App.pledgeNotFound'), 404, 'PLEDGE_NOT_FOUND'), 404);
         }
 
@@ -1456,12 +1456,12 @@ class People extends BaseController
         }
 
         $this->audit()->log('annual_pledge.update', [
-            'parish_id' => $churchId,
+            'parish_id' => $parishId,
             'entity_type' => 'annual_pledge',
             'entity_id' => $pledgeId,
             'old_values' => $pledge,
             'new_values' => $payload,
-            'meta' => $this->buildParishContextMeta($churchId, self::ATTRIBUTION_POLICY_OPERATIONAL_DEFAULT),
+            'meta' => $this->buildParishContextMeta($parishId, self::ATTRIBUTION_POLICY_OPERATIONAL_DEFAULT),
         ]);
 
         return $this->jsonResponse([
@@ -1480,21 +1480,21 @@ class People extends BaseController
         }
 
         if ($redirect = $this->requireParish()) {
-            return $this->jsonResponse($this->apiErrorPayload(lang('App.errorNoParishScope'), 403, 'NO_CHURCH'), 403);
+            return $this->jsonResponse($this->apiErrorPayload(lang('App.errorNoParishScope'), 403, 'NO_PARISH'), 403);
         }
 
         if ($this->isProvinceAdmin()) {
             return $this->jsonResponse($this->apiErrorPayload(lang('App.errorUnauthorized'), 403, 'PROVINCE_WRITE_DISABLED'), 403);
         }
 
-        $churchId = (int) ($this->getOperationalParishId() ?? 0);
-        if ($churchId <= 0) {
-            return $this->jsonResponse($this->apiErrorPayload(lang('App.errorNoParishScope'), 403, 'NO_CHURCH'), 403);
+        $parishId = (int) ($this->getOperationalParishId() ?? 0);
+        if ($parishId <= 0) {
+            return $this->jsonResponse($this->apiErrorPayload(lang('App.errorNoParishScope'), 403, 'NO_PARISH'), 403);
         }
 
         $model = model('AnnualPledgeModel');
         $pledge = $model->find($pledgeId);
-        if (!$pledge || (int) ($pledge['parish_id'] ?? 0) !== $churchId) {
+        if (!$pledge || (int) ($pledge['parish_id'] ?? 0) !== $parishId) {
             return $this->jsonResponse($this->apiErrorPayload(lang('App.pledgeNotFound'), 404, 'PLEDGE_NOT_FOUND'), 404);
         }
 
@@ -1510,11 +1510,11 @@ class People extends BaseController
         }
 
         $this->audit()->log('annual_pledge.delete', [
-            'parish_id' => $churchId,
+            'parish_id' => $parishId,
             'entity_type' => 'annual_pledge',
             'entity_id' => $pledgeId,
             'old_values' => $pledge,
-            'meta' => $this->buildParishContextMeta($churchId, self::ATTRIBUTION_POLICY_OPERATIONAL_DEFAULT),
+            'meta' => $this->buildParishContextMeta($parishId, self::ATTRIBUTION_POLICY_OPERATIONAL_DEFAULT),
         ]);
 
         return $this->jsonResponse([
@@ -1533,19 +1533,19 @@ class People extends BaseController
         }
 
         if ($redirect = $this->requireParish()) {
-            return $this->jsonResponse($this->apiErrorPayload(lang('App.errorNoParishScope'), 403, 'NO_CHURCH'), 403);
+            return $this->jsonResponse($this->apiErrorPayload(lang('App.errorNoParishScope'), 403, 'NO_PARISH'), 403);
         }
 
         if ($this->isProvinceAdmin()) {
             return $this->jsonResponse($this->apiErrorPayload(lang('App.errorUnauthorized'), 403, 'PROVINCE_WRITE_DISABLED'), 403);
         }
 
-        $churchId = (int) ($this->getOperationalParishId() ?? 0);
-        if ($churchId <= 0) {
-            return $this->jsonResponse($this->apiErrorPayload(lang('App.errorNoParishScope'), 403, 'NO_CHURCH'), 403);
+        $parishId = (int) ($this->getOperationalParishId() ?? 0);
+        if ($parishId <= 0) {
+            return $this->jsonResponse($this->apiErrorPayload(lang('App.errorNoParishScope'), 403, 'NO_PARISH'), 403);
         }
 
-        $profile = $this->getProfileForPersonManagement($profileId, $churchId);
+        $profile = $this->getProfileForPersonManagement($profileId, $parishId);
         if (!$profile) {
             return $this->jsonResponse($this->apiErrorPayload(lang('App.errorNotFound'), 404, 'PROFILE_NOT_FOUND'), 404);
         }
@@ -1579,7 +1579,7 @@ class People extends BaseController
 
         $model = new \App\Models\SacramentalRecordModel();
         $payload = [
-            'parish_id'           => $churchId,
+            'parish_id'           => $parishId,
             'person_id'           => $personId,
             'sacrament_type'      => trim((string) $this->request->getPost('sacrament_type')),
             'sacrament_date'      => (string) ($this->request->getPost('sacrament_date') ?? '') ?: null,
@@ -1604,19 +1604,19 @@ class People extends BaseController
         // of truth for baptism/confirmation status.
         (new \App\Services\SacramentFlagSyncService())->applyForPerson(
             $personId,
-            $churchId,
+            $parishId,
             auth()->loggedIn() ? (int) auth()->id() : null,
             'Sacrament record added'
         );
 
-        $this->registryService->syncParish($churchId);
+        $this->registryService->syncParish($parishId);
 
         $this->audit()->log('sacramental_record.create', [
-            'parish_id' => $churchId,
+            'parish_id' => $parishId,
             'entity_type' => 'sacramental_record',
             'entity_id' => $recordId,
             'new_values' => $payload,
-            'meta' => $this->buildParishContextMeta($churchId, self::ATTRIBUTION_POLICY_OPERATIONAL_DEFAULT),
+            'meta' => $this->buildParishContextMeta($parishId, self::ATTRIBUTION_POLICY_OPERATIONAL_DEFAULT),
         ]);
 
         return $this->jsonResponse([
@@ -1636,20 +1636,20 @@ class People extends BaseController
         }
 
         if ($redirect = $this->requireParish()) {
-            return $this->jsonResponse($this->apiErrorPayload(lang('App.errorNoParishScope'), 403, 'NO_CHURCH'), 403);
+            return $this->jsonResponse($this->apiErrorPayload(lang('App.errorNoParishScope'), 403, 'NO_PARISH'), 403);
         }
 
         if ($this->isProvinceAdmin()) {
             return $this->jsonResponse($this->apiErrorPayload(lang('App.errorUnauthorized'), 403, 'PROVINCE_WRITE_DISABLED'), 403);
         }
 
-        $churchId = (int) ($this->getOperationalParishId() ?? 0);
-        if ($churchId <= 0) {
-            return $this->jsonResponse($this->apiErrorPayload(lang('App.errorNoParishScope'), 403, 'NO_CHURCH'), 403);
+        $parishId = (int) ($this->getOperationalParishId() ?? 0);
+        if ($parishId <= 0) {
+            return $this->jsonResponse($this->apiErrorPayload(lang('App.errorNoParishScope'), 403, 'NO_PARISH'), 403);
         }
 
         $model = new \App\Models\SacramentalRecordModel();
-        $record = $model->getRecordForParish($recordId, $churchId);
+        $record = $model->getRecordForParish($recordId, $parishId);
         if (!$record) {
             return $this->jsonResponse($this->apiErrorPayload(lang('App.errorNotFound'), 404, 'SACRAMENT_NOT_FOUND'), 404);
         }
@@ -1697,18 +1697,18 @@ class People extends BaseController
         // so recompute the derived flags + profile dates from all records.
         (new \App\Services\SacramentFlagSyncService())->applyForPerson(
             (int) ($record['person_id'] ?? 0),
-            $churchId,
+            $parishId,
             auth()->loggedIn() ? (int) auth()->id() : null,
             'Sacrament record updated'
         );
 
         $this->audit()->log('sacramental_record.update', [
-            'parish_id' => $churchId,
+            'parish_id' => $parishId,
             'entity_type' => 'sacramental_record',
             'entity_id' => $recordId,
             'old_values' => $record,
             'new_values' => $payload,
-            'meta' => $this->buildParishContextMeta($churchId, self::ATTRIBUTION_POLICY_OPERATIONAL_DEFAULT),
+            'meta' => $this->buildParishContextMeta($parishId, self::ATTRIBUTION_POLICY_OPERATIONAL_DEFAULT),
         ]);
 
         return $this->jsonResponse([
@@ -1727,20 +1727,20 @@ class People extends BaseController
         }
 
         if ($redirect = $this->requireParish()) {
-            return $this->jsonResponse($this->apiErrorPayload(lang('App.errorNoParishScope'), 403, 'NO_CHURCH'), 403);
+            return $this->jsonResponse($this->apiErrorPayload(lang('App.errorNoParishScope'), 403, 'NO_PARISH'), 403);
         }
 
         if ($this->isProvinceAdmin()) {
             return $this->jsonResponse($this->apiErrorPayload(lang('App.errorUnauthorized'), 403, 'PROVINCE_WRITE_DISABLED'), 403);
         }
 
-        $churchId = (int) ($this->getOperationalParishId() ?? 0);
-        if ($churchId <= 0) {
-            return $this->jsonResponse($this->apiErrorPayload(lang('App.errorNoParishScope'), 403, 'NO_CHURCH'), 403);
+        $parishId = (int) ($this->getOperationalParishId() ?? 0);
+        if ($parishId <= 0) {
+            return $this->jsonResponse($this->apiErrorPayload(lang('App.errorNoParishScope'), 403, 'NO_PARISH'), 403);
         }
 
         $model = new \App\Models\SacramentalRecordModel();
-        $record = $model->getRecordForParish($recordId, $churchId);
+        $record = $model->getRecordForParish($recordId, $parishId);
         if (!$record) {
             return $this->jsonResponse($this->apiErrorPayload(lang('App.errorNotFound'), 404, 'SACRAMENT_NOT_FOUND'), 404);
         }
@@ -1756,17 +1756,17 @@ class People extends BaseController
         // flags + profile dates. Recompute from the remaining records.
         (new \App\Services\SacramentFlagSyncService())->applyForPerson(
             (int) ($record['person_id'] ?? 0),
-            $churchId,
+            $parishId,
             auth()->loggedIn() ? (int) auth()->id() : null,
             'Sacrament record deleted'
         );
 
         $this->audit()->log('sacramental_record.delete', [
-            'parish_id' => $churchId,
+            'parish_id' => $parishId,
             'entity_type' => 'sacramental_record',
             'entity_id' => $recordId,
             'old_values' => $record,
-            'meta' => $this->buildParishContextMeta($churchId, self::ATTRIBUTION_POLICY_OPERATIONAL_DEFAULT),
+            'meta' => $this->buildParishContextMeta($parishId, self::ATTRIBUTION_POLICY_OPERATIONAL_DEFAULT),
         ]);
 
         return $this->jsonResponse([
@@ -1785,20 +1785,20 @@ class People extends BaseController
         }
 
         if ($redirect = $this->requireParish()) {
-            return $this->jsonResponse($this->apiErrorPayload(lang('App.errorNoParishScope'), 403, 'NO_CHURCH'), 403);
+            return $this->jsonResponse($this->apiErrorPayload(lang('App.errorNoParishScope'), 403, 'NO_PARISH'), 403);
         }
 
         if ($this->isProvinceAdmin()) {
             return $this->jsonResponse($this->apiErrorPayload(lang('App.errorUnauthorized'), 403, 'PROVINCE_WRITE_DISABLED'), 403);
         }
 
-        $churchId = (int) ($this->getOperationalParishId() ?? 0);
-        if ($churchId <= 0) {
-            return $this->jsonResponse($this->apiErrorPayload(lang('App.errorNoParishScope'), 403, 'NO_CHURCH'), 403);
+        $parishId = (int) ($this->getOperationalParishId() ?? 0);
+        if ($parishId <= 0) {
+            return $this->jsonResponse($this->apiErrorPayload(lang('App.errorNoParishScope'), 403, 'NO_PARISH'), 403);
         }
 
         $recordModel = new \App\Models\SacramentalRecordModel();
-        $record = $recordModel->getRecordForParish($recordId, $churchId);
+        $record = $recordModel->getRecordForParish($recordId, $parishId);
         if (!$record) {
             return $this->jsonResponse($this->apiErrorPayload(lang('App.errorNotFound'), 404, 'SACRAMENT_NOT_FOUND'), 404);
         }
@@ -1849,11 +1849,11 @@ class People extends BaseController
         $participantId = (int) $participantModel->getInsertID();
 
         $this->audit()->log('sacramental_participant.create', [
-            'parish_id' => $churchId,
+            'parish_id' => $parishId,
             'entity_type' => 'sacramental_participant',
             'entity_id' => $participantId,
             'new_values' => $payload,
-            'meta' => $this->buildParishContextMeta($churchId, self::ATTRIBUTION_POLICY_OPERATIONAL_DEFAULT),
+            'meta' => $this->buildParishContextMeta($parishId, self::ATTRIBUTION_POLICY_OPERATIONAL_DEFAULT),
         ]);
 
         return $this->jsonResponse([
@@ -1873,21 +1873,21 @@ class People extends BaseController
         }
 
         if ($redirect = $this->requireParish()) {
-            return $this->jsonResponse($this->apiErrorPayload(lang('App.errorNoParishScope'), 403, 'NO_CHURCH'), 403);
+            return $this->jsonResponse($this->apiErrorPayload(lang('App.errorNoParishScope'), 403, 'NO_PARISH'), 403);
         }
 
         if ($this->isProvinceAdmin()) {
             return $this->jsonResponse($this->apiErrorPayload(lang('App.errorUnauthorized'), 403, 'PROVINCE_WRITE_DISABLED'), 403);
         }
 
-        $churchId = (int) ($this->getOperationalParishId() ?? 0);
-        if ($churchId <= 0) {
-            return $this->jsonResponse($this->apiErrorPayload(lang('App.errorNoParishScope'), 403, 'NO_CHURCH'), 403);
+        $parishId = (int) ($this->getOperationalParishId() ?? 0);
+        if ($parishId <= 0) {
+            return $this->jsonResponse($this->apiErrorPayload(lang('App.errorNoParishScope'), 403, 'NO_PARISH'), 403);
         }
 
         $participantModel = new \App\Models\SacramentalParticipantModel();
         $participant = $participantModel->getParticipantWithRecord($participantId);
-        if (!$participant || (int) ($participant['parish_id'] ?? 0) !== $churchId) {
+        if (!$participant || (int) ($participant['parish_id'] ?? 0) !== $parishId) {
             return $this->jsonResponse($this->apiErrorPayload(lang('App.errorNotFound'), 404, 'PARTICIPANT_NOT_FOUND'), 404);
         }
 
@@ -1929,12 +1929,12 @@ class People extends BaseController
         }
 
         $this->audit()->log('sacramental_participant.update', [
-            'parish_id' => $churchId,
+            'parish_id' => $parishId,
             'entity_type' => 'sacramental_participant',
             'entity_id' => $participantId,
             'old_values' => $participant,
             'new_values' => ['participant_role' => $role],
-            'meta' => $this->buildParishContextMeta($churchId, self::ATTRIBUTION_POLICY_OPERATIONAL_DEFAULT),
+            'meta' => $this->buildParishContextMeta($parishId, self::ATTRIBUTION_POLICY_OPERATIONAL_DEFAULT),
         ]);
 
         return $this->jsonResponse([
@@ -1953,21 +1953,21 @@ class People extends BaseController
         }
 
         if ($redirect = $this->requireParish()) {
-            return $this->jsonResponse($this->apiErrorPayload(lang('App.errorNoParishScope'), 403, 'NO_CHURCH'), 403);
+            return $this->jsonResponse($this->apiErrorPayload(lang('App.errorNoParishScope'), 403, 'NO_PARISH'), 403);
         }
 
         if ($this->isProvinceAdmin()) {
             return $this->jsonResponse($this->apiErrorPayload(lang('App.errorUnauthorized'), 403, 'PROVINCE_WRITE_DISABLED'), 403);
         }
 
-        $churchId = (int) ($this->getOperationalParishId() ?? 0);
-        if ($churchId <= 0) {
-            return $this->jsonResponse($this->apiErrorPayload(lang('App.errorNoParishScope'), 403, 'NO_CHURCH'), 403);
+        $parishId = (int) ($this->getOperationalParishId() ?? 0);
+        if ($parishId <= 0) {
+            return $this->jsonResponse($this->apiErrorPayload(lang('App.errorNoParishScope'), 403, 'NO_PARISH'), 403);
         }
 
         $participantModel = new \App\Models\SacramentalParticipantModel();
         $participant = $participantModel->getParticipantWithRecord($participantId);
-        if (!$participant || (int) ($participant['parish_id'] ?? 0) !== $churchId) {
+        if (!$participant || (int) ($participant['parish_id'] ?? 0) !== $parishId) {
             return $this->jsonResponse($this->apiErrorPayload(lang('App.errorNotFound'), 404, 'PARTICIPANT_NOT_FOUND'), 404);
         }
 
@@ -1979,11 +1979,11 @@ class People extends BaseController
         }
 
         $this->audit()->log('sacramental_participant.delete', [
-            'parish_id' => $churchId,
+            'parish_id' => $parishId,
             'entity_type' => 'sacramental_participant',
             'entity_id' => $participantId,
             'old_values' => $participant,
-            'meta' => $this->buildParishContextMeta($churchId, self::ATTRIBUTION_POLICY_OPERATIONAL_DEFAULT),
+            'meta' => $this->buildParishContextMeta($parishId, self::ATTRIBUTION_POLICY_OPERATIONAL_DEFAULT),
         ]);
 
         return $this->jsonResponse([
@@ -2002,19 +2002,19 @@ class People extends BaseController
         }
 
         if ($redirect = $this->requireParish()) {
-            return $this->jsonResponse($this->apiErrorPayload(lang('App.errorNoParishScope'), 403, 'NO_CHURCH'), 403);
+            return $this->jsonResponse($this->apiErrorPayload(lang('App.errorNoParishScope'), 403, 'NO_PARISH'), 403);
         }
 
         if ($this->isProvinceAdmin()) {
             return $this->jsonResponse($this->apiErrorPayload(lang('App.errorUnauthorized'), 403, 'PROVINCE_WRITE_DISABLED'), 403);
         }
 
-        $churchId = (int) ($this->getOperationalParishId() ?? 0);
-        if ($churchId <= 0) {
-            return $this->jsonResponse($this->apiErrorPayload(lang('App.errorNoParishScope'), 403, 'NO_CHURCH'), 403);
+        $parishId = (int) ($this->getOperationalParishId() ?? 0);
+        if ($parishId <= 0) {
+            return $this->jsonResponse($this->apiErrorPayload(lang('App.errorNoParishScope'), 403, 'NO_PARISH'), 403);
         }
 
-        $profile = $this->getProfileForPersonManagement($profileId, $churchId);
+        $profile = $this->getProfileForPersonManagement($profileId, $parishId);
         if (!$profile) {
             return $this->jsonResponse($this->apiErrorPayload(lang('App.errorNotFound'), 404, 'PROFILE_NOT_FOUND'), 404);
         }
@@ -2048,7 +2048,7 @@ class People extends BaseController
 
         try {
             $familyId = (int) $familyModel->insert([
-                'parish_id' => $churchId,
+                'parish_id' => $parishId,
                 'family_name' => trim((string) $this->request->getPost('family_name')),
                 'head_of_household_id' => $userId,
                 'address' => trim((string) ($this->request->getPost('address') ?? '')),
@@ -2082,17 +2082,17 @@ class People extends BaseController
         }
 
         $this->audit()->log('family.create', [
-            'parish_id' => $churchId,
+            'parish_id' => $parishId,
             'entity_type' => 'family',
             'entity_id' => $familyId,
             'new_values' => [
                 'family_name' => trim((string) $this->request->getPost('family_name')),
                 'head_of_household_id' => $userId,
             ],
-            'meta' => $this->buildParishContextMeta($churchId, self::ATTRIBUTION_POLICY_OPERATIONAL_DEFAULT),
+            'meta' => $this->buildParishContextMeta($parishId, self::ATTRIBUTION_POLICY_OPERATIONAL_DEFAULT),
         ]);
 
-        $this->registryService->syncParish($churchId);
+        $this->registryService->syncParish($parishId);
 
         return $this->jsonResponse([
             'success' => true,
@@ -2111,19 +2111,19 @@ class People extends BaseController
         }
 
         if ($redirect = $this->requireParish()) {
-            return $this->jsonResponse($this->apiErrorPayload(lang('App.errorNoParishScope'), 403, 'NO_CHURCH'), 403);
+            return $this->jsonResponse($this->apiErrorPayload(lang('App.errorNoParishScope'), 403, 'NO_PARISH'), 403);
         }
 
         if ($this->isProvinceAdmin()) {
             return $this->jsonResponse($this->apiErrorPayload(lang('App.errorUnauthorized'), 403, 'PROVINCE_WRITE_DISABLED'), 403);
         }
 
-        $churchId = (int) ($this->getOperationalParishId() ?? 0);
-        if ($churchId <= 0) {
-            return $this->jsonResponse($this->apiErrorPayload(lang('App.errorNoParishScope'), 403, 'NO_CHURCH'), 403);
+        $parishId = (int) ($this->getOperationalParishId() ?? 0);
+        if ($parishId <= 0) {
+            return $this->jsonResponse($this->apiErrorPayload(lang('App.errorNoParishScope'), 403, 'NO_PARISH'), 403);
         }
 
-        $profile = $this->getProfileForPersonManagement($profileId, $churchId);
+        $profile = $this->getProfileForPersonManagement($profileId, $parishId);
         if (!$profile) {
             return $this->jsonResponse($this->apiErrorPayload(lang('App.errorNotFound'), 404, 'PROFILE_NOT_FOUND'), 404);
         }
@@ -2140,7 +2140,7 @@ class People extends BaseController
 
         $familyModel = model('FamilyModel');
         $family = $familyModel->find($familyId);
-        if (!$family || (int) ($family['parish_id'] ?? 0) !== $churchId) {
+        if (!$family || (int) ($family['parish_id'] ?? 0) !== $parishId) {
             return $this->jsonResponse($this->apiErrorPayload(lang('Families.invalidFamily'), 404, 'FAMILY_NOT_FOUND'), 404);
         }
 
@@ -2172,7 +2172,7 @@ class People extends BaseController
         }
 
         $this->audit()->log('family_member.add', [
-            'parish_id' => $churchId,
+            'parish_id' => $parishId,
             'entity_type' => 'family_member',
             'entity_id' => $relationId,
             'new_values' => [
@@ -2180,10 +2180,10 @@ class People extends BaseController
                 'user_id' => $userId,
                 'relationship' => $relationship,
             ],
-            'meta' => $this->buildParishContextMeta($churchId, self::ATTRIBUTION_POLICY_OPERATIONAL_DEFAULT),
+            'meta' => $this->buildParishContextMeta($parishId, self::ATTRIBUTION_POLICY_OPERATIONAL_DEFAULT),
         ]);
 
-        $this->registryService->syncParish($churchId);
+        $this->registryService->syncParish($parishId);
 
         return $this->jsonResponse([
             'success' => true,
@@ -2202,19 +2202,19 @@ class People extends BaseController
         }
 
         if ($redirect = $this->requireParish()) {
-            return $this->jsonResponse($this->apiErrorPayload(lang('App.errorNoParishScope'), 403, 'NO_CHURCH'), 403);
+            return $this->jsonResponse($this->apiErrorPayload(lang('App.errorNoParishScope'), 403, 'NO_PARISH'), 403);
         }
 
         if ($this->isProvinceAdmin()) {
             return $this->jsonResponse($this->apiErrorPayload(lang('App.errorUnauthorized'), 403, 'PROVINCE_WRITE_DISABLED'), 403);
         }
 
-        $churchId = (int) ($this->getOperationalParishId() ?? 0);
-        if ($churchId <= 0) {
-            return $this->jsonResponse($this->apiErrorPayload(lang('App.errorNoParishScope'), 403, 'NO_CHURCH'), 403);
+        $parishId = (int) ($this->getOperationalParishId() ?? 0);
+        if ($parishId <= 0) {
+            return $this->jsonResponse($this->apiErrorPayload(lang('App.errorNoParishScope'), 403, 'NO_PARISH'), 403);
         }
 
-        $profile = $this->getProfileForPersonManagement($profileId, $churchId);
+        $profile = $this->getProfileForPersonManagement($profileId, $parishId);
         if (!$profile) {
             return $this->jsonResponse($this->apiErrorPayload(lang('App.errorNotFound'), 404, 'PROFILE_NOT_FOUND'), 404);
         }
@@ -2232,7 +2232,7 @@ class People extends BaseController
 
         $familyModel = model('FamilyModel');
         $family = $familyModel->find((int) ($relation['family_id'] ?? 0));
-        if (!$family || (int) ($family['parish_id'] ?? 0) !== $churchId) {
+        if (!$family || (int) ($family['parish_id'] ?? 0) !== $parishId) {
             return $this->jsonResponse($this->apiErrorPayload(lang('App.errorUnauthorized'), 403, 'FAMILY_SCOPE_FORBIDDEN'), 403);
         }
 
@@ -2245,14 +2245,14 @@ class People extends BaseController
         }
 
         $this->audit()->log('family_member.remove', [
-            'parish_id' => $churchId,
+            'parish_id' => $parishId,
             'entity_type' => 'family_member',
             'entity_id' => $relationId,
             'old_values' => $relation,
-            'meta' => $this->buildParishContextMeta($churchId, self::ATTRIBUTION_POLICY_OPERATIONAL_DEFAULT),
+            'meta' => $this->buildParishContextMeta($parishId, self::ATTRIBUTION_POLICY_OPERATIONAL_DEFAULT),
         ]);
 
-        $this->registryService->syncParish($churchId);
+        $this->registryService->syncParish($parishId);
 
         return $this->jsonResponse([
             'success' => true,
@@ -2270,19 +2270,19 @@ class People extends BaseController
         }
 
         if ($redirect = $this->requireParish()) {
-            return $this->jsonResponse($this->apiErrorPayload(lang('App.errorNoParishScope'), 403, 'NO_CHURCH'), 403);
+            return $this->jsonResponse($this->apiErrorPayload(lang('App.errorNoParishScope'), 403, 'NO_PARISH'), 403);
         }
 
         if ($this->isProvinceAdmin()) {
             return $this->jsonResponse($this->apiErrorPayload(lang('App.errorUnauthorized'), 403, 'PROVINCE_WRITE_DISABLED'), 403);
         }
 
-        $churchId = (int) ($this->getOperationalParishId() ?? 0);
-        if ($churchId <= 0) {
-            return $this->jsonResponse($this->apiErrorPayload(lang('App.errorNoParishScope'), 403, 'NO_CHURCH'), 403);
+        $parishId = (int) ($this->getOperationalParishId() ?? 0);
+        if ($parishId <= 0) {
+            return $this->jsonResponse($this->apiErrorPayload(lang('App.errorNoParishScope'), 403, 'NO_PARISH'), 403);
         }
 
-        $profile = $this->getProfileForPersonManagement($profileId, $churchId);
+        $profile = $this->getProfileForPersonManagement($profileId, $parishId);
         if (!$profile) {
             return $this->jsonResponse($this->apiErrorPayload(lang('App.errorNotFound'), 404, 'PROFILE_NOT_FOUND'), 404);
         }
@@ -2300,7 +2300,7 @@ class People extends BaseController
 
         $familyModel = model('FamilyModel');
         $family = $familyModel->find((int) ($relation['family_id'] ?? 0));
-        if (!$family || (int) ($family['parish_id'] ?? 0) !== $churchId) {
+        if (!$family || (int) ($family['parish_id'] ?? 0) !== $parishId) {
             return $this->jsonResponse($this->apiErrorPayload(lang('App.errorUnauthorized'), 403, 'FAMILY_SCOPE_FORBIDDEN'), 403);
         }
 
@@ -2318,15 +2318,15 @@ class People extends BaseController
         }
 
         $this->audit()->log('family_member.update', [
-            'parish_id' => $churchId,
+            'parish_id' => $parishId,
             'entity_type' => 'family_member',
             'entity_id' => $relationId,
             'old_values' => $relation,
             'new_values' => ['relationship' => $relationship],
-            'meta' => $this->buildParishContextMeta($churchId, self::ATTRIBUTION_POLICY_OPERATIONAL_DEFAULT),
+            'meta' => $this->buildParishContextMeta($parishId, self::ATTRIBUTION_POLICY_OPERATIONAL_DEFAULT),
         ]);
 
-        $this->registryService->syncParish($churchId);
+        $this->registryService->syncParish($parishId);
 
         return $this->jsonResponse([
             'success' => true,
@@ -2346,13 +2346,13 @@ class People extends BaseController
     /**
      * Load a profile scoped to the current parish for person-management endpoints.
      */
-    private function getProfileForPersonManagement(int $profileId, int $churchId): ?array
+    private function getProfileForPersonManagement(int $profileId, int $parishId): ?array
     {
         return db_connect()->table('profile p')
             ->select('p.*')
             ->join('parish_people pp', 'pp.user_id = p.user_id', 'inner')
             ->where('p.id', $profileId)
-            ->where('pp.parish_id', $churchId)
+            ->where('pp.parish_id', $parishId)
             ->where('pp.deleted_at', null)
             ->get()
             ->getRowArray();
@@ -2368,16 +2368,16 @@ class People extends BaseController
         }
 
         if ($redirect = $this->requireParish()) {
-            return $this->jsonResponse($this->apiErrorPayload(lang('App.errorNoParishScope'), 403, 'NO_CHURCH'), 403);
+            return $this->jsonResponse($this->apiErrorPayload(lang('App.errorNoParishScope'), 403, 'NO_PARISH'), 403);
         }
 
         if ($this->isProvinceAdmin()) {
             return $this->jsonResponse($this->apiErrorPayload(lang('App.errorUnauthorized'), 403, 'PROVINCE_WRITE_DISABLED'), 403);
         }
 
-        $churchId = (int) ($this->getOperationalParishId() ?? 0);
-        if ($churchId <= 0) {
-            return $this->jsonResponse($this->apiErrorPayload(lang('App.errorNoParishScope'), 403, 'NO_CHURCH'), 403);
+        $parishId = (int) ($this->getOperationalParishId() ?? 0);
+        if ($parishId <= 0) {
+            return $this->jsonResponse($this->apiErrorPayload(lang('App.errorNoParishScope'), 403, 'NO_PARISH'), 403);
         }
 
         $requested = (array) $this->request->getPost('profile_ids');
@@ -2403,7 +2403,7 @@ class People extends BaseController
 
         foreach ($profileIds as $profileId) {
             $person = $db->table('parish_people')
-                ->where('parish_id', $churchId)
+                ->where('parish_id', $parishId)
                 ->where('profile_id', $profileId)
                 ->where('deleted_at', null)
                 ->get()
@@ -2440,7 +2440,7 @@ class People extends BaseController
 
             // Soft-delete the matching parish affiliation.
             $affiliation = $db->table('parish_affiliation')
-                ->where('parish_id', $churchId)
+                ->where('parish_id', $parishId)
                 ->where('linked_user_id', $userId)
                 ->where('deleted_at', null)
                 ->get()
@@ -2453,7 +2453,7 @@ class People extends BaseController
             }
 
             $this->audit()->log('people.bulk_delete', [
-                'parish_id' => $churchId,
+                'parish_id' => $parishId,
                 'entity_type' => 'person',
                 'entity_id' => $profileId,
                 'new_values' => [
@@ -2465,7 +2465,7 @@ class People extends BaseController
             $deleted++;
         }
 
-        $this->registryService->syncParish($churchId);
+        $this->registryService->syncParish($parishId);
 
         return $this->jsonResponse([
             'success' => $deleted > 0,

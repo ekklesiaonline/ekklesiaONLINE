@@ -6,7 +6,7 @@ Owner: Release engineering + backend maintainers
 
 ## Objective
 
-Enforce and verify completion of legacy church-to-parish schema renames in production, then schedule removal of temporary compatibility code after 1-2 stable releases.
+Enforce and verify completion of legacy parish-to-parish schema renames in production, then schedule removal of temporary compatibility code after 1-2 stable releases.
 
 ## Verified in this environment
 
@@ -15,21 +15,21 @@ Enforce and verify completion of legacy church-to-parish schema renames in produ
     - Result: `Migrations complete.`
 2. Critical rename/normalization migrations are marked as migrated:
     - `2026_05_09_000007 StandardizeParishIdAcrossAllTables`
-    - `2026_05_09_000008 NormalizeChurchScopeEnumsToParish`
-    - `2026_05_10_000001 StrictRenameLegacyChurchSchemaObjects`
+    - `2026_05_09_000008 NormalizeParishScopeEnumsToParish`
+    - `2026_05_10_000001 StrictRenameLegacyParishSchemaObjects`
 
 ## Legacy-Renamed table map
 
-- `churches` -> `parish`
-- `church_settings` -> `parish_setting`
-- `church_integrations` -> `parish_integration`
-- `church_provider_credentials` -> `parish_provider_credential`
-- `church_role_audit_logs` -> `parish_role_audit_log`
-- `church_budgets` -> `parish_budgets`
-- `church_people` -> `parish_people`
-- `church_report_storage` -> `parish_report_storage`
-- `church_financial_summary` -> `parish_report_storage` (older env fallback path)
-- `member_church_affiliations` -> `parish_affiliation` (standardization lineage)
+- `parishes` -> `parish`
+- `parish_settings` -> `parish_setting`
+- `parish_integrations` -> `parish_integration`
+- `parish_provider_credentials` -> `parish_provider_credential`
+- `parish_role_audit_logs` -> `parish_role_audit_log`
+- `parish_budgets` -> `parish_budgets`
+- `parish_people` -> `parish_people`
+- `parish_report_storage` -> `parish_report_storage`
+- `parish_financial_summary` -> `parish_report_storage` (older env fallback path)
+- `member_parish_affiliations` -> `parish_affiliation` (standardization lineage)
 
 ## Production enforcement runbook (release gate)
 
@@ -68,7 +68,7 @@ Enforce and verify completion of legacy church-to-parish schema renames in produ
 ## Candidate cleanup targets (post-stability)
 
 1. Legacy fallback logic in models/services that still probes old table names.
-2. Any stale comments/docs that still describe `church_*` as canonical names.
+2. Any stale comments/docs that still describe `parish_*` as canonical names.
 3. Retired follow-up migration helper command if no legacy data migration remains operationally required.
 
 ## Exit criteria for Step 2 complete

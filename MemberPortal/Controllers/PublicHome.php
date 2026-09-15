@@ -97,7 +97,7 @@ class PublicHome extends BaseController
             || str_starts_with($relativePath, 'parish/')
             || str_starts_with($relativePath, 'event/')
             || str_starts_with($relativePath, 'attachment/')
-            || str_starts_with($relativePath, 'churches/')
+            || str_starts_with($relativePath, 'parishes/')
             || str_starts_with($relativePath, 'parishes/')
             || str_starts_with($relativePath, 'events/')
         ) {
@@ -148,16 +148,16 @@ class PublicHome extends BaseController
     }
 
     /**
-     * Serve a private church logo for an authorized viewer.
+     * Serve a private parish logo for an authorized viewer.
      */
-    public function churchLogo(int $churchId)
+    public function parishLogo(int $parishId)
     {
-        if (!auth()->loggedIn() || $churchId <= 0 || !$this->canAccessParish($churchId)) {
+        if (!auth()->loggedIn() || $parishId <= 0 || !$this->canAccessParish($parishId)) {
             throw \CodeIgniter\Exceptions\PageNotFoundException::forPageNotFound();
         }
 
-        $church = model('ParishModel')->find($churchId);
-        $storedPath = trim((string) ($church['logo'] ?? ''));
+        $parish = model('ParishModel')->find($parishId);
+        $storedPath = trim((string) ($parish['logo'] ?? ''));
         if ($storedPath === '') {
             throw \CodeIgniter\Exceptions\PageNotFoundException::forPageNotFound();
         }
@@ -170,9 +170,9 @@ class PublicHome extends BaseController
         $pathsToTry = [$relativePath];
         if (!str_starts_with($relativePath, 'parish/')) {
             // Backward compatibility for legacy flat and pluralized logo names.
-            $pathsToTry[] = 'parish/' . $churchId . '/logo/' . ltrim($relativePath, '/');
-            $pathsToTry[] = 'parishes/' . $churchId . '/logo/' . ltrim($relativePath, '/');
-            $pathsToTry[] = 'churches/' . $churchId . '/logo/' . ltrim($relativePath, '/');
+            $pathsToTry[] = 'parish/' . $parishId . '/logo/' . ltrim($relativePath, '/');
+            $pathsToTry[] = 'parishes/' . $parishId . '/logo/' . ltrim($relativePath, '/');
+            $pathsToTry[] = 'parishes/' . $parishId . '/logo/' . ltrim($relativePath, '/');
         }
 
         $filepath = null;
@@ -194,14 +194,14 @@ class PublicHome extends BaseController
     /**
      * Serve a private parish banner for an authorized viewer.
      */
-    public function parishBanner(int $churchId)
+    public function parishBanner(int $parishId)
     {
-        if (!auth()->loggedIn() || $churchId <= 0 || !$this->canAccessParish($churchId)) {
+        if (!auth()->loggedIn() || $parishId <= 0 || !$this->canAccessParish($parishId)) {
             throw \CodeIgniter\Exceptions\PageNotFoundException::forPageNotFound();
         }
 
-        $church = model('ParishModel')->find($churchId);
-        $storedPath = trim((string) ($church['banner'] ?? ''));
+        $parish = model('ParishModel')->find($parishId);
+        $storedPath = trim((string) ($parish['banner'] ?? ''));
         if ($storedPath === '') {
             throw \CodeIgniter\Exceptions\PageNotFoundException::forPageNotFound();
         }
@@ -214,9 +214,9 @@ class PublicHome extends BaseController
         $pathsToTry = [$relativePath];
         if (!str_starts_with($relativePath, 'parish/')) {
             // Backward compatibility for legacy flat and pluralized banner names.
-            $pathsToTry[] = 'parish/' . $churchId . '/banner/' . ltrim($relativePath, '/');
-            $pathsToTry[] = 'parishes/' . $churchId . '/banner/' . ltrim($relativePath, '/');
-            $pathsToTry[] = 'churches/' . $churchId . '/banner/' . ltrim($relativePath, '/');
+            $pathsToTry[] = 'parish/' . $parishId . '/banner/' . ltrim($relativePath, '/');
+            $pathsToTry[] = 'parishes/' . $parishId . '/banner/' . ltrim($relativePath, '/');
+            $pathsToTry[] = 'parishes/' . $parishId . '/banner/' . ltrim($relativePath, '/');
         }
 
         $filepath = null;
@@ -379,30 +379,30 @@ class PublicHome extends BaseController
         $viewerAffiliations = $affiliationModel->getUserAffiliations($viewerUserId);
         $targetAffiliations = $affiliationModel->getUserAffiliations($targetUserId);
 
-        $viewerChurchIds = array_values(array_unique(array_filter(array_map(
+        $viewerParishIds = array_values(array_unique(array_filter(array_map(
             static fn(array $row): int => (int) ($row['parish_id'] ?? 0),
             $viewerAffiliations
         ))));
-        $targetChurchIds = array_values(array_unique(array_filter(array_map(
+        $targetParishIds = array_values(array_unique(array_filter(array_map(
             static fn(array $row): int => (int) ($row['parish_id'] ?? 0),
             $targetAffiliations
         ))));
 
-        if ($viewerChurchIds === [] || $targetChurchIds === []) {
+        if ($viewerParishIds === [] || $targetParishIds === []) {
             return false;
         }
 
-        return array_intersect($viewerChurchIds, $targetChurchIds) !== [];
+        return array_intersect($viewerParishIds, $targetParishIds) !== [];
     }
 
     private function canAccessEvent(array $event): bool
     {
-        $churchId = (int) ($event['parish_id'] ?? 0);
-        if ($churchId > 0 && $this->canAccessParish($churchId)) {
+        $parishId = (int) ($event['parish_id'] ?? 0);
+        if ($parishId > 0 && $this->canAccessParish($parishId)) {
             return true;
         }
 
-        $scopeLevel = (string) ($event['scope_level'] ?? 'church');
+        $scopeLevel = (string) ($event['scope_level'] ?? 'parish');
         if ($scopeLevel === 'diocese') {
             $dioceseId = (int) ($event['scope_diocese_id'] ?? 0);
             return $dioceseId > 0 && $this->canAccessDiocese($dioceseId);
@@ -411,9 +411,9 @@ class PublicHome extends BaseController
         return false;
     }
 
-    private function canAccessParish(int $churchId): bool
+    private function canAccessParish(int $parishId): bool
     {
-        if (!auth()->loggedIn() || $churchId <= 0) {
+        if (!auth()->loggedIn() || $parishId <= 0) {
             return false;
         }
 
@@ -422,25 +422,25 @@ class PublicHome extends BaseController
             return true;
         }
 
-        $church = model('ParishModel')->findWithHierarchy($churchId);
-        if (!is_array($church)) {
+        $parish = model('ParishModel')->findWithHierarchy($parishId);
+        if (!is_array($parish)) {
             return false;
         }
 
         if ($viewer->inGroup('provinceadmin')) {
             $viewerProvinceId = (int) ((model('ProfileModel')->where('user_id', (int) ($viewer->id ?? 0))->first())['province_id'] ?? 0);
-            return $viewerProvinceId > 0 && $viewerProvinceId === (int) ($church['province_id'] ?? 0);
+            return $viewerProvinceId > 0 && $viewerProvinceId === (int) ($parish['province_id'] ?? 0);
         }
 
         if ($viewer->inGroup('dioceseadmin')) {
             $viewerDioceseId = (int) ((model('ProfileModel')->where('user_id', (int) ($viewer->id ?? 0))->first())['diocese_id'] ?? 0);
-            return $viewerDioceseId > 0 && $viewerDioceseId === (int) ($church['diocese_id'] ?? 0);
+            return $viewerDioceseId > 0 && $viewerDioceseId === (int) ($parish['diocese_id'] ?? 0);
         }
 
         if (
             !$viewer->can('event.view')
-            && !$viewer->can('churches.manage.official')
-            && !$viewer->can('churches.edit')
+            && !$viewer->can('parishes.manage.official')
+            && !$viewer->can('parishes.edit')
             && !$viewer->can('member.view')
         ) {
             return false;
@@ -452,7 +452,7 @@ class PublicHome extends BaseController
         }
 
         $affiliationModel = model('MemberParishAffiliationModel');
-        return $affiliationModel->isUserAffiliatedWithParish($viewerUserId, $churchId, true);
+        return $affiliationModel->isUserAffiliatedWithParish($viewerUserId, $parishId, true);
     }
 
     private function canAccessDiocese(int $dioceseId): bool

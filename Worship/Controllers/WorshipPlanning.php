@@ -27,8 +27,8 @@ class WorshipPlanning extends BaseController
             return $redirect;
         }
 
-        $churchId = (int) ($this->getOperationalParishId() ?? 0);
-        $services = $this->serviceModel->getParishServices($churchId, 50);
+        $parishId = (int) ($this->getOperationalParishId() ?? 0);
+        $services = $this->serviceModel->getParishServices($parishId, 50);
 
         $serviceIds = array_map(static fn(array $service): int => (int) ($service['id'] ?? 0), $services);
         $planCounts = [];
@@ -104,7 +104,7 @@ class WorshipPlanning extends BaseController
 
         $this->serviceWorshipItemModel->where('service_id', (int) $serviceId)->delete();
 
-        $churchId = (int) ($this->getOperationalParishId() ?? 0);
+        $parishId = (int) ($this->getOperationalParishId() ?? 0);
 
         for ($i = 0; $i < $rows; $i++) {
             $itemType = trim((string) ($itemTypes[$i] ?? ''));
@@ -124,7 +124,7 @@ class WorshipPlanning extends BaseController
             if ($songId > 0 && $itemType === 'song') {
                 $song = $this->worshipSongModel
                     ->where('id', $songId)
-                    ->where('parish_id', $churchId)
+                    ->where('parish_id', $parishId)
                     ->first();
 
                 if (is_array($song) && $title === '') {
@@ -140,7 +140,7 @@ class WorshipPlanning extends BaseController
 
             $this->serviceWorshipItemModel->insert([
                 'service_id' => (int) $serviceId,
-                'parish_id' => $churchId,
+                'parish_id' => $parishId,
                 'song_id' => $songId > 0 ? $songId : null,
                 'item_type' => $itemType,
                 'title' => $title,

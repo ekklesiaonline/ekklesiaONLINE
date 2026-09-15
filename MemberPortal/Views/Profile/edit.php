@@ -244,19 +244,19 @@
             </div>
         </div>
 
-        <!-- Church Affiliations Section -->
+        <!-- Parish Affiliations Section -->
         <div class="card mb-3 form-section-card">
             <div class="card-header bg-primary text-white">
-                <h5 class="mb-0"><i class="bi bi-buildings"></i> <?= lang('Profile.churchAffiliation') ?></h5>
+                <h5 class="mb-0"><i class="bi bi-buildings"></i> <?= lang('Profile.parishAffiliation') ?></h5>
             </div>
             <div class="card-body">
                 <?php
                 $isElevatedAdmin = $isElevatedAdmin ?? false;
                 $adminScope = $adminScope ?? null;
                 $primaryParts = array_filter([
-                    $churchAffiliation['province'] ?? '',
-                    $churchAffiliation['diocese'] ?? '',
-                    $churchAffiliation['parish'] ?? '',
+                    $parishAffiliation['province'] ?? '',
+                    $parishAffiliation['diocese'] ?? '',
+                    $parishAffiliation['parish'] ?? '',
                 ]);
                 // Elevated admins administer a diocese/province/system scope but
                 // may also be personally affiliated with one or more parishes
@@ -272,11 +272,11 @@
                         : lang('Profile.noAffiliation'));
                 ?>
                 <div class="mb-3">
-                    <label class="form-label fw-semibold"><?= lang('Profile.primaryChurch') ?></label>
+                    <label class="form-label fw-semibold"><?= lang('Profile.primaryParish') ?></label>
                     <div class="d-flex justify-content-between align-items-center border rounded p-2 bg-body-tertiary">
                         <span><?= esc($primaryLabel) ?></span>
                     </div>
-                    <small class="text-muted"><?= lang('Profile.primaryChurchReadOnly') ?></small>
+                    <small class="text-muted"><?= lang('Profile.primaryParishReadOnly') ?></small>
                     <?php if (empty($profile['parish_id']) && !$isElevatedAdmin): ?>
                         <div class="mt-2">
                             <?php if (($registrationStatus ?? '') === 'pending_review'): ?>
@@ -292,7 +292,7 @@
                     <?php endif; ?>
                 </div>
 
-                <label class="form-label fw-semibold"><?= lang('Profile.otherChurches') ?></label>
+                <label class="form-label fw-semibold"><?= lang('Profile.otherParishes') ?></label>
                 <div id="affiliations-container" class="mb-2">
                     <?php
                     $affIndex = 0;
@@ -320,9 +320,9 @@
                             </select>
                         </div>
                         <div class="col-md-3">
-                            <label class="form-label"><?= lang('Profile.church') ?></label>
+                            <label class="form-label"><?= lang('Profile.parish') ?></label>
                             <select class="form-select parish-select" name="affiliations[<?= $affIndex ?>][parish_id]" data-index="<?= $affIndex ?>" required>
-                                <option value=""><?= lang('Profile.selectChurch') ?></option>
+                                <option value=""><?= lang('Profile.selectParish') ?></option>
                             </select>
                         </div>
                         <div class="col-md-2">
@@ -343,7 +343,7 @@
                 </div>
 
                 <button type="button" class="btn btn-outline-primary btn-sm" id="add-affiliation">
-                    <i class="bi bi-plus-circle"></i> <?= lang('Profile.addChurch') ?>
+                    <i class="bi bi-plus-circle"></i> <?= lang('Profile.addParish') ?>
                 </button>
 
                 <script type="text/template" id="affiliation-row-template">
@@ -364,9 +364,9 @@
                             </select>
                         </div>
                         <div class="col-md-3">
-                            <label class="form-label"><?= lang('Profile.church') ?></label>
+                            <label class="form-label"><?= lang('Profile.parish') ?></label>
                             <select class="form-select parish-select" name="affiliations[__IDX__][parish_id]" data-index="__IDX__" required>
-                                <option value=""><?= lang('Profile.selectChurch') ?></option>
+                                <option value=""><?= lang('Profile.selectParish') ?></option>
                             </select>
                         </div>
                         <div class="col-md-2">
@@ -525,7 +525,7 @@
         const diocesesByProvince = <?= json_encode($diocesesByProvince, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
         const parishesByDiocese = <?= json_encode($parishesByDiocese, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
         const selectDioceseText = <?= json_encode(lang('Profile.selectDiocese')) ?>;
-        const selectChurchText = <?= json_encode(lang('Profile.selectChurch')) ?>;
+        const selectParishText = <?= json_encode(lang('Profile.selectParish')) ?>;
         const excludedParishIds = <?= json_encode([(int) $primaryParishId, (int) $pendingParishId], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
 
         function updateDioceseSelect(select, provinceId, selectedDioceseId) {
@@ -542,7 +542,7 @@
         function updateParishSelect(select, dioceseId, selectedParishId) {
             selectedParishId = selectedParishId || '';
             select.options.length = 0;
-            select.add(new Option(selectChurchText, ''));
+            select.add(new Option(selectParishText, ''));
             if (!dioceseId || !parishesByDiocese[dioceseId]) return;
             parishesByDiocese[dioceseId].forEach(function (p) {
                 if (excludedParishIds.indexOf(parseInt(p.id, 10)) !== -1 && String(selectedParishId) !== String(p.id)) {

@@ -1,9 +1,9 @@
-# ekklesiaRD – Multi-Church Management System (ChMS)
+# ekklesiaRD – Multi-Parish Management System (ChMS)
 
 ## 1. Project Overview
 
-ekklesiaRD is a multi‑church web application designed to streamline administrative tasks for parishes, dioceses and provincial networks in the Episcopal Church.
-A system admin (Presiding Bishop, or staff from the central office or 815 ) can view aggregated data across all churches, while each church has its own administrators (clergy, vestry members[Senior and Junior Guardians, clerk, treasurer], ministry leaders) who manage only their church’s data. Diocesan bishop and bishops’ staff have read-only access to all churches in their diocese. The system supports member management, service attendance tracking, financial record-keeping, volunteer coordination, and guest follow-up.
+ekklesiaRD is a multi‑parish web application designed to streamline administrative tasks for parishes, dioceses and provincial networks in the Episcopal Church.
+A system admin (Presiding Bishop, or staff from the central office or 815 ) can view aggregated data across all parishes, while each parish has its own administrators (clergy, vestry members[Senior and Junior Guardians, clerk, treasurer], ministry leaders) who manage only their parish’s data. Diocesan bishop and bishops’ staff have read-only access to all parishes in their diocese. The system supports member management, service attendance tracking, financial record-keeping, volunteer coordination, and guest follow-up.
 
 Built on CodeIgniter 4.7 with Shield 1.2 for authentication and authorization, and MySQL 8.0, the system uses a modular architecture.
 User account data (login credentials) is kept separate from extended profile information to allow flexible user management.
@@ -13,13 +13,13 @@ Target Users: Parish administrators, clergy, treasurers, ministry leaders, volun
 
 ## 2. Core Features & Modules
 
-### 2.1 Multi‑Church & User Management
+### 2.1 Multi‑Parish & User Management
 
-Multi-Church support
+Multi-Parish support
 
-- A churches table stores each church’s details.
-- Every record that belongs to a church (members, services, donations, etc.) includes a church_id foreign key.
-- Super admin can access all churches; church admins are restricted to their own church.
+- A parishes table stores each parish’s details.
+- Every record that belongs to a parish (members, services, donations, etc.) includes a parish_id foreign key.
+- Super admin can access all parishes; parish admins are restricted to their own parish.
 - Authentication (via Shield)
 - Registration, login, password reset, email verification – using Shield’s users table (email, password, etc.).
 
@@ -37,7 +37,7 @@ Family Grouping
 
 Roles & Permissions
 
-- Granular access control using Shield’s permission system. Predefined roles: Super Admin, Church Admin, Clergy, Treasurer, Volunteer Coordinator, Member. Permissions are scoped per church (e.g., members.view may be restricted to a specific church).
+- Granular access control using Shield’s permission system. Predefined roles: Super Admin, Parish Admin, Clergy, Treasurer, Volunteer Coordinator, Member. Permissions are scoped per parish (e.g., members.view may be restricted to a specific parish).
 
 CRUD Operations
 
@@ -64,7 +64,7 @@ Attendance Statistics
   Export Reports
 - Generate PDF/Excel summaries of attendance.
 
-### 2.3 Church Accounting
+### 2.3 Parish Accounting
 
 Income Management
 
@@ -139,7 +139,7 @@ Additional Libraries: Dompdf (PDF), PhpSpreadsheet (Excel), CodeIgniter Settings
 ## 4. Database Schema (Key Tables & Pending Tables)
 
 Shield provides default tables: users, auth_identities, auth_logins, auth_permissions, auth_roles, auth_groups_users.
-We extend with the following tables (all include church_id for multi‑tenancy unless noted otherwise):
+We extend with the following tables (all include parish_id for multi‑tenancy unless noted otherwise):
 
 ### 4.0 Pending/Planned Tables (Not Yet Used in Code)
 
@@ -223,7 +223,7 @@ See also: docs/MIGRATIONS_AND_SEEDERS.md for migration status.
 
 - id (INT, PK)
 - user_id (INT, UNSIGNED, UNIQUE, FK to users.id)
-- church_id (INT, UNSIGNED, FK to churches.id) // which church the user belongs to
+- parish_id (INT, UNSIGNED, FK to parishes.id) // which parish the user belongs to
 - first_name, middle_name, last_name (VARCHAR, nullable)
 - phone (VARCHAR, nullable)
 - address, city, state, zip, country (nullable)
@@ -238,7 +238,7 @@ See also: docs/MIGRATIONS_AND_SEEDERS.md for migration status.
 **families**
 
 - id (INT, PK)
-- church_id (INT, UNSIGNED, FK to churches.id)
+- parish_id (INT, UNSIGNED, FK to parishes.id)
 - family_name (VARCHAR)
 - head_of_household_id (INT, UNSIGNED, FK to users.id, nullable) // head can be NULL initially
 - address (TEXT, nullable)
@@ -259,7 +259,7 @@ See also: docs/MIGRATIONS_AND_SEEDERS.md for migration status.
 **services**
 
 - id (INT, PK)
-- church_id (INT, UNSIGNED, FK to churches.id)
+- parish_id (INT, UNSIGNED, FK to parishes.id)
 - date (DATE)
 - liturgical_day (VARCHAR, nullable)
 - service_type (ENUM: 'Sunday Worship','Weekday Service','Special','Other')
@@ -287,7 +287,7 @@ See also: docs/MIGRATIONS_AND_SEEDERS.md for migration status.
 **guests**
 
 - id (INT, PK)
-- church_id (INT, UNSIGNED, FK to churches.id)
+- parish_id (INT, UNSIGNED, FK to parishes.id)
 - first_name, last_name (VARCHAR)
 - email (VARCHAR, nullable)
 - phone (VARCHAR, nullable)
@@ -314,7 +314,7 @@ See also: docs/MIGRATIONS_AND_SEEDERS.md for migration status.
 **donations**
 
 - id (INT, PK)
-- church_id (INT, UNSIGNED, FK to churches.id)
+- parish_id (INT, UNSIGNED, FK to parishes.id)
 - user_id (INT, UNSIGNED, FK to users.id, nullable) // null for anonymous/non‑member
 - amount (DECIMAL(10,2))
 - date (DATE)
@@ -328,7 +328,7 @@ See also: docs/MIGRATIONS_AND_SEEDERS.md for migration status.
 **expenses**
 
 - id (INT, PK)
-- church_id (INT, UNSIGNED, FK to churches.id)
+- parish_id (INT, UNSIGNED, FK to parishes.id)
 - description (VARCHAR)
 - amount (DECIMAL(10,2))
 - category (VARCHAR) // e.g., utilities, salaries, maintenance
@@ -342,7 +342,7 @@ See also: docs/MIGRATIONS_AND_SEEDERS.md for migration status.
 **volunteer_teams**
 
 - id (INT, PK)
-- church_id (INT, UNSIGNED, FK to churches.id)
+- parish_id (INT, UNSIGNED, FK to parishes.id)
 - name (VARCHAR)
 - description (TEXT, nullable)
 - leader_id (INT, UNSIGNED, FK to users.id, nullable)
@@ -376,9 +376,9 @@ See also: docs/MIGRATIONS_AND_SEEDERS.md for migration status.
 Shield provides a robust foundation for authentication and role‑based permissions. We will:
 
 Extend the User Model
-Add a church_id field to the users table (or use a separate user_church table if users can belong to multiple churches – here we assume one church per user for simplicity).
+Add a parish_id field to the users table (or use a separate user_parish table if users can belong to multiple parishes – here we assume one parish per user for simplicity).
 
-Alternatively, keep the church_id in the profiles table and retrieve it when needed.
+Alternatively, keep the parish_id in the profiles table and retrieve it when needed.
 Define Permissions
 
 Examples:
@@ -390,20 +390,20 @@ finance.view – view financial reports
 finance.manage – add/edit donations/expenses
 volunteers.assign – manage volunteer teams and schedules
 guests.followup – manage guest follow‑ups
-admin.province – super admin (access all churches)
+admin.province – super admin (access all parishes)
 
 Define Roles
 
-- Super Admin – all permissions, can switch between churches.
-- Church Admin – full access to one church’s data (except super admin functions).
+- Super Admin – all permissions, can switch between parishes.
+- Parish Admin – full access to one parish’s data (except super admin functions).
 - Clergy – can view members, mark attendance, view financial summaries.
 - Treasurer – manage finances (donations, expenses, reports).
 - Volunteer Coordinator – manage teams and schedules.
 - Member – view own profile, view family, possibly mark own attendance (if allowed).
 
-Scoping Permissions per Church
+Scoping Permissions per Parish
 
-- In controllers, after authentication, check if the user has the required permission and if the requested record belongs to the user’s church (or if user is super admin). This can be done with a global scope or manually in queries.
+- In controllers, after authentication, check if the user has the required permission and if the requested record belongs to the user’s parish (or if user is super admin). This can be done with a global scope or manually in queries.
 
 Middleware
 
@@ -475,7 +475,7 @@ fetch(url, {
 
 - Input Validation – CI4’s validation library on all forms.
 - CSRF Protection – Enabled by default; the CSRF token is injected via `<meta name="csrf-token">` in every layout. Always use the fetch pattern in §6.1 for native fetch calls.
-- Authorization – Shield’s permission checks on every sensitive route, plus church‑scoping.
+- Authorization – Shield’s permission checks on every sensitive route, plus parish‑scoping.
 - Data Encryption – Encrypt sensitive data (e.g., donation amounts could be encrypted at rest if required).
 - HTTPS – Enforced in production.
 - SQL Injection Prevention – Use Query Builder or prepared statements.
@@ -483,7 +483,7 @@ fetch(url, {
 ## 8. User Interface & Experience
 
 - Responsive Design – Bootstrap 5 ensures mobile‑friendliness.
-- Intuitive Navigation – Sidebar menu grouped by modules, with church selector for super admin.
+- Intuitive Navigation – Sidebar menu grouped by modules, with parish selector for super admin.
 - Modal Forms – Quick add/edit without leaving the page.
 - Toast Notifications – Non‑intrusive success/error messages after AJAX actions.
 
@@ -591,7 +591,7 @@ Every list/index view that exposes search or filter controls **must** use the co
 | View file                                       | Panel ID                | Active condition                                                 |
 | ----------------------------------------------- | ----------------------- | ---------------------------------------------------------------- |
 | `Clergy/Views/People/index.php`                 | `#peopleFilterPanel`    | search / status / family                                         |
-| `MemberPortal/Views/Admin/audit_logs.php`       | `#auditLogFilterPanel`  | church / action / start_date / end_date                          |
+| `MemberPortal/Views/Admin/audit_logs.php`       | `#auditLogFilterPanel`  | parish / action / start_date / end_date                          |
 | `MemberPortal/Views/GuestConversions/index.php` | `#guestConvFilterPanel` | search                                                           |
 | `Clergy/Views/Reports/roi_second_visit.php`     | `#roiFilterPanel`       | from_date / to_date (collapsed by default — no active detection) |
 | `Clergy/Views/Events/index.php`                 | `#eventsFilterPanel`    | search / status                                                  |
@@ -661,7 +661,7 @@ When a list row (table `<tr>` or `list-group-item`) would expose **3 or more act
 | View file                                     | Current inline actions                              |
 | --------------------------------------------- | --------------------------------------------------- |
 | `Worship/Views/WorshipPlanning/songs.php`     | Preview Lyrics, Edit, Deactivate/Reactivate, Delete |
-| `Diocesan/Views/Churches/index.php`           | Switch, Edit, Staff, Delete                         |
+| `Diocesan/Views/Parishes/index.php`           | Switch, Edit, Staff, Delete                         |
 | `Clergy/Views/FollowupWorkflow/sequences.php` | View Actions, Toggle Active, Delete                 |
 | `Clergy/Views/FollowupWorkflow/templates.php` | Preview, Edit, Delete                               |
 | `Clergy/Views/Guests/index.php`               | View, Edit, Delete                                  |
@@ -675,16 +675,16 @@ When a list row (table `<tr>` or `list-group-item`) would expose **3 or more act
 
 ## 10. Database Migrations (Examples)
 
-All migrations follow the patterns shown above. Here is an example for the churches table:
+All migrations follow the patterns shown above. Here is an example for the parishes table:
 
 ```php
-// app/Database/Migrations/2025_01_01_000001_create_churches.php
+// app/Database/Migrations/2025_01_01_000001_create_parishes.php
 
 <?php
 namespace App\Database\Migrations;
 use CodeIgniter\Database\Migration;
 
-class CreateChurches extends Migration
+class CreateParishes extends Migration
 {
     public function up()
     {
@@ -699,17 +699,17 @@ class CreateChurches extends Migration
             'updated_at' => ['type' => 'DATETIME', 'null' => true],
         ]);
         $this->forge->addKey('id', true);
-        $this->forge->createTable('churches');
+        $this->forge->createTable('parishes');
     }
 
     public function down()
     {
-        $this->forge->dropTable('churches');
+        $this->forge->dropTable('parishes');
     }
 }
 ```
 
-Similarly, adjust the previously shown migrations to include church_id where needed.
+Similarly, adjust the previously shown migrations to include parish_id where needed.
 
 ## 11. Setting Up Permissions and Roles with Shield
 
@@ -754,30 +754,30 @@ $routes->group('', ['filter' => 'session'], function($routes) {
 });
 ```
 
-Enforce church scoping in controllers:
+Enforce parish scoping in controllers:
 
 ```php
 // In Members controller
 public function index()
 {
-    $churchId = auth()->user()->church_id;  // from profiles or user table
+    $parishId = auth()->user()->parish_id;  // from profiles or user table
     if (auth()->user()->can('admin.province')) {
-        // super admin may see all or choose church
-        $churchId = $this->request->getGet('church_id') ?? $churchId;
+        // super admin may see all or choose parish
+        $parishId = $this->request->getGet('parish_id') ?? $parishId;
     }
-    $members = $this->profileModel->where('church_id', $churchId)->findAll();
+    $members = $this->profileModel->where('parish_id', $parishId)->findAll();
     // ...
 }
 ```
 
-## 12. Sunday Attendance Graphics Constraint (Church Admin Scope)
+## 12. Sunday Attendance Graphics Constraint (Parish Admin Scope)
 
-Hard rule for church admin dashboard graphics that draw Sunday attendance (for example, `ekklesiard.local/dashboard` in non-diocesan scope):
+Hard rule for parish admin dashboard graphics that draw Sunday attendance (for example, `ekklesiard.local/dashboard` in non-diocesan scope):
 
 - Use raw values from `service_metrics` rows joined to `services`.
 - Do not apply bucket-level averaging or derived ASA/ASC calculations for these graphics.
 - If multiple Sunday services exist on the same date, preserve separate service points in chart series.
-- Keep member-level attendance (`attendance` table) decoupled from church Sunday graphics data retrieval.
+- Keep member-level attendance (`attendance` table) decoupled from parish Sunday graphics data retrieval.
 
 Exception:
 
@@ -798,7 +798,7 @@ Exception:
 
 ### 13.2 Duplicate Detection
 
-`MemberMergeService::findDuplicatesForChurch(int $churchId)` returns pairs where, within the same `church_id`:
+`MemberMergeService::findDuplicatesForParish(int $parishId)` returns pairs where, within the same `parish_id`:
 
 - `LOWER(TRIM(first_name))` + `LOWER(TRIM(last_name))` match, **OR**
 - Non-empty `phone` values match (after decryption via `DataEncryption::decrypt()`).
@@ -814,7 +814,7 @@ The query uses a self-join with `p1.id < p2.id` to avoid symmetric pairs.
 
 Inside `MemberMergeService::merge()` — single transaction:
 
-- **Phase 1**: `reassignUserReferences($duplicateUserId, $canonicalUserId)` — reassigns all transactional FK rows from duplicate → canonical (with dedup guards on `family_members`, `team_members`, `member_church_affiliations`).
+- **Phase 1**: `reassignUserReferences($duplicateUserId, $canonicalUserId)` — reassigns all transactional FK rows from duplicate → canonical (with dedup guards on `family_members`, `team_members`, `member_parish_affiliations`).
 - **Phase 2**: Apply `$fieldOverrides` to the canonical `profiles` row.
 - **Phase 3**: `performHardDelete($duplicateUserId)` — delete all remaining data for the duplicate.
 
@@ -839,29 +839,29 @@ The audit log entry `member.hard_delete` is written **before** the service call 
 
 | Strategy                                          | Tables                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
 | ------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Reassign to canonical** (merge only)            | `attendance`, `annual_pledges`, `member_discipline`, `member_standing_summary`, `event_registrations`, `donations`, `family_members`, `team_members`, `volunteer_schedule`, `leadership_positions`, `member_church_affiliations`, `follow_up_tasks`, `church_role_audit_logs` (both columns), `families.head_of_household_id`, `volunteer_teams.leader_id`, `expenses.approved_by`, `guests.*`, `church_budgets.*`, `audit_logs.user_id`, `user_registration_requests.reviewed_by`, `leadership_positions.appointed_by_user_id` |
-| **NULL** (hard-delete, preserve surrounding rows) | `donations.user_id`, `families.head_of_household_id`, `volunteer_teams.leader_id`, `expenses.approved_by`, `event_registrations.user_id`, `guests.*`, `church_budgets.*`, `audit_logs.user_id`, `user_registration_requests.reviewed_by`, `leadership_positions.appointed_by_user_id`                                                                                                                                                                                                                                           |
-| **Delete rows**                                   | `church_role_audit_logs` (NOT NULL, cannot be NULLed), `attendance`, `annual_pledges`, `family_members`, `team_members`, `volunteer_schedule`, `leadership_positions`, `member_church_affiliations`, `member_discipline`, `member_standing_summary`, `follow_up_tasks`, `system_admin_primary`, `user_registration_requests (user_id)`, `church_people`, `auth_identities`, `auth_groups_users`, `auth_permissions_users`, `auth_remember_tokens`, `user_sessions`, `profiles`, `users`                                         |
+| **Reassign to canonical** (merge only)            | `attendance`, `annual_pledges`, `member_discipline`, `member_standing_summary`, `event_registrations`, `donations`, `family_members`, `team_members`, `volunteer_schedule`, `leadership_positions`, `member_parish_affiliations`, `follow_up_tasks`, `parish_role_audit_logs` (both columns), `families.head_of_household_id`, `volunteer_teams.leader_id`, `expenses.approved_by`, `guests.*`, `parish_budgets.*`, `audit_logs.user_id`, `user_registration_requests.reviewed_by`, `leadership_positions.appointed_by_user_id` |
+| **NULL** (hard-delete, preserve surrounding rows) | `donations.user_id`, `families.head_of_household_id`, `volunteer_teams.leader_id`, `expenses.approved_by`, `event_registrations.user_id`, `guests.*`, `parish_budgets.*`, `audit_logs.user_id`, `user_registration_requests.reviewed_by`, `leadership_positions.appointed_by_user_id`                                                                                                                                                                                                                                           |
+| **Delete rows**                                   | `parish_role_audit_logs` (NOT NULL, cannot be NULLed), `attendance`, `annual_pledges`, `family_members`, `team_members`, `volunteer_schedule`, `leadership_positions`, `member_parish_affiliations`, `member_discipline`, `member_standing_summary`, `follow_up_tasks`, `system_admin_primary`, `user_registration_requests (user_id)`, `parish_people`, `auth_identities`, `auth_groups_users`, `auth_permissions_users`, `auth_remember_tokens`, `user_sessions`, `profiles`, `users`                                         |
 
 ### 13.6 Portal Revocation Rule (critical invariant)
 
 **Never set `users.active = 0` as part of portal revocation or merge/delete.**
 
-`syncChurch()` in `ChurchPeopleRegistryService` filters on `u.active = 1`. Setting `users.active = 0` silently removes the person from the `church_people` snapshot and makes them invisible on `/people`.
+`syncParish()` in `ParishPeopleRegistryService` filters on `u.active = 1`. Setting `users.active = 0` silently removes the person from the `parish_people` snapshot and makes them invisible on `/people`.
 
 The correct revocation is: **delete the `auth_identities` row only** (type `email_password`). Shield requires that row to authenticate — login is impossible without it, and the member remains correctly visible.
 
-If you find `users.active = 0` rows that have active `member_church_affiliations` and no `auth_identities`, restore them with:
+If you find `users.active = 0` rows that have active `member_parish_affiliations` and no `auth_identities`, restore them with:
 
 ```sql
 UPDATE users u
 LEFT JOIN auth_identities ai ON ai.user_id = u.id AND ai.type = 'email_password'
-INNER JOIN member_church_affiliations mca ON mca.user_id = u.id AND mca.active = 1
+INNER JOIN member_parish_affiliations mca ON mca.user_id = u.id AND mca.active = 1
 SET u.active = 1
 WHERE u.active = 0 AND ai.id IS NULL;
 ```
 
-Then run `php spark church-people:sync`.
+Then run `php spark parish-people:sync`.
 
 ### 13.7 FK Column Precision Rule (merge/hard-delete)
 
@@ -1031,12 +1031,12 @@ All layouts contain a capture-phase `document.addEventListener('submit', …)` t
 | `app/Commands/SendFollowups.php`                   | `php spark followup:send` Spark command — dispatches due log entries                             |
 | `app/Services/FollowupDispatchService.php`         | Channel-specific dispatch logic (email/text/call/mail/gift)                                      |
 | `app/Services/SmsService.php`                      | Twilio or log-only SMS provider abstraction                                                      |
-| `app/Models/FollowupSequenceModel.php`             | Sequence CRUD; `getActiveForChurch(int $churchId)`                                               |
+| `app/Models/FollowupSequenceModel.php`             | Sequence CRUD; `getActiveForParish(int $parishId)`                                               |
 | `app/Models/FollowupActionModel.php`               | Action CRUD; `getBySequenceWithTemplates()`                                                      |
 | `app/Models/FollowupTemplateModel.php`             | Template CRUD                                                                                    |
 | `app/Models/GuestVisitModel.php`                   | Visit recording; auto-schedule hook in `onAfterInsert`; `triggerSecondVisitReward()`             |
 | `app/Models/GuestFollowupLogModel.php`             | Log CRUD; `scheduleActiveSequencesForGuest()`; `getPendingDue()`; `getTimelineForGuest()`        |
-| `app/Models/CallTaskModel.php`                     | Manual call task CRUD; `getPendingForChurch()`                                                   |
+| `app/Models/CallTaskModel.php`                     | Manual call task CRUD; `getPendingForParish()`                                                   |
 | `app/Database/Seeds/SixWeekFollowupSeeder.php`     | Default 6-week sequence + all templates (idempotent)                                             |
 | `app/Database/Seeds/FollowupPermissionsSeeder.php` | Permission + `followup_volunteer` group bootstrap                                                |
 | `Clergy/Controllers/Guests.php`                    | Guest CRUD + followup AJAX endpoints + `pendingCallsApi()` navbar badge                          |
@@ -1048,7 +1048,7 @@ All layouts contain a capture-phase `document.addEventListener('submit', …)` t
 
 When a guest visit is inserted, `GuestVisitModel::onAfterInsert()` fires:
 
-- **First visit** → `GuestFollowupLogModel::scheduleActiveSequencesForGuest()` creates one `guest_followup_log` row per action in every active sequence for the church. `scheduled_date = visit_date + action.day_offset`.
+- **First visit** → `GuestFollowupLogModel::scheduleActiveSequencesForGuest()` creates one `guest_followup_log` row per action in every active sequence for the parish. `scheduled_date = visit_date + action.day_offset`.
 - **Second visit** → `triggerSecondVisitReward()` checks for a week-4 gift action, generates a coupon (`GIFT-XXXXXXXX`), inserts a log entry, and sends a gift email.
 
 The cron command picks up due rows:
@@ -1070,7 +1070,7 @@ FollowupDispatchService::dispatch($logRow, $template, $guest)
 
 ### 15.3 Default 6-Week Sequence
 
-Seeded by `SixWeekFollowupSeeder` as a system-level default (`church_id = NULL` — visible to all churches). Churches may override via `/followup-workflow/sequences/create`.
+Seeded by `SixWeekFollowupSeeder` as a system-level default (`parish_id = NULL` — visible to all parishes). Parishes may override via `/followup-workflow/sequences/create`.
 
 | Week | Day offset | Channel | Automated      | Purpose                          |
 | ---- | ---------- | ------- | -------------- | -------------------------------- |
@@ -1091,7 +1091,7 @@ Replaced at dispatch time in both `body_text` and `body_html`:
 | --------------- | ----------------------------------------------------------------------------- |
 | `{first_name}`  | `guests.first_name`                                                           |
 | `{last_name}`   | `guests.last_name`                                                            |
-| `{church_name}` | `churches.name` for the guest's church                                        |
+| `{parish_name}` | `parishes.name` for the guest's parish                                        |
 | `{visit_date}`  | Scheduled date of the log entry                                               |
 | `{clergy_name}` | Blank by default; extend `FollowupDispatchService::buildVarMap()` to populate |
 | `{phone}`       | Decrypted `guests.phone`                                                      |
@@ -1100,9 +1100,9 @@ Replaced at dispatch time in both `body_text` and `body_html`:
 
 | Permission                  | Roles                                         | Scope                                                                  |
 | --------------------------- | --------------------------------------------- | ---------------------------------------------------------------------- |
-| `followup.manage`           | `churchadmin`, `clergy`                       | CRUD sequences/actions/templates; trigger actions; complete call tasks |
-| `followup.view`             | `churchadmin`, `clergy`, `followup_volunteer` | Read-only: sequences, templates, call queue, timeline                  |
-| `followup.tasks` _(legacy)_ | `churchadmin`, `clergy`                       | Manage legacy `follow_up_tasks` table only                             |
+| `followup.manage`           | `parishadmin`, `clergy`                       | CRUD sequences/actions/templates; trigger actions; complete call tasks |
+| `followup.view`             | `parishadmin`, `clergy`, `followup_volunteer` | Read-only: sequences, templates, call queue, timeline                  |
+| `followup.tasks` _(legacy)_ | `parishadmin`, `clergy`                       | Manage legacy `follow_up_tasks` table only                             |
 
 ### 15.6 Cron Setup
 
@@ -1110,8 +1110,8 @@ Replaced at dispatch time in both `body_text` and `body_html`:
 # Dispatch all due followup actions at 9 AM daily
 0 9 * * * php /path/to/spark followup:send >> /path/to/writable/logs/followup.log 2>&1
 
-# Scope to a single church
-0 9 * * * php /path/to/spark followup:send --church 5
+# Scope to a single parish
+0 9 * * * php /path/to/spark followup:send --parish 5
 
 # Dry-run (no DB writes)
 php spark followup:send --dry-run
@@ -1165,7 +1165,7 @@ Never commit real credentials to version control.
 
 ### 16.1 Valid ENUM values
 
-`profiles.membership_status` and `member_church_affiliations.membership_status` share the same five-value set:
+`profiles.membership_status` and `member_parish_affiliations.membership_status` share the same five-value set:
 
 ```
 active | inactive | visitor | pending | regular_attender
@@ -1200,9 +1200,9 @@ if (!in_array($status, ['active', 'inactive', 'visitor', 'pending', 'regular_att
 Key locations where this guard exists:
 
 - `Clergy/Controllers/Members.php` — `in_list` validation rule + affiliation sync guard
-- `app/Models/MemberChurchAffiliationModel.php` — `in_list` validation rule
-- `app/Models/ChurchPeopleModel.php` — SQL CASE normalizer
-- `app/Services/ChurchPeopleRegistryService.php` — snapshot sync normalizer
+- `app/Models/MemberParishAffiliationModel.php` — `in_list` validation rule
+- `app/Models/ParishPeopleModel.php` — SQL CASE normalizer
+- `app/Services/ParishPeopleRegistryService.php` — snapshot sync normalizer
 - `Clergy/Views/People/index.php` — filter dropdown status chip
 
 ### 16.4 Language keys

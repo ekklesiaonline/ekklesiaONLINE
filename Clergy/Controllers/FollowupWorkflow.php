@@ -37,8 +37,8 @@ class FollowupWorkflow extends BaseController
     // ------------------------------------------------------------------
 
     /**
-     * List all follow-up sequences available to the operational church.
-     * Includes global (parish_id = NULL) and church-specific rows.
+     * List all follow-up sequences available to the operational parish.
+     * Includes global (parish_id = NULL) and parish-specific rows.
      */
     public function sequences()
     {
@@ -71,7 +71,7 @@ class FollowupWorkflow extends BaseController
             $this->getCommonViewData(lang('Guests.pageTitleSequences')),
             [
                 'sequences' => $sequences,
-                'churchId'  => $parishId,
+                'parishId'  => $parishId,
             ]
         ));
     }
@@ -103,11 +103,11 @@ class FollowupWorkflow extends BaseController
             return redirect()->to('followup-workflow/sequences')->with('error', 'Sequence not found.');
         }
 
-        // Church-scope guard: a church admin cannot edit another church's sequence
+        // Parish-scope guard: a parish admin cannot edit another parish's sequence
         // or a global (parish_id=null) sequence.
         if ($sequence !== null) {
-            $seqChurchId = $sequence['parish_id'];
-            if ($seqChurchId === null || (int) $seqChurchId !== $parishId) {
+            $seqParishId = $sequence['parish_id'];
+            if ($seqParishId === null || (int) $seqParishId !== $parishId) {
                 return redirect()->to('followup-workflow/sequences')
                     ->with('error', 'Global sequences cannot be edited at this level.');
             }
@@ -126,7 +126,7 @@ class FollowupWorkflow extends BaseController
                 'sequence'  => $sequence,
                 'actions'   => $actions,
                 'templates' => $templates,
-                'churchId'  => $parishId,
+                'parishId'  => $parishId,
             ]
         ));
     }
@@ -532,7 +532,7 @@ class FollowupWorkflow extends BaseController
             $this->getCommonViewData(lang('Guests.pageTitleTemplates')),
             [
                 'templates'        => $templates,
-                'churchId'         => $parishId,
+                'parishId'         => $parishId,
                 'guestsForPreview' => $guestsForPreview,
             ]
         ));
@@ -553,7 +553,7 @@ class FollowupWorkflow extends BaseController
 
         $parishId = (int) $this->getOperationalParishId();
 
-        // Global templates (parish_id = NULL) are read-only at church level
+        // Global templates (parish_id = NULL) are read-only at parish level
         if ($id > 0) {
             $existing = $this->templateModel->find($id);
             if ($existing && $existing['parish_id'] === null) {
@@ -619,14 +619,14 @@ class FollowupWorkflow extends BaseController
         $knownTokens = [
             '{first_name}',
             '{last_name}',
-            '{church_name}',
+            '{parish_name}',
             '{visit_date}',
             '{clergy_name}',
             '{phone}',
             '{next_event_title}',
             '{next_event_date}',
             '{clergy_email}',
-            '{church_address}',
+            '{parish_address}',
             '{unsubscribe_url}',
         ];
         $allContent = ($data['body_text'] ?? '') . ' ' . ($data['body_html'] ?? '') . ' ' . ($data['subject'] ?? '');
@@ -693,12 +693,12 @@ class FollowupWorkflow extends BaseController
         }
 
         $parishId = (int) $this->getOperationalParishId();
-        $church   = db_connect()->table('parish')->where('id', $parishId)->get()->getRowArray();
+        $parish   = db_connect()->table('parish')->where('id', $parishId)->get()->getRowArray();
 
         $sampleVars = [
             '{first_name}'  => 'Maria',
             '{last_name}'   => 'García',
-            '{church_name}' => $church['name'] ?? 'Grace Church',
+            '{parish_name}' => $parish['name'] ?? 'Grace Parish',
             '{visit_date}'  => date('F j, Y'),
             '{clergy_name}' => 'Clergy Juan',
             '{phone}'       => '(555) 000-0000',
@@ -765,20 +765,20 @@ class FollowupWorkflow extends BaseController
             return $this->jsonResponse(['success' => false, 'message' => 'Template not found.'], 404);
         }
 
-        $tplChurchId = (int) ($template['parish_id'] ?? 0);
-        if ($tplChurchId !== 0 && $tplChurchId !== $parishId) {
+        $tplParishId = (int) ($template['parish_id'] ?? 0);
+        if ($tplParishId !== 0 && $tplParishId !== $parishId) {
             return $this->jsonResponse(['success' => false, 'message' => 'Forbidden.'], 403);
         }
 
-        // Load the church row
-        $church = db_connect()->table('parish')->where('id', $parishId)->get()->getRowArray() ?: null;
+        // Load the parish row
+        $parish = db_connect()->table('parish')->where('id', $parishId)->get()->getRowArray() ?: null;
 
-        // Load church settings as a flat key→value map
+        // Load parish settings as a flat key→value map
         $settingModel    = model('ParishSettingModel');
         $settingsRows    = $settingModel->getParishSettings($parishId);   // rows with key, value
-        $churchSettings  = [];
+        $parishSettings  = [];
         foreach ($settingsRows as $row) {
-            $churchSettings[(string) $row['key']] = (string) ($row['value'] ?? '');
+            $parishSettings[(string) $row['key']] = (string) ($row['value'] ?? '');
         }
 
         // Load and decrypt guest, or fall back to sample data
@@ -801,7 +801,7 @@ class FollowupWorkflow extends BaseController
             ];
         }
 
-        // Find next upcoming event for this church
+        // Find next upcoming event for this parish
         $nextEvent = null;
         $today     = date('Y-m-d H:i:s');
         $nextEvent = db_connect()
@@ -816,7 +816,7 @@ class FollowupWorkflow extends BaseController
 
         // Apply token substitution via the helper
         helper('followup_template');
-        $vars = parse_template_vars($guest, $churchSettings, $church, $nextEvent);
+        $vars = parse_template_vars($guest, $parishSettings, $parish, $nextEvent);
 
         return $this->jsonResponse([
             'success'   => true,
@@ -906,7 +906,7 @@ class FollowupWorkflow extends BaseController
     // ------------------------------------------------------------------
 
     /**
-     * Display pending (and recent) call tasks for the operational church.
+     * Display pending (and recent) call tasks for the operational parish.
      * Accepts ?status= filter (pending|completed|cancelled|all).
      */
     public function callTasks()
@@ -967,7 +967,7 @@ class FollowupWorkflow extends BaseController
             return $this->jsonResponse(['success' => false, 'message' => 'Task not found.'], 404);
         }
 
-        // Church scope guard
+        // Parish scope guard
         $parishId = $this->getOperationalParishId();
         if ((int) $task['parish_id'] !== $parishId) {
             return $this->jsonResponse(['success' => false, 'message' => 'Forbidden.'], 403);

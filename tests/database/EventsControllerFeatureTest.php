@@ -177,8 +177,8 @@ final class EventsControllerFeatureTest extends CIUnitTestCase
 
         if (in_array('parish_id', $columns, true)) {
             $payload['parish_id'] = $parishId;
-        } elseif (in_array('church_id', $columns, true)) {
-            $payload['church_id'] = $parishId;
+        } elseif (in_array('parish_id', $columns, true)) {
+            $payload['parish_id'] = $parishId;
         }
         if (in_array('diocese_id', $columns, true)) {
             $payload['diocese_id'] = $dioceseId;

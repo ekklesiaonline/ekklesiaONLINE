@@ -23,10 +23,10 @@ This document summarizes the performance optimizations that have been implemente
 
 ```php
 // BEFORE (inefficient - loads all records)
-'total_members' => count($profileModel->where('church_id', $churchId)->findAll()),
+'total_members' => count($profileModel->where('parish_id', $parishId)->findAll()),
 
 // AFTER (efficient - database counts)
-'total_members' => $profileModel->where('church_id', $churchId)->countAllResults(false),
+'total_members' => $profileModel->where('parish_id', $parishId)->countAllResults(false),
 ```
 
 **Impact:**
@@ -54,10 +54,10 @@ This document summarizes the performance optimizations that have been implemente
 
 #### Composite Indexes (Multi-Column)
 
-- `profile(church_id, membership_status)` - Optimizes filtered member lists
-- `donations(church_id, date)` - Accelerates financial reports
-- `services(church_id, date)` - Speeds up service listings
-- `guests(church_id, followed_up)` - Fast pending guest queries
+- `profile(parish_id, membership_status)` - Optimizes filtered member lists
+- `donations(parish_id, date)` - Accelerates financial reports
+- `services(parish_id, date)` - Speeds up service listings
+- `guests(parish_id, followed_up)` - Fast pending guest queries
 - `follow_up_tasks(assigned_to, status)` - Efficient task assignment views
 
 **Impact:**
@@ -96,8 +96,8 @@ $this->attendanceModel->insertBatch($dataToUpsert);
 
 **Impact:**
 
-- **Small Churches (50 members):** 5-10x faster (100ms vs 500ms)
-- **Large Churches (500+ members):** 20-50x faster (200ms vs 5-10 seconds!)
+- **Small Parishes (50 members):** 5-10x faster (100ms vs 500ms)
+- **Large Parishes (500+ members):** 20-50x faster (200ms vs 5-10 seconds!)
 - **User Experience:** Bulk attendance marking now feels instant
 
 ---
@@ -144,7 +144,7 @@ protected function getProfile() {
 
 ## 📊 Performance Improvements Achieved
 
-### Benchmark Results (Estimated based on typical church with 200 members)
+### Benchmark Results (Estimated based on typical parish with 200 members)
 
 | Metric                            | Before      | After     | Improvement          |
 | --------------------------------- | ----------- | --------- | -------------------- |
@@ -168,7 +168,7 @@ protected function getProfile() {
 ### Medium Priority
 
 1. **Implement Caching Layer**
-    - Cache church list (changes rarely)
+    - Cache parish list (changes rarely)
     - Cache permission mappings
     - Cache status counts (5-15 minute TTL)
     - **Estimated Impact:** 80-90% reduction in repeated queries
@@ -237,7 +237,7 @@ SELECT * FROM mysql.slow_log ORDER BY start_time DESC LIMIT 10;
 
 When caching is added, ensure cache is cleared when:
 
-- Church data is updated → Clear `churches_*` keys
+- Parish data is updated → Clear `parishes_*` keys
 - User profile changes → Clear `profile_{user_id}` key
 - Donations/expenses added → Clear financial summary caches
 - Members added/removed → Clear status count caches
@@ -281,7 +281,7 @@ The implemented optimizations deliver **significant performance improvements** a
 - ✅ **99%+ less memory** used for count operations
 - ✅ **5-50x faster** filtered queries with indexes
 
-These improvements will scale well as the church grows, maintaining snappy performance even with thousands of members, services, and donations.
+These improvements will scale well as the parish grows, maintaining snappy performance even with thousands of members, services, and donations.
 
 ---
 

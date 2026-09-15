@@ -6,7 +6,7 @@
 <?php
 $provinces = (isset($provinces) && is_array($provinces)) ? $provinces : [];
 $diocesesByProvince = (isset($diocesesByProvince) && is_array($diocesesByProvince)) ? $diocesesByProvince : [];
-$parishesByDiocese = (isset($churchesByDiocese) && is_array($churchesByDiocese)) ? $churchesByDiocese : [];
+$parishesByDiocese = (isset($parishesByDiocese) && is_array($parishesByDiocese)) ? $parishesByDiocese : [];
 
 $selectedProvince = old('province_id', $registration_request['province_id'] ?? $profile['province_id'] ?? null);
 $selectedDiocese = old('diocese_id', $profile['diocese_id'] ?? $registration_request['diocese_id'] ?? null);
@@ -14,8 +14,8 @@ $selectedParish = old(
     'parish_id',
     $registration_request['requested_parish_id']
         ?? $registration_request['parish_id']
-        ?? $registration_request['requested_church_id']
-        ?? $registration_request['church_id']
+        ?? $registration_request['requested_parish_id']
+        ?? $registration_request['parish_id']
         ?? $profile['parish_id']
         ?? null
 );
@@ -118,7 +118,7 @@ $localPhoneValue = old('phone', $storedLocalPhone ?? '');
                                 <dt class="col-sm-3"><?= lang('Profile.diocese') ?></dt>
                                 <dd class="col-sm-9 mb-2"><?= esc($selectedDioceseLabel) ?></dd>
 
-                                <dt class="col-sm-3"><?= lang('Profile.church') ?></dt>
+                                <dt class="col-sm-3"><?= lang('Profile.parish') ?></dt>
                                 <dd class="col-sm-9 mb-0"><?= esc($selectedParishLabel) ?></dd>
                             </dl>
 

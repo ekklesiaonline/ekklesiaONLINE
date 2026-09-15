@@ -2,13 +2,13 @@
 
 ## Scope
 
-This report documents the families feature in ekklesiaRD, including data model, request flow, CRUD behavior, church scoping, security controls, and implementation files.
+This report documents the families feature in ekklesiaRD, including data model, request flow, CRUD behavior, parish scoping, security controls, and implementation files.
 
 ## Architecture Summary
 
-The families feature is built as a church-scoped household module with two core tables.
+The families feature is built as a parish-scoped household module with two core tables.
 
-- families stores family metadata for a church.
+- families stores family metadata for a parish.
 - family_members stores user-to-family membership links.
 
 The lifecycle is intentionally split.
@@ -31,7 +31,7 @@ Purpose: canonical family record.
 Fields:
 
 - id
-- church_id
+- parish_id
 - family_name
 - head_of_household_id
 - address
@@ -40,7 +40,7 @@ Fields:
 
 Foreign keys and behavior:
 
-- church_id -> churches.id (ON DELETE CASCADE, ON UPDATE CASCADE)
+- parish_id -> parishes.id (ON DELETE CASCADE, ON UPDATE CASCADE)
 - head_of_household_id -> users.id (ON DELETE CASCADE, ON UPDATE SET NULL in current live DDL)
 
 ### family_members table
@@ -77,8 +77,8 @@ Route:
 Flow:
 
 1. Permission guard requires families.view.
-2. Church scope guard requires operational church context.
-3. FamilyModel returns church-scoped families with member counts.
+2. Parish scope guard requires operational parish context.
+3. FamilyModel returns parish-scoped families with member counts.
 4. Controller renders families index view.
 
 ## B) Create family
@@ -91,16 +91,16 @@ Routes:
 GET flow:
 
 1. Permission guard requires families.manage.
-2. Church scope guard enforced.
-3. MemberChurchAffiliationModel loads church members for head-of-household select.
+2. Parish scope guard enforced.
+3. MemberParishAffiliationModel loads parish members for head-of-household select.
 4. Controller renders create form.
 
 POST flow:
 
 1. Permission guard requires families.manage.
-2. Church scope guard enforced.
+2. Parish scope guard enforced.
 3. Validation requires family_name with min length 3.
-4. Insert payload is built using operational church_id and posted form fields.
+4. Insert payload is built using operational parish_id and posted form fields.
 5. On success: audit log family.create and redirect success.
 6. On failure: redirect back with errors/input.
 
@@ -118,9 +118,9 @@ Route:
 Flow:
 
 1. Permission guard requires families.view.
-2. Church scope guard enforced.
+2. Parish scope guard enforced.
 3. FamilyModel aggregate fetches family, head name, and member list.
-4. Controller verifies family.church_id matches operational church.
+4. Controller verifies family.parish_id matches operational parish.
 5. Controller renders detail page.
 
 ## D) Update family
@@ -133,15 +133,15 @@ Routes:
 GET flow:
 
 1. Permission guard requires families.manage.
-2. Church scope guard enforced.
-3. Controller verifies family exists and is in church scope.
+2. Parish scope guard enforced.
+3. Controller verifies family exists and is in parish scope.
 4. Member list is loaded for head-of-household selection.
 5. Edit view renders form.
 
 POST flow:
 
 1. Permission and scope checks.
-2. Validate family ownership in church scope.
+2. Validate family ownership in parish scope.
 3. Validate family_name required + min length 3.
 4. Update family_name, head_of_household_id, address.
 5. On success: audit log family.update with old/new values and redirect.
@@ -156,8 +156,8 @@ Route:
 Flow:
 
 1. Permission guard requires families.manage.
-2. Church scope guard enforced.
-3. Controller verifies family exists in current church scope.
+2. Parish scope guard enforced.
+3. Controller verifies family exists in current parish scope.
 4. Delete family row.
 5. Return JSON success/error payload.
 6. On success: audit log family.delete.
@@ -175,10 +175,10 @@ Route:
 Flow:
 
 1. Permission guard requires families.manage.
-2. Church scope guard enforced.
+2. Parish scope guard enforced.
 3. Controller reads family_id, user_id, relationship.
-4. Controller verifies family in current church scope.
-5. Controller verifies user affiliation with same church using MemberChurchAffiliationModel::isUserAffiliatedWithChurch(..., activeOnly=true).
+4. Controller verifies family in current parish scope.
+5. Controller verifies user affiliation with same parish using MemberParishAffiliationModel::isUserAffiliatedWithParish(..., activeOnly=true).
 6. Insert row into family_members.
 7. Return JSON success/error.
 8. On success: audit log family_member.add.
@@ -192,9 +192,9 @@ Route:
 Flow:
 
 1. Permission guard requires families.manage.
-2. Church scope guard enforced.
+2. Parish scope guard enforced.
 3. Controller loads relation row from family_members.
-4. Controller loads parent family and validates church scope.
+4. Controller loads parent family and validates parish scope.
 5. Delete relation row.
 6. Return JSON success/error.
 7. On success: audit log family_member.remove.
@@ -219,9 +219,9 @@ Permissions used:
 Security and boundary controls:
 
 - Route-level permission filters in MemberPortal route group.
-- Controller-level requirePermission and requireChurch checks.
-- In-scope ownership checks by comparing family.church_id with operational church context.
-- addMember checks member-church affiliation before insert.
+- Controller-level requirePermission and requireParish checks.
+- In-scope ownership checks by comparing family.parish_id with operational parish context.
+- addMember checks member-parish affiliation before insert.
 - CSRF tokens/headers are included for form and AJAX writes.
 - API rate limit includes families write endpoints.
 
@@ -263,7 +263,7 @@ Controller performs check-then-write operations without explicit transaction bou
 
 ### Supporting models used by family flows
 
-- app/Models/MemberChurchAffiliationModel.php
+- app/Models/MemberParishAffiliationModel.php
 - app/Models/ProfileModel.php
 
 ### Cross-cutting framework pieces
@@ -294,7 +294,7 @@ Controller performs check-then-write operations without explicit transaction bou
 ## End-to-End Create Family Flow (Condensed)
 
 1. User opens /families/create.
-2. Controller loads church-scoped member options for optional head selection.
+2. Controller loads parish-scoped member options for optional head selection.
 3. User submits family_name, optional head_of_household_id, optional address.
 4. Controller validates and inserts into families.
 5. Audit event family.create is recorded.
@@ -303,4 +303,4 @@ Controller performs check-then-write operations without explicit transaction bou
 
 ## Conclusion
 
-The families module is well-structured and consistently church-scoped, with clear separation between family metadata and membership links. Permission guards, scope checks, CSRF handling, and JSON error contract usage are present. The main hardening opportunities are uniqueness and consistency constraints for family membership and head-of-household linkage.
+The families module is well-structured and consistently parish-scoped, with clear separation between family metadata and membership links. Permission guards, scope checks, CSRF handling, and JSON error contract usage are present. The main hardening opportunities are uniqueness and consistency constraints for family membership and head-of-household linkage.

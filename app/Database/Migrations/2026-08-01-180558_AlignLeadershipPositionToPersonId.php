@@ -65,7 +65,7 @@ class AlignLeadershipPositionToPersonId extends Migration
 
     private function rebuildSnapshot(): void
     {
-        if (!$this->db->tableExists('parish_people') && !$this->db->tableExists('church_people')) {
+        if (!$this->db->tableExists('parish_people') && !$this->db->tableExists('parish_people')) {
             return;
         }
 

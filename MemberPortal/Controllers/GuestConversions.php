@@ -19,7 +19,7 @@ class GuestConversions extends BaseController
             return $redirect;
         }
 
-        $churchId = (int) ($this->getOperationalParishId() ?? 0);
+        $parishId = (int) ($this->getOperationalParishId() ?? 0);
         $search = trim((string) ($this->request->getGet('search') ?? ''));
         $page = max(1, (int) ($this->request->getGet('page') ?? 1));
         $perPage = (int) ($this->request->getGet('per_page') ?? 25);
@@ -32,7 +32,7 @@ class GuestConversions extends BaseController
         if ($profileTable === null) {
             return view('MemberPortal\\Views\\GuestConversions/index', array_merge($this->getCommonViewData(lang('Guests.conversionsTitle')), [
                 'guests' => [],
-                'members' => model('MemberParishAffiliationModel')->getParishMembers($churchId),
+                'members' => model('MemberParishAffiliationModel')->getParishMembers($parishId),
                 'search' => $search,
                 'page' => 1,
                 'per_page' => $perPage,
@@ -46,7 +46,7 @@ class GuestConversions extends BaseController
             ->join($profileTable . ' p', 'p.user_id = g.converted_user_id', 'left')
             ->join('users u', 'u.id = g.converted_user_id', 'left')
             ->join('auth_identities ai', 'ai.user_id = u.id AND ai.type = "email_password"', 'left')
-            ->where('g.parish_id', $churchId)
+            ->where('g.parish_id', $parishId)
             ->orderBy('g.visit_date', 'DESC')
             ->orderBy('g.id', 'DESC');
 
@@ -82,7 +82,7 @@ class GuestConversions extends BaseController
             ->getResultArray();
         $guestModel = model('GuestModel');
         $guests = array_map(fn(array $row): array => $guestModel->decryptGuestRow($row), $guests);
-        $members = model('MemberParishAffiliationModel')->getParishMembers($churchId);
+        $members = model('MemberParishAffiliationModel')->getParishMembers($parishId);
 
         return view('MemberPortal\Views\GuestConversions/index', array_merge($this->getCommonViewData(lang('Guests.conversionsTitle')), [
             'guests' => $guests,
@@ -114,9 +114,9 @@ class GuestConversions extends BaseController
         $affiliationModel = model('MemberParishAffiliationModel');
 
         $guest = $guestModel->find((int) $guestId);
-        $churchId = (int) ($this->getOperationalParishId() ?? 0);
+        $parishId = (int) ($this->getOperationalParishId() ?? 0);
 
-        if (!$guest || (int) ($guest['parish_id'] ?? 0) !== $churchId) {
+        if (!$guest || (int) ($guest['parish_id'] ?? 0) !== $parishId) {
             return redirect()->to('/guest-conversions')->with('error', lang('App.errorNotFound'));
         }
 
@@ -125,7 +125,7 @@ class GuestConversions extends BaseController
 
         if ($personId <= 0) {
             try {
-                $intake = GuestIntakeService::record($guest, $churchId);
+                $intake = GuestIntakeService::record($guest, $parishId);
                 $personId = $intake['person_id'];
                 $guestModel->update((int) $guestId, ['person_id' => $personId]);
             } catch (\Throwable $e) {
@@ -135,7 +135,7 @@ class GuestConversions extends BaseController
 
         $converted = PersonConversionService::convertToMember(
             $personId,
-            $churchId,
+            $parishId,
             $userId,
             null,
             null,
@@ -147,7 +147,7 @@ class GuestConversions extends BaseController
         }
 
         // Rebuild the parish snapshot so the converted guest appears in /people.
-        (new \App\Services\ParishPeopleRegistryService())->syncParish($churchId);
+        (new \App\Services\ParishPeopleRegistryService())->syncParish($parishId);
 
         return redirect()->to('/guest-conversions')->with('success', lang('Guests.conversionLinkSuccess'));
     }
@@ -164,9 +164,9 @@ class GuestConversions extends BaseController
 
         $guestModel = model('GuestModel');
         $guest = $guestModel->find((int) $guestId);
-        $churchId = (int) ($this->getOperationalParishId() ?? 0);
+        $parishId = (int) ($this->getOperationalParishId() ?? 0);
 
-        if (!$guest || (int) ($guest['parish_id'] ?? 0) !== $churchId) {
+        if (!$guest || (int) ($guest['parish_id'] ?? 0) !== $parishId) {
             return redirect()->to('/guest-conversions')->with('error', lang('App.errorNotFound'));
         }
 

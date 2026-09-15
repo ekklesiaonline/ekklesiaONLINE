@@ -44,7 +44,7 @@ Result: `php spark optimize:benchmark` returned `GREEN`.
 
 ## HTTP Endpoint Baseline
 
-Measured with an authenticated church-admin session against the local app.
+Measured with an authenticated parish-admin session against the local app.
 
 | Endpoint | HTTP | Avg | Min | Max |
 | --- | --- | ---: | ---: | ---: |

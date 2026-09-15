@@ -479,10 +479,10 @@ class ProfileModel extends BaseTenantModel
         $candidates = [];
         if ($prefix !== '') {
             $candidates[] = $prefix . 'parish_people';
-            $candidates[] = $prefix . 'church_people';
+            $candidates[] = $prefix . 'parish_people';
         }
         $candidates[] = 'parish_people';
-        $candidates[] = 'church_people';
+        $candidates[] = 'parish_people';
 
         foreach ($candidates as $table) {
             try {

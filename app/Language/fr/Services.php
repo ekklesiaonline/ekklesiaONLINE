@@ -129,7 +129,7 @@ return [
     'pleaseFixFollowing'  => 'Veuillez corriger les points suivants :',
     'serviceNotFound'     => 'Culte introuvable',
     'forbidden'           => 'Interdit',
-    'noChurchScopeAssigned' => 'Aucun périmètre de paroisse n\'est attribué à votre compte.',
+    'noParishScopeAssigned' => 'Aucun périmètre de paroisse n\'est attribué à votre compte.',
     'validationLiveViewsRequired' => 'Le total des vues en direct est requis pour les cultes Hybride/En ligne.',
     'validationCommunionExceedsPresent' => 'Le nombre de communions ne peut pas dépasser le nombre de présents.',
     'validationPrivateOnlyHolyCommunion' => 'Les cultes privés sont autorisés uniquement pour la Sainte Communion.',

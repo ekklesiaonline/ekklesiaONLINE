@@ -77,6 +77,6 @@ final class FamiliesIntegrityRemediationTest extends CIUnitTestCase
 
         $this->assertStringContainsString('families/available-members/', $content);
         $this->assertStringNotContainsString("model('ProfileModel')", $content);
-        $this->assertStringNotContainsString('getChurchProfiles(', $content);
+        $this->assertStringNotContainsString('getParishProfiles(', $content);
     }
 }

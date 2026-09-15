@@ -16,7 +16,7 @@ class AnnualPledges extends BaseController
             return $redirect;
         }
 
-        $churchId = (int) ($this->getOperationalParishId() ?? 0);
+        $parishId = (int) ($this->getOperationalParishId() ?? 0);
         $year = (int) ($this->request->getGet('year') ?? date('Y'));
         $search = trim((string) ($this->request->getGet('search') ?? ''));
         $page = max(1, (int) ($this->request->getGet('page') ?? 1));
@@ -30,7 +30,7 @@ class AnnualPledges extends BaseController
         if ($profileTable === null) {
             return view('MemberPortal\\Views\\Pledges/index', array_merge($this->getCommonViewData(lang('Pledges.pageTitle')), [
                 'pledges' => [],
-                'members' => model('MemberParishAffiliationModel')->getParishMembers($churchId, 'active'),
+                'members' => model('MemberParishAffiliationModel')->getParishMembers($parishId, 'active'),
                 'selected_year' => $year,
                 'search' => $search,
                 'page' => 1,
@@ -45,7 +45,7 @@ class AnnualPledges extends BaseController
             ->join($profileTable . ' p', 'p.user_id = ap.user_id', 'left')
             ->join('users u', 'u.id = ap.user_id', 'left')
             ->join('auth_identities ai', 'ai.user_id = u.id AND ai.type = "email_password"', 'left')
-            ->where('ap.parish_id', $churchId)
+            ->where('ap.parish_id', $parishId)
             ->where('ap.pledge_year', $year)
             ->orderBy('p.last_name', 'ASC')
             ->orderBy('p.first_name', 'ASC');
@@ -71,7 +71,7 @@ class AnnualPledges extends BaseController
             ->get()
             ->getResultArray();
 
-        $members = model('MemberParishAffiliationModel')->getParishMembers($churchId, 'active');
+        $members = model('MemberParishAffiliationModel')->getParishMembers($parishId, 'active');
 
         return view('MemberPortal\Views\Pledges/index', array_merge($this->getCommonViewData(lang('Pledges.pageTitle')), [
             'pledges' => $pledges,
@@ -109,14 +109,14 @@ class AnnualPledges extends BaseController
 
         $model = model('AnnualPledgeModel');
         $attributionPolicy = self::ATTRIBUTION_POLICY_OPERATIONAL_DEFAULT;
-        $attributionChurchId = (int) ($this->resolveAttributionParishId($attributionPolicy) ?? 0);
-        if ($attributionChurchId <= 0) {
+        $attributionParishId = (int) ($this->resolveAttributionParishId($attributionPolicy) ?? 0);
+        if ($attributionParishId <= 0) {
             return redirect()->back()->withInput()->with('error', lang('App.errorNoParishScope'));
         }
 
         $payload = [
             'user_id' => (int) $this->request->getPost('user_id'),
-            'parish_id' => $attributionChurchId,
+            'parish_id' => $attributionParishId,
             'pledge_year' => (int) $this->request->getPost('pledge_year'),
             'pledged_amount' => $this->request->getPost('pledged_amount') !== '' ? (float) $this->request->getPost('pledged_amount') : null,
             'fulfilled_amount' => $this->request->getPost('fulfilled_amount') !== '' ? (float) $this->request->getPost('fulfilled_amount') : 0,
@@ -133,11 +133,11 @@ class AnnualPledges extends BaseController
 
         $pledgeId = (int) $model->getInsertID();
         $this->audit()->log('annual_pledge.create', [
-            'parish_id' => $attributionChurchId,
+            'parish_id' => $attributionParishId,
             'entity_type' => 'annual_pledge',
             'entity_id' => $pledgeId,
             'new_values' => $payload,
-            'meta' => $this->buildParishContextMeta($attributionChurchId, $attributionPolicy),
+            'meta' => $this->buildParishContextMeta($attributionParishId, $attributionPolicy),
         ]);
 
         return redirect()->to('/pledges?year=' . (int) $payload['pledge_year'])->with('success', lang('App.pledgeSavedSuccess'));

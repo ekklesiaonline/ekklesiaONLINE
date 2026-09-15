@@ -1,6 +1,6 @@
 <?php
 
-use App\Models\MemberChurchAffiliationModel;
+use App\Models\MemberParishAffiliationModel;
 use CodeIgniter\Test\CIUnitTestCase;
 use CodeIgniter\Test\DatabaseTestTrait;
 
@@ -17,16 +17,16 @@ final class MemberAffiliationScopeTest extends CIUnitTestCase
         $this->rebuildSchema();
     }
 
-    public function testGetChurchMembersExcludesProvinceAdmins(): void
+    public function testGetParishMembersExcludesProvinceAdmins(): void
     {
         $dioceseId = $this->insertDiocese('Central Diocese');
-        $churchId  = $this->insertChurch($dioceseId, 'St. Mark');
+        $parishId  = $this->insertParish($dioceseId, 'St. Mark');
 
         $memberUserId = $this->insertUser('member.user');
         $adminUserId  = $this->insertUser('province.admin');
 
-        $this->insertProfile($memberUserId, $churchId, 'Maria', 'Member');
-        $this->insertProfile($adminUserId, $churchId, 'Peter', 'Admin');
+        $this->insertProfile($memberUserId, $parishId, 'Maria', 'Member');
+        $this->insertProfile($adminUserId, $parishId, 'Peter', 'Admin');
 
         $this->db->table('auth_groups_users')->insert([
             'group' => 'provinceadmin',
@@ -34,10 +34,10 @@ final class MemberAffiliationScopeTest extends CIUnitTestCase
             'created_at' => date('Y-m-d H:i:s'),
         ]);
 
-        $this->insertAffiliation($memberUserId, $churchId, $dioceseId, 'member');
-        $this->insertAffiliation($adminUserId, $churchId, $dioceseId, 'member');
+        $this->insertAffiliation($memberUserId, $parishId, $dioceseId, 'member');
+        $this->insertAffiliation($adminUserId, $parishId, $dioceseId, 'member');
 
-        $rows = model(MemberChurchAffiliationModel::class)->getParishMembers($churchId);
+        $rows = model(MemberParishAffiliationModel::class)->getParishMembers($parishId);
 
         $this->assertCount(1, $rows);
         $this->assertSame($memberUserId, (int) $rows[0]['user_id']);
@@ -46,36 +46,36 @@ final class MemberAffiliationScopeTest extends CIUnitTestCase
     public function testCountDistinctMembersDefaultsToActiveAndInactiveOnly(): void
     {
         $dioceseId = $this->insertDiocese('North Diocese');
-        $churchId  = $this->insertChurch($dioceseId, 'St. Luke');
+        $parishId  = $this->insertParish($dioceseId, 'St. Luke');
 
         $activeUserId   = $this->insertUser('active.user');
         $inactiveUserId = $this->insertUser('inactive.user');
         $visitorUserId  = $this->insertUser('visitor.user');
 
-        $this->insertProfile($activeUserId, $churchId, 'A', 'Active');
-        $this->insertProfile($inactiveUserId, $churchId, 'I', 'Inactive');
-        $this->insertProfile($visitorUserId, $churchId, 'V', 'Visitor');
+        $this->insertProfile($activeUserId, $parishId, 'A', 'Active');
+        $this->insertProfile($inactiveUserId, $parishId, 'I', 'Inactive');
+        $this->insertProfile($visitorUserId, $parishId, 'V', 'Visitor');
 
-        $this->insertAffiliation($activeUserId, $churchId, $dioceseId, 'member');
-        $this->insertAffiliation($inactiveUserId, $churchId, $dioceseId, 'inactive');
-        $this->insertAffiliation($visitorUserId, $churchId, $dioceseId, 'guest');
+        $this->insertAffiliation($activeUserId, $parishId, $dioceseId, 'member');
+        $this->insertAffiliation($inactiveUserId, $parishId, $dioceseId, 'inactive');
+        $this->insertAffiliation($visitorUserId, $parishId, $dioceseId, 'guest');
 
-        $count = model(MemberChurchAffiliationModel::class)->countDistinctMembers($churchId);
+        $count = model(MemberParishAffiliationModel::class)->countDistinctMembers($parishId);
 
         $this->assertSame(2, $count);
     }
 
-    public function testAttachToChurchReactivatesExistingAffiliationAndSetsDiocese(): void
+    public function testAttachToParishReactivatesExistingAffiliationAndSetsDiocese(): void
     {
         $dioceseId = $this->insertDiocese('South Diocese');
-        $churchId  = $this->insertChurch($dioceseId, 'St. John');
+        $parishId  = $this->insertParish($dioceseId, 'St. John');
         $userId    = $this->insertUser('reactivate.user');
 
-        $this->insertProfile($userId, $churchId, 'Re', 'Activate');
+        $this->insertProfile($userId, $parishId, 'Re', 'Activate');
 
         $this->db->table('parish_affiliation')->insert([
             'linked_user_id' => $userId,
-            'parish_id' => $churchId,
+            'parish_id' => $parishId,
             'person_id' => null,
             'affiliation_type' => 'member',
             'membership_status' => 'inactive',
@@ -89,12 +89,12 @@ final class MemberAffiliationScopeTest extends CIUnitTestCase
             'updated_at' => date('Y-m-d H:i:s'),
         ]);
 
-        $ok = model(MemberChurchAffiliationModel::class)->attachToParish($userId, $churchId, true, 'member');
+        $ok = model(MemberParishAffiliationModel::class)->attachToParish($userId, $parishId, true, 'member');
         $this->assertTrue($ok);
 
         $row = $this->db->table('parish_affiliation')
             ->where('linked_user_id', $userId)
-            ->where('parish_id', $churchId)
+            ->where('parish_id', $parishId)
             ->get()
             ->getRowArray();
 
@@ -177,7 +177,7 @@ final class MemberAffiliationScopeTest extends CIUnitTestCase
         $forge->addField([
             'id' => ['type' => 'INTEGER', 'auto_increment' => true],
             'user_id' => ['type' => 'INTEGER'],
-            'church_id' => ['type' => 'INTEGER', 'null' => true],
+            'parish_id' => ['type' => 'INTEGER', 'null' => true],
             'first_name' => ['type' => 'VARCHAR', 'constraint' => 100, 'null' => true],
             'nickname' => ['type' => 'VARCHAR', 'constraint' => 100, 'null' => true],
             'last_name' => ['type' => 'VARCHAR', 'constraint' => 100, 'null' => true],
@@ -248,7 +248,7 @@ final class MemberAffiliationScopeTest extends CIUnitTestCase
         return (int) $this->db->insertID();
     }
 
-    private function insertChurch(int $dioceseId, string $name): int
+    private function insertParish(int $dioceseId, string $name): int
     {
         $this->db->table('parish')->insert([
             'diocese_id' => $dioceseId,
@@ -282,11 +282,11 @@ final class MemberAffiliationScopeTest extends CIUnitTestCase
         return $userId;
     }
 
-    private function insertProfile(int $userId, int $churchId, string $firstName, string $lastName): void
+    private function insertProfile(int $userId, int $parishId, string $firstName, string $lastName): void
     {
         $this->db->table('profile')->insert([
             'user_id' => $userId,
-            'church_id' => $churchId,
+            'parish_id' => $parishId,
             'first_name' => $firstName,
             'last_name' => $lastName,
             'membership_status' => 'member',
@@ -295,11 +295,11 @@ final class MemberAffiliationScopeTest extends CIUnitTestCase
         ]);
     }
 
-    private function insertAffiliation(int $userId, int $churchId, int $dioceseId, string $status): void
+    private function insertAffiliation(int $userId, int $parishId, int $dioceseId, string $status): void
     {
-        model(MemberChurchAffiliationModel::class)->attachToParish(
+        model(MemberParishAffiliationModel::class)->attachToParish(
             $userId,
-            $churchId,
+            $parishId,
             false,
             $status,
             in_array($status, ['member', 'inactive'], true)

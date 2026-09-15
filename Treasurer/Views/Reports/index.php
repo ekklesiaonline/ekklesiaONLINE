@@ -57,8 +57,8 @@
     <div class="col-md-6 col-xl-3">
         <div class="card h-100">
             <div class="card-body">
-                <div class="text-muted small"><?= lang('Treasurer.reportChurches') ?></div>
-                <div class="h3 mb-0"><?= (int) ($report_summary['church_count'] ?? 0) ?></div>
+                <div class="text-muted small"><?= lang('Treasurer.reportParishes') ?></div>
+                <div class="h3 mb-0"><?= (int) ($report_summary['parish_count'] ?? 0) ?></div>
             </div>
         </div>
     </div>
@@ -130,7 +130,7 @@
                     <thead>
                         <tr>
                             <th><?= lang('Treasurer.reportDiocese') ?></th>
-                            <th><?= lang('Treasurer.reportChurches') ?></th>
+                            <th><?= lang('Treasurer.reportParishes') ?></th>
                             <th><?= lang('Treasurer.reportPeople') ?></th>
                             <th><?= lang('Treasurer.reportGuests') ?></th>
                             <th><?= lang('Treasurer.reportMembers') ?></th>
@@ -146,7 +146,7 @@
                         <?php foreach (($report_diocese_breakdown ?? []) as $row): ?>
                             <tr>
                                 <td><?= esc($row['diocese_name']) ?></td>
-                                <td><?= number_format((int) $row['church_count']) ?></td>
+                                <td><?= number_format((int) $row['parish_count']) ?></td>
                                 <td><?= number_format((int) ($row['people_count'] ?? 0)) ?></td>
                                 <td><?= number_format((int) ($row['guest_count'] ?? 0)) ?></td>
                                 <td><?= number_format((int) $row['member_count']) ?></td>

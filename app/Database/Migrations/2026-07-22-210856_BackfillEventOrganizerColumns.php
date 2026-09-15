@@ -12,7 +12,7 @@ class BackfillEventOrganizerColumns extends Migration
             UPDATE `event`
             SET
                 organizer_type       = scope_level,
-                organizer_church_id    = NULL,
+                organizer_parish_id    = NULL,
                 organizer_province_id  = CASE WHEN scope_level = 'province' THEN scope_province_id ELSE NULL END,
                 organizer_diocese_id   = CASE WHEN scope_level = 'diocese'  THEN scope_diocese_id  ELSE NULL END,
                 organizer_parish_id    = CASE WHEN scope_level = 'parish'   THEN parish_id          ELSE NULL END,
@@ -27,7 +27,7 @@ class BackfillEventOrganizerColumns extends Migration
             UPDATE `event`
             SET
                 organizer_type       = 'parish',
-                organizer_church_id  = NULL,
+                organizer_parish_id  = NULL,
                 organizer_province_id = NULL,
                 organizer_diocese_id  = NULL,
                 organizer_parish_id   = NULL,

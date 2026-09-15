@@ -30,12 +30,12 @@ $currentPeriodLabel = $periodLabels[$current_period] ?? $current_period;
     <div class="card-body py-3">
         <div class="row g-3 align-items-end">
             <div class="col-md-5">
-                <label for="churchFinanceScopeToggle" class="form-label mb-1"><?= lang('Dashboard.parishScopeLiveToggle') ?></label>
-                <select id="churchFinanceScopeToggle" class="form-select">
+                <label for="parishFinanceScopeToggle" class="form-label mb-1"><?= lang('Dashboard.parishScopeLiveToggle') ?></label>
+                <select id="parishFinanceScopeToggle" class="form-select">
                     <option value="all" selected><?= lang('App.scopeAllParishes') ?></option>
-                    <?php foreach ($all_churches as $parish): ?>
-                        <?php $churchUeid = trim((string) ($parish['parish_ueid'] ?? '')); ?>
-                        <option value="<?= (int) $parish['id'] ?>\"><?= esc($parish['name'] . ($churchUeid !== '' ? ' (' . $churchUeid . ')' : '')) ?></option>
+                    <?php foreach ($all_parishes as $parish): ?>
+                        <?php $parishUeid = trim((string) ($parish['parish_ueid'] ?? '')); ?>
+                        <option value="<?= (int) $parish['id'] ?>\"><?= esc($parish['name'] . ($parishUeid !== '' ? ' (' . $parishUeid . ')' : '')) ?></option>
                     <?php endforeach; ?>
                 </select>
             </div>
@@ -362,7 +362,7 @@ $currentPeriodLabel = $periodLabels[$current_period] ?? $current_period;
         if (!financeMetricsById[id]) {
             financeMetricsById[id] = {
                 id,
-                name: row.church_name || `${financeChurchFallbackPrefix} ${id}`,
+                name: row.parish_name || `${financeParishFallbackPrefix} ${id}`,
                 income: 0,
                 expenses: 0
             };
@@ -375,7 +375,7 @@ $currentPeriodLabel = $periodLabels[$current_period] ?? $current_period;
         expenses: <?= (float) ($total_expenses ?? 0) ?>,
     };
 
-    function buildComparisonChart(scopeChurchId = 'all') {
+    function buildComparisonChart(scopeParishId = 'all') {
         if (!financeComparisonChartEl) {
             return;
         }
@@ -387,8 +387,8 @@ $currentPeriodLabel = $periodLabels[$current_period] ?? $current_period;
         let rows = Object.values(financeMetricsById)
             .sort((left, right) => (right.income + right.expenses) - (left.income + left.expenses));
 
-        if (scopeChurchId !== 'all') {
-            const selected = financeMetricsById[Number(scopeChurchId)];
+        if (scopeParishId !== 'all') {
+            const selected = financeMetricsById[Number(scopeParishId)];
             rows = selected ? [selected] : [];
         } else {
             rows = rows.slice(0, 10);
@@ -437,7 +437,7 @@ $currentPeriodLabel = $periodLabels[$current_period] ?? $current_period;
         });
     }
 
-    function buildTrendChart(scopeChurchId = 'all') {
+    function buildTrendChart(scopeParishId = 'all') {
         if (!financeTrendChartEl) {
             return;
         }
@@ -446,12 +446,12 @@ $currentPeriodLabel = $periodLabels[$current_period] ?? $current_period;
             financeTrendChart.destroy();
         }
 
-        const incomeSeries = scopeChurchId === 'all' ?
+        const incomeSeries = scopeParishId === 'all' ?
             financeIncomeTrend :
-            (financeIncomeTrendByParish[String(scopeChurchId)] || financeIncomeTrendByParish[Number(scopeChurchId)] || Array(financeTrendLabels.length).fill(0));
-        const expenseSeries = scopeChurchId === 'all' ?
+            (financeIncomeTrendByParish[String(scopeParishId)] || financeIncomeTrendByParish[Number(scopeParishId)] || Array(financeTrendLabels.length).fill(0));
+        const expenseSeries = scopeParishId === 'all' ?
             financeExpenseTrend :
-            (financeExpenseTrendByParish[String(scopeChurchId)] || financeExpenseTrendByParish[Number(scopeChurchId)] || Array(financeTrendLabels.length).fill(0));
+            (financeExpenseTrendByParish[String(scopeParishId)] || financeExpenseTrendByParish[Number(scopeParishId)] || Array(financeTrendLabels.length).fill(0));
 
         financeTrendChart = new Chart(financeTrendChartEl.getContext('2d'), {
             type: 'line',
@@ -518,11 +518,11 @@ $currentPeriodLabel = $periodLabels[$current_period] ?? $current_period;
         financeProgressExpenses.style.width = `${expensesPct}%`;
     }
 
-    function applyFinanceScope(scopeChurchId = 'all') {
-        const rows = financeComparisonBody ? financeComparisonBody.querySelectorAll('tr[data-church-id]') : [];
+    function applyFinanceScope(scopeParishId = 'all') {
+        const rows = financeComparisonBody ? financeComparisonBody.querySelectorAll('tr[data-parish-id]') : [];
 
-        if (scopeChurchId === 'all') {
-            financeScopeLabel.textContent = financeAllChurchesLabel;
+        if (scopeParishId === 'all') {
+            financeScopeLabel.textContent = financeAllParishesLabel;
             setFinancialSummary(financeNetworkBaseline.income, financeNetworkBaseline.expenses);
             rows.forEach((row) => {
                 row.style.display = '';
@@ -532,20 +532,20 @@ $currentPeriodLabel = $periodLabels[$current_period] ?? $current_period;
             return;
         }
 
-        const selected = financeMetricsById[Number(scopeChurchId)] || {
+        const selected = financeMetricsById[Number(scopeParishId)] || {
             income: 0,
             expenses: 0,
-            name: financeSelectedChurchFallback
+            name: financeSelectedParishFallback
         };
         financeScopeLabel.textContent = selected.name;
         setFinancialSummary(selected.income, selected.expenses);
 
         rows.forEach((row) => {
-            row.style.display = Number(row.dataset.churchId) === Number(scopeChurchId) ? '' : 'none';
+            row.style.display = Number(row.dataset.parishId) === Number(scopeParishId) ? '' : 'none';
         });
 
-        buildComparisonChart(scopeChurchId);
-        buildTrendChart(scopeChurchId);
+        buildComparisonChart(scopeParishId);
+        buildTrendChart(scopeParishId);
     }
 
     if (financeScopeToggle) {

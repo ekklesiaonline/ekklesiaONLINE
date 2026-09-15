@@ -18,7 +18,7 @@ SELECT
 
 FROM services s
 JOIN service_metrics sm ON sm.service_id = s.id
-WHERE s.church_id = :church_id
+WHERE s.parish_id = :parish_id
   AND s.date BETWEEN :from_date AND :to_date
 GROUP BY YEAR(s.date), MONTH(s.date)
 ORDER BY YEAR(s.date), MONTH(s.date);
@@ -38,7 +38,7 @@ SELECT
 
 FROM services s
 JOIN service_metrics sm ON sm.service_id = s.id
-WHERE s.church_id = :church_id
+WHERE s.parish_id = :parish_id
   AND YEAR(s.date) = :year
 GROUP BY YEAR(s.date)
 ORDER BY YEAR(s.date);
@@ -74,7 +74,7 @@ SELECT
 
 FROM services s
 JOIN service_metrics sm ON sm.service_id = s.id
-WHERE s.church_id = :church_id
+WHERE s.parish_id = :parish_id
   AND s.date BETWEEN :from_date AND :to_date
 GROUP BY YEAR(s.date), MONTH(s.date)
 ORDER BY YEAR(s.date), MONTH(s.date);
@@ -108,7 +108,7 @@ SELECT
 
 FROM services s
 JOIN service_metrics sm ON sm.service_id = s.id
-WHERE s.church_id = :church_id
+WHERE s.parish_id = :parish_id
   AND YEAR(s.date) = :year
 GROUP BY YEAR(s.date)
 ORDER BY YEAR(s.date);
@@ -119,7 +119,7 @@ ORDER BY YEAR(s.date);
 ```php
 // In app/Models/ServiceModel.php or dedicated ReportsModel.php
 
-public function getMonthlyServiceClassificationSummary(int $churchId, string $fromDate, string $toDate): array
+public function getMonthlyServiceClassificationSummary(int $parishId, string $fromDate, string $toDate): array
 {
     return $this->db->query("
         SELECT
@@ -133,11 +133,11 @@ public function getMonthlyServiceClassificationSummary(int $churchId, string $fr
             SUM(CASE WHEN sm.service_family = 'other' AND sm.service_schedule = 'weekday' THEN 1 ELSE 0 END) AS other_weekday_count
         FROM services s
         JOIN service_metrics sm ON sm.service_id = s.id
-        WHERE s.church_id = ?
+        WHERE s.parish_id = ?
           AND s.date BETWEEN ? AND ?
         GROUP BY YEAR(s.date), MONTH(s.date)
         ORDER BY YEAR(s.date), MONTH(s.date)
-    ", [$churchId, $fromDate, $toDate])->getResultArray();
+    ", [$parishId, $fromDate, $toDate])->getResultArray();
 }
 ```
 

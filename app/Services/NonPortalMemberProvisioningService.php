@@ -195,8 +195,8 @@ class NonPortalMemberProvisioningService
         $profileColumns = array_map('strtolower', $this->getColumnsForTable('profile'));
         if (in_array('parish_id', $profileColumns, true)) {
             $profileBuilder->where('parish_id', $parishId);
-        } elseif (in_array('church_id', $profileColumns, true)) {
-            $profileBuilder->where('church_id', $parishId);
+        } elseif (in_array('parish_id', $profileColumns, true)) {
+            $profileBuilder->where('parish_id', $parishId);
         } else {
             return $this->result(false, 404, 'MEMBER_NOT_FOUND', 'Member not found in this parish.');
         }

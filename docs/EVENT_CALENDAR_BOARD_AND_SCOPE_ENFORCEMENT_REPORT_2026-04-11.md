@@ -26,7 +26,7 @@ Outcome:
 
 Previous risk:
 
-- Diocese-visible events could be fetched through the same visibility path used for church-scoped viewing.
+- Diocese-visible events could be fetched through the same visibility path used for parish-scoped viewing.
 - That made view access and management access too closely coupled.
 
 Implemented split:
@@ -36,9 +36,9 @@ Implemented split:
 
 Current management rule:
 
-- Church-scoped events remain manageable by the current operational church.
+- Parish-scoped events remain manageable by the current operational parish.
 - Diocese-scoped events are only manageable when the user is allowed to assign diocesan scope and the event belongs to the current diocese.
-- Church users who can only view diocese-visible events no longer inherit edit or delete access from visibility alone.
+- Parish users who can only view diocese-visible events no longer inherit edit or delete access from visibility alone.
 
 Additional UI alignment:
 

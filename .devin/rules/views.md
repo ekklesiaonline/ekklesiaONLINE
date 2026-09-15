@@ -105,4 +105,4 @@ fetch(url, {
 
 ## Terminology
 
-- Use `parish` in code, routes, and models. `church` is acceptable only in user-facing labels or legacy aliases (e.g., `churches` → `parish_list` redirect).
+- Use `parish` in code, routes, and models. `parish` is acceptable only in user-facing labels or legacy aliases (e.g., `parishes` → `parish_list` redirect).

@@ -289,7 +289,7 @@ class ParishPeopleRegistryService
 
     private function resolveSnapshotTable(): ?string
     {
-        foreach (['parish_people', 'church_people'] as $candidate) {
+        foreach (['parish_people', 'parish_people'] as $candidate) {
             if ($this->getColumnsForTable($candidate) !== []) {
                 return $candidate;
             }
@@ -307,8 +307,8 @@ class ParishPeopleRegistryService
             return 'parish_id';
         }
 
-        if (in_array('church_id', $lowered, true)) {
-            return 'church_id';
+        if (in_array('parish_id', $lowered, true)) {
+            return 'parish_id';
         }
 
         return 'parish_id';

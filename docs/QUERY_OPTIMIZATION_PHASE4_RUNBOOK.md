@@ -29,7 +29,7 @@ Expected:
 1. Migration completes without error.
 2. New indexes exist on:
 
-- `member_church_affiliations`
+- `member_parish_affiliations`
 - `attendance`
 - `donations`
 - `expenses`
@@ -96,7 +96,7 @@ mysqldumpslow -s t /var/log/mysql/slow-query.log | head -n 20
 
 Watch for:
 
-1. Repeated full scans on `donations`, `expenses`, `services`, `member_church_affiliations`.
+1. Repeated full scans on `donations`, `expenses`, `services`, `member_parish_affiliations`.
 2. Missing `key` usage in explain output for common date-range queries.
 3. Query patterns bypassing cached list helpers.
 
@@ -106,13 +106,13 @@ Caching implemented in Phase 3:
 
 1. Chart of Accounts list/read methods (with write invalidation).
 2. Creatable roles lookup in members controller.
-3. Province/diocese church selector lists in base controller.
+3. Province/diocese parish selector lists in base controller.
 
 Quick checks:
 
 1. Load affected pages twice and compare latency.
 2. Edit/create/delete chart accounts and verify updated lists are visible immediately.
-3. Confirm no stale scope lists after church hierarchy changes (if those changes happen often, add manual cache flush step in admin workflow).
+3. Confirm no stale scope lists after parish hierarchy changes (if those changes happen often, add manual cache flush step in admin workflow).
 
 ## Step 6: Weekly Audit Routine
 

@@ -8,15 +8,15 @@ This report documents the implemented end-to-end lifecycle from user registratio
 
 - Authentication and initial onboarding record creation.
 - Profile completion and moderation handoff.
-- Church-admin moderation and activation.
+- Parish-admin moderation and activation.
 - Good-standing computation sources and refresh paths.
 
 ## Flow Overview
 
 1. User registration creates authentication account records.
 2. Registration event hook creates onboarding profile/request records.
-3. User completes profile and submits church selection for review.
-4. Church admin approves, dismisses, or bans the request.
+3. User completes profile and submits parish selection for review.
+4. Parish admin approves, dismisses, or bans the request.
 5. Member activity data accumulates (attendance, communion, pledges, discipline).
 6. Good-standing is computed and surfaced by standing services/dashboard metrics.
 
@@ -42,20 +42,20 @@ sequenceDiagram
     U->>P: Submit profile completion
     P->>DB: UPDATE profile
     P->>DB: UPDATE user_registration_requests (status=pending_review, profile_completed_at)
-    P->>DB: INSERT church_role_audit_logs (submission/notification)
+    P->>DB: INSERT parish_role_audit_logs (submission/notification)
 
     R->>DB: Read pending_review request in scope
     alt Approve
         R->>DB: UPDATE auth_groups_users
-        R->>DB: UPDATE profile (membership_status=active, church scope)
+        R->>DB: UPDATE profile (membership_status=active, parish scope)
         R->>DB: UPDATE user_registration_requests (status=approved, reviewed_by, reviewed_at)
-        R->>DB: INSERT church_role_audit_logs (registration_approved)
+        R->>DB: INSERT parish_role_audit_logs (registration_approved)
     else Dismiss/Ban
         R->>DB: UPDATE user_registration_requests (dismissed or banned)
         opt Ban
             R->>DB: UPDATE users.active=0
         end
-        R->>DB: INSERT church_role_audit_logs
+        R->>DB: INSERT parish_role_audit_logs
     end
 ```
 
@@ -73,7 +73,7 @@ sequenceDiagram
     M->>DB: attendance, services, annual_pledges, member_discipline, users.active
 
     Note over L: MemberStandingSummaryModel path
-    L->>DB: Read member_church_affiliations + attendance + pledges
+    L->>DB: Read member_parish_affiliations + attendance + pledges
     L->>DB: UPSERT member_standing_summary
     H->>DB: Read member_standing_summary (PeopleMetricsService)
 
@@ -111,7 +111,7 @@ Primary implementation:
 
 Behavior:
 
-- Resolves province/diocese from selected church when available.
+- Resolves province/diocese from selected parish when available.
 - Ensures a profile row exists with membership_status set to pending.
 - Creates or updates one user_registration_requests row with status pending_profile.
 
@@ -133,23 +133,23 @@ Primary implementation:
 
 Behavior:
 
-- Validates province, diocese, and church hierarchy integrity.
+- Validates province, diocese, and parish hierarchy integrity.
 - Updates profile demographics and geo context.
 - Promotes registration request from pending_profile to pending_review.
 - Sets profile_completed_at timestamp.
-- Logs registration audit and notifies church admins.
+- Logs registration audit and notifies parish admins.
 
 Primary tables written:
 
 - profile
 - user_registration_requests
-- church_role_audit_logs
+- parish_role_audit_logs
 
 Primary status after this step:
 
 - user_registration_requests.status = pending_review
 
-### Step 4: Moderation by church admin
+### Step 4: Moderation by parish admin
 
 Primary implementation:
 
@@ -159,7 +159,7 @@ Approval path behavior:
 
 - Confirms request is still pending_review and in moderator scope.
 - Assigns group role in auth_groups_users.
-- Updates profile membership_status to active and sets province/diocese/church scope.
+- Updates profile membership_status to active and sets province/diocese/parish scope.
 - Marks request approved with reviewer metadata.
 
 Dismiss/Ban behavior:
@@ -173,7 +173,7 @@ Primary tables written:
 - profile
 - user_registration_requests
 - users (ban path active toggle)
-- church_role_audit_logs
+- parish_role_audit_logs
 
 Primary status after approval:
 
@@ -187,7 +187,7 @@ Good standing is derived from member lifecycle and contribution/discipline evide
 Primary input tables:
 
 - users (active flag)
-- member_church_affiliations (active membership and status for legacy review model)
+- member_parish_affiliations (active membership and status for legacy review model)
 - attendance
 - services
 - annual_pledges
@@ -196,7 +196,7 @@ Primary input tables:
 Supporting membership context tables:
 
 - profile
-- churches
+- parishes
 - dioceses
 - provinces
 
@@ -204,7 +204,7 @@ Supporting membership context tables:
 
 The codebase currently contains two computation paths.
 
-### Path A: Legacy review model (actively used by church dashboard people metrics)
+### Path A: Legacy review model (actively used by parish dashboard people metrics)
 
 Primary implementation:
 
@@ -213,7 +213,7 @@ Primary implementation:
 
 Rules (legacy review):
 
-- Active church affiliation exists.
+- Active parish affiliation exists.
 - Affiliation membership_status is active.
 - Communion count for year >= 3.
 - Pledge exists for current year.
@@ -258,7 +258,7 @@ Source model:
 Statuses:
 
 - pending_profile: registered, must complete onboarding profile.
-- pending_review: submitted for church-admin moderation.
+- pending_review: submitted for parish-admin moderation.
 - approved: accepted and role/scopes applied.
 - dismissed: rejected.
 - banned: rejected and account deactivated.
@@ -274,15 +274,15 @@ Gate enforcement:
 
 | Phase | Primary Writes | Primary Reads |
 | --- | --- | --- |
-| Register | users, auth_identities, profile, user_registration_requests | churches, dioceses, provinces |
-| Complete Profile | profile, user_registration_requests, church_role_audit_logs | provinces, dioceses, churches |
-| Moderate Request | auth_groups_users, profile, user_registration_requests, users, church_role_audit_logs | user_registration_requests, profile |
+| Register | users, auth_identities, profile, user_registration_requests | parishes, dioceses, provinces |
+| Complete Profile | profile, user_registration_requests, parish_role_audit_logs | provinces, dioceses, parishes |
+| Moderate Request | auth_groups_users, profile, user_registration_requests, users, parish_role_audit_logs | user_registration_requests, profile |
 | Standing Refresh (summary) | member_standing_summary | users, attendance, services, annual_pledges, member_discipline |
 
 ## Current Operational Notes
 
-1. Approval updates profile membership status and role assignment, but does not directly call MemberChurchAffiliationModel::attachToChurch in RegistrationRequests approve flow.
-2. Church dashboard people metrics currently reads good-standing counts from member_standing_summary via PeopleMetricsService.
+1. Approval updates profile membership status and role assignment, but does not directly call MemberParishAffiliationModel::attachToParish in RegistrationRequests approve flow.
+2. Parish dashboard people metrics currently reads good-standing counts from member_standing_summary via PeopleMetricsService.
 3. The newer member_standing_summary path is implemented and refreshable via standing:refresh, with helper support for summary counts.
 
 ## Verification SQL Appendix
@@ -350,21 +350,21 @@ WHERE mss.year = YEAR(CURDATE())
 ### C. Summary consistency checks
 
 ```sql
--- 7) Validate church-scoped good-standing count from summary
--- Replace :church_id and :year as needed.
+-- 7) Validate parish-scoped good-standing count from summary
+-- Replace :parish_id and :year as needed.
 SELECT COUNT(*) AS summary_good
 FROM member_standing_summary mss
-JOIN member_church_affiliations mca
+JOIN member_parish_affiliations mca
     ON mca.user_id = mss.user_id
-   AND mca.church_id = :church_id
+   AND mca.parish_id = :parish_id
    AND mca.active = 1
 WHERE mss.year = :year
   AND mss.is_good_standing = 1;
 ```
 
 ```sql
--- 8) User-level summary sanity sample for a church/year
--- Replace :church_id and :year as needed.
+-- 8) User-level summary sanity sample for a parish/year
+-- Replace :parish_id and :year as needed.
 SELECT
     mca.user_id,
     mss.is_active_member,
@@ -373,11 +373,11 @@ SELECT
     mss.has_pledged,
     mss.is_under_discipline,
     mss.is_good_standing
-FROM member_church_affiliations mca
+FROM member_parish_affiliations mca
 JOIN member_standing_summary mss
     ON mss.user_id = mca.user_id
    AND mss.year = :year
-WHERE mca.church_id = :church_id
+WHERE mca.parish_id = :parish_id
   AND mca.active = 1
 ORDER BY mca.user_id
 LIMIT 200;
@@ -395,7 +395,7 @@ Surface policy matrix:
 
 | Surface | Source of Truth | Notes |
 | --- | --- | --- |
-| Dashboard KPI cards/widgets | member_standing_summary | Includes church/diocese/province rollups via scope joins. |
+| Dashboard KPI cards/widgets | member_standing_summary | Includes parish/diocese/province rollups via scope joins. |
 | Reports (CSV/PDF/on-screen) | member_standing_summary | Use summary-only counts and scope joins. |
 | API responses for standing counts/lists | member_standing_summary | API contracts should not expose mixed-source counts. |
 
@@ -423,7 +423,7 @@ Rationale:
 
 1. Phase 0 - Stabilize inputs
 
-- Ensure moderation/approval flow also maintains member_church_affiliations explicitly where required by business rules.
+- Ensure moderation/approval flow also maintains member_parish_affiliations explicitly where required by business rules.
 - Keep weekly standing:refresh cron active.
 
 1. Phase 1 - Summary validation window (1-2 weeks)
@@ -433,7 +433,7 @@ Rationale:
 
 1. Phase 2 - Reader cutover
 
-- Confirm PeopleMetricsService and church dashboard good-standing metrics read member_standing_summary.
+- Confirm PeopleMetricsService and parish dashboard good-standing metrics read member_standing_summary.
 - Confirm reports and API endpoints read member_standing_summary.
 
 1. Phase 3 - Legacy deprecation
@@ -465,8 +465,8 @@ Rationale:
 - app/Models/UserModel.php
 - app/Libraries/PeopleMetricsService.php
 - app/Commands/RefreshGoodStanding.php
-- app/Models/MemberChurchAffiliationModel.php
+- app/Models/MemberParishAffiliationModel.php
 - app/Database/Migrations/2026_03_14_000002_CreateUserRegistrationRequests.php
-- app/Database/Migrations/2026_03_18_000005_CreateMemberChurchAffiliations.php
+- app/Database/Migrations/2026_03_18_000005_CreateMemberParishAffiliations.php
 - app/Database/Migrations/2026_04_10_000001_CreateMemberDiscipline.php
 - app/Database/Migrations/2026_04_10_000002_CreateMemberStandingSummary.php

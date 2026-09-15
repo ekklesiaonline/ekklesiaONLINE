@@ -268,8 +268,8 @@ final class EventsAudienceIntegrationTest extends CIUnitTestCase
 
         if (in_array('parish_id', $columns, true)) {
             $payload['parish_id'] = $parishId;
-        } elseif (in_array('church_id', $columns, true)) {
-            $payload['church_id'] = $parishId;
+        } elseif (in_array('parish_id', $columns, true)) {
+            $payload['parish_id'] = $parishId;
         }
         if (in_array('diocese_id', $columns, true)) {
             $payload['diocese_id'] = $dioceseId;
@@ -568,7 +568,7 @@ final class EventsAudienceIntegrationTest extends CIUnitTestCase
                 user_id INTEGER NOT NULL,
                 parish_id INTEGER NULL,
                 diocese_id INTEGER NULL,
-                church_id INTEGER NULL,
+                parish_id INTEGER NULL,
                 first_name TEXT NULL,
                 last_name TEXT NULL,
                 nickname TEXT NULL,
@@ -583,7 +583,7 @@ final class EventsAudienceIntegrationTest extends CIUnitTestCase
         $profilesTable = $this->resolveTableName('profile');
         $this->ensureColumnExists($profilesTable, 'parish_id', 'INTEGER NULL');
         $this->ensureColumnExists($profilesTable, 'diocese_id', 'INTEGER NULL');
-        $this->ensureColumnExists($profilesTable, 'church_id', 'INTEGER NULL');
+        $this->ensureColumnExists($profilesTable, 'parish_id', 'INTEGER NULL');
         $this->ensureColumnExists($profilesTable, 'nickname', 'TEXT NULL');
     }
 
@@ -610,7 +610,7 @@ final class EventsAudienceIntegrationTest extends CIUnitTestCase
                 user_id INTEGER NOT NULL,
                 status TEXT NULL,
                 requested_parish_id INTEGER NULL,
-                requested_church_id INTEGER NULL,
+                requested_parish_id INTEGER NULL,
                 reviewed_by INTEGER NULL,
                 created_at TEXT NULL,
                 updated_at TEXT NULL

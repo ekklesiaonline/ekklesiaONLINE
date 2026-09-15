@@ -6,7 +6,7 @@
     <div class="brand-bar">
         <h4 class="mb-0 fw-bold">
             <i class="bi bi-person-lines-fill me-2"></i>
-            <?= esc($church['name'] ?? 'Connection Card') ?>
+            <?= esc($parish['name'] ?? 'Connection Card') ?>
         </h4>
         <p class="mb-0 mt-1 opacity-75 small">We're glad you're here! Fill in your details below.</p>
     </div>

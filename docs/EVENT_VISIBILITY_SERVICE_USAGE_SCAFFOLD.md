@@ -23,7 +23,7 @@ Every controller using EventVisibilityService should build this context shape:
 ```php
 [
     'user_id' => (int) auth()->id(),
-    'church_id' => (int) $operationalChurchId,
+    'parish_id' => (int) $operationalParishId,
     'diocese_id' => (int) $operationalDioceseId,
     'can_manage_diocese_scope' => (bool) $canManageDioceseScope,
 ]
@@ -58,14 +58,14 @@ class Events extends BaseController
             return $redirect;
         }
 
-        if ($redirect = $this->requireChurch()) {
+        if ($redirect = $this->requireParish()) {
             return $redirect;
         }
 
-        $churchId = (int) ($this->getOperationalChurchId() ?? 0);
+        $parishId = (int) ($this->getOperationalParishId() ?? 0);
         $dioceseId = (int) $this->resolveDiocesanScopeId();
 
-        $events = $this->eventModel->getChurchEventsWithCounts($churchId, $dioceseId, null, null);
+        $events = $this->eventModel->getParishEventsWithCounts($parishId, $dioceseId, null, null);
         $events = $this->eventVisibilityService->filterVisibleEvents($events, $this->getEventVisibilityContext());
 
         return view('MemberPortal\\Views\\Events/index', [
@@ -79,7 +79,7 @@ class Events extends BaseController
             return $redirect;
         }
 
-        if ($redirect = $this->requireChurch()) {
+        if ($redirect = $this->requireParish()) {
             return $redirect;
         }
 
@@ -95,7 +95,7 @@ class Events extends BaseController
     {
         return [
             'user_id' => (int) (auth()->id() ?? 0),
-            'church_id' => (int) ($this->getOperationalChurchId() ?? 0),
+            'parish_id' => (int) ($this->getOperationalParishId() ?? 0),
             'diocese_id' => (int) $this->resolveDiocesanScopeId(),
             'can_manage_diocese_scope' => auth()->user()->can('admin.diocese'),
         ];
@@ -130,10 +130,10 @@ class Events extends BaseController
             return $redirect;
         }
 
-        $churchId = (int) ($this->getOperationalChurchId() ?? 0);
+        $parishId = (int) ($this->getOperationalParishId() ?? 0);
         $dioceseId = (int) $this->resolveDiocesanScopeId();
 
-        $events = $this->eventModel->getChurchEventsWithCounts($churchId, $dioceseId, null, null);
+        $events = $this->eventModel->getParishEventsWithCounts($parishId, $dioceseId, null, null);
         $events = $this->eventVisibilityService->filterVisibleEvents($events, $this->getEventVisibilityContext());
 
         return view('Diocesan\\Views\\Events/index', ['events' => $events]);
@@ -143,7 +143,7 @@ class Events extends BaseController
     {
         return [
             'user_id' => (int) (auth()->id() ?? 0),
-            'church_id' => (int) ($this->getOperationalChurchId() ?? 0),
+            'parish_id' => (int) ($this->getOperationalParishId() ?? 0),
             'diocese_id' => (int) $this->resolveDiocesanScopeId(),
             'can_manage_diocese_scope' => true,
         ];

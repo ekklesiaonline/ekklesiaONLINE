@@ -228,8 +228,8 @@ class Expenses extends BaseController
         }
 
         $attributionPolicy = self::ATTRIBUTION_POLICY_OPERATIONAL_DEFAULT;
-        $attributionChurchId = (int) ($this->resolveAttributionParishId($attributionPolicy) ?? 0);
-        if ($attributionChurchId <= 0) {
+        $attributionParishId = (int) ($this->resolveAttributionParishId($attributionPolicy) ?? 0);
+        if ($attributionParishId <= 0) {
             return redirect()->back()->withInput()->with('error', lang('App.errorNoParishScope'));
         }
 
@@ -245,7 +245,7 @@ class Expenses extends BaseController
 
         $fundId = (int) $this->request->getPost('fund_id');
         $fund = $this->getFundModel()->find($fundId);
-        if (!$fund || (int) ($fund['parish_id'] ?? 0) !== $attributionChurchId) {
+        if (!$fund || (int) ($fund['parish_id'] ?? 0) !== $attributionParishId) {
             return redirect()->back()->withInput()->with('error', lang('Treasurer.validFundRequired'));
         }
 
@@ -254,7 +254,7 @@ class Expenses extends BaseController
         }
 
         $data = [
-            'parish_id' => $attributionChurchId,
+            'parish_id' => $attributionParishId,
             'fund_id' => $fundId,
             'date' => $this->request->getPost('date'),
             'amount' => $this->request->getPost('amount'),
@@ -270,7 +270,7 @@ class Expenses extends BaseController
 
         if ($expenseId > 0) {
             $this->audit()->log('expense.create', [
-                'parish_id' => $attributionChurchId,
+                'parish_id' => $attributionParishId,
                 'entity_type' => 'expense',
                 'entity_id' => $expenseId,
                 'new_values' => [
@@ -281,7 +281,7 @@ class Expenses extends BaseController
                     'chart_account_id' => (int) ($data['chart_account_id'] ?? 0),
                     'approved_by' => isset($data['approved_by']) ? (int) $data['approved_by'] : null,
                 ],
-                'meta' => $this->buildParishContextMeta($attributionChurchId, $attributionPolicy),
+                'meta' => $this->buildParishContextMeta($attributionParishId, $attributionPolicy),
             ]);
 
             return redirect()->to('/expenses')->with('success', lang('Treasurer.expenseRecorded'));
@@ -383,9 +383,9 @@ class Expenses extends BaseController
         ];
 
         if ($this->expenseModel->update($id, $data)) {
-            $attributionChurchId = (int) ($expense['parish_id'] ?? 0);
+            $attributionParishId = (int) ($expense['parish_id'] ?? 0);
             $this->audit()->log('expense.update', [
-                'parish_id' => $attributionChurchId,
+                'parish_id' => $attributionParishId,
                 'entity_type' => 'expense',
                 'entity_id' => (int) $id,
                 'old_values' => [
@@ -404,7 +404,7 @@ class Expenses extends BaseController
                     'chart_account_id' => (int) ($data['chart_account_id'] ?? 0),
                     'description' => (string) ($data['description'] ?? ''),
                 ],
-                'meta' => $this->buildParishContextMeta($attributionChurchId, self::ATTRIBUTION_POLICY_OPERATIONAL_DEFAULT),
+                'meta' => $this->buildParishContextMeta($attributionParishId, self::ATTRIBUTION_POLICY_OPERATIONAL_DEFAULT),
             ]);
 
             return redirect()->to('/expenses')->with('success', lang('Treasurer.expenseUpdated'));
@@ -433,9 +433,9 @@ class Expenses extends BaseController
         }
 
         if ($this->expenseModel->delete($id)) {
-            $attributionChurchId = (int) ($expense['parish_id'] ?? 0);
+            $attributionParishId = (int) ($expense['parish_id'] ?? 0);
             $this->audit()->log('expense.delete', [
-                'parish_id' => $attributionChurchId,
+                'parish_id' => $attributionParishId,
                 'entity_type' => 'expense',
                 'entity_id' => (int) $id,
                 'old_values' => [
@@ -446,7 +446,7 @@ class Expenses extends BaseController
                     'chart_account_id' => isset($expense['chart_account_id']) ? (int) $expense['chart_account_id'] : null,
                     'description' => (string) ($expense['description'] ?? ''),
                 ],
-                'meta' => $this->buildParishContextMeta($attributionChurchId, self::ATTRIBUTION_POLICY_OPERATIONAL_DEFAULT),
+                'meta' => $this->buildParishContextMeta($attributionParishId, self::ATTRIBUTION_POLICY_OPERATIONAL_DEFAULT),
             ]);
 
             return $this->jsonResponse(['success' => true, 'message' => lang('Treasurer.expenseDeleted')]);
@@ -539,7 +539,7 @@ class Expenses extends BaseController
 
     private function buildExpensesPdfHtml(int $parishId, array $filters, array $expenses, array $summary): string
     {
-        $church = model('ParishModel')->find($parishId);
+        $parish = model('ParishModel')->find($parishId);
         $rows = '';
 
         foreach ($expenses as $expense) {
@@ -588,7 +588,7 @@ class Expenses extends BaseController
         <body>
             <h1>' . htmlspecialchars(lang('Treasurer.expensesExportTitle')) . '</h1>
             <div class="meta">
-                <strong>' . htmlspecialchars(lang('Treasurer.churchLabel')) . ':</strong> ' . htmlspecialchars((string) ($church['name'] ?? lang('Treasurer.unknownChurch'))) . '<br>
+                <strong>' . htmlspecialchars(lang('Treasurer.parishLabel')) . ':</strong> ' . htmlspecialchars((string) ($parish['name'] ?? lang('Treasurer.unknownParish'))) . '<br>
                 <strong>' . htmlspecialchars(lang('Treasurer.generatedLabel')) . ':</strong> ' . htmlspecialchars($this->formatLocalizedDateTime(date('Y-m-d H:i:s'))) . '<br>
                 <strong>' . htmlspecialchars(lang('Treasurer.filtersLabel')) . ':</strong> ' . htmlspecialchars($filterParts !== [] ? implode(' | ', $filterParts) : lang('Treasurer.noneLabel')) . '
             </div>

@@ -77,7 +77,7 @@ class Dashboard extends BaseController
     }
 
     protected function getParishSundayAttendanceAverageTrend(
-        int $churchId,
+        int $parishId,
         string $period = 'this_year',
         ?string $customStartDate = null,
         ?string $customEndDate = null,
@@ -114,7 +114,7 @@ class Dashboard extends BaseController
               AND DAYOFWEEK(s.service_date) = 1
             ORDER BY s.service_date ASC
             ",
-            [$churchId, $range['start_date'], $range['end_date']]
+            [$parishId, $range['start_date'], $range['end_date']]
         )->getResultArray();
 
         return array_merge(
@@ -412,7 +412,7 @@ class Dashboard extends BaseController
     }
 
     /**
-     * AJAX endpoint — guest follow-up KPI stats for the church admin dashboard.
+     * AJAX endpoint — guest follow-up KPI stats for the parish admin dashboard.
      * GET /dashboard/followup-stats
      *
      * Returns JSON:
@@ -423,11 +423,11 @@ class Dashboard extends BaseController
      */
     public function followupStats()
     {
-        $churchId = $this->getOperationalParishId();
-        if (!$churchId) {
-            return $this->response->setStatusCode(403)->setJSON(['success' => false, 'message' => 'No church scope']);
+        $parishId = $this->getOperationalParishId();
+        if (!$parishId) {
+            return $this->response->setStatusCode(403)->setJSON(['success' => false, 'message' => 'No parish scope']);
         }
-        $churchId = (int) $churchId;
+        $parishId = (int) $parishId;
 
         $db = db_connect();
 
@@ -435,19 +435,19 @@ class Dashboard extends BaseController
         $guestsInFollowup = (int) ($db->table('followup_log gfl')
             ->select('COUNT(DISTINCT gfl.person_id) AS cnt')
             ->where('gfl.status', 'pending')
-            ->where('gfl.parish_id', $churchId)
+            ->where('gfl.parish_id', $parishId)
             ->get()->getRowArray()['cnt'] ?? 0);
 
         // 2. Pending call tasks scheduled on or before today.
         $callTasksToday = (int) $db->table('call_task')
-            ->where('parish_id', $churchId)
+            ->where('parish_id', $parishId)
             ->where('status', 'pending')
             ->where('scheduled_date <=', date('Y-m-d'))
             ->countAllResults();
 
         // 3. Failed SMS entries in the last 7 days.
         $failedMessages7d = (int) $db->table('sms_queue')
-            ->where('parish_id', $churchId)
+            ->where('parish_id', $parishId)
             ->where('status', 'failed')
             ->where('created_at >=', date('Y-m-d H:i:s', strtotime('-7 days')))
             ->countAllResults();
@@ -456,7 +456,7 @@ class Dashboard extends BaseController
         $cutoff = date('Y-m-d', strtotime('-12 weeks'));
         $rows = $db->table('guest')
             ->select('YEARWEEK(visit_date, 3) AS yw, MIN(visit_date) AS week_start, COUNT(*) AS count')
-            ->where('parish_id', $churchId)
+            ->where('parish_id', $parishId)
             ->where('visit_date >=', $cutoff)
             ->groupBy('yw')
             ->orderBy('yw', 'ASC')
@@ -481,31 +481,31 @@ class Dashboard extends BaseController
      * Switch parish — province admin only.
      * The dioceseadmin branch has moved to Diocesan\Controllers\Dashboard::switchParish().
      */
-    public function switchParish($churchId = null)
+    public function switchParish($parishId = null)
     {
         if (!$this->isProvinceAdmin()) {
             return redirect()->to('/dashboard')->with('error', lang('App.errorUnauthorized'));
         }
 
-        if (!$churchId) {
+        if (!$parishId) {
             return redirect()->to('/province/dashboard');
         }
 
-        $churchModel = model('ParishModel');
-        $church = $churchModel->findWithHierarchy((int) $churchId);
+        $parishModel = model('ParishModel');
+        $parish = $parishModel->findWithHierarchy((int) $parishId);
 
-        if (!$church) {
-            return redirect()->to('/province/dashboard')->with('error', lang('App.churchNotFound'));
+        if (!$parish) {
+            return redirect()->to('/province/dashboard')->with('error', lang('App.parishNotFound'));
         }
 
         $adminProvinceId = $this->resolveAdminProvinceId();
-        if ($adminProvinceId <= 0 || (int) ($church['province_id'] ?? 0) !== $adminProvinceId) {
-            return redirect()->to('/province/dashboard')->with('error', lang('App.churchOutsideProvince'));
+        if ($adminProvinceId <= 0 || (int) ($parish['province_id'] ?? 0) !== $adminProvinceId) {
+            return redirect()->to('/province/dashboard')->with('error', lang('App.parishOutsideProvince'));
         }
 
-        $this->setOperationalParishId($churchId);
+        $this->setOperationalParishId($parishId);
 
-        return redirect()->to('/province/dashboard')->with('success', lang('App.churchSwitchedSuccess'));
+        return redirect()->to('/province/dashboard')->with('success', lang('App.parishSwitchedSuccess'));
     }
 
     private function resolveExistingProfileTable($db): ?string

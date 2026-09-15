@@ -2,7 +2,7 @@
 
 ## Scope
 
-This document records the implementation completed for the expanded Events creation and edit workflow before the broader province or diocese or church calendar rollout.
+This document records the implementation completed for the expanded Events creation and edit workflow before the broader province or diocese or parish calendar rollout.
 
 The work delivered:
 
@@ -83,7 +83,7 @@ Baseline calendar management page added:
 
 Current calendar scope support:
 
-- Church calendars
+- Parish calendars
 - Diocese calendars
 
 ## 5. Visibility metadata
@@ -104,14 +104,14 @@ Current implementation status:
 
 The form now persists scope as:
 
-- church
+- parish
 - diocese
 
 Current behavior:
 
 - Diocese scope can be assigned only when diocesan scope is allowed.
-- Church-scoped event behavior remains compatible with the current Pastor module flow.
-- Church event listing now includes diocese-scoped events visible to the current diocese.
+- Parish-scoped event behavior remains compatible with the current Pastor module flow.
+- Parish event listing now includes diocese-scoped events visible to the current diocese.
 
 ## 7. Registration toggle
 
@@ -139,11 +139,11 @@ Current implementation status:
 
 Purpose:
 
-- Stores reusable event calendars for church and diocese scope.
+- Stores reusable event calendars for parish and diocese scope.
 
 Key fields:
 
-- church_id
+- parish_id
 - diocese_id
 - scope_level
 - name
@@ -261,6 +261,6 @@ These items were intentionally prepared but not fully activated in this change:
 ## Recommended Next Step After Running Migrations
 
 1. Run migrations to create calendars and attachment tables and add event metadata columns.
-1. Verify event create and edit flow in church scope.
+1. Verify event create and edit flow in parish scope.
 1. Verify diocesan staff can create diocese-scoped events and select diocese calendars.
-1. Then move into the full calendar phase with month or week colored views and province or diocese or church visibility engine expansion.
+1. Then move into the full calendar phase with month or week colored views and province or diocese or parish visibility engine expansion.

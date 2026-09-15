@@ -6,7 +6,7 @@ use CodeIgniter\Test\CIUnitTestCase;
 /**
  * @internal
  */
-final class FinanceAuditChurchContextContractTest extends CIUnitTestCase
+final class FinanceAuditParishContextContractTest extends CIUnitTestCase
 {
     public function testBaseControllerDefinesAttributionPolicyConstants(): void
     {
@@ -43,7 +43,7 @@ final class FinanceAuditChurchContextContractTest extends CIUnitTestCase
     /**
      * @dataProvider financeAuditEventContractProvider
      */
-    public function testFinanceAuditEventsIncludeChurchContextMeta(
+    public function testFinanceAuditEventsIncludeParishContextMeta(
         string $filePath,
         string $eventName
     ): void {

@@ -11,7 +11,7 @@ use App\Models\ParishFinancialSummaryModel;
  * Authoritative TEC parochial report controller.
  *
  * The field contract follows docs/EPISCOPAL_PAROCHIAL_REPORT_FOR_REFERENCE.md.
- * Computed values are auto-filled from church data, service metrics, attendance,
+ * Computed values are auto-filled from parish data, service metrics, attendance,
  * member standing, pledges, donations, and expenses. Manual report-year fields
  * are persisted in parish_report_storage.
  */
@@ -27,14 +27,14 @@ class ParochialReport extends BaseController
             return $redirect;
         }
 
-        $churchId = (int) ($this->getOperationalParishId() ?? 0);
+        $parishId = (int) ($this->getOperationalParishId() ?? 0);
         $year = (int) ($this->request->getGet('year') ?? ((int) date('Y') - 1));
         $forceRecompute = (string) ($this->request->getGet('recompute') ?? '') === '1';
         $pdfEngine = $this->normalizePdfEngine((string) ($this->request->getGet('pdf_engine') ?? 'dompdf'));
 
         $data = array_merge(
             $this->getCommonViewData(lang('App.navParochialReport')),
-            $this->buildReportViewData($churchId, $year, $forceRecompute),
+            $this->buildReportViewData($parishId, $year, $forceRecompute),
             ['pdf_engine' => $pdfEngine]
         );
 
@@ -51,11 +51,11 @@ class ParochialReport extends BaseController
             return $redirect;
         }
 
-        $churchId = (int) ($this->getOperationalParishId() ?? 0);
+        $parishId = (int) ($this->getOperationalParishId() ?? 0);
         $year = (int) ($this->request->getGet('year') ?? ((int) date('Y') - 1));
         $forceRecompute = (string) ($this->request->getGet('recompute') ?? '') === '1';
 
-        $data = $this->buildReportViewData($churchId, $year, $forceRecompute);
+        $data = $this->buildReportViewData($parishId, $year, $forceRecompute);
         $data['paper_size'] = $this->normalizePaperSize((string) ($this->request->getGet('paper_size') ?? 'letter'));
         $data['pdf_engine'] = $this->normalizePdfEngine((string) ($this->request->getGet('pdf_engine') ?? 'dompdf'));
         $data['show_toolbar'] = true;
@@ -73,16 +73,16 @@ class ParochialReport extends BaseController
             return $redirect;
         }
 
-        $churchId = (int) ($this->getOperationalParishId() ?? 0);
+        $parishId = (int) ($this->getOperationalParishId() ?? 0);
         $year = (int) ($this->request->getGet('year') ?? ((int) date('Y') - 1));
         $forceRecompute = (string) ($this->request->getGet('recompute') ?? '') === '1';
         $paperSize = $this->normalizePaperSize((string) ($this->request->getGet('paper_size') ?? 'letter'));
         $pdfEngine = $this->normalizePdfEngine((string) ($this->request->getGet('pdf_engine') ?? 'dompdf'));
         $pdfDebug = $this->normalizeDebugFlag((string) ($this->request->getGet('pdf_debug') ?? '0'));
-        $pdf = $this->buildPdfPayload($churchId, $year, $forceRecompute, $paperSize, $pdfEngine, $pdfDebug);
+        $pdf = $this->buildPdfPayload($parishId, $year, $forceRecompute, $paperSize, $pdfEngine, $pdfDebug);
 
         $this->audit()->log('parochial_report.export_pdf', [
-            'parish_id' => $churchId,
+            'parish_id' => $parishId,
             'entity_type' => 'parochial_report',
             'meta' => [
                 'report_year' => $year,
@@ -112,7 +112,7 @@ class ParochialReport extends BaseController
             return $redirect;
         }
 
-        $churchId = (int) ($this->getOperationalParishId() ?? 0);
+        $parishId = (int) ($this->getOperationalParishId() ?? 0);
         $year = (int) ($this->request->getPost('year') ?? ((int) date('Y') - 1));
         $forceRecompute = (string) ($this->request->getPost('recompute') ?? '') === '1';
         $paperSize = $this->normalizePaperSize((string) ($this->request->getPost('paper_size') ?? 'letter'));
@@ -127,7 +127,7 @@ class ParochialReport extends BaseController
                 ->with('error', lang('App.prEmailPdfInvalidRecipient'));
         }
 
-        $pdf = $this->buildPdfPayload($churchId, $year, $forceRecompute, $paperSize, $pdfEngine, $pdfDebug);
+        $pdf = $this->buildPdfPayload($parishId, $year, $forceRecompute, $paperSize, $pdfEngine, $pdfDebug);
         $tempPath = tempnam(WRITEPATH . 'cache', 'pr_pdf_');
 
         if ($tempPath === false || file_put_contents($tempPath, $pdf['bytes']) === false) {
@@ -139,10 +139,10 @@ class ParochialReport extends BaseController
         $email = service('email');
         $email->clear(true);
         $email->setTo($recipient);
-        $churchName = (string) ($pdf['church_name'] ?? '');
-        $email->setSubject('Parochial Report ' . $year . ' - ' . $churchName);
+        $parishName = (string) ($pdf['parish_name'] ?? '');
+        $email->setSubject('Parochial Report ' . $year . ' - ' . $parishName);
         $email->setMessage(
-            '<p>Please find the attached parochial report PDF for <strong>' . esc($churchName) . '</strong>.</p>'
+            '<p>Please find the attached parochial report PDF for <strong>' . esc($parishName) . '</strong>.</p>'
                 . '<p>Report year: ' . esc((string) $year) . '<br>Paper size: ' . esc(strtoupper($paperSize)) . '</p>'
         );
         $email->attach($tempPath, 'attachment', $pdf['filename'], 'application/pdf');
@@ -150,8 +150,8 @@ class ParochialReport extends BaseController
         $sent = $email->send(false);
 
         if (!$sent) {
-            log_message('error', 'Parochial report PDF email failed for church {churchId}: {debug}', [
-                'churchId' => $churchId,
+            log_message('error', 'Parochial report PDF email failed for parish {parishId}: {debug}', [
+                'parishId' => $parishId,
                 'debug' => $email->printDebugger(['headers']),
             ]);
         }
@@ -166,7 +166,7 @@ class ParochialReport extends BaseController
         }
 
         $this->audit()->log('parochial_report.email_pdf', [
-            'parish_id' => $churchId,
+            'parish_id' => $parishId,
             'entity_type' => 'parochial_report',
             'meta' => [
                 'report_year' => $year,
@@ -194,7 +194,7 @@ class ParochialReport extends BaseController
             return $redirect;
         }
 
-        $churchId = (int) ($this->getOperationalParishId() ?? 0);
+        $parishId = (int) ($this->getOperationalParishId() ?? 0);
         $year = (int) ($this->request->getPost('report_year') ?? ((int) date('Y') - 1));
         $markDone = (string) ($this->request->getPost('mark_done') ?? '') === '1';
 
@@ -211,7 +211,7 @@ class ParochialReport extends BaseController
         $amountDrawnCapital = $float('amount_drawn_capital');
 
         $data = [
-            'parish_id' => $churchId,
+            'parish_id' => $parishId,
             'report_year' => $year,
             'mailing_address_1' => $string('mailing_address_1'),
             'mailing_address_2' => $string('mailing_address_2'),
@@ -274,12 +274,12 @@ class ParochialReport extends BaseController
             $snapshot = [
                 'report_year' => $year,
                 'generated_at' => date(DATE_ATOM),
-                'attendance' => $this->getAttendanceMetrics($db, $churchId, $year),
-                'sacraments' => $this->getSacramentalMetrics($db, $churchId, $year),
-                'membership' => $this->getMembershipMetrics($db, $churchId, $year),
-                'clergy' => $this->getClergyMetrics($db, $churchId),
-                'finance' => $this->getFinancialMetrics($db, $churchId, $year),
-                'languages_used' => $this->getLanguagesUsed($db, $churchId, $year),
+                'attendance' => $this->getAttendanceMetrics($db, $parishId, $year),
+                'sacraments' => $this->getSacramentalMetrics($db, $parishId, $year),
+                'membership' => $this->getMembershipMetrics($db, $parishId, $year),
+                'clergy' => $this->getClergyMetrics($db, $parishId),
+                'finance' => $this->getFinancialMetrics($db, $parishId, $year),
+                'languages_used' => $this->getLanguagesUsed($db, $parishId, $year),
             ];
 
             $data['frozen_snapshot_json'] = json_encode($snapshot, JSON_UNESCAPED_SLASHES);
@@ -294,14 +294,14 @@ class ParochialReport extends BaseController
             ->with('success', lang($markDone ? 'App.prReportMarkedDone' : 'App.prReportDraftSaved'));
     }
 
-    private function buildReportViewData(int $churchId, int $year, bool $forceRecompute): array
+    private function buildReportViewData(int $parishId, int $year, bool $forceRecompute): array
     {
         $db = db_connect();
         $summaryModel = model(ParishFinancialSummaryModel::class);
 
-        $church = $this->getParishData($db, $churchId);
-        $summary = $summaryModel->getForParishYear($churchId, $year) ?? [];
-        $previousSummary = $summaryModel->getForParishYear($churchId, $year - 1) ?? [];
+        $parish = $this->getParishData($db, $parishId);
+        $summary = $summaryModel->getForParishYear($parishId, $year) ?? [];
+        $previousSummary = $summaryModel->getForParishYear($parishId, $year - 1) ?? [];
         $snapshot = $this->decodeJsonObject($summary['frozen_snapshot_json'] ?? null);
         $isFinalized = ($summary['report_status'] ?? 'draft') === 'finalized';
         $usingFrozenSnapshot = !$forceRecompute && $isFinalized && $snapshot !== [];
@@ -314,12 +314,12 @@ class ParochialReport extends BaseController
             $finance = is_array($snapshot['finance'] ?? null) ? $snapshot['finance'] : [];
             $languages = is_array($snapshot['languages_used'] ?? null) ? $snapshot['languages_used'] : [];
         } else {
-            $attendance = $this->getAttendanceMetrics($db, $churchId, $year);
-            $sacraments = $this->getSacramentalMetrics($db, $churchId, $year);
-            $membership = $this->getMembershipMetrics($db, $churchId, $year);
-            $clergy = $this->getClergyMetrics($db, $churchId);
-            $finance = $this->getFinancialMetrics($db, $churchId, $year);
-            $languages = $this->getLanguagesUsed($db, $churchId, $year);
+            $attendance = $this->getAttendanceMetrics($db, $parishId, $year);
+            $sacraments = $this->getSacramentalMetrics($db, $parishId, $year);
+            $membership = $this->getMembershipMetrics($db, $parishId, $year);
+            $clergy = $this->getClergyMetrics($db, $parishId);
+            $finance = $this->getFinancialMetrics($db, $parishId, $year);
+            $languages = $this->getLanguagesUsed($db, $parishId, $year);
         }
 
         $summary['programs_list'] = $this->decodeJsonList($summary['programs_json'] ?? null);
@@ -336,7 +336,7 @@ class ParochialReport extends BaseController
 
         return [
             'year' => $year,
-            'church' => $church,
+            'parish' => $parish,
             'summary' => $summary,
             'attendance' => $attendance,
             'sacraments' => $sacraments,
@@ -344,7 +344,7 @@ class ParochialReport extends BaseController
             'clergy' => $clergy,
             'finance' => $finance,
             'languages_used' => $languages,
-            'available_years' => $this->getAvailableYears($churchId, $db),
+            'available_years' => $this->getAvailableYears($parishId, $db),
             'is_finalized' => $isFinalized,
             'using_frozen_snapshot' => $usingFrozenSnapshot,
             'force_recompute' => $forceRecompute,
@@ -371,30 +371,30 @@ class ParochialReport extends BaseController
         return in_array($normalized, ['1', 'true', 'yes', 'on'], true);
     }
 
-    private function buildPdfFilename(string $churchName, int $year): string
+    private function buildPdfFilename(string $parishName, int $year): string
     {
-        $slug = strtolower(trim(preg_replace('/[^A-Za-z0-9]+/', '_', $churchName), '_'));
+        $slug = strtolower(trim(preg_replace('/[^A-Za-z0-9]+/', '_', $parishName), '_'));
         if ($slug === '') {
-            $slug = 'church';
+            $slug = 'parish';
         }
 
         return 'parochial_report_' . $slug . '_' . $year . '.pdf';
     }
 
-    private function buildPdfPayload(int $churchId, int $year, bool $forceRecompute, string $paperSize, string $pdfEngine = 'dompdf', bool $pdfDebug = false): array
+    private function buildPdfPayload(int $parishId, int $year, bool $forceRecompute, string $paperSize, string $pdfEngine = 'dompdf', bool $pdfDebug = false): array
     {
-        $data = $this->buildReportViewData($churchId, $year, $forceRecompute);
+        $data = $this->buildReportViewData($parishId, $year, $forceRecompute);
         $data['paper_size'] = $paperSize;
         $data['show_toolbar'] = false;
         $data['pdf_engine'] = 'dompdf';
 
-        $churchName = (string) ($data['church']['name'] ?? 'church');
+        $parishName = (string) ($data['parish']['name'] ?? 'parish');
         $html = view('Worship\Views\ParochialReport/print', $data);
         $bytes = $this->buildPdfWithDompdf($html, $paperSize);
 
         return [
-            'church_name' => $churchName,
-            'filename' => $this->buildPdfFilename($churchName, $year),
+            'parish_name' => $parishName,
+            'filename' => $this->buildPdfFilename($parishName, $year),
             'engine' => 'dompdf',
             'bytes' => $bytes,
         ];
@@ -410,34 +410,34 @@ class ParochialReport extends BaseController
         return $dompdf->output();
     }
 
-    private function getParishData($db, int $churchId): array
+    private function getParishData($db, int $parishId): array
     {
-        $church = $db->table('parish c')
+        $parish = $db->table('parish c')
             ->select('c.*, d.name AS diocese_name')
             ->join('diocese d', 'd.id = c.diocese_id', 'left')
-            ->where('c.id', $churchId)
+            ->where('c.id', $parishId)
             ->get()
             ->getRowArray() ?? [];
-        $church['phone'] = DataEncryption::decrypt((string) ($church['phone'] ?? ''));
-        $church['diocese'] = (string) ($church['diocese_name'] ?? '');
+        $parish['phone'] = DataEncryption::decrypt((string) ($parish['phone'] ?? ''));
+        $parish['diocese'] = (string) ($parish['diocese_name'] ?? '');
 
         $addressParts = array_filter([
-            trim((string) ($church['street'] ?? '')),
-            trim((string) ($church['city'] ?? '')),
-            trim((string) ($church['state'] ?? '')),
-            trim((string) ($church['zip'] ?? '')),
-            trim((string) ($church['county'] ?? '')),
-            trim((string) ($church['country'] ?? '')),
+            trim((string) ($parish['street'] ?? '')),
+            trim((string) ($parish['city'] ?? '')),
+            trim((string) ($parish['state'] ?? '')),
+            trim((string) ($parish['zip'] ?? '')),
+            trim((string) ($parish['county'] ?? '')),
+            trim((string) ($parish['country'] ?? '')),
         ], static fn(string $part): bool => $part !== '');
 
-        $church['formatted_address'] = $addressParts !== []
+        $parish['formatted_address'] = $addressParts !== []
             ? implode(', ', $addressParts)
-            : trim((string) ($church['address'] ?? ''));
+            : trim((string) ($parish['address'] ?? ''));
 
-        return $church;
+        return $parish;
     }
 
-    private function getAttendanceMetrics($db, int $churchId, int $year): array
+    private function getAttendanceMetrics($db, int $parishId, int $year): array
     {
         $sundayRows = $db->query(
             "SELECT sm.reported_present_count, sm.online_live_viewers, sm.online_recorded_views, sm.format_of_service
@@ -446,7 +446,7 @@ class ParochialReport extends BaseController
              WHERE s.parish_id = ?
                AND YEAR(s.service_date) = ?
                AND sm.service_schedule = 'sunday'",
-            [$churchId, $year]
+            [$parishId, $year]
         )->getResultArray();
 
         $weekdayRows = $db->query(
@@ -456,7 +456,7 @@ class ParochialReport extends BaseController
              WHERE s.parish_id = ?
                AND YEAR(s.service_date) = ?
                AND sm.service_schedule = 'weekday'",
-            [$churchId, $year]
+            [$parishId, $year]
         )->getResultArray();
 
         $sundayInPersonRows = array_values(array_filter($sundayRows, static fn(array $row): bool => ($row['format_of_service'] ?? '') !== 'Online'));
@@ -471,7 +471,7 @@ class ParochialReport extends BaseController
              WHERE s.parish_id = ?
                AND YEAR(s.service_date) = ?
                AND sm.online_recorded_views IS NOT NULL",
-            [$churchId, $year]
+            [$parishId, $year]
         )->getResultArray();
 
         return [
@@ -492,7 +492,7 @@ class ParochialReport extends BaseController
         ];
     }
 
-    private function getSacramentalMetrics($db, int $churchId, int $year): array
+    private function getSacramentalMetrics($db, int $parishId, int $year): array
     {
         $row = $db->query(
             "SELECT
@@ -507,7 +507,7 @@ class ParochialReport extends BaseController
              JOIN service s ON s.id = sm.service_id
              WHERE s.parish_id = ?
                AND YEAR(s.service_date) = ?",
-            [$churchId, $year]
+            [$parishId, $year]
         )->getRowArray() ?? [];
 
         return [
@@ -521,7 +521,7 @@ class ParochialReport extends BaseController
         ];
     }
 
-    private function getMembershipMetrics($db, int $churchId, int $year): array
+    private function getMembershipMetrics($db, int $parishId, int $year): array
     {
         $asOfDate = sprintf('%04d-12-31', $year);
 
@@ -533,7 +533,7 @@ class ParochialReport extends BaseController
              WHERE COALESCE(mss.is_good_standing, 0) = 1
                AND p.baptism_date IS NOT NULL
                AND (p.birth_date IS NULL OR TIMESTAMPDIFF(YEAR, p.birth_date, ?) >= 16)",
-            [$churchId, $year, $asOfDate]
+            [$parishId, $year, $asOfDate]
         )->getRowArray()['cnt'] ?? 0);
 
         $youthCommunicants = (int) ($db->query(
@@ -545,12 +545,12 @@ class ParochialReport extends BaseController
                AND p.baptism_date IS NOT NULL
                AND p.birth_date IS NOT NULL
                AND TIMESTAMPDIFF(YEAR, p.birth_date, ?) < 16",
-            [$churchId, $year, $asOfDate]
+            [$parishId, $year, $asOfDate]
         )->getRowArray()['cnt'] ?? 0);
 
         $memberTotal = (int) ($db->query(
             'SELECT COUNT(*) AS cnt FROM parish_affiliation WHERE parish_id = ? AND is_member = 1',
-            [$churchId]
+            [$parishId]
         )->getRowArray()['cnt'] ?? 0);
 
         $activeMembersOther = (int) ($db->query(
@@ -560,7 +560,7 @@ class ParochialReport extends BaseController
              WHERE mca.parish_id = ?
                AND mca.is_member = 1
                AND COALESCE(mss.is_good_standing, 0) = 0",
-            [$year, $churchId]
+            [$year, $parishId]
         )->getRowArray()['cnt'] ?? 0);
 
         $activeParticipants = (int) ($db->query(
@@ -571,12 +571,12 @@ class ParochialReport extends BaseController
              JOIN service s ON s.id = a.service_id AND s.parish_id = ? AND YEAR(s.service_date) = ?
              WHERE mca.is_member = 0
                AND p.membership_status IN ('visitor', 'regular_attender', 'pending')",
-            [$churchId, $churchId, $year]
+            [$parishId, $parishId, $year]
         )->getRowArray()['cnt'] ?? 0);
 
         $averageAge = $db->query(
             'SELECT AVG(TIMESTAMPDIFF(YEAR, birth_date, ?)) AS avg_age FROM profile WHERE parish_id = ? AND birth_date IS NOT NULL',
-            [$asOfDate, $churchId]
+            [$asOfDate, $parishId]
         )->getRowArray();
 
         return [
@@ -587,12 +587,12 @@ class ParochialReport extends BaseController
             'active_members_other' => $activeMembersOther,
             'active_participants' => $activeParticipants,
             'average_age' => isset($averageAge['avg_age']) && $averageAge['avg_age'] !== null ? round((float) $averageAge['avg_age'], 1) : null,
-            'easter_attendance' => $this->getHolidayAttendance($db, $churchId, $year, 'easter'),
-            'christmas_attendance' => $this->getHolidayAttendance($db, $churchId, $year, 'christmas'),
+            'easter_attendance' => $this->getHolidayAttendance($db, $parishId, $year, 'easter'),
+            'christmas_attendance' => $this->getHolidayAttendance($db, $parishId, $year, 'christmas'),
         ];
     }
 
-    private function getClergyMetrics($db, int $churchId): array
+    private function getClergyMetrics($db, int $parishId): array
     {
         $counts = [
             'fulltime_clergy' => 0,
@@ -612,7 +612,7 @@ class ParochialReport extends BaseController
         $hasClergyOrder = $this->columnExists('leadership_position', 'clergy_order');
         $rows = $db->query(
             'SELECT employment_type, role_category' . ($hasClergyOrder ? ', clergy_order' : '') . ' FROM leadership_position WHERE parish_id = ? AND active = 1',
-            [$churchId]
+            [$parishId]
         )->getResultArray();
 
         foreach ($rows as $row) {
@@ -649,14 +649,14 @@ class ParochialReport extends BaseController
         return $counts;
     }
 
-    private function getFinancialMetrics($db, int $churchId, int $year): array
+    private function getFinancialMetrics($db, int $parishId, int $year): array
     {
         $startDate = sprintf('%04d-01-01', $year);
         $endDate = sprintf('%04d-12-31', $year);
 
         $donationRows = $db->table('donation')
             ->select('amount, is_restricted')
-            ->where('parish_id', $churchId)
+            ->where('parish_id', $parishId)
             ->where('date >=', $startDate)
             ->where('date <=', $endDate)
             ->get()
@@ -681,10 +681,10 @@ class ParochialReport extends BaseController
              WHERE parish_id = ?
                AND date >= ?
                AND date <= ?",
-            [$churchId, $startDate, $endDate]
+            [$parishId, $startDate, $endDate]
         )->getRowArray() ?? [];
 
-        $pledges = model(AnnualPledgeModel::class)->getParishPledgeSummary($churchId, $year);
+        $pledges = model(AnnualPledgeModel::class)->getParishPledgeSummary($parishId, $year);
 
         return [
             'confirmed_pledges_count' => (int) ($pledges['total_pledges'] ?? 0),
@@ -696,7 +696,7 @@ class ParochialReport extends BaseController
         ];
     }
 
-    private function getLanguagesUsed($db, int $churchId, int $year): array
+    private function getLanguagesUsed($db, int $parishId, int $year): array
     {
         $rows = $db->query(
             "SELECT sm.languages_json
@@ -705,7 +705,7 @@ class ParochialReport extends BaseController
              WHERE s.parish_id = ?
                AND YEAR(s.service_date) = ?
                AND sm.languages_json IS NOT NULL",
-            [$churchId, $year]
+            [$parishId, $year]
         )->getResultArray();
 
         $set = [];
@@ -726,7 +726,7 @@ class ParochialReport extends BaseController
         return array_keys($set);
     }
 
-    private function getHolidayAttendance($db, int $churchId, int $year, string $holiday): int
+    private function getHolidayAttendance($db, int $parishId, int $year, string $holiday): int
     {
         if ($holiday === 'christmas') {
             $row = $db->query(
@@ -740,7 +740,7 @@ class ParochialReport extends BaseController
                         OR JSON_SEARCH(s.service, 'one', 'Christmas Eve') IS NOT NULL
                         OR JSON_SEARCH(s.service, 'one', 'Christmas Day') IS NOT NULL
                    )",
-                [$churchId, $year]
+                [$parishId, $year]
             )->getRowArray();
 
             return (int) ($row['cnt'] ?? 0);
@@ -755,7 +755,7 @@ class ParochialReport extends BaseController
                     s.liturgical_day LIKE '%Easter Day%'
                     OR JSON_SEARCH(s.service, 'one', 'Easter Day') IS NOT NULL
                )",
-            [$churchId, $year]
+            [$parishId, $year]
         )->getRowArray();
 
         $easterDayDate = $easterDayRow['easter_day_date'] ?? null;
@@ -781,7 +781,7 @@ class ParochialReport extends BaseController
                         )
                     )
                )",
-            [$churchId, $year, $easterVigilDate, $easterVigilDate]
+            [$parishId, $year, $easterVigilDate, $easterVigilDate]
         )->getRowArray();
 
         return (int) ($row['cnt'] ?? 0);
@@ -863,11 +863,11 @@ class ParochialReport extends BaseController
         }
     }
 
-    private function getAvailableYears(int $churchId, $db): array
+    private function getAvailableYears(int $parishId, $db): array
     {
         $rows = $db->query(
             'SELECT DISTINCT YEAR(s.service_date) AS yr FROM service s WHERE s.parish_id = ? ORDER BY yr DESC LIMIT 10',
-            [$churchId]
+            [$parishId]
         )->getResultArray();
 
         return array_map('intval', array_column($rows, 'yr'));

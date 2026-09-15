@@ -61,7 +61,7 @@ Open: <http://localhost:8080>
 ## Default Login Credentials
 
 - Super Admin: <admin@ekklesiaRD.org> / Admin@123456
-- Church Admin: <churchadmin@firstchurch.org> / Church@123456
+- Parish Admin: <parishadmin@firstparish.org> / Parish@123456
 
 ## Project Layout
 
@@ -84,12 +84,12 @@ Open: <http://localhost:8080>
 - Database restore script: `build/restore_database.sh`
 - Optional nightly security CI workflow: `.github/workflows/nightly-security-rate-limit.yml`
 
-## Church Staff Role Actions
+## Parish Staff Role Actions
 
-On church staff management pages (`/churches/{id}/staff`):
+On parish staff management pages (`/parishes/{id}/staff`):
 
 - `Remove Role` removes only the selected leadership role from a user.
-- `Demote` removes all church leadership roles (`churchadmin`, `pastor`, `treasurer`, `volunteer_coordinator`) and ensures the user remains in `member`.
+- `Demote` removes all parish leadership roles (`parishadmin`, `pastor`, `treasurer`, `volunteer_coordinator`) and ensures the user remains in `member`.
 
 ## Canonical Documentation
 

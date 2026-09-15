@@ -4,13 +4,13 @@
 
 `codeigniter4/settings 2.2.0` is already installed as a Composer dependency.
 The `settings.manage` permission already exists in `app/Config/AuthGroups.php`
-and is mapped to `churchadmin` and `systemadmin` groups.
+and is mapped to `parishadmin` and `systemadmin` groups.
 No `Settings` controller or settings view exists yet.
 
-The active cron entry for church people sync is:
+The active cron entry for parish people sync is:
 
 ```cron
-*/5 * * * * cd /Users/juanrosariodelacruz/Sites/ekklesiaRD && sh build/cron_sync_church_people.sh >> writable/logs/church_people_sync_cron.log 2>&1
+*/5 * * * * cd /Users/juanrosariodelacruz/Sites/ekklesiaRD && sh build/cron_sync_parish_people.sh >> writable/logs/parish_people_sync_cron.log 2>&1
 ```
 
 ---
@@ -30,30 +30,30 @@ Settings are organized into three scopes that map directly to how
 | `App.locale` | Display language | `en` / `es` | `en` |
 | `App.dateFormat` | Date display format | `Y-m-d` / `d/m/Y` / `M j, Y` | `M j, Y` |
 
-### Church Settings *(scoped per `church_id`)*
+### Parish Settings *(scoped per `parish_id`)*
 
 | Key | Label | Options | Default |
 | --- | ----- | ------- | ------- |
-| `Church.defaultServiceType` | Default service type | `Sunday Worship` / `Weekday Service` / `Special` | `Sunday Worship` |
-| `Church.liturgicalCalendar` | Liturgical calendar | `RCL` / `Roman` / `None` | `RCL` |
-| `Church.fiscalYearStart` | Fiscal year start month | `1`–`12` | `1` |
-| `Church.currency` | Currency code | `USD` / `DOP` / `EUR` | `USD` |
-| `Church.enforceSingleFamily` | Prevent dual-family membership | `0` / `1` | `0` |
-| `Church.guestFollowUpDays` | Guest follow-up reminder (days) | `3` / `5` / `7` / `14` | `7` |
-| `Church.allowSelfCheckin` | Allow member self check-in | `0` / `1` | `0` |
+| `Parish.defaultServiceType` | Default service type | `Sunday Worship` / `Weekday Service` / `Special` | `Sunday Worship` |
+| `Parish.liturgicalCalendar` | Liturgical calendar | `RCL` / `Roman` / `None` | `RCL` |
+| `Parish.fiscalYearStart` | Fiscal year start month | `1`–`12` | `1` |
+| `Parish.currency` | Currency code | `USD` / `DOP` / `EUR` | `USD` |
+| `Parish.enforceSingleFamily` | Prevent dual-family membership | `0` / `1` | `0` |
+| `Parish.guestFollowUpDays` | Guest follow-up reminder (days) | `3` / `5` / `7` / `14` | `7` |
+| `Parish.allowSelfCheckin` | Allow member self check-in | `0` / `1` | `0` |
 
 ### System Settings *(system admin only)*
 
 | Key | Label | Options | Default |
 | --- | ----- | ------- | ------- |
-| `System.churchPeopleSyncInterval` | People registry sync interval (minutes) | `5` / `10` / `15` / `30` | `5` |
+| `System.parishPeopleSyncInterval` | People registry sync interval (minutes) | `5` / `10` / `15` / `30` | `5` |
 | `System.serviceMetricsRefreshHours` | Service metrics refresh cycle (hours) | `6` / `12` / `24` | `24` |
 | `System.maintenanceMode` | Maintenance mode | `0` / `1` | `0` |
 | `System.registrationOpen` | New user registration | `open` / `closed` | `open` |
 | `System.emailNotifications` | Outbound email notifications | `0` / `1` | `1` |
 | `System.backupRetentionDays` | Backup file retention (days) | `7` / `14` / `30` / `60` | `14` |
 
-> `System.churchPeopleSyncInterval` is advisory — it documents the intended
+> `System.parishPeopleSyncInterval` is advisory — it documents the intended
 > cron cadence. The settings view should print the matching crontab line so
 > the admin can copy it (see todo step 10).
 
@@ -73,16 +73,16 @@ Settings are organized into three scopes that map directly to how
 
 - File: `app/Controllers/Settings.php`
 - Methods:
-  - `index()` — renders tabbed view (System / Church / User tabs).
+  - `index()` — renders tabbed view (System / Parish / User tabs).
   - `update()` — POST handler; validates and saves via `setting()`.
-- Guard `System` and `Church` tabs with `permission:settings.manage`.
+- Guard `System` and `Parish` tabs with `permission:settings.manage`.
 - Any authenticated user may save their own User Preferences tab.
 
 ### Step 3 — Create views
 
 - File: `app/Views/settings/index.php`
-- Bootstrap 5 tabbed card: **My Preferences** | **Church** | **System**
-- `Church` and `System` tabs rendered conditionally based on permission.
+- Bootstrap 5 tabbed card: **My Preferences** | **Parish** | **System**
+- `Parish` and `System` tabs rendered conditionally based on permission.
 - CSRF token included; AJAX save with toast feedback (consistent with UI
   patterns used across the app).
 
@@ -148,13 +148,13 @@ Add to `app/Language/en/App.php` and `app/Language/es/App.php`:
 // one key per setting label/hint as needed
 ```
 
-### Step 10 — Consume `System.churchPeopleSyncInterval` in cron hint UI
+### Step 10 — Consume `System.parishPeopleSyncInterval` in cron hint UI
 
 - The settings view reads the stored interval value and prints the
   corresponding ready-to-copy crontab line:
 
 ```cron
-*/5 * * * * cd /path/to/ekklesiaRD && sh build/cron_sync_church_people.sh >> writable/logs/church_people_sync_cron.log 2>&1
+*/5 * * * * cd /path/to/ekklesiaRD && sh build/cron_sync_parish_people.sh >> writable/logs/parish_people_sync_cron.log 2>&1
 ```
 
 - Changing the interval in the UI updates the hint; it does NOT
@@ -166,16 +166,16 @@ Add to `app/Language/en/App.php` and `app/Language/es/App.php`:
 - Returns a 503 view for non-system-admin users when `maintenanceMode` is `1`.
 - Register in `app/Config/Filters.php` as a global `before` filter.
 
-### Step 12 — Protect Church tab with church-scope guard
+### Step 12 — Protect Parish tab with parish-scope guard
 
-- Apply the same church scoping pattern used in People/Members controllers:
+- Apply the same parish scoping pattern used in People/Members controllers:
 
 ```php
-$churchId = $this->getOperationalChurchId();
+$parishId = $this->getOperationalParishId();
 ```
 
-- Store `Church.*` settings using `$churchId` as the context key so
-  settings are isolated per church and do not bleed across tenants.
+- Store `Parish.*` settings using `$parishId` as the context key so
+  settings are isolated per parish and do not bleed across tenants.
 
 ---
 

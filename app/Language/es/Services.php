@@ -129,7 +129,7 @@ return [
     'pleaseFixFollowing'  => 'Por favor corrige lo siguiente:',
     'serviceNotFound'     => 'Servicio no encontrado',
     'forbidden'           => 'Prohibido',
-    'noChurchScopeAssigned' => 'No hay un alcance de parroquia asignado a tu cuenta.',
+    'noParishScopeAssigned' => 'No hay un alcance de parroquia asignado a tu cuenta.',
     'validationLiveViewsRequired' => 'La cantidad total de vistas en vivo es obligatoria para servicios Hibrido/En linea.',
     'validationCommunionExceedsPresent' => 'El conteo de comunion no puede ser mayor que el conteo de presentes.',
     'validationPrivateOnlyHolyCommunion' => 'Los servicios privados solo se permiten para Santa Comunion.',

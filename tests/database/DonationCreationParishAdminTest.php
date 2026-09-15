@@ -9,7 +9,7 @@ use CodeIgniter\Test\DatabaseTestTrait;
 /**
  * @internal
  */
-final class DonationCreationChurchAdminTest extends CIUnitTestCase
+final class DonationCreationParishAdminTest extends CIUnitTestCase
 {
     use DatabaseTestTrait;
 
@@ -19,16 +19,16 @@ final class DonationCreationChurchAdminTest extends CIUnitTestCase
         $this->rebuildTestSchema();
     }
 
-    public function testChurchAdminDonationCreationAcceptsChartDerivedCategory(): void
+    public function testParishAdminDonationCreationAcceptsChartDerivedCategory(): void
     {
-        $churchId = $this->insertChurch('St. Michael Church');
-        $userId = $this->insertChurchAdminWithProfile($churchId, 'church.admin');
+        $parishId = $this->insertParish('St. Michael Parish');
+        $userId = $this->insertParishAdminWithProfile($parishId, 'parish.admin');
 
         $chartAccountId = $this->insertIncomeChartAccount('4250', 'Special Offering Income', 'special_offering');
-        $fundId = $this->insertFund($churchId, $chartAccountId, 'General Fund');
+        $fundId = $this->insertFund($parishId, $chartAccountId, 'General Fund');
 
         $donationId = $this->attemptDonationCreationFlow(
-            $churchId,
+            $parishId,
             [
                 'fund_id' => $fundId,
                 'user_id' => $userId,
@@ -44,7 +44,7 @@ final class DonationCreationChurchAdminTest extends CIUnitTestCase
 
         $storedDonation = $this->db->table('donation')->where('id', $donationId)->get()->getRowArray();
         $this->assertNotNull($storedDonation);
-        $this->assertSame($churchId, (int) $storedDonation['parish_id']);
+        $this->assertSame($parishId, (int) $storedDonation['parish_id']);
         $this->assertSame($fundId, (int) $storedDonation['fund_id']);
         $this->assertSame($chartAccountId, (int) $storedDonation['chart_account_id']);
         $this->assertSame('special_offering', $storedDonation['category']);
@@ -55,19 +55,19 @@ final class DonationCreationChurchAdminTest extends CIUnitTestCase
         $this->assertSame(1250.0, (float) ($decryptedDonation['amount'] ?? 0));
     }
 
-    public function testChurchAdminCannotCreateDonationWithFundFromAnotherChurch(): void
+    public function testParishAdminCannotCreateDonationWithFundFromAnotherParish(): void
     {
-        $churchId = $this->insertChurch('Holy Trinity Church');
-        $otherChurchId = $this->insertChurch('St. Nicholas Church');
-        $userId = $this->insertChurchAdminWithProfile($churchId, 'church.admin.blocked');
+        $parishId = $this->insertParish('Holy Trinity Parish');
+        $otherParishId = $this->insertParish('St. Nicholas Parish');
+        $userId = $this->insertParishAdminWithProfile($parishId, 'parish.admin.blocked');
 
         $chartAccountId = $this->insertIncomeChartAccount('4260', 'Designated Income', 'donation');
-        $foreignFundId = $this->insertFund($otherChurchId, $chartAccountId, 'Foreign Fund');
+        $foreignFundId = $this->insertFund($otherParishId, $chartAccountId, 'Foreign Fund');
 
         $beforeCount = $this->db->table('donation')->countAllResults();
 
         $donationId = $this->attemptDonationCreationFlow(
-            $churchId,
+            $parishId,
             [
                 'fund_id' => $foreignFundId,
                 'user_id' => $userId,
@@ -75,7 +75,7 @@ final class DonationCreationChurchAdminTest extends CIUnitTestCase
                 'amount' => '75.00',
                 'chart_account_id' => $chartAccountId,
                 'payment_method' => 'cash',
-                'notes' => 'Must be rejected due to church scope mismatch',
+                'notes' => 'Must be rejected due to parish scope mismatch',
             ]
         );
 
@@ -88,7 +88,7 @@ final class DonationCreationChurchAdminTest extends CIUnitTestCase
     /**
      * Mirrors the critical guard path in Treasurer\\Controllers\\Donations::store().
      */
-    private function attemptDonationCreationFlow(int $churchId, array $payload): int
+    private function attemptDonationCreationFlow(int $parishId, array $payload): int
     {
         $chartAccount = model(ChartOfAccountModel::class)
             ->where('id', (int) ($payload['chart_account_id'] ?? 0))
@@ -101,7 +101,7 @@ final class DonationCreationChurchAdminTest extends CIUnitTestCase
         }
 
         $fund = model(FundModel::class)->find((int) ($payload['fund_id'] ?? 0));
-        if (!is_array($fund) || (int) ($fund['parish_id'] ?? 0) !== $churchId) {
+        if (!is_array($fund) || (int) ($fund['parish_id'] ?? 0) !== $parishId) {
             return 0;
         }
 
@@ -112,7 +112,7 @@ final class DonationCreationChurchAdminTest extends CIUnitTestCase
         $donationModel = model(DonationModel::class);
 
         return (int) $donationModel->insert([
-            'parish_id' => $churchId,
+            'parish_id' => $parishId,
             'fund_id' => (int) $payload['fund_id'],
             'user_id' => $payload['user_id'] ?? null,
             'date' => (string) $payload['date'],
@@ -124,7 +124,7 @@ final class DonationCreationChurchAdminTest extends CIUnitTestCase
         ], true);
     }
 
-    private function insertChurch(string $name): int
+    private function insertParish(string $name): int
     {
         $this->db->table('parish')->insert([
             'name' => $name,
@@ -140,7 +140,7 @@ final class DonationCreationChurchAdminTest extends CIUnitTestCase
         return $id;
     }
 
-    private function insertChurchAdminWithProfile(int $churchId, string $username): int
+    private function insertParishAdminWithProfile(int $parishId, string $username): int
     {
         $this->db->table('users')->insert([
             'username' => $username,
@@ -151,15 +151,15 @@ final class DonationCreationChurchAdminTest extends CIUnitTestCase
         $userId = (int) $this->db->insertID();
 
         $this->db->table('auth_groups_users')->insert([
-            'group' => 'churchadmin',
+            'group' => 'parishadmin',
             'user_id' => $userId,
             'created_at' => date('Y-m-d H:i:s'),
         ]);
 
         $this->db->table('profile')->insert([
             'user_id' => $userId,
-            'parish_id' => $churchId,
-            'first_name' => 'Church',
+            'parish_id' => $parishId,
+            'first_name' => 'Parish',
             'last_name' => 'Admin',
             'membership_status' => 'active',
             'created_at' => date('Y-m-d H:i:s'),
@@ -187,10 +187,10 @@ final class DonationCreationChurchAdminTest extends CIUnitTestCase
         return (int) $this->db->insertID();
     }
 
-    private function insertFund(int $churchId, int $chartAccountId, string $name): int
+    private function insertFund(int $parishId, int $chartAccountId, string $name): int
     {
         $this->db->table('fund')->insert([
-            'parish_id' => $churchId,
+            'parish_id' => $parishId,
             'name' => $name,
             'description' => 'Unrestricted operating fund',
             'fund_type' => 'unrestricted',

@@ -6,7 +6,7 @@ This table defines the baseline least-privilege policy used by the canonical sid
 
 - Enforced by: `app/Database/Seeds/PermissionRoleSyncSeeder.php`
 - Canonical menu renderer: `app/Views/partials/sidebar.php`
-- Baseline roles: `provinceadmin`, `diocesanadmin`, `churchadmin`, `pastor`, `treasurer`, `volunteer_coordinator`, `member`
+- Baseline roles: `provinceadmin`, `diocesanadmin`, `parishadmin`, `pastor`, `treasurer`, `volunteer_coordinator`, `member`
 
 ## Policy Table
 
@@ -15,22 +15,22 @@ This table defines the baseline least-privilege policy used by the canonical sid
 | Province Dashboard | `admin.province` | `provinceadmin` |
 | Diocesan Dashboard + diocesan links | `admin.diocese` | `diocesanadmin` |
 | Dashboard access fallback | `dashboard.view` | all baseline roles |
-| Members / Staff | `members.view` | `provinceadmin`, `diocesanadmin`, `churchadmin`, `pastor`, `treasurer` |
-| Members edit actions | `members.edit` | `provinceadmin`, `diocesanadmin`, `churchadmin`, `pastor` |
-| Families | `families.view` | `churchadmin`, `pastor` |
-| Services | `services.view` | `diocesanadmin`, `churchadmin`, `pastor`, `volunteer_coordinator` |
-| Attendance reports | `attendance.view` | `churchadmin`, `pastor` |
-| Guests | `guests.view` | `churchadmin`, `pastor` |
-| Guest conversions / edit | `guests.edit` | `churchadmin`, `pastor` |
-| Follow-up tasks | `followup.tasks` | `churchadmin`, `pastor` |
-| Finance section visibility | `donations.view` OR `expenses.view` OR `finance.view` OR `finance.manage` | `diocesanadmin`, `churchadmin`, `treasurer` |
-| Pledges (inside Finance) | `finance.manage` | `diocesanadmin`, `churchadmin`, `treasurer` |
-| Volunteers | `volunteers.manage` | `churchadmin`, `volunteer_coordinator` |
-| Volunteer schedules | `volunteers.schedule` | `churchadmin`, `volunteer_coordinator` |
-| Events | `events.view` | `churchadmin`, `pastor`, `volunteer_coordinator` |
-| Worship planning | `worship.view` | `churchadmin`, `pastor`, `volunteer_coordinator` |
-| Reports | `reports.view` | `provinceadmin`, `diocesanadmin`, `churchadmin`, `pastor`, `treasurer` |
-| Churches management | `churches.edit` | `provinceadmin`, `diocesanadmin` |
+| Members / Staff | `members.view` | `provinceadmin`, `diocesanadmin`, `parishadmin`, `pastor`, `treasurer` |
+| Members edit actions | `members.edit` | `provinceadmin`, `diocesanadmin`, `parishadmin`, `pastor` |
+| Families | `families.view` | `parishadmin`, `pastor` |
+| Services | `services.view` | `diocesanadmin`, `parishadmin`, `pastor`, `volunteer_coordinator` |
+| Attendance reports | `attendance.view` | `parishadmin`, `pastor` |
+| Guests | `guests.view` | `parishadmin`, `pastor` |
+| Guest conversions / edit | `guests.edit` | `parishadmin`, `pastor` |
+| Follow-up tasks | `followup.tasks` | `parishadmin`, `pastor` |
+| Finance section visibility | `donations.view` OR `expenses.view` OR `finance.view` OR `finance.manage` | `diocesanadmin`, `parishadmin`, `treasurer` |
+| Pledges (inside Finance) | `finance.manage` | `diocesanadmin`, `parishadmin`, `treasurer` |
+| Volunteers | `volunteers.manage` | `parishadmin`, `volunteer_coordinator` |
+| Volunteer schedules | `volunteers.schedule` | `parishadmin`, `volunteer_coordinator` |
+| Events | `events.view` | `parishadmin`, `pastor`, `volunteer_coordinator` |
+| Worship planning | `worship.view` | `parishadmin`, `pastor`, `volunteer_coordinator` |
+| Reports | `reports.view` | `provinceadmin`, `diocesanadmin`, `parishadmin`, `pastor`, `treasurer` |
+| Parishes management | `parishes.edit` | `provinceadmin`, `diocesanadmin` |
 
 ## Enforcement Notes
 

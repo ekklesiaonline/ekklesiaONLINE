@@ -22,7 +22,7 @@ return [
     'certificateNumber' => 'Certificate Number',
     'officiant' => 'Officiant',
     'selectOfficiant' => '— Select officiant —',
-    'locationNotes' => 'Location / Church',
+    'locationNotes' => 'Location / Parish',
     'notes' => 'Notes',
     'saveSuccess' => 'Sacramental record saved successfully.',
     'updateSuccess' => 'Sacramental record updated successfully.',

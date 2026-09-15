@@ -1,6 +1,6 @@
 <?php
 
-use App\Models\MemberChurchAffiliationModel;
+use App\Models\MemberParishAffiliationModel;
 use App\Models\ProfileModel;
 use App\Services\ProfileLookupService;
 use CodeIgniter\Test\CIUnitTestCase;
@@ -22,15 +22,15 @@ final class ParishAffiliationSecurityIntegrationTest extends CIUnitTestCase
     public function testSetHomeParishUpdatesPrimaryFlag(): void
     {
         $dioceseId = $this->insertDiocese('Home Diocese');
-        $churchId  = $this->insertChurch($dioceseId, 'St. Primary');
-        $otherId   = $this->insertChurch($dioceseId, 'St. Other');
+        $parishId  = $this->insertParish($dioceseId, 'St. Primary');
+        $otherId   = $this->insertParish($dioceseId, 'St. Other');
         $userId    = $this->insertUser('home.user');
 
-        $this->insertProfile($userId, $churchId, 'Homer', 'User');
-        $this->insertAffiliation($userId, $churchId, $dioceseId, 'member', true);
+        $this->insertProfile($userId, $parishId, 'Homer', 'User');
+        $this->insertAffiliation($userId, $parishId, $dioceseId, 'member', true);
         $this->insertAffiliation($userId, $otherId, $dioceseId, 'member', false);
 
-        $model = model(MemberChurchAffiliationModel::class);
+        $model = model(MemberParishAffiliationModel::class);
         $ok = $model->setHomeParish($userId, $otherId);
 
         if (!$ok) {
@@ -61,21 +61,21 @@ final class ParishAffiliationSecurityIntegrationTest extends CIUnitTestCase
     public function testAttachToParishDoesNotDuplicateRows(): void
     {
         $dioceseId = $this->insertDiocese('Single Diocese');
-        $churchId  = $this->insertChurch($dioceseId, 'St. Solo');
+        $parishId  = $this->insertParish($dioceseId, 'St. Solo');
         $userId    = $this->insertUser('solo.user');
 
-        $this->insertProfile($userId, $churchId, 'Solo', 'User');
+        $this->insertProfile($userId, $parishId, 'Solo', 'User');
 
-        $model = model(MemberChurchAffiliationModel::class);
-        $first = $model->attachToParish($userId, $churchId, false, 'member');
-        $second = $model->attachToParish($userId, $churchId, false, 'member');
+        $model = model(MemberParishAffiliationModel::class);
+        $first = $model->attachToParish($userId, $parishId, false, 'member');
+        $second = $model->attachToParish($userId, $parishId, false, 'member');
 
         $this->assertTrue($first);
         $this->assertTrue($second);
 
         $count = (int) $this->db->table('parish_affiliation')
             ->where('linked_user_id', $userId)
-            ->where('parish_id', $churchId)
+            ->where('parish_id', $parishId)
             ->countAllResults();
 
         $this->assertSame(1, $count);
@@ -84,8 +84,8 @@ final class ParishAffiliationSecurityIntegrationTest extends CIUnitTestCase
     public function testProfileLookupOnlyReturnsProfilesInParishScope(): void
     {
         $dioceseId = $this->insertDiocese('Scope Diocese');
-        $allowedParishId = $this->insertChurch($dioceseId, 'Allowed Parish');
-        $otherParishId   = $this->insertChurch($dioceseId, 'Other Parish');
+        $allowedParishId = $this->insertParish($dioceseId, 'Allowed Parish');
+        $otherParishId   = $this->insertParish($dioceseId, 'Other Parish');
 
         $allowedUserId = $this->insertUser('allowed.user');
         $otherUserId   = $this->insertUser('other.user');
@@ -219,7 +219,7 @@ final class ParishAffiliationSecurityIntegrationTest extends CIUnitTestCase
         return (int) $this->db->insertID();
     }
 
-    private function insertChurch(int $dioceseId, string $name): int
+    private function insertParish(int $dioceseId, string $name): int
     {
         $this->db->table('parish')->insert([
             'diocese_id' => $dioceseId,

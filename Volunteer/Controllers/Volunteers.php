@@ -512,10 +512,10 @@ class Volunteers extends BaseController
             return redirect()->to('/volunteers/schedules')->with('error', lang('Volunteer.scheduleNotFound'));
         }
 
-        $churchId = (int) ($this->getOperationalParishId() ?? 0);
-        $teams    = $this->volunteerTeamModel->where('parish_id', $churchId)->findAll();
+        $parishId = (int) ($this->getOperationalParishId() ?? 0);
+        $teams    = $this->volunteerTeamModel->where('parish_id', $parishId)->findAll();
         $services = model('ServiceModel')
-            ->where('parish_id', $churchId)
+            ->where('parish_id', $parishId)
             ->where('service_date >=', date('Y-m-d', strtotime('-90 days')))
             ->orderBy('service_date', 'DESC')
             ->orderBy('service_time', 'DESC')
@@ -664,7 +664,7 @@ class Volunteers extends BaseController
     }
 
     /**
-     * AJAX endpoint — returns team members for a given team, scoped to the current church.
+     * AJAX endpoint — returns team members for a given team, scoped to the current parish.
      * GET volunteers/schedules/team-members/:teamId  → JSON {members:[{user_id,name},...]}
      */
     public function teamMembersApi(int $teamId)
@@ -728,7 +728,7 @@ class Volunteers extends BaseController
     }
 
     /**
-     * Resolves and validates the linked service within the current church scope.
+     * Resolves and validates the linked service within the current parish scope.
      * When a service is linked, its date is the single source of truth for schedule date.
      */
     protected function resolveLinkedService(): ?array

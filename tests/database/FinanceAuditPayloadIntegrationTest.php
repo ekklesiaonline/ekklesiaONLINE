@@ -9,12 +9,12 @@ use Config\Services;
 
 class FinanceAuditPayloadDonationsTestController extends \Treasurer\Controllers\Donations
 {
-    private int $forcedChurchId = 0;
+    private int $forcedParishId = 0;
     private array $auditEvents = [];
 
-    public function setForcedChurchId(int $churchId): void
+    public function setForcedParishId(int $parishId): void
     {
-        $this->forcedChurchId = $churchId;
+        $this->forcedParishId = $parishId;
     }
 
     protected function requirePermission(string $permission)
@@ -29,18 +29,18 @@ class FinanceAuditPayloadDonationsTestController extends \Treasurer\Controllers\
 
     protected function getHomeparishId(): ?int
     {
-        return $this->forcedChurchId;
+        return $this->forcedParishId;
     }
 
     protected function getOperationalParishId(): ?int
     {
-        return $this->forcedChurchId;
+        return $this->forcedParishId;
     }
 
     protected function getProfile(): ?array
     {
         return [
-            'parish_id' => $this->forcedChurchId,
+            'parish_id' => $this->forcedParishId,
             'locale' => 'en',
         ];
     }
@@ -70,12 +70,12 @@ class FinanceAuditPayloadDonationsTestController extends \Treasurer\Controllers\
 
 class FinanceAuditPayloadExpensesTestController extends \Treasurer\Controllers\Expenses
 {
-    private int $forcedChurchId = 0;
+    private int $forcedParishId = 0;
     private array $auditEvents = [];
 
-    public function setForcedChurchId(int $churchId): void
+    public function setForcedParishId(int $parishId): void
     {
-        $this->forcedChurchId = $churchId;
+        $this->forcedParishId = $parishId;
     }
 
     protected function requirePermission(string $permission)
@@ -90,18 +90,18 @@ class FinanceAuditPayloadExpensesTestController extends \Treasurer\Controllers\E
 
     protected function getHomeparishId(): ?int
     {
-        return $this->forcedChurchId;
+        return $this->forcedParishId;
     }
 
     protected function getOperationalParishId(): ?int
     {
-        return $this->forcedChurchId;
+        return $this->forcedParishId;
     }
 
     protected function getProfile(): ?array
     {
         return [
-            'parish_id' => $this->forcedChurchId,
+            'parish_id' => $this->forcedParishId,
             'locale' => 'en',
         ];
     }
@@ -153,16 +153,16 @@ final class FinanceAuditPayloadIntegrationTest extends CIUnitTestCase
         parent::tearDown();
     }
 
-    public function testDonationExportEmitsAuditPayloadWithChurchContextMeta(): void
+    public function testDonationExportEmitsAuditPayloadWithParishContextMeta(): void
     {
-        $churchId = $this->insertChurch('Audit Donation Church');
+        $parishId = $this->insertParish('Audit Donation Parish');
         $this->injectAuthUser(7);
 
         $request = service('request');
         $request->setGlobal('get', []);
 
         $controller = new FinanceAuditPayloadDonationsTestController();
-        $controller->setForcedChurchId($churchId);
+        $controller->setForcedParishId($parishId);
 
         $controller->initController($request, service('response'), service('logger'));
         $result = $controller->export();
@@ -174,27 +174,27 @@ final class FinanceAuditPayloadIntegrationTest extends CIUnitTestCase
         $this->assertSame('donation.export_csv', $events[0]['event']);
 
         $payload = $events[0]['payload'];
-        $this->assertSame($churchId, (int) ($payload['parish_id'] ?? 0));
+        $this->assertSame($parishId, (int) ($payload['parish_id'] ?? 0));
         $this->assertSame('donation_report', (string) ($payload['entity_type'] ?? ''));
 
         $context = $payload['meta']['parish_context'] ?? null;
         $this->assertIsArray($context);
-        $this->assertSame($churchId, (int) ($context['home_parish_id'] ?? 0));
-        $this->assertSame($churchId, (int) ($context['operational_parish_id'] ?? 0));
-        $this->assertSame($churchId, (int) ($context['attribution_parish_id'] ?? 0));
+        $this->assertSame($parishId, (int) ($context['home_parish_id'] ?? 0));
+        $this->assertSame($parishId, (int) ($context['operational_parish_id'] ?? 0));
+        $this->assertSame($parishId, (int) ($context['attribution_parish_id'] ?? 0));
         $this->assertSame(BaseController::ATTRIBUTION_POLICY_OPERATIONAL_DEFAULT, (string) ($context['attribution_policy'] ?? ''));
     }
 
-    public function testExpenseExportEmitsAuditPayloadWithChurchContextMeta(): void
+    public function testExpenseExportEmitsAuditPayloadWithParishContextMeta(): void
     {
-        $churchId = $this->insertChurch('Audit Expense Church');
+        $parishId = $this->insertParish('Audit Expense Parish');
         $this->injectAuthUser(9);
 
         $request = service('request');
         $request->setGlobal('get', []);
 
         $controller = new FinanceAuditPayloadExpensesTestController();
-        $controller->setForcedChurchId($churchId);
+        $controller->setForcedParishId($parishId);
 
         $controller->initController($request, service('response'), service('logger'));
         $result = $controller->export();
@@ -206,14 +206,14 @@ final class FinanceAuditPayloadIntegrationTest extends CIUnitTestCase
         $this->assertSame('expense.export_csv', $events[0]['event']);
 
         $payload = $events[0]['payload'];
-        $this->assertSame($churchId, (int) ($payload['parish_id'] ?? 0));
+        $this->assertSame($parishId, (int) ($payload['parish_id'] ?? 0));
         $this->assertSame('expense_report', (string) ($payload['entity_type'] ?? ''));
 
         $context = $payload['meta']['parish_context'] ?? null;
         $this->assertIsArray($context);
-        $this->assertSame($churchId, (int) ($context['home_parish_id'] ?? 0));
-        $this->assertSame($churchId, (int) ($context['operational_parish_id'] ?? 0));
-        $this->assertSame($churchId, (int) ($context['attribution_parish_id'] ?? 0));
+        $this->assertSame($parishId, (int) ($context['home_parish_id'] ?? 0));
+        $this->assertSame($parishId, (int) ($context['operational_parish_id'] ?? 0));
+        $this->assertSame($parishId, (int) ($context['attribution_parish_id'] ?? 0));
         $this->assertSame(BaseController::ATTRIBUTION_POLICY_OPERATIONAL_DEFAULT, (string) ($context['attribution_policy'] ?? ''));
     }
 
@@ -272,7 +272,7 @@ final class FinanceAuditPayloadIntegrationTest extends CIUnitTestCase
         Services::injectMock('auth', $auth);
     }
 
-    private function insertChurch(string $name): int
+    private function insertParish(string $name): int
     {
         $this->db->table($this->resolveTableName('parish'))->insert([
             'name' => $name,
@@ -283,10 +283,10 @@ final class FinanceAuditPayloadIntegrationTest extends CIUnitTestCase
         return (int) $this->db->insertID();
     }
 
-    private function insertFund(int $churchId, string $name): int
+    private function insertFund(int $parishId, string $name): int
     {
         $this->db->table($this->resolveTableName('fund'))->insert([
-            'parish_id' => $churchId,
+            'parish_id' => $parishId,
             'name' => $name,
             'fund_type' => 'unrestricted',
             'is_active' => 1,

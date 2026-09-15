@@ -8,7 +8,7 @@ use CodeIgniter\Test\DatabaseTestTrait;
  * Integration tests for ParishPeopleModel::getParishPeoplePaginated().
  *
  * Covers scope filter (all / members / non_members), status filter,
- * combined scope+status, cross-church isolation, pagination offset,
+ * combined scope+status, cross-parish isolation, pagination offset,
  * and per-page edge values up to the model layer.
  *
  * @internal
@@ -25,15 +25,15 @@ final class PeopleFilterIntegrationTest extends CIUnitTestCase
 
     // ------------------------------------------------------------------ scope
 
-    public function testScopeAllReturnsEveryPersonForChurch(): void
+    public function testScopeAllReturnsEveryPersonForParish(): void
     {
-        $churchId = $this->insertChurch('Scope All Church');
-        $this->insertChurchPerson($churchId, 'Alice', 'member', 1);
-        $this->insertChurchPerson($churchId, 'Bob', 'visitor', 0);
-        $this->insertChurchPerson($churchId, 'Carol', 'pending', 0);
+        $parishId = $this->insertParish('Scope All Parish');
+        $this->insertParishPerson($parishId, 'Alice', 'member', 1);
+        $this->insertParishPerson($parishId, 'Bob', 'visitor', 0);
+        $this->insertParishPerson($parishId, 'Carol', 'pending', 0);
 
         $result = model(ParishPeopleModel::class)
-            ->getParishPeoplePaginated($churchId, 'all', null, 25, 1);
+            ->getParishPeoplePaginated($parishId, 'all', null, 25, 1);
 
         $this->assertSame(3, (int) $result['total']);
         $this->assertCount(3, $result['rows']);
@@ -41,14 +41,14 @@ final class PeopleFilterIntegrationTest extends CIUnitTestCase
 
     public function testScopeMembersReturnsOnlyTaggedMembers(): void
     {
-        $churchId = $this->insertChurch('Members Only Church');
-        $this->insertChurchPerson($churchId, 'Alice', 'active', 1);
-        $this->insertChurchPerson($churchId, 'Bob', 'active', 1);
-        $this->insertChurchPerson($churchId, 'Carol', 'visitor', 0);
-        $this->insertChurchPerson($churchId, 'Dave', 'pending', 0);
+        $parishId = $this->insertParish('Members Only Parish');
+        $this->insertParishPerson($parishId, 'Alice', 'active', 1);
+        $this->insertParishPerson($parishId, 'Bob', 'active', 1);
+        $this->insertParishPerson($parishId, 'Carol', 'visitor', 0);
+        $this->insertParishPerson($parishId, 'Dave', 'pending', 0);
 
         $result = model(ParishPeopleModel::class)
-            ->getParishPeoplePaginated($churchId, 'members', null, 25, 1);
+            ->getParishPeoplePaginated($parishId, 'members', null, 25, 1);
 
         $this->assertSame(2, (int) $result['total']);
         $names = array_column($result['rows'], 'first_name');
@@ -60,13 +60,13 @@ final class PeopleFilterIntegrationTest extends CIUnitTestCase
 
     public function testScopeNonMembersReturnsOnlyUntaggedPeople(): void
     {
-        $churchId = $this->insertChurch('Non Members Church');
-        $this->insertChurchPerson($churchId, 'Alice', 'active', 1);
-        $this->insertChurchPerson($churchId, 'Bob', 'visitor', 0);
-        $this->insertChurchPerson($churchId, 'Carol', 'pending', 0);
+        $parishId = $this->insertParish('Non Members Parish');
+        $this->insertParishPerson($parishId, 'Alice', 'active', 1);
+        $this->insertParishPerson($parishId, 'Bob', 'visitor', 0);
+        $this->insertParishPerson($parishId, 'Carol', 'pending', 0);
 
         $result = model(ParishPeopleModel::class)
-            ->getParishPeoplePaginated($churchId, 'non_members', null, 25, 1);
+            ->getParishPeoplePaginated($parishId, 'non_members', null, 25, 1);
 
         $this->assertSame(2, (int) $result['total']);
         $names = array_column($result['rows'], 'first_name');
@@ -77,18 +77,18 @@ final class PeopleFilterIntegrationTest extends CIUnitTestCase
 
     public function testInvalidOrNullScopeDefaultsToAll(): void
     {
-        $churchId = $this->insertChurch('Default Scope Church');
-        $this->insertChurchPerson($churchId, 'A', 'active', 1);
-        $this->insertChurchPerson($churchId, 'B', 'visitor', 0);
+        $parishId = $this->insertParish('Default Scope Parish');
+        $this->insertParishPerson($parishId, 'A', 'active', 1);
+        $this->insertParishPerson($parishId, 'B', 'visitor', 0);
 
         // Null scope (no scope param passed)
         $resultNull = model(ParishPeopleModel::class)
-            ->getParishPeoplePaginated($churchId, null, null, 25, 1);
+            ->getParishPeoplePaginated($parishId, null, null, 25, 1);
         $this->assertSame(2, (int) $resultNull['total']);
 
         // Empty string — model treats neither 'members' nor 'non_members', so returns all
         $resultEmpty = model(ParishPeopleModel::class)
-            ->getParishPeoplePaginated($churchId, '', null, 25, 1);
+            ->getParishPeoplePaginated($parishId, '', null, 25, 1);
         $this->assertSame(2, (int) $resultEmpty['total']);
     }
 
@@ -96,13 +96,13 @@ final class PeopleFilterIntegrationTest extends CIUnitTestCase
 
     public function testStatusFilterReturnsSingleMatchingStatus(): void
     {
-        $churchId = $this->insertChurch('Status Filter Church');
-        $this->insertChurchPerson($churchId, 'Alice', 'active', 1);
-        $this->insertChurchPerson($churchId, 'Bob', 'inactive', 1);
-        $this->insertChurchPerson($churchId, 'Carol', 'visitor', 0);
+        $parishId = $this->insertParish('Status Filter Parish');
+        $this->insertParishPerson($parishId, 'Alice', 'active', 1);
+        $this->insertParishPerson($parishId, 'Bob', 'inactive', 1);
+        $this->insertParishPerson($parishId, 'Carol', 'visitor', 0);
 
         $result = model(ParishPeopleModel::class)
-            ->getParishPeoplePaginated($churchId, 'all', 'active', 25, 1);
+            ->getParishPeoplePaginated($parishId, 'all', 'active', 25, 1);
 
         $this->assertSame(1, (int) $result['total']);
         $this->assertSame('Alice', (string) ($result['rows'][0]['first_name'] ?? ''));
@@ -110,14 +110,14 @@ final class PeopleFilterIntegrationTest extends CIUnitTestCase
 
     public function testStatusFilterCombinedWithScopeMembers(): void
     {
-        $churchId = $this->insertChurch('Combined Filter Church');
-        $this->insertChurchPerson($churchId, 'Alice', 'active', 1);
-        $this->insertChurchPerson($churchId, 'Bob', 'inactive', 1);
-        $this->insertChurchPerson($churchId, 'Carol', 'active', 0);
+        $parishId = $this->insertParish('Combined Filter Parish');
+        $this->insertParishPerson($parishId, 'Alice', 'active', 1);
+        $this->insertParishPerson($parishId, 'Bob', 'inactive', 1);
+        $this->insertParishPerson($parishId, 'Carol', 'active', 0);
 
         // members + status=active should return only tagged active people
         $result = model(ParishPeopleModel::class)
-            ->getParishPeoplePaginated($churchId, 'members', 'active', 25, 1);
+            ->getParishPeoplePaginated($parishId, 'members', 'active', 25, 1);
 
         $this->assertSame(1, (int) $result['total']);
         $this->assertSame('Alice', (string) ($result['rows'][0]['first_name'] ?? ''));
@@ -125,37 +125,37 @@ final class PeopleFilterIntegrationTest extends CIUnitTestCase
 
     public function testNullStatusReturnsAllStatuses(): void
     {
-        $churchId = $this->insertChurch('Null Status Church');
-        $this->insertChurchPerson($churchId, 'A', 'active', 1);
-        $this->insertChurchPerson($churchId, 'B', 'visitor', 0);
-        $this->insertChurchPerson($churchId, 'C', 'pending', 0);
+        $parishId = $this->insertParish('Null Status Parish');
+        $this->insertParishPerson($parishId, 'A', 'active', 1);
+        $this->insertParishPerson($parishId, 'B', 'visitor', 0);
+        $this->insertParishPerson($parishId, 'C', 'pending', 0);
 
         $result = model(ParishPeopleModel::class)
-            ->getParishPeoplePaginated($churchId, 'all', null, 25, 1);
+            ->getParishPeoplePaginated($parishId, 'all', null, 25, 1);
 
         $this->assertSame(3, (int) $result['total']);
     }
 
-    // ---------------------------------------------------- cross-church isolation
+    // ---------------------------------------------------- cross-parish isolation
 
-    public function testFiltersDoNotLeakAcrossChurches(): void
+    public function testFiltersDoNotLeakAcrossParishes(): void
     {
-        $churchA = $this->insertChurch('Church A');
-        $churchB = $this->insertChurch('Church B');
+        $parishA = $this->insertParish('Parish A');
+        $parishB = $this->insertParish('Parish B');
 
-        $this->insertChurchPerson($churchA, 'Alice', 'active', 1);
-        $this->insertChurchPerson($churchB, 'Bob', 'active', 1);
-        $this->insertChurchPerson($churchB, 'Carol', 'active', 1);
+        $this->insertParishPerson($parishA, 'Alice', 'active', 1);
+        $this->insertParishPerson($parishB, 'Bob', 'active', 1);
+        $this->insertParishPerson($parishB, 'Carol', 'active', 1);
 
-        session()->set('selected_parish_id', $churchA);
+        session()->set('selected_parish_id', $parishA);
         $resultA = model(ParishPeopleModel::class)
-            ->getParishPeoplePaginated($churchA, 'members', null, 25, 1);
+            ->getParishPeoplePaginated($parishA, 'members', null, 25, 1);
         $this->assertSame(1, (int) $resultA['total']);
         $this->assertSame('Alice', (string) ($resultA['rows'][0]['first_name'] ?? ''));
 
-        session()->set('selected_parish_id', $churchB);
+        session()->set('selected_parish_id', $parishB);
         $resultB = model(ParishPeopleModel::class)
-            ->getParishPeoplePaginated($churchB, 'members', null, 25, 1);
+            ->getParishPeoplePaginated($parishB, 'members', null, 25, 1);
         $this->assertSame(2, (int) $resultB['total']);
     }
 
@@ -163,12 +163,12 @@ final class PeopleFilterIntegrationTest extends CIUnitTestCase
 
     public function testStatusCountsAllIncludesEveryPerson(): void
     {
-        $churchId = $this->insertChurch('Status Counts All Church');
-        $this->insertChurchPerson($churchId, 'Alice', 'active', 1);
-        $this->insertChurchPerson($churchId, 'Bob', 'inactive', 1);
-        $this->insertChurchPerson($churchId, 'Carol', 'visitor', 0);
+        $parishId = $this->insertParish('Status Counts All Parish');
+        $this->insertParishPerson($parishId, 'Alice', 'active', 1);
+        $this->insertParishPerson($parishId, 'Bob', 'inactive', 1);
+        $this->insertParishPerson($parishId, 'Carol', 'visitor', 0);
 
-        $counts = model(ParishPeopleModel::class)->getStatusCounts($churchId, 'all');
+        $counts = model(ParishPeopleModel::class)->getStatusCounts($parishId, 'all');
 
         $total = array_sum(array_column($counts, 'count'));
         $this->assertSame(3, $total);
@@ -176,12 +176,12 @@ final class PeopleFilterIntegrationTest extends CIUnitTestCase
 
     public function testStatusCountsMembersOnlyExcludesNonMembers(): void
     {
-        $churchId = $this->insertChurch('Status Counts Members Church');
-        $this->insertChurchPerson($churchId, 'Alice', 'active', 1);
-        $this->insertChurchPerson($churchId, 'Bob', 'inactive', 1);
-        $this->insertChurchPerson($churchId, 'Carol', 'visitor', 0);
+        $parishId = $this->insertParish('Status Counts Members Parish');
+        $this->insertParishPerson($parishId, 'Alice', 'active', 1);
+        $this->insertParishPerson($parishId, 'Bob', 'inactive', 1);
+        $this->insertParishPerson($parishId, 'Carol', 'visitor', 0);
 
-        $counts = model(ParishPeopleModel::class)->getStatusCounts($churchId, 'members');
+        $counts = model(ParishPeopleModel::class)->getStatusCounts($parishId, 'members');
 
         $total = array_sum(array_column($counts, 'count'));
         $this->assertSame(2, $total, 'Only the two tagged members should be counted');
@@ -192,12 +192,12 @@ final class PeopleFilterIntegrationTest extends CIUnitTestCase
 
     public function testStatusCountsNonMembersOnlyExcludesMembers(): void
     {
-        $churchId = $this->insertChurch('Status Counts Non Members Church');
-        $this->insertChurchPerson($churchId, 'Alice', 'active', 1);
-        $this->insertChurchPerson($churchId, 'Bob', 'visitor', 0);
-        $this->insertChurchPerson($churchId, 'Carol', 'pending', 0);
+        $parishId = $this->insertParish('Status Counts Non Members Parish');
+        $this->insertParishPerson($parishId, 'Alice', 'active', 1);
+        $this->insertParishPerson($parishId, 'Bob', 'visitor', 0);
+        $this->insertParishPerson($parishId, 'Carol', 'pending', 0);
 
-        $counts = model(ParishPeopleModel::class)->getStatusCounts($churchId, 'non_members');
+        $counts = model(ParishPeopleModel::class)->getStatusCounts($parishId, 'non_members');
 
         $total = array_sum(array_column($counts, 'count'));
         $this->assertSame(2, $total, 'Only the two untagged people should be counted');
@@ -205,11 +205,11 @@ final class PeopleFilterIntegrationTest extends CIUnitTestCase
 
     public function testStatusCountsDefaultsToAllWhenScopeOmitted(): void
     {
-        $churchId = $this->insertChurch('Status Counts Default Church');
-        $this->insertChurchPerson($churchId, 'Alice', 'active', 1);
-        $this->insertChurchPerson($churchId, 'Bob', 'visitor', 0);
+        $parishId = $this->insertParish('Status Counts Default Parish');
+        $this->insertParishPerson($parishId, 'Alice', 'active', 1);
+        $this->insertParishPerson($parishId, 'Bob', 'visitor', 0);
 
-        $counts = model(ParishPeopleModel::class)->getStatusCounts($churchId);
+        $counts = model(ParishPeopleModel::class)->getStatusCounts($parishId);
 
         $total = array_sum(array_column($counts, 'count'));
         $this->assertSame(2, $total);
@@ -219,14 +219,14 @@ final class PeopleFilterIntegrationTest extends CIUnitTestCase
 
     public function testPaginationOffsetReturnsCorrectPage(): void
     {
-        $churchId = $this->insertChurch('Pagination Church');
+        $parishId = $this->insertParish('Pagination Parish');
         for ($i = 1; $i <= 5; $i++) {
-            $this->insertChurchPerson($churchId, 'Person' . str_pad((string) $i, 2, '0', STR_PAD_LEFT), 'active', 1);
+            $this->insertParishPerson($parishId, 'Person' . str_pad((string) $i, 2, '0', STR_PAD_LEFT), 'active', 1);
         }
 
         // perPage=2, page=2 → skip 2, take 2 → Person03, Person04
         $result = model(ParishPeopleModel::class)
-            ->getParishPeoplePaginated($churchId, 'all', null, 2, 2);
+            ->getParishPeoplePaginated($parishId, 'all', null, 2, 2);
 
         $this->assertSame(5, (int) $result['total'], 'total must reflect all rows, not just this page');
         $this->assertCount(2, $result['rows']);
@@ -234,22 +234,22 @@ final class PeopleFilterIntegrationTest extends CIUnitTestCase
 
     public function testPageBeyondLastReturnsEmptyRows(): void
     {
-        $churchId = $this->insertChurch('Overflow Pagination Church');
-        $this->insertChurchPerson($churchId, 'Solo', 'active', 1);
+        $parishId = $this->insertParish('Overflow Pagination Parish');
+        $this->insertParishPerson($parishId, 'Solo', 'active', 1);
 
         $result = model(ParishPeopleModel::class)
-            ->getParishPeoplePaginated($churchId, 'all', null, 25, 99);
+            ->getParishPeoplePaginated($parishId, 'all', null, 25, 99);
 
         $this->assertSame(1, (int) $result['total']);
         $this->assertCount(0, $result['rows']);
     }
 
-    public function testEmptyChurchReturnsZeroTotal(): void
+    public function testEmptyParishReturnsZeroTotal(): void
     {
-        $churchId = $this->insertChurch('Empty Church');
+        $parishId = $this->insertParish('Empty Parish');
 
         $result = model(ParishPeopleModel::class)
-            ->getParishPeoplePaginated($churchId, 'all', null, 25, 1);
+            ->getParishPeoplePaginated($parishId, 'all', null, 25, 1);
 
         $this->assertSame(0, (int) $result['total']);
         $this->assertCount(0, $result['rows']);
@@ -259,13 +259,13 @@ final class PeopleFilterIntegrationTest extends CIUnitTestCase
 
     public function testResultsOrderedByLastNameThenFirstName(): void
     {
-        $churchId = $this->insertChurch('Sort Church');
-        $this->insertChurchPersonFull($churchId, 'Zoe', 'Archer', 'active', 1);
-        $this->insertChurchPersonFull($churchId, 'Anna', 'Brown', 'active', 1);
-        $this->insertChurchPersonFull($churchId, 'Mike', 'Archer', 'active', 1);
+        $parishId = $this->insertParish('Sort Parish');
+        $this->insertParishPersonFull($parishId, 'Zoe', 'Archer', 'active', 1);
+        $this->insertParishPersonFull($parishId, 'Anna', 'Brown', 'active', 1);
+        $this->insertParishPersonFull($parishId, 'Mike', 'Archer', 'active', 1);
 
         $result = model(ParishPeopleModel::class)
-            ->getParishPeoplePaginated($churchId, 'all', null, 25, 1);
+            ->getParishPeoplePaginated($parishId, 'all', null, 25, 1);
 
         $this->assertCount(3, $result['rows']);
         $this->assertSame('Mike', (string) ($result['rows'][0]['first_name'] ?? ''));  // Archer, Mike
@@ -279,9 +279,9 @@ final class PeopleFilterIntegrationTest extends CIUnitTestCase
     {
         $forge = \Config\Database::forge();
 
-        // NOTE: `church_people` / `church_id` are the legacy pre-rename names.
+        // NOTE: `parish_people` / `parish_id` are the legacy pre-rename names.
         // Production has used `parish_people` / `parish_id` since the
-        // StrictRenameLegacyChurchSchemaObjects migration; ParishPeopleModel's
+        // StrictRenameLegacyParishSchemaObjects migration; ParishPeopleModel's
         // detectSnapshotStorage() prefers `parish_people` whenever it exists
         // (which it always does in real deployments). Building the legacy
         // table here made the model silently query a *different*, stale
@@ -325,7 +325,7 @@ final class PeopleFilterIntegrationTest extends CIUnitTestCase
         $forge->createTable('parish_people', true);
     }
 
-    private function insertChurch(string $name): int
+    private function insertParish(string $name): int
     {
         $this->db->table('parish')->insert([
             'name'       => $name,
@@ -342,15 +342,15 @@ final class PeopleFilterIntegrationTest extends CIUnitTestCase
         return $id;
     }
 
-    private function insertChurchPerson(int $churchId, string $firstName, string $status, int $isMember): void
+    private function insertParishPerson(int $parishId, string $firstName, string $status, int $isMember): void
     {
-        $this->insertChurchPersonFull($churchId, $firstName, 'Lastname', $status, $isMember);
+        $this->insertParishPersonFull($parishId, $firstName, 'Lastname', $status, $isMember);
     }
 
-    private function insertChurchPersonFull(int $churchId, string $firstName, string $lastName, string $status, int $isMember): void
+    private function insertParishPersonFull(int $parishId, string $firstName, string $lastName, string $status, int $isMember): void
     {
         $this->db->table('parish_people')->insert([
-            'parish_id'         => $churchId,
+            'parish_id'         => $parishId,
             'user_id'           => 0,
             'first_name'        => $firstName,
             'last_name'         => $lastName,

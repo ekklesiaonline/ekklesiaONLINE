@@ -26,17 +26,17 @@ final class ModuleCrudControllerPathsTest extends CIUnitTestCase
 
     public function testMembersCrudPathCreateUpdateDeleteAffiliation(): void
     {
-        $this->requireTables(['churches', 'users', 'profile', 'parish_affiliation']);
+        $this->requireTables(['parishes', 'users', 'profile', 'parish_affiliation']);
 
-        $churchId = $this->insertChurch('CRUD Members Church');
+        $parishId = $this->insertParish('CRUD Members Parish');
         $userId = $this->insertUser('member.crud.user');
 
-        $profileId = $this->insertProfile($userId, $churchId, 'Member', 'Crud', 'active');
+        $profileId = $this->insertProfile($userId, $parishId, 'Member', 'Crud', 'active');
         $this->assertGreaterThan(0, $profileId);
 
         $this->db->table('parish_affiliation')->insert([
             'linked_user_id' => $userId,
-            'parish_id' => $churchId,
+            'parish_id' => $parishId,
             'person_id' => null,
             'affiliation_type' => 'member',
             'membership_status' => 'member',
@@ -52,7 +52,7 @@ final class ModuleCrudControllerPathsTest extends CIUnitTestCase
 
         $this->db->table('parish_affiliation')
             ->where('linked_user_id', $userId)
-            ->where('parish_id', $churchId)
+            ->where('parish_id', $parishId)
             ->update([
                 'membership_status' => 'inactive',
                 'canonical_status' => 'inactive',
@@ -62,7 +62,7 @@ final class ModuleCrudControllerPathsTest extends CIUnitTestCase
 
         $row = $this->db->table('parish_affiliation')
             ->where('linked_user_id', $userId)
-            ->where('parish_id', $churchId)
+            ->where('parish_id', $parishId)
             ->get()
             ->getRowArray();
 
@@ -71,12 +71,12 @@ final class ModuleCrudControllerPathsTest extends CIUnitTestCase
 
         $this->db->table('parish_affiliation')
             ->where('linked_user_id', $userId)
-            ->where('parish_id', $churchId)
+            ->where('parish_id', $parishId)
             ->delete();
 
         $deleted = $this->db->table('parish_affiliation')
             ->where('linked_user_id', $userId)
-            ->where('parish_id', $churchId)
+            ->where('parish_id', $parishId)
             ->countAllResults();
 
         $this->assertSame(0, $deleted);
@@ -84,13 +84,13 @@ final class ModuleCrudControllerPathsTest extends CIUnitTestCase
 
     public function testAttendanceCrudPathMarkReadUpdateDelete(): void
     {
-        $this->requireTables(['churches', 'users', 'profile']);
+        $this->requireTables(['parishes', 'users', 'profile']);
 
-        $churchId = $this->insertChurch('CRUD Attendance Church');
+        $parishId = $this->insertParish('CRUD Attendance Parish');
         $userId = $this->insertUser('attendance.crud.user');
-        $this->insertProfile($userId, $churchId, 'Attendance', 'Crud', 'active');
+        $this->insertProfile($userId, $parishId, 'Attendance', 'Crud', 'active');
 
-        $serviceId = $this->insertService($churchId, '2026-03-31');
+        $serviceId = $this->insertService($parishId, '2026-03-31');
 
         $attendanceModel = model(AttendanceModel::class);
         $created = $attendanceModel->markAttendance($serviceId, $userId, true, true);
@@ -120,21 +120,21 @@ final class ModuleCrudControllerPathsTest extends CIUnitTestCase
 
     public function testDonationsCrudPathCreateReadUpdateDelete(): void
     {
-        $this->requireTables(['churches', 'users', 'profile', 'donation']);
+        $this->requireTables(['parishes', 'users', 'profile', 'donation']);
 
-        $churchId = $this->insertChurch('CRUD Donation Church');
+        $parishId = $this->insertParish('CRUD Donation Parish');
         $userId = $this->insertUser('donation.crud.user');
-        $this->insertProfile($userId, $churchId, 'Donation', 'Crud', 'active');
+        $this->insertProfile($userId, $parishId, 'Donation', 'Crud', 'active');
 
         $fundId = null;
         if ($this->tableAvailable('fund')) {
-            $fundId = $this->insertFund($churchId, 'CRUD Donations Fund');
+            $fundId = $this->insertFund($parishId, 'CRUD Donations Fund');
         }
 
         $donationModel = model(DonationModel::class);
 
         $donationPayload = [
-            'church_id' => $churchId,
+            'parish_id' => $parishId,
             'user_id' => $userId,
             'amount' => '90.00',
             'date' => '2026-03-31',
@@ -168,17 +168,17 @@ final class ModuleCrudControllerPathsTest extends CIUnitTestCase
 
     public function testVolunteersCrudPathTeamMemberSchedule(): void
     {
-        $this->requireTables(['churches', 'users', 'profile']);
+        $this->requireTables(['parishes', 'users', 'profile']);
 
-        $churchId = $this->insertChurch('CRUD Volunteer Church');
+        $parishId = $this->insertParish('CRUD Volunteer Parish');
         $userId = $this->insertUser('volunteer.crud.user');
-        $this->insertProfile($userId, $churchId, 'Volunteer', 'Crud', 'active');
+        $this->insertProfile($userId, $parishId, 'Volunteer', 'Crud', 'active');
 
-        $serviceId = $this->insertService($churchId, '2026-03-31');
+        $serviceId = $this->insertService($parishId, '2026-03-31');
 
         $teamModel = model(VolunteerTeamModel::class);
         $teamId = (int) $teamModel->insert([
-            'church_id' => $churchId,
+            'parish_id' => $parishId,
             'name' => 'CRUD Team',
             'description' => 'controller path integration',
             'leader_id' => $userId,
@@ -218,11 +218,11 @@ final class ModuleCrudControllerPathsTest extends CIUnitTestCase
         $this->assertTrue($teamModel->delete($teamId));
     }
 
-    private function insertChurch(string $name): int
+    private function insertParish(string $name): int
     {
-        $table = $this->resolveTableName('churches');
+        $table = $this->resolveTableName('parishes');
         if ($table === null) {
-            $this->markTestSkipped('churches table unavailable in this schema.');
+            $this->markTestSkipped('parishes table unavailable in this schema.');
         }
 
         $this->db->table($table)->insert([
@@ -251,7 +251,7 @@ final class ModuleCrudControllerPathsTest extends CIUnitTestCase
         return (int) $this->db->insertID();
     }
 
-    private function insertProfile(int $userId, int $churchId, string $firstName, string $lastName, string $status): int
+    private function insertProfile(int $userId, int $parishId, string $firstName, string $lastName, string $status): int
     {
         $table = $this->resolveTableName('profile');
         if ($table === null) {
@@ -260,7 +260,7 @@ final class ModuleCrudControllerPathsTest extends CIUnitTestCase
 
         $this->db->table($table)->insert([
             'user_id' => $userId,
-            'church_id' => $churchId,
+            'parish_id' => $parishId,
             'first_name' => $firstName,
             'last_name' => $lastName,
             'membership_status' => $status,
@@ -271,10 +271,10 @@ final class ModuleCrudControllerPathsTest extends CIUnitTestCase
         return (int) $this->db->insertID();
     }
 
-    private function insertService(int $churchId, string $date): int
+    private function insertService(int $parishId, string $date): int
     {
         $payload = [
-            'church_id' => $churchId,
+            'parish_id' => $parishId,
             'date' => $date,
             'liturgical_day' => 'Sunday Worship',
             'service' => json_encode(['Sunday Worship']),
@@ -327,7 +327,7 @@ final class ModuleCrudControllerPathsTest extends CIUnitTestCase
         }
     }
 
-    private function insertFund(int $churchId, string $name): int
+    private function insertFund(int $parishId, string $name): int
     {
         $table = $this->resolveTableName('fund');
         if ($table === null) {
@@ -335,7 +335,7 @@ final class ModuleCrudControllerPathsTest extends CIUnitTestCase
         }
 
         $this->db->table($table)->insert([
-            'church_id' => $churchId,
+            'parish_id' => $parishId,
             'name' => $name,
             'fund_type' => 'unrestricted',
             'is_active' => 1,
@@ -368,7 +368,7 @@ final class ModuleCrudControllerPathsTest extends CIUnitTestCase
         if (!in_array($prefix . 'volunteer_teams', $tables, true) && !in_array('volunteer_teams', $tables, true)) {
             $this->db->query('CREATE TABLE IF NOT EXISTS ' . $prefix . 'volunteer_teams (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
-                church_id INTEGER NOT NULL,
+                parish_id INTEGER NOT NULL,
                 name TEXT NOT NULL,
                 description TEXT NULL,
                 leader_id INTEGER NULL,
@@ -407,7 +407,7 @@ final class ModuleCrudControllerPathsTest extends CIUnitTestCase
         $prefix = $this->db->getPrefix();
         $this->db->query('CREATE TABLE IF NOT EXISTS services (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            church_id INTEGER NOT NULL,
+            parish_id INTEGER NOT NULL,
             date TEXT NOT NULL,
             liturgical_day TEXT NULL,
             service TEXT NULL,
@@ -418,7 +418,7 @@ final class ModuleCrudControllerPathsTest extends CIUnitTestCase
         if ($prefix !== '') {
             $this->db->query('CREATE TABLE IF NOT EXISTS ' . $prefix . 'services (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
-                church_id INTEGER NOT NULL,
+                parish_id INTEGER NOT NULL,
                 date TEXT NOT NULL,
                 liturgical_day TEXT NULL,
                 service TEXT NULL,

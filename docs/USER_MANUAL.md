@@ -2,11 +2,11 @@
 
 ## 1. Purpose
 
-EkklesiaRD is a multi-level Church Management System (ChMS) for:
+EkklesiaRD is a multi-level Parish Management System (ChMS) for:
 
 - Province oversight
 - Diocese administration
-- Church-level operations
+- Parish-level operations
 - Ministry team workflows
 
 The system is role-driven. Each user sees only the modules and data allowed by permissions.
@@ -32,7 +32,7 @@ Main purpose:
 
 Typical widgets:
 
-- Total dioceses and churches
+- Total dioceses and parishes
 - Total people and attendance
 - Attendance period averages (Today, Week, Month, Year, Sundays, Weekdays)
 
@@ -41,23 +41,23 @@ Typical widgets:
 Primary dashboard: Diocesan Dashboard.
 Main purpose:
 
-- Oversee all churches in one diocese
+- Oversee all parishes in one diocese
 - Review and moderate new registrations
 - Open diocesan finance and system overview pages
 
 Typical widgets:
 
-- Churches in scope
+- Parishes in scope
 - People/members in scope
 - Attendance averages
 - Pending registrations with Approve, Dismiss, Ban, Delete actions
 
-### Church-Level Roles (Church Admin, Pastor, Treasurer, Volunteer Coordinator, Member)
+### Parish-Level Roles (Parish Admin, Pastor, Treasurer, Volunteer Coordinator, Member)
 
-Primary dashboard: Church Dashboard.
+Primary dashboard: Parish Dashboard.
 Main purpose:
 
-- Daily church operations and member care
+- Daily parish operations and member care
 
 Typical widgets:
 
@@ -92,7 +92,7 @@ The sidebar is permission-aware. Common menu items include:
 - Worship Planning
 - Reports
 - Consistency Report
-- Churches
+- Parishes
 - Profile
 - Logout
 
@@ -200,7 +200,7 @@ For diocesan admins:
 1. Open Diocesan Dashboard.
 2. Review New User Registrations Pending Review.
 3. Select role.
-4. Select church assignment when needed.
+4. Select parish assignment when needed.
 5. Choose action:
    - Approve
    - Dismiss
@@ -209,7 +209,7 @@ For diocesan admins:
 
 Best practice:
 
-- Approve only after verifying profile data and intended church scope.
+- Approve only after verifying profile data and intended parish scope.
 
 ## 7. Province Oversight Workflow
 
@@ -224,10 +224,10 @@ For province admins:
 ## 8. Finance Dashboard Workflow (Diocesan)
 
 1. Open Diocesan Finance Dashboard.
-2. Choose church scope (All Churches or one church).
+2. Choose parish scope (All Parishes or one parish).
 3. Choose period (today/week/month/year/custom).
 4. Review total income, total expenses, net.
-5. Analyze by-church comparisons and monthly trends.
+5. Analyze by-parish comparisons and monthly trends.
 
 ## 9. Reports and Data Quality
 
@@ -252,9 +252,9 @@ If profile is incomplete, complete it before full workflow access.
 ## 11. Permissions and Visibility Rules
 
 - Permissions define what actions are allowed.
-- Church-level users are scoped to their church.
+- Parish-level users are scoped to their parish.
 - Diocesan admins are scoped to their diocese.
-- Province admins can see province-wide summaries but not unrestricted church CRUD/finance unless explicitly granted.
+- Province admins can see province-wide summaries but not unrestricted parish CRUD/finance unless explicitly granted.
 
 ## 12. Troubleshooting
 
@@ -266,7 +266,7 @@ Action: contact an administrator to verify role and permission assignment.
 ### I am redirected away from a page
 
 Cause: scope or permission restriction.
-Action: confirm your assigned church/diocese and role.
+Action: confirm your assigned parish/diocese and role.
 
 ### Dashboard is empty
 
@@ -307,13 +307,13 @@ To build a screenshot appendix for this manual:
 2. Capture:
    - Province Dashboard
    - Diocesan Dashboard
-   - Church Dashboard
+   - Parish Dashboard
    - Finance Dashboard
    - Members, Guests, Good Standing, Pledges, Volunteers
 3. Save files using this naming pattern:
    - screenshot-province-dashboard.png
    - screenshot-diocesan-dashboard.png
-   - screenshot-church-dashboard.png
+   - screenshot-parish-dashboard.png
    - screenshot-finance-dashboard.png
 4. Add them under docs/images and reference them in this manual.
 
@@ -330,10 +330,10 @@ To build a screenshot appendix for this manual:
 
 - Open Diocesan Dashboard
 - Moderate pending registrations
-- Manage churches and diocesan tools
+- Manage parishes and diocesan tools
 - Use finance and system overview
 
-### Church Admin
+### Parish Admin
 
 - Manage members, families, services, attendance, guests, finance, volunteers
 - Monitor consistency and reports

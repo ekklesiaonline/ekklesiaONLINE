@@ -40,7 +40,7 @@ Reference: [docs/MODULARIZATION_CUTOVER_EXECUTION_PLAN.md](docs/MODULARIZATION_C
 ### 2.2 Encryption at rest (implemented for key domains, not full scope)
 
 - Encryption framework and blind-index approach are implemented and tested for profile and guest sensitive fields.
-- Donation amount encryption is now implemented with encrypted-at-rest aggregation regression coverage (category/fund/church/monthly and monthly-by-church).
+- Donation amount encryption is now implemented with encrypted-at-rest aggregation regression coverage (category/fund/parish/monthly and monthly-by-parish).
 
 References: [tests/database/DataEncryptionAtRestTest.php](tests/database/DataEncryptionAtRestTest.php#L1), [app/Models/DonationModel.php](app/Models/DonationModel.php#L1), [tests/database/DonationAggregationEncryptedTotalsTest.php](tests/database/DonationAggregationEncryptedTotalsTest.php#L1)
 

@@ -27,16 +27,16 @@ return [
 
     // Access & Permission Issues
     'accessDenied' => 'Access denied',
-    'invalidUserOrChurch' => 'Invalid user or parish',
+    'invalidUserOrParish' => 'Invalid user or parish',
     'invalidUserOrParish' => 'Invalid user or parish',
     'provinceAdminReassignmentOnly' => 'Province admins may only reassign province-level staff. Diocesan and parish staff are managed by their respective diocese administrators.',
 
-    // Church/Diocese/Province Lookup Errors
-    'churchNotFound' => 'Parish not found',
+    // Parish/Diocese/Province Lookup Errors
     'parishNotFound' => 'Parish not found',
-    'churchOutsideProvinceScope' => 'Selected parish is outside your province scope',
+    'parishNotFound' => 'Parish not found',
     'parishOutsideProvinceScope' => 'Selected parish is outside your province scope',
-    'churchOutsideDioceseScope' => 'Selected parish is outside the currently loaded diocese scope',
+    'parishOutsideProvinceScope' => 'Selected parish is outside your province scope',
+    'parishOutsideDioceseScope' => 'Selected parish is outside the currently loaded diocese scope',
     'parishOutsideDioceseScope' => 'Selected parish is outside the currently loaded diocese scope',
     'userProfileNotFound' => 'User profile not found',
 

@@ -17,7 +17,7 @@ class ProvinceDashboardTest extends CIUnitTestCase
         $this->assertStringContainsString("province_dashboard.reporting_overdue_days", $controller);
         $this->assertStringContainsString('getPreviousDateRange', $controller);
         $this->assertStringNotContainsString('FROM dioceses WHERE province_id', $controller);
-        $this->assertStringContainsString("s.id, s.service_date, s.service_type, c.name as church_name", $controller);
+        $this->assertStringContainsString("s.id, s.service_date, s.service_type, c.name as parish_name", $controller);
         $this->assertStringNotContainsString("s.service, s.liturgical_day", $controller);
     }
 

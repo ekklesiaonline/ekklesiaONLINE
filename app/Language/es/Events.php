@@ -71,7 +71,7 @@ return [
     'invitedMembers' => 'Miembros Invitados',
     'invitedMembersHelp' => 'Mantenga Command/Ctrl para seleccionar varios miembros invitados.',
     'scope' => 'Alcance',
-    'scopeChurch' => 'Parroquia',
+    'scopeParish' => 'Parroquia',
     'scopeParish' => 'Parroquia',
     'scopeDiocese' => 'Diocesis',
     'parishEvents' => 'Eventos Parroquiales',

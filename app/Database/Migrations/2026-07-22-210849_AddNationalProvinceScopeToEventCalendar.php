@@ -9,7 +9,7 @@ class AddNationalProvinceScopeToEventCalendar extends Migration
     public function up()
     {
         $this->forge->addColumn('event_calendar', [
-            'church_id' => [
+            'parish_id' => [
                 'type'     => 'INT',
                 'unsigned' => true,
                 'null'     => true,
@@ -19,21 +19,21 @@ class AddNationalProvinceScopeToEventCalendar extends Migration
                 'type'     => 'INT',
                 'unsigned' => true,
                 'null'     => true,
-                'after'    => 'church_id',
+                'after'    => 'parish_id',
             ],
         ]);
 
         $this->db->query("ALTER TABLE `event_calendar` MODIFY `scope_level` ENUM('national','province','diocese','parish') NOT NULL DEFAULT 'parish'");
 
-        $this->db->query("ALTER TABLE `event_calendar` ADD CONSTRAINT `fk_event_calendar_church` FOREIGN KEY (`church_id`) REFERENCES `church` (`id`) ON DELETE SET NULL ON UPDATE CASCADE");
+        $this->db->query("ALTER TABLE `event_calendar` ADD CONSTRAINT `fk_event_calendar_parish` FOREIGN KEY (`parish_id`) REFERENCES `parish` (`id`) ON DELETE SET NULL ON UPDATE CASCADE");
         $this->db->query("ALTER TABLE `event_calendar` ADD CONSTRAINT `fk_event_calendar_province` FOREIGN KEY (`province_id`) REFERENCES `province` (`id`) ON DELETE SET NULL ON UPDATE CASCADE");
 
-        $this->db->query("ALTER TABLE `event_calendar` ADD KEY `idx_event_calendar_church` (`church_id`)");
+        $this->db->query("ALTER TABLE `event_calendar` ADD KEY `idx_event_calendar_parish` (`parish_id`)");
         $this->db->query("ALTER TABLE `event_calendar` ADD KEY `idx_event_calendar_province` (`province_id`)");
 
         $this->db->table('event_calendar')->insert([
             'scope_level' => 'national',
-            'church_id'   => 1,
+            'parish_id'   => 1,
             'name'        => 'National Episcopal Calendar',
             'color_hex'   => '#0d6efd',
             'is_active'   => 1,
@@ -60,9 +60,9 @@ class AddNationalProvinceScopeToEventCalendar extends Migration
 
     public function down()
     {
-        $this->db->query("ALTER TABLE `event_calendar` DROP FOREIGN KEY `fk_event_calendar_church`");
+        $this->db->query("ALTER TABLE `event_calendar` DROP FOREIGN KEY `fk_event_calendar_parish`");
         $this->db->query("ALTER TABLE `event_calendar` DROP FOREIGN KEY `fk_event_calendar_province`");
-        $this->forge->dropColumn('event_calendar', ['province_id', 'church_id']);
+        $this->forge->dropColumn('event_calendar', ['province_id', 'parish_id']);
         $this->db->query("ALTER TABLE `event_calendar` MODIFY `scope_level` ENUM('parish','diocese') NOT NULL DEFAULT 'parish'");
     }
 }

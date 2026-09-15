@@ -14,19 +14,19 @@ class Standing extends BaseController
 
         $year = (int) ($this->request->getGet('year') ?? date('Y'));
 
-        $churchId = (int) ($this->getOperationalParishId() ?? 0);
-        if ($churchId <= 0 && !$this->isProvinceAdmin() && !$this->isDioceseAdmin()) {
+        $parishId = (int) ($this->getOperationalParishId() ?? 0);
+        if ($parishId <= 0 && !$this->isProvinceAdmin() && !$this->isDioceseAdmin()) {
             return redirect()->to('/dashboard')->with('error', lang('App.errorNoParishScope'));
         }
 
-        $scope = 'church';
+        $scope = 'parish';
         if ($this->isProvinceAdmin()) {
             $scope = 'province';
         } elseif ($this->isDioceseAdmin()) {
             $scope = 'diocese';
         }
 
-        $summary = $this->buildSummary($scope, $churchId, $year);
+        $summary = $this->buildSummary($scope, $parishId, $year);
 
         return view('MemberPortal\Views\Standing/index', array_merge($this->getCommonViewData(lang('Standing.pageTitle')), [
             'selected_year' => $year,
@@ -47,14 +47,14 @@ class Standing extends BaseController
         /** @var \App\Models\MemberStandingSummaryModel $standingModel */
         $standingModel = model(\App\Models\MemberStandingSummaryModel::class);
 
-        $scope = 'church';
+        $scope = 'parish';
         if ($this->isProvinceAdmin()) {
             $scope = 'province';
         } elseif ($this->isDioceseAdmin()) {
             $scope = 'diocese';
         } else {
-            $churchId = (int) ($this->getOperationalParishId() ?? 0);
-            if ($churchId <= 0) {
+            $parishId = (int) ($this->getOperationalParishId() ?? 0);
+            if ($parishId <= 0) {
                 return redirect()->to('/standing')->with('error', lang('App.errorNoParishScope'));
             }
         }
@@ -71,12 +71,12 @@ class Standing extends BaseController
         }
 
         $year = (int) ($this->request->getGet('year') ?? date('Y'));
-        $churchId = (int) ($this->getOperationalParishId() ?? 0);
-        if ($churchId <= 0 && !$this->isProvinceAdmin() && !$this->isDioceseAdmin()) {
-            return $this->jsonResponse($this->apiErrorPayload(lang('App.errorNoParishScope'), 403, 'CHURCH_SCOPE_REQUIRED'), 403);
+        $parishId = (int) ($this->getOperationalParishId() ?? 0);
+        if ($parishId <= 0 && !$this->isProvinceAdmin() && !$this->isDioceseAdmin()) {
+            return $this->jsonResponse($this->apiErrorPayload(lang('App.errorNoParishScope'), 403, 'PARISH_SCOPE_REQUIRED'), 403);
         }
 
-        $scope = 'church';
+        $scope = 'parish';
         if ($this->isProvinceAdmin()) {
             $scope = 'province';
         } elseif ($this->isDioceseAdmin()) {
@@ -89,12 +89,12 @@ class Standing extends BaseController
             'data' => [
                 'year' => $year,
                 'scope' => $scope,
-                'summary' => $this->buildSummary($scope, $churchId, $year),
+                'summary' => $this->buildSummary($scope, $parishId, $year),
             ],
         ]);
     }
 
-    private function buildSummary(string $scope, int $churchId, int $year): array
+    private function buildSummary(string $scope, int $parishId, int $year): array
     {
         $db = db_connect();
         // Check if is_member column exists
@@ -181,7 +181,7 @@ class Standing extends BaseController
             ->join('parish_affiliation mca', $memberJoin, 'inner')
             ->join('users u', 'u.id = mss.user_id', 'inner')
             ->join('auth_groups_users agu', 'agu.user_id = u.id AND agu.group IN ("provinceadmin","diocesanadmin")', 'left')
-            ->where('mca.parish_id', $churchId)
+            ->where('mca.parish_id', $parishId)
             ->where('mss.year', $year)
             ->where('mss.is_good_standing', 1)
             ->where('agu.id IS NULL')
@@ -192,7 +192,7 @@ class Standing extends BaseController
             ->join('parish_affiliation mca', $memberJoin, 'inner')
             ->join('users u', 'u.id = mss.user_id', 'inner')
             ->join('auth_groups_users agu', 'agu.user_id = u.id AND agu.group IN ("provinceadmin","diocesanadmin")', 'left')
-            ->where('mca.parish_id', $churchId)
+            ->where('mca.parish_id', $parishId)
             ->where('mss.year', $year)
             ->where('agu.id IS NULL')
             ->get()->getRowArray();

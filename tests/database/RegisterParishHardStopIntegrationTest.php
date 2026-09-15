@@ -21,7 +21,7 @@ final class RegisterParishHardStopIntegrationTest extends CIUnitTestCase
         helper('auth');
         Services::reset(true);
         $this->ensureUsersTable();
-        $this->ensureChurchesTable();
+        $this->ensureParishesTable();
         $this->ensureSettingsTable();
     }
 
@@ -65,7 +65,7 @@ final class RegisterParishHardStopIntegrationTest extends CIUnitTestCase
             'email' => 'invalid.parish@example.org',
             'password' => 'Passw0rd!234',
             'password_confirm' => 'Passw0rd!234',
-            'church_id' => 999999,
+            'parish_id' => 999999,
         ];
         $request->setGlobal('post', $postData);
         $request->setGlobal('request', $postData);
@@ -118,10 +118,10 @@ final class RegisterParishHardStopIntegrationTest extends CIUnitTestCase
         }
     }
 
-    private function ensureChurchesTable(): void
+    private function ensureParishesTable(): void
     {
-        $table = $this->createTableName('churches');
-        if (!$this->tableExists('churches')) {
+        $table = $this->createTableName('parishes');
+        if (!$this->tableExists('parishes')) {
             $this->db->query('CREATE TABLE IF NOT EXISTS ' . $table . ' (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 name TEXT NOT NULL,

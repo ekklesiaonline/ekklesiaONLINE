@@ -82,7 +82,7 @@ Result: no matching route entries found in current module route files.
 - ministry_role
 - governance_term
 - parish_user_role
-- church_role_catalog
+- parish_role_catalog
 
 ### F) Intake and personalization expansion domain
 

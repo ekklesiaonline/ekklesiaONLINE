@@ -262,16 +262,16 @@ class Dashboard extends BaseController
         }
 
         $rawActivityType = strtolower(trim((string) ($this->request->getGet('activity_type') ?? 'all')));
-        $activityType = in_array($rawActivityType, ['all', 'church', 'donation', 'expense'], true) ? $rawActivityType : 'all';
+        $activityType = in_array($rawActivityType, ['all', 'parish', 'donation', 'expense'], true) ? $rawActivityType : 'all';
 
-        $churchId = (int) ($this->request->getGet('parish_id') ?? 0);
-        if ($churchId > 0) {
-            $churchInScope = (int) db_connect()->table('parish')
-                ->where('id', $churchId)
+        $parishId = (int) ($this->request->getGet('parish_id') ?? 0);
+        if ($parishId > 0) {
+            $parishInScope = (int) db_connect()->table('parish')
+                ->where('id', $parishId)
                 ->where('diocese_id', $scopeDioceseId)
                 ->countAllResults();
-            if ($churchInScope <= 0) {
-                $churchId = 0;
+            if ($parishInScope <= 0) {
+                $parishId = 0;
             }
         }
 
@@ -289,7 +289,7 @@ class Dashboard extends BaseController
 
         $filters = [
             'activity_type' => $activityType,
-            'parish_id'     => $churchId,
+            'parish_id'     => $parishId,
             'date_from'     => $dateFrom,
             'date_to'       => $dateTo,
         ];
@@ -314,7 +314,7 @@ class Dashboard extends BaseController
             'recent_activity'        => $recentActivity,
             'filters'                => $filters,
             'parish_options'         => $parishOptions,
-            'church_options'         => $parishOptions,
+            'parish_options'         => $parishOptions,
             'activity_type_options'  => [
                 'all'      => lang('Dashboard.recentActivityTypeAll'),
                 'donation' => lang('Dashboard.recentActivityTypeIncomeDonations'),
@@ -336,29 +336,29 @@ class Dashboard extends BaseController
     // Switch parish (dioceseadmin branch only)
     // ----------------------------------------------------------------
 
-    public function switchParish($churchId = null)
+    public function switchParish($parishId = null)
     {
         if (!$this->isDioceseAdmin()) {
             return redirect()->to('/diocese/dashboard')->with('error', lang('App.errorUnauthorized'));
         }
-        if (!$churchId) {
+        if (!$parishId) {
             return redirect()->to('/diocese/dashboard');
         }
 
-        $churchModel = model('ParishModel');
-        $church = $churchModel->findWithHierarchy((int) $churchId);
-        if (!$church) {
-            return redirect()->to('/diocese/dashboard')->with('error', lang('App.churchNotFound'));
+        $parishModel = model('ParishModel');
+        $parish = $parishModel->findWithHierarchy((int) $parishId);
+        if (!$parish) {
+            return redirect()->to('/diocese/dashboard')->with('error', lang('App.parishNotFound'));
         }
 
         $adminDioceseId = $this->resolveDiocesanScopeId();
-        if ($adminDioceseId <= 0 || (int) ($church['diocese_id'] ?? 0) !== $adminDioceseId) {
-            return redirect()->to('/diocese/dashboard')->with('error', lang('App.churchOutsideDiocese'));
+        if ($adminDioceseId <= 0 || (int) ($parish['diocese_id'] ?? 0) !== $adminDioceseId) {
+            return redirect()->to('/diocese/dashboard')->with('error', lang('App.parishOutsideDiocese'));
         }
 
-        $this->setOperationalParishId($churchId);
+        $this->setOperationalParishId($parishId);
 
-        return redirect()->to('/diocese/dashboard')->with('success', lang('App.churchSwitchedSuccess'));
+        return redirect()->to('/diocese/dashboard')->with('success', lang('App.parishSwitchedSuccess'));
     }
 
     // ----------------------------------------------------------------
@@ -820,15 +820,15 @@ class Dashboard extends BaseController
         $clauses = ['1=1'];
 
         $activityType = strtolower(trim((string) ($filters['activity_type'] ?? 'all')));
-        if ($activityType === 'church') {
+        if ($activityType === 'parish') {
             $activityType = 'parish';
         }
         if ($activityType !== '' && $activityType !== 'all') {
             $clauses[] = 'activity_type = ' . $db->escape($activityType);
         }
-        $churchId = (int) ($filters['parish_id'] ?? 0);
-        if ($churchId > 0) {
-            $clauses[] = 'parish_id = ' . $churchId;
+        $parishId = (int) ($filters['parish_id'] ?? 0);
+        if ($parishId > 0) {
+            $clauses[] = 'parish_id = ' . $parishId;
         }
         $dateFrom = trim((string) ($filters['date_from'] ?? ''));
         if ($dateFrom !== '') {
@@ -864,7 +864,7 @@ class Dashboard extends BaseController
 
             switch ($type) {
                 case 'parish':
-                case 'church':
+                case 'parish':
                     $row['title'] = lang('Dashboard.systemOverviewActivityParishCreated', [$subject]);
                     break;
                 case 'donation':
@@ -970,10 +970,10 @@ class Dashboard extends BaseController
         $candidates = [];
         if ($prefix !== '') {
             $candidates[] = $prefix . 'parish_people';
-            $candidates[] = $prefix . 'church_people';
+            $candidates[] = $prefix . 'parish_people';
         }
         $candidates[] = 'parish_people';
-        $candidates[] = 'church_people';
+        $candidates[] = 'parish_people';
 
         foreach ($candidates as $table) {
             try {

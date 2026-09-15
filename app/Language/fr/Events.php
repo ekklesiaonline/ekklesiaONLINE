@@ -71,7 +71,7 @@ return [
     'invitedMembers' => 'Membres Invites',
     'invitedMembersHelp' => 'Maintenez Command/Ctrl pour selectionner plusieurs membres invites.',
     'scope' => 'Portee',
-    'scopeChurch' => 'Paroisse',
+    'scopeParish' => 'Paroisse',
     'scopeParish' => 'Paroisse',
     'scopeDiocese' => 'Diocese',
     'parishEvents' => 'Événements paroissiaux',

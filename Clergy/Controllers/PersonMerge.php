@@ -19,16 +19,16 @@ class PersonMerge extends BaseController
             return $redirect;
         }
 
-        $churchId = (int) ($this->getOperationalParishId() ?? 0);
-        if ($churchId <= 0) {
+        $parishId = (int) ($this->getOperationalParishId() ?? 0);
+        if ($parishId <= 0) {
             return redirect()->to('/people')->with('error', lang('App.errorNoParishScope'));
         }
 
-        $candidates = $this->getMergeService()->findCandidates($churchId);
+        $candidates = $this->getMergeService()->findCandidates($parishId);
 
         return view('Clergy\\Views\\PersonMerge\\index', array_merge(
             $this->getCommonViewData(lang('People.personMergeTitle')),
-            ['candidates' => $candidates, 'parish_id' => $churchId]
+            ['candidates' => $candidates, 'parish_id' => $parishId]
         ));
     }
 
@@ -38,8 +38,8 @@ class PersonMerge extends BaseController
             return $redirect;
         }
 
-        $churchId = (int) ($this->getOperationalParishId() ?? 0);
-        if ($churchId <= 0) {
+        $parishId = (int) ($this->getOperationalParishId() ?? 0);
+        if ($parishId <= 0) {
             return redirect()->to('/people')->with('error', lang('App.errorNoParishScope'));
         }
 
@@ -50,7 +50,7 @@ class PersonMerge extends BaseController
             return redirect()->to('/people/merge')->with('error', lang('People.personMergeSelectBoth'));
         }
 
-        $preview = $this->getMergeService()->getPreview($sourceId, $targetId, $churchId);
+        $preview = $this->getMergeService()->getPreview($sourceId, $targetId, $parishId);
 
         if (empty($preview['ok'])) {
             return redirect()->to('/people/merge')->with('error', $preview['message'] ?? lang('App.errorFailed'));
@@ -62,7 +62,7 @@ class PersonMerge extends BaseController
                 'source'    => $preview['source'] ?? [],
                 'target'    => $preview['target'] ?? [],
                 'conflicts' => $preview['conflicts'] ?? [],
-                'parish_id' => $churchId,
+                'parish_id' => $parishId,
             ]
         ));
     }
@@ -73,8 +73,8 @@ class PersonMerge extends BaseController
             return $this->response->setJSON(['success' => false, 'message' => lang('App.errorUnauthorized')])->setStatusCode(403);
         }
 
-        $churchId = (int) ($this->getOperationalParishId() ?? 0);
-        if ($churchId <= 0) {
+        $parishId = (int) ($this->getOperationalParishId() ?? 0);
+        if ($parishId <= 0) {
             return $this->response->setJSON(['success' => false, 'message' => lang('App.errorNoParishScope')])->setStatusCode(403);
         }
 
@@ -102,7 +102,7 @@ class PersonMerge extends BaseController
         $result = $this->getMergeService()->merge(
             $sourceId,
             $targetId,
-            $churchId,
+            $parishId,
             (int) (auth()->id() ?? 0),
             $overrides
         );
@@ -112,7 +112,7 @@ class PersonMerge extends BaseController
         }
 
         $this->audit()->log('person.merge', [
-            'parish_id' => $churchId,
+            'parish_id' => $parishId,
             'entity_type' => 'person',
             'entity_id' => $targetId,
             'new_values' => [

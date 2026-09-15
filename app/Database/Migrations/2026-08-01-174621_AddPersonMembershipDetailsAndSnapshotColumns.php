@@ -166,7 +166,7 @@ class AddPersonMembershipDetailsAndSnapshotColumns extends Migration
             ],
         ];
 
-        foreach (['parish_people', 'church_people'] as $table) {
+        foreach (['parish_people', 'parish_people'] as $table) {
             if (!$this->db->tableExists($table)) {
                 continue;
             }
@@ -183,7 +183,7 @@ class AddPersonMembershipDetailsAndSnapshotColumns extends Migration
     {
         $columns = ['has_pledge', 'is_under_16', 'is_dependent', 'is_communicant', 'is_confirmed', 'is_baptized'];
 
-        foreach (['parish_people', 'church_people'] as $table) {
+        foreach (['parish_people', 'parish_people'] as $table) {
             if (!$this->db->tableExists($table)) {
                 continue;
             }

@@ -66,7 +66,7 @@ Notes:
 Initial normalization is applied through:
 
 - Base controller JSON payload normalization
-- Scope filters (church, diocesan, province)
+- Scope filters (parish, diocesan, province)
 - Device verification filter
 - API rate-limit filter
 - Session keepalive JSON endpoint

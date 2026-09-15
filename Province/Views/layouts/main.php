@@ -26,7 +26,7 @@
             document.documentElement.setAttribute('data-bs-theme', theme);
         }());
     </script>
-    <title><?= esc($title ?? 'EkklesiaRD - Church Management System') ?></title>
+    <title><?= esc($title ?? 'EkklesiaRD - Parish Management System') ?></title>
 
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -400,7 +400,7 @@
                         'reports' => 'App.navReports',
                         'volunteers' => 'App.navVolunteers',
                         'profile' => 'App.navProfile',
-                        'churches' => 'App.navParishes',
+                        'parishes' => 'App.navParishes',
                         'events' => 'App.navEvents',
                         'pledges' => 'App.navPledges',
                         'worship-planning' => 'App.navWorshipPlanning',

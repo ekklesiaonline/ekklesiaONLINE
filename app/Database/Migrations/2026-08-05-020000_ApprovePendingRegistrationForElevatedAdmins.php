@@ -12,7 +12,7 @@ use CodeIgniter\Database\Migration;
  * This is the exact scenario reported in production: a diocese admin's own
  * parish-join request was escalated (RegistrationApprovalService::escalate())
  * instead of auto-approved, leaving their profile.membership_status as
- * 'visitor' and /profile showing "Pending" + no church affiliation even
+ * 'visitor' and /profile showing "Pending" + no parish affiliation even
  * though they were already a fully-functioning diocese admin. escalate()
  * now auto-approves top-tier admins going forward (see
  * RegistrationApprovalService::escalate()); this migration fixes any

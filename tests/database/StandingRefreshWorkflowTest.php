@@ -23,13 +23,13 @@ final class StandingRefreshWorkflowTest extends CIUnitTestCase
     public function testRefreshForYearMarksEligibleMemberAsGoodStanding(): void
     {
         $year = 2026;
-        $churchId = $this->insertChurch('Eligible Church');
+        $parishId = $this->insertParish('Eligible Parish');
         $userId = $this->insertUser('eligible.member');
 
-        $this->insertAffiliation($userId, $churchId, 'active');
-        $this->insertCommunionAttendances($userId, $churchId, $year, 3);
-        $this->insertPledge($userId, $churchId, $year - 1);
-        $this->insertPledge($userId, $churchId, $year);
+        $this->insertAffiliation($userId, $parishId, 'active');
+        $this->insertCommunionAttendances($userId, $parishId, $year, 3);
+        $this->insertPledge($userId, $parishId, $year - 1);
+        $this->insertPledge($userId, $parishId, $year);
 
         $model = model(MemberStandingSummaryModel::class);
         $count = $model->refreshForYear($year);
@@ -52,11 +52,11 @@ final class StandingRefreshWorkflowTest extends CIUnitTestCase
     public function testRefreshForYearMarksMissingPledgeAsNotGoodStanding(): void
     {
         $year = 2026;
-        $churchId = $this->insertChurch('Pending Pledge Church');
+        $parishId = $this->insertParish('Pending Pledge Parish');
         $userId = $this->insertUser('pending.pledge.member');
 
-        $this->insertAffiliation($userId, $churchId, 'active');
-        $this->insertCommunionAttendances($userId, $churchId, $year, 3);
+        $this->insertAffiliation($userId, $parishId, 'active');
+        $this->insertCommunionAttendances($userId, $parishId, $year, 3);
         // Do not insert current-year pledge; summary model requires has_pledged=true.
 
         $model = model(MemberStandingSummaryModel::class);
@@ -75,7 +75,7 @@ final class StandingRefreshWorkflowTest extends CIUnitTestCase
         $this->assertSame(0, (int) ($summary['has_pledged'] ?? 0));
     }
 
-    private function insertChurch(string $name): int
+    private function insertParish(string $name): int
     {
         $this->db->table($this->resolveTableName('parish'))->insert([
             'name' => $name,
@@ -109,20 +109,20 @@ final class StandingRefreshWorkflowTest extends CIUnitTestCase
         if (in_array('is_confirmed', $profileColumns, true)) {
             $profilePayload['is_confirmed'] = 1;
         }
-        // Provide parish_id / church_id with a safe default to satisfy any NOT NULL
+        // Provide parish_id / parish_id with a safe default to satisfy any NOT NULL
         // constraint left by a prior test class in the shared SQLite in-memory db.
         if (in_array('parish_id', $profileColumns, true)) {
             $profilePayload['parish_id'] = 0;
         }
-        if (in_array('church_id', $profileColumns, true)) {
-            $profilePayload['church_id'] = 0;
+        if (in_array('parish_id', $profileColumns, true)) {
+            $profilePayload['parish_id'] = 0;
         }
         $this->db->table($profileTable)->insert($profilePayload);
 
         return $userId;
     }
 
-    private function insertAffiliation(int $userId, int $churchId, string $status): void
+    private function insertAffiliation(int $userId, int $parishId, string $status): void
     {
         $table = $this->resolveTableName('parish_affiliation');
         $columns = array_map('strtolower', $this->db->getFieldNames($table));
@@ -136,9 +136,9 @@ final class StandingRefreshWorkflowTest extends CIUnitTestCase
         }
 
         if (in_array('parish_id', $columns, true)) {
-            $payload['parish_id'] = $churchId;
+            $payload['parish_id'] = $parishId;
         } else {
-            $payload['church_id'] = $churchId;
+            $payload['parish_id'] = $parishId;
         }
 
         if (in_array('membership_status', $columns, true)) {
@@ -160,12 +160,12 @@ final class StandingRefreshWorkflowTest extends CIUnitTestCase
         ]);
     }
 
-    private function insertCommunionAttendances(int $userId, int $churchId, int $year, int $count): void
+    private function insertCommunionAttendances(int $userId, int $parishId, int $year, int $count): void
     {
         for ($i = 1; $i <= $count; $i++) {
             $date = sprintf('%d-01-%02d', $year, $i);
             $this->db->table($this->resolveTableName('service'))->insert([
-                'church_id' => $churchId,
+                'parish_id' => $parishId,
                 'date' => $date,
                 'service_date' => $date,
                 'service' => json_encode(['Sunday Worship']),
@@ -185,11 +185,11 @@ final class StandingRefreshWorkflowTest extends CIUnitTestCase
         }
     }
 
-    private function insertPledge(int $userId, int $churchId, int $year): void
+    private function insertPledge(int $userId, int $parishId, int $year): void
     {
         $this->db->table($this->resolveTableName('annual_pledge'))->insert([
             'user_id' => $userId,
-            'church_id' => $churchId,
+            'parish_id' => $parishId,
             'pledge_year' => $year,
             'pledged_amount' => 100.00,
             'fulfilled_amount' => 0.00,
@@ -271,7 +271,7 @@ final class StandingRefreshWorkflowTest extends CIUnitTestCase
         $affiliationTable = $this->resolveTableName('parish_affiliation');
         $this->ensureColumnExists($affiliationTable, 'linked_user_id', 'INTEGER NULL');
         $this->ensureColumnExists($affiliationTable, 'parish_id', 'INTEGER NULL');
-        $this->ensureColumnExists($affiliationTable, 'church_id', 'INTEGER NULL');
+        $this->ensureColumnExists($affiliationTable, 'parish_id', 'INTEGER NULL');
         $this->ensureColumnExists($affiliationTable, 'person_id', 'INTEGER NULL');
         $this->ensureColumnExists($affiliationTable, 'is_member', 'INTEGER NOT NULL DEFAULT 0');
         $this->ensureColumnExists($affiliationTable, 'affiliation_type', 'TEXT NULL');
@@ -282,7 +282,7 @@ final class StandingRefreshWorkflowTest extends CIUnitTestCase
         $prefixedAffiliation = $prefix . 'parish_affiliation';
         $this->ensureColumnExists($prefixedAffiliation, 'linked_user_id', 'INTEGER NULL');
         $this->ensureColumnExists($prefixedAffiliation, 'parish_id', 'INTEGER NULL');
-        $this->ensureColumnExists($prefixedAffiliation, 'church_id', 'INTEGER NULL');
+        $this->ensureColumnExists($prefixedAffiliation, 'parish_id', 'INTEGER NULL');
         $this->ensureColumnExists($prefixedAffiliation, 'person_id', 'INTEGER NULL');
         $this->ensureColumnExists($prefixedAffiliation, 'is_member', 'INTEGER NOT NULL DEFAULT 0');
 
@@ -298,7 +298,7 @@ final class StandingRefreshWorkflowTest extends CIUnitTestCase
         if (!in_array($prefix . 'service', $tables, true) && !in_array('service', $tables, true)) {
             $this->db->query('CREATE TABLE IF NOT EXISTS ' . $prefix . 'service (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
-                church_id INTEGER NOT NULL,
+                parish_id INTEGER NOT NULL,
                 date TEXT NOT NULL,
                 service_date TEXT NULL,
                 service_time TEXT NULL,
@@ -310,12 +310,12 @@ final class StandingRefreshWorkflowTest extends CIUnitTestCase
 
         $servicesTable = $this->resolveTableName('service');
         $this->ensureColumnExists($servicesTable, 'id', 'INTEGER');
-        $this->ensureColumnExists($servicesTable, 'church_id', 'INTEGER NULL');
+        $this->ensureColumnExists($servicesTable, 'parish_id', 'INTEGER NULL');
         $this->ensureColumnExists($servicesTable, 'date', 'TEXT NULL');
         $this->ensureColumnExists($servicesTable, 'service_date', 'TEXT NULL');
         $this->ensureColumnExists($servicesTable, 'service_time', 'TEXT NULL');
         $prefixedServices = $prefix . 'service';
-        $this->ensureColumnExists($prefixedServices, 'church_id', 'INTEGER NULL');
+        $this->ensureColumnExists($prefixedServices, 'parish_id', 'INTEGER NULL');
         $this->ensureColumnExists($prefixedServices, 'date', 'TEXT NULL');
         $this->ensureColumnExists($prefixedServices, 'service_date', 'TEXT NULL');
         $this->ensureColumnExists($prefixedServices, 'service_time', 'TEXT NULL');
@@ -346,7 +346,7 @@ final class StandingRefreshWorkflowTest extends CIUnitTestCase
             $this->db->query('CREATE TABLE IF NOT EXISTS ' . $prefix . 'annual_pledge (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 user_id INTEGER NOT NULL,
-                church_id INTEGER NOT NULL,
+                parish_id INTEGER NOT NULL,
                 pledge_year INTEGER NOT NULL,
                 pledged_amount REAL NULL,
                 fulfilled_amount REAL NULL,

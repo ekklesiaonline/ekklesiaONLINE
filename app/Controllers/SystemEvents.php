@@ -17,8 +17,8 @@ class SystemEvents extends BaseController
             return $redirect;
         }
 
-        $churchId = $this->nationalChurchId();
-        if ($churchId === null) {
+        $parishId = $this->nationalParishId();
+        if ($parishId === null) {
             return $this->forbiddenResponse(lang('App.errorGeneric'));
         }
 
@@ -27,7 +27,7 @@ class SystemEvents extends BaseController
         $status = trim((string) ($this->request->getGet('status') ?? ''));
         $search = trim((string) ($this->request->getGet('search') ?? ''));
 
-        $events = model('EventModel')->getNationalEventsWithCounts($churchId, $status === '' ? null : $status, $search === '' ? null : $search);
+        $events = model('EventModel')->getNationalEventsWithCounts($parishId, $status === '' ? null : $status, $search === '' ? null : $search);
 
         $canEdit = auth()->user()->can('national.event.manage');
         foreach ($events as &$event) {
@@ -49,8 +49,8 @@ class SystemEvents extends BaseController
             return $redirect;
         }
 
-        $churchId = $this->nationalChurchId();
-        if ($churchId === null) {
+        $parishId = $this->nationalParishId();
+        if ($parishId === null) {
             return $this->forbiddenResponse(lang('App.errorGeneric'));
         }
 
@@ -84,7 +84,7 @@ class SystemEvents extends BaseController
             $gridEnd = $periodEnd;
         }
 
-        $events = model('EventModel')->getNationalEventsForRange($churchId, $gridStart->format('Y-m-d H:i:s'), $gridEnd->format('Y-m-d H:i:s'));
+        $events = model('EventModel')->getNationalEventsForRange($parishId, $gridStart->format('Y-m-d H:i:s'), $gridEnd->format('Y-m-d H:i:s'));
         $events = array_map(static function (array $event): array {
             $event['scope_level'] = 'national';
             $event['source_label'] = lang('Province.calendarNationalLabel');
@@ -131,14 +131,14 @@ class SystemEvents extends BaseController
             return $redirect;
         }
 
-        $churchId = $this->nationalChurchId();
-        if ($churchId === null) {
+        $parishId = $this->nationalParishId();
+        if ($parishId === null) {
             return $this->forbiddenResponse(lang('App.errorGeneric'));
         }
 
         return view('App\Views\System\Events\create', array_merge($this->getCommonViewData(lang('Events.pageTitleCreateEvent')), [
             'event' => null,
-            'calendars' => $this->getNationalCalendars($churchId),
+            'calendars' => $this->getNationalCalendars($parishId),
             'can_manage_calendars' => auth()->user()->can('national.calendar.manage'),
         ]));
     }
@@ -149,8 +149,8 @@ class SystemEvents extends BaseController
             return $redirect;
         }
 
-        $churchId = $this->nationalChurchId();
-        if ($churchId === null) {
+        $parishId = $this->nationalParishId();
+        if ($parishId === null) {
             return $this->forbiddenResponse(lang('App.errorGeneric'));
         }
 
@@ -159,7 +159,7 @@ class SystemEvents extends BaseController
         }
 
         try {
-            $eventId = $this->persistEvent($churchId);
+            $eventId = $this->persistEvent($parishId);
         } catch (\RuntimeException $e) {
             return redirect()->back()->withInput()->with('error', $e->getMessage());
         }
@@ -186,8 +186,8 @@ class SystemEvents extends BaseController
             return $redirect;
         }
 
-        $churchId = $this->nationalChurchId();
-        if ($churchId === null) {
+        $parishId = $this->nationalParishId();
+        if ($parishId === null) {
             return $this->forbiddenResponse(lang('App.errorGeneric'));
         }
 
@@ -198,7 +198,7 @@ class SystemEvents extends BaseController
 
         return view('App\Views\System\Events\edit', array_merge($this->getCommonViewData(lang('Events.pageTitleEditEvent')), [
             'event' => $event,
-            'calendars' => $this->getNationalCalendars($churchId),
+            'calendars' => $this->getNationalCalendars($parishId),
             'can_manage_calendars' => auth()->user()->can('national.calendar.manage'),
         ]));
     }
@@ -209,8 +209,8 @@ class SystemEvents extends BaseController
             return $redirect;
         }
 
-        $churchId = $this->nationalChurchId();
-        if ($churchId === null) {
+        $parishId = $this->nationalParishId();
+        if ($parishId === null) {
             return $this->forbiddenResponse(lang('App.errorGeneric'));
         }
 
@@ -224,7 +224,7 @@ class SystemEvents extends BaseController
         }
 
         try {
-            $updated = $this->persistEvent($churchId, $id);
+            $updated = $this->persistEvent($parishId, $id);
         } catch (\RuntimeException $e) {
             return redirect()->back()->withInput()->with('error', $e->getMessage());
         }
@@ -263,18 +263,18 @@ class SystemEvents extends BaseController
         return redirect()->to(base_url('system/events/calendar'))->with('success', lang('Province.eventDeleted'));
     }
 
-    private function nationalChurchId(): ?int
+    private function nationalParishId(): ?int
     {
-        $row = db_connect()->table('church')->select('id')->limit(1)->get()->getRowArray();
+        $row = db_connect()->table('parish')->select('id')->limit(1)->get()->getRowArray();
         $id = is_array($row) ? (int) ($row['id'] ?? 0) : 0;
         return $id > 0 ? $id : null;
     }
 
-    private function getNationalCalendars(int $churchId): array
+    private function getNationalCalendars(int $parishId): array
     {
         return model('EventCalendarModel')
             ->where('scope_level', 'national')
-            ->where('church_id', $churchId)
+            ->where('parish_id', $parishId)
             ->orderBy('sort_order', 'ASC')
             ->orderBy('name', 'ASC')
             ->findAll();
@@ -310,10 +310,10 @@ class SystemEvents extends BaseController
         ];
     }
 
-    private function persistEvent(int $churchId, ?int $eventId = null): int|bool
+    private function persistEvent(int $parishId, ?int $eventId = null): int|bool
     {
         $calendarId = (int) $this->request->getPost('calendar_id');
-        $calendar = model('EventCalendarModel')->where('id', $calendarId)->where('scope_level', 'national')->where('church_id', $churchId)->first();
+        $calendar = model('EventCalendarModel')->where('id', $calendarId)->where('scope_level', 'national')->where('parish_id', $parishId)->first();
         if (!is_array($calendar)) {
             return false;
         }
@@ -341,7 +341,7 @@ class SystemEvents extends BaseController
         $data = [
             'calendar_id' => $calendarId,
             'organizer_type' => 'national',
-            'organizer_church_id' => $churchId,
+            'organizer_parish_id' => $parishId,
             'organizer_province_id' => null,
             'organizer_diocese_id' => null,
             'organizer_parish_id' => null,

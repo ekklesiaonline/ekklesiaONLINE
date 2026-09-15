@@ -19,9 +19,9 @@ Codify the private-by-default media delivery model for ekklesiaRD with clear sec
 
 Additional private media routes:
 
-- Route: `GET /media/church-logo/{churchId}`
-- Controller: `MemberPortal\Controllers\PublicHome::churchLogo(int $churchId)`
-- Storage convention (`churches.logo`): `churches/{churchId}/logo/{randomName}`
+- Route: `GET /media/parish-logo/{parishId}`
+- Controller: `MemberPortal\Controllers\PublicHome::parishLogo(int $parishId)`
+- Storage convention (`parishes.logo`): `parishes/{parishId}/logo/{randomName}`
 
 - Route: `GET /media/event-attachment/{attachmentId}`
 - Controller: `MemberPortal\Controllers\PublicHome::eventAttachment(int $attachmentId)`
@@ -33,7 +33,7 @@ Authorization rules:
 - Allow `systemadmin`
 - Allow `provinceadmin` when `viewer.province_id === target.province_id`
 - Allow `diocesanadmin` when `viewer.diocese_id === target.diocese_id`
-- For other staff (`members.view` or `profile.edit`), require at least one shared active church affiliation
+- For other staff (`members.view` or `profile.edit`), require at least one shared active parish affiliation
 
 Failure behavior:
 
@@ -50,8 +50,8 @@ For any upload path consumption:
 
 Legacy upload endpoint hardening:
 
-- `serveUpload()` blocks `profile/*`, `churches/*`, and `events/*` requests
-- Profile photos, church logos, and event attachments must be served exclusively via their guarded `media/*` endpoints
+- `serveUpload()` blocks `profile/*`, `parishes/*`, and `events/*` requests
+- Profile photos, parish logos, and event attachments must be served exclusively via their guarded `media/*` endpoints
 
 ## Performance Controls
 
@@ -83,12 +83,12 @@ Normalized views:
 
 Additional normalized non-profile media views:
 
-- `Diocesan/Views/Churches/edit.php` uses `base_url('media/church-logo/' . {churchId})`
+- `Diocesan/Views/Parishes/edit.php` uses `base_url('media/parish-logo/' . {parishId})`
 - `Pastor/Views/Events/view.php` uses `base_url('media/event-attachment/' . {attachmentId})`
 
 ## Operational Notes
 
 - Keep per-user folders; they reduce directory fan-out and improve file-system performance at scale.
-- Keep per-entity folders for logos and attachments (`churches/{id}/logo`, `events/{id}`) for the same reasons.
+- Keep per-entity folders for logos and attachments (`parishes/{id}/logo`, `events/{id}`) for the same reasons.
 - Keep random names; they reduce guessability and URL enumeration risk.
 - If a future requirement needs public avatars, migrate avatars to `public/uploads` and treat that as a separate explicit public model.

@@ -8,8 +8,8 @@
 ### 1. **Database Migration Verified**
 
 - Confirmed migration 2026_05_09_000007 applied successfully
-- All 31 tables converted: `church_id` → `parish_id`
-- Old `church_id` columns fully removed (verified via DESCRIBE)
+- All 31 tables converted: `parish_id` → `parish_id`
+- Old `parish_id` columns fully removed (verified via DESCRIBE)
 - Foreign key constraints maintained
 - **Impact**: Database is now canonical and ready for code updates
 
@@ -32,8 +32,8 @@
 ### 4. **Phase 3 Controllers - Critical Updates**
 
 - ✅ **Pastor/Controllers/Guests.php** (33 occurrences)
-    - Line 47: WHERE clause updated: `church_id` → `parish_id`
-    - Line 149: Data access check updated: `$guest['church_id']` → `$guest['parish_id']`
+    - Line 47: WHERE clause updated: `parish_id` → `parish_id`
+    - Line 149: Data access check updated: `$guest['parish_id']` → `$guest['parish_id']`
     - Line 243: Data assignment kept as-is (will map via model's allowedFields)
     - Remaining 14 similar instances in data assignments (can use model's field filtering)
 
@@ -45,7 +45,7 @@
 
 ## ⚠️ Critical Finding
 
-**Old `church_id` column no longer exists in database.** Controllers using `$data['church_id']` will fail. Two approaches to fix:
+**Old `parish_id` column no longer exists in database.** Controllers using `$data['parish_id']` will fail. Two approaches to fix:
 
 **Option A (Preferred - Clean)**: Update all controller code to use `'parish_id'` key
 **Option B (Workaround)**: Controller sends `'parish_id'` through model's allowedFields filtering
@@ -64,14 +64,14 @@ Currently implemented: Mixed approach
 - VolunteerScheduleModel (8 refs)
 - FollowupTemplateModel (7 refs)
 - ParishIntegrationModel (6 refs)
-- ChurchFinancialSummaryModel (6 refs)
+- ParishFinancialSummaryModel (6 refs)
 - AttendanceModel (6 refs)
 - AnnualPledgeModel ✅ DONE
 - CallTaskModel (5 refs)
 - FollowupSequenceModel (5 refs)
 - UserRegistrationRequestModel (5 refs)
 - ParishSettingModel (5 refs) - partially done
-- ChurchBudgetModel (4 refs) - partially done
+- ParishBudgetModel (4 refs) - partially done
 - DiocesanAttendanceMonthlyModel (4 refs)
 - FollowupLogModel (4 refs)
 - LeadershipPositionModel (5 refs)
@@ -82,7 +82,7 @@ Currently implemented: Mixed approach
 - ServiceWorshipItemModel (2 refs)
 - SmsQueueModel (2 refs)
 - FundModel (3 refs)
-- ChurchPeopleModel (3 refs)
+- ParishPeopleModel (3 refs)
 - DiocesesModel (1 ref)
 - ParishModel (2 refs)
 - WorshipSongModel (3 refs)
@@ -92,7 +92,7 @@ Currently implemented: Mixed approach
 
 - Volunteer/Controllers/Volunteers.php (21 refs)
 - MemberPortal/Controllers/Families.php (21 refs)
-- Diocesan/Controllers/Churches.php (20 refs)
+- Diocesan/Controllers/Parishes.php (20 refs)
 - Worship/Controllers/ParochialReport.php (17 refs)
 - Diocesan/Controllers/RegistrationRequests.php (15 refs)
 - Treasurer/Controllers/Expenses.php (14 refs)
@@ -118,7 +118,7 @@ Currently implemented: Mixed approach
 ### Phase 4 Forms/Views
 
 - **Status**: Inventory needed - expected in Pastor/Views, Treasurer/Views, Worship/Views, MemberPortal/Views, Diocesan/Views
-- Patterns: `<input name="church_id"` → `<input name="parish_id"`, hidden field updates, data binding updates
+- Patterns: `<input name="parish_id"` → `<input name="parish_id"`, hidden field updates, data binding updates
 - **Estimated effort**: 30-50 form field updates
 
 ### Phase 5 Application Testing
@@ -141,9 +141,9 @@ Currently implemented: Mixed approach
 
 1. **Use terminal sed/perl** to batch-replace patterns in remaining models:
     ```bash
-    find app/Models -name "*.php" -exec sed -i "" "s/'church_id'/'parish_id'/g" {} \;
+    find app/Models -name "*.php" -exec sed -i "" "s/'parish_id'/'parish_id'/g" {} \;
     ```
-2. **Update critical 5 controllers** (Volunteers, Families, Churches, Reports, ParochialReport)
+2. **Update critical 5 controllers** (Volunteers, Families, Parishes, Reports, ParochialReport)
 3. **Test application** with real endpoints to identify any remaining issues
 
 ### Medium Priority
@@ -158,9 +158,9 @@ Currently implemented: Mixed approach
 
 ## 📝 Known Issues to Watch
 
-1. **Data mapping**: Controllers using `'church_id'` in insert arrays must have model's allowedFields include `'parish_id'` to work correctly
+1. **Data mapping**: Controllers using `'parish_id'` in insert arrays must have model's allowedFields include `'parish_id'` to work correctly
 2. **Return data keys**: Model query results will have `'parish_id'` key if SELECT alias is `'parish_id'` - controllers must check against correct key
-3. **Scope validation**: All permission checks still reference getOperationalChurchId() - method name suggests "church" but operates correctly
+3. **Scope validation**: All permission checks still reference getOperationalParishId() - method name suggests "parish" but operates correctly
 
 ## ✅ Validation Checklist
 

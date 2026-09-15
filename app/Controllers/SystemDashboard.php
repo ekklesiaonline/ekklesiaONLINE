@@ -19,7 +19,7 @@ class SystemDashboard extends BaseController
         $db = db_connect();
 
         $provinceRows = $db->table('province p')
-            ->select('p.id, p.province_number, p.name, p.sort_order, COUNT(DISTINCT d.id) AS diocese_count, COUNT(DISTINCT c.id) AS church_count')
+            ->select('p.id, p.province_number, p.name, p.sort_order, COUNT(DISTINCT d.id) AS diocese_count, COUNT(DISTINCT c.id) AS parish_count')
             ->join('diocese d', 'd.province_id = p.id', 'left')
             ->join('parish c', 'c.diocese_id = d.id', 'left')
             ->groupBy('p.id, p.province_number, p.name, p.sort_order')
@@ -31,7 +31,7 @@ class SystemDashboard extends BaseController
         $selectedProvinceId = (int) ($this->request->getGet('province_id') ?? 0);
 
         $dioceseQuery = $db->table('diocese d')
-            ->select('d.id, d.name, d.province_id, p.name AS province_name, p.province_number, COUNT(DISTINCT c.id) AS church_count')
+            ->select('d.id, d.name, d.province_id, p.name AS province_name, p.province_number, COUNT(DISTINCT c.id) AS parish_count')
             ->join('province p', 'p.id = d.province_id', 'inner')
             ->join('parish c', 'c.diocese_id = d.id', 'left')
             ->groupBy('d.id, d.name, d.province_id, p.name, p.province_number')

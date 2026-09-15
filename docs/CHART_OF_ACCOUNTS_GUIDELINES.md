@@ -2,20 +2,20 @@
 
 ## Overview
 
-The ekklesiaRD Chart of Accounts (COA) uses a standardized 4-digit numbering system designed for church and charitable organization fund accounting. This structure enables accurate financial reporting, proper fund segregation, and compliance with religious and nonprofit accounting standards.
+The ekklesiaRD Chart of Accounts (COA) uses a standardized 4-digit numbering system designed for parish and charitable organization fund accounting. This structure enables accurate financial reporting, proper fund segregation, and compliance with religious and nonprofit accounting standards.
 
 ## Account Structure
 
 ### Numbering Tiers
 
 ```ini
-1000-1999: Assets (What the church owns)
-2000-2999: Liabilities (What the church owes)
+1000-1999: Assets (What the parish owns)
+2000-2999: Liabilities (What the parish owes)
 3000-3999: Net Assets/Fund Balances (Equity)
 4000-4999: Income - Unrestricted (General operating revenue)
 5000-5999: Income - Restricted/Designated (Funds for specific purposes)
 6000-6999: Expenses - Outreach & Parish Missions (Money given away)
-7000-7999: Expenses - Ministry & Programs (Church life and groups)
+7000-7999: Expenses - Ministry & Programs (Parish life and groups)
 8000-8999: Expenses - Operations & Facilities (Building/Admin costs)
 ```
 
@@ -23,7 +23,7 @@ The ekklesiaRD Chart of Accounts (COA) uses a standardized 4-digit numbering sys
 
 ### 1. Balance Sheet Accounts (1000–3999)
 
-Track what the church owns (assets), owes (liabilities), and the net equity.
+Track what the parish owns (assets), owes (liabilities), and the net equity.
 
 - **Assets (1000–1999)**: Current assets (cash, receivables), fixed assets (property, equipment), and contra accounts (accumulated depreciation).
 - **Liabilities (2000–2999)**: Current liabilities (payables, payroll taxes) and long-term liabilities (mortgages, loans).
@@ -40,7 +40,7 @@ Separated by restriction status for proper fund accounting.
 
 Organized by _functional_ categories to support mission-focused reporting.
 
-- **Outreach Expenses (6000–6999)**: Diocesan assessments, mission work, theological education—money given away beyond the parish to support the larger church and community.
+- **Outreach Expenses (6000–6999)**: Diocesan assessments, mission work, theological education—money given away beyond the parish to support the larger parish and community.
 - **Ministry & Program Expenses (7000–7999)**: Clergy compensation, worship/music, formation (Sunday school, youth), fellowship—direct support of the congregation's life and spiritual mission.
 - **Operations & Facilities (8000–8999)**: Utilities, maintenance, insurance, office supplies, professional fees, capital projects—the infrastructure cost of being open and functional.
 
@@ -93,7 +93,7 @@ Each tier is allocated space for detailed sub-categorization:
 | 1310               | Prepaid Expenses                     | Asset (Current) | Insurance or other items paid in advance.    |
 | **Fixed Assets**   |                                      |                 |                                              |
 | 1410               | Land                                 | Asset (Fixed)   | Value of land owned.                         |
-| 1420               | Buildings                            | Asset (Fixed)   | Value of buildings (church, vicarage, hall). |
+| 1420               | Buildings                            | Asset (Fixed)   | Value of buildings (parish, vicarage, hall). |
 | 1430               | Accumulated Depreciation - Buildings | Asset (Contra)  | Reduces building value to show age/use.      |
 | 1440               | Furniture, Fixtures & Equipment      | Asset (Fixed)   | Pews, office furniture, computers, etc.      |
 | 1450               | Accumulated Depreciation - FF&E      | Asset (Contra)  | Reduces FF&E value.                          |
@@ -176,7 +176,7 @@ Each tier is allocated space for detailed sub-categorization:
 
 | Code                            | Account Name                          | Type    | Description                                               |
 | ------------------------------- | ------------------------------------- | ------- | --------------------------------------------------------- |
-| 7000                            | MINISTRY & PROGRAM EXPENSES           | Heading | Money spent on church life and groups.                    |
+| 7000                            | MINISTRY & PROGRAM EXPENSES           | Heading | Money spent on parish life and groups.                    |
 | **Clergy**                      |                                       |         |                                                           |
 | 7110                            | Clergy Salary & Housing               | Expense | Stipend, housing allowance, and cash compensation.        |
 | 7120                            | Clergy Pension & Benefits             | Expense | Pension fund contributions and other benefits.            |
@@ -200,9 +200,9 @@ Each tier is allocated space for detailed sub-categorization:
 
 | Code                              | Account Name                       | Type    | Description                                          |
 | --------------------------------- | ---------------------------------- | ------- | ---------------------------------------------------- |
-| 8000                              | OPERATIONS & FACILITIES            | Heading | The cost of keeping the church open and running.     |
+| 8000                              | OPERATIONS & FACILITIES            | Heading | The cost of keeping the parish open and running.     |
 | **Utilities**                     |                                    |         |                                                      |
-| 8110                              | Utilities - Church                 | Expense | Electricity, water, gas, trash for church.           |
+| 8110                              | Utilities - Parish                 | Expense | Electricity, water, gas, trash for parish.           |
 | 8111                              | Utilities - Vicarage               | Expense | Electricity, water, gas, trash for vicarage.         |
 | 8112                              | Utilities - Telephone & Internet   | Expense | Phone, fax, internet services.                       |
 | **Maintenance & Repairs**         |                                    |         |                                                      |
@@ -231,13 +231,13 @@ Each tier is allocated space for detailed sub-categorization:
 
 The system uses fund accounting principles. Each tier maps to a specific `fund_type` value in the `funds` table (see next section):
 
-- **General (Unrestricted) Fund** (`fund_type = unrestricted`): Operates on accounts 4000–4999 (income) and 8000–8999 (operations). Balances support the church's general mission.
+- **General (Unrestricted) Fund** (`fund_type = unrestricted`): Operates on accounts 4000–4999 (income) and 8000–8999 (operations). Balances support the parish's general mission.
 - **Specific Purpose (Designated) Fund** (`fund_type = restricted`): Operates on accounts 5000–5999. Money must be spent according to the donor's or council's stated intent.
 - **Permanently Restricted Fund** (`fund_type = permanent`): Operates on account 3300 (endowment). Principal is never spent; only investment income may be used.
 
 ### Funds Table (Implemented)
 
-The `funds` table is the database implementation of the three accounting tiers above. Each church manages its own named funds, each typed and optionally linked to a default COA account.
+The `funds` table is the database implementation of the three accounting tiers above. Each parish manages its own named funds, each typed and optionally linked to a default COA account.
 
 **Migration:** `2026_03_18_000006_CreateFundsAndAddFundIdToTransactions.php`
 
@@ -246,8 +246,8 @@ The `funds` table is the database implementation of the three accounting tiers a
 | Column                | Type                                                | Description                                                |
 | --------------------- | --------------------------------------------------- | ---------------------------------------------------------- |
 | `id`                  | INT UNSIGNED PK                                     | Auto-increment primary key                                 |
-| `church_id`           | INT UNSIGNED FK → `churches.id`                     | Multi-tenant scoping                                       |
-| `name`                | VARCHAR(255) UNIQUE per church                      | Fund display name                                          |
+| `parish_id`           | INT UNSIGNED FK → `parishes.id`                     | Multi-tenant scoping                                       |
+| `name`                | VARCHAR(255) UNIQUE per parish                      | Fund display name                                          |
 | `description`         | TEXT (nullable)                                     | Optional description of the fund's purpose                 |
 | `fund_type`           | ENUM: `unrestricted`, `restricted`, `permanent`     | Maps to the three COA accounting tiers (see mapping below) |
 | `restriction_purpose` | VARCHAR(255) (nullable)                             | Describes the restriction for restricted/permanent funds   |
@@ -283,7 +283,7 @@ An existing transaction already assigned to a locked fund retains its assignment
 
 #### Default Funds (Seeder)
 
-`DefaultFundsSeeder` creates five seed funds for every church on first run:
+`DefaultFundsSeeder` creates five seed funds for every parish on first run:
 
 | Fund Name                   | `fund_type`    | `is_locked` | Restriction Purpose  |
 | --------------------------- | -------------- | ----------- | -------------------- |
@@ -312,15 +312,15 @@ expenses.fund_id  → funds.id  (ON DELETE SET NULL, ON UPDATE CASCADE)
 
 | Method                                                   | Return   | Notes                                                           |
 | -------------------------------------------------------- | -------- | --------------------------------------------------------------- |
-| `getChurchFunds(int $churchId, bool $activeOnly = true)` | `array`  | Active (or all) funds ordered by `fund_type`, then `name`       |
+| `getParishFunds(int $parishId, bool $activeOnly = true)` | `array`  | Active (or all) funds ordered by `fund_type`, then `name`       |
 | `getFundWithBalance(int $fundId)`                        | `?array` | Fund row plus `total_income`, `total_expenses`, `balance`       |
-| `getChurchFundsWithBalances(int $churchId)`              | `array`  | All active church funds, each with a calculated running balance |
+| `getParishFundsWithBalances(int $parishId)`              | `array`  | All active parish funds, each with a calculated running balance |
 
 `DonationModel::getDonationsByFund()` and `ExpenseModel::getExpensesByFund()` group transaction totals by fund for period reporting.
 
 ### Accounts Receivable & Pledges
 
-Track pledges in account 1210 (Accounts Receivable) and recognize them as income only when payment is received, not when pledged (cash basis). For accrual basis churches, adjust the recognition policy accordingly.
+Track pledges in account 1210 (Accounts Receivable) and recognize them as income only when payment is received, not when pledged (cash basis). For accrual basis parishes, adjust the recognition policy accordingly.
 
 ### Depreciation & Fixed Assets
 
@@ -377,11 +377,11 @@ When the CoA structure is updated:
 1. Existing transactions continue to map to legacy account codes through a reconciliation table if needed.
 2. All new transactions use the standardized 4-digit system.
 3. Historical reporting can aggregate legacy codes into the new structure.
-4. Church leadership should review and approve the new CoA structure before implementation.
+4. Parish leadership should review and approve the new CoA structure before implementation.
 
 ## Questions & Customization
 
-Churches may need to customize accounts for:
+Parishes may need to customize accounts for:
 
 - **Multi-site operations**: Add location suffixes (e.g., 7110-A for Main Campus Clergy, 7110-B for Satellite).
 - **Detailed sub-funds**: Create dedicated restricted funds for capital projects or significant ministries.

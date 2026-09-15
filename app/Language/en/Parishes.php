@@ -21,7 +21,7 @@ return [
     'btn_manageStaff'  => 'Manage Staff',
     'btn_saveChanges'  => 'Save Changes',
     'btn_createParish' => 'Create Parish',
-    'btn_createChurch' => 'Create Parish',
+    'btn_createParish' => 'Create Parish',
     'btn_cancel'       => 'Cancel',
     'btn_addParish'    => 'Add Parish',
     'btn_switch'       => 'Switch',
@@ -36,7 +36,7 @@ return [
     'btn_assignRole'   => 'Assign Role',
 
     // Section headings
-    'sectionChurchLogo'              => 'Parish Logo',
+    'sectionParishLogo'              => 'Parish Logo',
     'sectionParishBanner'            => 'Parish Banner',
     'sectionCongregationId'          => 'Congregation Identification',
     'sectionCongregationIdReadOnly'  => 'Congregation Identification (Read-Only)',
@@ -58,7 +58,7 @@ return [
 
     // Form labels
     'labelParishName'       => 'Parish Name',
-    'labelChurchName'       => 'Parish Name',
+    'labelParishName'       => 'Parish Name',
     'labelProvince'         => 'Province',
     'labelDiocese'          => 'Diocese',
     'labelTaxId'            => 'Tax ID (EIN)',
@@ -116,8 +116,8 @@ return [
     'impactMembers' => 'Active member affiliations (deleted)',
     'impactProfilesSetNull' => 'Profiles detached from parish (set NULL)',
     'impactProfilesDeleted' => 'Profiles linked to parish (deleted)',
-    'impactChurchRoleAuditLogsSetNull' => 'Parish role audit logs detached from parish (set NULL)',
-    'impactChurchRoleAuditLogsDeleted' => 'Parish role audit logs linked to parish (deleted)',
+    'impactParishRoleAuditLogsSetNull' => 'Parish role audit logs detached from parish (set NULL)',
+    'impactParishRoleAuditLogsDeleted' => 'Parish role audit logs linked to parish (deleted)',
     'impactDonations' => 'Donations (deleted)',
     'impactServices' => 'Services (deleted)',
     'impactAttendance' => 'Attendance via services (deleted)',
@@ -172,11 +172,11 @@ return [
     'filterAllDioceses'  => 'All Dioceses',
     'filterAllProvinces' => 'All Provinces',
 
-    'textNoChurchesFound' => 'No churches found.',
+    'textNoParishesFound' => 'No parishes found.',
 
-    'btn_confirmDeleteChurch' => 'Confirm Delete',
+    'btn_confirmDeleteParish' => 'Confirm Delete',
 
-    'textUnableDeleteChurch' => 'Unable to delete church.',
+    'textUnableDeleteParish' => 'Unable to delete parish.',
 
-    'textDeleteChurchConfirm' => 'Are you sure you want to delete this church?',
+    'textDeleteParishConfirm' => 'Are you sure you want to delete this parish?',
 ];

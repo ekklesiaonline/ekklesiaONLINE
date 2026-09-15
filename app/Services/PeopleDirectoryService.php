@@ -203,7 +203,7 @@ class PeopleDirectoryService
 
     private function resolveSnapshotTable(): ?string
     {
-        foreach (['parish_people', 'church_people'] as $candidate) {
+        foreach (['parish_people', 'parish_people'] as $candidate) {
             if ($this->db->tableExists($candidate)) {
                 return $candidate;
             }
@@ -220,8 +220,8 @@ class PeopleDirectoryService
             return 'parish_id';
         }
 
-        if (in_array('church_id', $columns, true)) {
-            return 'church_id';
+        if (in_array('parish_id', $columns, true)) {
+            return 'parish_id';
         }
 
         return 'parish_id';

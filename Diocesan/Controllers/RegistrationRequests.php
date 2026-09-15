@@ -29,8 +29,8 @@ class RegistrationRequests extends BaseController
         $approvedParishId = (int) (
             $request['requested_parish_id']
             ?? $request['parish_id']
-            ?? $request['requested_church_id']
-            ?? $request['church_id']
+            ?? $request['requested_parish_id']
+            ?? $request['parish_id']
             ?? 0
         );
         if ($approvedParishId > 0) {
@@ -85,8 +85,8 @@ class RegistrationRequests extends BaseController
                     $parishId = (int) (
                         $request['requested_parish_id']
                         ?? $request['parish_id']
-                        ?? $request['requested_church_id']
-                        ?? $request['church_id']
+                        ?? $request['requested_parish_id']
+                        ?? $request['parish_id']
                         ?? 0
                     );
                     if ($parishId > 0) {

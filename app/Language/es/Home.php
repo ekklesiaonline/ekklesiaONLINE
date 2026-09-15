@@ -16,7 +16,7 @@ return [
     'featureGuestBody' => 'Captura información de visitantes y automatiza flujos de seguimiento',
     'featureVolunteerTitle' => 'Gestión de Voluntarios',
     'featureVolunteerBody' => 'Programa voluntarios, gestiona equipos y optimiza asignaciones de servicio',
-    'featureMultiChurchTitle' => 'Soporte Multi-Parroquia',
-    'featureMultiChurchBody' => 'Ideal para diócesis y redes de parroquias con supervisión centralizada',
+    'featureMultiParishTitle' => 'Soporte Multi-Parroquia',
+    'featureMultiParishBody' => 'Ideal para diócesis y redes de parroquias con supervisión centralizada',
     'footerRights' => 'Todos los derechos reservados.',
 ];

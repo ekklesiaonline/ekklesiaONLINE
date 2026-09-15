@@ -71,7 +71,7 @@ return [
     'invitedMembers' => 'Invited Members',
     'invitedMembersHelp' => 'Hold Command/Ctrl to select multiple invited members.',
     'scope' => 'Scope',
-    'scopeChurch' => 'Parish',
+    'scopeParish' => 'Parish',
     'scopeParish' => 'Parish',
     'scopeDiocese' => 'Diocese',
     'parishEvents' => 'Parish Events',

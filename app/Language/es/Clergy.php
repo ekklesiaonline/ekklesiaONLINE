@@ -27,13 +27,13 @@ return [
 
     // Access & Permission Issues
     'accessDenied' => 'Acceso denegado',
-    'invalidUserOrChurch' => 'Usuario o parroquia inválido',
+    'invalidUserOrParish' => 'Usuario o parroquia inválido',
     'provinceAdminReassignmentOnly' => 'Los administradores provinciales solo pueden reasignar personal de nivel provincial. El personal diocesano e parroquia es administrado por sus respectivos administradores diocesanos.',
 
-    // Church/Diocese/Province Lookup Errors
-    'churchNotFound' => 'Parroquia no encontrada',
-    'churchOutsideProvinceScope' => 'La parroquia seleccionada está fuera de su alcance provincial',
-    'churchOutsideDioceseScope' => 'La parroquia seleccionada está fuera del alcance diocesano cargado actualmente',
+    // Parish/Diocese/Province Lookup Errors
+    'parishNotFound' => 'Parroquia no encontrada',
+    'parishOutsideProvinceScope' => 'La parroquia seleccionada está fuera de su alcance provincial',
+    'parishOutsideDioceseScope' => 'La parroquia seleccionada está fuera del alcance diocesano cargado actualmente',
     'userProfileNotFound' => 'Perfil de usuario no encontrado',
 
     // Transaction Errors

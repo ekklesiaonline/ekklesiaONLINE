@@ -34,11 +34,11 @@ This audit phase completed comprehensive internationalization across **system-le
   - Line 369: `'Access denied'` (quickCreateDiocese) → `lang('Province.accessDenied')`
   - Line 408: `'Diocese created successfully'` (JSON response) → `lang('Province.dioceseCreatedSuccess')`
 
-#### 2. **Province/Views/Dashboard/no_churches.php**
+#### 2. **Province/Views/Dashboard/no_parishes.php**
 
 - **Hardcoded alert messages replaced:**
-  - Line 6: `'No Churches In Province Scope'` → `<?= lang('Province.noChurchesHeading') ?>`
-  - Line 7: `'No churches are available...'` → `<?= lang('Province.noChurchesMessage') ?>`
+  - Line 6: `'No Parishes In Province Scope'` → `<?= lang('Province.noParishesHeading') ?>`
+  - Line 7: `'No parishes are available...'` → `<?= lang('Province.noParishesMessage') ?>`
 
 #### 3. **Province/Views/Dashboard/province.php**
 
@@ -69,8 +69,8 @@ This audit phase completed comprehensive internationalization across **system-le
 
 1. `accessDeniedProvinceRequired` → Spanish/French equivalents
 2. `accessDenied` → Spanish/French equivalents
-3. `noChurchesHeading` → Spanish/French equivalents
-4. `noChurchesMessage` → Spanish/French equivalents
+3. `noParishesHeading` → Spanish/French equivalents
+4. `noParishesMessage` → Spanish/French equivalents
 5. `dioceseCreatedSuccess` → Spanish/French equivalents
 6. `userCreatedSuccess` → Spanish/French equivalents
 7. `validationError` → Spanish/French equivalents
@@ -94,23 +94,23 @@ This audit phase completed comprehensive internationalization across **system-le
 | Diocesan/Views/Dashboard/finance.php | Chart labels, financial summary, JS variables | 20+ strings + dynamic period labels |
 | app/Language/{en,es,fr}/Dashboard.php | New keys | 4 keys each (12 total) |
 
-#### Phase 3: Diocesan Admin Pages (Dioceses/Churches)
+#### Phase 3: Diocesan Admin Pages (Dioceses/Parishes)
 
 | File | Scope | Changes |
 |------|-------|---------|
 | Diocesan/Views/Dioceses/index.php | Button title attributes (View/Edit/Delete) | 3 title attributes → localized |
 | Diocesan/Views/Dioceses/create.php | Diocese name placeholder | 1 placeholder → localized |
 | Diocesan/Views/Dioceses/edit.php | Diocese name placeholder | 1 placeholder → localized |
-| Diocesan/Views/Churches/edit.php | Tax ID & ZIP placeholder examples | 2 placeholders → localized |
+| Diocesan/Views/Parishes/edit.php | Tax ID & ZIP placeholder examples | 2 placeholders → localized |
 | app/Language/{en,es,fr}/Diocesan.php | New keys | 4 keys each (12 total) |
-| app/Language/{en,es,fr}/Churches.php | New keys | 2 keys each (6 total) |
+| app/Language/{en,es,fr}/Parishes.php | New keys | 2 keys each (6 total) |
 
 #### Phase 4: Province System Screens (Today)
 
 | File | Scope | Changes |
 |------|-------|---------|
 | Province/Controllers/Dashboard.php | Access denial, success messages | 6 hardcoded strings → localized |
-| Province/Views/Dashboard/no_churches.php | No churches alert | 2 strings → localized |
+| Province/Views/Dashboard/no_parishes.php | No parishes alert | 2 strings → localized |
 | Province/Views/Dashboard/province.php | JavaScript alerts | 6 JS variables + 8 alert messages |
 | app/Language/{en,es,fr}/Province.php | New keys | 10 keys each (30 total) |
 
@@ -124,7 +124,7 @@ This audit phase completed comprehensive internationalization across **system-le
 All 14 files passed PHP -l syntax check:
   ✓ Province/Controllers/Dashboard.php
   ✓ Province/Views/Dashboard/province.php
-  ✓ Province/Views/Dashboard/no_churches.php
+  ✓ Province/Views/Dashboard/no_parishes.php
   ✓ app/Language/en/Province.php
   ✓ app/Language/es/Province.php
   ✓ app/Language/fr/Province.php
@@ -143,7 +143,7 @@ Grep scan for remaining hardcoded English strings (Province module):
 ### Locale Key Verification ✅
 
 - All 29 new locale keys implemented in EN/ES/FR triads
-- Consistent naming conventions (camelCase, module-prefixed: Province.*/ Diocesan.* / Churches.*)
+- Consistent naming conventions (camelCase, module-prefixed: Province.*/ Diocesan.* / Parishes.*)
 - Keys map to appropriate context (access denial, success, validation, error messages)
 
 ---
@@ -164,10 +164,10 @@ return $this->forbiddenResponse(lang('Province.accessDeniedProvinceRequired'));
 
 ```php
 // BEFORE
-<h4>No Churches In Province Scope</h4>
+<h4>No Parishes In Province Scope</h4>
 
 // AFTER
-<h4><?= lang('Province.noChurchesHeading') ?></h4>
+<h4><?= lang('Province.noParishesHeading') ?></h4>
 ```
 
 ### 3. **JavaScript-Facing Localization** (Dynamic Messages)
@@ -217,7 +217,7 @@ alert(dioceseCreatedSuccessMsg);
 **Controllers:** 3  
 **Views:** 7  
 **Language Files (New):** 6  
-**Language Files (Already Existing):** 2 (Dashboard.php, Diocesan.php, Churches.php — extended with new keys)  
+**Language Files (Already Existing):** 2 (Dashboard.php, Diocesan.php, Parishes.php — extended with new keys)  
 **Total Files:** 18
 
 **New Locale Keys:** 29  
@@ -232,7 +232,7 @@ alert(dioceseCreatedSuccessMsg);
 # Syntax validation
 php -l Province/Controllers/Dashboard.php
 php -l Province/Views/Dashboard/province.php
-php -l Province/Views/Dashboard/no_churches.php
+php -l Province/Views/Dashboard/no_parishes.php
 php -l app/Language/en/Province.php app/Language/es/Province.php app/Language/fr/Province.php
 
 # Grep scan (confirms 0 hardcoded English strings remain)

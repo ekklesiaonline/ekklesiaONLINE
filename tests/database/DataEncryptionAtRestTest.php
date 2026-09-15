@@ -2,7 +2,7 @@
 
 use App\Libraries\DataEncryption;
 use App\Models\GuestModel;
-use App\Models\MemberChurchAffiliationModel;
+use App\Models\MemberParishAffiliationModel;
 use App\Models\ProfileModel;
 use CodeIgniter\Test\CIUnitTestCase;
 use CodeIgniter\Test\DatabaseTestTrait;
@@ -24,13 +24,13 @@ final class DataEncryptionAtRestTest extends CIUnitTestCase
 
     public function testProtectedFieldsAreStoredAsCiphertextAndReadAsPlaintext(): void
     {
-        $churchId = $this->insertChurch('Encryption Church');
+        $parishId = $this->insertParish('Encryption Parish');
         [$userId] = $this->insertUserWithIdentityAndGroup('encrypted.profile', 'encrypted.profile@example.org', 'member');
 
         $profileModel = model(ProfileModel::class);
         $profileId = (int) $profileModel->insert([
             'user_id' => $userId,
-            'parish_id' => $churchId,
+            'parish_id' => $parishId,
             'first_name' => 'Ana',
             'last_name' => 'Encrypted',
             'phone' => '(809) 555-7777',
@@ -54,7 +54,7 @@ final class DataEncryptionAtRestTest extends CIUnitTestCase
 
         $guestModel = model(GuestModel::class);
         $guestId = (int) $guestModel->insert([
-            'parish_id' => $churchId,
+            'parish_id' => $parishId,
             'first_name' => 'Guest',
             'last_name' => 'Cipher',
             'email' => 'guest.cipher@example.org',
@@ -81,30 +81,30 @@ final class DataEncryptionAtRestTest extends CIUnitTestCase
 
     public function testExactPhoneAndEmailSearchStillResolveThroughBlindIndexes(): void
     {
-        $churchId = $this->insertChurch('Search Church');
+        $parishId = $this->insertParish('Search Parish');
 
         [$memberUserId] = $this->insertUserWithIdentityAndGroup('search.member', 'search.member@example.org', 'member');
-        $this->insertAffiliation($memberUserId, $churchId, 'member');
+        $this->insertAffiliation($memberUserId, $parishId, 'member');
 
         $profileModel = model(ProfileModel::class);
         $profileModel->insert([
             'user_id' => $memberUserId,
-            'parish_id' => $churchId,
+            'parish_id' => $parishId,
             'first_name' => 'Maria',
             'last_name' => 'Lookup',
             'phone' => '(809) 555-9001',
             'membership_status' => 'active',
         ]);
 
-        $searchModel = model(MemberChurchAffiliationModel::class);
-        $memberResults = $searchModel->searchChurchMembers($churchId, '809-555-9001');
+        $searchModel = model(MemberParishAffiliationModel::class);
+        $memberResults = $searchModel->searchParishMembers($parishId, '809-555-9001');
 
         $this->assertNotEmpty($memberResults);
         $this->assertContains($memberUserId, array_column($memberResults, 'user_id'));
 
         $guestModel = model(GuestModel::class);
         $guestModel->insert([
-            'parish_id' => $churchId,
+            'parish_id' => $parishId,
             'first_name' => 'Email',
             'last_name' => 'Lookup',
             'email' => 'Exact.Lookup@Example.org',
@@ -118,7 +118,7 @@ final class DataEncryptionAtRestTest extends CIUnitTestCase
         $emailHash = $guestModel->emailSearchHash($search);
 
         $guestRows = $this->db->table('guest g')
-            ->where('g.parish_id', $churchId)
+            ->where('g.parish_id', $parishId)
             ->groupStart()
             ->like('g.first_name', $search)
             ->orLike('g.last_name', $search)
@@ -148,7 +148,7 @@ final class DataEncryptionAtRestTest extends CIUnitTestCase
         Services::reset(true);
     }
 
-    private function insertChurch(string $name): int
+    private function insertParish(string $name): int
     {
         $this->db->table('parish')->insert([
             'name' => $name,
@@ -199,11 +199,11 @@ final class DataEncryptionAtRestTest extends CIUnitTestCase
         return [$userId, $email];
     }
 
-    private function insertAffiliation(int $userId, int $churchId, string $status): void
+    private function insertAffiliation(int $userId, int $parishId, string $status): void
     {
         $this->db->table('parish_affiliation')->insert([
             'linked_user_id' => $userId,
-            'parish_id' => $churchId,
+            'parish_id' => $parishId,
             'person_id' => null,
             'affiliation_type' => 'member',
             'membership_status' => $status,
@@ -287,7 +287,7 @@ final class DataEncryptionAtRestTest extends CIUnitTestCase
             // the same PHPUnit run, since this table is created with "IF NOT EXISTS"
             // and never dropped between test classes.
             'parish_id' => ['type' => 'INTEGER', 'null' => true],
-            'church_id' => ['type' => 'INTEGER', 'null' => true],
+            'parish_id' => ['type' => 'INTEGER', 'null' => true],
             'province_id' => ['type' => 'INTEGER', 'null' => true],
             'diocese_id' => ['type' => 'INTEGER', 'null' => true],
             'first_name' => ['type' => 'VARCHAR', 'constraint' => 100, 'null' => true],
@@ -308,7 +308,7 @@ final class DataEncryptionAtRestTest extends CIUnitTestCase
         $forge->addField([
             'id' => ['type' => 'INTEGER', 'auto_increment' => true],
             'parish_id' => ['type' => 'INTEGER', 'null' => false],
-            'church_id' => ['type' => 'INTEGER', 'null' => true],
+            'parish_id' => ['type' => 'INTEGER', 'null' => true],
             'first_name' => ['type' => 'VARCHAR', 'constraint' => 100],
             'last_name' => ['type' => 'VARCHAR', 'constraint' => 100],
             'email' => ['type' => 'TEXT', 'null' => true],

@@ -13,7 +13,7 @@ class EventModel extends BaseTenantModel
     protected $allowedFields    = [
         // Organizer abstraction (new source of truth)
         'organizer_type',
-        'organizer_church_id',
+        'organizer_parish_id',
         'organizer_province_id',
         'organizer_diocese_id',
         'organizer_parish_id',
@@ -75,7 +75,7 @@ class EventModel extends BaseTenantModel
 
         $hasOrganizerInfo = !empty($row['organizer_type'])
             || !empty($row['scope_level'])
-            || !empty($row['organizer_church_id'])
+            || !empty($row['organizer_parish_id'])
             || !empty($row['organizer_province_id'])
             || !empty($row['organizer_diocese_id'])
             || !empty($row['organizer_parish_id'])
@@ -96,8 +96,8 @@ class EventModel extends BaseTenantModel
         $type = $row['organizer_type'];
 
         if ($type === 'national') {
-            if (empty($row['organizer_church_id'])) {
-                $row['organizer_church_id'] = $row['organizer_church_id'] ?? 1;
+            if (empty($row['organizer_parish_id'])) {
+                $row['organizer_parish_id'] = $row['organizer_parish_id'] ?? 1;
             }
             $row['organizer_province_id'] = null;
             $row['organizer_diocese_id']  = null;
@@ -106,21 +106,21 @@ class EventModel extends BaseTenantModel
             if (empty($row['organizer_province_id']) && !empty($row['scope_province_id'])) {
                 $row['organizer_province_id'] = $row['scope_province_id'];
             }
-            $row['organizer_church_id']  = null;
+            $row['organizer_parish_id']  = null;
             $row['organizer_diocese_id'] = null;
             $row['organizer_parish_id']  = null;
         } elseif ($type === 'diocese') {
             if (empty($row['organizer_diocese_id']) && !empty($row['scope_diocese_id'])) {
                 $row['organizer_diocese_id'] = $row['scope_diocese_id'];
             }
-            $row['organizer_church_id']   = null;
+            $row['organizer_parish_id']   = null;
             $row['organizer_province_id'] = null;
             $row['organizer_parish_id']   = null;
         } else { // parish
             if (empty($row['organizer_parish_id']) && !empty($row['parish_id'])) {
                 $row['organizer_parish_id'] = $row['parish_id'];
             }
-            $row['organizer_church_id']   = null;
+            $row['organizer_parish_id']   = null;
             $row['organizer_province_id'] = null;
             $row['organizer_diocese_id']  = null;
         }
@@ -147,7 +147,7 @@ class EventModel extends BaseTenantModel
         $type = $data['organizer_type'] ?? '';
 
         return match ($type) {
-            'national' => !empty($data['organizer_church_id']),
+            'national' => !empty($data['organizer_parish_id']),
             'province' => !empty($data['organizer_province_id']),
             'diocese'  => !empty($data['organizer_diocese_id']),
             'parish'   => !empty($data['organizer_parish_id']),
@@ -261,14 +261,14 @@ class EventModel extends BaseTenantModel
             ->getResultArray();
     }
 
-    public function getNationalEventsWithCounts(int $churchId, ?string $status = null, ?string $search = null): array
+    public function getNationalEventsWithCounts(int $parishId, ?string $status = null, ?string $search = null): array
     {
         $builder = $this->db->table('event e')
             ->select('e.*, ec.name as calendar_name, ec.color_hex as calendar_color, COUNT(er.id) as registration_count, ' . $this->getCheckinCountSelect())
             ->join('event_calendar ec', 'ec.id = e.calendar_id', 'left')
             ->join('event_registration er', 'er.event_id = e.id', 'left')
             ->where('e.organizer_type', 'national')
-            ->where('e.organizer_church_id', $churchId)
+            ->where('e.organizer_parish_id', $parishId)
             ->groupBy('e.id')
             ->orderBy('e.start_at', 'DESC');
 
@@ -288,13 +288,13 @@ class EventModel extends BaseTenantModel
         return $builder->get()->getResultArray();
     }
 
-    public function getNationalEventsForRange(int $churchId, string $rangeStart, string $rangeEnd): array
+    public function getNationalEventsForRange(int $parishId, string $rangeStart, string $rangeEnd): array
     {
         return $this->db->table('event e')
             ->select('e.*, ec.name as calendar_name, ec.color_hex as calendar_color')
             ->join('event_calendar ec', 'ec.id = e.calendar_id', 'left')
             ->where('e.organizer_type', 'national')
-            ->where('e.organizer_church_id', $churchId)
+            ->where('e.organizer_parish_id', $parishId)
             ->groupStart()
             ->groupStart()
             ->where('e.start_at <=', $rangeEnd)

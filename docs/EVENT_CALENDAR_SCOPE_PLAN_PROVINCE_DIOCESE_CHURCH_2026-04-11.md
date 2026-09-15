@@ -1,18 +1,18 @@
-# Event Calendar Scope Plan (Province -> Diocese -> Church)
+# Event Calendar Scope Plan (Province -> Diocese -> Parish)
 
 ## Objective
 
 Implement hierarchical event calendars so event visibility follows organizational scope:
 
 1. Province events: visible to dioceses in that province.
-1. Diocese events: visible to diocesan staff and all churches in that diocese.
-1. Church events: visible to that church scope only (existing behavior).
+1. Diocese events: visible to diocesan staff and all parishes in that diocese.
+1. Parish events: visible to that parish scope only (existing behavior).
 
 This plan is designed for the current module boundaries:
 
 - Province dashboard is summary oriented.
-- Diocesan scope is operational for diocese plus church metrics.
-- Church scope is operational events CRUD.
+- Diocesan scope is operational for diocese plus parish metrics.
+- Parish scope is operational events CRUD.
 
 ## Delivery Todo (Phased)
 
@@ -20,10 +20,10 @@ This plan is designed for the current module boundaries:
 
 - [ ] Create table event_calendars.
 - [ ] Add scope fields to event_calendars:
-- [ ] scope_level enum: province, diocese, church
+- [ ] scope_level enum: province, diocese, parish
 - [ ] province_id nullable
 - [ ] diocese_id nullable
-- [ ] church_id nullable
+- [ ] parish_id nullable
 - [ ] Add display fields to event_calendars:
 - [ ] name
 - [ ] color_hex
@@ -32,7 +32,7 @@ This plan is designed for the current module boundaries:
 - [ ] Add calendar_id to events table (nullable first, then required after backfill).
 - [ ] Add indexes:
 - [ ] events(calendar_id, start_at, status)
-- [ ] event_calendars(scope_level, province_id, diocese_id, church_id, is_active)
+- [ ] event_calendars(scope_level, province_id, diocese_id, parish_id, is_active)
 - [ ] Add foreign keys with restrictive delete policy.
 
 ## Phase 2 - Backfill and Safe Migration
@@ -40,8 +40,8 @@ This plan is designed for the current module boundaries:
 - [ ] Seed default calendars per scope:
 - [ ] Province default calendar for each province.
 - [ ] Diocese default calendar for each diocese.
-- [ ] Church default calendar for each church.
-- [ ] Backfill existing events with church default calendar by church_id.
+- [ ] Parish default calendar for each parish.
+- [ ] Backfill existing events with parish default calendar by parish_id.
 - [ ] Switch events.calendar_id to not null.
 - [ ] Add migration guard checks and rollback-safe down scripts.
 
@@ -52,7 +52,7 @@ This plan is designed for the current module boundaries:
 - [ ] events.calendars.manage
 - [ ] events.create.province
 - [ ] events.create.diocese
-- [ ] events.create.church (maps to existing events.create)
+- [ ] events.create.parish (maps to existing events.create)
 - [ ] Add policy service EventScopePolicy to validate:
 - [ ] creator can create only allowed scope levels
 - [ ] viewer can only access events visible to current operational scope
@@ -62,14 +62,14 @@ This plan is designed for the current module boundaries:
 ## Phase 4 - Query Layer and Visibility Engine
 
 - [ ] Add EventVisibilityService with single source-of-truth query builder.
-- [ ] For church scope, visible events are:
-- [ ] church events where church_id equals operational church
-- [ ] diocese events where diocese_id equals church diocese
-- [ ] province events where province_id equals church province
+- [ ] For parish scope, visible events are:
+- [ ] parish events where parish_id equals operational parish
+- [ ] diocese events where diocese_id equals parish diocese
+- [ ] province events where province_id equals parish province
 - [ ] For diocesan scope, visible events are:
 - [ ] diocese events for operational diocese
 - [ ] province events for parent province
-- [ ] optional church events aggregation by filter toggle
+- [ ] optional parish events aggregation by filter toggle
 - [ ] For province scope, visible events are:
 - [ ] province events for operational province
 - [ ] optional diocesan events in province by filter toggle
@@ -80,7 +80,7 @@ This plan is designed for the current module boundaries:
 - [ ] Create calendar management page:
 - [ ] list calendars with color swatches
 - [ ] create, edit, activate or deactivate
-- [ ] scope badge (Province, Diocese, Church)
+- [ ] scope badge (Province, Diocese, Parish)
 - [ ] Add validation:
 - [ ] unique calendar name within same scope
 - [ ] valid color hex format
@@ -118,7 +118,7 @@ This plan is designed for the current module boundaries:
 - [ ] visibility resolution matrix
 - [ ] color and calendar validation
 - [ ] Integration tests:
-- [ ] church user sees own church plus diocese plus province events
+- [ ] parish user sees own parish plus diocese plus province events
 - [ ] diocese user sees diocese plus province events
 - [ ] province user visibility behavior
 - [ ] Regression tests for existing events CRUD and registration flow.
@@ -129,10 +129,10 @@ This plan is designed for the current module boundaries:
 ## event_calendars
 
 - id
-- scope_level enum province, diocese, church
+- scope_level enum province, diocese, parish
 - province_id nullable
 - diocese_id nullable
-- church_id nullable
+- parish_id nullable
 - name
 - color_hex
 - is_active
@@ -160,15 +160,15 @@ Constraints:
 1. Diocese event visibility:
 
 - visible to diocesan staff of that diocese.
-- visible to churches belonging to that diocese.
+- visible to parishes belonging to that diocese.
 
-1. Church event visibility:
+1. Parish event visibility:
 
-- visible only within that church scope unless explicitly shared in future phase.
+- visible only within that parish scope unless explicitly shared in future phase.
 
 ## Routing and Module Ownership
 
-- Keep events operations in Pastor module for church scope initially.
+- Keep events operations in Pastor module for parish scope initially.
 - Add diocesan event operations in Diocesan module for diocese scope events.
 - Add province event operations in Province module for province scope events.
 - Share EventVisibilityService and EventScopePolicy from app Services to avoid duplicated logic.
@@ -206,7 +206,7 @@ Constraints:
 
 1. Create migrations for event_calendars and events.calendar_id.
 1. Add EventCalendarModel.
-1. Seed default calendars for province, diocese, church.
+1. Seed default calendars for province, diocese, parish.
 1. Build backfill command for existing events.
 1. Add EventVisibilityService.
 1. Add EventScopePolicy.

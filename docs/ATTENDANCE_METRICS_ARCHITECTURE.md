@@ -113,15 +113,15 @@ public function reports()
 {
     // ✅ NEW: All data from service_metrics only
     $attendanceKpis = $this->serviceMetricsModel->getKpiAggregates(
-        $churchId, $startDate, $endDate
+        $parishId, $startDate, $endDate
     );
 
     $snapshot = $this->serviceMetricsModel->getServiceSnapshot(
-        $churchId, $startDate, $endDate
+        $parishId, $startDate, $endDate
     );
 
     $weeklySundayData = $this->serviceMetricsModel->getWeeklySundayTotals(
-        $churchId, $startDate, $endDate
+        $parishId, $startDate, $endDate
     );
 }
 ```
@@ -134,7 +134,7 @@ public function reports()
 
 All methods query ONLY from `service_metrics` table (no attendance table calculations).
 
-##### `getKpiAggregates($churchId, $startDate, $endDate): array`
+##### `getKpiAggregates($parishId, $startDate, $endDate): array`
 
 ```
 Returns:
@@ -147,7 +147,7 @@ Returns:
 }
 ```
 
-##### `getWeeklySundayTotals($churchId, $startDate, $endDate): array`
+##### `getWeeklySundayTotals($parishId, $startDate, $endDate): array`
 
 ```
 Groups by week (monday-sunday), returns:
@@ -162,7 +162,7 @@ Groups by week (monday-sunday), returns:
 ]
 ```
 
-##### `getServiceSnapshot($churchId, $startDate, $endDate): array`
+##### `getServiceSnapshot($parishId, $startDate, $endDate): array`
 
 ```
 Returns:
@@ -184,10 +184,10 @@ Returns:
 - ❌ `getServiceWithAttendance()` - was computing totals from attendance table
 - ❌ Complex SELECT with LEFT JOIN to attendance for every query
 
-#### Added: `getChurchServicesWithMetrics()`
+#### Added: `getParishServicesWithMetrics()`
 
 ```php
-public function getChurchServicesWithMetrics($churchId, $startDate, $endDate)
+public function getParishServicesWithMetrics($parishId, $startDate, $endDate)
 {
     // Simple JOIN with service_metrics
     // SELECT s.*, sm.reported_present_count, sm.reported_communion_count, ...
@@ -208,7 +208,7 @@ public function getChurchServicesWithMetrics($churchId, $startDate, $endDate)
 $builder = db_connect()->table('attendance a')
     ->select('COUNT(CASE WHEN a.attended = 1...')
     ->join('services s', ...)
-    ->join('churches c', ...)
+    ->join('parishes c', ...)
     ->join('dioceses d', ...)
 
 // AFTER: Query from service_metrics only
@@ -216,7 +216,7 @@ $result = db_connect()->table('service_metrics sm')
     ->select('COUNT(sm.service_id) as total_services')
     ->select('SUM(COALESCE(sm.reported_present_count, 0)) as total_attendance')
     ->join('services s', ...)
-    ->join('churches c', ...)
+    ->join('parishes c', ...)
     ->join('dioceses d', ...)
 ```
 
@@ -327,21 +327,21 @@ FROM diocesan_attendance_monthly
 WHERE diocese_id = :diocese_id:
     AND period_month >= :start_month: -- e.g. 2026-02-01
     AND period_month <= :end_month:;  -- e.g. 2026-04-01
-### Church Breakdown Variant (Any Period)
+### Parish Breakdown Variant (Any Period)
 
 ```sql
 SELECT
-    dam.church_id,
-    c.name AS church_name,
+    dam.parish_id,
+    c.name AS parish_name,
     COALESCE(SUM(dam.sunday_services_count), 0) AS sunday_services_count,
     COALESCE(SUM(dam.sunday_attended_total), 0) AS sunday_attended_total,
     ROUND(COALESCE(SUM(dam.sunday_attended_total) / NULLIF(SUM(dam.sunday_services_count), 0), 0), 2) AS sunday_attendance_average
 FROM diocesan_attendance_monthly dam
-JOIN churches c ON c.id = dam.church_id
+JOIN parishes c ON c.id = dam.parish_id
 WHERE dam.diocese_id = :diocese_id:
     AND dam.period_month >= :start_month:
     AND dam.period_month <= :end_month:
-GROUP BY dam.church_id, c.name
+GROUP BY dam.parish_id, c.name
 ORDER BY c.name ASC;
 ```
 
@@ -397,12 +397,12 @@ User visits /attendance/reports?start_date=2026-01-01&end_date=2026-03-21
     ↓
 Attendance Controller::reports()
     ↓
-ServiceMetricsModel::getKpiAggregates(churchId=3, startDate, endDate)
+ServiceMetricsModel::getKpiAggregates(parishId=3, startDate, endDate)
     ↓
 SELECT SUM(CASE WHEN attendance_classification='Regular'...)
   FROM service_metrics sm
   JOIN services s ON s.id = sm.service_id
-  WHERE s.church_id=3 AND s.date BETWEEN ? AND ?
+  WHERE s.parish_id=3 AND s.date BETWEEN ? AND ?
     ↓
 Render KPI tiles with aggregated metrics
 ```

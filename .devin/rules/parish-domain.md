@@ -1,9 +1,9 @@
 ---
-description: Church hierarchy and data integrity rules for ekklesiaRD
+description: Parish hierarchy and data integrity rules for ekklesiaRD
 trigger: always_on
 ---
 
-# Church Domain & Data Integrity
+# Parish Domain & Data Integrity
 
 ## Hierarchy & Scopes
 
@@ -34,11 +34,11 @@ trigger: always_on
 
 ## Elevated Admin Scope Restrictions
 
-- Province admins have **read-only** access to church/parish data and are **blocked** from staff management (`staff`, `addStaff`, `promoteMember`, `removeStaffRole`, `demoteStaff`).
+- Province admins have **read-only** access to parish data and are **blocked** from staff management (`staff`, `addStaff`, `promoteMember`, `removeStaffRole`, `demoteStaff`).
 - Tax ID editability:
-  - System Admin: all churches/parishes.
-  - Diocesan Admin: churches/parishes within their diocese.
-  - Church/Parish Admin: their own church/parish only.
+  - System Admin: all parishes.
+  - Diocesan Admin: parishes within their diocese.
+  - Parish Admin: their own parish only.
 - Error key for province admin staff block: `Diocesan.provinceAdminStaffManagementDenied`.
 
 ## Registration Approvals

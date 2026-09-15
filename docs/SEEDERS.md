@@ -6,7 +6,7 @@ This document defines the active seeder strategy for ekklesiaRD.
 
 - Use one entry-point seeder for application bootstrap.
 - Keep idempotent behavior for liturgical seed data.
-- Keep role/user/church sample bootstrap in one place.
+- Keep role/user/parish sample bootstrap in one place.
 
 ## Canonical Seeder
 
@@ -14,7 +14,7 @@ This document defines the active seeder strategy for ekklesiaRD.
 
 Responsibilities:
 
-1. Seed sample church and baseline users (Province Admin + Church Admin).
+1. Seed sample parish and baseline users (Province Admin + Parish Admin).
 2. Seed profile records for created users.
 3. Sync role-to-menu permission policy via `PermissionRoleSyncSeeder`.
 4. Seed/update liturgical calendar entries.

@@ -52,9 +52,9 @@ Widgets tipicos:
 - Promedios de asistencia
 - Registros pendientes con acciones Aprobar, Descartar, Bloquear, Eliminar
 
-### Roles a Nivel de Iglesia (Church Admin, Pastor, Tesorero, Coordinador de Voluntarios, Miembro)
+### Roles a Nivel de Iglesia (Parish Admin, Pastor, Tesorero, Coordinador de Voluntarios, Miembro)
 
-Dashboard principal: Church Dashboard.
+Dashboard principal: Parish Dashboard.
 Objetivo principal:
 
 - Operacion diaria y cuidado pastoral
@@ -92,7 +92,7 @@ La barra lateral depende de permisos. Los menus comunes incluyen:
 - Worship Planning
 - Reports
 - Consistency Report
-- Churches
+- Parishes
 - Profile
 - Logout
 
@@ -224,7 +224,7 @@ Para administradores provinciales:
 ## 8. Flujo del Dashboard Financiero (Diocesis)
 
 1. Abra Diocesan Finance Dashboard.
-2. Elija alcance de iglesia (All Churches o una iglesia).
+2. Elija alcance de iglesia (All Parishes o una iglesia).
 3. Elija periodo (today/week/month/year/custom).
 4. Revise ingresos, gastos y neto.
 5. Analice comparativos por iglesia y tendencias mensuales.
@@ -307,13 +307,13 @@ Para construir un anexo visual de este manual:
 2. Capture:
    - Province Dashboard
    - Diocesan Dashboard
-   - Church Dashboard
+   - Parish Dashboard
    - Finance Dashboard
    - Members, Guests, Good Standing, Pledges, Volunteers
 3. Use este patron de nombres:
    - screenshot-province-dashboard.png
    - screenshot-diocesan-dashboard.png
-   - screenshot-church-dashboard.png
+   - screenshot-parish-dashboard.png
    - screenshot-finance-dashboard.png
 4. Guarde en docs/images y referencie en este manual.
 
@@ -333,7 +333,7 @@ Para construir un anexo visual de este manual:
 - Gestionar iglesias y herramientas diocesanas
 - Usar finanzas y estado del sistema
 
-### Church Admin
+### Parish Admin
 
 - Gestionar miembros, familias, servicios, asistencia, invitados, finanzas y voluntarios
 - Monitorear consistencia y reportes

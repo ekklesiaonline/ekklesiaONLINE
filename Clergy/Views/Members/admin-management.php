@@ -93,7 +93,7 @@ $staff_roles = $staff_roles ?? [];
 </div>
 
 <!-- =========================================================
-     SECTION 2: DIOCESAN STAFF  (read-only — diocesanadmin, churchadmin, clergy)
+     SECTION 2: DIOCESAN STAFF  (read-only — diocesanadmin, parishadmin, clergy)
      ========================================================= -->
 <div class="card mb-4">
     <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2 filter-panel-header">
@@ -171,7 +171,7 @@ $staff_roles = $staff_roles ?? [];
                                     </span>
                                 </td>
                                 <td><?= esc((string) ($staff['diocese_name'] ?? '—')) ?></td>
-                                <td><?= esc((string) ($staff['parish_name'] ?? $staff['church_name'] ?? lang('Members.unassigned'))) ?></td>
+                                <td><?= esc((string) ($staff['parish_name'] ?? $staff['parish_name'] ?? lang('Members.unassigned'))) ?></td>
                             </tr>
                         <?php endforeach; ?>
                     </tbody>

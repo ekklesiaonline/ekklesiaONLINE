@@ -5,7 +5,7 @@
 - `POST /families/addMemberNonPortal`
 - `POST /families/enablePortal/{userId}`
 
-Both endpoints are JSON-only responses and enforce `families.manage` plus operational church scope.
+Both endpoints are JSON-only responses and enforce `families.manage` plus operational parish scope.
 
 ## Deterministic Envelope
 
@@ -16,7 +16,7 @@ All responses use this exact top-level shape:
 - `message` (string)
 - `data` (object or null)
 - `errors` (array)
-- `meta` (object: `request_id`, `timestamp`, `church_id`)
+- `meta` (object: `request_id`, `timestamp`, `parish_id`)
 
 ## Top-Level Codes
 

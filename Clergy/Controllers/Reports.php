@@ -7,7 +7,7 @@ use App\Controllers\BaseController;
 /**
  * Clergy\Controllers\Reports
  *
- * Followup-focused reporting for church admins.
+ * Followup-focused reporting for parish admins.
  *
  * Routes (all require permission:report.view):
  *   GET  guests/reports/followup-completion         → followupCompletion()
@@ -43,7 +43,7 @@ class Reports extends BaseController
             return $redirect;
         }
 
-        $churchId  = (int) ($this->getOperationalParishId() ?? 0);
+        $parishId  = (int) ($this->getOperationalParishId() ?? 0);
         $startDate = $this->sanitizeDate(
             $this->request->getGet('start_date'),
             date('Y-m-d', strtotime('-3 months'))
@@ -53,7 +53,7 @@ class Reports extends BaseController
             date('Y-m-d')
         );
 
-        $rows = $this->queryCompletionByWeek($churchId, $startDate, $endDate);
+        $rows = $this->queryCompletionByWeek($parishId, $startDate, $endDate);
 
         // ---- Chart.js dataset ----
         $labels    = [];
@@ -107,7 +107,7 @@ class Reports extends BaseController
             return $redirect;
         }
 
-        $churchId  = (int) ($this->getOperationalParishId() ?? 0);
+        $parishId  = (int) ($this->getOperationalParishId() ?? 0);
         $startDate = $this->sanitizeDate(
             $this->request->getGet('start_date'),
             date('Y-m-d', strtotime('-3 months'))
@@ -117,7 +117,7 @@ class Reports extends BaseController
             date('Y-m-d')
         );
 
-        [$withFollowup, $withoutFollowup] = $this->queryRoiCohorts($churchId, $startDate, $endDate);
+        [$withFollowup, $withoutFollowup] = $this->queryRoiCohorts($parishId, $startDate, $endDate);
 
         // ---- Chart.js dataset (grouped bar: total vs converted per cohort) ----
         $wfTotal     = (int) ($withFollowup['total_guests'] ?? 0);
@@ -129,7 +129,7 @@ class Reports extends BaseController
         $nfPct       = $nfTotal > 0 ? round($nfConverted / $nfTotal * 100, 1) : 0.0;
 
         // Also retrieve per-week breakdown for the detailed table
-        $weekBreakdown = $this->queryWeeklyGuestVolume($churchId, $startDate, $endDate);
+        $weekBreakdown = $this->queryWeeklyGuestVolume($parishId, $startDate, $endDate);
 
         $data = array_merge($this->getCommonViewData('ROI – Second Visit'), [
             'report_start_date'  => $startDate,
@@ -168,7 +168,7 @@ class Reports extends BaseController
             return $redirect;
         }
 
-        $churchId  = (int) ($this->getOperationalParishId() ?? 0);
+        $parishId  = (int) ($this->getOperationalParishId() ?? 0);
         $startDate = $this->sanitizeDate(
             $this->request->getGet('start_date'),
             date('Y-m-d', strtotime('-3 months'))
@@ -184,13 +184,13 @@ class Reports extends BaseController
         }
 
         [$headers, $rows] = match ($reportType) {
-            'followup-completion' => $this->csvFollowupCompletion($churchId, $startDate, $endDate),
-            'roi-second-visit'    => $this->csvRoiSecondVisit($churchId, $startDate, $endDate),
-            default               => $this->csvGuestsAll($churchId, $startDate, $endDate),
+            'followup-completion' => $this->csvFollowupCompletion($parishId, $startDate, $endDate),
+            'roi-second-visit'    => $this->csvRoiSecondVisit($parishId, $startDate, $endDate),
+            default               => $this->csvGuestsAll($parishId, $startDate, $endDate),
         };
 
         $this->audit()->log('report.export_csv', [
-            'parish_id'   => $churchId,
+            'parish_id'   => $parishId,
             'entity_type' => 'followup_report',
             'meta'        => [
                 'report_type' => $reportType,
@@ -225,7 +225,7 @@ class Reports extends BaseController
      *
      * Returns rows: week_number, total_actions, completed_actions
      */
-    private function queryCompletionByWeek(int $churchId, string $startDate, string $endDate): array
+    private function queryCompletionByWeek(int $parishId, string $startDate, string $endDate): array
     {
         return $this->db
             ->table('followup_log gfl')
@@ -236,7 +236,7 @@ class Reports extends BaseController
             ])
             ->join('followup_action fa', 'fa.id = gfl.action_id')
             ->join('guest g',            'g.person_id = gfl.person_id')
-            ->where('g.parish_id', $churchId)
+            ->where('g.parish_id', $parishId)
             ->where('gfl.scheduled_date >=', $startDate)
             ->where('gfl.scheduled_date <=', $endDate)
             ->where('fa.week_number IS NOT NULL', null, false)
@@ -250,7 +250,7 @@ class Reports extends BaseController
      * Return two cohort rows: [withFollowup, withoutFollowup]
      * Each row has keys: total_guests, converted
      */
-    private function queryRoiCohorts(int $churchId, string $startDate, string $endDate): array
+    private function queryRoiCohorts(int $parishId, string $startDate, string $endDate): array
     {
         $db = $this->db;
 
@@ -259,7 +259,7 @@ class Reports extends BaseController
                 'COUNT(DISTINCT g.id) AS total_guests',
                 'SUM(CASE WHEN g.converted_to_member_at IS NOT NULL THEN 1 ELSE 0 END) AS converted',
             ])
-            ->where('g.parish_id', $churchId)
+            ->where('g.parish_id', $parishId)
             ->where('g.visit_date >=', $startDate)
             ->where('g.visit_date <=', $endDate)
             ->where("EXISTS (SELECT 1 FROM followup_log gfl WHERE gfl.person_id = g.person_id AND gfl.status = 'sent')", null, false)
@@ -271,7 +271,7 @@ class Reports extends BaseController
                 'COUNT(DISTINCT g.id) AS total_guests',
                 'SUM(CASE WHEN g.converted_to_member_at IS NOT NULL THEN 1 ELSE 0 END) AS converted',
             ])
-            ->where('g.parish_id', $churchId)
+            ->where('g.parish_id', $parishId)
             ->where('g.visit_date >=', $startDate)
             ->where('g.visit_date <=', $endDate)
             ->where("NOT EXISTS (SELECT 1 FROM followup_log gfl WHERE gfl.person_id = g.person_id AND gfl.status = 'sent')", null, false)
@@ -284,7 +284,7 @@ class Reports extends BaseController
     /**
      * Per-ISO-week new guest volume (for the ROI detail table).
      */
-    private function queryWeeklyGuestVolume(int $churchId, string $startDate, string $endDate): array
+    private function queryWeeklyGuestVolume(int $parishId, string $startDate, string $endDate): array
     {
         return $this->db
             ->table('guest g')
@@ -295,7 +295,7 @@ class Reports extends BaseController
                 'SUM(CASE WHEN g.converted_to_member_at IS NOT NULL THEN 1 ELSE 0 END) AS converted',
                 "SUM(CASE WHEN EXISTS (SELECT 1 FROM followup_log gfl WHERE gfl.person_id = g.person_id AND gfl.status = 'sent') THEN 1 ELSE 0 END) AS received_followup",
             ])
-            ->where('g.parish_id', $churchId)
+            ->where('g.parish_id', $parishId)
             ->where('g.visit_date >=', $startDate)
             ->where('g.visit_date <=', $endDate)
             ->groupBy('YEARWEEK(g.visit_date, 1)')
@@ -309,10 +309,10 @@ class Reports extends BaseController
     // ── ── ── ── ── ── ── ── ── ── ── ── ── ── ── ── ── ── ── ──
 
     /** @return array{0: string[], 1: array[]} */
-    private function csvFollowupCompletion(int $churchId, string $startDate, string $endDate): array
+    private function csvFollowupCompletion(int $parishId, string $startDate, string $endDate): array
     {
         $headers = ['Sequence Week', 'Total Scheduled', 'Completed (Sent)', 'Completion %'];
-        $source  = $this->queryCompletionByWeek($churchId, $startDate, $endDate);
+        $source  = $this->queryCompletionByWeek($parishId, $startDate, $endDate);
         $rows    = [];
         foreach ($source as $r) {
             $total = (int) $r['total_actions'];
@@ -324,10 +324,10 @@ class Reports extends BaseController
     }
 
     /** @return array{0: string[], 1: array[]} */
-    private function csvRoiSecondVisit(int $churchId, string $startDate, string $endDate): array
+    private function csvRoiSecondVisit(int $parishId, string $startDate, string $endDate): array
     {
         $headers = ['Cohort', 'Total Guests', 'Converted to Member', 'Conversion %'];
-        [$with, $without] = $this->queryRoiCohorts($churchId, $startDate, $endDate);
+        [$with, $without] = $this->queryRoiCohorts($parishId, $startDate, $endDate);
 
         $wfTotal = (int) ($with['total_guests'] ?? 0);
         $wfConv  = (int) ($with['converted'] ?? 0);
@@ -341,7 +341,7 @@ class Reports extends BaseController
     }
 
     /** @return array{0: string[], 1: array[]} */
-    private function csvGuestsAll(int $churchId, string $startDate, string $endDate): array
+    private function csvGuestsAll(int $parishId, string $startDate, string $endDate): array
     {
         $headers = [
             'First Name',
@@ -375,7 +375,7 @@ class Reports extends BaseController
                 "SUM(CASE WHEN gfl.status = 'sent' THEN 1 ELSE 0 END) AS log_sent",
             ])
             ->join('followup_log gfl', 'gfl.person_id = g.person_id', 'left')
-            ->where('g.parish_id', $churchId)
+            ->where('g.parish_id', $parishId)
             ->where('g.visit_date >=', $startDate)
             ->where('g.visit_date <=', $endDate)
             ->groupBy('g.id')

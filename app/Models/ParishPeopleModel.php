@@ -14,7 +14,7 @@ class ParishPeopleModel extends BaseTenantModel
     protected $protectFields    = true;
     protected $allowedFields    = [
         'parish_id',
-        'church_id',
+        'parish_id',
         'user_id',
         'profile_id',
         'first_name',
@@ -220,10 +220,10 @@ class ParishPeopleModel extends BaseTenantModel
             return;
         }
 
-        $churchColumns = $this->getColumnsForTable('church_people');
-        if ($churchColumns !== []) {
-            $this->table = 'church_people';
-            $this->scopeColumn = $this->resolveScopeColumn($churchColumns);
+        $parishColumns = $this->getColumnsForTable('parish_people');
+        if ($parishColumns !== []) {
+            $this->table = 'parish_people';
+            $this->scopeColumn = $this->resolveScopeColumn($parishColumns);
         }
     }
 
@@ -259,8 +259,8 @@ class ParishPeopleModel extends BaseTenantModel
             return 'parish_id';
         }
 
-        if (in_array('church_id', $lowered, true)) {
-            return 'church_id';
+        if (in_array('parish_id', $lowered, true)) {
+            return 'parish_id';
         }
 
         return 'parish_id';
@@ -276,19 +276,19 @@ class ParishPeopleModel extends BaseTenantModel
             return $data;
         }
 
-        if ($this->scopeColumn === 'church_id') {
-            if (array_key_exists('parish_id', $data['data']) && !array_key_exists('church_id', $data['data'])) {
-                $data['data']['church_id'] = $data['data']['parish_id'];
+        if ($this->scopeColumn === 'parish_id') {
+            if (array_key_exists('parish_id', $data['data']) && !array_key_exists('parish_id', $data['data'])) {
+                $data['data']['parish_id'] = $data['data']['parish_id'];
             }
             unset($data['data']['parish_id']);
 
             return $data;
         }
 
-        if (array_key_exists('church_id', $data['data']) && !array_key_exists('parish_id', $data['data'])) {
-            $data['data']['parish_id'] = $data['data']['church_id'];
+        if (array_key_exists('parish_id', $data['data']) && !array_key_exists('parish_id', $data['data'])) {
+            $data['data']['parish_id'] = $data['data']['parish_id'];
         }
-        unset($data['data']['church_id']);
+        unset($data['data']['parish_id']);
 
         return $data;
     }
@@ -299,7 +299,7 @@ class ParishPeopleModel extends BaseTenantModel
      */
     protected function mapScopeColumnAfterFind(array $data): array
     {
-        if ($this->scopeColumn !== 'church_id') {
+        if ($this->scopeColumn !== 'parish_id') {
             return $data;
         }
 
@@ -343,8 +343,8 @@ class ParishPeopleModel extends BaseTenantModel
      */
     private function normalizeFoundRow(array $row): array
     {
-        if (array_key_exists('church_id', $row) && !array_key_exists('parish_id', $row)) {
-            $row['parish_id'] = $row['church_id'];
+        if (array_key_exists('parish_id', $row) && !array_key_exists('parish_id', $row)) {
+            $row['parish_id'] = $row['parish_id'];
         }
 
         return $row;

@@ -36,12 +36,12 @@ class MemberMerge extends BaseController
             return $redirect;
         }
 
-        $churchId = (int) ($this->getOperationalParishId() ?? 0);
-        if ($churchId <= 0) {
+        $parishId = (int) ($this->getOperationalParishId() ?? 0);
+        if ($parishId <= 0) {
             return redirect()->to(base_url('members'))->with('error', lang('App.notAuthorized'));
         }
 
-        $pairs = $this->getMergeService()->findDuplicatesForParish($churchId);
+        $pairs = $this->getMergeService()->findDuplicatesForParish($parishId);
 
         return view('Clergy\Views\MemberMerge\index', array_merge(
             $this->getCommonViewData(lang('Members.dedupTitle')),
@@ -59,8 +59,8 @@ class MemberMerge extends BaseController
             return $redirect;
         }
 
-        $churchId = (int) ($this->getOperationalParishId() ?? 0);
-        if ($churchId <= 0) {
+        $parishId = (int) ($this->getOperationalParishId() ?? 0);
+        if ($parishId <= 0) {
             return redirect()->back()->with('error', lang('App.notAuthorized'));
         }
 
@@ -71,7 +71,7 @@ class MemberMerge extends BaseController
             return redirect()->to(base_url('members/dedup'))->with('error', 'Select two profile to compare.');
         }
 
-        $result = $this->getMergeService()->getMergePreview($canonicalId, $duplicateId, $churchId);
+        $result = $this->getMergeService()->getMergePreview($canonicalId, $duplicateId, $parishId);
 
         if (!$result['ok']) {
             return redirect()->to(base_url('members/dedup'))->with('error', $result['message']);
@@ -96,8 +96,8 @@ class MemberMerge extends BaseController
             return $this->response->setJSON(['success' => false, 'message' => lang('App.notAuthorized')])->setStatusCode(403);
         }
 
-        $churchId = (int) ($this->getOperationalParishId() ?? 0);
-        if ($churchId <= 0) {
+        $parishId = (int) ($this->getOperationalParishId() ?? 0);
+        if ($parishId <= 0) {
             return $this->response->setJSON(['success' => false, 'message' => lang('App.notAuthorized')])->setStatusCode(403);
         }
 
@@ -113,7 +113,7 @@ class MemberMerge extends BaseController
             return $this->response->setJSON(['success' => false, 'message' => 'Please provide a reason for merging (min 8 characters).'])->setStatusCode(400);
         }
 
-        $duplicateProfile = $this->loadProfileForParish($duplicateId, $churchId);
+        $duplicateProfile = $this->loadProfileForParish($duplicateId, $parishId);
         if ($duplicateProfile !== null) {
             if ($code = $this->guardTargetUserMutation((int) ($duplicateProfile['user_id'] ?? 0), true)) {
                 return $this->response->setJSON(['success' => false, 'message' => $this->hierarchyGuardMessage($code)])->setStatusCode(403);
@@ -130,7 +130,7 @@ class MemberMerge extends BaseController
             }
         }
 
-        $result = $this->getMergeService()->merge($canonicalId, $duplicateId, $churchId, $fieldOverrides);
+        $result = $this->getMergeService()->merge($canonicalId, $duplicateId, $parishId, $fieldOverrides);
 
         if (!$result['ok']) {
             return $this->response->setJSON([
@@ -140,8 +140,8 @@ class MemberMerge extends BaseController
             ])->setStatusCode($result['http_status']);
         }
 
-        // Sync snapshot for the church
-        (new ParishPeopleRegistryService())->syncParish($churchId);
+        // Sync snapshot for the parish
+        (new ParishPeopleRegistryService())->syncParish($parishId);
 
         $this->audit()->log('member.merge', array_merge(
             [
@@ -151,7 +151,7 @@ class MemberMerge extends BaseController
                 'field_overrides'      => array_keys($fieldOverrides),
                 'duplicate_user_id'    => $result['data']['duplicate_user_id'] ?? null,
             ],
-            $this->buildParishContextMeta($churchId, self::ATTRIBUTION_POLICY_OPERATIONAL_DEFAULT)
+            $this->buildParishContextMeta($parishId, self::ATTRIBUTION_POLICY_OPERATIONAL_DEFAULT)
         ));
 
         return $this->response->setJSON([
@@ -171,12 +171,12 @@ class MemberMerge extends BaseController
             return $redirect;
         }
 
-        $churchId = (int) ($this->getOperationalParishId() ?? 0);
-        if ($churchId <= 0) {
+        $parishId = (int) ($this->getOperationalParishId() ?? 0);
+        if ($parishId <= 0) {
             return redirect()->back()->with('error', lang('App.notAuthorized'));
         }
 
-        $profile = $this->loadProfileForParish($profileId, $churchId);
+        $profile = $this->loadProfileForParish($profileId, $parishId);
         if ($profile === null) {
             return redirect()->to(base_url('members'))->with('error', lang('Clergy.memberNotFound'));
         }
@@ -197,12 +197,12 @@ class MemberMerge extends BaseController
             return $this->response->setJSON(['success' => false, 'message' => lang('App.notAuthorized')])->setStatusCode(403);
         }
 
-        $churchId = (int) ($this->getOperationalParishId() ?? 0);
-        if ($churchId <= 0) {
+        $parishId = (int) ($this->getOperationalParishId() ?? 0);
+        if ($parishId <= 0) {
             return $this->response->setJSON(['success' => false, 'message' => lang('App.notAuthorized')])->setStatusCode(403);
         }
 
-        $profile = $this->loadProfileForParish($profileId, $churchId);
+        $profile = $this->loadProfileForParish($profileId, $parishId);
         if ($profile === null) {
             return $this->response->setJSON(['success' => false, 'message' => lang('Clergy.memberNotFound')])->setStatusCode(404);
         }
@@ -249,10 +249,10 @@ class MemberMerge extends BaseController
                 'full_name'  => $profile['first_name'] . ' ' . $profile['last_name'],
                 'reason'     => $reason,
             ],
-            $this->buildParishContextMeta($churchId, self::ATTRIBUTION_POLICY_OPERATIONAL_DEFAULT)
+            $this->buildParishContextMeta($parishId, self::ATTRIBUTION_POLICY_OPERATIONAL_DEFAULT)
         ));
 
-        $result = $this->getMergeService()->hardDelete($profileId, $churchId);
+        $result = $this->getMergeService()->hardDelete($profileId, $parishId);
 
         if (!$result['ok']) {
             return $this->response->setJSON([
@@ -262,7 +262,7 @@ class MemberMerge extends BaseController
             ])->setStatusCode($result['http_status']);
         }
 
-        (new ParishPeopleRegistryService())->syncParish($churchId);
+        (new ParishPeopleRegistryService())->syncParish($parishId);
 
         return $this->response->setJSON([
             'success'  => true,
@@ -278,7 +278,7 @@ class MemberMerge extends BaseController
     /**
      * @return array<string,mixed>|null
      */
-    private function loadProfileForParish(int $profileId, int $churchId): ?array
+    private function loadProfileForParish(int $profileId, int $parishId): ?array
     {
         $db = db_connect();
         $profileTable = $this->resolveExistingProfileTable($db);
@@ -290,7 +290,7 @@ class MemberMerge extends BaseController
             ->select('p.*, COALESCE(ai.secret, \'\') AS email')
             ->join('auth_identities ai', 'ai.user_id = p.user_id AND ai.type = \'email_password\'', 'left')
             ->where('p.id', $profileId)
-            ->where('p.parish_id', $churchId)
+            ->where('p.parish_id', $parishId)
             ->get()
             ->getRowArray();
 

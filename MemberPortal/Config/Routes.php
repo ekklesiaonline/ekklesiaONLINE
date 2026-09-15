@@ -18,7 +18,7 @@ $routes->post('families/enablePortal/(:num)', '\\MemberPortal\\Controllers\\Fami
 
 $routes->group('', ['filter' => 'session'], function ($routes) {
     $routes->get('media/profile-picture/(:num)', '\\MemberPortal\\Controllers\\PublicHome::profilePicture/$1');
-    $routes->get('media/church-logo/(:num)', '\\MemberPortal\\Controllers\\PublicHome::churchLogo/$1');
+    $routes->get('media/parish-logo/(:num)', '\\MemberPortal\\Controllers\\PublicHome::parishLogo/$1');
     $routes->get('media/parish-banner/(:num)', '\\MemberPortal\\Controllers\\PublicHome::parishBanner/$1');
     $routes->get('media/event-cover/(:num)', '\\MemberPortal\\Controllers\\PublicHome::eventCover/$1');
     $routes->get('media/event-attachment/(:num)', '\\MemberPortal\\Controllers\\PublicHome::eventAttachment/$1');

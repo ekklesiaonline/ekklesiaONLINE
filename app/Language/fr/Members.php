@@ -120,7 +120,7 @@ return [
     'bulkTransferDesc'          => 'Sélectionnez des membres et déplacez-les vers une autre paroisse avec une justification obligatoire.',
     'bulkTransferTitle'         => 'Transfert massif de membres',
     'bulkTransferWarning'       => "Les membres sélectionnés seront déplacés de la paroisse actuelle vers une autre paroisse.",
-    'destinationChurch'         => 'Paroisse de destination',
+    'destinationParish'         => 'Paroisse de destination',
     'selectDestination'         => 'Sélectionner la destination...',
     'reasonForTransfer'         => 'Motif du transfert',
     'transferReasonPlaceholder' => 'Expliquez pourquoi ces membres sont transférés...',
@@ -181,11 +181,11 @@ return [
     // Messages flash (spécifique au module Pasteur)
     // -------------------------------------------------------------------------
     'transferSuccess'           => '{0} membre(s) transféré(s) avec succès.',
-    'noChurchSelected'          => 'Aucune paroisse sélectionnée pour la gestion des membres.',
-    'noSourceChurch'            => 'Aucune paroisse source n\'a été sélectionnée.',
+    'noParishSelected'          => 'Aucune paroisse sélectionnée pour la gestion des membres.',
+    'noSourceParish'            => 'Aucune paroisse source n\'a été sélectionnée.',
     'selectMembers'             => 'Sélectionnez au moins un membre à transférer.',
     'chooseDestination'         => 'Choisissez une paroisse de destination valide.',
-    'sameChurch'                => 'La paroisse de destination doit être différente de la paroisse actuelle.',
+    'sameParish'                => 'La paroisse de destination doit être différente de la paroisse actuelle.',
     'reasonTooShort'            => 'La raison du transfert doit contenir au moins 8 caractères.',
     'transferFailed'            => 'Le transfert n\'a pas pu être complété.',
     'affiliationFailed'         => 'Impossible de créer l\'affiliation des membres à la paroisse sélectionnée.',

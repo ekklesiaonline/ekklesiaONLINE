@@ -5,7 +5,7 @@
 This guide defines the canonical handling rules for people records in ekklesiaRD, including:
 
 - Users (authentication identity in Shield)
-- Members (church-affiliated people)
+- Members (parish-affiliated people)
 - Guests (first-time or non-member visitors)
 - Children (member subtype, usually family-linked)
 - Families (household grouping)
@@ -24,19 +24,19 @@ Use this as an operational and implementation reference for controllers, service
 ### 2. profile (extended person record)
 
 - Source of truth for personal/member metadata.
-- Holds church scope linkage (`church_id`) and membership status.
+- Holds parish scope linkage (`parish_id`) and membership status.
 - Includes portal access flags (`portal_access`, `portal_enabled_at`) when present.
 
-### 3. member_church_affiliations (membership scope)
+### 3. member_parish_affiliations (membership scope)
 
-- Source of truth for church affiliation state and active/home linkage.
+- Source of truth for parish affiliation state and active/home linkage.
 - Required for scope-aware membership queries.
 
 ### 4. families + family_members
 
 - `families`: household metadata.
 - `family_members`: user-to-family relation rows.
-- Family membership management must be church-scoped.
+- Family membership management must be parish-scoped.
 
 ### 5. guests
 
@@ -55,7 +55,7 @@ A system account that can authenticate. A user may be:
 
 ### Member
 
-A church-affiliated person with profile + affiliation and normally family linkage where applicable.
+A parish-affiliated person with profile + affiliation and normally family linkage where applicable.
 
 ### Guest
 
@@ -67,31 +67,31 @@ A member subtype represented as a normal user/profile record with family relatio
 
 ### Non-access / Non-portal member
 
-A valid member in church records who does not have active login credentials.
+A valid member in parish records who does not have active login credentials.
 
 ## Canonical Workflows
 
 ## A. Create Family
 
-1. Validate church scope and `families.manage` permission.
-2. Insert into `families` using operational `church_id`.
+1. Validate parish scope and `families.manage` permission.
+2. Insert into `families` using operational `parish_id`.
 3. Do not auto-create `family_members` rows.
 4. Audit event: `family.create`.
 
 ## B. Add Existing Member to Family
 
-1. Validate family belongs to operational church.
-2. Validate user has active affiliation in same church.
+1. Validate family belongs to operational parish.
+2. Validate user has active affiliation in same parish.
 3. Insert relation row in `family_members`.
 4. Audit event: `family_member.add`.
 
 ## C. Create Non-portal Member (No Login Access)
 
-1. Validate family and church scope.
+1. Validate family and parish scope.
 2. Insert `users` row (no auth identity).
 3. Insert `profile` row with member metadata.
 4. Set `portal_access = 'none'` (or equivalent canonical value).
-5. Insert active `member_church_affiliations` row.
+5. Insert active `member_parish_affiliations` row.
 6. Insert `family_members` relation.
 7. Audit event for member creation and family linking.
 
@@ -100,7 +100,7 @@ Result: person is a valid member in records, not able to log in.
 ## D. Enable Portal Access for Existing Non-portal Member
 
 1. Validate family scope and member linkage.
-2. Validate active church affiliation.
+2. Validate active parish affiliation.
 3. Ensure no existing `email_password` identity for that user.
 4. Ensure email uniqueness among identity records.
 5. Insert Shield identity (`auth_identities`).
@@ -127,8 +127,8 @@ Result: person is a valid member in records, not able to log in.
 
 ## Access and Permission Rules
 
-- Always enforce permission + church scope at route and controller/service level.
-- Super-admin/system scopes may bypass church restriction only where explicitly allowed.
+- Always enforce permission + parish scope at route and controller/service level.
+- Super-admin/system scopes may bypass parish restriction only where explicitly allowed.
 - Families and member write operations must require `families.manage` (or stronger role permission).
 - Read routes use `families.view` minimum.
 
@@ -140,13 +140,13 @@ Use these consistently:
 - Portal access lifecycle:
   - `none`: no login enabled
   - `enabled`: login enabled
-- Affiliation active state must align with effective member visibility in church-scoped lists.
+- Affiliation active state must align with effective member visibility in parish-scoped lists.
 
 ## Data Integrity Rules (Required)
 
 - Do not create auth identity for non-portal members.
 - Do not enable portal without validated scope + family linkage + active affiliation.
-- Do not allow cross-church family/member operations.
+- Do not allow cross-parish family/member operations.
 - Do not write plaintext passwords to logs.
 - Wrap multi-step create/enable workflows in DB transactions.
 
@@ -182,7 +182,7 @@ For database integration tests involving users/members/families:
   - Use guest flow.
 - Household relationship needed?
   - Use family + family_members flow.
-- Cross-church request?
+- Cross-parish request?
   - Deny unless super-admin permitted path.
 
 ## Ownership

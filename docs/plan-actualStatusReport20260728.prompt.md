@@ -33,7 +33,7 @@ The member subsystem is one of the strongest areas in the codebase. Evidence inc
 - profile models and parish affiliation models
 - import workflow
 - member dedup/merge/hard-delete service and controller
-- people/church registry logic for portal and non-portal members
+- people/parish registry logic for portal and non-portal members
 
 This is not just scaffolding; it is a substantial, user-facing implementation.
 

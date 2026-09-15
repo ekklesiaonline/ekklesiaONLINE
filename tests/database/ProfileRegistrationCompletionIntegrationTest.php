@@ -69,14 +69,14 @@ final class ProfileRegistrationCompletionIntegrationTest extends CIUnitTestCase
         $this->assertSame('pending_profile', (string) ($registration['status'] ?? ''));
         $this->assertEmpty($registration['requested_parish_id'] ?? null);
 
-        $auditCount = $this->db->table($this->resolveTableName('church_role_audit_logs'))->countAllResults();
+        $auditCount = $this->db->table($this->resolveTableName('parish_role_audit_logs'))->countAllResults();
         $this->assertSame(0, $auditCount);
     }
 
     public function testCompleteSubmitStoresRequestedParishAndWritesAuditAndNotificationSideEffects(): void
     {
-        [$userId, $provinceId, $dioceseId, $churchId] = $this->seedRegistrationContext();
-        $this->seedChurchAdminRecipient($dioceseId, $churchId, 'church.admin@example.org');
+        [$userId, $provinceId, $dioceseId, $parishId] = $this->seedRegistrationContext();
+        $this->seedParishAdminRecipient($dioceseId, $parishId, 'parish.admin@example.org');
         $this->injectAuthUser($userId);
 
         $emailMock = new class {
@@ -109,7 +109,7 @@ final class ProfileRegistrationCompletionIntegrationTest extends CIUnitTestCase
             'phone' => '4155552671',
             'province_id' => $provinceId,
             'diocese_id' => $dioceseId,
-            'parish_id' => $churchId,
+            'parish_id' => $parishId,
         ];
         $request->setGlobal('post', $postData);
         $request->setGlobal('request', $postData);
@@ -138,14 +138,14 @@ final class ProfileRegistrationCompletionIntegrationTest extends CIUnitTestCase
         }
 
         if (in_array('requested_parish_id', $registrationColumns, true)) {
-            $this->assertSame($churchId, (int) ($registration['requested_parish_id'] ?? 0));
-        } elseif (in_array('requested_church_id', $registrationColumns, true)) {
-            $this->assertSame($churchId, (int) ($registration['requested_church_id'] ?? 0));
+            $this->assertSame($parishId, (int) ($registration['requested_parish_id'] ?? 0));
+        } elseif (in_array('requested_parish_id', $registrationColumns, true)) {
+            $this->assertSame($parishId, (int) ($registration['requested_parish_id'] ?? 0));
         }
 
         $auditRows = [];
-        $auditTable = $this->resolveTableName('church_role_audit_logs');
-        if ($this->tableExists('church_role_audit_logs')) {
+        $auditTable = $this->resolveTableName('parish_role_audit_logs');
+        if ($this->tableExists('parish_role_audit_logs')) {
             $auditRows = $this->db->table($auditTable)
                 ->where('target_user_id', $userId)
                 ->orderBy('id', 'ASC')
@@ -181,7 +181,7 @@ final class ProfileRegistrationCompletionIntegrationTest extends CIUnitTestCase
     {
         $provinceId = $this->insertProvince();
         $dioceseId = $this->insertDiocese($provinceId);
-        $churchId = $this->insertChurch($dioceseId, 'Test Parish');
+        $parishId = $this->insertParish($dioceseId, 'Test Parish');
         $userId = $this->insertUser('pending.member', 'pending.member@example.org');
 
         $profileTable = $this->resolveTableName('profile');
@@ -195,11 +195,11 @@ final class ProfileRegistrationCompletionIntegrationTest extends CIUnitTestCase
         if (in_array('locale', $profileColumns, true)) {
             $profilePayload['locale'] = 'en';
         }
-        $profileScopeId = $this->profileScopeChurchId(null);
+        $profileScopeId = $this->profileScopeParishId(null);
         if ($this->columnExists($profileTable, 'parish_id')) {
             $profilePayload['parish_id'] = $profileScopeId;
-        } elseif ($this->columnExists($profileTable, 'church_id')) {
-            $profilePayload['church_id'] = $profileScopeId;
+        } elseif ($this->columnExists($profileTable, 'parish_id')) {
+            $profilePayload['parish_id'] = $profileScopeId;
         }
 
         $profilePayload = $this->filterPayloadByColumns($profileTable, $profilePayload);
@@ -209,7 +209,7 @@ final class ProfileRegistrationCompletionIntegrationTest extends CIUnitTestCase
         } catch (\Throwable $e) {
             if (array_key_exists('parish_id', $profilePayload)) {
                 unset($profilePayload['parish_id']);
-                $profilePayload['church_id'] = $profileScopeId;
+                $profilePayload['parish_id'] = $profileScopeId;
                 $profilePayload = $this->filterPayloadByColumns($profileTable, $profilePayload);
                 $this->db->table($profileTable)->insert($profilePayload);
             } else {
@@ -234,17 +234,17 @@ final class ProfileRegistrationCompletionIntegrationTest extends CIUnitTestCase
         if (in_array('requested_parish_id', $requestColumns, true)) {
             $requestPayload['requested_parish_id'] = null;
         }
-        if (in_array('requested_church_id', $requestColumns, true)) {
-            $requestPayload['requested_church_id'] = null;
+        if (in_array('requested_parish_id', $requestColumns, true)) {
+            $requestPayload['requested_parish_id'] = null;
         }
         $this->db->table($requestTable)->insert($requestPayload);
 
-        return [$userId, $provinceId, $dioceseId, $churchId];
+        return [$userId, $provinceId, $dioceseId, $parishId];
     }
 
-    private function seedChurchAdminRecipient(int $dioceseId, int $churchId, string $email): void
+    private function seedParishAdminRecipient(int $dioceseId, int $parishId, string $email): void
     {
-        $adminUserId = $this->insertUser('church.admin', $email);
+        $adminUserId = $this->insertUser('parish.admin', $email);
 
         $profileTable = $this->resolveTableName('profile');
         $profileColumns = array_map('strtolower', $this->db->getFieldNames($profileTable));
@@ -258,9 +258,9 @@ final class ProfileRegistrationCompletionIntegrationTest extends CIUnitTestCase
             $profilePayload['locale'] = 'en';
         }
         if ($this->columnExists($profileTable, 'parish_id')) {
-            $profilePayload['parish_id'] = $churchId;
-        } elseif ($this->columnExists($profileTable, 'church_id')) {
-            $profilePayload['church_id'] = $churchId;
+            $profilePayload['parish_id'] = $parishId;
+        } elseif ($this->columnExists($profileTable, 'parish_id')) {
+            $profilePayload['parish_id'] = $parishId;
         }
 
         $profilePayload = $this->filterPayloadByColumns($profileTable, $profilePayload);
@@ -270,7 +270,7 @@ final class ProfileRegistrationCompletionIntegrationTest extends CIUnitTestCase
         } catch (\Throwable $e) {
             if (array_key_exists('parish_id', $profilePayload)) {
                 unset($profilePayload['parish_id']);
-                $profilePayload['church_id'] = $churchId;
+                $profilePayload['parish_id'] = $parishId;
                 $profilePayload = $this->filterPayloadByColumns($profileTable, $profilePayload);
                 $this->db->table($profileTable)->insert($profilePayload);
             } else {
@@ -280,7 +280,7 @@ final class ProfileRegistrationCompletionIntegrationTest extends CIUnitTestCase
 
         $this->db->table($this->resolveTableName('auth_groups_users'))->insert([
             'user_id' => $adminUserId,
-            'group' => 'churchadmin',
+            'group' => 'parishadmin',
             'created_at' => date('Y-m-d H:i:s'),
         ]);
 
@@ -370,7 +370,7 @@ final class ProfileRegistrationCompletionIntegrationTest extends CIUnitTestCase
         $this->ensureUsersTable();
         $this->ensureProvincesTable();
         $this->ensureDiocesesTable();
-        $this->ensureChurchesTable();
+        $this->ensureParishesTable();
         $this->ensureUserSessionsTable();
         $this->ensureProfilesTable();
         $this->ensureRegistrationRequestsTable();
@@ -450,9 +450,9 @@ final class ProfileRegistrationCompletionIntegrationTest extends CIUnitTestCase
         $this->ensureColumnExists($this->createTableName('diocese'), 'province_id', 'INTEGER NULL');
     }
 
-    private function ensureChurchesTable(): void
+    private function ensureParishesTable(): void
     {
-        // Create both 'parish' and 'churches' for backward compatibility
+        // Create both 'parish' and 'parishes' for backward compatibility
         $table = $this->createTableName('parish');
         if (!$this->tableExists('parish')) {
             $this->db->query('CREATE TABLE IF NOT EXISTS ' . $table . ' (
@@ -478,7 +478,7 @@ final class ProfileRegistrationCompletionIntegrationTest extends CIUnitTestCase
                 user_id INTEGER NOT NULL,
                 province_id INTEGER NULL,
                 diocese_id INTEGER NULL,
-                church_id INTEGER NULL,
+                parish_id INTEGER NULL,
                 parish_id INTEGER NULL,
                 first_name TEXT NULL,
                 last_name TEXT NULL,
@@ -499,7 +499,7 @@ final class ProfileRegistrationCompletionIntegrationTest extends CIUnitTestCase
         $this->ensureColumnExists($profilesTable, 'phone_hash', 'TEXT NULL');
         $this->ensureColumnExists($profilesTable, 'province_id', 'INTEGER NULL');
         $this->ensureColumnExists($profilesTable, 'diocese_id', 'INTEGER NULL');
-        $this->ensureColumnExists($profilesTable, 'church_id', 'INTEGER NULL');
+        $this->ensureColumnExists($profilesTable, 'parish_id', 'INTEGER NULL');
         $this->ensureColumnExists($profilesTable, 'parish_id', 'INTEGER NULL');
         $this->ensureColumnExists($profilesTable, 'membership_status', 'TEXT NULL');
         $this->ensureColumnExists($profilesTable, 'locale', 'TEXT NULL');
@@ -509,7 +509,7 @@ final class ProfileRegistrationCompletionIntegrationTest extends CIUnitTestCase
         $this->ensureColumnExists($this->createTableName('profile'), 'phone_hash', 'TEXT NULL');
         $this->ensureColumnExists($this->createTableName('profile'), 'province_id', 'INTEGER NULL');
         $this->ensureColumnExists($this->createTableName('profile'), 'diocese_id', 'INTEGER NULL');
-        $this->ensureColumnExists($this->createTableName('profile'), 'church_id', 'INTEGER NULL');
+        $this->ensureColumnExists($this->createTableName('profile'), 'parish_id', 'INTEGER NULL');
         $this->ensureColumnExists($this->createTableName('profile'), 'parish_id', 'INTEGER NULL');
         $this->ensureColumnExists($this->createTableName('profile'), 'membership_status', 'TEXT NULL');
         $this->ensureColumnExists($this->createTableName('profile'), 'locale', 'TEXT NULL');
@@ -550,7 +550,7 @@ final class ProfileRegistrationCompletionIntegrationTest extends CIUnitTestCase
                 user_id INTEGER NOT NULL,
                 province_id INTEGER NULL,
                 diocese_id INTEGER NULL,
-                requested_church_id INTEGER NULL,
+                requested_parish_id INTEGER NULL,
                 requested_parish_id INTEGER NULL,
                 status TEXT NULL,
                 requested_role TEXT NULL,
@@ -566,7 +566,7 @@ final class ProfileRegistrationCompletionIntegrationTest extends CIUnitTestCase
         $resolved = $this->resolveTableName('user_registration_request');
         $this->ensureColumnExists($resolved, 'province_id', 'INTEGER NULL');
         $this->ensureColumnExists($resolved, 'diocese_id', 'INTEGER NULL');
-        $this->ensureColumnExists($resolved, 'requested_church_id', 'INTEGER NULL');
+        $this->ensureColumnExists($resolved, 'requested_parish_id', 'INTEGER NULL');
         $this->ensureColumnExists($resolved, 'requested_parish_id', 'INTEGER NULL');
         $this->ensureColumnExists($resolved, 'requested_role', 'TEXT NULL');
         $this->ensureColumnExists($resolved, 'reviewed_by', 'INTEGER NULL');
@@ -577,11 +577,11 @@ final class ProfileRegistrationCompletionIntegrationTest extends CIUnitTestCase
 
     private function ensureAuditLogsTable(): void
     {
-        $table = $this->createTableName('church_role_audit_logs');
-        if (!$this->tableExists('church_role_audit_logs')) {
+        $table = $this->createTableName('parish_role_audit_logs');
+        if (!$this->tableExists('parish_role_audit_logs')) {
             $this->db->query('CREATE TABLE IF NOT EXISTS ' . $table . ' (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
-                church_id INTEGER NULL,
+                parish_id INTEGER NULL,
                 actor_user_id INTEGER NOT NULL,
                 target_user_id INTEGER NOT NULL,
                 action TEXT NOT NULL,
@@ -693,7 +693,7 @@ final class ProfileRegistrationCompletionIntegrationTest extends CIUnitTestCase
         return (int) $this->db->insertID();
     }
 
-    private function insertChurch(int $dioceseId, string $name): int
+    private function insertParish(int $dioceseId, string $name): int
     {
         $table = $this->resolveTableName('parish');
         $data = [
@@ -741,7 +741,7 @@ final class ProfileRegistrationCompletionIntegrationTest extends CIUnitTestCase
         return $this->db->getPrefix() . $base;
     }
 
-    private function profileScopeChurchId(?int $preferred): ?int
+    private function profileScopeParishId(?int $preferred): ?int
     {
         if ($preferred !== null) {
             return $preferred;
@@ -752,7 +752,7 @@ final class ProfileRegistrationCompletionIntegrationTest extends CIUnitTestCase
 
         foreach ($result as $column) {
             $name = (string) ($column['name'] ?? '');
-            if ($name === 'parish_id' || $name === 'church_id') {
+            if ($name === 'parish_id' || $name === 'parish_id') {
                 return ((int) ($column['notnull'] ?? 0) === 1) ? 0 : null;
             }
         }

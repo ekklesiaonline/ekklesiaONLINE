@@ -26,8 +26,8 @@ class AddParishIdToFamilyTable extends Migration
             ],
         ]);
 
-        $this->forge->addKey('parish_id', false, false, 'church_id');
-        $this->forge->addForeignKey('parish_id', 'parish', 'id', 'CASCADE', 'CASCADE', 'families_church_id_foreign');
+        $this->forge->addKey('parish_id', false, false, 'parish_id');
+        $this->forge->addForeignKey('parish_id', 'parish', 'id', 'CASCADE', 'CASCADE', 'families_parish_id_foreign');
     }
 
     public function down()
@@ -40,7 +40,7 @@ class AddParishIdToFamilyTable extends Migration
             return;
         }
 
-        $this->forge->dropForeignKey('family', 'families_church_id_foreign');
+        $this->forge->dropForeignKey('family', 'families_parish_id_foreign');
         $this->forge->dropColumn('family', 'parish_id');
     }
 }

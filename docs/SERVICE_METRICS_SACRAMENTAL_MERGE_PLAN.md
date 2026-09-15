@@ -289,7 +289,7 @@ public function down(): void
 After the merge, the annual aggregation query simplifies to a single table join:
 
 ```sql
--- Example: Parochial Report Line 19 for church 5, year 2026
+-- Example: Parochial Report Line 19 for parish 5, year 2026
 SELECT
     SUM(sm.baptism_adult)      AS total_baptisms_adult,
     SUM(sm.baptism_child)      AS total_baptisms_child,
@@ -304,7 +304,7 @@ SELECT
     SUM(sm.online_recorded_views) AS total_online_recorded_views
 FROM service_metrics sm
 INNER JOIN services s ON s.id = sm.service_id
-WHERE s.church_id = 5
+WHERE s.parish_id = 5
   AND YEAR(s.date) = 2026;
 ```
 

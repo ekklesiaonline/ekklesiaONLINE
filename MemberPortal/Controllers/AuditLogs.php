@@ -25,7 +25,7 @@ class AuditLogs extends BaseController
                 'pager' => null,
                 'audit_actions' => [],
                 'audit_entity_types' => [],
-                'audit_churches' => $this->getScopedParishes($scopeParishIds),
+                'audit_parishes' => $this->getScopedParishes($scopeParishIds),
                 'filter_parish_id' => $filters['parish_id'],
                 'filter_action' => $filters['action'],
                 'filter_entity_type' => $filters['entity_type'],
@@ -45,7 +45,7 @@ class AuditLogs extends BaseController
             $profileTable = 'profile';
         }
         $builder = $auditModel
-            ->select('audit_log.*, c.name AS church_name, p.first_name AS actor_first_name, p.last_name AS actor_last_name')
+            ->select('audit_log.*, c.name AS parish_name, p.first_name AS actor_first_name, p.last_name AS actor_last_name')
             ->join('parish c', 'c.id = audit_log.parish_id', 'left')
             ->join($profileTable . ' p', 'p.user_id = audit_log.user_id', 'left');
 
@@ -70,7 +70,7 @@ class AuditLogs extends BaseController
             'pager' => $auditModel->pager,
             'audit_actions' => $this->getAvailableActions($scopeParishIds),
             'audit_entity_types' => $this->getAvailableEntityTypes($scopeParishIds),
-            'audit_churches' => $this->getScopedParishes($scopeParishIds),
+            'audit_parishes' => $this->getScopedParishes($scopeParishIds),
             'filter_parish_id' => $filters['parish_id'],
             'filter_action' => $filters['action'],
             'filter_entity_type' => $filters['entity_type'],
@@ -108,7 +108,7 @@ class AuditLogs extends BaseController
         }
 
         $builder = db_connect()->table('audit_log')
-            ->select('audit_log.*, c.name AS church_name, p.first_name AS actor_first_name, p.last_name AS actor_last_name')
+            ->select('audit_log.*, c.name AS parish_name, p.first_name AS actor_first_name, p.last_name AS actor_last_name')
             ->join('parish c', 'c.id = audit_log.parish_id', 'left')
             ->join($profileTable . ' p', 'p.user_id = audit_log.user_id', 'left');
 
@@ -142,7 +142,7 @@ class AuditLogs extends BaseController
 
             fputcsv($handle, [
                 (string) ($row['created_at'] ?? ''),
-                (string) ($row['church_name'] ?? ''),
+                (string) ($row['parish_name'] ?? ''),
                 $actorName,
                 (string) ($row['action'] ?? ''),
                 (string) ($row['entity_type'] ?? ''),
@@ -190,7 +190,7 @@ class AuditLogs extends BaseController
         }
 
         $builder = $auditModel
-            ->select('audit_log.*, c.name AS church_name, p.first_name AS actor_first_name, p.last_name AS actor_last_name')
+            ->select('audit_log.*, c.name AS parish_name, p.first_name AS actor_first_name, p.last_name AS actor_last_name')
             ->join('parish c', 'c.id = audit_log.parish_id', 'left')
             ->join($profileTable . ' p', 'p.user_id = audit_log.user_id', 'left');
 
@@ -243,7 +243,7 @@ class AuditLogs extends BaseController
         }
 
         $builder = $auditModel
-            ->select('audit_log.*, c.name AS church_name, p.first_name AS actor_first_name, p.last_name AS actor_last_name')
+            ->select('audit_log.*, c.name AS parish_name, p.first_name AS actor_first_name, p.last_name AS actor_last_name')
             ->join('parish c', 'c.id = audit_log.parish_id', 'left')
             ->join($profileTable . ' p', 'p.user_id = audit_log.user_id', 'left');
 
@@ -332,7 +332,7 @@ class AuditLogs extends BaseController
 
             $html .= '<tr>
                 <td>' . esc((string) ($row['created_at'] ?? '')) . '</td>
-                <td>' . esc((string) ($row['church_name'] ?? '-')) . '</td>
+                <td>' . esc((string) ($row['parish_name'] ?? '-')) . '</td>
                 <td>' . esc($actorDisplay) . '</td>
                 <td>' . $actionDisplay . '</td>
                 <td>' . esc((string) ($row['reason_text'] ?? '-')) . '</td>
@@ -420,7 +420,7 @@ class AuditLogs extends BaseController
         }
 
         $builder = $auditModel
-            ->select('audit_log.*, c.name AS church_name, p.first_name AS actor_first_name, p.last_name AS actor_last_name')
+            ->select('audit_log.*, c.name AS parish_name, p.first_name AS actor_first_name, p.last_name AS actor_last_name')
             ->join('parish c', 'c.id = audit_log.parish_id', 'left')
             ->join($profileTable . ' p', 'p.user_id = audit_log.user_id', 'left');
 
@@ -506,7 +506,7 @@ class AuditLogs extends BaseController
         }
 
         $builder = $auditModel
-            ->select('audit_log.*, c.name AS church_name, p.first_name AS actor_first_name, p.last_name AS actor_last_name')
+            ->select('audit_log.*, c.name AS parish_name, p.first_name AS actor_first_name, p.last_name AS actor_last_name')
             ->join('parish c', 'c.id = audit_log.parish_id', 'left')
             ->join($profileTable . ' p', 'p.user_id = audit_log.user_id', 'left')
             ->where('audit_log.id >', $lastId)
@@ -790,7 +790,7 @@ class AuditLogs extends BaseController
             return;
         }
 
-        // Parish admin (churchadmin): all logs for their parish — no action filter.
+        // Parish admin (parishadmin): all logs for their parish — no action filter.
     }
 
     private function resolveFilters(array $scopeParishIds): array

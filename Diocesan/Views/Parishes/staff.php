@@ -22,9 +22,9 @@ $roleLabelMap = [
 </div>
 
 <div class="alert alert-info">
-    <?php $churchUeid = trim((string) ($parish['parish_ueid'] ?? '')); ?>
+    <?php $parishUeid = trim((string) ($parish['parish_ueid'] ?? '')); ?>
     <strong><?= esc($parish['name']) ?></strong>
-    <span class="badge border border-secondary text-secondary fw-normal ms-2"><?= esc($churchUeid !== '' ? $churchUeid : lang('Parishes.textNotApplicable')) ?></span><br>
+    <span class="badge border border-secondary text-secondary fw-normal ms-2"><?= esc($parishUeid !== '' ? $parishUeid : lang('Parishes.textNotApplicable')) ?></span><br>
     <?= lang('Parishes.textOnlyAdminsLeadersShown') ?>
 </div>
 

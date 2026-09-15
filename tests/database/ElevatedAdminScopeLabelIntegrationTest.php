@@ -16,7 +16,7 @@ class ElevatedAdminScopeLabelTestController extends BaseController
 }
 
 /**
- * Covers the /profile "pending" + "no church affiliation" bug for elevated
+ * Covers the /profile "pending" + "no parish affiliation" bug for elevated
  * admins: system/province/diocese admins have no single parish_id by design,
  * so BaseController::resolveElevatedAdminScopeLabel() must resolve what they
  * actually administer instead of the page falling back to "no affiliation".

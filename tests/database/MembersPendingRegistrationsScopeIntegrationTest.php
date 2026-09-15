@@ -30,26 +30,26 @@ final class MembersPendingRegistrationsScopeIntegrationTest extends CIUnitTestCa
         parent::tearDown();
     }
 
-    public function testChurchAdminSeesOnlyOwnParishPendingRegistrations(): void
+    public function testParishAdminSeesOnlyOwnParishPendingRegistrations(): void
     {
-        [$churchA, $churchB] = $this->seedScopeChurches();
+        [$parishA, $parishB] = $this->seedScopeParishes();
 
-        $churchAdminUserId = $this->insertUser('church.admin', 'church.admin@example.org');
-        $this->insertProfile($churchAdminUserId, $churchA, 'Admin', 'A');
-        $this->insertAuthIdentity($churchAdminUserId, 'church.admin@example.org');
-        $this->insertGroup($churchAdminUserId, 'parishadmin');
+        $parishAdminUserId = $this->insertUser('parish.admin', 'parish.admin@example.org');
+        $this->insertProfile($parishAdminUserId, $parishA, 'Admin', 'A');
+        $this->insertAuthIdentity($parishAdminUserId, 'parish.admin@example.org');
+        $this->insertGroup($parishAdminUserId, 'parishadmin');
 
         $ownApplicantId = $this->insertUser('own.applicant', 'own.applicant@example.org');
         $this->insertProfile($ownApplicantId, null, 'Own', 'Applicant');
         $this->insertAuthIdentity($ownApplicantId, 'own.applicant@example.org');
-        $this->insertPendingRegistration($ownApplicantId, $churchA);
+        $this->insertPendingRegistration($ownApplicantId, $parishA);
 
         $otherApplicantId = $this->insertUser('other.applicant', 'other.applicant@example.org');
         $this->insertProfile($otherApplicantId, null, 'Other', 'Applicant');
         $this->insertAuthIdentity($otherApplicantId, 'other.applicant@example.org');
-        $this->insertPendingRegistration($otherApplicantId, $churchB);
+        $this->insertPendingRegistration($otherApplicantId, $parishB);
 
-        $this->injectChurchAdminAuth($churchAdminUserId);
+        $this->injectParishAdminAuth($parishAdminUserId);
 
         $request = service('request');
         $request->setMethod('get');
@@ -58,12 +58,12 @@ final class MembersPendingRegistrationsScopeIntegrationTest extends CIUnitTestCa
             protected function getMemberParishAffiliationModel()
             {
                 return new class {
-                    public function getParishMembersPaginated(int $churchId, ?string $status = null, int $perPage = 25, int $page = 1): array
+                    public function getParishMembersPaginated(int $parishId, ?string $status = null, int $perPage = 25, int $page = 1): array
                     {
                         return ['rows' => [], 'total' => 0];
                     }
 
-                    public function getParishStatusCounts(int $churchId): array
+                    public function getParishStatusCounts(int $parishId): array
                     {
                         return [];
                     }
@@ -91,7 +91,7 @@ final class MembersPendingRegistrationsScopeIntegrationTest extends CIUnitTestCa
         $this->ensureUsersTable();
         $this->ensureProvinceTable();
         $this->ensureDioceseTable();
-        $this->ensureChurchesTable();
+        $this->ensureParishesTable();
         $this->ensureProfilesTable();
         $this->ensureAuthIdentitiesTable();
         $this->ensureGroupsUsersTable();
@@ -174,7 +174,7 @@ final class MembersPendingRegistrationsScopeIntegrationTest extends CIUnitTestCa
         $this->ensureColumnExists($this->createTableName('diocese'), 'province_id', 'INTEGER NULL');
     }
 
-    private function ensureChurchesTable(): void
+    private function ensureParishesTable(): void
     {
         $table = $this->createTableName('parish');
         if (!$this->tableExists('parish')) {
@@ -344,15 +344,15 @@ final class MembersPendingRegistrationsScopeIntegrationTest extends CIUnitTestCa
         $this->ensureColumnExists($resolved, 'reviewed_at', 'TEXT NULL');
     }
 
-    private function seedScopeChurches(): array
+    private function seedScopeParishes(): array
     {
         $provinceId = $this->insertProvince('Scope Province');
         $dioceseId = $this->insertDiocese($provinceId, 'Scope Diocese');
 
-        $churchA = $this->insertChurch($dioceseId, 'Parish A');
-        $churchB = $this->insertChurch($dioceseId, 'Parish B');
+        $parishA = $this->insertParish($dioceseId, 'Parish A');
+        $parishB = $this->insertParish($dioceseId, 'Parish B');
 
-        return [$churchA, $churchB];
+        return [$parishA, $parishB];
     }
 
     private function insertProvince(string $name): int
@@ -388,7 +388,7 @@ final class MembersPendingRegistrationsScopeIntegrationTest extends CIUnitTestCa
         return (int) $this->db->insertID();
     }
 
-    private function insertChurch(int $dioceseId, string $name): int
+    private function insertParish(int $dioceseId, string $name): int
     {
         $table = $this->resolveTableName('parish');
         $data = [
@@ -420,10 +420,10 @@ final class MembersPendingRegistrationsScopeIntegrationTest extends CIUnitTestCa
         return (int) $this->db->insertID();
     }
 
-    private function insertProfile(int $userId, ?int $churchId, string $firstName, string $lastName): void
+    private function insertProfile(int $userId, ?int $parishId, string $firstName, string $lastName): void
     {
-        if ($churchId === null) {
-            $churchId = $this->nullableProfileChurchId();
+        if ($parishId === null) {
+            $parishId = $this->nullableProfileParishId();
         }
 
         $profileTable = $this->resolveTableName('profile');
@@ -441,9 +441,9 @@ final class MembersPendingRegistrationsScopeIntegrationTest extends CIUnitTestCa
         }
 
         if ($this->columnExists($profileTable, 'parish_id')) {
-            $payload['parish_id'] = $churchId;
-        } elseif ($this->columnExists($profileTable, 'church_id')) {
-            $payload['church_id'] = $churchId;
+            $payload['parish_id'] = $parishId;
+        } elseif ($this->columnExists($profileTable, 'parish_id')) {
+            $payload['parish_id'] = $parishId;
         }
 
         try {
@@ -451,7 +451,7 @@ final class MembersPendingRegistrationsScopeIntegrationTest extends CIUnitTestCa
         } catch (\Throwable $e) {
             if (array_key_exists('parish_id', $payload)) {
                 unset($payload['parish_id']);
-                $payload['church_id'] = $churchId;
+                $payload['parish_id'] = $parishId;
                 $this->db->table($profileTable)->insert($payload);
                 return;
             }
@@ -460,14 +460,14 @@ final class MembersPendingRegistrationsScopeIntegrationTest extends CIUnitTestCa
         }
     }
 
-    private function nullableProfileChurchId(): ?int
+    private function nullableProfileParishId(): ?int
     {
         $table = $this->resolveTableName('profile');
         $result = $this->db->query('PRAGMA table_info(' . $table . ')')->getResultArray();
 
         foreach ($result as $column) {
             $name = (string) ($column['name'] ?? '');
-            if ($name === 'parish_id' || $name === 'church_id') {
+            if ($name === 'parish_id' || $name === 'parish_id') {
                 return ((int) ($column['notnull'] ?? 0) === 1) ? 0 : null;
             }
         }
@@ -498,26 +498,26 @@ final class MembersPendingRegistrationsScopeIntegrationTest extends CIUnitTestCa
         ]);
     }
 
-    private function insertPendingRegistration(int $userId, int $churchId): void
+    private function insertPendingRegistration(int $userId, int $parishId): void
     {
         $this->db->table($this->resolveTableName('user_registration_request'))->insert([
             'user_id' => $userId,
-            'requested_parish_id' => $churchId,
+            'requested_parish_id' => $parishId,
             'status' => 'pending_review',
             'created_at' => date('Y-m-d H:i:s'),
             'updated_at' => date('Y-m-d H:i:s'),
         ]);
     }
 
-    private function injectChurchAdminAuth(int $userId): void
+    private function injectParishAdminAuth(int $userId): void
     {
         $fakeUser = new class($userId) extends User {
             public function __construct(private int $userIdForTest)
             {
                 parent::__construct([
                     'id' => $userIdForTest,
-                    'username' => 'church.admin.' . $userIdForTest,
-                    'email' => 'church.admin.' . $userIdForTest . '@example.org',
+                    'username' => 'parish.admin.' . $userIdForTest,
+                    'email' => 'parish.admin.' . $userIdForTest . '@example.org',
                 ]);
             }
 

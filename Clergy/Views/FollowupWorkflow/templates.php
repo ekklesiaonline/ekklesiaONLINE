@@ -76,7 +76,7 @@ $channelBadge = [
                                     <?php if ($isGlobal): ?>
                                         <span class="badge border border-info text-info fw-normal"><?= lang('Guests.tplScopeGlobal') ?></span>
                                     <?php else: ?>
-                                        <span class="badge border border-secondary text-body fw-normal"><?= lang('Guests.tplScopeChurch') ?></span>
+                                        <span class="badge border border-secondary text-body fw-normal"><?= lang('Guests.tplScopeParish') ?></span>
                                     <?php endif; ?>
                                 </td>
                                 <td class="text-end">
@@ -168,12 +168,12 @@ $channelBadge = [
                     <div class="col-12">
                         <label class="form-label" for="tpl_body_text"><?= lang('Guests.tplFieldBodyText') ?> <span class="text-danger">*</span></label>
                         <textarea id="tpl_body_text" class="form-control font-monospace" rows="5" required
-                            placeholder="Hi {first_name}, we loved having you at {church_name}!"></textarea>
+                            placeholder="Hi {first_name}, we loved having you at {parish_name}!"></textarea>
                         <div class="form-text">
                             <?= lang('Guests.tplFieldAvailableTokens') ?>
                             <code>{first_name}</code> <code>{last_name}</code> <code>{full_name}</code>
-                            <code>{church_name}</code> <code>{clergy_name}</code> <code>{service_time}</code>
-                            <code>{church_address}</code> <code>{visit_date}</code> <code>{phone}</code>
+                            <code>{parish_name}</code> <code>{clergy_name}</code> <code>{service_time}</code>
+                            <code>{parish_address}</code> <code>{visit_date}</code> <code>{phone}</code>
                             <code>{next_event_name}</code> <code>{event_date}</code>
                             <code>{interests_list}</code> <code>{interest_*}</code>
                         </div>
@@ -188,7 +188,7 @@ $channelBadge = [
                     <div class="col-12">
                         <label class="form-label" for="tpl_variables"><?= lang('Guests.tplFieldVariables') ?> <span class="text-muted small">(<?= lang('Guests.tplFieldVariablesHint') ?>)</span></label>
                         <input type="text" id="tpl_variables" class="form-control"
-                            placeholder="{first_name},{church_name},{visit_date}">
+                            placeholder="{first_name},{parish_name},{visit_date}">
                         <div class="form-text"><?= lang('Guests.tplFieldVariablesHelp') ?></div>
                     </div>
                 </div>

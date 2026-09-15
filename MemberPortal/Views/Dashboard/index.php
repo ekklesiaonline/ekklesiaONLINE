@@ -339,7 +339,7 @@ $formatLocalizedDateTime = static function (?string $value, string $locale): str
         <div class="col-md-6">
             <div class="card h-100">
                 <div class="card-header d-flex justify-content-between align-items-center gap-3 flex-wrap">
-                    <h5 class="mb-0"><i class="bi bi-graph-up-arrow"></i> <?= lang('Dashboard.churchSundayAttendanceTitle') ?></h5>
+                    <h5 class="mb-0"><i class="bi bi-graph-up-arrow"></i> <?= lang('Dashboard.parishSundayAttendanceTitle') ?></h5>
                 </div>
                 <div class="card-body" style="min-height: 420px;">
                     <?php if (empty($sunday_attendance_has_data)): ?>
@@ -348,14 +348,14 @@ $formatLocalizedDateTime = static function (?string $value, string $locale): str
                         </div>
                     <?php endif; ?>
                     <div style="height: 260px; max-height: 260px;">
-                        <canvas id="churchAttendanceChart"></canvas>
+                        <canvas id="parishAttendanceChart"></canvas>
                     </div>
                 </div>
                 <div class="card-footer bg-transparent border-top-0 pt-0 pb-3">
                     <div class="d-flex align-items-center justify-content-end gap-2">
                         <button
                             type="button"
-                            id="churchChartTypeToggle"
+                            id="parishChartTypeToggle"
                             class="btn btn-sm btn-outline-secondary"
                             data-current-type="line"
                             aria-label="<?= esc(lang('Dashboard.chartType')) ?>">
@@ -375,35 +375,35 @@ $formatLocalizedDateTime = static function (?string $value, string $locale): str
 
 <?= $this->section('scripts') ?>
 <script>
-    const churchLabels = <?= json_encode($sunday_attendance_labels ?? []) ?>;
-    const churchAsaValues = <?= json_encode($sunday_attendance_averages ?? []) ?>;
-    const churchAscValues = <?= json_encode($communion_attendance_averages ?? []) ?>;
-    const churchCtx = document.getElementById('churchAttendanceChart');
-    const churchChartTypeToggle = document.getElementById('churchChartTypeToggle');
-    const churchPresentLegendLabel = <?= json_encode(lang('Dashboard.churchPresentCountLegend')) ?>;
-    const churchCommunionLegendLabel = <?= json_encode(lang('Dashboard.churchCommunionCountLegend')) ?>;
+    const parishLabels = <?= json_encode($sunday_attendance_labels ?? []) ?>;
+    const parishAsaValues = <?= json_encode($sunday_attendance_averages ?? []) ?>;
+    const parishAscValues = <?= json_encode($communion_attendance_averages ?? []) ?>;
+    const parishCtx = document.getElementById('parishAttendanceChart');
+    const parishChartTypeToggle = document.getElementById('parishChartTypeToggle');
+    const parishPresentLegendLabel = <?= json_encode(lang('Dashboard.parishPresentCountLegend')) ?>;
+    const parishCommunionLegendLabel = <?= json_encode(lang('Dashboard.parishCommunionCountLegend')) ?>;
     const chartTypeLineLabel = <?= json_encode(lang('Dashboard.chartTypeLine')) ?>;
     const chartTypeBarLabel = <?= json_encode(lang('Dashboard.chartTypeBar')) ?>;
-    let churchChart = null;
+    let parishChart = null;
 
-    function syncChurchChartTypeToggleLabel(currentType) {
-        if (!churchChartTypeToggle) {
+    function syncParishChartTypeToggleLabel(currentType) {
+        if (!parishChartTypeToggle) {
             return;
         }
 
         const nextType = currentType === 'bar' ? 'line' : 'bar';
-        churchChartTypeToggle.setAttribute('data-current-type', currentType);
-        churchChartTypeToggle.textContent = nextType === 'bar' ? chartTypeBarLabel : chartTypeLineLabel;
+        parishChartTypeToggle.setAttribute('data-current-type', currentType);
+        parishChartTypeToggle.textContent = nextType === 'bar' ? chartTypeBarLabel : chartTypeLineLabel;
     }
 
-    function applyChurchChartStyle(chartType) {
-        if (!churchChart || !churchChart.data || !Array.isArray(churchChart.data.datasets)) {
+    function applyParishChartStyle(chartType) {
+        if (!parishChart || !parishChart.data || !Array.isArray(parishChart.data.datasets)) {
             return;
         }
 
         const isBar = chartType === 'bar';
 
-        churchChart.data.datasets.forEach((dataset, index) => {
+        parishChart.data.datasets.forEach((dataset, index) => {
             const colorBorder = index === 0 ? '#0d6efd' : '#198754';
             const lineFill = index === 0 ? 'rgba(13, 110, 253, 0.10)' : 'rgba(25, 135, 84, 0.10)';
             const barFill = index === 0 ? 'rgba(13, 110, 253, 0.70)' : 'rgba(25, 135, 84, 0.70)';
@@ -416,23 +416,23 @@ $formatLocalizedDateTime = static function (?string $value, string $locale): str
             dataset.pointRadius = isBar ? 0 : 3;
         });
 
-        if (!churchChart.options.scales) {
-            churchChart.options.scales = {};
+        if (!parishChart.options.scales) {
+            parishChart.options.scales = {};
         }
-        if (!churchChart.options.scales.x) {
-            churchChart.options.scales.x = {};
+        if (!parishChart.options.scales.x) {
+            parishChart.options.scales.x = {};
         }
-        churchChart.options.scales.x.offset = isBar;
+        parishChart.options.scales.x.offset = isBar;
     }
 
-    if (churchCtx) {
-        churchChart = new Chart(churchCtx, {
+    if (parishCtx) {
+        parishChart = new Chart(parishCtx, {
             type: 'line',
             data: {
-                labels: churchLabels,
+                labels: parishLabels,
                 datasets: [{
-                        label: churchPresentLegendLabel,
-                        data: churchAsaValues,
+                        label: parishPresentLegendLabel,
+                        data: parishAsaValues,
                         borderColor: '#0d6efd',
                         backgroundColor: 'rgba(13, 110, 253, 0.10)',
                         fill: false,
@@ -440,8 +440,8 @@ $formatLocalizedDateTime = static function (?string $value, string $locale): str
                         pointRadius: 3,
                     },
                     {
-                        label: churchCommunionLegendLabel,
-                        data: churchAscValues,
+                        label: parishCommunionLegendLabel,
+                        data: parishAscValues,
                         borderColor: '#198754',
                         backgroundColor: 'rgba(25, 135, 84, 0.10)',
                         fill: false,
@@ -466,24 +466,24 @@ $formatLocalizedDateTime = static function (?string $value, string $locale): str
             },
         });
 
-        applyChurchChartStyle('line');
-        churchChart.update();
-        syncChurchChartTypeToggleLabel('line');
+        applyParishChartStyle('line');
+        parishChart.update();
+        syncParishChartTypeToggleLabel('line');
     }
 
-    if (churchChartTypeToggle) {
-        churchChartTypeToggle.addEventListener('click', () => {
-            if (!churchChart) {
+    if (parishChartTypeToggle) {
+        parishChartTypeToggle.addEventListener('click', () => {
+            if (!parishChart) {
                 return;
             }
 
-            const currentType = churchChartTypeToggle.getAttribute('data-current-type') || 'line';
+            const currentType = parishChartTypeToggle.getAttribute('data-current-type') || 'line';
             const nextType = currentType === 'bar' ? 'line' : 'bar';
 
-            churchChart.config.type = nextType;
-            applyChurchChartStyle(nextType);
-            churchChart.update();
-            syncChurchChartTypeToggleLabel(nextType);
+            parishChart.config.type = nextType;
+            applyParishChartStyle(nextType);
+            parishChart.update();
+            syncParishChartTypeToggleLabel(nextType);
         });
     }
 </script>

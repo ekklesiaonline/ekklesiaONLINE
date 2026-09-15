@@ -109,7 +109,7 @@ $auditEventCount = $has_audit_logs_table ? (int) ($audit_event_count ?? 0) : 0;
                                     class="badge border border-secondary text-secondary fw-normal"><?= esc((string) ($province['diocese_count'] ?? 0)) ?></span>
                             </td>
                             <td><span
-                                    class="badge border border-secondary text-secondary fw-normal"><?= esc((string) ($province['church_count'] ?? 0)) ?></span>
+                                    class="badge border border-secondary text-secondary fw-normal"><?= esc((string) ($province['parish_count'] ?? 0)) ?></span>
                             </td>
                             <td class="text-end">
                                 <button class="btn btn-sm btn-outline-secondary me-1" type="button" data-bs-toggle="modal"
@@ -174,7 +174,7 @@ $auditEventCount = $has_audit_logs_table ? (int) ($audit_event_count ?? 0) : 0;
                             <td><?= esc((string) ($diocese['province_number'] . ' – ' . $diocese['province_name'])) ?></td>
                             <td><?= esc((string) ($diocese['name'] ?? '')) ?></td>
                             <td><span
-                                    class="badge border border-secondary text-secondary fw-normal"><?= esc((string) ($diocese['church_count'] ?? 0)) ?></span>
+                                    class="badge border border-secondary text-secondary fw-normal"><?= esc((string) ($diocese['parish_count'] ?? 0)) ?></span>
                             </td>
                             <td class="text-end">
                                 <button class="btn btn-sm btn-outline-secondary me-1" type="button" data-bs-toggle="modal"

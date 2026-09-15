@@ -22,7 +22,7 @@ final class ServicesLiturgicalDaysLocalizationTest extends CIUnitTestCase
         $now = date('Y-m-d H:i:s');
 
         $this->db->table('liturgical_calendar_entry')->insert([
-            'church_id' => null,
+            'parish_id' => null,
             'code' => 'test_maundy_thursday_locale',
             'name' => 'Maundy Thursday',
             'season' => 'Holy Week',
@@ -63,7 +63,7 @@ final class ServicesLiturgicalDaysLocalizationTest extends CIUnitTestCase
     }
 
     /**
-     * Calls Services::liturgicalDays with mocked permission/church scope and returns decoded JSON.
+     * Calls Services::liturgicalDays with mocked permission/parish scope and returns decoded JSON.
      */
     private function callLiturgicalDaysEndpoint(string $season, string $locale): array
     {
@@ -85,7 +85,7 @@ final class ServicesLiturgicalDaysLocalizationTest extends CIUnitTestCase
                 return null;
             }
 
-            protected function getChurchId()
+            protected function getParishId()
             {
                 return 1;
             }

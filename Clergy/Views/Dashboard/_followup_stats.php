@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Follow-up stats partial for the church admin dashboard.
+ * Follow-up stats partial for the parish admin dashboard.
  *
  * No required variables — all data is loaded via AJAX from:
  *   GET /dashboard/followup-stats

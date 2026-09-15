@@ -85,7 +85,7 @@ $formatLocalizedDate = static function (?string $value): string {
     <div class="col-md-6">
         <div class="card h-100">
             <div class="card-header">
-                <h5 class="mb-0"><i class="bi bi-graph-up-arrow"></i> <?= lang('Dashboard.churchSundayAttendanceTitle') ?></h5>
+                <h5 class="mb-0"><i class="bi bi-graph-up-arrow"></i> <?= lang('Dashboard.parishSundayAttendanceTitle') ?></h5>
             </div>
             <div class="card-body" style="min-height: 350px;">
                 <?php if (empty($sunday_attendance_has_data)): ?>

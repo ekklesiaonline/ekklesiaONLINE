@@ -12,7 +12,7 @@ Status: Ready for execution
 ## Definitions
 
 - Active tables/features: already wired into routes/controllers/models and validated by smoke tests.
-- Legacy-renamed tables: old `church_*` objects that were normalized to `parish_*`.
+- Legacy-renamed tables: old `parish_*` objects that were normalized to `parish_*`.
 - Orphan tables: tables present in schema but not fully wired into user-facing modules.
 
 ---
@@ -73,8 +73,8 @@ Deliverable:
 - [ ] Verify migration status (`php spark migrate:status --all`).
 - [ ] Confirm critical rename chain is migrated:
     - `2026_05_09_000007 StandardizeParishIdAcrossAllTables`
-    - `2026_05_09_000008 NormalizeChurchScopeEnumsToParish`
-    - `2026_05_10_000001 StrictRenameLegacyChurchSchemaObjects`
+    - `2026_05_09_000008 NormalizeParishScopeEnumsToParish`
+    - `2026_05_10_000001 StrictRenameLegacyParishSchemaObjects`
 - [ ] Verify target canonical tables exist in production DB:
     - `parish`, `parish_setting`, `parish_integration`, `parish_provider_credential`, `parish_role_audit_log`, `parish_budgets`, `parish_people`, `parish_report_storage`
 - [ ] Verify legacy names are absent (except archived backup schemas if intentionally retained).
@@ -205,7 +205,7 @@ Target outcome: formation/governance records for clergy and parish leadership.
 Tables:
 
 - `sacramental_record`, `sacramental_participant`, `electoral_roll_entry`
-- `membership_stage_history`, `ministry`, `ministry_role`, `governance_term`, `parish_user_role`, `church_role_catalog`
+- `membership_stage_history`, `ministry`, `ministry_role`, `governance_term`, `parish_user_role`, `parish_role_catalog`
 
 Steps:
 

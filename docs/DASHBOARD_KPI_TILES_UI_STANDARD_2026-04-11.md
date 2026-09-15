@@ -2,7 +2,7 @@
 
 ## Scope
 
-This document records the dashboard KPI tile changes implemented at `/dashboard` (church-scoped dashboard), including layout, interaction, data cards, and consistency rules for future enhancements.
+This document records the dashboard KPI tile changes implemented at `/dashboard` (parish-scoped dashboard), including layout, interaction, data cards, and consistency rules for future enhancements.
 
 ## Final KPI Structure
 
@@ -76,14 +76,14 @@ Implementation class:
 
 ## Data Notes for New KPI Tiles
 
-The second-row cards are computed in `MemberPortal/Controllers/Dashboard.php` for church scope.
+The second-row cards are computed in `MemberPortal/Controllers/Dashboard.php` for parish scope.
 
 - Birthdays This Week:
-  - Uses active church affiliations and profile `birth_date` values.
+  - Uses active parish affiliations and profile `birth_date` values.
   - Counts by month-day in the current week window.
 
 - Guests Pending Follow-up This Month
-  - Counts **`COUNT(DISTINCT gfl.guest_id)`** with `status = 'pending'` and `scheduled_date` inside the current month (joined to `guests` for `church_id` scoping). **Not** `call_tasks` — that was a bug fixed 2026-04-16. Counts distinct guests, not individual pending steps — a guest with 7 remaining steps contributes 1 to the total (fixed 2026-04-19).
+  - Counts **`COUNT(DISTINCT gfl.guest_id)`** with `status = 'pending'` and `scheduled_date` inside the current month (joined to `guests` for `parish_id` scoping). **Not** `call_tasks` — that was a bug fixed 2026-04-16. Counts distinct guests, not individual pending steps — a guest with 7 remaining steps contributes 1 to the total (fixed 2026-04-19).
   - The count must equal the "Guests in Follow-up" tile on `/guests/dashboard` (both use `COUNT(DISTINCT gfl.guest_id)` where `status='pending'`).
 
 - Done Follow-ups This Month (Admins):
@@ -92,7 +92,7 @@ The second-row cards are computed in `MemberPortal/Controllers/Dashboard.php` fo
   - Includes assignments to admin/pastoral groups.
 
 - Events This Month:
-  - Counts church events by `start_at` in current month.
+  - Counts parish events by `start_at` in current month.
 
 ## Strict SQL Compatibility Note
 

@@ -11,7 +11,7 @@
             </a>
         <?php endif; ?>
         <?php
-        // Only show to admins (systemadmin, provinceadmin, diocesanadmin, churchadmin)
+        // Only show to admins (systemadmin, provinceadmin, diocesanadmin, parishadmin)
         if (
             auth()->user()->inGroup('systemadmin') ||
             auth()->user()->inGroup('provinceadmin') ||

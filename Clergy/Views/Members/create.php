@@ -69,7 +69,7 @@
                             $roleLabels = [
                                 'provinceadmin' => lang('Dashboard.roleProvinceAdmin'),
                                 'diocesanadmin' => lang('Dashboard.roleDiocesanAdmin'),
-                                'parishadmin' => lang('Dashboard.roleChurchAdmin'),
+                                'parishadmin' => lang('Dashboard.roleParishAdmin'),
                                 'clergy' => lang('Dashboard.rolePastor'),
                                 'treasurer' => lang('Dashboard.roleTreasurer'),
                                 'volunteer_coordinator' => lang('Dashboard.roleVolunteerCoordinator'),

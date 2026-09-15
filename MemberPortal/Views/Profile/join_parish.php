@@ -70,10 +70,10 @@ $selectedParish = (int) old('parish_id', 0);
                     </div>
 
                     <div class="col-md-6">
-                        <label class="form-label" for="parish_id"><?= lang('Profile.church') ?></label>
+                        <label class="form-label" for="parish_id"><?= lang('Profile.parish') ?></label>
                         <select class="form-select" id="parish_id" name="parish_id" required
                             data-selected="<?= $selectedParish ?>">
-                            <option value=""><?= lang('Profile.selectChurch') ?></option>
+                            <option value=""><?= lang('Profile.selectParish') ?></option>
                         </select>
                     </div>
                 </div>
@@ -113,7 +113,7 @@ $selectedParish = (int) old('parish_id', 0);
 
         function updateParishSelect(preselect) {
             parishSelect.options.length = 0;
-            parishSelect.add(new Option(<?= json_encode(lang('Profile.selectChurch')) ?>, ''));
+            parishSelect.add(new Option(<?= json_encode(lang('Profile.selectParish')) ?>, ''));
             const dioceseId = dioceseSelect.value;
             if (!dioceseId || !parishesByDiocese[dioceseId]) return;
             parishesByDiocese[dioceseId].forEach(function (p) {

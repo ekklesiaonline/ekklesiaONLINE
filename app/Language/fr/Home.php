@@ -16,7 +16,7 @@ return [
     'featureGuestBody' => 'Capturez les informations des visiteurs et automatisez les workflows de suivi',
     'featureVolunteerTitle' => 'Gestion des bénévoles',
     'featureVolunteerBody' => 'Planifiez les bénévoles, gérez les équipes et optimisez les affectations de service',
-    'featureMultiChurchTitle' => 'Prise en charge multi-paroisse',
-    'featureMultiChurchBody' => 'Parfait pour les diocèses et réseaux de paroisses avec supervision centralisée',
+    'featureMultiParishTitle' => 'Prise en charge multi-paroisse',
+    'featureMultiParishBody' => 'Parfait pour les diocèses et réseaux de paroisses avec supervision centralisée',
     'footerRights' => 'Tous droits réservés.',
 ];

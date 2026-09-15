@@ -82,11 +82,11 @@ class Parishes extends BaseController
                 $filterMailingDiffers
             );
 
-            return view('Diocesan\Views\Churches/index', array_merge(
+            return view('Diocesan\Views\Parishes/index', array_merge(
                 $paginated,
                 [
-                    'churches'           => $paginated['parish'] ?? [],
-                    'selectedChurchId'   => (int) ($this->getOperationalparishId() ?? 0),
+                    'parishes'           => $paginated['parish'] ?? [],
+                    'selectedParishId'   => (int) ($this->getOperationalparishId() ?? 0),
                     'selectedparishId'   => (int) ($this->getOperationalparishId() ?? 0),
                     'isProvinceAdmin'    => true,
                     'isDiocesanAdmin'    => false,
@@ -132,11 +132,11 @@ class Parishes extends BaseController
             $filterMailingDiffers
         );
 
-        return view('Diocesan\Views\Churches/index', array_merge(
+        return view('Diocesan\Views\Parishes/index', array_merge(
             $paginated,
             [
-                'churches'           => $paginated['parish'] ?? [],
-                'selectedChurchId'   => (int) ($this->getOperationalparishId() ?? 0),
+                'parishes'           => $paginated['parish'] ?? [],
+                'selectedParishId'   => (int) ($this->getOperationalparishId() ?? 0),
                 'selectedparishId'   => (int) ($this->getOperationalparishId() ?? 0),
                 'isProvinceAdmin'    => false,
                 'isDiocesanAdmin'    => $isDiocesanAdmin,
@@ -204,7 +204,7 @@ class Parishes extends BaseController
             return redirect()->to('/parish_list')->with('error', lang('Diocesan.dioceseNotFound'));
         }
 
-        return view('Diocesan\Views\Churches/create', array_merge($this->getCommonViewData(lang('Parishes.createPageTitle')), [
+        return view('Diocesan\Views\Parishes/create', array_merge($this->getCommonViewData(lang('Parishes.createPageTitle')), [
             'dioceses' => $dioceses,
         ]));
     }
@@ -331,7 +331,7 @@ class Parishes extends BaseController
         // - Parish admin (only their own parish)
         $canEditTaxId = $isSystemAdmin || $isDiocesanAdmin || ($isParishAdmin && $operationalparishId === $parishId);
 
-        return view('Diocesan\Views\Churches/edit', array_merge($this->getCommonViewData(lang('Parishes.editPageTitle')), [
+        return view('Diocesan\Views\Parishes/edit', array_merge($this->getCommonViewData(lang('Parishes.editPageTitle')), [
             'parish' => $parish,
             'provinces' => $this->getProvinceOptions(),
             'diocesesByProvince' => $this->getDiocesesByProvince(),
@@ -780,7 +780,7 @@ class Parishes extends BaseController
             return redirect()->to('/parish_list')->with('error', lang('Diocesan.parishNotFound'));
         }
 
-        return view('Diocesan\Views\Churches/staff', array_merge($this->getCommonViewData(lang('Parishes.staffPageTitle')), [
+        return view('Diocesan\Views\Parishes/staff', array_merge($this->getCommonViewData(lang('Parishes.staffPageTitle')), [
             'parish'         => $parish, // Explicit: getCommonViewData uses operational parish which may differ
             'staff'          => $this->parishModel->getParishStaff($parishId),
             'members'        => $this->parishModel->getParishMembersWithGroups($parishId),
@@ -1185,7 +1185,7 @@ class Parishes extends BaseController
     protected function hasParishEditPermission(): bool
     {
         return $this->checkPermission('parishes.edit')
-            || $this->checkPermission('churches.edit')
+            || $this->checkPermission('parishes.edit')
             || $this->checkPermission('parish.edit')
             || $this->checkPermission('diocese.admin');
     }
@@ -1427,7 +1427,7 @@ class Parishes extends BaseController
             // Legacy and flat names are resolved to known parish asset roots as fallback.
             $candidates[] = 'parish/' . $parishId . '/' . $assetKind . '/' . $normalized;
             $candidates[] = 'parishes/' . $parishId . '/' . $assetKind . '/' . $normalized;
-            $candidates[] = 'churches/' . $parishId . '/' . $assetKind . '/' . $normalized;
+            $candidates[] = 'parishes/' . $parishId . '/' . $assetKind . '/' . $normalized;
         }
 
         foreach ($candidates as $candidate) {

@@ -16,7 +16,7 @@ class AddOrganizerColumnsToEvents extends Migration
                 'null'       => false,
                 'after'      => 'scope_province_id',
             ],
-            'organizer_church_id' => [
+            'organizer_parish_id' => [
                 'type'       => 'INT',
                 'unsigned'   => true,
                 'null'       => true,
@@ -26,7 +26,7 @@ class AddOrganizerColumnsToEvents extends Migration
                 'type'       => 'INT',
                 'unsigned'   => true,
                 'null'       => true,
-                'after'      => 'organizer_church_id',
+                'after'      => 'organizer_parish_id',
             ],
             'organizer_diocese_id' => [
                 'type'       => 'INT',
@@ -48,7 +48,7 @@ class AddOrganizerColumnsToEvents extends Migration
             ],
         ]);
 
-        $this->db->query("ALTER TABLE `event` ADD KEY `idx_event_organizer_church` (`organizer_type`,`organizer_church_id`)");
+        $this->db->query("ALTER TABLE `event` ADD KEY `idx_event_organizer_parish` (`organizer_type`,`organizer_parish_id`)");
         $this->db->query("ALTER TABLE `event` ADD KEY `idx_event_organizer_province` (`organizer_type`,`organizer_province_id`)");
         $this->db->query("ALTER TABLE `event` ADD KEY `idx_event_organizer_diocese` (`organizer_type`,`organizer_diocese_id`)");
         $this->db->query("ALTER TABLE `event` ADD KEY `idx_event_organizer_parish` (`organizer_type`,`organizer_parish_id`)");
@@ -62,7 +62,7 @@ class AddOrganizerColumnsToEvents extends Migration
             'organizer_parish_id',
             'organizer_diocese_id',
             'organizer_province_id',
-            'organizer_church_id',
+            'organizer_parish_id',
             'organizer_type',
         ]);
     }

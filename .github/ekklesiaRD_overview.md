@@ -2,7 +2,7 @@
 
 ## Overview
 
-**ekklesiaRD** is a multi-church management system built for Episcopal dioceses and church networks.
+**ekklesiaRD** is a multi-parish management system built for Episcopal dioceses and parish networks.
 It covers member management, liturgical service tracking, guest follow-up automation, financial
 accounting, volunteer coordination, event management, and worship planning.
 
@@ -93,8 +93,8 @@ How the ministry framework maps to software modules in this codebase:
 | Communicant tracking (≥3/year)         | §2.4                      | `attendance.communicant` column; `communion_count` aggregated in `MemberStandingSummaryModel`                                             |
 | Baptism record                         | §1.1                      | `profiles.baptism_date` field exists                                                                                                      |
 | Confirmation record                    | §1.2                      | `profiles.confirmation_date` (DATE) + `profiles.is_confirmed` (BOOL); required in `MemberStandingSummaryModel` good standing calculation  |
-| Electoral roll                         | §5.1                      | `member_church_affiliations` + `church_people` snapshot; People controller                                                                |
-| Membership categories                  | §2.5                      | `profiles.membership_status` ENUM (active/inactive/visitor/pending/regular_attender); also `member_church_affiliations.membership_status` |
+| Electoral roll                         | §5.1                      | `member_parish_affiliations` + `parish_people` snapshot; People controller                                                                |
+| Membership categories                  | §2.5                      | `profiles.membership_status` ENUM (active/inactive/visitor/pending/regular_attender); also `member_parish_affiliations.membership_status` |
 | Membership pathway stages              | §2.6                      | ⚠️ **Not tracked in schema** — see gaps below                                                                                             |
 | Guest / visitor (Judea scope)          | §2.2                      | `guests` table; Guest management + 6-week follow-up workflow                                                                              |
 | Guest → member conversion              | §2.2 / Stage 1            | `Guests::convertToMember()`; `GuestConversions` controller; conversion stamp fields                                                       |
@@ -116,7 +116,7 @@ These are places where the framework definition and the actual code diverge — 
 | **Active member vs. `users.active`**   | Good standing requires active membership status                                        | Code uses `users.active = 1` as the `is_active_member` proxy — it is a system account flag, not a canonical membership status check.                                                                 |
 | **Extra discipline criterion**         | Framework defines 4 criteria for good standing                                         | Code adds a 5th: `is_under_discipline = 0` (checks `member_discipline` table). This is a correct hardening beyond the framework.                                                                     |
 | **Membership pathway stages**          | Three explicit stages with completion tracking                                         | ⏳ **Future implementation** — no `pathway_stage` field yet. Stage progress is inferred only from `membership_status`.                                                                               |
-| **`membership_status` location**       | Framework implies a single member status                                               | Code maintains status in two places: `profiles.membership_status` (legacy/convenience) and `member_church_affiliations.membership_status` (authoritative for multi-church). Queries vary by context. |
+| **`membership_status` location**       | Framework implies a single member status                                               | Code maintains status in two places: `profiles.membership_status` (legacy/convenience) and `member_parish_affiliations.membership_status` (authoritative for multi-parish). Queries vary by context. |
 | **Small group integration**            | Stage 2 completion = placed in a small group                                           | ⏳ **Future implementation** — no `small_groups` module or `group_membership` table yet.                                                                                                             |
 | **Guest → member conversion pre-fill** | Conversion should carry guest name/email/phone into the create-member form             | `Guests::convertToMember()` flashes `guest_data` but `Members/create.php` only uses `old()` — the flash is never consumed. Form arrives blank. ⏳ **Not yet fixed.**                                 |
 | **Leadership appointment gate**        | Good standing required for Vestry / synod roles (§2.4)                                 | `leadership_positions` has no `is_good_standing` check at insert time. Anyone can be appointed to any position. ⏳ **Not yet fixed.**                                                                |
@@ -132,14 +132,14 @@ These are places where the framework definition and the actual code diverge — 
 
 | Module                                 | Status     | Notes                                                                                                                                                                     |
 | -------------------------------------- | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Multi-tier Hierarchy**               | ✅ Full    | Province → Diocese → Church scoping with filters and scope guards                                                                                                         |
+| **Multi-tier Hierarchy**               | ✅ Full    | Province → Diocese → Parish scoping with filters and scope guards                                                                                                         |
 | **Authentication & Registration**      | ✅ Full    | Shield-based login, email verification, onboarding gate filter, rate limiting                                                                                             |
-| **Role & Permission System**           | ✅ Full    | Roles: provinceadmin, diocesanadmin, churchadmin, clergy, treasurer, volunteer_coordinator, followup_volunteer, member                                                    |
-| **Member Management**                  | ✅ Full    | Profiles, scoped search, status filters, profile pictures, church affiliation transfer, multi-parish membership                                                           |
+| **Role & Permission System**           | ✅ Full    | Roles: provinceadmin, diocesanadmin, parishadmin, clergy, treasurer, volunteer_coordinator, followup_volunteer, member                                                    |
+| **Member Management**                  | ✅ Full    | Profiles, scoped search, status filters, profile pictures, parish affiliation transfer, multi-parish membership                                                           |
 | **Member Import**                      | ✅ Full    | Clergy/Controllers/Import.php; bulk CSV import with validation                                                                                                            |
 | **Member Dedup / Merge / Hard-Delete** | ✅ Full    | MemberMergeService + MemberMerge controller; duplicate detection by name/phone, merge flow with field overrides, three-gate hard-delete                                   |
-| **People / Church Registry**           | ✅ Full    | People controller + ChurchPeopleRegistryService; portal vs non-portal sync; church_people snapshot                                                                        |
-| **Family Grouping**                    | ✅ Full    | Family CRUD, head of household, member linking, per-church scoping                                                                                                        |
+| **People / Parish Registry**           | ✅ Full    | People controller + ParishPeopleRegistryService; portal vs non-portal sync; parish_people snapshot                                                                        |
+| **Family Grouping**                    | ✅ Full    | Family CRUD, head of household, member linking, per-parish scoping                                                                                                        |
 | **Liturgical Service Logging**         | ✅ Full    | Services with liturgical day/season, format (in-person/hybrid/online), sacramental counts, service_metrics                                                                |
 | **Attendance Marking**                 | ✅ Full    | Per-service individual attendance, bulk mark, AJAX mark, communicant tracking                                                                                             |
 | **Attendance Reports**                 | ✅ Full    | ASA/AWA KPIs, weekly Sunday trend, per-period breakdowns, date-range filter                                                                                               |
@@ -152,16 +152,16 @@ These are places where the framework definition and the actual code diverge — 
 | **Expenses**                           | ✅ Full    | Record expenses, fund assignment, approval tracking, COA linkage, same filter/chip UX as donations                                                                        |
 | **Fund Accounting**                    | ✅ Full    | funds table with unrestricted/restricted/permanent types, locked funds, balance calculations                                                                              |
 | **Chart of Accounts**                  | ✅ Full    | 4-digit COA, 5 account types, budget flag, Episcopal section metadata                                                                                                     |
-| **Budget Management**                  | ✅ Full    | Budgets controller + ChurchBudgetModel; COA-aligned budgetable accounts; fiscal-year scoping                                                                              |
+| **Budget Management**                  | ✅ Full    | Budgets controller + ParishBudgetModel; COA-aligned budgetable accounts; fiscal-year scoping                                                                              |
 | **Annual Pledges**                     | ✅ Full    | AnnualPledges controller + AnnualPledgeModel; pledge tracking per member per year                                                                                         |
 | **Member Standing**                    | ✅ Full    | Standing controller + MemberStandingSummaryModel; good-standing criteria: active + **confirmed** (`is_confirmed`) + communicant ≥3 + annual pledge + not under discipline |
 | **Leadership Positions**               | ✅ Full    | LeadershipPositions controller + LeadershipPositionModel; clergy and lay position tracking                                                                                |
 | **Volunteer Teams**                    | ✅ Full    | Team CRUD, member assignment, role labeling                                                                                                                               |
 | **Volunteer Scheduling**               | ✅ Full    | Calendar week/list views; team-scoped AJAX member picker; service linkage; status confirm from ⋮ dropdown; automated email reminders via `volunteers:remind` cron         |
-| **Liturgical Calendar Source**         | ✅ Full    | Province-managed global entries + church-specific overrides; season/color/icon metadata                                                                                   |
+| **Liturgical Calendar Source**         | ✅ Full    | Province-managed global entries + parish-specific overrides; season/color/icon metadata                                                                                   |
 | **Province Dashboard**                 | ✅ Full    | Province-wide summary, per-diocese breakdown, attendance averages by period, audit log, AJAX updates                                                                      |
 | **Diocesan Dashboard**                 | ✅ Full    | Finance dashboard with income/expense/fund summary; diocesan attendance monthly roll-up                                                                                   |
-| **Church Dashboard**                   | ✅ Full    | Member counts, recent services, monthly income/expense, pending follow-ups, guests                                                                                        |
+| **Parish Dashboard**                   | ✅ Full    | Member counts, recent services, monthly income/expense, pending follow-ups, guests                                                                                        |
 | **Clergy Reports**                     | ✅ Full    | Clergy/Controllers/Reports.php; ROI / second-visit analytics                                                                                                              |
 | **Audit Logs**                         | ✅ Full    | AuditLogs controller + AuditLogModel; action logging across modules; audit log viewer                                                                                     |
 | **SMS / Messaging Services**           | ⚠️ Partial | SmsService (Twilio or log-only); MessagingService; SmsQueueModel — used by follow-up workflow only; no general bulk messaging module                                      |
@@ -221,7 +221,7 @@ See the table above for a summary. For each, see the implementation plan below.
 
 ### Small Groups Module (New — Stage 2 of Membership Pathway)
 
-- [ ] Design `small_groups` and `group_memberships` tables (church-scoped, leader_id FK)
+- [ ] Design `small_groups` and `group_memberships` tables (parish-scoped, leader_id FK)
 - [ ] Build small group CRUD (Clergy module)
 - [ ] Add member placement UI (assign member to a small group after Stage 2)
 - [ ] Wire small group placement as Stage 2 completion criterion in standing calculation
@@ -243,7 +243,7 @@ See the table above for a summary. For each, see the implementation plan below.
 ### Communication Module (New)
 
 - [ ] Design messages / notification_log table schema
-- [ ] Build bulk email module (group-targeted, church-scoped, template-based)
+- [ ] Build bulk email module (group-targeted, parish-scoped, template-based)
 - [ ] Add in-app notification bell with unread badge
 - [ ] Add push notification support (web push or mobile)
 
@@ -267,7 +267,7 @@ See the table above for a summary. For each, see the implementation plan below.
 - [ ] Build cross-module report builder (combine attendance + finance + membership in one export)
 - [ ] Add printable member directory (PDF, sorted by family or last name)
 - [ ] Add vCard / CSV member roster export
-- [ ] Add province-level financial roll-up report (income/expenses across all churches by fund type)
+- [ ] Add province-level financial roll-up report (income/expenses across all parishes by fund type)
 - [ ] Wire financial export actions (CSV/Excel/PDF) for Donations, Expenses, and Budget controllers
 
 ### Child Check-in

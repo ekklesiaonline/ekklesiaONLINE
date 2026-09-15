@@ -34,14 +34,14 @@ class Services extends BaseController
             return $redirect;
         }
 
-        $churchId = (int) ($this->getOperationalParishId() ?? 0);
+        $parishId = (int) ($this->getOperationalParishId() ?? 0);
         $page = max(1, (int) ($this->request->getGet('page') ?? 1));
         $perPage = (int) ($this->request->getGet('per_page') ?? 25);
         if (!in_array($perPage, [25, 50, 100], true)) {
             $perPage = 25;
         }
 
-        $servicePage = $this->serviceModel->getParishServicesPaginated($churchId, $perPage, $page);
+        $servicePage = $this->serviceModel->getParishServicesPaginated($parishId, $perPage, $page);
         $pagerLinks = service('pager')->makeLinks($page, $perPage, (int) ($servicePage['total'] ?? 0));
         $totalItems = (int) ($servicePage['total'] ?? 0);
         $totalPages = max(1, (int) ceil($totalItems / $perPage));
@@ -104,8 +104,8 @@ class Services extends BaseController
             return $redirect;
         }
 
-        $churchId = $this->getOperationalParishId();
-        $liturgicalSeasons = $this->safeGetLiturgicalSeasons($churchId);
+        $parishId = $this->getOperationalParishId();
+        $liturgicalSeasons = $this->safeGetLiturgicalSeasons($parishId);
 
         $selectedLiturgicalSeason = (string) old('liturgical_season', '');
         if ($selectedLiturgicalSeason === '' && !empty($liturgicalSeasons)) {
@@ -113,7 +113,7 @@ class Services extends BaseController
         }
 
         $liturgicalDays = $selectedLiturgicalSeason !== ''
-            ? $this->safeGetLiturgicalDays($churchId, $selectedLiturgicalSeason)
+            ? $this->safeGetLiturgicalDays($parishId, $selectedLiturgicalSeason)
             : [];
 
         return view('Worship\Views\Services/create', array_merge($this->getCommonViewData(lang('Services.pageTitleAdd')), [
@@ -192,12 +192,12 @@ class Services extends BaseController
             return redirect()->to('/services')->with('error', lang('Services.serviceNotFound'));
         }
 
-        $churchId = $this->getOperationalParishId();
-        $liturgicalSeasons = $this->safeGetLiturgicalSeasons($churchId);
+        $parishId = $this->getOperationalParishId();
+        $liturgicalSeasons = $this->safeGetLiturgicalSeasons($parishId);
         $selectedLiturgicalSeason = (string) old('liturgical_season', '');
 
         if ($selectedLiturgicalSeason === '' && !empty($service['liturgical_day'])) {
-            $entry = $this->safeFindLiturgicalEntryByName($churchId, (string) $service['liturgical_day']);
+            $entry = $this->safeFindLiturgicalEntryByName($parishId, (string) $service['liturgical_day']);
             $selectedLiturgicalSeason = (string) ($entry['season'] ?? '');
         }
 
@@ -206,7 +206,7 @@ class Services extends BaseController
         }
 
         $liturgicalDays = $selectedLiturgicalSeason !== ''
-            ? $this->safeGetLiturgicalDays($churchId, $selectedLiturgicalSeason)
+            ? $this->safeGetLiturgicalDays($parishId, $selectedLiturgicalSeason)
             : [];
 
         $data = array_merge($this->getCommonViewData(lang('Services.pageTitleEdit')), [
@@ -337,7 +337,7 @@ class Services extends BaseController
         }
 
         if ($redirect = $this->requireParish()) {
-            return $this->jsonResponse(['success' => false, 'message' => lang('Services.noChurchScopeAssigned')], 403);
+            return $this->jsonResponse(['success' => false, 'message' => lang('Services.noParishScopeAssigned')], 403);
         }
 
         $season = trim((string) $this->request->getGet('season'));
@@ -427,7 +427,7 @@ class Services extends BaseController
         return $errors;
     }
 
-    private function getCoreServiceData(bool $includeChurchId): array
+    private function getCoreServiceData(bool $includeParishId): array
     {
         $serviceArray = $this->request->getPost('service');
         $serviceJson = null;
@@ -446,7 +446,7 @@ class Services extends BaseController
             'notes' => $this->request->getPost('notes') ?: null,
         ];
 
-        if ($includeChurchId) {
+        if ($includeParishId) {
             $data['parish_id'] = $this->getOperationalParishId();
         }
 
@@ -607,33 +607,33 @@ class Services extends BaseController
             ->findAll();
     }
 
-    private function safeGetLiturgicalSeasons($churchId): array
+    private function safeGetLiturgicalSeasons($parishId): array
     {
         $db = db_connect();
         if (!$db->tableExists('liturgical_calendar_entry')) {
             return [];
         }
 
-        return $this->liturgicalCalendarEntryModel->getSeasonsForDropdown($churchId);
+        return $this->liturgicalCalendarEntryModel->getSeasonsForDropdown($parishId);
     }
 
-    private function safeGetLiturgicalDays($churchId, string $season): array
+    private function safeGetLiturgicalDays($parishId, string $season): array
     {
         $db = db_connect();
         if (!$db->tableExists('liturgical_calendar_entry')) {
             return [];
         }
 
-        return $this->liturgicalCalendarEntryModel->getDaysBySeason($churchId, $season);
+        return $this->liturgicalCalendarEntryModel->getDaysBySeason($parishId, $season);
     }
 
-    private function safeFindLiturgicalEntryByName($churchId, string $name): ?array
+    private function safeFindLiturgicalEntryByName($parishId, string $name): ?array
     {
         $db = db_connect();
         if (!$db->tableExists('liturgical_calendar_entry')) {
             return null;
         }
 
-        return $this->liturgicalCalendarEntryModel->findByName($churchId, $name);
+        return $this->liturgicalCalendarEntryModel->findByName($parishId, $name);
     }
 }

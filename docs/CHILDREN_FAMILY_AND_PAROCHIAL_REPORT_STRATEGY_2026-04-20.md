@@ -9,7 +9,7 @@
 - The parochial report runtime now uses the Episcopal reference document as the canonical field set.
 - `Worship/Controllers/ParochialReport.php` now computes autofill values from the modeled data sources instead of treating the form as a mostly manual worksheet.
 - `Worship/Views/ParochialReport/index.php` now mirrors the page-by-page reference structure, including explanation text and examples for operators.
-- `church_financial_summary` was expanded to persist report-year metadata such as mailing details, certifications, manual estimates, checklist responses, and narratives.
+- `parish_financial_summary` was expanded to persist report-year metadata such as mailing details, certifications, manual estimates, checklist responses, and narratives.
 - Remaining strategic items in this document still apply where they concern adjacent family and dependent modeling work outside the parochial-report screen itself.
 
 ---
@@ -18,7 +18,7 @@
 
 ### 1.1 Operational scenario
 
-A family arrives at a parish. The parents are not members — they have not yet progressed through the pipeline — but their children attend regularly and are being baptized or confirmed. The church needs to:
+A family arrives at a parish. The parents are not members — they have not yet progressed through the pipeline — but their children attend regularly and are being baptized or confirmed. The parish needs to:
 
 1. Record the children as **regular attenders** under a family unit.
 2. Designate a **head of household** for that family.
@@ -68,11 +68,11 @@ This reframes the child problem: it is not that children are outside the system 
 The head-of-household dropdown is populated by:
 
 ```php
-$members = $this->getMemberChurchAffiliationModel()->getParishMembers((int) $churchId);
+$members = $this->getMemberParishAffiliationModel()->getParishMembers((int) $parishId);
 // membersOnly defaults to true → only is_member = 1 people appear
 ```
 
-The server-side validation check (`isChurchAffiliatedMember`) only requires an **active affiliation row** — it does not require `is_member = 1`. The constraint is entirely in the dropdown population, not in the business rule.
+The server-side validation check (`isParishAffiliatedMember`) only requires an **active affiliation row** — it does not require `is_member = 1`. The constraint is entirely in the dropdown population, not in the business rule.
 
 `head_of_household_id` is nullable in the database and in the controller. A family can be saved without any head.
 
@@ -142,15 +142,15 @@ The pipeline transition at confirmation is currently **entirely manual** — no 
 
 | Report Field | ekklesiaRD Mapping | Gap |
 | --- | --- | --- |
-| Name of Congregation | `churches.name` | None |
+| Name of Congregation | `parishes.name` | None |
 | Diocese | `dioceses` via FK | None |
-| Street Address 1/2, City, State, Zip, County, Country | `churches.address` (single text field) | Address is not structured — split into `city`, `state`, `zip`, `county`, `country` columns needed |
+| Street Address 1/2, City, State, Zip, County, Country | `parishes.address` (single text field) | Address is not structured — split into `city`, `state`, `zip`, `county`, `country` columns needed |
 | Mailing Address (separate) | Not stored | New fields: `mailing_address`, `mailing_city`, `mailing_state`, `mailing_zip`, `mailing_country` |
-| Email | `churches.email` | None |
-| Website | `churches.website` | None |
-| Phone | `churches.phone` | None |
-| Federal Tax ID | Not stored | New field: `churches.federal_tax_id VARCHAR(20)` |
-| Report preparers (2 roles) | Not modeled | New: `parochial_report_meta` table or JSON field on `churches` |
+| Email | `parishes.email` | None |
+| Website | `parishes.website` | None |
+| Phone | `parishes.phone` | None |
+| Federal Tax ID | Not stored | New field: `parishes.federal_tax_id VARCHAR(20)` |
+| Report preparers (2 roles) | Not modeled | New: `parochial_report_meta` table or JSON field on `parishes` |
 | Four certification blocks | Not modeled | Same — part of `parochial_report_meta` or a dedicated `parochial_report_certifications` table |
 | Completion participant count/roles | Not modeled | Same |
 
@@ -219,10 +219,10 @@ ALTER TABLE leadership_positions
 
 #### Lines 17–18 — Clergy Situation
 
-New fields on `churches`:
+New fields on `parishes`:
 
 ```sql
-ALTER TABLE churches
+ALTER TABLE parishes
     ADD COLUMN primary_worship_leader_type ENUM(
         'full_time_priest','part_time_priest','short_term_supply',
         'long_term_supply','lay_person','deacon'
@@ -266,7 +266,7 @@ SELECT
     SUM(daily_office_count) AS total_daily_offices
 FROM service_sacramental_counts ssc
 INNER JOIN services s ON s.id = ssc.service_id
-WHERE s.church_id = :churchId
+WHERE s.parish_id = :parishId
   AND YEAR(s.date) = :reportYear;
 ```
 
@@ -277,32 +277,32 @@ WHERE s.church_id = :churchId
 Not modeled. Recommended new table:
 
 ```sql
-CREATE TABLE church_programs (
-    church_id   INT UNSIGNED NOT NULL,
+CREATE TABLE parish_programs (
+    parish_id   INT UNSIGNED NOT NULL,
     program_key VARCHAR(60)  NOT NULL,  -- e.g. 'sunday_eucharist', 'streamed_service', 'sunday_school'
     active      TINYINT(1)   DEFAULT 1,
-    PRIMARY KEY (church_id, program_key),
-    FOREIGN KEY (church_id) REFERENCES churches(id)
+    PRIMARY KEY (parish_id, program_key),
+    FOREIGN KEY (parish_id) REFERENCES parishes(id)
 );
 ```
 
 Valid `program_key` values (from Line 20): `sunday_eucharist`, `streamed_service`, `childrens_choir`, `ecumenical_collaboration`, `sunday_morning_prayer`, `interactive_virtual`, `sunday_school`, `virtual_formation`, `other_weekend_eucharist`, `paid_musicians`, `sunday_childcare`, `in_person_formation`, `weekday_eucharist`, `volunteer_musicians`, `bible_study`, `campus_ministry`, `weekday_prayer`, `adult_choir`, `outreach_ministries`.
 
-**Children implication:** `sunday_school` and `sunday_childcare` are two of these program keys. If the church has these programs, children under 18 have a formal place in the church's reported ministry structure.
+**Children implication:** `sunday_school` and `sunday_childcare` are two of these program keys. If the parish has these programs, children under 18 have a formal place in the parish's reported ministry structure.
 
 #### Lines 22–25 — Demographics
 
 | Line | Field | Gap |
 | --- | --- | --- |
-| 22 | Languages of worship | New table: `church_languages (church_id, language_code)` |
-| 23 | Simultaneous multi-language service | New boolean: `churches.has_multilingual_service TINYINT(1)` |
+| 22 | Languages of worship | New table: `parish_languages (parish_id, language_code)` |
+| 23 | Simultaneous multi-language service | New boolean: `parishes.has_multilingual_service TINYINT(1)` |
 | 24 | % White/Caucasian | Not stored — optional survey field; no schema change mandated |
 | 25 | Average age of congregation | **Computable** from `profile.birth_date` — no schema change needed |
 
 Average age computation (application-layer, because `birth_date` is encrypted):
 
 ```php
-$profile = $db->table('profile')->select('birth_date')->where('church_id', $churchId)->get()->getResultArray();
+$profile = $db->table('profile')->select('birth_date')->where('parish_id', $parishId)->get()->getResultArray();
 $ages = array_filter(array_map(static function(array $row): ?int {
     $decrypted = DataEncryption::decrypt($row['birth_date'] ?? null);
     if (!$decrypted) { return null; }
@@ -357,9 +357,9 @@ ALTER TABLE expenses
 None of these are tracked in ekklesiaRD. A dedicated table is needed:
 
 ```sql
-CREATE TABLE church_financial_summary (
+CREATE TABLE parish_financial_summary (
     id               INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    church_id        INT UNSIGNED NOT NULL,
+    parish_id        INT UNSIGNED NOT NULL,
     report_year      YEAR         NOT NULL,
     cash_balance     DECIMAL(14,2) DEFAULT NULL,
     endowment_restricted   DECIMAL(14,2) DEFAULT NULL,
@@ -381,8 +381,8 @@ CREATE TABLE church_financial_summary (
     future_hope_text       TEXT    DEFAULT NULL,
     created_at       DATETIME      DEFAULT NULL,
     updated_at       DATETIME      DEFAULT NULL,
-    UNIQUE KEY uk_church_year (church_id, report_year),
-    FOREIGN KEY (church_id) REFERENCES churches(id)
+    UNIQUE KEY uk_parish_year (parish_id, report_year),
+    FOREIGN KEY (parish_id) REFERENCES parishes(id)
 );
 ```
 
@@ -406,14 +406,14 @@ In `MemberPortal/Controllers/Families.php`, `create()` and `edit()`, change:
 
 ```php
 // Before
-$members = $this->getMemberChurchAffiliationModel()->getParishMembers((int) $churchId);
+$members = $this->getMemberParishAffiliationModel()->getParishMembers((int) $parishId);
 
 // After
-$members = $this->getMemberChurchAffiliationModel()->getParishMembers((int) $churchId, null, false);
+$members = $this->getMemberParishAffiliationModel()->getParishMembers((int) $parishId, null, false);
 // membersOnly=false → all active affiliated people appear, not just is_member=1
 ```
 
-The server-side eligibility check (`isChurchAffiliatedMember`) already accepts anyone with an active affiliation — no change needed there.
+The server-side eligibility check (`isParishAffiliatedMember`) already accepts anyone with an active affiliation — no change needed there.
 
 #### Fix F2 — Honor `is_child` in the provisioning service
 
@@ -445,12 +445,12 @@ This ensures children arrive as `regular_attender`, `is_member=0` — the same s
 
 ### 4.3 Phase 2 — `is_dependent` flag (schema extension, next sprint)
 
-Add `is_dependent TINYINT(1) DEFAULT 0` to both `profile` and `member_church_affiliations`.
+Add `is_dependent TINYINT(1) DEFAULT 0` to both `profile` and `member_parish_affiliations`.
 
 **Rules:**
 
 - Set `is_dependent=1` when `is_child=true` at provisioning time.
-- Auto-derived in `ChurchPeopleRegistryService` sync: anyone with `TIMESTAMPDIFF(YEAR, birth_date, CURDATE()) < 18` AND decrypted `birth_date` known → `is_dependent=1`.
+- Auto-derived in `ParishPeopleRegistryService` sync: anyone with `TIMESTAMPDIFF(YEAR, birth_date, CURDATE()) < 18` AND decrypted `birth_date` known → `is_dependent=1`.
 - `is_dependent=1` people are excluded from the adult follow-up pipeline (no automated emails to a 7-year-old).
 - `is_dependent=1` cannot be appointed to leadership positions (already blocked by `canBeAppointed()` via `is_member=0` gate).
 - Head-of-household constraint: require `is_dependent=0` (i.e., a legal adult).
@@ -460,7 +460,7 @@ Add `is_dependent TINYINT(1) DEFAULT 0` to both `profile` and `member_church_aff
 
 When `profile.is_confirmed` flips to `1`:
 
-- Automatically set `membership_status='active'`, `is_member=1` in both `profile` and `member_church_affiliations`.
+- Automatically set `membership_status='active'`, `is_member=1` in both `profile` and `member_parish_affiliations`.
 - Log a `member.confirmation_transition` audit entry.
 - Remove `is_dependent=1` if person is now 16+ (or leave it and use age solely for Parochial Report bucket).
 
@@ -474,23 +474,23 @@ This makes the confirmation event the programmatic trigger for covenant membersh
 
 | Field / Table | Migration | Priority |
 | --- | --- | --- |
-| `churches.federal_tax_id` | `ALTER TABLE churches ADD COLUMN federal_tax_id VARCHAR(20) NULL` | Medium |
-| `churches.address_city`, `address_state`, `address_zip`, `address_county`, `address_country` | Structured address fields | Low |
-| `churches.mailing_*` | Mailing address block | Low |
-| `churches.primary_worship_leader_type` ENUM | See §3.3 | Low |
-| `churches.clergy_situation_flags` JSON | See §3.3 | Low |
-| `churches.has_multilingual_service` | Boolean | Low |
+| `parishes.federal_tax_id` | `ALTER TABLE parishes ADD COLUMN federal_tax_id VARCHAR(20) NULL` | Medium |
+| `parishes.address_city`, `address_state`, `address_zip`, `address_county`, `address_country` | Structured address fields | Low |
+| `parishes.mailing_*` | Mailing address block | Low |
+| `parishes.primary_worship_leader_type` ENUM | See §3.3 | Low |
+| `parishes.clergy_situation_flags` JSON | See §3.3 | Low |
+| `parishes.has_multilingual_service` | Boolean | Low |
 | `services.online_live_viewers` INT | ASA online (Line 2) | High |
 | `services.online_recorded_views` INT | Viewed-after (Line 4) | Medium |
 | `leadership_positions.employment_type`, `role_category`, `clergy_order` | Clergy/staff roster (Line 16) | Medium |
 | `service_sacramental_counts` — 4 new columns | `marriage_count`, `burial_count`, `eucharist_count`, `daily_office_count` | High |
-| `church_programs` junction table | Programs checklist (Line 20) | Medium |
-| `church_languages` junction table | Languages (Line 22) | Low |
+| `parish_programs` junction table | Programs checklist (Line 20) | Medium |
+| `parish_languages` junction table | Languages (Line 22) | Low |
 | `donations.is_restricted`, `restriction_purpose` | Revenue split Lines 3–4 | High |
 | `expenses.is_capital` | Capital vs. non-capital (Line 7) | High |
-| `church_financial_summary` table | Year-end balances, endowments, debt, property, rental (Lines 8–12) | High |
+| `parish_financial_summary` table | Year-end balances, endowments, debt, property, rental (Lines 8–12) | High |
 | `profile.is_dependent` | Children/dependent flag (Phase 2) | High |
-| `member_church_affiliations.is_dependent` | Same, affiliation scope | High |
+| `member_parish_affiliations.is_dependent` | Same, affiliation scope | High |
 
 ### Data computable from existing schema (no migration needed)
 
@@ -503,9 +503,9 @@ This makes the confirmation event the programmatic trigger for covenant membersh
 | Youth communicants in good standing (Line 10) | Same, age < 16 |
 | Active Members (Line 12) | `is_member=1` AND `is_good_standing=0` |
 | Active Participants (Line 13) | `is_member=0` AND `membership_status IN ('visitor','regular_attender','pending')` |
-| Sacramental counts (Line 19, partial) | `SUM(service_sacramental_counts.*) GROUP BY church_id, YEAR(service.date)` |
+| Sacramental counts (Line 19, partial) | `SUM(service_sacramental_counts.*) GROUP BY parish_id, YEAR(service.date)` |
 | Average age of congregation (Line 25) | Application-layer: decrypt `birth_date`, compute mean age |
-| Baptism count on child profile | `COUNT(profile WHERE baptism_date IS NOT NULL AND church_id=:id)` |
+| Baptism count on child profile | `COUNT(profile WHERE baptism_date IS NOT NULL AND parish_id=:id)` |
 
 ### Not trackable without new data entry (manual or external)
 
@@ -526,7 +526,7 @@ This makes the confirmation event the programmatic trigger for covenant membersh
 | --- | --- | --- |
 | **Now** | Fix F1 (dropdown) + Fix F2 (`is_child` in provisioning) | Unblocks all families with non-member parents immediately |
 | **Sprint 1** | Add `service_sacramental_counts` missing columns + `donations.is_restricted` + `expenses.is_capital` | Enables correct financial and sacramental report data |
-| **Sprint 2** | Add `services.online_live_viewers` + `services.online_recorded_views` + `church_financial_summary` table | Completes attendance and financial year-end blocks |
-| **Sprint 3** | Add `profile.is_dependent` + honor it in `ChurchPeopleRegistryService` sync + exclude dependents from follow-up pipeline | Correct demographic segmentation; clean Parochial Report age buckets |
-| **Sprint 4** | Build the Parochial Report generation UI (per-church, per-year) using the above data | The actual report output |
-| **Future** | Sacramental track automation (confirmation triggers `active` transition) + `church_programs` checklist + `church_languages` | Completes the full TEC reporting surface |
+| **Sprint 2** | Add `services.online_live_viewers` + `services.online_recorded_views` + `parish_financial_summary` table | Completes attendance and financial year-end blocks |
+| **Sprint 3** | Add `profile.is_dependent` + honor it in `ParishPeopleRegistryService` sync + exclude dependents from follow-up pipeline | Correct demographic segmentation; clean Parochial Report age buckets |
+| **Sprint 4** | Build the Parochial Report generation UI (per-parish, per-year) using the above data | The actual report output |
+| **Future** | Sacramental track automation (confirmation triggers `active` transition) + `parish_programs` checklist + `parish_languages` | Completes the full TEC reporting surface |

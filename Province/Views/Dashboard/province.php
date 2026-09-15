@@ -129,8 +129,8 @@
         <div class="col-md-3">
             <div class="card stat-card warning h-100">
                 <div class="card-body">
-                    <h6 class="text-muted mb-1"><?= lang('Dashboard.totalChurches') ?></h6>
-                    <h3 class="mb-0"><?= number_format((int) ($province_totals['total_churches'] ?? 0)) ?></h3>
+                    <h6 class="text-muted mb-1"><?= lang('Dashboard.totalParishes') ?></h6>
+                    <h3 class="mb-0"><?= number_format((int) ($province_totals['total_parishes'] ?? 0)) ?></h3>
                 </div>
             </div>
         </div>
@@ -217,7 +217,7 @@
                                     <?php foreach ($recent_services as $service): ?>
                                         <tr>
                                             <td><?= esc((string) ($service['service_date'] ?? '')) ?></td>
-                                            <td><?= esc((string) ($service['church_name'] ?? '')) ?></td>
+                                            <td><?= esc((string) ($service['parish_name'] ?? '')) ?></td>
                                             <td>
                                                 <?php
                                                 $serviceLabel = service_type_label((string) ($service['service_type'] ?? ''));
@@ -255,7 +255,7 @@
                     <thead>
                         <tr>
                             <th><?= lang('Dashboard.colDiocese') ?></th>
-                            <th class="text-end"><?= lang('Dashboard.colChurches') ?></th>
+                            <th class="text-end"><?= lang('Dashboard.colParishes') ?></th>
                             <th class="text-end"><?= lang('Dashboard.colPeople') ?></th>
                             <th class="text-end"><?= lang('Dashboard.colGuests') ?></th>
                             <th class="text-end"><?= lang('Dashboard.colMembers') ?></th>
@@ -274,7 +274,7 @@
                                 <?php $health = $healthByDiocese[(int) $row['diocese_id']] ?? []; ?>
                                 <tr>
                                     <td><?= esc($row['diocese_name']) ?></td>
-                                    <td class="text-end"><?= number_format((int) $row['churches_count']) ?></td>
+                                    <td class="text-end"><?= number_format((int) $row['parishes_count']) ?></td>
                                     <td class="text-end"><?= number_format((int) ($row['total_people'] ?? 0)) ?></td>
                                     <td class="text-end"><?= number_format((int) ($row['guest_count'] ?? 0)) ?></td>
                                     <td class="text-end"><?= number_format((int) $row['total_members']) ?></td>

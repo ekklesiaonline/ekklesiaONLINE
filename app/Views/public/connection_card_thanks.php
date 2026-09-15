@@ -5,7 +5,7 @@
 <div class="card card-public text-center">
     <div class="brand-bar">
         <h4 class="mb-0 fw-bold">
-            <?= esc($church['name'] ?? 'Thank You') ?>
+            <?= esc($parish['name'] ?? 'Thank You') ?>
         </h4>
     </div>
 
@@ -22,7 +22,7 @@
             <button type="button" class="btn btn-primary" id="btnDone">
                 <i class="bi bi-check2 me-1"></i> Done
             </button>
-            <a href="<?= base_url('connect/' . esc($church['public_token'] ?? '')) ?>"
+            <a href="<?= base_url('connect/' . esc($parish['public_token'] ?? '')) ?>"
                 class="btn btn-outline-secondary">
                 <i class="bi bi-arrow-counterclockwise me-1"></i> Fill in another card
             </a>

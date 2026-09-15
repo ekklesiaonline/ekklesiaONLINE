@@ -17,15 +17,15 @@ and audit-ready for common data protection obligations (for example GDPR/CCPA-st
 |Table|Data Type|Risk Level|
 |---|---|---|
 |profile|Member PII and profile attributes|High|
-|member_church_affiliations|Membership status and church relationships|High|
+|member_parish_affiliations|Membership status and parish relationships|High|
 |families|Household grouping and family address|High|
 |family_members|Household relationship links|Medium|
 |guests|Guest PII and follow-up data|High|
-|donations|Financial transactions tied to members/churches|High|
+|donations|Financial transactions tied to members/parishes|High|
 |annual_pledges|Planned/fulfilled giving commitments|High|
 |expenses|Operational finance records|Medium|
 |audit_logs|Security/event metadata and before/after values|High|
-|church_role_audit_logs|Role assignment history|Medium|
+|parish_role_audit_logs|Role assignment history|Medium|
 
 ### Identity Linkage Tables (Sensitive by Association)
 
@@ -52,12 +52,12 @@ Blind indexes are implemented for exact search:
 - guests.email_hash
 - guests.phone_hash
 
-Multi-tenancy scoping is present at query/controller level via church_id/affiliation boundaries.
+Multi-tenancy scoping is present at query/controller level via parish_id/affiliation boundaries.
 
 Audit logging tables exist:
 
 - audit_logs
-- church_role_audit_logs
+- parish_role_audit_logs
 
 ### Major Gaps (Critical)
 
@@ -135,7 +135,7 @@ Add table-level privacy metadata and retention controls.
 Tighten audit trail quality for financial events.
 
 - Mandatory audit for create/update/delete on donations and pledges.
-- Store actor, reason, source IP, church scope, and changed fields.
+- Store actor, reason, source IP, parish scope, and changed fields.
 - Prevent hard delete of financial records; use soft-delete or reversal entries.
 
 Implement data subject request workflow support.
@@ -190,7 +190,7 @@ Add backup/restore privacy controls.
 ### families
 
 - Encrypt address field.
-- Restrict family household visibility by role and church scope.
+- Restrict family household visibility by role and parish scope.
 
 ### guests
 
@@ -223,7 +223,7 @@ Add backup/restore privacy controls.
 |Encryption at rest for PII|Partial|Complete for all in-scope fields|
 |Encryption at rest for finance values|Missing|Implement for donations and pledges|
 |Key rotation and recovery runbook|Partial|Documented, tested, approved|
-|Access control evidence|Partial|Role/church scoped tests and evidence|
+|Access control evidence|Partial|Role/parish scoped tests and evidence|
 |Audit integrity and coverage|Partial|Mandatory for financial changes|
 |Data retention policy|Missing|Automated purge/anonymization|
 |User rights operations (export/delete)|Missing|Operational workflow and SLA|
@@ -262,7 +262,7 @@ Add backup/restore privacy controls.
 ## Source References
 
 - Member profile schema: app/Database/Migrations/2025_01_01_000002_CreateProfiles.php
-- Member affiliation schema: app/Database/Migrations/2026_03_18_000005_CreateMemberChurchAffiliations.php
+- Member affiliation schema: app/Database/Migrations/2026_03_18_000005_CreateMemberParishAffiliations.php
 - Family schema: app/Database/Migrations/2025_01_01_000003_CreateFamilies.php
 - Guest schema: app/Database/Migrations/2025_01_01_000007_CreateGuests.php
 - Encryption migration: app/Database/Migrations/2026_03_31_000004_AddDataEncryptionAtRest.php

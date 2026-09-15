@@ -56,7 +56,7 @@ $badge = $channelBadge[$template['channel']] ?? 'border border-secondary text-bo
                         <?php if ($template['parish_id'] === null): ?>
                             <span class="badge border border-info text-info fw-normal"><?= lang('Guests.tplScopeGlobal') ?></span>
                         <?php else: ?>
-                            <span class="badge border border-secondary text-body fw-normal"><?= lang('Guests.tplScopeChurch') ?></span>
+                            <span class="badge border border-secondary text-body fw-normal"><?= lang('Guests.tplScopeParish') ?></span>
                         <?php endif; ?>
                     </dd>
 

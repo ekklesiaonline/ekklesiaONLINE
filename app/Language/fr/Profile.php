@@ -19,7 +19,7 @@ return [
 
     'sectionPersonal'      => 'Informations personnelles',
     'sectionContact'       => 'Informations de contact',
-    'sectionChurch'        => "Informations sur la paroisse",
+    'sectionParish'        => "Informations sur la paroisse",
     'sectionPreferences'   => 'Préférences',
     'sectionSecurity'      => 'Sécurité',
 
@@ -51,10 +51,10 @@ return [
     'completeSubtitle'    => 'Terminez ces informations pour que l\'administrateur de la paroisse choisie puisse autoriser ou bloquer votre inscription.',
     'province'            => 'Province',
     'diocese'             => 'Diocese',
-    'church'              => 'Paroisse',
+    'parish'              => 'Paroisse',
     'selectProvince'      => 'Selectionnez une province',
     'selectDiocese'       => 'Selectionnez un diocese',
-    'selectChurch'        => 'Selectionnez une paroisse',
+    'selectParish'        => 'Selectionnez une paroisse',
     'signOut'             => 'Se deconnecter',
     'submitForReview'     => 'Soumettre pour examen',
     'language'             => 'Langue',
@@ -75,7 +75,7 @@ return [
     'profilePendingWarningBody' => 'Completez votre profil pour activer tout l\'acces de votre compte.',
     'completeProfileNow'   => 'Completer le profil',
     'dioceseMismatch'      => 'Le diocèse sélectionné n\'appartient pas à la province sélectionnée.',
-    'churchDioceseMismatch' => 'La paroisse selectionnee n\'appartient pas au diocese selectionne.',
+    'parishDioceseMismatch' => 'La paroisse selectionnee n\'appartient pas au diocese selectionne.',
     'editMyProfile'       => 'Modifier mon profil',
     'back'                => 'Retour',
     'validationErrors'    => 'Erreurs de validation :',
@@ -131,20 +131,20 @@ return [
     'profileCompletion'   => 'Profil complété',
     'profileCompletionHint' => 'Complétez votre profil pour aider votre paroisse à mieux vous servir.',
 
-    // Church affiliation
-    'churchAffiliation'   => 'Affiliation paroissiale',
+    // Parish affiliation
+    'parishAffiliation'   => 'Affiliation paroissiale',
     'noAffiliation'       => 'Aucune paroisse principale',
     'adminScopeLabel'     => 'Administre',
     'parishesLabel'       => 'Paroisse(s)',
     'systemAdminScope'    => "À l'échelle du système",
     'provinceAdminScopeUnknown' => 'Province (non assignée)',
     'dioceseAdminScopeUnknown'  => 'Diocèse (non assigné)',
-    'primaryChurch'       => 'Paroisse principale',
-    'primaryChurchReadOnly' => 'Votre paroisse principale est gérée par les administrateurs.',
-    'otherChurches'       => 'Autres paroisses',
-    'addChurch'           => 'Ajouter une autre paroisse',
+    'primaryParish'       => 'Paroisse principale',
+    'primaryParishReadOnly' => 'Votre paroisse principale est gérée par les administrateurs.',
+    'otherParishes'       => 'Autres paroisses',
+    'addParish'           => 'Ajouter une autre paroisse',
     'affiliationStatus'   => 'Statut',
-    'noOtherChurches'     => 'Aucune paroisse supplémentaire.',
+    'noOtherParishes'     => 'Aucune paroisse supplémentaire.',
 
     // Preferences
     'themeHint'           => 'Choisissez l\'apparence de l\'application.',

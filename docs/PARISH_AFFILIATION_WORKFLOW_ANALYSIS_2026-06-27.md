@@ -7,7 +7,7 @@ authorization, audit, concurrency, and data-integrity concerns.
 
 **Files reviewed:**
 - `app/Models/MemberParishAffiliationModel.php`
-- `app/Models/MemberChurchAffiliationModel.php`
+- `app/Models/MemberParishAffiliationModel.php`
 - `app/Models/ParishModel.php`
 - `app/Models/ParishPeopleModel.php`
 - `app/Models/ProfileModel.php`
@@ -126,7 +126,7 @@ $this->audit()->log('member.parish_attached', [
     'entity_id'      => (int) $profile['user_id'],
     'ip_address'     => $this->request->getIPAddress(),
     'user_agent'     => esc($this->request->getUserAgent()->getAgentString()),
-    'new_values'     => ['parish_id' => $churchId, 'status' => $status, 'is_primary' => $isHome],
+    'new_values'     => ['parish_id' => $parishId, 'status' => $status, 'is_primary' => $isHome],
 ]);
 ```
 

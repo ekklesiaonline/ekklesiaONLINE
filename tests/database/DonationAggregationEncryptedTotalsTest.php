@@ -19,14 +19,14 @@ final class DonationAggregationEncryptedTotalsTest extends CIUnitTestCase
         $this->rebuildTestSchema();
     }
 
-    public function testEncryptedDonationAmountsAggregateCorrectlyByCategoryFundChurchAndMonth(): void
+    public function testEncryptedDonationAmountsAggregateCorrectlyByCategoryFundParishAndMonth(): void
     {
-        $churchA = $this->insertChurch('Church A');
-        $churchB = $this->insertChurch('Church B');
+        $parishA = $this->insertParish('Parish A');
+        $parishB = $this->insertParish('Parish B');
 
-        $fundA1 = $this->insertFund($churchA, 'General Fund');
-        $fundA2 = $this->insertFund($churchA, 'Missions Fund');
-        $fundB1 = $this->insertFund($churchB, 'Building Fund');
+        $fundA1 = $this->insertFund($parishA, 'General Fund');
+        $fundA2 = $this->insertFund($parishA, 'Missions Fund');
+        $fundB1 = $this->insertFund($parishB, 'Building Fund');
 
         $model = model(DonationModel::class);
 
@@ -34,10 +34,10 @@ final class DonationAggregationEncryptedTotalsTest extends CIUnitTestCase
         $prevMonthDate = date('Y-m-15', strtotime('-1 month'));
 
         $entries = [
-            ['parish_id' => $churchA, 'fund_id' => $fundA1, 'amount' => '100.00', 'date' => $nowMonthDate, 'category' => 'offering'],
-            ['parish_id' => $churchA, 'fund_id' => $fundA1, 'amount' => '50.50', 'date' => $nowMonthDate, 'category' => 'tithe'],
-            ['parish_id' => $churchA, 'fund_id' => $fundA2, 'amount' => '25.25', 'date' => $prevMonthDate, 'category' => 'offering'],
-            ['parish_id' => $churchB, 'fund_id' => $fundB1, 'amount' => '75.00', 'date' => $nowMonthDate, 'category' => 'offering'],
+            ['parish_id' => $parishA, 'fund_id' => $fundA1, 'amount' => '100.00', 'date' => $nowMonthDate, 'category' => 'offering'],
+            ['parish_id' => $parishA, 'fund_id' => $fundA1, 'amount' => '50.50', 'date' => $nowMonthDate, 'category' => 'tithe'],
+            ['parish_id' => $parishA, 'fund_id' => $fundA2, 'amount' => '25.25', 'date' => $prevMonthDate, 'category' => 'offering'],
+            ['parish_id' => $parishB, 'fund_id' => $fundB1, 'amount' => '75.00', 'date' => $nowMonthDate, 'category' => 'offering'],
         ];
 
         foreach ($entries as $entry) {
@@ -65,7 +65,7 @@ final class DonationAggregationEncryptedTotalsTest extends CIUnitTestCase
         $start = date('Y-m-01', strtotime('-2 months'));
         $end = date('Y-m-t');
 
-        $byCategory = $model->getDonationsByCategory($churchA, $start, $end);
+        $byCategory = $model->getDonationsByCategory($parishA, $start, $end);
         $categoryTotals = [];
         foreach ($byCategory as $row) {
             $categoryTotals[(string) $row['category']] = (float) ($row['total'] ?? 0);
@@ -73,7 +73,7 @@ final class DonationAggregationEncryptedTotalsTest extends CIUnitTestCase
         $this->assertEqualsWithDelta(125.25, (float) ($categoryTotals['offering'] ?? 0.0), 0.0001);
         $this->assertEqualsWithDelta(50.50, (float) ($categoryTotals['tithe'] ?? 0.0), 0.0001);
 
-        $byFund = $model->getDonationsByFund($churchA, $start, $end);
+        $byFund = $model->getDonationsByFund($parishA, $start, $end);
         $fundTotals = [];
         foreach ($byFund as $row) {
             $fundTotals[(int) $row['fund_id']] = (float) ($row['total'] ?? 0);
@@ -81,15 +81,15 @@ final class DonationAggregationEncryptedTotalsTest extends CIUnitTestCase
         $this->assertEqualsWithDelta(150.50, (float) ($fundTotals[$fundA1] ?? 0.0), 0.0001);
         $this->assertEqualsWithDelta(25.25, (float) ($fundTotals[$fundA2] ?? 0.0), 0.0001);
 
-        $byChurch = $model->getDonationsByParish($start, $end, [$churchA, $churchB], false);
-        $churchTotals = [];
-        foreach ($byChurch as $row) {
-            $churchTotals[(int) $row['parish_id']] = (float) ($row['total_donations'] ?? 0);
+        $byParish = $model->getDonationsByParish($start, $end, [$parishA, $parishB], false);
+        $parishTotals = [];
+        foreach ($byParish as $row) {
+            $parishTotals[(int) $row['parish_id']] = (float) ($row['total_donations'] ?? 0);
         }
-        $this->assertEqualsWithDelta(175.75, (float) ($churchTotals[$churchA] ?? 0.0), 0.0001);
-        $this->assertEqualsWithDelta(75.00, (float) ($churchTotals[$churchB] ?? 0.0), 0.0001);
+        $this->assertEqualsWithDelta(175.75, (float) ($parishTotals[$parishA] ?? 0.0), 0.0001);
+        $this->assertEqualsWithDelta(75.00, (float) ($parishTotals[$parishB] ?? 0.0), 0.0001);
 
-        $networkMonthly = $model->getNetworkMonthlyTrend(12, [$churchA, $churchB], false);
+        $networkMonthly = $model->getNetworkMonthlyTrend(12, [$parishA, $parishB], false);
         $monthlyTotals = [];
         foreach ($networkMonthly as $row) {
             $monthlyTotals[(string) $row['month_key']] = (float) ($row['total_amount'] ?? 0);
@@ -100,22 +100,22 @@ final class DonationAggregationEncryptedTotalsTest extends CIUnitTestCase
         $this->assertEqualsWithDelta(25.25, (float) ($monthlyTotals[$prevMonthKey] ?? 0.0), 0.0001);
     }
 
-    public function testMonthlyTrendByChurchAggregatesEncryptedAmountsPerChurchAndMonth(): void
+    public function testMonthlyTrendByParishAggregatesEncryptedAmountsPerParishAndMonth(): void
     {
         $model = model(DonationModel::class);
         $fixture = $this->seedAggregationFixture($model);
 
-        $monthlyByChurch = $model->getMonthlyTrendByParish(12, [$fixture['churchA'], $fixture['churchB']], false);
+        $monthlyByParish = $model->getMonthlyTrendByParish(12, [$fixture['parishA'], $fixture['parishB']], false);
 
         $indexed = [];
-        foreach ($monthlyByChurch as $row) {
+        foreach ($monthlyByParish as $row) {
             $key = (int) ($row['parish_id'] ?? 0) . '|' . (string) ($row['month_key'] ?? '');
             $indexed[$key] = (float) ($row['total_amount'] ?? 0.0);
         }
 
-        $this->assertEqualsWithDelta(150.50, (float) ($indexed[$fixture['churchA'] . '|' . $fixture['thisMonthKey']] ?? 0.0), 0.0001);
-        $this->assertEqualsWithDelta(25.25, (float) ($indexed[$fixture['churchA'] . '|' . $fixture['prevMonthKey']] ?? 0.0), 0.0001);
-        $this->assertEqualsWithDelta(75.00, (float) ($indexed[$fixture['churchB'] . '|' . $fixture['thisMonthKey']] ?? 0.0), 0.0001);
+        $this->assertEqualsWithDelta(150.50, (float) ($indexed[$fixture['parishA'] . '|' . $fixture['thisMonthKey']] ?? 0.0), 0.0001);
+        $this->assertEqualsWithDelta(25.25, (float) ($indexed[$fixture['parishA'] . '|' . $fixture['prevMonthKey']] ?? 0.0), 0.0001);
+        $this->assertEqualsWithDelta(75.00, (float) ($indexed[$fixture['parishB'] . '|' . $fixture['thisMonthKey']] ?? 0.0), 0.0001);
     }
 
     private function configureEncryptionKeys(): void
@@ -181,7 +181,7 @@ final class DonationAggregationEncryptedTotalsTest extends CIUnitTestCase
         $forge->createTable('donation', true);
     }
 
-    private function insertChurch(string $name): int
+    private function insertParish(string $name): int
     {
         $this->db->table('parish')->insert([
             'name' => $name,
@@ -197,10 +197,10 @@ final class DonationAggregationEncryptedTotalsTest extends CIUnitTestCase
         return $id;
     }
 
-    private function insertFund(int $churchId, string $name): int
+    private function insertFund(int $parishId, string $name): int
     {
         $this->db->table('fund')->insert([
-            'parish_id' => $churchId,
+            'parish_id' => $parishId,
             'name' => $name,
             'fund_type' => 'unrestricted',
             'created_at' => date('Y-m-d H:i:s'),
@@ -211,25 +211,25 @@ final class DonationAggregationEncryptedTotalsTest extends CIUnitTestCase
     }
 
     /**
-     * @return array{churchA:int,churchB:int,thisMonthKey:string,prevMonthKey:string}
+     * @return array{parishA:int,parishB:int,thisMonthKey:string,prevMonthKey:string}
      */
     private function seedAggregationFixture(DonationModel $model): array
     {
-        $churchA = $this->insertChurch('Church A');
-        $churchB = $this->insertChurch('Church B');
+        $parishA = $this->insertParish('Parish A');
+        $parishB = $this->insertParish('Parish B');
 
-        $fundA1 = $this->insertFund($churchA, 'General Fund');
-        $fundA2 = $this->insertFund($churchA, 'Missions Fund');
-        $fundB1 = $this->insertFund($churchB, 'Building Fund');
+        $fundA1 = $this->insertFund($parishA, 'General Fund');
+        $fundA2 = $this->insertFund($parishA, 'Missions Fund');
+        $fundB1 = $this->insertFund($parishB, 'Building Fund');
 
         $nowMonthDate = date('Y-m-15');
         $prevMonthDate = date('Y-m-15', strtotime('-1 month'));
 
         $entries = [
-            ['parish_id' => $churchA, 'fund_id' => $fundA1, 'amount' => '100.00', 'date' => $nowMonthDate, 'category' => 'offering'],
-            ['parish_id' => $churchA, 'fund_id' => $fundA1, 'amount' => '50.50', 'date' => $nowMonthDate, 'category' => 'tithe'],
-            ['parish_id' => $churchA, 'fund_id' => $fundA2, 'amount' => '25.25', 'date' => $prevMonthDate, 'category' => 'offering'],
-            ['parish_id' => $churchB, 'fund_id' => $fundB1, 'amount' => '75.00', 'date' => $nowMonthDate, 'category' => 'offering'],
+            ['parish_id' => $parishA, 'fund_id' => $fundA1, 'amount' => '100.00', 'date' => $nowMonthDate, 'category' => 'offering'],
+            ['parish_id' => $parishA, 'fund_id' => $fundA1, 'amount' => '50.50', 'date' => $nowMonthDate, 'category' => 'tithe'],
+            ['parish_id' => $parishA, 'fund_id' => $fundA2, 'amount' => '25.25', 'date' => $prevMonthDate, 'category' => 'offering'],
+            ['parish_id' => $parishB, 'fund_id' => $fundB1, 'amount' => '75.00', 'date' => $nowMonthDate, 'category' => 'offering'],
         ];
 
         foreach ($entries as $entry) {
@@ -249,8 +249,8 @@ final class DonationAggregationEncryptedTotalsTest extends CIUnitTestCase
         }
 
         return [
-            'churchA' => $churchA,
-            'churchB' => $churchB,
+            'parishA' => $parishA,
+            'parishB' => $parishB,
             'thisMonthKey' => date('Y-m', strtotime($nowMonthDate)),
             'prevMonthKey' => date('Y-m', strtotime($prevMonthDate)),
         ];

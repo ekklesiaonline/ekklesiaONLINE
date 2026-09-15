@@ -1,14 +1,14 @@
 # EkklesiaRD Deep Analysis Report
 
 **Date:** March 31, 2026  
-**System:** Multi-Church Management System (ChMS) on CodeIgniter 4.7  
+**System:** Multi-Parish Management System (ChMS) on CodeIgniter 4.7  
 **Scope:** Complete codebase analysis, improvement recommendations, and deployment readiness assessment
 
 ---
 
 ## Executive Summary
 
-EkklesiaRD is a **well-architected, production-ready multi-church management system** that demonstrates solid
+EkklesiaRD is a **well-architected, production-ready multi-parish management system** that demonstrates solid
 software engineering practices. The system successfully manages complex multi-tenancy requirements with
 clear role-based access control, has implemented significant performance optimizations, and maintains
 good documentation standards.
@@ -23,11 +23,11 @@ good documentation standards.
 
 ### 1.1 Core Capabilities
 
-EkklesiaRD is a comprehensive Church Management System (ChMS) designed for diocesan/provincial oversight with granular church-level operations. It manages:
+EkklesiaRD is a comprehensive Parish Management System (ChMS) designed for diocesan/provincial oversight with granular parish-level operations. It manages:
 
 | Capability                 | Scope                         | Features                                                                                                                         |
 |----------------------------|-------------------------------|----------------------------------------------------------------------------------------------------------------------------------|
-| **Multi-Church Hierarchy** | Province → Diocese → Church   | Super admin oversees all; bishops manage dioceses; pastors manage churches; role-based access control per church                 |
+| **Multi-Parish Hierarchy** | Province → Diocese → Parish   | Super admin oversees all; bishops manage dioceses; pastors manage parishes; role-based access control per parish                 |
 | **Member Management**      | Individual members & families | Profiles, status tracking (active/inactive/visitor/pending), family grouping, spiritual gifts, baptism/membership dates          |
 | **Attendance Tracking**    | Service-level attendance      | Real-time check-in, communion tracking, attendance trends, weekly/monthly charts, export to PDF/Excel                            |
 | **Financial Management**   | Donations & expenses          | Tithe/offering tracking, donation categories, expense approval workflows, budget management, donor statements, financial reports |
@@ -64,10 +64,10 @@ MemberPortal/           → Member self-service (dashboard, profile, family view
 
 ### 1.4 Multi-Tenancy Implementation
 
-- **Church Isolation:** Every record includes `church_id` foreign key; filters applied at controller level using `ChurchScopeFilter`
-- **User-Church Binding:** Users belong to one church (stored in `profiles.church_id`); super admin can switch between churches
-- **Scope Filters:** Custom filters (`ProvinceScopeFilter`, `DiocesanScopeFilter`, `ChurchScopeFilter`) enforce multi-tenancy boundaries
-- **Permission Scoping:** Permissions checked both at Shield level (user has permission?) and at controller level (requested record belongs to user's church?)
+- **Parish Isolation:** Every record includes `parish_id` foreign key; filters applied at controller level using `ParishScopeFilter`
+- **User-Parish Binding:** Users belong to one parish (stored in `profiles.parish_id`); super admin can switch between parishes
+- **Scope Filters:** Custom filters (`ProvinceScopeFilter`, `DiocesanScopeFilter`, `ParishScopeFilter`) enforce multi-tenancy boundaries
+- **Permission Scoping:** Permissions checked both at Shield level (user has permission?) and at controller level (requested record belongs to user's parish?)
 
 ### 1.5 Authentication & Authorization
 
@@ -81,14 +81,14 @@ MemberPortal/           → Member self-service (dashboard, profile, family view
 **Authorization:**
 
 - 50+ granular permissions (members.view, members.edit, attendance.mark, finance.view, finance.manage, volunteers.assign, etc.)
-- Predefined roles: Super Admin, Church Admin, Pastor, Treasurer, Volunteer Coordinator, Member
+- Predefined roles: Super Admin, Parish Admin, Pastor, Treasurer, Volunteer Coordinator, Member
 - Permissions assigned to groups (roles); users assigned to groups
 - Permission checks on every sensitive route
 
-**Church Scoping:**
+**Parish Scoping:**
 
-- Users belong to exactly one church (except Super Admin who can switch)
-- Controllers check `auth()->user()->can('permission')` AND verify record's `church_id` matches user's church
+- Users belong to exactly one parish (except Super Admin who can switch)
+- Controllers check `auth()->user()->can('permission')` AND verify record's `parish_id` matches user's parish
 
 ---
 
@@ -211,15 +211,15 @@ MemberPortal/           → Member self-service (dashboard, profile, family view
 
 2. **Integration Tests** (critical):
    - Authentication flows (login, password reset, email verification)
-   - Multi-tenancy enforcement (user can't see another church's data)
+   - Multi-tenancy enforcement (user can't see another parish's data)
    - Permission checks (unauthorized access returns 403)
    - CRUD operations per module (members, services, donations, volunteers)
    - Financial reports generation
    - Database transaction handling
 
 3. **E2E Tests** (workflow):
-   - Super Admin: Switch between churches, create church, assign staff
-   - Church Admin: Add member, mark attendance, record donation, create volunteer team
+   - Super Admin: Switch between parishes, create parish, assign staff
+   - Parish Admin: Add member, mark attendance, record donation, create volunteer team
    - Guest workflow: Check-in guest, trigger follow-up, mark complete
    - Financial workflow: Record tithe, generate report, export to Excel
    - Use Selenium or CodeIgniter's built-in testing tools
@@ -239,7 +239,7 @@ tests/
     Controllers/         → Controller tests
   integration/
     Auth/               → Authentication flows
-    MultiTenancy/       → Church scoping
+    MultiTenancy/       → Parish scoping
     Permissions/        → Authorization
     Finance/            → Financial module
   acceptance/           → E2E workflow tests
@@ -300,7 +300,7 @@ tests/
 4. **Structured Logging** (recommended):
    - Move from text logs to JSON structured logs
    - Makes parsing/searching easier
-   - Example: `{"level":"error", "action":"member.create", "user_id":5, "church_id":2, "message":"..."}`
+   - Example: `{"level":"error", "action":"member.create", "user_id":5, "parish_id":2, "message":"..."}`
 
 5. **Central Logging** (production):
    - Use external service: Sentry, LogRocket, or ELK Stack
@@ -313,7 +313,7 @@ tests/
 CREATE TABLE audit_logs (
   id INT PRIMARY KEY AUTO_INCREMENT,
   user_id INT,
-  church_id INT,
+  parish_id INT,
   action VARCHAR(100),     -- 'member.create', 'donation.edit', 'permission.denied'
   entity_type VARCHAR(50), -- 'member', 'donation', 'service'
   entity_id INT,
@@ -323,9 +323,9 @@ CREATE TABLE audit_logs (
   user_agent TEXT,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (user_id) REFERENCES users(id),
-  FOREIGN KEY (church_id) REFERENCES churches(id),
+  FOREIGN KEY (parish_id) REFERENCES parishes(id),
   INDEX (action, created_at),
-  INDEX (user_id, church_id)
+  INDEX (user_id, parish_id)
 );
 ```
 
@@ -410,7 +410,7 @@ CREATE TABLE audit_logs (
 
 4. **404/403 Pages**:
    - Custom, user-friendly error pages (currently may show generic CodeIgniter pages)
-   - Include help text: "This church does not exist. Contact your administrator."
+   - Include help text: "This parish does not exist. Contact your administrator."
 
 **Impact:** Improves user satisfaction; reduces support tickets
 
@@ -445,7 +445,7 @@ CREATE TABLE audit_logs (
      ```
 
 3. **Caching**:
-   - Cache frequently accessed data (role list, permission list, church list for super admin)
+   - Cache frequently accessed data (role list, permission list, parish list for super admin)
    - Cache for 1 hour; invalidate on change
 
    ```php
@@ -476,7 +476,7 @@ CREATE TABLE audit_logs (
 **Improvements Needed:**
 
 1. **Session Timeout**:
-   - Auto-logout after 30 minutes of inactivity (sensible for church staff with shared devices)
+   - Auto-logout after 30 minutes of inactivity (sensible for parish staff with shared devices)
    - Warn user at 25 minutes: "Session expires in 5 minutes"
    - Implement via middleware or JavaScript timer
 
@@ -538,7 +538,7 @@ CREATE TABLE audit_logs (
 - CodeIgniter's built-in `lang()` function
 - Translation files in `app/Language/{locale}/`
 
-**Impact:** Enables international deployments; accommodates diverse church networks
+**Impact:** Enables international deployments; accommodates diverse parish networks
 
 ---
 
@@ -650,7 +650,7 @@ The system is **substantially ready** but has critical gaps that should be addre
 
 #### ✅ **COMPLETED / STRONG**
 
-- Multi-tenancy architecture (church scoping, filters)
+- Multi-tenancy architecture (parish scoping, filters)
 - Authentication & authorization (Shield integration, granular permissions)
 - Performance optimizations (batch operations, indexes, lazy-loading)
 - Database schema (45+ migrations, well-designed)
@@ -747,10 +747,10 @@ MEDIUM PRIORITY (NICE TO HAVE)
 ### 3.8 **Post-Deployment Tasks**
 
 1. **Verify Functionality**
-   - Test login as super admin, church admin, pastor, member
+   - Test login as super admin, parish admin, pastor, member
    - Test member creation, attendance marking, donation recording
    - Verify emails sending (password reset, follow-up notifications)
-   - Test multi-church access (super admin switch church, verify scoping)
+   - Test multi-parish access (super admin switch parish, verify scoping)
 
 2. **Monitor**
    - Dashboard load time < 2 seconds
@@ -812,7 +812,7 @@ EkklesiaRD is a **well-designed system with solid fundamentals**. The architectu
 
 **Estimated timeline to production-ready:** 3-4 weeks (if a full team works on it) to 6-8 weeks (if smaller team)
 
-The system is ready for **pilot deployment** in a limited diocese/church; scale to larger network after addressing critical blockers.
+The system is ready for **pilot deployment** in a limited diocese/parish; scale to larger network after addressing critical blockers.
 
 ---
 

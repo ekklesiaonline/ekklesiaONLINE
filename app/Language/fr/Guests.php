@@ -76,7 +76,7 @@ return [
     'tplColScope'                => 'Portée',
     'tplColActions'              => 'Actions',
     'tplScopeGlobal'             => 'Global',
-    'tplScopeChurch'             => 'Paroisse',
+    'tplScopeParish'             => 'Paroisse',
     'tplEmpty'                   => 'Aucun modèle de message pour l\'instant.',
     'tplEmptyCreate'             => 'En créer un maintenant',
     // Templates modal
@@ -365,7 +365,7 @@ return [
     'seqColStatus'                => 'Statut',
     'seqColScope'                 => 'Portée',
     'seqScopeGlobal'              => 'Global',
-    'seqScopeChurch'              => 'Paroisse',
+    'seqScopeParish'              => 'Paroisse',
     'seqActivateTitle'            => 'Activer',
     'seqDeactivateTitle'          => 'Désactiver',
     'seqActivateVerb'             => 'activer',

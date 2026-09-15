@@ -10,7 +10,7 @@ Provide a controlled alias layer for canonical liturgical day names so legacy or
 ## 2) Why This Is Optional
 
 - Current implementation already localizes canonical service type, season, and color values.
-- Many liturgical day names are church-authored or diocesan-managed text.
+- Many liturgical day names are parish-authored or diocesan-managed text.
 - Auto-translating arbitrary day names risks incorrect theology/liturgical meaning.
 
 ## 3) Suggested Alias Model

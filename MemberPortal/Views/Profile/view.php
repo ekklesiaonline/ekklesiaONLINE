@@ -18,7 +18,7 @@ $profilePictureUrl = ($profilePicturePath !== '' && !empty($user->id))
     ? base_url('media/profile-picture/' . (int) $user->id)
     : '';
 $completionPct = (int) ($completionPct ?? 0);
-$churchAffiliation = $churchAffiliation ?? ['province' => '', 'diocese' => '', 'parish' => ''];
+$parishAffiliation = $parishAffiliation ?? ['province' => '', 'diocese' => '', 'parish' => ''];
 
 $formatLocalizedDate = static function (?string $value, string $pattern, string $locale): string {
     if ($value === null || trim($value) === '' || $value === '0000-00-00') {
@@ -66,7 +66,7 @@ if ($displayName === '') {
     $displayName = $user->username ?? $user->email ?? 'User';
 }
 
-$hasAffiliation = !empty($churchAffiliation['province']) || !empty($churchAffiliation['diocese']) || !empty($churchAffiliation['parish']);
+$hasAffiliation = !empty($parishAffiliation['province']) || !empty($parishAffiliation['diocese']) || !empty($parishAffiliation['parish']);
 $hasAdminScope = $isElevatedAdmin && !empty($adminScope['name']);
 // Elevated admins administer a diocese/province/system scope, but may also
 // be personally affiliated with one or more parishes (parish_people rows) —
@@ -206,7 +206,7 @@ $adminParishNames = $hasAdminScope
                 <div class="col-md-6">
                     <div class="card h-100">
                         <div class="card-header bg-primary text-white">
-                            <h5 class="mb-0"><i class="bi bi-building"></i> <?= lang('Profile.churchAffiliation') ?></h5>
+                            <h5 class="mb-0"><i class="bi bi-building"></i> <?= lang('Profile.parishAffiliation') ?></h5>
                         </div>
                         <div class="card-body">
                             <?php if ($hasAdminScope): ?>
@@ -221,11 +221,11 @@ $adminParishNames = $hasAdminScope
                             <?php elseif ($hasAffiliation): ?>
                                 <dl class="row affiliation-list mb-0">
                                     <dt class="col-sm-4"><?= lang('Profile.province') ?></dt>
-                                    <dd class="col-sm-8"><?= esc($churchAffiliation['province'] ?: '-') ?></dd>
+                                    <dd class="col-sm-8"><?= esc($parishAffiliation['province'] ?: '-') ?></dd>
                                     <dt class="col-sm-4"><?= lang('Profile.diocese') ?></dt>
-                                    <dd class="col-sm-8"><?= esc($churchAffiliation['diocese'] ?: '-') ?></dd>
-                                    <dt class="col-sm-4"><?= lang('Profile.church') ?></dt>
-                                    <dd class="col-sm-8"><?= esc($churchAffiliation['parish'] ?: '-') ?></dd>
+                                    <dd class="col-sm-8"><?= esc($parishAffiliation['diocese'] ?: '-') ?></dd>
+                                    <dt class="col-sm-4"><?= lang('Profile.parish') ?></dt>
+                                    <dd class="col-sm-8"><?= esc($parishAffiliation['parish'] ?: '-') ?></dd>
                                 </dl>
                             <?php else: ?>
                                 <p class="text-muted mb-0"><i class="bi bi-info-circle"></i> <?= lang('Profile.noAffiliation') ?></p>
@@ -291,7 +291,7 @@ $adminParishNames = $hasAdminScope
                 <div class="col-12">
                     <div class="card h-100">
                         <div class="card-header bg-primary text-white">
-                            <h5 class="mb-0"><i class="bi bi-buildings"></i> <?= lang('Profile.otherChurches') ?></h5>
+                            <h5 class="mb-0"><i class="bi bi-buildings"></i> <?= lang('Profile.otherParishes') ?></h5>
                         </div>
                         <div class="card-body">
                             <?php if (!empty($otherAffiliations)): ?>
@@ -317,7 +317,7 @@ $adminParishNames = $hasAdminScope
                                     <?php endforeach; ?>
                                 </ul>
                             <?php else: ?>
-                                <p class="text-muted mb-0"><i class="bi bi-info-circle"></i> <?= lang('Profile.noOtherChurches') ?></p>
+                                <p class="text-muted mb-0"><i class="bi bi-info-circle"></i> <?= lang('Profile.noOtherParishes') ?></p>
                             <?php endif; ?>
                         </div>
                     </div>
@@ -520,7 +520,7 @@ $adminParishNames = $hasAdminScope
                 <div class="col-md-6">
                     <div class="card h-100">
                         <div class="card-header bg-primary text-white">
-                            <h5 class="mb-0"><i class="bi bi-building"></i> <?= lang('Profile.churchAffiliation') ?></h5>
+                            <h5 class="mb-0"><i class="bi bi-building"></i> <?= lang('Profile.parishAffiliation') ?></h5>
                         </div>
                         <div class="card-body">
                             <?php if ($hasAdminScope): ?>
@@ -535,11 +535,11 @@ $adminParishNames = $hasAdminScope
                             <?php elseif ($hasAffiliation): ?>
                                 <dl class="row affiliation-list mb-0">
                                     <dt class="col-sm-4"><?= lang('Profile.province') ?></dt>
-                                    <dd class="col-sm-8"><?= esc($churchAffiliation['province'] ?: '-') ?></dd>
+                                    <dd class="col-sm-8"><?= esc($parishAffiliation['province'] ?: '-') ?></dd>
                                     <dt class="col-sm-4"><?= lang('Profile.diocese') ?></dt>
-                                    <dd class="col-sm-8"><?= esc($churchAffiliation['diocese'] ?: '-') ?></dd>
-                                    <dt class="col-sm-4"><?= lang('Profile.church') ?></dt>
-                                    <dd class="col-sm-8"><?= esc($churchAffiliation['parish'] ?: '-') ?></dd>
+                                    <dd class="col-sm-8"><?= esc($parishAffiliation['diocese'] ?: '-') ?></dd>
+                                    <dt class="col-sm-4"><?= lang('Profile.parish') ?></dt>
+                                    <dd class="col-sm-8"><?= esc($parishAffiliation['parish'] ?: '-') ?></dd>
                                 </dl>
                             <?php else: ?>
                                 <p class="text-muted mb-0"><i class="bi bi-info-circle"></i> <?= lang('Profile.noAffiliation') ?></p>

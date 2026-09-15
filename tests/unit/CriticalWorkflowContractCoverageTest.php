@@ -94,7 +94,7 @@ final class CriticalWorkflowContractCoverageTest extends CIUnitTestCase
         $this->assertStringContainsString('jsonResponse([\'success\' => false', $content);
     }
 
-    public function testCriticalControllersExposeChurchScopeRequiredCode(): void
+    public function testCriticalControllersExposeParishScopeRequiredCode(): void
     {
         $membersContent = file_get_contents(ROOTPATH . 'Clergy/Controllers/Members.php');
         $this->assertNotFalse($membersContent);
@@ -103,8 +103,8 @@ final class CriticalWorkflowContractCoverageTest extends CIUnitTestCase
         $followUpContent = file_get_contents(ROOTPATH . 'Clergy/Controllers/FollowupWorkflow.php');
         $this->assertNotFalse($followUpContent);
 
-        $this->assertStringContainsString("'CHURCH_SCOPE_REQUIRED'", $membersContent);
-        $this->assertStringContainsString("'CHURCH_SCOPE_REQUIRED'", $familiesContent);
+        $this->assertStringContainsString("'PARISH_SCOPE_REQUIRED'", $membersContent);
+        $this->assertStringContainsString("'PARISH_SCOPE_REQUIRED'", $familiesContent);
         $this->assertStringContainsString('requireParish()', $followUpContent);
     }
 

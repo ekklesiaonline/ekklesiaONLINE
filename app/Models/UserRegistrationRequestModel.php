@@ -18,8 +18,8 @@ class UserRegistrationRequestModel extends Model
         'diocese_id',
         'parish_id',
         'requested_parish_id',
-        'requested_church_id',
-        'church_id',
+        'requested_parish_id',
+        'parish_id',
         'status',
         'requested_role',
         'reviewed_by',
@@ -39,8 +39,8 @@ class UserRegistrationRequestModel extends Model
         'diocese_id' => 'permit_empty|is_not_unique[diocese.id]',
         'parish_id' => 'permit_empty|is_not_unique[parish.id]',
         'requested_parish_id' => 'permit_empty|is_not_unique[parish.id]',
-        'requested_church_id' => 'permit_empty|is_not_unique[parish.id]',
-        'church_id' => 'permit_empty|is_not_unique[parish.id]',
+        'requested_parish_id' => 'permit_empty|is_not_unique[parish.id]',
+        'parish_id' => 'permit_empty|is_not_unique[parish.id]',
         'status' => 'required|in_list[pending_profile,pending_review,approved,dismissed,banned]',
     ];
 
@@ -101,13 +101,13 @@ class UserRegistrationRequestModel extends Model
                 return $this->resolvedRequestedParishColumn;
             }
 
-            if ($this->db->fieldExists('requested_church_id', $this->table)) {
-                $this->resolvedRequestedParishColumn = 'requested_church_id';
+            if ($this->db->fieldExists('requested_parish_id', $this->table)) {
+                $this->resolvedRequestedParishColumn = 'requested_parish_id';
                 return $this->resolvedRequestedParishColumn;
             }
 
-            if ($this->db->fieldExists('church_id', $this->table)) {
-                $this->resolvedRequestedParishColumn = 'church_id';
+            if ($this->db->fieldExists('parish_id', $this->table)) {
+                $this->resolvedRequestedParishColumn = 'parish_id';
                 return $this->resolvedRequestedParishColumn;
             }
         } catch (\Throwable $e) {

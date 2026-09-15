@@ -22,8 +22,8 @@ final class MemberAccessServiceTest extends CIUnitTestCase
 
     public function testCreateNonPortalUserWritesCoreTablesWithoutAuthRecords(): void
     {
-        $churchId = $this->insertChurch('Non Portal Church');
-        $familyId = $this->insertFamily($churchId, 'Family A');
+        $parishId = $this->insertParish('Non Portal Parish');
+        $familyId = $this->insertFamily($parishId, 'Family A');
 
         $service = new MemberAccessService($this->db);
         $result = $service->createNonPortalUser([
@@ -34,7 +34,7 @@ final class MemberAccessServiceTest extends CIUnitTestCase
             'birth_date' => '2018-01-01',
             'portal_access' => 'none',
             'is_child' => true,
-        ], $churchId);
+        ], $parishId);
 
         $this->assertTrue((bool) ($result['ok'] ?? false), $this->diagnosticContext($result));
         $this->assertSame('NON_PORTAL_MEMBER_CREATED', (string) ($result['code'] ?? ''));
@@ -50,11 +50,11 @@ final class MemberAccessServiceTest extends CIUnitTestCase
 
         $affiliationColumns = array_map('strtolower', $this->db->getFieldNames($this->resolveTableName('parish_affiliation')));
         $userColumn = in_array('linked_user_id', $affiliationColumns, true) ? 'linked_user_id' : 'user_id';
-        $churchColumn = in_array('parish_id', $affiliationColumns, true) ? 'parish_id' : 'church_id';
+        $parishColumn = in_array('parish_id', $affiliationColumns, true) ? 'parish_id' : 'parish_id';
 
         $affiliation = $this->db->table('parish_affiliation')
             ->where($userColumn, $userId)
-            ->where($churchColumn, $churchId)
+            ->where($parishColumn, $parishId)
             ->get()
             ->getRowArray();
         $this->assertNotNull($affiliation);
@@ -82,8 +82,8 @@ final class MemberAccessServiceTest extends CIUnitTestCase
 
     public function testEnablePortalAccessIsIdempotentAndNoDuplicateGroupRows(): void
     {
-        $churchId = $this->insertChurch('Enable Portal Church');
-        $familyId = $this->insertFamily($churchId, 'Family B');
+        $parishId = $this->insertParish('Enable Portal Parish');
+        $familyId = $this->insertFamily($parishId, 'Family B');
 
         $service = new MemberAccessService($this->db);
         $created = $service->createNonPortalUser([
@@ -92,7 +92,7 @@ final class MemberAccessServiceTest extends CIUnitTestCase
             'last_name' => 'Candidate',
             'relationship' => 'Child',
             'portal_access' => 'none',
-        ], $churchId);
+        ], $parishId);
 
         $this->assertTrue((bool) ($created['ok'] ?? false), $this->diagnosticContext($created));
         $userId = (int) ($created['data']['user_id'] ?? 0);
@@ -102,7 +102,7 @@ final class MemberAccessServiceTest extends CIUnitTestCase
             'family_id' => $familyId,
             'email' => 'candidate@example.org',
             'password' => 'MyStrongPass1',
-        ], $churchId);
+        ], $parishId);
 
         $this->assertTrue((bool) ($enabled['ok'] ?? false));
         $this->assertSame('PORTAL_ACCESS_ENABLED', (string) ($enabled['code'] ?? ''));
@@ -130,7 +130,7 @@ final class MemberAccessServiceTest extends CIUnitTestCase
             'family_id' => $familyId,
             'email' => 'candidate@example.org',
             'password' => 'MyStrongPass1',
-        ], $churchId);
+        ], $parishId);
 
         $this->assertTrue((bool) ($repeat['ok'] ?? false));
         $this->assertSame('PORTAL_INVITE_RESENT', (string) ($repeat['code'] ?? ''));
@@ -148,11 +148,11 @@ final class MemberAccessServiceTest extends CIUnitTestCase
         $this->assertSame(1, $groupRowsAfter);
     }
 
-    public function testScopeGuardReturnsOutOfScopeForCrossChurchFamilyAccess(): void
+    public function testScopeGuardReturnsOutOfScopeForCrossParishFamilyAccess(): void
     {
-        $churchA = $this->insertChurch('Scope A');
-        $churchB = $this->insertChurch('Scope B');
-        $familyA = $this->insertFamily($churchA, 'Scoped Family');
+        $parishA = $this->insertParish('Scope A');
+        $parishB = $this->insertParish('Scope B');
+        $familyA = $this->insertFamily($parishA, 'Scoped Family');
 
         $service = new MemberAccessService($this->db);
         $result = $service->createNonPortalUser([
@@ -160,7 +160,7 @@ final class MemberAccessServiceTest extends CIUnitTestCase
             'first_name' => 'Scope',
             'last_name' => 'Mismatch',
             'portal_access' => 'none',
-        ], $churchB);
+        ], $parishB);
 
         $this->assertFalse((bool) ($result['ok'] ?? true));
         $this->assertSame('OUT_OF_SCOPE', (string) ($result['code'] ?? ''));
@@ -169,14 +169,14 @@ final class MemberAccessServiceTest extends CIUnitTestCase
 
     public function testCreateNonPortalUserSupportsStandaloneCreationWithoutFamilyLink(): void
     {
-        $churchId = $this->insertChurch('Standalone Service Church');
+        $parishId = $this->insertParish('Standalone Service Parish');
 
         $service = new MemberAccessService($this->db);
         $result = $service->createNonPortalUser([
             'first_name' => 'Standalone',
             'last_name' => 'Member',
             'portal_access' => 'none',
-        ], $churchId);
+        ], $parishId);
 
         $this->assertTrue((bool) ($result['ok'] ?? false), $this->diagnosticContext($result));
         $this->assertSame('NON_PORTAL_MEMBER_CREATED_STANDALONE', (string) ($result['code'] ?? ''));
@@ -190,7 +190,7 @@ final class MemberAccessServiceTest extends CIUnitTestCase
         $this->assertSame(0, $familyLinks);
     }
 
-    private function insertChurch(string $name): int
+    private function insertParish(string $name): int
     {
         $this->db->table('parish')->insert([
             'name' => $name,
@@ -201,10 +201,10 @@ final class MemberAccessServiceTest extends CIUnitTestCase
         return (int) $this->db->insertID();
     }
 
-    private function insertFamily(int $churchId, string $familyName): int
+    private function insertFamily(int $parishId, string $familyName): int
     {
         $this->db->table('family')->insert([
-            'parish_id' => $churchId,
+            'parish_id' => $parishId,
             'family_name' => $familyName,
             'head_of_household_id' => null,
             'address' => null,
@@ -231,8 +231,8 @@ final class MemberAccessServiceTest extends CIUnitTestCase
             )');
         }
 
-        $churchesTable = $this->resolveTableName('parish');
-        $this->ensureColumnExists($churchesTable, 'diocese_id', 'INTEGER NULL');
+        $parishesTable = $this->resolveTableName('parish');
+        $this->ensureColumnExists($parishesTable, 'diocese_id', 'INTEGER NULL');
         $this->ensureColumnExists($this->db->getPrefix() . 'parish', 'diocese_id', 'INTEGER NULL');
         $this->ensureColumnExists('parish', 'diocese_id', 'INTEGER NULL');
 

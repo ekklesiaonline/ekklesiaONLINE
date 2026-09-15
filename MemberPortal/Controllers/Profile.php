@@ -59,8 +59,8 @@ class Profile extends BaseController
         $data['profile'] = $profile;
         $data['isElevatedAdmin'] = $isElevatedAdmin;
         $data['adminScope'] = $isElevatedAdmin ? $this->resolveElevatedAdminScopeLabel($user) : null;
-        $data['churchAffiliation'] = $this->resolveChurchAffiliation($profile);
-        $data['otherAffiliations'] = $this->resolveAllChurchAffiliations((int) $user->id, (int) ($profile['parish_id'] ?? 0));
+        $data['parishAffiliation'] = $this->resolveParishAffiliation($profile);
+        $data['otherAffiliations'] = $this->resolveAllParishAffiliations((int) $user->id, (int) ($profile['parish_id'] ?? 0));
         $data['completionPct'] = $this->calculateCompletionPct($profile);
         $data['registrationStatus'] = $state['status'];
         $data['userGroups'] = $this->resolveLoggedInGroups($user);
@@ -103,8 +103,8 @@ class Profile extends BaseController
         $data['profile'] = $profile;
         $data['isElevatedAdmin'] = $isElevatedAdmin;
         $data['adminScope'] = $isElevatedAdmin ? $this->resolveElevatedAdminScopeLabel($user) : null;
-        $data['churchAffiliation'] = $this->resolveChurchAffiliation($profile);
-        $data['otherAffiliations'] = $this->resolveAllChurchAffiliations((int) $user->id, (int) ($profile['parish_id'] ?? 0));
+        $data['parishAffiliation'] = $this->resolveParishAffiliation($profile);
+        $data['otherAffiliations'] = $this->resolveAllParishAffiliations((int) $user->id, (int) ($profile['parish_id'] ?? 0));
         $data['provinces'] = db_connect()->table('province')
             ->select('id, province_number, name')
             ->orderBy('sort_order', 'ASC')
@@ -229,7 +229,7 @@ class Profile extends BaseController
         session()->set('user_locale', $effectiveLocale);
         service('request')->setLocale($effectiveLocale);
 
-        // Sync primary parish and save any additional church affiliations
+        // Sync primary parish and save any additional parish affiliations
         $this->syncPrimaryParishPeople($profile);
         $parishPeopleModel = model('ParishPeopleModel');
         $primaryParishId = (int) ($profile['parish_id'] ?? 0);
@@ -446,7 +446,7 @@ class Profile extends BaseController
      *
      * @return array{province: string, diocese: string, parish: string}
      */
-    private function resolveChurchAffiliation(?array $profile): array
+    private function resolveParishAffiliation(?array $profile): array
     {
         $result = ['province' => '', 'diocese' => '', 'parish' => ''];
 
@@ -479,11 +479,11 @@ class Profile extends BaseController
     }
 
     /**
-     * Resolve all church affiliations for a user, including the primary one.
+     * Resolve all parish affiliations for a user, including the primary one.
      *
      * @return array<int, array<string, mixed>>
      */
-    private function resolveAllChurchAffiliations(int $userId, int $primaryParishId): array
+    private function resolveAllParishAffiliations(int $userId, int $primaryParishId): array
     {
         $db = db_connect();
 
@@ -608,7 +608,7 @@ class Profile extends BaseController
             'legacy_completion_mode' => $legacyCompletionMode,
             'provinces' => $provinces,
             'diocesesByProvince' => $this->getDiocesesByProvinceOptions(),
-            'churchesByDiocese' => $this->getParishesByDioceseOptions(),
+            'parishesByDiocese' => $this->getParishesByDioceseOptions(),
         ]);
     }
 
@@ -621,12 +621,12 @@ class Profile extends BaseController
             return redirect()->to('login');
         }
 
-        // Backward compatibility for older clients posting church_id.
+        // Backward compatibility for older clients posting parish_id.
         if ($this->request->getPost('parish_id') === null) {
-            $legacyChurchId = (int) ($this->request->getPost('church_id') ?? 0);
-            if ($legacyChurchId > 0) {
+            $legacyParishId = (int) ($this->request->getPost('parish_id') ?? 0);
+            if ($legacyParishId > 0) {
                 $post = (array) $this->request->getPost();
-                $post['parish_id'] = $legacyChurchId;
+                $post['parish_id'] = $legacyParishId;
                 $this->request->setGlobal('post', $post);
             }
         }
@@ -667,12 +667,12 @@ class Profile extends BaseController
 
         $provinceId = 0;
         $dioceseId = 0;
-        $churchId = 0;
+        $parishId = 0;
 
         if (!$legacyCompletionMode) {
             $provinceId = (int) $this->request->getPost('province_id');
             $dioceseId = (int) $this->request->getPost('diocese_id');
-            $churchId = (int) $this->request->getPost('parish_id');
+            $parishId = (int) $this->request->getPost('parish_id');
 
             $dioceseValid = db_connect()->table('diocese')
                 ->where('id', $dioceseId)
@@ -683,13 +683,13 @@ class Profile extends BaseController
                 return redirect()->back()->withInput()->with('error', lang('Profile.dioceseMismatch'));
             }
 
-            $churchValid = db_connect()->table('parish')
-                ->where('id', $churchId)
+            $parishValid = db_connect()->table('parish')
+                ->where('id', $parishId)
                 ->where('diocese_id', $dioceseId)
                 ->countAllResults() > 0;
 
-            if (!$churchValid) {
-                return redirect()->back()->withInput()->with('error', lang('Profile.churchDioceseMismatch'));
+            if (!$parishValid) {
+                return redirect()->back()->withInput()->with('error', lang('Profile.parishDioceseMismatch'));
             }
         }
 
@@ -737,10 +737,10 @@ class Profile extends BaseController
 
             $this->syncPrimaryParishPeople($completedProfile);
 
-            if (!$legacyCompletionMode && $churchId > 0) {
+            if (!$legacyCompletionMode && $parishId > 0) {
                 (new PersonOnboardingService())->start(
                     (int) $completedProfile['id'],
-                    $churchId,
+                    $parishId,
                     (int) (auth()->id() ?? 0) ?: null
                 );
             }
@@ -753,10 +753,10 @@ class Profile extends BaseController
         $registrationRequestUpdate = $this->filterPayloadByTableColumns('user_registration_request', [
             'province_id' => $provinceId,
             'diocese_id' => $dioceseId,
-            'parish_id' => $churchId,
-            'requested_parish_id' => $churchId,
-            'requested_church_id' => $churchId,
-            'church_id' => $churchId,
+            'parish_id' => $parishId,
+            'requested_parish_id' => $parishId,
+            'requested_parish_id' => $parishId,
+            'parish_id' => $parishId,
             'status' => 'pending_review',
             'profile_completed_at' => date('Y-m-d H:i:s'),
         ]);
@@ -779,11 +779,11 @@ class Profile extends BaseController
                 return redirect()->to('/dashboard')->with('error', $error);
             }
 
-            if ($completedProfile && $churchId > 0) {
+            if ($completedProfile && $parishId > 0) {
                 (new PersonOnboardingService())->advance(
                     (int) $completedProfile['id'],
                     'completed',
-                    $churchId,
+                    $parishId,
                     (int) $user->id,
                     'Auto-approved because the requester already holds an elevated admin role.'
                 );
@@ -799,14 +799,14 @@ class Profile extends BaseController
         }
 
         $this->logRegistrationAudit(
-            $churchId,
+            $parishId,
             (int) $user->id,
             'registration_submitted_for_review',
-            'Submitted onboarding profile and selected parish for church-admin authorization.'
+            'Submitted onboarding profile and selected parish for parish-admin authorization.'
         );
 
         $this->notifyParishAdminsOfPendingReview(
-            $churchId,
+            $parishId,
             (int) $registrationRequest['id'],
             (int) $user->id,
             (string) $this->request->getPost('first_name'),
@@ -914,12 +914,12 @@ class Profile extends BaseController
             return redirect()->back()->withInput()->with('error', lang('Profile.dioceseMismatch'));
         }
 
-        $churchValid = db_connect()->table('parish')
+        $parishValid = db_connect()->table('parish')
             ->where('id', $parishId)
             ->where('diocese_id', $dioceseId)
             ->countAllResults() > 0;
-        if (!$churchValid) {
-            return redirect()->back()->withInput()->with('error', lang('Profile.churchDioceseMismatch'));
+        if (!$parishValid) {
+            return redirect()->back()->withInput()->with('error', lang('Profile.parishDioceseMismatch'));
         }
 
         $now = date('Y-m-d H:i:s');
@@ -967,8 +967,8 @@ class Profile extends BaseController
             'diocese_id' => $dioceseId,
             'parish_id' => $parishId,
             'requested_parish_id' => $parishId,
-            'requested_church_id' => $parishId,
-            'church_id' => $parishId,
+            'requested_parish_id' => $parishId,
+            'parish_id' => $parishId,
             'status' => 'pending_review',
             'profile_completed_at' => $now,
         ]);
@@ -1029,16 +1029,16 @@ class Profile extends BaseController
         return redirect()->to('/profile')->with('success', lang('Profile.joinParishSuccess'));
     }
 
-    private function notifyParishAdminsOfPendingReview(int $churchId, int $requestId, int $requestUserId, string $firstName, string $lastName, string $emailAddress): void
+    private function notifyParishAdminsOfPendingReview(int $parishId, int $requestId, int $requestUserId, string $firstName, string $lastName, string $emailAddress): void
     {
-        if ($churchId <= 0) {
+        if ($parishId <= 0) {
             return;
         }
 
-        $recipients = $this->getParishAdminRecipients($churchId);
+        $recipients = $this->getParishAdminRecipients($parishId);
         if ($recipients === []) {
             $this->logRegistrationAudit(
-                $churchId,
+                $parishId,
                 $requestUserId,
                 'registration_review_notification_missing_recipients',
                 'No admin recipients found for selected parish.'
@@ -1046,9 +1046,9 @@ class Profile extends BaseController
             return;
         }
 
-        $church = db_connect()->table('parish')
+        $parish = db_connect()->table('parish')
             ->select('name')
-            ->where('id', $churchId)
+            ->where('id', $parishId)
             ->get()
             ->getRowArray();
 
@@ -1056,7 +1056,7 @@ class Profile extends BaseController
         $dashboardUrl = base_url('members');
         $subject = 'New registration awaiting parish review';
         $message = "A new user registration is awaiting review.\n\n"
-            . 'Parish: ' . ($church['name'] ?? 'Unknown') . "\n"
+            . 'Parish: ' . ($parish['name'] ?? 'Unknown') . "\n"
             . 'Applicant: ' . ($requesterName !== '' ? $requesterName : 'Name not provided') . "\n"
             . 'Email: ' . $emailAddress . "\n\n"
             . 'Action needed: authorize or ban this registration in the Members module.\n'
@@ -1075,7 +1075,7 @@ class Profile extends BaseController
                 $email->send();
                 $delivered++;
             } catch (\Throwable $e) {
-                log_message('warning', 'Failed sending church pending review email to {email}: {message}', [
+                log_message('warning', 'Failed sending parish pending review email to {email}: {message}', [
                     'email' => $recipient,
                     'message' => $e->getMessage(),
                 ]);
@@ -1083,14 +1083,14 @@ class Profile extends BaseController
         }
 
         $this->logRegistrationAudit(
-            $churchId,
+            $parishId,
             $requestUserId,
             'registration_review_notification_sent',
             'Pending registration notification dispatched to ' . $delivered . ' admin recipient(s).'
         );
     }
 
-    private function getParishAdminRecipients(int $churchId): array
+    private function getParishAdminRecipients(int $parishId): array
     {
         $profileTable = $this->resolveExistingProfileTable();
         if ($profileTable === null) {
@@ -1098,29 +1098,29 @@ class Profile extends BaseController
         }
 
         $columns = array_map('strtolower', $this->getProfileColumns());
-        $churchColumn = in_array('parish_id', $columns, true) ? 'parish_id' : 'church_id';
+        $parishColumn = in_array('parish_id', $columns, true) ? 'parish_id' : 'parish_id';
         $hasDioceseId = in_array('diocese_id', $columns, true);
         $hasProvinceId = in_array('province_id', $columns, true);
 
-        $churchColumns = array_map('strtolower', db_connect()->getFieldNames('parish'));
-        $churchSelect    = ['id'];
-        if (in_array('diocese_id', $churchColumns, true)) {
-            $churchSelect[] = 'diocese_id';
+        $parishColumns = array_map('strtolower', db_connect()->getFieldNames('parish'));
+        $parishSelect    = ['id'];
+        if (in_array('diocese_id', $parishColumns, true)) {
+            $parishSelect[] = 'diocese_id';
         }
-        if (in_array('province_id', $churchColumns, true)) {
-            $churchSelect[] = 'province_id';
+        if (in_array('province_id', $parishColumns, true)) {
+            $parishSelect[] = 'province_id';
         }
 
-        $church = db_connect()->table('parish')
-            ->select(implode(', ', $churchSelect))
-            ->where('id', $churchId)
+        $parish = db_connect()->table('parish')
+            ->select(implode(', ', $parishSelect))
+            ->where('id', $parishId)
             ->get()
             ->getRowArray();
 
-        $dioceseId = (int) ($church['diocese_id'] ?? 0);
-        $provinceId = (int) ($church['province_id'] ?? 0);
+        $dioceseId = (int) ($parish['diocese_id'] ?? 0);
+        $provinceId = (int) ($parish['province_id'] ?? 0);
 
-        $emails = $this->getAdminEmailsByScope($profileTable, $churchColumn, 'churchadmin', $churchId);
+        $emails = $this->getAdminEmailsByScope($profileTable, $parishColumn, 'parishadmin', $parishId);
 
         if ($dioceseId > 0 && $hasDioceseId) {
             $emails = array_merge($emails, $this->getAdminEmailsByScope($profileTable, 'diocese_id', 'diocesanadmin', $dioceseId));
@@ -1157,7 +1157,7 @@ class Profile extends BaseController
         return $emails;
     }
 
-    private function logRegistrationAudit(int $churchId, int $targetUserId, string $action, string $details): void
+    private function logRegistrationAudit(int $parishId, int $targetUserId, string $action, string $details): void
     {
         $actorUserId = (int) auth()->id();
         if ($actorUserId <= 0 || $targetUserId <= 0) {
@@ -1166,7 +1166,7 @@ class Profile extends BaseController
 
         try {
             model('ParishRoleAuditModel')->insert([
-                'parish_id' => $churchId > 0 ? $churchId : null,
+                'parish_id' => $parishId > 0 ? $parishId : null,
                 'actor_user_id' => $actorUserId,
                 'target_user_id' => $targetUserId,
                 'action' => $action,

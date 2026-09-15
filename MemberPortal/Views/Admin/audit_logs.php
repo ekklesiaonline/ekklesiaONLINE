@@ -223,7 +223,7 @@ $auditFiltersActive = ((int) ($filter_parish_id ?? 0) > 0)
                     <label class="form-label mb-1"><?= lang('App.navParishes') ?></label>
                     <select name="parish_id" class="form-select form-select-sm">
                         <option value="0"><?= lang('App.all') ?></option>
-                        <?php foreach (($audit_churches ?? []) as $parish): ?>
+                        <?php foreach (($audit_parishes ?? []) as $parish): ?>
                             <option value="<?= (int) ($parish['id'] ?? 0) ?>" <?= ((int) ($filter_parish_id ?? 0) === (int) ($parish['id'] ?? 0)) ? 'selected' : '' ?>>
                                 <?= esc((string) $parish['name']) ?>
                             </option>
@@ -312,7 +312,7 @@ $auditFiltersActive = ((int) ($filter_parish_id ?? 0) > 0)
                         <?php foreach ($audit_rows as $row): ?>
                             <tr class="<?= ($row['is_security_event'] ?? false) ? 'table-warning' : '' ?>" data-audit-id="<?= (int) ($row['id'] ?? 0) ?>">
                                 <td><?= esc($formatLocalizedDateTime((string) ($row['created_at'] ?? ''), $locale)) ?></td>
-                                <td><?= esc((string) ($row['church_name'] ?? '-')) ?></td>
+                                <td><?= esc((string) ($row['parish_name'] ?? '-')) ?></td>
                                 <td>
                                     <?php $actorName = trim((string) (($row['actor_first_name'] ?? '') . ' ' . ($row['actor_last_name'] ?? ''))); ?>
                                     <?= esc($actorName !== '' ? $actorName : lang('App.auditUserFallback', [(int) ($row['user_id'] ?? 0)])) ?>

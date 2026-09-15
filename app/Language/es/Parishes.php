@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Churches module strings — Spanish
+ * Parishes module strings — Spanish
  */
 return [
     // Page titles
@@ -20,14 +20,14 @@ return [
     'btn_back'         => 'Volver',
     'btn_manageStaff'  => 'Gestionar Personal',
     'btn_saveChanges'  => 'Guardar Cambios',
-    'btn_createChurch' => 'Crear Parroquia',
+    'btn_createParish' => 'Crear Parroquia',
     'btn_cancel'       => 'Cancelar',
     'btn_addParish'    => 'Agregar Parroquia',
     'btn_switch'       => 'Cambiar',
     'btn_edit'         => 'Editar',
     'btn_staff'        => 'Personal',
     'btn_delete'       => 'Eliminar',
-    'btn_backToChurch' => 'Volver a la Parroquia',
+    'btn_backToParish' => 'Volver a la Parroquia',
     'btn_allParishes'  => 'Todas las Parroquias',
     'btn_removeRole'   => 'Quitar Rol',
     'btn_demote'       => 'Degradar',
@@ -35,7 +35,7 @@ return [
     'btn_assignRole'   => 'Asignar Rol',
 
     // Section headings
-    'sectionChurchLogo'              => 'Logotipo de la Parroquia',
+    'sectionParishLogo'              => 'Logotipo de la Parroquia',
     'sectionCongregationId'          => 'Identificación de la Congregación',
     'sectionCongregationIdReadOnly'  => 'Identificación de la Congregación (Solo Lectura)',
     'sectionLocation'                => 'Ubicación',
@@ -51,7 +51,7 @@ return [
     'logoPreviewLabel' => 'Vista previa:',
 
     // Form labels
-    'labelChurchName'       => 'Nombre de la Parroquia',
+    'labelParishName'       => 'Nombre de la Parroquia',
     'labelProvince'         => 'Provincia',
     'labelDiocese'          => 'Diócesis',
     'labelTaxId'            => 'ID Fiscal (EIN)',
@@ -89,28 +89,28 @@ return [
 
     // Fallback text
     'textNotSpecified' => 'No especificado',
-    'textNoChurchesFound' => 'No se encontraron parroquias.',
+    'textNoParishesFound' => 'No se encontraron parroquias.',
     'textCurrent' => 'Actual',
     'textShowingPageSummary' => 'Mostrando pagina {0} de {1} ({2} total)',
-    'textDeleteChurchConfirm' => 'Eliminar la parroquia "{0}"? Esto no se puede deshacer.',
-    'textUnableDeleteChurch' => 'No se pudo eliminar la parroquia.',
+    'textDeleteParishConfirm' => 'Eliminar la parroquia "{0}"? Esto no se puede deshacer.',
+    'textUnableDeleteParish' => 'No se pudo eliminar la parroquia.',
     'textDeleteImpactTitle' => 'Eliminar Parroquia: Revision de Impacto',
     'textDeleteImpactIntro' => 'Estas a punto de eliminar "{0}". Esta accion eliminara registros relacionados.',
     'textDeleteImpactWarning' => 'Esta accion es permanente y no se puede deshacer.',
     'textLoadingDeleteImpact' => 'Cargando detalles de impacto...',
     'textUnableLoadDeleteImpact' => 'No se pudieron cargar los detalles del impacto de eliminacion.',
     'textDeletePurgeNullableRefsOption' => 'Marque para eliminar permanentemente los perfiles vinculados y los logs de auditoria de roles de parroquia de esta parroquia.',
-    'textDeletePurgeNullableRefsHelp' => 'Dejelo sin marcar para conservar esos registros como historial; su church_id se establecera en NULL por reglas de base de datos.',
+    'textDeletePurgeNullableRefsHelp' => 'Dejelo sin marcar para conservar esos registros como historial; su parish_id se establecera en NULL por reglas de base de datos.',
     'textDeletePurgeNullableRefsRecommended' => 'Recomendado: deje esto sin marcar para evitar perdida accidental de datos.',
     'textUnexpectedError' => 'Ocurrio un error inesperado.',
-    'btn_confirmDeleteChurch' => 'Eliminar Parroquia Ahora',
+    'btn_confirmDeleteParish' => 'Eliminar Parroquia Ahora',
     'bulkDeleteSelected' => 'Eliminar seleccionadas',
     'bulkDeleteConfirm' => 'Se eliminaran {count} parroquia(s).',
     'impactMembers' => 'Afiliaciones activas de miembros (eliminadas)',
     'impactProfilesSetNull' => 'Perfiles desvinculados de la parroquia (set NULL)',
     'impactProfilesDeleted' => 'Perfiles vinculados a la parroquia (eliminados)',
-    'impactChurchRoleAuditLogsSetNull' => 'Logs de auditoria de roles desvinculados de la parroquia (set NULL)',
-    'impactChurchRoleAuditLogsDeleted' => 'Logs de auditoria de roles vinculados a la parroquia (eliminados)',
+    'impactParishRoleAuditLogsSetNull' => 'Logs de auditoria de roles desvinculados de la parroquia (set NULL)',
+    'impactParishRoleAuditLogsDeleted' => 'Logs de auditoria de roles vinculados a la parroquia (eliminados)',
     'impactDonations' => 'Donaciones (eliminadas)',
     'impactServices' => 'Servicios (eliminados)',
     'impactAttendance' => 'Asistencia via servicios (eliminada)',

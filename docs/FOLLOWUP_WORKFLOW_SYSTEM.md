@@ -15,7 +15,7 @@ The Guest Follow-up Workflow automates and tracks outreach to first-time guests 
 - Named follow-up *sequences* (e.g., "6-Week First-Time Guest Journey") with ordered *actions*
 - Five delivery channels: **email**, **text/SMS**, **call** (human task), **mail** (PDF letter), **gift** (manual)
 - Reusable *templates* with `{merge_tag}` variable replacement
-- Automatic scheduling: when a guest visit is recorded, all active sequences for the church are scheduled automatically via `GuestVisitModel::onAfterInsert()`
+- Automatic scheduling: when a guest visit is recorded, all active sequences for the parish are scheduled automatically via `GuestVisitModel::onAfterInsert()`
 - Second-visit reward: a coupon email (week-4 gift action) fires automatically on the guest's second visit
 - Spark CLI command `followup:send` for scheduled cron dispatch
 
@@ -26,7 +26,7 @@ The Guest Follow-up Workflow automates and tracks outreach to first-time guests 
 ### 2.1 Data flow
 
 ```
-Guest visits church
+Guest visits parish
       │
       ▼
 guests.store() → GuestVisit::insert()
@@ -55,12 +55,12 @@ guests.store() → GuestVisit::insert()
 
 | Model | Table | Notes |
 |-------|-------|-------|
-| `FollowupSequenceModel` | `followup_sequences` | `getActiveForChurch(churchId)`, optional church_id for global defaults |
-| `FollowupTemplateModel` | `followup_templates` | `church_id = null` = system default |
+| `FollowupSequenceModel` | `followup_sequences` | `getActiveForParish(parishId)`, optional parish_id for global defaults |
+| `FollowupTemplateModel` | `followup_templates` | `parish_id = null` = system default |
 | `FollowupActionModel`   | `followup_actions`   | `getBySequenceWithTemplates()`, `getAutomatedBySequence()` |
 | `GuestVisitModel`       | `guest_visits`       | has `onAfterInsert` hook; `triggerSecondVisitReward()` |
 | `GuestFollowupLogModel` | `guest_followup_log` | `scheduleActiveSequencesForGuest()`, `getPendingDue()`, `getTimelineForGuest()` |
-| `CallTaskModel`         | `call_tasks`         | `getPendingForChurch()`, `markCompleted()` |
+| `CallTaskModel`         | `call_tasks`         | `getPendingForParish()`, `markCompleted()` |
 | `SmsQueueModel`         | `sms_queue`          | Outbound SMS queue |
 
 ### 2.3 Controllers
@@ -83,7 +83,7 @@ guests.store() → GuestVisit::insert()
 
 ## 3. Default 6-Week Sequence
 
-Seeded by `SixWeekFollowupSeeder` as a system-level default (`church_id = null`).  Churches may override by creating their own sequences via `/followup-workflow/sequences/create`.
+Seeded by `SixWeekFollowupSeeder` as a system-level default (`parish_id = null`).  Parishes may override by creating their own sequences via `/followup-workflow/sequences/create`.
 
 | Week | Day offset | Channel | Automation | Template |
 |------|-----------|---------|-----------|---------|
@@ -106,7 +106,7 @@ Templates support these merge tags (replaced at dispatch time):
 |-----|--------|
 | `{first_name}` | `guests.first_name` |
 | `{last_name}` | `guests.last_name` |
-| `{church_name}` | `churches.name` for the guest's church |
+| `{parish_name}` | `parishes.name` for the guest's parish |
 | `{visit_date}` | Scheduled date of the log entry |
 | `{pastor_name}` | Blank by default; set manually or extend `FollowupDispatchService::buildVarMap()` |
 | `{phone}` | Decrypted `guests.phone` |
@@ -119,8 +119,8 @@ Templates support these merge tags (replaced at dispatch time):
 # Dispatch all pending followup actions each morning at 9 AM
 0 9 * * * php /path/to/spark followup:send >> /path/to/writable/logs/followup.log 2>&1
 
-# Scope to a single church (useful for per-church scheduling windows)
-0 9 * * * php /path/to/spark followup:send --church 5
+# Scope to a single parish (useful for per-parish scheduling windows)
+0 9 * * * php /path/to/spark followup:send --parish 5
 ```
 
 Dry-run test (no database writes):
@@ -161,9 +161,9 @@ php spark db:seed SixWeekFollowupSeeder
 
 | Permission | Roles | Description |
 |-----------|-------|-------------|
-| `followup.manage` | `churchadmin`, `pastor` | CRUD on sequences/actions/templates, trigger actions, complete call tasks |
-| `followup.view` | `churchadmin`, `pastor`, `followup_volunteer` | Read-only: sequences, templates, call queue, timeline |
-| `followup.tasks` *(legacy)* | `churchadmin`, `pastor` | Manage legacy `follow_up_tasks` table |
+| `followup.manage` | `parishadmin`, `pastor` | CRUD on sequences/actions/templates, trigger actions, complete call tasks |
+| `followup.view` | `parishadmin`, `pastor`, `followup_volunteer` | Read-only: sequences, templates, call queue, timeline |
+| `followup.tasks` *(legacy)* | `parishadmin`, `pastor` | Manage legacy `follow_up_tasks` table |
 
 ---
 
@@ -175,7 +175,7 @@ When a guest is converted to a member via `Guests::convertToMember()`:
 2. `GuestModel::markConvertedToMember($guestId, $userId)` stamps `converted_to_member_at`, `converted_user_id`, and `converted_by_user_id`
 3. Admin is redirected to `/members/create` with `guest_data` flash data pre-populating the form
 
-The `guests` table retains the record permanently for historical reporting — converted guests simply no longer appear in the active guest list (`getChurchGuestCount(excludeConverted: true)` by default).
+The `guests` table retains the record permanently for historical reporting — converted guests simply no longer appear in the active guest list (`getParishGuestCount(excludeConverted: true)` by default).
 
 ---
 
@@ -233,7 +233,7 @@ SELECT COUNT(DISTINCT gfl.guest_id)
 FROM guest_followup_log gfl
 JOIN guests g ON g.id = gfl.guest_id
 WHERE gfl.status = 'pending'
-AND g.church_id = :churchId
+AND g.parish_id = :parishId
 ```
 
 ### `followup_stage` index filter values
@@ -253,7 +253,7 @@ A public (unauthenticated) URL that allows walk-in guests to self-submit their d
 
 ### Flow
 
-1. Church admin visits `/guests/import` — QR code and shareable URL are displayed
+1. Parish admin visits `/guests/import` — QR code and shareable URL are displayed
 2. Guest scans QR / opens link → `GET /connect/{token}` renders `app/Views/public/connection_card.php`
 3. Guest submits form → `POST /connect/{token}` handled by `Pastor\Controllers\Import::digitalCard()`
 4. Controller upserts guest record (deduplication by encrypted email/phone hash)
@@ -287,9 +287,9 @@ $this->extend('app\Views\layouts/public')
 
 ### Required variables for connection card views
 
-`connection_card.php` requires: `$church` (array), `$token` (string), `$title` (string). Optionally: `$errors` (array), `$old` (array).
+`connection_card.php` requires: `$parish` (array), `$token` (string), `$title` (string). Optionally: `$errors` (array), `$old` (array).
 
-`connection_card_thanks.php` requires: `$church` (array), `$title` (string).
+`connection_card_thanks.php` requires: `$parish` (array), `$title` (string).
 
 ---
 
@@ -298,7 +298,7 @@ $this->extend('app\Views\layouts/public')
 | `app/Commands/SendFollowups.php` | `php spark followup:send` Spark command |
 | `app/Services/FollowupDispatchService.php` | Channel-specific dispatch logic |
 | `app/Services/SmsService.php` | Twilio / log-only SMS provider |
-| `app/Models/FollowupSequenceModel.php` | Sequence CRUD + `getActiveForChurch()` |
+| `app/Models/FollowupSequenceModel.php` | Sequence CRUD + `getActiveForParish()` |
 | `app/Models/FollowupActionModel.php` | Action CRUD + sequence join methods |
 | `app/Models/FollowupTemplateModel.php` | Template CRUD |
 | `app/Models/GuestVisitModel.php` | Visit recording + auto-schedule hook |

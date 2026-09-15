@@ -128,7 +128,7 @@ $to = min($total, $page * $perPage);
                     <div class="list-group-item">
                         <div class="small text-muted">
                             <?= esc($formatLocalizedDate((string) ($activity['happened_at'] ?? ''), 'MMM d, y h:mm a', $locale)) ?>
-                            - <?= esc((string) ($activity['parish_name'] ?? $activity['church_name'] ?? lang('Dashboard.systemOverviewUnknownParish'))) ?>
+                            - <?= esc((string) ($activity['parish_name'] ?? $activity['parish_name'] ?? lang('Dashboard.systemOverviewUnknownParish'))) ?>
                         </div>
                         <div class="small mt-1">
                             <span><?= esc((string) ($activity['display_subject'] ?? lang('Dashboard.systemOverviewActivityFallback'))) ?></span>

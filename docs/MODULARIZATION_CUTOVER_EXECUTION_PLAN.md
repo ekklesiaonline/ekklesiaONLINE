@@ -49,7 +49,7 @@ These items were completed once before module-specific cutover.
 - Autoload resolution was verified for namespaced controllers.
 - View ownership strategy was executed as module-owned layouts/views for non-MemberPortal modules.
 - Smoke-test coverage was established for migrated route groups.
-- Province fallback/no-churches rendering was provided through module-owned view coverage.
+- Province fallback/no-parishes rendering was provided through module-owned view coverage.
 
 ## Ranking Method
 
@@ -159,7 +159,7 @@ Risk: Low to Medium
 Why it was third:
 
 - Finance routes are broader than Volunteer but still bounded.
-- No obvious cross-module ownership issue like the diocesan create-church mismatch.
+- No obvious cross-module ownership issue like the diocesan create-parish mismatch.
 - The route surface is moderate and predictable.
 
 Cutover scope delivered:
@@ -205,7 +205,7 @@ Why it was fourth:
 
 - Route surface is small.
 - It has admin-critical actions.
-- It depends on a missing fallback view and is referenced by diocesan create-church behavior.
+- It depends on a missing fallback view and is referenced by diocesan create-parish behavior.
 
 Cutover scope delivered:
 
@@ -216,18 +216,18 @@ Legacy files affected:
 
 - app/Controllers/ProvinceDashboard.php
 - app/Views/dashboard/province.php
-- app/Views/dashboard/no_churches.php
+- app/Views/dashboard/no_parishes.php
 - app/Config/Routes.php province group
 
 Cutover blockers that were resolved:
 
-1. no_churches rendering was provided through module-owned view coverage.
+1. no_parishes rendering was provided through module-owned view coverage.
 
 2. Province/Diocesan ownership boundaries were stabilized as part of module route/controller ownership checks.
 
 Cutover actions completed:
 
-1. Province dashboard rendering paths were validated for both populated and no-church states.
+1. Province dashboard rendering paths were validated for both populated and no-parish states.
 
 2. Province route/controller ownership was finalized under module namespace.
 
@@ -247,8 +247,8 @@ Why it was fifth:
 
 - Broadest admin surface outside Pastor.
 - Multiple controllers under one module.
-- Cross-module dependency exists because diocesan create-church still points to Province logic.
-- Includes churches, dioceses, chart accounts, liturgical source, dashboard, finance, and system overview.
+- Cross-module dependency exists because diocesan create-parish still points to Province logic.
+- Includes parishes, dioceses, chart accounts, liturgical source, dashboard, finance, and system overview.
 
 Cutover scope delivered:
 
@@ -256,7 +256,7 @@ Cutover scope delivered:
 - Diocesan/Controllers/FinanceDashboard.php
 - Diocesan/Controllers/SystemOverview.php
 - Diocesan/Controllers/Dioceses.php
-- Diocesan/Controllers/Churches.php
+- Diocesan/Controllers/Parishes.php
 - Diocesan/Controllers/ChartOfAccounts.php
 - Diocesan/Controllers/LiturgicalCalendar.php
 - Diocesan/Controllers/RegistrationRequests.php
@@ -268,21 +268,21 @@ Legacy files affected:
 - app/Controllers/FinanceDashboard.php
 - app/Controllers/SystemOverview.php
 - app/Controllers/Dioceses.php
-- app/Controllers/Churches.php
+- app/Controllers/Parishes.php
 - app/Controllers/ChartOfAccounts.php
 - app/Controllers/LiturgicalCalendar.php
 - app/Views/dashboard/\*.php for diocesan pages
 - app/Views/dioceses/\*.php
-- app/Views/churches/\*.php
+- app/Views/parishes/\*.php
 - app/Views/chart_accounts/\*.php
 - app/Views/liturgical_calendar/\*.php
-- app/Config/Routes.php diocesan, churches, dioceses, chart-accounts, liturgical-source groups
+- app/Config/Routes.php diocesan, parishes, dioceses, chart-accounts, liturgical-source groups
 
 Cutover actions completed:
 
-1. Create-church ownership boundaries were resolved.
+1. Create-parish ownership boundaries were resolved.
 
-2. Subareas were cut over in order: dashboard, finance, system overview, chart accounts, liturgical source, dioceses, churches, then registration requests.
+2. Subareas were cut over in order: dashboard, finance, system overview, chart accounts, liturgical source, dioceses, parishes, then registration requests.
 
 3. Corresponding legacy routes were removed one subarea at a time.
 
@@ -347,7 +347,7 @@ Post-cutover deletion status:
 
 2. View ownership strategy was finalized and applied.
 
-3. no_churches rendering path was covered by module-owned views.
+3. no_parishes rendering path was covered by module-owned views.
 
 4. Smoke and ownership guard tests were prepared.
 

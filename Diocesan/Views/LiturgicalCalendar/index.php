@@ -202,8 +202,8 @@ $defaultIconClass = is_object($liturgicalIcons) && isset($liturgicalIcons->defau
                                         <span class="badge border border-primary text-primary fw-normal"><?= lang('Diocesan.liturgicalScopeProvince') ?></span>
                                     <?php elseif ($sourceTier === 'diocese'): ?>
                                         <span class="badge border border-info text-info fw-normal"><?= lang('Diocesan.liturgicalScopeDiocese') ?></span>
-                                    <?php elseif ($sourceTier === 'church'): ?>
-                                        <span class="badge border border-info text-info fw-normal"><?= lang('Diocesan.liturgicalScopeChurch') ?></span>
+                                    <?php elseif ($sourceTier === 'parish'): ?>
+                                        <span class="badge border border-info text-info fw-normal"><?= lang('Diocesan.liturgicalScopeParish') ?></span>
                                     <?php else: ?>
                                         <span class="badge border border-secondary text-body fw-normal"><?= lang('Diocesan.liturgicalScopeSystem') ?></span>
                                     <?php endif; ?>

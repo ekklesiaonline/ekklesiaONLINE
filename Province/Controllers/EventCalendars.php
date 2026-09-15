@@ -127,7 +127,7 @@ class EventCalendars extends BaseController
         return [
             'scope_level' => 'province',
             'province_id' => $provinceId,
-            'church_id'   => null,
+            'parish_id'   => null,
             'parish_id'   => null,
             'diocese_id'  => null,
             'name'        => trim((string) $this->request->getPost('name')),

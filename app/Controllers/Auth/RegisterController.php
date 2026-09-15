@@ -11,9 +11,9 @@ class RegisterController extends ShieldRegisterController
 {
     public function registerAction(): RedirectResponse
     {
-        $parishId = (int) ($this->request->getPost('parish_id') ?? $this->request->getPost('church_id') ?? 0);
+        $parishId = (int) ($this->request->getPost('parish_id') ?? $this->request->getPost('parish_id') ?? 0);
 
-        // Backward compatibility for older forms posting church_id.
+        // Backward compatibility for older forms posting parish_id.
         if ($parishId > 0 && $this->request->getPost('parish_id') === null) {
             $post = (array) $this->request->getPost();
             $post['parish_id'] = $parishId;

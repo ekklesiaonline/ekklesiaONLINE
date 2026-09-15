@@ -16,20 +16,20 @@ final class ModuleDemoDataSeederTest extends CIUnitTestCase
 
     public function testSeederCreatesCrossModuleBaselineRecords(): void
     {
-        $churchesTable = $this->resolveTableName('churches');
-        if ($churchesTable === null) {
-            $this->markTestSkipped('No churches table found in current test database schema.');
+        $parishesTable = $this->resolveTableName('parishes');
+        if ($parishesTable === null) {
+            $this->markTestSkipped('No parishes table found in current test database schema.');
         }
 
         $this->seed(ModuleDemoDataSeeder::class);
 
-        $church = $this->db->table($churchesTable)
-            ->where('name', 'Module Demo Church')
+        $parish = $this->db->table($parishesTable)
+            ->where('name', 'Module Demo Parish')
             ->get()
             ->getRowArray();
 
-        $this->assertNotNull($church);
-        $churchId = (int) $church['id'];
+        $this->assertNotNull($parish);
+        $parishId = (int) $parish['id'];
 
         foreach (['profile', 'services', 'guests', 'donations', 'expenses', 'volunteer_teams', 'families'] as $baseTable) {
             $table = $this->resolveTableName($baseTable);
@@ -38,11 +38,11 @@ final class ModuleDemoDataSeederTest extends CIUnitTestCase
             }
 
             $columns = $this->db->getFieldNames($table);
-            if (!in_array('church_id', $columns, true)) {
+            if (!in_array('parish_id', $columns, true)) {
                 continue;
             }
 
-            $count = (int) $this->db->table($table)->where('church_id', $churchId)->countAllResults();
+            $count = (int) $this->db->table($table)->where('parish_id', $parishId)->countAllResults();
             $this->assertGreaterThanOrEqual(0, $count, $baseTable . ' table query should be valid');
         }
     }

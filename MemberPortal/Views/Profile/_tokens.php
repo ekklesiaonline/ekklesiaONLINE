@@ -146,7 +146,7 @@
         font-size: 3rem;
     }
 
-    /* Church affiliation list */
+    /* Parish affiliation list */
     .profile-page .affiliation-list dt {
         font-size: var(--profile-field-label-size);
         color: var(--bs-secondary-color);

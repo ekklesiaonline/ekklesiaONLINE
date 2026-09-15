@@ -10,8 +10,8 @@ Question: On the Sunday attendance graphic, March 1 appears as one Sunday point,
 
 Live query result (`services`):
 
-- Service ID 11, church_id 1443, 2026-03-01 09:00:00, Morning Prayer Rite II
-- Service ID 12, church_id 1443, 2026-03-01 17:00:00, Evening Prayer Rite II + Benediction
+- Service ID 11, parish_id 1443, 2026-03-01 09:00:00, Morning Prayer Rite II
+- Service ID 12, parish_id 1443, 2026-03-01 17:00:00, Evening Prayer Rite II + Benediction
 
 ### 2) Both service rows have service metrics
 
@@ -22,7 +22,7 @@ Live query result (`services` + `service_metrics`):
 
 ### 3) Bucket-level dashboard math for March 1
 
-Live grouped verification for church 1443 and Sunday date 2026-03-01:
+Live grouped verification for parish 1443 and Sunday date 2026-03-01:
 
 - sunday_services_count = 2
 - ASA (average present) = 5.00
@@ -33,12 +33,12 @@ This proves both services are included in the metric calculation.
 
 ## Reason It Shows as One Sunday Point
 
-The church Sunday chart is bucketed by Sunday date/week, not by individual service instance time.
+The parish Sunday chart is bucketed by Sunday date/week, not by individual service instance time.
 
 Implementation behavior in dashboard controller:
 
 - Data source is per-service metrics joined to services.
-- For church view, weekly granularity uses `bucketKey = Y-m-d` (the Sunday date).
+- For parish view, weekly granularity uses `bucketKey = Y-m-d` (the Sunday date).
 - Multiple services on the same Sunday share the same bucket key.
 - The chart plots one point per Sunday bucket.
 

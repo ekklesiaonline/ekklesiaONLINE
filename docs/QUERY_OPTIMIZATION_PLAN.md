@@ -34,16 +34,16 @@ Analysis of codebase identified multiple optimization opportunities:
 foreach ($members as $member) {
     $userId = (int) ($member['user_id'] ?? 0);
     // Query 1: isUserAffiliatedWithParish (inside loop)
-    if ($userId <= 0 || !$affiliationModel->isUserAffiliatedWithParish($userId, $sourceChurchId, true)) {
+    if ($userId <= 0 || !$affiliationModel->isUserAffiliatedWithParish($userId, $sourceParishId, true)) {
         // ...
     }
 }
 
 foreach ($members as $member) {
-    // Query 2: member_church_affiliations per member inside loop
-    $sourceAffiliation = $db->table('member_church_affiliations')
+    // Query 2: member_parish_affiliations per member inside loop
+    $sourceAffiliation = $db->table('member_parish_affiliations')
         ->where('user_id', $userId)
-        ->where('church_id', $sourceChurchId)
+        ->where('parish_id', $sourceParishId)
         ->where('active', 1)
         ->get()
         ->getRowArray();
@@ -55,9 +55,9 @@ foreach ($members as $member) {
 **Fix:** Fetch all affiliations upfront in single query, then loop through in-memory
 
 ```php
-$allAffiliations = $db->table('member_church_affiliations')
+$allAffiliations = $db->table('member_parish_affiliations')
     ->whereIn('user_id', $memberUserIds)
-    ->where('church_id', $sourceChurchId)
+    ->where('parish_id', $sourceParishId)
     ->where('active', 1)
     ->get()
     ->getResultArray();
@@ -80,20 +80,20 @@ foreach ($members as $member) {
 **Problem:**
 
 ```php
-$churchRows = db_connect()->table('churches c')
+$parishRows = db_connect()->table('parishes c')
     ->select('c.id')
     ->join('dioceses d', 'd.id = c.diocese_id', 'inner')
     ->where('d.province_id', $provinceId)
     ->get()
     ->getResultArray();
 
-foreach ($churchRows as $row) {
-    // Query per church (N queries where N = church count)
+foreach ($parishRows as $row) {
+    // Query per parish (N queries where N = parish count)
     $count += $standingModel->refreshForYear($year);
 }
 ```
 
-**Impact:** Province with 20 dioceses × 5 churches each = 100+ queries
+**Impact:** Province with 20 dioceses × 5 parishes each = 100+ queries
 
 **Fix:** Use summary refresh once per year, then scope reads by affiliation joins
 
@@ -113,9 +113,9 @@ public function refreshForScope(int $dioceseId, int $year): int
 
 ```php
 foreach ($dioceses as $diocese) {
-    $churchIds = array_map(
+    $parishIds = array_map(
         static fn($row) => (int) $row['id'],
-        $db->table('churches')
+        $db->table('parishes')
             ->select('id')
             ->where('diocese_id', (int) $diocese['id'])
             ->get()
@@ -129,23 +129,23 @@ foreach ($dioceses as $diocese) {
 **Fix:**
 
 ```php
-$churchesByDiocese = $db->table('churches')
+$parishesByDiocese = $db->table('parishes')
     ->select('id, diocese_id')
     ->whereIn('diocese_id', array_map(fn($d) => $d['id'], $dioceses))
     ->get()
     ->getResultArray();
 
-$churchMap = [];
-foreach ($churchesByDiocese as $church) {
-    $dio = (int)$church['diocese_id'];
-    if (!isset($churchMap[$dio])) {
-        $churchMap[$dio] = [];
+$parishMap = [];
+foreach ($parishesByDiocese as $parish) {
+    $dio = (int)$parish['diocese_id'];
+    if (!isset($parishMap[$dio])) {
+        $parishMap[$dio] = [];
     }
-    $churchMap[$dio][] = (int)$church['id'];
+    $parishMap[$dio][] = (int)$parish['id'];
 }
 
 foreach ($dioceses as $diocese) {
-    $churchIds = $churchMap[(int)$diocese['id']] ?? [];
+    $parishIds = $parishMap[(int)$diocese['id']] ?? [];
 }
 ```
 
@@ -174,7 +174,7 @@ public function index()
     $perPage = (int) ($this->request->getGet('per_page') ?? 25);
     $page = (int) ($this->request->getGet('page') ?? 1);
     
-    $builder = $this->model->where('church_id', $churchId);
+    $builder = $this->model->where('parish_id', $parishId);
     
     // Apply filters...
     if ($search) {
@@ -195,10 +195,10 @@ public function index()
 **Recommended Indexes (Estimated Priority):**
 
 ```sql
--- 1. Member church affiliations (CRITICAL - used in all member queries)
-ALTER TABLE member_church_affiliations 
-  ADD INDEX idx_church_active (church_id, active),
-  ADD INDEX idx_user_church_active (user_id, church_id, active);
+-- 1. Member parish affiliations (CRITICAL - used in all member queries)
+ALTER TABLE member_parish_affiliations 
+  ADD INDEX idx_parish_active (parish_id, active),
+  ADD INDEX idx_user_parish_active (user_id, parish_id, active);
 
 -- 2. Attendance queries (HIGH - used in reports & dashboards)
 ALTER TABLE attendance
@@ -207,17 +207,17 @@ ALTER TABLE attendance
 
 -- 3. Donations & Expenses (HIGH - used in financial queries)
 ALTER TABLE donations
-  ADD INDEX idx_church_date (church_id, date),
-  ADD INDEX idx_date_range (date, church_id);
+  ADD INDEX idx_parish_date (parish_id, date),
+  ADD INDEX idx_date_range (date, parish_id);
 
 ALTER TABLE expenses
-  ADD INDEX idx_church_date (church_id, date),
-  ADD INDEX idx_date_range (date, church_id);
+  ADD INDEX idx_parish_date (parish_id, date),
+  ADD INDEX idx_date_range (date, parish_id);
 
 -- 4. Services (MEDIUM - used in attendance reports)
 ALTER TABLE services
-  ADD INDEX idx_church_date (church_id, date),
-  ADD INDEX idx_date_range (date, church_id);
+  ADD INDEX idx_parish_date (parish_id, date),
+  ADD INDEX idx_date_range (date, parish_id);
 
 -- 5. Member Standing (MEDIUM - used in standing queries)
 ALTER TABLE member_standing_summary
@@ -248,14 +248,14 @@ $members = $this->memberModel->findAll();  // N queries if accessing profile per
 
 ```php
 // Use model relationships or consistent join patterns
-public function getMembersWithFamilies($churchId)
+public function getMembersWithFamilies($parishId)
 {
     // Option 1: Eager load via joins
     return $db->table('profile p')
         ->select('p.*, f.family_name, fm.relationship')
         ->join('family_members fm', 'fm.user_id = p.user_id', 'left')
         ->join('families f', 'f.id = fm.family_id', 'left')
-        ->where('p.church_id', $churchId)
+        ->where('p.parish_id', $parishId)
         ->get()
         ->getResultArray();
     
@@ -338,28 +338,28 @@ public function assignUserToRole($userId, $role)
     // ... perform assignment
 }
 
-// 3. Church List for Super Admin (accessed frequently)
-public function getAllChurchesBrief(): array
+// 3. Parish List for Super Admin (accessed frequently)
+public function getAllParishesBrief(): array
 {
-    if ($cached = cache('all_churches_brief')) {
+    if ($cached = cache('all_parishes_brief')) {
         return $cached;
     }
     
-    $churches = $db->table('churches c')
+    $parishes = $db->table('parishes c')
         ->select('c.id, c.name')
         ->join('dioceses d', 'd.id = c.diocese_id', 'left')
         ->orderBy('d.name, c.name')
         ->get()
         ->getResultArray();
     
-    cache()->save('all_churches_brief', $churches, 3600);
-    return $churches;
+    cache()->save('all_parishes_brief', $parishes, 3600);
+    return $parishes;
 }
 
-// Invalidate on church create/update
-public function invalidateChurchCache()
+// Invalidate on parish create/update
+public function invalidateParishCache()
 {
-    cache()->delete('all_churches_brief');
+    cache()->delete('all_parishes_brief');
 }
 ```
 
@@ -422,7 +422,7 @@ public function testMemberListLoadTime()
 {
     $start = microtime(true);
     
-    $members = model('ProfileModel')->getChurchProfiles(1); // 500 members
+    $members = model('ProfileModel')->getParishProfiles(1); // 500 members
     
     $elapsed = microtime(true) - $start;
     $this->assertLessThan(0.5, $elapsed, 'Member list should load in <500ms');
@@ -486,7 +486,7 @@ public function testDonationReportGenerationTime()
 ```
 CRITICAL FIXES
 ☐ Member transfer operation <100ms for 100 members
-☐ Standing refresh <1s for 100 churches
+☐ Standing refresh <1s for 100 parishes
 ☐ Diocese reporting <500ms per diocese
 ☐ No queries in loops in hot paths
 

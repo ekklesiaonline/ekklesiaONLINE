@@ -18,7 +18,7 @@ class Dashboard extends BaseController
         $provinceId = $scope['province_id'];
 
         if ($provinceId === null) {
-            return view('Province\Views\Dashboard/no_churches');
+            return view('Province\Views\Dashboard/no_parishes');
         }
 
         $filters = $this->resolveDashboardFilters();
@@ -95,7 +95,7 @@ class Dashboard extends BaseController
             'end_date' => $endDate,
 
             'total_dioceses' => (int) ($membershipOverview['total_dioceses'] ?? 0),
-            'total_churches' => (int) ($membershipOverview['total_churches'] ?? 0),
+            'total_parishes' => (int) ($membershipOverview['total_parishes'] ?? 0),
             'total_people' => (int) ($membershipOverview['total_people'] ?? 0),
             'total_guests' => (int) ($membershipOverview['guest_count'] ?? 0),
             'total_members' => (int) ($membershipOverview['total_members'] ?? 0),
@@ -211,10 +211,10 @@ class Dashboard extends BaseController
         $healthRows = $this->getDioceseHealthRows($rows, $provinceId);
         $healthByDiocese = array_column($healthRows, null, 'diocese_id');
         $handle = fopen('php://temp', 'w+');
-        fputcsv($handle, [lang('Dashboard.colDiocese'), lang('Dashboard.colChurches'), lang('Dashboard.colPeople'), lang('Dashboard.colMembers'), lang('Dashboard.colAttendance'), lang('Dashboard.colServices'), lang('Dashboard.lastServiceDate'), lang('Dashboard.adminCoverage'), lang('Dashboard.healthStatus')]);
+        fputcsv($handle, [lang('Dashboard.colDiocese'), lang('Dashboard.colParishes'), lang('Dashboard.colPeople'), lang('Dashboard.colMembers'), lang('Dashboard.colAttendance'), lang('Dashboard.colServices'), lang('Dashboard.lastServiceDate'), lang('Dashboard.adminCoverage'), lang('Dashboard.healthStatus')]);
         foreach ($rows as $row) {
             $health = $healthByDiocese[(int) $row['diocese_id']] ?? [];
-            fputcsv($handle, [$row['diocese_name'], $row['churches_count'], $row['total_people'], $row['total_members'], $row['total_attendance'], $row['total_services'], $health['last_service_date'] ?? '', !empty($health['has_active_admin']) ? lang('Dashboard.adminCovered') : lang('Dashboard.adminMissing'), lang('Dashboard.health_' . ($health['health_status'] ?? 'attention'))]);
+            fputcsv($handle, [$row['diocese_name'], $row['parishes_count'], $row['total_people'], $row['total_members'], $row['total_attendance'], $row['total_services'], $health['last_service_date'] ?? '', !empty($health['has_active_admin']) ? lang('Dashboard.adminCovered') : lang('Dashboard.adminMissing'), lang('Dashboard.health_' . ($health['health_status'] ?? 'attention'))]);
         }
         rewind($handle);
         $csv = stream_get_contents($handle);
@@ -251,7 +251,7 @@ class Dashboard extends BaseController
                 return $this->jsonResponse($this->apiErrorPayload('Selected diocese is outside your diocesan scope', 403, 'DIOCESE_OUTSIDE_DIOCESAN_SCOPE'), 403);
             }
 
-            $churchId = model('ParishModel')->insert([
+            $parishId = model('ParishModel')->insert([
                 'name' => $this->request->getPost('name'),
                 'diocese_id' => $dioceseId,
                 'email' => $this->request->getPost('email'),
@@ -260,12 +260,12 @@ class Dashboard extends BaseController
                 'website' => $this->request->getPost('website'),
             ]);
 
-            if ($churchId) {
+            if ($parishId) {
                 try {
                     $this->audit()->log('province.parish.created', [
                         'user_id' => (int) auth()->id(),
                         'entity_type' => 'parish',
-                        'entity_id' => $churchId,
+                        'entity_id' => $parishId,
                         'ip_address' => $this->request->getIPAddress(),
                         'user_agent' => esc($this->request->getUserAgent()->getAgentString()),
                         'timestamp' => date('Y-m-d H:i:s'),
@@ -281,15 +281,15 @@ class Dashboard extends BaseController
                 }
                 return $this->jsonResponse([
                     'success' => true,
-                    'message' => 'Church created successfully',
-                    'parish_id' => $churchId,
+                    'message' => 'Parish created successfully',
+                    'parish_id' => $parishId,
                 ]);
             }
 
-            return $this->jsonResponse($this->apiErrorPayload('Failed to create church', 500, 'CHURCH_CREATE_FAILED'), 500);
+            return $this->jsonResponse($this->apiErrorPayload('Failed to create parish', 500, 'PARISH_CREATE_FAILED'), 500);
         }
 
-        return $this->jsonResponse($this->apiErrorPayload('Province workflow does not allow church creation. Create dioceses and assign diocesan admins instead.', 403, 'PROVINCE_CHURCH_CREATE_FORBIDDEN'), 403);
+        return $this->jsonResponse($this->apiErrorPayload('Province workflow does not allow parish creation. Create dioceses and assign diocesan admins instead.', 403, 'PROVINCE_PARISH_CREATE_FORBIDDEN'), 403);
     }
 
     protected function resolveDashboardFilters(): array
@@ -445,10 +445,10 @@ class Dashboard extends BaseController
         }
 
         if ($provinceId <= 0 || db_connect()->table('province')->where('id', $provinceId)->countAllResults() === 0) {
-            return ['parish_id' => null, 'province_id' => null, 'church' => null];
+            return ['parish_id' => null, 'province_id' => null, 'parish' => null];
         }
 
-        return ['parish_id' => null, 'province_id' => $provinceId, 'church' => null];
+        return ['parish_id' => null, 'province_id' => $provinceId, 'parish' => null];
     }
 
     protected function getMembershipOverview(int $provinceId, ?int $dioceseId = null): array
@@ -457,7 +457,7 @@ class Dashboard extends BaseController
             ->select('COUNT(DISTINCT mca.linked_user_id) as total_affiliated')
             ->select('COUNT(DISTINCT CASE WHEN mca.is_member = 1 THEN mca.linked_user_id END) as total_members')
             ->select('COUNT(DISTINCT CASE WHEN mca.is_member = 1 AND mca.membership_status = "member" THEN mca.linked_user_id END) as active_members')
-            ->select('COUNT(DISTINCT c.id) as total_churches')
+            ->select('COUNT(DISTINCT c.id) as total_parishes')
             ->select('COUNT(DISTINCT c.diocese_id) as total_dioceses')
             ->join('parish c', 'c.id = mca.parish_id')
             ->join('diocese d', 'd.id = c.diocese_id')
@@ -546,7 +546,7 @@ class Dashboard extends BaseController
             'guest_count' => $guestCount,
             'total_members' => (int) ($row['total_members'] ?? 0),
             'active_members' => (int) ($row['active_members'] ?? 0),
-            'total_churches' => (int) ($row['total_churches'] ?? 0),
+            'total_parishes' => (int) ($row['total_parishes'] ?? 0),
             'total_dioceses' => (int) ($row['total_dioceses'] ?? 0),
             'good_standing_members' => (int) ($standingRow['good_standing_members'] ?? 0),
             'leadership_members' => (int) ($leadershipRow['leadership_members'] ?? 0),
@@ -602,7 +602,7 @@ class Dashboard extends BaseController
         $db = db_connect();
 
         $baseBuilder = $db->table('diocese d')
-            ->select('d.id as diocese_id, d.name as diocese_name, COUNT(DISTINCT c.id) as churches_count')
+            ->select('d.id as diocese_id, d.name as diocese_name, COUNT(DISTINCT c.id) as parishes_count')
             ->select('COUNT(DISTINCT CASE WHEN mca.linked_user_id IS NOT NULL AND agu.id IS NULL THEN mca.linked_user_id END) as total_affiliated')
             ->select('COUNT(DISTINCT CASE WHEN mca.is_member = 1 AND agu.id IS NULL THEN mca.linked_user_id END) as total_members')
             ->select('COUNT(DISTINCT CASE WHEN mca.is_member = 1 AND mca.membership_status = "member" AND agu.id IS NULL THEN mca.linked_user_id END) as active_members')
@@ -707,7 +707,7 @@ class Dashboard extends BaseController
             $rows[] = [
                 'diocese_id' => $dioceseId,
                 'diocese_name' => (string) ($row['diocese_name'] ?? 'Unknown Diocese'),
-                'churches_count' => (int) ($row['churches_count'] ?? 0),
+                'parishes_count' => (int) ($row['parishes_count'] ?? 0),
                 'total_people' => (int) ($row['total_affiliated'] ?? 0) + (int) ($guestMap[$dioceseId] ?? 0),
                 'guest_count' => (int) ($guestMap[$dioceseId] ?? 0),
                 'total_members' => (int) ($row['total_members'] ?? 0),
@@ -752,7 +752,7 @@ class Dashboard extends BaseController
     {
         $totals = [
             'total_dioceses' => 0,
-            'total_churches' => 0,
+            'total_parishes' => 0,
             'total_people' => 0,
             'total_guests' => 0,
             'total_members' => 0,
@@ -764,7 +764,7 @@ class Dashboard extends BaseController
 
         foreach ($rows as $row) {
             $totals['total_dioceses']++;
-            $totals['total_churches'] += (int) ($row['churches_count'] ?? 0);
+            $totals['total_parishes'] += (int) ($row['parishes_count'] ?? 0);
             $totals['total_people'] += (int) ($row['total_people'] ?? 0);
             $totals['total_guests'] += (int) ($row['guest_count'] ?? 0);
             $totals['total_members'] += (int) ($row['total_members'] ?? 0);
@@ -783,7 +783,7 @@ class Dashboard extends BaseController
     protected function getRecentServicesForDiocese(int $provinceId, int $dioceseId, int $limit = 20): array
     {
         $rows = db_connect()->table('service s')
-            ->select('s.id, s.service_date, s.service_type, c.name as church_name')
+            ->select('s.id, s.service_date, s.service_type, c.name as parish_name')
             ->join('parish c', 'c.id = s.parish_id', 'inner')
             ->join('diocese d', 'd.id = c.diocese_id', 'inner')
             ->where('d.province_id', $provinceId)

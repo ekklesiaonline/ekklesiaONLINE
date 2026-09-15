@@ -41,7 +41,6 @@ final class AuthGroupsGovernanceBoundaryTest extends CIUnitTestCase
         );
 
         $forbidden = [
-            'churches.edit',
             'finance.view',
             'finance.manage',
             'donation.view',

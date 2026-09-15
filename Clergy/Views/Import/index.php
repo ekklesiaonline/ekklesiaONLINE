@@ -169,7 +169,7 @@ $importErrors = session('import_errors');
 
                 <!-- QR code image – served from the server-side proxy route -->
                 <img src="<?= base_url('guests/import/qr') ?>"
-                    alt="QR Code for <?= esc($church['name']) ?> connection card"
+                    alt="QR Code for <?= esc($parish['name']) ?> connection card"
                     class="img-fluid mb-3 border rounded p-2"
                     style="max-width: 220px;"
                     id="qrCodeImg">

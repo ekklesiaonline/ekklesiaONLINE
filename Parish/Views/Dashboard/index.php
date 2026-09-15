@@ -160,7 +160,7 @@ $formatLocalizedDate = static function (?string $value, string $pattern, string 
     <div class="col-md-6">
         <div class="card h-100">
             <div class="card-header">
-                <h5 class="mb-0"><i class="bi bi-graph-up-arrow"></i> <?= lang('Dashboard.churchSundayAttendanceTitle') ?></h5>
+                <h5 class="mb-0"><i class="bi bi-graph-up-arrow"></i> <?= lang('Dashboard.parishSundayAttendanceTitle') ?></h5>
             </div>
             <div class="card-body" style="min-height: 420px;">
                 <?php if (empty($sunday_attendance_has_data)): ?>
@@ -193,7 +193,7 @@ $formatLocalizedDate = static function (?string $value, string $pattern, string 
                 labels: parishLabels,
                 datasets: [
                     {
-                        label: <?= json_encode(lang('Dashboard.churchPresentCountLegend')) ?>,
+                        label: <?= json_encode(lang('Dashboard.parishPresentCountLegend')) ?>,
                         data: parishAsaValues,
                         borderColor: '#0d6efd',
                         backgroundColor: 'rgba(13, 110, 253, 0.10)',
@@ -202,7 +202,7 @@ $formatLocalizedDate = static function (?string $value, string $pattern, string 
                         pointRadius: 3,
                     },
                     {
-                        label: <?= json_encode(lang('Dashboard.churchCommunionCountLegend')) ?>,
+                        label: <?= json_encode(lang('Dashboard.parishCommunionCountLegend')) ?>,
                         data: parishAscValues,
                         borderColor: '#198754',
                         backgroundColor: 'rgba(25, 135, 84, 0.10)',

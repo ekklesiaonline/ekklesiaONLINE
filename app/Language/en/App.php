@@ -711,9 +711,9 @@ return [
 
     'accessDenied' => 'Access denied.',
 
-    'churchNotFound' => 'Church not found.',
+    'parishNotFound' => 'Parish not found.',
 
-    'churchOutsideDiocese' => 'The selected church is outside your diocese.',
+    'parishOutsideDiocese' => 'The selected parish is outside your diocese.',
 
-    'churchSwitchedSuccess' => 'Church switched successfully.',
+    'parishSwitchedSuccess' => 'Parish switched successfully.',
 ];

@@ -77,14 +77,14 @@ Locales executed:
 
 Roles executed:
 
-- church_admin (`church@admin.com`)
+- parish_admin (`parish@admin.com`)
 - diocesan_admin_1 (`admin@ekklesiaRD.org`)
-- diocesan_admin_2 (`diocesanadmin@firstchurch.org`)
+- diocesan_admin_2 (`diocesanadmin@firstparish.org`)
 
 Observed behavior summary:
 
 - Read flows returned HTTP 200 with matching html lang (en/es/fr) for all tested roles.
-- Church admin mutation POSTs returned HTTP 403 (blocked).
+- Parish admin mutation POSTs returned HTTP 403 (blocked).
 - Diocesan admin mutation POSTs returned HTTP 303 redirect to /session/device-verify (step-up verification gate before mutation).
 
 Interpretation:

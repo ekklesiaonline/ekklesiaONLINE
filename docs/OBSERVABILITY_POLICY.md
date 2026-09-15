@@ -17,7 +17,7 @@ Provide a minimum production-ready observability standard for request tracing, a
 1. Audit events
 
 - Source: audit service
-- Captures: actor, action, entity, change summary, church scope, request metadata
+- Captures: actor, action, entity, change summary, parish scope, request metadata
 
 1. Slow-query monitoring
 

@@ -44,7 +44,7 @@ Computed expression in code:
 Refresh population scope behavior:
 
 - Computes one row per user per year in member_standing_summary.
-- Church/diocese/province scoping is applied at read time using affiliation joins.
+- Parish/diocese/province scoping is applied at read time using affiliation joins.
 
 ## Count Results (Database Snapshot)
 
@@ -58,9 +58,9 @@ Snapshot date: 2026-04-09
 | 2026 | 18 | 0 | 18 |
 | 2025 | 18 | 0 | 18 |
 
-### 2026 Church Breakdown
+### 2026 Parish Breakdown
 
-| church_id | church_name | reviewed_total | good_standing_total |
+| parish_id | parish_name | reviewed_total | good_standing_total |
 | ---: | --- | ---: | ---: |
 | 1443 | Iglesia Episcopal La Transfiguracion | 18 | 0 |
 
@@ -81,12 +81,12 @@ To refresh snapshots before recounting:
 
 - php spark standing:refresh --year 2026
 
-To count good-standing members by church/year directly:
+To count good-standing members by parish/year directly:
 
 - SELECT COUNT(*)
   FROM member_standing_summary mss
-  JOIN member_church_affiliations mca ON mca.user_id = mss.user_id
-  WHERE mca.church_id = :church_id
+  JOIN member_parish_affiliations mca ON mca.user_id = mss.user_id
+  WHERE mca.parish_id = :parish_id
     AND mca.active = 1
     AND mss.year = :year
     AND mss.is_good_standing = 1;

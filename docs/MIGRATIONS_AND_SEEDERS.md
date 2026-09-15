@@ -50,7 +50,7 @@ Master seeder that orchestrates all other seeders in the correct order:
 Seeds:
 
 - **49 permissions** - All application permissions (members._, attendance._, finance.\*, etc.)
-- **9 roles/groups** - systemadmin, provinceadmin, diocesanadmin, churchadmin, pastor, treasurer, volunteer_coordinator, followup_volunteer, member
+- **9 roles/groups** - systemadmin, provinceadmin, diocesanadmin, parishadmin, pastor, treasurer, volunteer_coordinator, followup_volunteer, member
 - **223 role-permission mappings** - Assigns appropriate permissions to each role
 
 ### ProvincesAndDiocesesSeeder

@@ -24,12 +24,12 @@ final class PersonProfileSyncServiceTest extends CIUnitTestCase
 
     public function testSyncFromProfileCreatesPersonAndLinksIt(): void
     {
-        $churchId = $this->insertChurch();
+        $parishId = $this->insertParish();
         $userId   = $this->insertUser('sync.create');
 
         $this->db->table('profile')->insert([
             'user_id'     => $userId,
-            'parish_id'   => $churchId,
+            'parish_id'   => $parishId,
             'first_name'  => 'Jane',
             'last_name'   => 'Doe',
             'phone'       => '+18005551234',
@@ -64,13 +64,13 @@ final class PersonProfileSyncServiceTest extends CIUnitTestCase
 
     public function testSyncFromProfileUpdatesExistingPerson(): void
     {
-        $churchId = $this->insertChurch();
+        $parishId = $this->insertParish();
         $userId   = $this->insertUser('sync.update');
         $personId = $this->insertPerson($userId, 'Old', 'Name');
 
         $this->db->table('profile')->insert([
             'user_id'     => $userId,
-            'parish_id'   => $churchId,
+            'parish_id'   => $parishId,
             'person_id'   => $personId,
             'first_name'  => 'New',
             'last_name'   => 'Name',
@@ -226,10 +226,10 @@ final class PersonProfileSyncServiceTest extends CIUnitTestCase
         $forge->createTable('auth_identities', true);
     }
 
-    private function insertChurch(): int
+    private function insertParish(): int
     {
         $this->db->table('parish')->insert([
-            'name'       => 'Sync Church',
+            'name'       => 'Sync Parish',
             'created_at' => date('Y-m-d H:i:s'),
             'updated_at' => date('Y-m-d H:i:s'),
         ]);

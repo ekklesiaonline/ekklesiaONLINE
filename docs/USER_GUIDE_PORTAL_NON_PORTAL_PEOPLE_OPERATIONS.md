@@ -2,7 +2,7 @@
 
 ## Audience
 
-This guide is for church admins, pastors, and authorized staff who manage people records in ekklesiaRD.
+This guide is for parish admins, pastors, and authorized staff who manage people records in ekklesiaRD.
 
 ## What This Guide Covers
 
@@ -21,9 +21,9 @@ This guide is for church admins, pastors, and authorized staff who manage people
 
 ## Before You Start
 
-1. Confirm you are in the correct church context.
+1. Confirm you are in the correct parish context.
 2. Confirm your role has people/family management permissions.
-3. Use church-scoped pages only for your assigned church unless you are super admin.
+3. Use parish-scoped pages only for your assigned parish unless you are super admin.
 
 ## 1. Managing Members
 
@@ -39,7 +39,7 @@ Use this when the person should be tracked but should not log in yet.
 Expected result:
 
 - Member record is created and linked to family.
-- Member is affiliated with the church.
+- Member is affiliated with the parish.
 - Portal access remains disabled.
 
 Use cases:
@@ -66,13 +66,13 @@ Expected result:
 Important:
 
 - Email must be unique.
-- Member must belong to that family and church scope.
+- Member must belong to that family and parish scope.
 
 ## C. Managing Existing Portal Members
 
 1. Search member in People/Families.
 2. Update profile details as needed.
-3. Keep church affiliation and membership status accurate.
+3. Keep parish affiliation and membership status accurate.
 4. If portal issues occur, verify identity email and group assignment.
 
 ## 2. Managing Guests
@@ -126,7 +126,7 @@ Best practice:
 
 Important:
 
-- Members should only be added if affiliated with the same church.
+- Members should only be added if affiliated with the same parish.
 - Remove operations only detach from family; they do not necessarily delete user/member records.
 
 ## 5. Portal vs Non-Portal Decision Guide
@@ -143,7 +143,7 @@ Choose Portal when:
 
 ## 6. Common Errors and What to Do
 
-- Out of scope: You are trying to manage a record from another church. Switch to correct church context.
+- Out of scope: You are trying to manage a record from another parish. Switch to correct parish context.
 - User not found: Record ID is invalid or deleted. Refresh and search again.
 - Email already in use: Use another email or resolve duplicate identity first.
 - Validation failed: Check required fields and format.
@@ -153,7 +153,7 @@ Choose Portal when:
 
 After create/update operations, verify:
 
-1. Correct church scope
+1. Correct parish scope
 2. Correct family linkage
 3. Correct membership status
 4. Correct portal status (none/enabled)

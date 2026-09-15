@@ -15,12 +15,12 @@ use App\Libraries\DataEncryption;
  *    POST guests/import/process → processConnectionCards() – parse & save CSV
  *    GET  guests/import/qr      → qrCode()            – serves QR code PNG (proxied)
  *
- * 2. Public digital connection card (no auth, token-gated by church)
+ * 2. Public digital connection card (no auth, token-gated by parish)
  *    GET  connect/{token}       → cardForm($token)    – public-facing guest form
  *    POST connect/{token}       → digitalCard($token) – save & trigger workflow
  *
  * Deduplication logic (both paths):
- *  - If a matching email_hash OR phone_hash already exists for the church → update visit_date.
+ *  - If a matching email_hash OR phone_hash already exists for the parish → update visit_date.
  *  - Otherwise insert a new guest row and schedule all active followup sequences.
  */
 class Import extends BaseController
@@ -40,7 +40,7 @@ class Import extends BaseController
 
     /**
      * GET  guests/import
-     * Show the CSV upload form and the church's shareable QR code.
+     * Show the CSV upload form and the parish's shareable QR code.
      */
     public function connectionCards()
     {
@@ -52,15 +52,15 @@ class Import extends BaseController
             return $redirect;
         }
 
-        $churchId = (int) $this->getOperationalParishId();
-        $church   = $this->ensurePublicToken($churchId);
+        $parishId = (int) $this->getOperationalParishId();
+        $parish   = $this->ensurePublicToken($parishId);
 
-        $cardUrl = base_url('connect/' . $church['public_token']);
+        $cardUrl = base_url('connect/' . $parish['public_token']);
 
         return view('Clergy\Views\Import/index', array_merge(
             $this->getCommonViewData(lang('Guests.importPageTitle')),
             [
-                'church'  => $church,
+                'parish'  => $parish,
                 'cardUrl' => $cardUrl,
             ]
         ));
@@ -96,12 +96,12 @@ class Import extends BaseController
         }
 
         $file     = $this->request->getFile('csv_file');
-        $churchId = (int) $this->getOperationalParishId();
+        $parishId = (int) $this->getOperationalParishId();
 
-        $result = $this->parseCsvAndUpsert($file->getTempName(), $churchId);
+        $result = $this->parseCsvAndUpsert($file->getTempName(), $parishId);
 
         $this->audit()->log('guest.csv_import', [
-            'parish_id'   => $churchId,
+            'parish_id'   => $parishId,
             'entity_type' => 'guest',
             'new_values'  => [
                 'inserted' => $result['inserted'],
@@ -131,9 +131,9 @@ class Import extends BaseController
             return $redirect;
         }
 
-        $churchId = (int) $this->getOperationalParishId();
-        $church   = $this->ensurePublicToken($churchId);
-        $cardUrl  = base_url('connect/' . $church['public_token']);
+        $parishId = (int) $this->getOperationalParishId();
+        $parish   = $this->ensurePublicToken($parishId);
+        $cardUrl  = base_url('connect/' . $parish['public_token']);
 
         $cacheKey  = 'qr_' . md5($cardUrl);
         $cachePath = WRITEPATH . 'cache/' . $cacheKey . '.png';
@@ -178,15 +178,15 @@ class Import extends BaseController
      */
     public function cardForm(string $token)
     {
-        $church = $this->findParishByToken($token);
-        if ($church === null) {
+        $parish = $this->findParishByToken($token);
+        if ($parish === null) {
             return $this->response->setStatusCode(404)->setBody('Connection card not found.');
         }
 
-        $parishName = (string) ($church['name'] ?? '');
+        $parishName = (string) ($parish['name'] ?? '');
 
         return view('public/connection_card', [
-            'church' => $church,
+            'parish' => $parish,
             'token'  => $token,
             'title'  => esc($parishName) . ' – Connection Card',
         ]);
@@ -198,14 +198,14 @@ class Import extends BaseController
      */
     public function digitalCard(string $token)
     {
-        $church = $this->findParishByToken($token);
-        if ($church === null) {
+        $parish = $this->findParishByToken($token);
+        if ($parish === null) {
             return $this->response->setStatusCode(404)->setBody('Connection card not found.');
         }
 
-        $parishName = (string) ($church['name'] ?? '');
+        $parishName = (string) ($parish['name'] ?? '');
 
-        $churchId = (int) $church['id'];
+        $parishId = (int) $parish['id'];
 
         $rules = [
             'first_name' => 'required|min_length[2]|max_length[100]',
@@ -217,7 +217,7 @@ class Import extends BaseController
 
         if (! $this->validate($rules)) {
             return view('public/connection_card', [
-                'church'      => $church,
+                'parish'      => $parish,
                 'token'       => $token,
                 'title'       => esc($parishName) . ' – Connection Card',
                 'errors'      => $this->validator->getErrors(),
@@ -237,18 +237,18 @@ class Import extends BaseController
             'source'      => 'digital_card',
         ];
 
-        $upsert = $this->upsertGuest($churchId, $data);
+        $upsert = $this->upsertGuest($parishId, $data);
 
         if ($upsert['is_new']) {
             $this->followupLogModel->scheduleActiveSequencesForGuest(
                 $upsert['guest_id'],
-                $churchId,
+                $parishId,
                 $data['visit_date']
             );
         }
 
         return view('public/connection_card_thanks', [
-            'church' => $church,
+            'parish' => $parish,
             'title'  => 'Thank You',
         ]);
     }
@@ -285,11 +285,11 @@ class Import extends BaseController
     // ── ── ── ── ── ── ── ── ── ── ── ── ── ── ── ── ── ── ── ──
 
     /**
-     * Parse a CSV file and upsert guests into the given church.
+     * Parse a CSV file and upsert guests into the given parish.
      *
      * @return array{ inserted: int, updated: int, row_errors: list<array{row: int, errors: string[]}> }
      */
-    private function parseCsvAndUpsert(string $filePath, int $churchId): array
+    private function parseCsvAndUpsert(string $filePath, int $parishId): array
     {
         $result = ['inserted' => 0, 'updated' => 0, 'row_errors' => []];
 
@@ -369,13 +369,13 @@ class Import extends BaseController
                 'source'     => 'csv_import',
             ];
 
-            $upsert = $this->upsertGuest($churchId, $data);
+            $upsert = $this->upsertGuest($parishId, $data);
 
             if ($upsert['is_new']) {
                 $result['inserted']++;
                 $this->followupLogModel->scheduleActiveSequencesForGuest(
                     $upsert['guest_id'],
-                    $churchId,
+                    $parishId,
                     $visitDate
                 );
             } else {
@@ -395,11 +395,11 @@ class Import extends BaseController
      *  2. phone_hash match (fallback)
      *  3. No match → insert new row
      *
-     * @param  int    $churchId
+     * @param  int    $parishId
      * @param  array  $data  Plain-text fields (email/phone not yet encrypted)
      * @return array{ guest_id: int, is_new: bool }
      */
-    private function upsertGuest(int $churchId, array $data): array
+    private function upsertGuest(int $parishId, array $data): array
     {
         $email = $data['email'] !== '' ? $data['email'] : null;
         $phone = $data['phone'] !== '' ? $data['phone'] : null;
@@ -411,7 +411,7 @@ class Import extends BaseController
             $hash = DataEncryption::emailIndex($email);
             if ($hash !== null) {
                 $existing = $this->guestModel
-                    ->where('parish_id', $churchId)
+                    ->where('parish_id', $parishId)
                     ->where('email_hash', $hash)
                     ->first();
             }
@@ -422,7 +422,7 @@ class Import extends BaseController
             $hash = DataEncryption::phoneIndex($phone);
             if ($hash !== null) {
                 $existing = $this->guestModel
-                    ->where('parish_id', $churchId)
+                    ->where('parish_id', $parishId)
                     ->where('phone_hash', $hash)
                     ->first();
             }
@@ -441,7 +441,7 @@ class Import extends BaseController
 
         // New guest.
         $payload = [
-            'parish_id'  => $churchId,
+            'parish_id'  => $parishId,
             'first_name' => $data['first_name'],
             'last_name'  => $data['last_name'],
             'email'      => $email,
@@ -500,8 +500,8 @@ class Import extends BaseController
     }
 
     /**
-     * Look up a church by its `public_token`.
-     * Returns the church row or null if not found.
+     * Look up a parish by its `public_token`.
+     * Returns the parish row or null if not found.
      */
     private function findParishByToken(string $token): ?array
     {
@@ -518,25 +518,25 @@ class Import extends BaseController
     }
 
     /**
-     * Ensure the church has a non-empty `public_token`.
+     * Ensure the parish has a non-empty `public_token`.
      * Generates and saves one if missing (lazy init for pre-migration rows).
      *
-     * @return array  The church row (with public_token guaranteed non-empty)
+     * @return array  The parish row (with public_token guaranteed non-empty)
      */
-    private function ensurePublicToken(int $churchId): array
+    private function ensurePublicToken(int $parishId): array
     {
-        $church = db_connect()->table('parish')->where('id', $churchId)->limit(1)->get()->getRowArray();
+        $parish = db_connect()->table('parish')->where('id', $parishId)->limit(1)->get()->getRowArray();
 
-        if ($church === null) {
+        if ($parish === null) {
             return [];
         }
 
-        if (empty($church['public_token'])) {
+        if (empty($parish['public_token'])) {
             $token = bin2hex(random_bytes(16));
-            db_connect()->table('parish')->where('id', $churchId)->update(['public_token' => $token]);
-            $church['public_token'] = $token;
+            db_connect()->table('parish')->where('id', $parishId)->update(['public_token' => $token]);
+            $parish['public_token'] = $token;
         }
 
-        return $church;
+        return $parish;
     }
 }

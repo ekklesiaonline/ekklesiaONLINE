@@ -35,9 +35,9 @@ final class ProfileLocaleUpdateIntegrationTest extends CIUnitTestCase
 
         $provinceId = $this->insertProvince();
         $dioceseId = $this->insertDiocese($provinceId);
-        $churchId = $this->insertChurch($dioceseId);
+        $parishId = $this->insertParish($dioceseId);
         $userId = $this->insertUser();
-        $profileId = $this->insertProfile($userId, $churchId, 'en');
+        $profileId = $this->insertProfile($userId, $parishId, 'en');
 
         $fakeUser = new class($userId) extends User {
             public function __construct(private int $userId)
@@ -137,9 +137,9 @@ final class ProfileLocaleUpdateIntegrationTest extends CIUnitTestCase
 
         $this->ensureColumnExists($this->resolveTableName('users'), 'email', 'TEXT NULL');
 
-        $churchesTable = $this->createTableName('churches');
-        if (!$this->tableExists('churches')) {
-            $this->db->query('CREATE TABLE IF NOT EXISTS ' . $churchesTable . ' (
+        $parishesTable = $this->createTableName('parishes');
+        if (!$this->tableExists('parishes')) {
+            $this->db->query('CREATE TABLE IF NOT EXISTS ' . $parishesTable . ' (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 name TEXT NOT NULL,
                 diocese_id INTEGER NULL,
@@ -149,7 +149,7 @@ final class ProfileLocaleUpdateIntegrationTest extends CIUnitTestCase
             )');
         }
 
-        $this->ensureColumnExists($this->resolveTableName('churches'), 'diocese_id', 'INTEGER NULL');
+        $this->ensureColumnExists($this->resolveTableName('parishes'), 'diocese_id', 'INTEGER NULL');
 
         $provincesTable = $this->createTableName('provinces');
         if (!$this->tableExists('provinces')) {
@@ -210,7 +210,7 @@ final class ProfileLocaleUpdateIntegrationTest extends CIUnitTestCase
             $this->db->query('CREATE TABLE IF NOT EXISTS ' . $profilesTable . ' (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 user_id INTEGER NOT NULL,
-                church_id INTEGER NULL,
+                parish_id INTEGER NULL,
                 first_name TEXT NULL,
                 middle_name TEXT NULL,
                 last_name TEXT NULL,
@@ -250,7 +250,7 @@ final class ProfileLocaleUpdateIntegrationTest extends CIUnitTestCase
         $this->ensureColumnExists($resolvedProfiles, 'membership_status', 'TEXT NULL');
         $this->ensureColumnExists($resolvedProfiles, 'locale', 'TEXT NULL');
         $this->ensureColumnExists($resolvedProfiles, 'profile_picture', 'TEXT NULL');
-        $this->ensureColumnExists($resolvedProfiles, 'church_id', 'INTEGER NULL');
+        $this->ensureColumnExists($resolvedProfiles, 'parish_id', 'INTEGER NULL');
         $this->ensureColumnExists($resolvedProfiles, 'province_id', 'INTEGER NULL');
         $this->ensureColumnExists($resolvedProfiles, 'diocese_id', 'INTEGER NULL');
         $prefixedProfiles = $this->createTableName('profile');
@@ -271,7 +271,7 @@ final class ProfileLocaleUpdateIntegrationTest extends CIUnitTestCase
         $this->ensureColumnExists($prefixedProfiles, 'profile_picture', 'TEXT NULL');
         $this->ensureColumnExists($prefixedProfiles, 'province_id', 'INTEGER NULL');
         $this->ensureColumnExists($prefixedProfiles, 'diocese_id', 'INTEGER NULL');
-        $this->ensureColumnExists($prefixedProfiles, 'church_id', 'INTEGER NULL');
+        $this->ensureColumnExists($prefixedProfiles, 'parish_id', 'INTEGER NULL');
         $this->ensureColumnExists($prefixedProfiles, 'locale', 'TEXT NULL');
     }
 
@@ -305,10 +305,10 @@ final class ProfileLocaleUpdateIntegrationTest extends CIUnitTestCase
         return (int) $this->db->insertID();
     }
 
-    private function insertChurch(int $dioceseId): int
+    private function insertParish(int $dioceseId): int
     {
-        $this->db->table($this->resolveTableName('churches'))->insert([
-            'name' => 'Locale Integration Church',
+        $this->db->table($this->resolveTableName('parishes'))->insert([
+            'name' => 'Locale Integration Parish',
             'diocese_id' => $dioceseId,
             'created_at' => date('Y-m-d H:i:s'),
             'updated_at' => date('Y-m-d H:i:s'),
@@ -329,7 +329,7 @@ final class ProfileLocaleUpdateIntegrationTest extends CIUnitTestCase
         return (int) $this->db->insertID();
     }
 
-    private function insertProfile(int $userId, int $churchId, string $locale): int
+    private function insertProfile(int $userId, int $parishId, string $locale): int
     {
         $profileTable = $this->resolveTableName('profile');
         $this->db->resetDataCache();
@@ -347,12 +347,12 @@ final class ProfileLocaleUpdateIntegrationTest extends CIUnitTestCase
         if (in_array('locale', $columns, true)) {
             $payload['locale'] = $locale;
         }
-        if (in_array('church_id', $columns, true)) {
-            $payload['church_id'] = $churchId;
+        if (in_array('parish_id', $columns, true)) {
+            $payload['parish_id'] = $parishId;
         }
 
         if (in_array('parish_id', $columns, true)) {
-            $payload['parish_id'] = $churchId;
+            $payload['parish_id'] = $parishId;
         }
 
         $this->db->table($profileTable)->insert($payload);

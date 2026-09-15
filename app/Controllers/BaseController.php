@@ -863,7 +863,7 @@ abstract class BaseController extends Controller
     }
 
     /**
-     * Resolve the canonical dashboard scope for a user following the church
+     * Resolve the canonical dashboard scope for a user following the parish
      * hierarchy: System → Province → Diocese → Parish → Personal.
      *
      * Returns an array with:

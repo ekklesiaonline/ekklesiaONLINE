@@ -393,7 +393,7 @@ $formatLocalizedDateTime = static function (?string $value, string $locale): str
                                     <small class="text-muted"><?= esc($formatLocalizedDateTime((string) ($log['created_at'] ?? ''), $locale)) ?></small>
                                 </div>
                                 <div class="small text-muted">
-                                    <?= esc((string) ($log['parish_name'] ?? $log['church_name'] ?? lang('Dashboard.systemOverviewUnknownParish'))) ?>
+                                    <?= esc((string) ($log['parish_name'] ?? $log['parish_name'] ?? lang('Dashboard.systemOverviewUnknownParish'))) ?>
                                     | <?= esc(trim((string) ($log['actor_name'] ?? '')) ?: lang('App.auditUserFallback', [(string) ($log['actor_user_id'] ?? lang('App.notApplicable'))])) ?>
                                     <?= esc(lang('Dashboard.systemOverviewActorTargetSeparator')) ?>
                                     <?= esc(trim((string) ($log['target_name'] ?? '')) ?: lang('App.auditUserFallback', [(string) ($log['target_user_id'] ?? lang('App.notApplicable'))])) ?>

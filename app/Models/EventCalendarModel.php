@@ -13,9 +13,8 @@ class EventCalendarModel extends Model
     protected $useSoftDeletes   = false;
     protected $protectFields    = true;
     protected $allowedFields    = [
-        'church_id',
-        'province_id',
         'parish_id',
+        'province_id',
         'diocese_id',
         'scope_level',
         'name',
@@ -35,13 +34,12 @@ class EventCalendarModel extends Model
         'color_hex' => 'required|regex_match[/^#[0-9A-Fa-f]{6}$/]',
     ];
 
-    public function getAssignableCalendars(int $parishId, int $dioceseId, bool $allowDioceseScope, ?int $provinceId = null, ?int $churchId = null): array
+    public function getAssignableCalendars(int $parishId, int $dioceseId, bool $allowDioceseScope, ?int $provinceId = null, ?int $nationalParishId = null): array
     {
         $hasIsActive    = $this->columnExists('is_active');
         $hasScopeLevel  = $this->columnExists('scope_level');
-        $hasChurchId    = $this->columnExists('church_id');
-        $hasProvinceId  = $this->columnExists('province_id');
         $hasParishId    = $this->columnExists('parish_id');
+        $hasProvinceId  = $this->columnExists('province_id');
         $hasDioceseId   = $this->columnExists('diocese_id');
         $hasSortOrder   = $this->columnExists('sort_order');
 
@@ -75,10 +73,10 @@ class EventCalendarModel extends Model
                     ->groupEnd();
             }
 
-            if ($churchId !== null && $churchId > 0 && $hasChurchId) {
+            if ($nationalParishId !== null && $nationalParishId > 0 && $hasParishId) {
                 $builder->orGroupStart()
                     ->where('scope_level', 'national')
-                    ->where('church_id', $churchId)
+                    ->where('parish_id', $nationalParishId)
                     ->groupEnd();
             }
 

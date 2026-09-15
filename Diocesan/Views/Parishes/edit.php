@@ -2,7 +2,7 @@
 
 <?= $this->section('content') ?>
 
-<?php $canEditOfficial = (bool) ($canEditOfficial ?? auth()->user()->can('churches.manage.official')); ?>
+<?php $canEditOfficial = (bool) ($canEditOfficial ?? auth()->user()->can('parishes.manage.official')); ?>
 <?php $canEditIdentity = (bool) ($canEditIdentity ?? false); ?>
 <?php $canEditTaxId = (bool) ($canEditTaxId ?? false); ?>
 <?php $parishData = $parish ?? []; ?>
@@ -20,12 +20,12 @@
             <?= csrf_field() ?>
 
             <!-- Logo — editable for all -->
-            <h5 class="mb-3"><?= lang('Parishes.sectionChurchLogo') ?></h5>
+            <h5 class="mb-3"><?= lang('Parishes.sectionParishLogo') ?></h5>
             <div class="row g-3 mb-4">
                 <div class="col-md-3 text-center">
                     <?php if (!empty($parish['logo'])): ?>
-                        <img src="<?= base_url('media/church-logo/' . (int) $parish['id']) ?>"
-                            alt="Church Logo"
+                        <img src="<?= base_url('media/parish-logo/' . (int) $parish['id']) ?>"
+                            alt="Parish Logo"
                             class="img-thumbnail mb-2"
                             style="max-width: 150px; max-height: 150px; object-fit: contain;">
                     <?php else: ?>
@@ -42,7 +42,7 @@
                         id="logo_upload"
                         name="logo"
                         accept="image/jpeg,image/jpg,image/png,image/gif"
-                        onchange="previewChurchLogo(event)">
+                        onchange="previewParishLogo(event)">
                     <small class="text-muted d-block mt-2">
                         <?= lang('Parishes.logoHelpText') ?>
                     </small>
@@ -96,7 +96,7 @@
             <h5 class="mb-3"><?= lang('Parishes.sectionCongregationId') ?></h5>
             <div class="row g-3 mb-4">
                 <div class="col-md-6">
-                    <label class="form-label"><?= lang('Parishes.labelChurchName') ?><?= $canEditIdentity ? ' *' : '' ?></label>
+                    <label class="form-label"><?= lang('Parishes.labelParishName') ?><?= $canEditIdentity ? ' *' : '' ?></label>
                     <?php if ($canEditIdentity): ?>
                         <input type="text" class="form-control" id="name" name="name" value="<?= old('name', $parish['name']) ?>" required>
                     <?php else: ?>
@@ -334,7 +334,7 @@
         });
     });
 
-    function previewChurchLogo(event) {
+    function previewParishLogo(event) {
         const file = event.target.files[0];
         if (file) {
             const reader = new FileReader();

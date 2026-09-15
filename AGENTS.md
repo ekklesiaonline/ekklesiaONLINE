@@ -27,13 +27,13 @@
 
 ## Terminology
 
-- Prefer `parish` in code, routes, models, and new namespaces. `church` is acceptable only in user-facing labels or legacy aliases (e.g., `churches` → `parish_list` redirect).
+- Prefer `parish` in code, routes, models, and new namespaces. `parish` is acceptable only in user-facing labels or legacy aliases (e.g., `parishes` → `parish_list` redirect).
 
 ## When In Doubt
 
 - For view/HTML rules, see `.devin/rules/views.md`.
 - For CI4/Shield coding rules, see `.devin/rules/codeigniter.md`.
-- For church-domain data integrity rules, see `.devin/rules/church-domain.md`.
+- For parish-domain data integrity rules, see `.devin/rules/parish-domain.md`.
 - For diagnostic playbooks, invoke the relevant skill (`/debug-no-parish`, `/debug-person-not-found`, `/sacrament-sync`, etc.).
-- For permission/scope issues, use `/church-permissions` or `/permission-denied`.
+- For permission/scope issues, use `/parish-permissions` or `/permission-denied`.
 - For audit, observability, and localization questions, use `/audit-logging` or `/localization`.

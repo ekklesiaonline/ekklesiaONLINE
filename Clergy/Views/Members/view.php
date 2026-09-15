@@ -276,7 +276,7 @@ $profilePictureUrl = ($profilePicturePath !== '' && $profileUserId > 0)
                                 <?php foreach ($affiliations as $aff): ?>
                                     <li class="list-group-item px-0 d-flex justify-content-between align-items-center">
                                         <div>
-                                            <strong><?= esc((string) ($aff['parish_name'] ?? $aff['church_name'] ?? lang('Members.unassigned'))) ?></strong>
+                                            <strong><?= esc((string) ($aff['parish_name'] ?? $aff['parish_name'] ?? lang('Members.unassigned'))) ?></strong>
                                             <?php $affUeid = trim((string) ($aff['parish_ueid'] ?? '')); ?>
                                             <?php if ($affUeid !== ''): ?>
                                                 <span class="small text-muted">(<?= esc($affUeid) ?>)</span>

@@ -16,7 +16,7 @@ class LeadershipPositions extends BaseController
             return $redirect;
         }
 
-        $churchId = (int) ($this->getOperationalParishId() ?? 0);
+        $parishId = (int) ($this->getOperationalParishId() ?? 0);
         $scope = trim((string) ($this->request->getGet('scope') ?? 'parish'));
         $page = max(1, (int) ($this->request->getGet('page') ?? 1));
         $perPage = (int) ($this->request->getGet('per_page') ?? 25);
@@ -32,7 +32,7 @@ class LeadershipPositions extends BaseController
         if ($profileTable === null) {
             return view('MemberPortal\\Views\\Leadership/index', array_merge($this->getCommonViewData('Leadership Positions'), [
                 'positions' => [],
-                'members' => model('MemberParishAffiliationModel')->getParishMembers($churchId),
+                'members' => model('MemberParishAffiliationModel')->getParishMembers($parishId),
                 'selected_scope' => $scope,
                 'profile_data' => $this->getProfile(),
                 'page' => 1,
@@ -43,7 +43,7 @@ class LeadershipPositions extends BaseController
         }
 
         $builder = $db->table('leadership_position lp')
-            ->select('lp.*, p.first_name, p.last_name, ai.secret as email, c.name as church_name, d.name as diocese_name, pz.name as province_name')
+            ->select('lp.*, p.first_name, p.last_name, ai.secret as email, c.name as parish_name, d.name as diocese_name, pz.name as province_name')
             ->join($profileTable . ' p', 'p.user_id = lp.user_id', 'left')
             ->join('users u', 'u.id = lp.user_id', 'left')
             ->join('auth_identities ai', 'ai.user_id = u.id AND ai.type = "email_password"', 'left')
@@ -55,7 +55,7 @@ class LeadershipPositions extends BaseController
             ->orderBy('lp.title', 'ASC');
 
         if ($scope === 'parish') {
-            $builder->where('lp.scope_type', 'parish')->where('lp.parish_id', $churchId);
+            $builder->where('lp.scope_type', 'parish')->where('lp.parish_id', $parishId);
         } elseif ($scope === 'diocese') {
             $dioceseId = (int) $this->resolveDiocesanScopeId();
             if ($dioceseId > 0) {
@@ -85,7 +85,7 @@ class LeadershipPositions extends BaseController
             ->get()
             ->getResultArray();
 
-        $members = model('MemberParishAffiliationModel')->getParishMembers($churchId);
+        $members = model('MemberParishAffiliationModel')->getParishMembers($parishId);
 
         return view('MemberPortal\Views\Leadership/index', array_merge($this->getCommonViewData('Leadership Positions'), [
             'positions' => $positions,

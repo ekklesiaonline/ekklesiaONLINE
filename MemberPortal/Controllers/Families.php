@@ -11,7 +11,7 @@ class Families extends BaseController
     protected $familyModel;
     protected $familyMemberModel;
     protected $profileModel;
-    protected $memberChurchAffiliationModel;
+    protected $memberParishAffiliationModel;
     protected $memberAccessService;
 
     public function __construct()
@@ -31,11 +31,11 @@ class Families extends BaseController
 
     protected function getMemberParishAffiliationModel()
     {
-        if ($this->memberChurchAffiliationModel === null) {
-            $this->memberChurchAffiliationModel = model('MemberParishAffiliationModel');
+        if ($this->memberParishAffiliationModel === null) {
+            $this->memberParishAffiliationModel = model('MemberParishAffiliationModel');
         }
 
-        return $this->memberChurchAffiliationModel;
+        return $this->memberParishAffiliationModel;
     }
 
     protected function getMemberAccessService(): MemberAccessService
@@ -60,12 +60,12 @@ class Families extends BaseController
             return $redirect;
         }
 
-        $churchId = $this->getOperationalParishId();
-        $families = $this->familyModel->getParishFamiliesWithCounts($churchId);
+        $parishId = $this->getOperationalParishId();
+        $families = $this->familyModel->getParishFamiliesWithCounts($parishId);
 
         return view('MemberPortal\Views\Families/index', array_merge($this->getCommonViewData(lang('Families.pageTitle')), [
             'families' => $families,
-            'parish_id' => $churchId,
+            'parish_id' => $parishId,
         ]));
     }
 
@@ -104,9 +104,9 @@ class Families extends BaseController
             return $redirect;
         }
 
-        $churchId = $this->getOperationalParishId();
+        $parishId = $this->getOperationalParishId();
         // membersOnly=false so regular_attender/visitor parents appear as eligible heads of household.
-        $members = $this->getMemberParishAffiliationModel()->getParishMembers((int) $churchId, null, false);
+        $members = $this->getMemberParishAffiliationModel()->getParishMembers((int) $parishId, null, false);
 
         return view('MemberPortal\Views\Families/create', array_merge($this->getCommonViewData(lang('Families.pageTitleAdd')), ['members' => $members]));
     }
@@ -132,18 +132,18 @@ class Families extends BaseController
             return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
         }
 
-        $churchId = (int) ($this->getOperationalParishId() ?? 0);
+        $parishId = (int) ($this->getOperationalParishId() ?? 0);
         $headOfHouseholdId = (int) ($this->request->getPost('head_of_household_id') ?? 0);
         if ($headOfHouseholdId <= 0) {
             $headOfHouseholdId = null;
         }
 
-        if ($headOfHouseholdId !== null && ! $this->isParishAffiliatedMember($headOfHouseholdId, $churchId)) {
+        if ($headOfHouseholdId !== null && ! $this->isParishAffiliatedMember($headOfHouseholdId, $parishId)) {
             return redirect()->back()->withInput()->with('error', lang('Families.invalidHeadSelection'));
         }
 
         $data = [
-            'parish_id' => $churchId,
+            'parish_id' => $parishId,
             'family_name' => $this->request->getPost('family_name'),
             'head_of_household_id' => $headOfHouseholdId,
             'address' => $this->request->getPost('address'),
@@ -203,9 +203,9 @@ class Families extends BaseController
             return redirect()->to('/families')->with('error', lang('Families.notFoundError'));
         }
 
-        $churchId = $this->getOperationalParishId();
+        $parishId = $this->getOperationalParishId();
         // membersOnly=false so regular_attender/visitor parents appear as eligible heads of household.
-        $members = $this->getMemberParishAffiliationModel()->getParishMembers((int) $churchId, null, false);
+        $members = $this->getMemberParishAffiliationModel()->getParishMembers((int) $parishId, null, false);
 
         return view('MemberPortal\Views\Families/edit', array_merge($this->getCommonViewData(lang('Families.pageTitleEdit')), [
             'family' => $family,
@@ -240,13 +240,13 @@ class Families extends BaseController
             return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
         }
 
-        $churchId = (int) ($this->getOperationalParishId() ?? 0);
+        $parishId = (int) ($this->getOperationalParishId() ?? 0);
         $headOfHouseholdId = (int) ($this->request->getPost('head_of_household_id') ?? 0);
         if ($headOfHouseholdId <= 0) {
             $headOfHouseholdId = null;
         }
 
-        if ($headOfHouseholdId !== null && ! $this->isParishAffiliatedMember($headOfHouseholdId, $churchId)) {
+        if ($headOfHouseholdId !== null && ! $this->isParishAffiliatedMember($headOfHouseholdId, $parishId)) {
             return redirect()->back()->withInput()->with('error', lang('Families.invalidHeadSelection'));
         }
 
@@ -307,7 +307,7 @@ class Families extends BaseController
         }
 
         if ($redirect = $this->requireParish()) {
-            return $this->jsonResponse($this->apiErrorPayload(lang('App.errorNoParishScope'), 403, 'CHURCH_SCOPE_REQUIRED'), 403);
+            return $this->jsonResponse($this->apiErrorPayload(lang('App.errorNoParishScope'), 403, 'PARISH_SCOPE_REQUIRED'), 403);
         }
 
         $family = $this->familyModel->find($id);
@@ -344,7 +344,7 @@ class Families extends BaseController
         }
 
         if ($redirect = $this->requireParish()) {
-            return $this->jsonResponse($this->apiErrorPayload(lang('App.errorNoParishScope'), 403, 'CHURCH_SCOPE_REQUIRED'), 403);
+            return $this->jsonResponse($this->apiErrorPayload(lang('App.errorNoParishScope'), 403, 'PARISH_SCOPE_REQUIRED'), 403);
         }
 
         $familyId = (int) ($this->request->getPost('family_id') ?? 0);
@@ -431,14 +431,14 @@ class Families extends BaseController
     public function addMemberNonPortal()
     {
         $requestId = $this->resolveRequestId();
-        $churchId = (int) ($this->getOperationalParishId() ?? 0);
+        $parishId = (int) ($this->getOperationalParishId() ?? 0);
 
         if (!auth()->loggedIn()) {
             return $this->contractResponse(false, 'UNAUTHENTICATED', 'Authentication is required.', null, [[
                 'field' => 'auth',
                 'code' => 'UNAUTHENTICATED',
                 'message' => 'Authentication is required.',
-            ]], 401, $requestId, $churchId > 0 ? $churchId : null);
+            ]], 401, $requestId, $parishId > 0 ? $parishId : null);
         }
 
         $canManagePortal = auth()->user()->can('family.manage');
@@ -454,14 +454,14 @@ class Families extends BaseController
                 'field' => 'permission',
                 'code' => 'FORBIDDEN',
                 'message' => 'family.manage or portal.manage permission is required.',
-            ]], 403, $requestId, $churchId > 0 ? $churchId : null);
+            ]], 403, $requestId, $parishId > 0 ? $parishId : null);
         }
 
-        if ($churchId <= 0) {
-            return $this->contractResponse(false, 'OUT_OF_SCOPE', 'No operational church scope is available.', null, [[
+        if ($parishId <= 0) {
+            return $this->contractResponse(false, 'OUT_OF_SCOPE', 'No operational parish scope is available.', null, [[
                 'field' => 'parish_id',
                 'code' => 'OUT_OF_SCOPE',
-                'message' => 'No operational church context is available.',
+                'message' => 'No operational parish context is available.',
             ]], 403, $requestId, null);
         }
 
@@ -471,7 +471,7 @@ class Families extends BaseController
                 'field' => 'body',
                 'code' => 'BAD_REQUEST_JSON',
                 'message' => 'Malformed JSON payload.',
-            ]], 400, $requestId, $churchId);
+            ]], 400, $requestId, $parishId);
         }
 
         $payload = $parsed['payload'];
@@ -490,12 +490,12 @@ class Families extends BaseController
         ]);
 
         if (!$validation->run($payload)) {
-            return $this->contractResponse(false, 'VALIDATION_FAILED', 'Request validation failed.', null, $this->validationErrorsToContract($validation->getErrors()), 422, $requestId, $churchId);
+            return $this->contractResponse(false, 'VALIDATION_FAILED', 'Request validation failed.', null, $this->validationErrorsToContract($validation->getErrors()), 422, $requestId, $parishId);
         }
 
-        $result = $this->getMemberAccessService()->createNonPortalUser($payload, $churchId);
+        $result = $this->getMemberAccessService()->createNonPortalUser($payload, $parishId);
         if (!($result['ok'] ?? false)) {
-            return $this->contractResponse(false, (string) ($result['code'] ?? 'INTERNAL_ERROR'), (string) ($result['message'] ?? 'Request failed.'), null, is_array($result['errors'] ?? null) ? $result['errors'] : [], (int) ($result['http_status'] ?? 500), $requestId, $churchId);
+            return $this->contractResponse(false, (string) ($result['code'] ?? 'INTERNAL_ERROR'), (string) ($result['message'] ?? 'Request failed.'), null, is_array($result['errors'] ?? null) ? $result['errors'] : [], (int) ($result['http_status'] ?? 500), $requestId, $parishId);
         }
 
         $data = is_array($result['data'] ?? null) ? $result['data'] : [];
@@ -506,19 +506,19 @@ class Families extends BaseController
         $this->audit()->log('non_portal_member.create', [
             'actor_user_id' => (int) auth()->id(),
             'target_user_id' => $targetUserId,
-            'parish_id' => $churchId,
+            'parish_id' => $parishId,
             'family_id' => $familyId > 0 ? $familyId : null,
         ]);
         if (!$isStandalone) {
             $this->audit()->log('family_member.add_non_portal', [
                 'actor_user_id' => (int) auth()->id(),
                 'target_user_id' => $targetUserId,
-                'parish_id' => $churchId,
+                'parish_id' => $parishId,
                 'family_id' => $familyId,
             ]);
         }
 
-        return $this->contractResponse(true, (string) $result['code'], (string) $result['message'], $data, [], (int) $result['http_status'], $requestId, $churchId);
+        return $this->contractResponse(true, (string) $result['code'], (string) $result['message'], $data, [], (int) $result['http_status'], $requestId, $parishId);
     }
 
     /**
@@ -527,7 +527,7 @@ class Families extends BaseController
     public function enablePortal($userId)
     {
         $requestId = $this->resolveRequestId();
-        $churchId = (int) ($this->getOperationalParishId() ?? 0);
+        $parishId = (int) ($this->getOperationalParishId() ?? 0);
         $userId = (int) $userId;
 
         if (!auth()->loggedIn()) {
@@ -535,7 +535,7 @@ class Families extends BaseController
                 'field' => 'auth',
                 'code' => 'UNAUTHENTICATED',
                 'message' => 'Authentication is required.',
-            ]], 401, $requestId, $churchId > 0 ? $churchId : null);
+            ]], 401, $requestId, $parishId > 0 ? $parishId : null);
         }
 
         if (!auth()->user()->can('family.manage')) {
@@ -543,14 +543,14 @@ class Families extends BaseController
                 'field' => 'permission',
                 'code' => 'FORBIDDEN',
                 'message' => 'family.manage permission is required.',
-            ]], 403, $requestId, $churchId > 0 ? $churchId : null);
+            ]], 403, $requestId, $parishId > 0 ? $parishId : null);
         }
 
-        if ($churchId <= 0) {
-            return $this->contractResponse(false, 'OUT_OF_SCOPE', 'No operational church scope is available.', null, [[
+        if ($parishId <= 0) {
+            return $this->contractResponse(false, 'OUT_OF_SCOPE', 'No operational parish scope is available.', null, [[
                 'field' => 'parish_id',
                 'code' => 'OUT_OF_SCOPE',
-                'message' => 'No operational church context is available.',
+                'message' => 'No operational parish context is available.',
             ]], 403, $requestId, null);
         }
 
@@ -559,7 +559,7 @@ class Families extends BaseController
                 'field' => 'userId',
                 'code' => 'INVALID',
                 'message' => 'userId must be greater than 0.',
-            ]], 422, $requestId, $churchId);
+            ]], 422, $requestId, $parishId);
         }
 
         $parsed = $this->readCompatiblePayload();
@@ -568,7 +568,7 @@ class Families extends BaseController
                 'field' => 'body',
                 'code' => 'BAD_REQUEST_JSON',
                 'message' => 'Malformed JSON payload.',
-            ]], 400, $requestId, $churchId);
+            ]], 400, $requestId, $parishId);
         }
 
         $payload = $parsed['payload'];
@@ -583,12 +583,12 @@ class Families extends BaseController
         ]);
 
         if (!$validation->run($payload)) {
-            return $this->contractResponse(false, 'VALIDATION_FAILED', 'Request validation failed.', null, $this->validationErrorsToContract($validation->getErrors()), 422, $requestId, $churchId);
+            return $this->contractResponse(false, 'VALIDATION_FAILED', 'Request validation failed.', null, $this->validationErrorsToContract($validation->getErrors()), 422, $requestId, $parishId);
         }
 
-        $result = $this->getMemberAccessService()->enablePortalAccess($userId, $payload, $churchId);
+        $result = $this->getMemberAccessService()->enablePortalAccess($userId, $payload, $parishId);
         if (!($result['ok'] ?? false)) {
-            return $this->contractResponse(false, (string) ($result['code'] ?? 'INTERNAL_ERROR'), (string) ($result['message'] ?? 'Request failed.'), null, is_array($result['errors'] ?? null) ? $result['errors'] : [], (int) ($result['http_status'] ?? 500), $requestId, $churchId);
+            return $this->contractResponse(false, (string) ($result['code'] ?? 'INTERNAL_ERROR'), (string) ($result['message'] ?? 'Request failed.'), null, is_array($result['errors'] ?? null) ? $result['errors'] : [], (int) ($result['http_status'] ?? 500), $requestId, $parishId);
         }
 
         $data = is_array($result['data'] ?? null) ? $result['data'] : [];
@@ -596,13 +596,13 @@ class Families extends BaseController
         $this->audit()->log('portal_access.enable', [
             'actor_user_id' => (int) auth()->id(),
             'target_user_id' => $userId,
-            'parish_id' => $churchId,
+            'parish_id' => $parishId,
             'family_id' => (int) ($payload['family_id'] ?? 0),
         ]);
 
-        (new ParishPeopleRegistryService())->syncParish($churchId);
+        (new ParishPeopleRegistryService())->syncParish($parishId);
 
-        return $this->contractResponse(true, (string) $result['code'], (string) $result['message'], $data, [], (int) $result['http_status'], $requestId, $churchId);
+        return $this->contractResponse(true, (string) $result['code'], (string) $result['message'], $data, [], (int) $result['http_status'], $requestId, $parishId);
     }
 
     /**
@@ -615,7 +615,7 @@ class Families extends BaseController
         }
 
         if ($redirect = $this->requireParish()) {
-            return $this->jsonResponse($this->apiErrorPayload(lang('App.errorNoParishScope'), 403, 'CHURCH_SCOPE_REQUIRED'), 403);
+            return $this->jsonResponse($this->apiErrorPayload(lang('App.errorNoParishScope'), 403, 'PARISH_SCOPE_REQUIRED'), 403);
         }
 
         $relation = $this->familyMemberModel->find($id);
@@ -673,14 +673,14 @@ class Families extends BaseController
         }
 
         if ($redirect = $this->requireParish()) {
-            return $this->jsonResponse($this->apiErrorPayload(lang('App.errorNoParishScope'), 403, 'CHURCH_SCOPE_REQUIRED'), 403);
+            return $this->jsonResponse($this->apiErrorPayload(lang('App.errorNoParishScope'), 403, 'PARISH_SCOPE_REQUIRED'), 403);
         }
 
         $familyId = (int) ($familyId ?? $this->request->getGet('family_id') ?? 0);
-        $churchId = (int) ($this->getOperationalParishId() ?? 0);
+        $parishId = (int) ($this->getOperationalParishId() ?? 0);
         $family = $this->familyModel->find($familyId);
 
-        if (! $family || (int) ($family['parish_id'] ?? 0) !== $churchId) {
+        if (! $family || (int) ($family['parish_id'] ?? 0) !== $parishId) {
             return $this->jsonResponse($this->apiErrorPayload(lang('Families.invalidFamily'), 404, 'FAMILY_NOT_FOUND_IN_SCOPE'), 404);
         }
 
@@ -688,7 +688,7 @@ class Families extends BaseController
         $limit = max(1, min(100, (int) ($this->request->getGet('limit') ?? 50)));
 
         $members = $this->getMemberParishAffiliationModel()
-            ->getParishMembersAvailableForFamily($churchId, $familyId, $query, $limit);
+            ->getParishMembersAvailableForFamily($parishId, $familyId, $query, $limit);
 
         return $this->jsonResponse([
             'success' => true,
@@ -697,9 +697,9 @@ class Families extends BaseController
         ]);
     }
 
-    private function isParishAffiliatedMember(int $userId, int $churchId): bool
+    private function isParishAffiliatedMember(int $userId, int $parishId): bool
     {
-        return $this->getMemberParishAffiliationModel()->isUserAffiliatedWithParish($userId, $churchId, true);
+        return $this->getMemberParishAffiliationModel()->isUserAffiliatedWithParish($userId, $parishId, true);
     }
 
     private function ensureHeadOfHouseholdMembership(int $familyId, ?int $headOfHouseholdId): void
@@ -788,7 +788,7 @@ class Families extends BaseController
      * @param array<string,mixed>|null $data
      * @param array<int,array<string,string>> $errors
      */
-    private function contractResponse(bool $success, string $code, string $message, ?array $data, array $errors, int $status, ?string $requestId, ?int $churchId)
+    private function contractResponse(bool $success, string $code, string $message, ?array $data, array $errors, int $status, ?string $requestId, ?int $parishId)
     {
         $payload = [
             'success' => $success,
@@ -799,7 +799,7 @@ class Families extends BaseController
             'meta' => [
                 'request_id' => (string) ($requestId ?? $this->resolveRequestId()),
                 'timestamp' => gmdate('Y-m-d\TH:i:s\Z'),
-                'parish_id' => $churchId,
+                'parish_id' => $parishId,
             ],
         ];
 

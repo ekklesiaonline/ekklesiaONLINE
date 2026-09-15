@@ -194,7 +194,7 @@ final class ProfilePicturePrivateDeliveryIntegrationTest extends CIUnitTestCase
             $this->db->query('CREATE TABLE IF NOT EXISTS ' . $profilesTable . ' (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 user_id INTEGER NOT NULL,
-                church_id INTEGER NULL,
+                parish_id INTEGER NULL,
                 province_id INTEGER NULL,
                 diocese_id INTEGER NULL,
                 first_name TEXT NULL,
@@ -211,7 +211,7 @@ final class ProfilePicturePrivateDeliveryIntegrationTest extends CIUnitTestCase
         $this->ensureColumnExists($resolvedProfiles, 'province_id', 'INTEGER NULL');
         $this->ensureColumnExists($resolvedProfiles, 'diocese_id', 'INTEGER NULL');
         $this->ensureColumnExists($resolvedProfiles, 'profile_picture', 'TEXT NULL');
-        $this->ensureColumnExists($resolvedProfiles, 'church_id', 'INTEGER NULL');
+        $this->ensureColumnExists($resolvedProfiles, 'parish_id', 'INTEGER NULL');
     }
 
     private function insertUser(string $username): int
@@ -243,8 +243,8 @@ final class ProfilePicturePrivateDeliveryIntegrationTest extends CIUnitTestCase
             'updated_at' => date('Y-m-d H:i:s'),
         ];
 
-        if (in_array('church_id', $columns, true)) {
-            $payload['church_id'] = null;
+        if (in_array('parish_id', $columns, true)) {
+            $payload['parish_id'] = null;
         }
         if (in_array('parish_id', $columns, true)) {
             $payload['parish_id'] = 0;

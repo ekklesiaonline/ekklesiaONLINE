@@ -19,7 +19,7 @@ Complete multilingual finance UI rendering (English, Spanish, French) for canoni
 - Missing language keys for multiple finance sections and seeded labels.
 - Some views rendered raw DB labels instead of translated labels.
 - CoA optgroup sections were partially hardcoded.
-- Diocesan-admin scope could resolve church context as null, producing empty fund dropdowns.
+- Diocesan-admin scope could resolve parish context as null, producing empty fund dropdowns.
 - Device verification CSRF enforcement blocked login flow, affecting reproducible locale validation.
 
 ## 4) Implemented Changes
@@ -84,7 +84,7 @@ Result:
 
 - fund_i18n helper available globally in finance views.
 
-### 4.5 Church Scope Resolution Fix for Diocesan Admin
+### 4.5 Parish Scope Resolution Fix for Diocesan Admin
 
 Updated:
 
@@ -92,7 +92,7 @@ Updated:
 
 Result:
 
-- getChurchId() now resolves via selected church, profile church, and diocesan fallback (first scoped church persisted in session) to prevent empty fund dropdowns.
+- getParishId() now resolves via selected parish, profile parish, and diocesan fallback (first scoped parish persisted in session) to prevent empty fund dropdowns.
 
 ### 4.6 Device Verification CSRF Blocker Fix
 

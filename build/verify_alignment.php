@@ -18,11 +18,11 @@ declare(strict_types=1);
 chdir(dirname(__DIR__));
 
 $OLD_TABLES = [
-    'churches',
-    'church_settings',
-    'church_integrations',
-    'church_provider_credentials',
-    'church_role_audit_logs',
+    'parishes',
+    'parish_settings',
+    'parish_integrations',
+    'parish_provider_credentials',
+    'parish_role_audit_logs',
     'audit_logs',
     'user_sessions',
     'volunteer_teams',
@@ -34,7 +34,7 @@ $OLD_TABLES = [
     'call_tasks',
     'donations',
     'guests',
-    // member_church_affiliations is now a backward-compat VIEW — SELECT refs are valid
+    // member_parish_affiliations is now a backward-compat VIEW — SELECT refs are valid
 ];
 
 $SCAN_DIRS = [
@@ -122,9 +122,9 @@ $tpat = "'" . implode("'|'", $OLD_TABLES) . "'";
 $raw  = grep_files($tpat, $SCAN_DIRS, $SKIP_PATHS);
 $raw  = array_filter($raw, function ($l) {
     $c = preg_replace('~^\s*//.+~m', '', $l);           // skip // comment lines
-    if (preg_match("/'\w+'\s*=>/", $c)) return false;   // view-data array key like 'churches' =>
-    if (preg_match('/\$\w+\[/', $c)) return false;       // array access like $totals['churches']
-    if (str_contains($c, 'base_url(')) return false;     // URL route paths like base_url('churches')
+    if (preg_match("/'\w+'\s*=>/", $c)) return false;   // view-data array key like 'parishes' =>
+    if (preg_match('/\$\w+\[/', $c)) return false;       // array access like $totals['parishes']
+    if (str_contains($c, 'base_url(')) return false;     // URL route paths like base_url('parishes')
     if (str_contains($c, 'uri_string()')) return false;  // sidebar/nav URI comparisons
     if (str_contains($c, "->group(")) return false;      // route group definitions
     if (str_contains($c, "->add(")) return false;        // route add definitions

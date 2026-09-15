@@ -62,7 +62,7 @@ Relevant fields verified:
 Relevant fields:
 
 - `id`
-- `church_id`
+- `parish_id`
 - `date`
 - `service`
 - plus liturgical and schedule metadata.

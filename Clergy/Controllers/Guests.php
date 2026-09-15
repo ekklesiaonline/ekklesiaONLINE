@@ -33,7 +33,7 @@ class Guests extends BaseController
             return $redirect;
         }
 
-        $churchId = $this->getOperationalParishId();
+        $parishId = $this->getOperationalParishId();
         $perPage  = 20;
 
         // Filters from query string
@@ -44,7 +44,7 @@ class Guests extends BaseController
         $followupStage = $this->request->getGet('followup_stage'); // pending|sent|failed|skipped|none
         $source        = $this->request->getGet('source');
 
-        $builder = $this->guestModel->where('parish_id', $churchId);
+        $builder = $this->guestModel->where('parish_id', $parishId);
 
         if ($followedUp !== null && $followedUp !== '') {
             $builder->where('followed_up', (int) $followedUp);
@@ -637,12 +637,12 @@ class Guests extends BaseController
         }
 
         $currentUserId = (int) (auth()->id());
-        $churchId = (int) ($this->getOperationalParishId() ?? 0);
+        $parishId = (int) ($this->getOperationalParishId() ?? 0);
 
         $personId = (int) ($guest['person_id'] ?? 0);
         if ($personId <= 0) {
             try {
-                $intake = GuestIntakeService::record($guest, $churchId);
+                $intake = GuestIntakeService::record($guest, $parishId);
                 $personId = $intake['person_id'];
                 $this->guestModel->update($id, ['person_id' => $personId]);
             } catch (\Throwable $e) {
@@ -652,7 +652,7 @@ class Guests extends BaseController
 
         $converted = PersonConversionService::convertToMember(
             $personId,
-            $churchId,
+            $parishId,
             null,
             null,
             null,
@@ -965,7 +965,7 @@ class Guests extends BaseController
      * GET  api/followup/pending-calls  (AJAX/JSON)
      *
      * Returns the count and a brief summary of pending call tasks for the
-     * current church.  Called by the navbar badge poller every 30 seconds.
+     * current parish.  Called by the navbar badge poller every 30 seconds.
      * Responds with JSON so it is safe for XHR / Fetch consumers.
      *
      * Requires: followup.view
@@ -990,12 +990,12 @@ class Guests extends BaseController
             return $redirect;
         }
 
-        $churchId = (int) $this->getOperationalParishId();
+        $parishId = (int) $this->getOperationalParishId();
 
         // KPI: total guests (all time) vs converted
-        $totalGuests    = $this->guestModel->getParishGuestCount($churchId, false);
+        $totalGuests    = $this->guestModel->getParishGuestCount($parishId, false);
         $convertedCount = (int) $this->guestModel
-            ->where('parish_id', $churchId)
+            ->where('parish_id', $parishId)
             ->where('converted_to_member_at IS NOT NULL', null, false)
             ->countAllResults();
 
@@ -1003,12 +1003,12 @@ class Guests extends BaseController
             ->table('followup_log gfl')
             ->select('COUNT(DISTINCT gfl.person_id) AS cnt')
             ->where('gfl.status', 'pending')
-            ->where('gfl.parish_id', $churchId)
+            ->where('gfl.parish_id', $parishId)
             ->get()->getRowArray()['cnt'] ?? 0);
 
         $inProgressCount = (int) db_connect()
             ->table('guest g')
-            ->where('g.parish_id', $churchId)
+            ->where('g.parish_id', $parishId)
             ->where('g.followed_up', 0)
             ->where('g.converted_to_member_at IS NULL', null, false)
             ->whereIn('g.person_id', function ($subQ) {
@@ -1023,26 +1023,26 @@ class Guests extends BaseController
 
         // KPI: pending call tasks
         $callTaskModel   = model('CallTaskModel');
-        $pendingCalls    = $callTaskModel->countPending($churchId);
+        $pendingCalls    = $callTaskModel->countPending($parishId);
 
         // KPI: active sequences
-        $activeSequences = $this->followupSequenceModel->getActiveForParish($churchId);
+        $activeSequences = $this->followupSequenceModel->getActiveForParish($parishId);
         $sequenceCount   = count($activeSequences);
 
         // KPI: template count
         $templateModel   = model('FollowupTemplateModel');
-        $templates       = $templateModel->getAllForParish($churchId);
+        $templates       = $templateModel->getAllForParish($parishId);
         $templateCount   = count($templates);
 
         // Recent guests (last 10)
-        $recentGuests = $this->guestModel->getRecentGuests($churchId, 10);
+        $recentGuests = $this->guestModel->getRecentGuests($parishId, 10);
         foreach ($recentGuests as &$row) {
             $row = $this->guestModel->decryptGuestRow($row);
         }
         unset($row);
 
         // Pending call tasks preview (top 5)
-        $pendingCallTasks = array_slice($callTaskModel->getPendingForParish($churchId), 0, 5);
+        $pendingCallTasks = array_slice($callTaskModel->getPendingForParish($parishId), 0, 5);
 
         // Per-guest progress map for recent guests 4-state badge
         $recentPersonIds = array_filter(array_column($recentGuests, 'person_id'));
@@ -1088,14 +1088,14 @@ class Guests extends BaseController
             return $this->jsonResponse(['success' => false, 'message' => lang('App.errorForbidden')], 403);
         }
 
-        $churchId = (int) ($this->getOperationalParishId() ?? 0);
-        if ($churchId <= 0) {
+        $parishId = (int) ($this->getOperationalParishId() ?? 0);
+        if ($parishId <= 0) {
             return $this->jsonResponse(['success' => true, 'count' => 0, 'items' => []]);
         }
 
         /** @var \App\Models\CallTaskModel $callTaskModel */
         $callTaskModel = model('CallTaskModel');
-        $tasks = $callTaskModel->getPendingForParish($churchId);
+        $tasks = $callTaskModel->getPendingForParish($parishId);
 
         $items = array_map(static function (array $t): array {
             return [

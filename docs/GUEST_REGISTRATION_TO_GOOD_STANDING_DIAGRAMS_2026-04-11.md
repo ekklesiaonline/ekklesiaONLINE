@@ -6,7 +6,7 @@ flowchart LR
     B --> C{Conversion Path}
     C -->|A: Link to Existing User| D[Guest Conversion Link]
     C -->|B: Create New User| E[Member Account Creation]
-    D --> F[Member Church Affiliation Active]
+    D --> F[Member Parish Affiliation Active]
     E --> F
     F --> G[Standing Refresh]
     G --> H[member_standing_summary]
@@ -16,7 +16,7 @@ flowchart LR
 ```mermaid
 sequenceDiagram
     autonumber
-    actor Staff as Pastor/Church Admin
+    actor Staff as Pastor/Parish Admin
     participant Guests as GuestsController
     participant FollowUp as FollowUpController
     participant Conv as GuestConversionsController
@@ -33,7 +33,7 @@ sequenceDiagram
 
     alt Link to existing member
         Staff->>Conv: POST /guest-conversions/convert/{guestId}
-        Conv->>DB: UPSERT member_church_affiliations
+        Conv->>DB: UPSERT member_parish_affiliations
         Conv->>DB: UPDATE guests.converted_to_member_at + converted_user_id + converted_by_user_id
     else Create new member
         Staff->>Guests: GET /guests/convertToMember/{guestId}
@@ -41,7 +41,7 @@ sequenceDiagram
         Staff->>Members: POST /members/store
         Members->>DB: INSERT users + auth_identities + auth_groups_users
         Members->>DB: INSERT profile
-        Members->>DB: INSERT member_church_affiliations
+        Members->>DB: INSERT member_parish_affiliations
     end
 
     Staff->>Stand: POST /standing/refresh or CLI standing:refresh
@@ -58,7 +58,7 @@ flowchart TB
     end
 
     C --> E{Affiliation Exists and Active?}
-    E -->|No| F[attachToChurch]
+    E -->|No| F[attachToParish]
     E -->|Yes| G[Keep Existing]
 
     D --> H[Create User and Identity]
@@ -91,18 +91,18 @@ flowchart LR
     P[annual_pledges] --> S
     D[member_discipline] --> S
     S --> J{Scope Join}
-    M[member_church_affiliations.active + membership_status] --> J
-    J --> K[Church Good Standing Count]
+    M[member_parish_affiliations.active + membership_status] --> J
+    J --> K[Parish Good Standing Count]
 ```
 
 ```mermaid
 flowchart TB
     subgraph Tables by Phase
         T1[Guest Intake\nguests\nfollow_up_tasks]
-        T2[Conversion A\nguests\nmember_church_affiliations]
-        T3[Conversion B\nusers\nauth_identities\nauth_groups_users\nprofiles\nmember_church_affiliations]
+        T2[Conversion A\nguests\nmember_parish_affiliations]
+        T3[Conversion B\nusers\nauth_identities\nauth_groups_users\nprofiles\nmember_parish_affiliations]
         T4[Standing Compute\nmember_standing_summary\nusers\nattendance\nservices\nannual_pledges\nmember_discipline]
-        T5[KPI Read\nmember_standing_summary + member_church_affiliations]
+        T5[KPI Read\nmember_standing_summary + member_parish_affiliations]
     end
 
     T1 --> T2
@@ -123,7 +123,7 @@ flowchart LR
 
 ```mermaid
 flowchart TB
-    X1[Data Entry Controls\nPermissions + Church Scope] --> X2[Conversion Integrity\nAffiliation enforced]
+    X1[Data Entry Controls\nPermissions + Parish Scope] --> X2[Conversion Integrity\nAffiliation enforced]
     X2 --> X3[Standing Refresh Controls\nScheduled + Manual]
     X3 --> X4[KPI Reliability\nSummary + Scope Joins]
     X4 --> X5[Leadership Visibility\nDashboard + Reports + API]

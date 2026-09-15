@@ -117,7 +117,7 @@ $selectedPerPage = (int) ($per_page ?? 25);
 $allowBulkSelection = !empty($isProvinceAdmin) || (empty($isProvinceAdmin) && auth()->user()->can('member.delete'));
 $status_counts = (isset($status_counts) && is_array($status_counts)) ? $status_counts : [];
 $availableParishes = (isset($availableParishes) && is_array($availableParishes)) ? $availableParishes : [];
-$church_id = (int) ($church_id ?? $parish_id ?? 0);
+$parish_id = (int) ($parish_id ?? $parish_id ?? 0);
 if (!in_array($selectedPerPage, [25, 50, 100], true)) {
     $selectedPerPage = 25;
 }
@@ -432,11 +432,11 @@ if (!in_array($selectedPerPage, [25, 50, 100], true)) {
                         </div>
 
                         <div class="mb-3">
-                            <label class="form-label"><?= lang('Members.destinationChurch') ?></label>
-                            <select name="destination_church_id" class="form-select" required>
+                            <label class="form-label"><?= lang('Members.destinationParish') ?></label>
+                            <select name="destination_parish_id" class="form-select" required>
                                 <option value=""><?= lang('Members.selectDestination') ?></option>
                                 <?php foreach ($availableParishes as $parish): ?>
-                                    <?php if ((int) $parish['id'] !== (int) $church_id): ?>
+                                    <?php if ((int) $parish['id'] !== (int) $parish_id): ?>
                                         <?php $parishUeid = trim((string) ($parish['parish_ueid'] ?? '')); ?>
                                         <option value="<?= (int) $parish['id'] ?>\"><?= esc($parish['name'] . ($parishUeid !== '' ? ' (' . $parishUeid . ')' : '')) ?></option>
                                     <?php endif; ?>

@@ -6,14 +6,14 @@ class SystemEventCalendars extends BaseController
 {
     public function index()
     {
-        $churchId = $this->nationalChurchId();
-        if ($churchId === null) {
+        $parishId = $this->nationalParishId();
+        if ($parishId === null) {
             return $this->forbiddenResponse(lang('App.errorGeneric'));
         }
 
         $calendars = model('EventCalendarModel')
             ->where('scope_level', 'national')
-            ->where('church_id', $churchId)
+            ->where('parish_id', $parishId)
             ->orderBy('sort_order', 'ASC')
             ->orderBy('name', 'ASC')
             ->findAll();
@@ -30,8 +30,8 @@ class SystemEventCalendars extends BaseController
 
     public function store()
     {
-        $churchId = $this->nationalChurchId();
-        if ($churchId === null) {
+        $parishId = $this->nationalParishId();
+        if ($parishId === null) {
             return $this->forbiddenResponse(lang('App.errorGeneric'));
         }
 
@@ -39,7 +39,7 @@ class SystemEventCalendars extends BaseController
             return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
         }
 
-        $data = $this->calendarPayload($churchId);
+        $data = $this->calendarPayload($parishId);
         $data['created_by'] = (int) auth()->id();
 
         if (model('EventCalendarModel')->insert($data, false)) {
@@ -70,7 +70,7 @@ class SystemEventCalendars extends BaseController
             return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
         }
 
-        $data = $this->calendarPayload((int) $calendar['church_id']);
+        $data = $this->calendarPayload((int) $calendar['parish_id']);
 
         if (model('EventCalendarModel')->update($id, $data)) {
             return redirect()->to(base_url('system/event-calendars'))->with('success', lang('Events.calendarUpdated'));
@@ -100,11 +100,11 @@ class SystemEventCalendars extends BaseController
         ];
     }
 
-    private function calendarPayload(int $churchId): array
+    private function calendarPayload(int $parishId): array
     {
         return [
             'scope_level' => 'national',
-            'church_id'   => $churchId,
+            'parish_id'   => $parishId,
             'province_id' => null,
             'diocese_id'  => null,
             'parish_id'   => null,
@@ -117,21 +117,21 @@ class SystemEventCalendars extends BaseController
 
     private function scopedCalendar(int $id): ?array
     {
-        $churchId = $this->nationalChurchId();
-        if ($churchId === null) {
+        $parishId = $this->nationalParishId();
+        if ($parishId === null) {
             return null;
         }
 
         return model('EventCalendarModel')
             ->where('id', $id)
             ->where('scope_level', 'national')
-            ->where('church_id', $churchId)
+            ->where('parish_id', $parishId)
             ->first();
     }
 
-    private function nationalChurchId(): ?int
+    private function nationalParishId(): ?int
     {
-        $row = db_connect()->table('church')->select('id')->limit(1)->get()->getRowArray();
+        $row = db_connect()->table('parish')->select('id')->limit(1)->get()->getRowArray();
         $id = is_array($row) ? (int) ($row['id'] ?? 0) : 0;
 
         return $id > 0 ? $id : null;

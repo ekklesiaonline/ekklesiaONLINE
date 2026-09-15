@@ -14,15 +14,15 @@ This document describes the structure, fields, and calculation rules of the TEC 
 
 | Field                                                         | Notes                                          |
 | --------------------------------------------------------------|------------------------------------------------|
-| Name of Congregation                                          | `churches.name`                                |
+| Name of Congregation                                          | `parishes.name`                                |
 | Diocese                                                       | Diocese affiliation                            |
-| Street Address 1 / 2                                          | `churches.address`                             |
-| City / State / Zip + 4 / County / Country                     | Extend `churches` if not already stored        |
+| Street Address 1 / 2                                          | `parishes.address`                             |
+| City / State / Zip + 4 / County / Country                     | Extend `parishes` if not already stored        |
 | Mailing Address 1 / 2 / City / State / Zip / County / Country | Separate mailing address if different          |
-| Email Address                                                 | `churches.email`                               |
-| Congregation's Web Address                                    | `churches.website`                             |
-| Phone #                                                       | `churches.phone`                               |
-| Federal Tax ID #                                              | New field — not currently in `churches` schema |
+| Email Address                                                 | `parishes.email`                               |
+| Congregation's Web Address                                    | `parishes.website`                             |
+| Phone #                                                       | `parishes.phone`                               |
+| Federal Tax ID #                                              | New field — not currently in `parishes` schema |
 
 ### Report Preparation
 
@@ -64,7 +64,7 @@ Total In-Person Annual Attendance ÷ Total Number of Sundays In-Person Worship W
 
 - Includes Saturday Evening services counted as Sunday.
 - Maps to: `services` table (`service_type = 'Sunday Worship'`) + `attendance` table (`attended = 1`).
-- **ekklesiaRD note:** §12 of the system rules prohibits bucket-level averaging for church-admin dashboard graphics. The formula above is the canonical Parochial Report calculation and applies here.
+- **ekklesiaRD note:** §12 of the system rules prohibits bucket-level averaging for parish-admin dashboard graphics. The formula above is the canonical Parochial Report calculation and applies here.
 
 #### Line 2 — Average Sunday Attendance Online (ASA Online)
 
@@ -132,7 +132,7 @@ The TEC definition of Communicant in Good Standing requires:
 | Line | Field | Description |
 | --- |---| --- |
 | 12 | Total Active Members (other) | Regularly participate, meet parish membership standard, but **do not** meet Communicant in Good Standing threshold. Includes non-Episcopalians and non-Christians who are parish members. Maps to `is_member = 1` AND `is_good_standing = 0`. |
-| 13 | Total Estimated Active Participants (non-members) | Participate in church life but meet neither the Communicant threshold nor the membership standard. Maps to `is_member = 0`, `membership_status IN ('visitor', 'regular_attender', 'pending')`. |
+| 13 | Total Estimated Active Participants (non-members) | Participate in parish life but meet neither the Communicant threshold nor the membership standard. Maps to `is_member = 0`, `membership_status IN ('visitor', 'regular_attender', 'pending')`. |
 
 ---
 
@@ -349,25 +349,25 @@ The following Parochial Report fields have **no current mapping** in ekklesiaRD 
 
 | Report Field | Gap Type | Suggested Resolution |
 | --- |---| --- |
-| Federal Tax ID | Missing field | Add `churches.federal_tax_id VARCHAR(20)` |
+| Federal Tax ID | Missing field | Add `parishes.federal_tax_id VARCHAR(20)` |
 | Online viewership (Line 2) | No tracking | Add `service_online_viewers INT` to `services` or a `service_streaming_stats` table |
 | "Viewed after" (Line 4) | No tracking | Same table as above, separate column |
 | Outreach beneficiaries / week (Line 6) | No tracking | Add to `volunteer_teams` or new `outreach_metrics` table |
 | Clergy & Staff roster (Line 16) | Not modeled | Extend `leadership_positions` with `employment_type` and `role_category` |
-| Primary worship leader type (Line 17) | Not modeled | `churches` setting or `services.lead_type` |
-| Unusual clergy situation (Line 18) | Not modeled | Boolean flags on `churches` or `leadership_positions` |
+| Primary worship leader type (Line 17) | Not modeled | `parishes` setting or `services.lead_type` |
+| Unusual clergy situation (Line 18) | Not modeled | Boolean flags on `parishes` or `leadership_positions` |
 | Sacramental counts (Line 19) | Partial — `ServiceSacramentalCountModel` exists | Confirm `baptism_adult`, `confirmation`, `reception`, `marriage`, `burial`, `daily_office`, `eucharist` columns |
-| Programs checklist (Line 20) | Not modeled | `church_programs` junction table or JSON column |
-| Subsidiary organizations (Line 21) | Not modeled | `church_organizations` table |
-| Languages offered (Line 22) | Not modeled | `church_languages` junction table |
-| Simultaneous multi-language (Line 23) | Not modeled | Boolean on `churches` |
-| Racial/ethnic composition (Line 24) | Not stored | Optional `churches.pct_white` or a demographics survey table |
+| Programs checklist (Line 20) | Not modeled | `parish_programs` junction table or JSON column |
+| Subsidiary organizations (Line 21) | Not modeled | `parish_organizations` table |
+| Languages offered (Line 22) | Not modeled | `parish_languages` junction table |
+| Simultaneous multi-language (Line 23) | Not modeled | Boolean on `parishes` |
+| Racial/ethnic composition (Line 24) | Not stored | Optional `parishes.pct_white` or a demographics survey table |
 | Average congregation age (Line 25) | Computable | Derived from `profile.birth_date` — no schema change needed |
 | Pledge tracking (Lines 1–2) | `annual_pledges` table exists | Verify it covers operating-fund vs. restricted distinction |
 | Restricted vs. unrestricted donations (Lines 3–4) | `donations.category` is coarse | Add `is_restricted BOOLEAN` + `restriction_purpose VARCHAR` to `donations` |
 | Capital vs. non-capital expenses (Line 7) | `expenses.category` is free text | Add `is_capital BOOLEAN` to `expenses` |
-| Year-end cash balance (Line 8) | Not tracked | New `church_financial_summary` table or manual entry |
-| Endowment / investment detail (Line 9) | Not tracked | New `church_investments` table |
-| Outstanding debt (Line 10) | Not tracked | New `church_debt` table or fields on `church_financial_summary` |
-| Property ownership (Line 11) | Not tracked | Boolean on `churches` |
+| Year-end cash balance (Line 8) | Not tracked | New `parish_financial_summary` table or manual entry |
+| Endowment / investment detail (Line 9) | Not tracked | New `parish_investments` table |
+| Outstanding debt (Line 10) | Not tracked | New `parish_debt` table or fields on `parish_financial_summary` |
+| Property ownership (Line 11) | Not tracked | Boolean on `parishes` |
 | Rental income/expenses (Line 12) | Partial — `expenses` and `donations` exist | Add `rental_income` and `rental_expense` fields or filter by category |
