@@ -96,3 +96,13 @@ fetch(url, {
 ## Opportunistic Normalization
 
 - When touching legacy views, normalize them to the same header/action/button/badge rules as part of the change.
+
+## Toasts & Modals
+
+- Use toast notifications for AJAX success/error feedback.
+- Use modal forms for quick add/edit without leaving the page.
+- Keep destructive modals separate from edit modals.
+
+## Terminology
+
+- Use `parish` in code, routes, and models. `church` is acceptable only in user-facing labels or legacy aliases (e.g., `churches` → `parish_list` redirect).

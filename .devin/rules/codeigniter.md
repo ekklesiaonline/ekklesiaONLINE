@@ -38,3 +38,23 @@ trigger: always_on
 
 - Use Query Builder or prepared statements.
 - Parish-scope queries by `parish_id`; elevated admins can cross scopes explicitly.
+
+## BaseController Patterns
+
+- Profile is lazy-loaded via `getProfile()`; do not eagerly load it in `initController()`.
+- Use `$this->audit()->log(...)` for audit events; redact credentials, contact data, financial values, and freeform notes.
+- Permission-denied logging is rate-limited to 10 entries/hour per user.
+- Localization resolution order: cookie → session → `profile.locale` → `Accept-Language` → default (`en`).
+- Parish attribution policies:
+  - `ATTRIBUTION_POLICY_OPERATIONAL_DEFAULT`: operational parish first, home parish fallback.
+  - `ATTRIBUTION_POLICY_HOME_DEFAULT`: home parish first, operational parish fallback.
+- Use `db_connect()` for ad-hoc queries; prefer models for domain operations.
+
+## API/AJAX Responses
+
+- Follow `docs/API_AJAX_ERROR_CONTRACT.md`.
+- Success shape: `{ "success": true, "status": "success", "message": "...", "meta": { "http_status": 200, "ts": "..." } }`.
+- Error shape: `{ "success": false, "status": "error", "message": "...", "error": { "code": "...", "message": "...", "details": {} }, "errors": {}, "meta": {} }`.
+- `error.code` is mandatory for new/updated endpoints.
+- Use generic messages for 500s; never return raw exception text.
+- HTTP status map: 400 malformed, 401 unauthenticated, 403 forbidden/scope, 404 not-in-scope, 409 conflict, 422 validation, 429 rate-limited, 500 server error.

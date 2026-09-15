@@ -20,13 +20,20 @@ Key sources:
 
 Use this hierarchy: System → Province → Diocese → Parish → Personal.
 
-New parish-tier dashboards live under `Parish/`:
-- `/parish/dashboard`
-- `/parish/finance`
-- `/parish/governance`
-- `/parish/secretary`
-- `/parish/worship`
-- `/parish/volunteers`
+Role-to-route mapping (first match wins, highest tier first):
+
+| Group | Dashboard route |
+| --- | --- |
+| `systemadmin` | `/system/dashboard` |
+| `provinceadmin` | `/province/dashboard` |
+| `dioceseadmin` | `/diocese/dashboard` |
+| `parishadmin` | `/parish/dashboard` |
+| `treasurer` | `/parish/finance` |
+| `secretary` | `/parish/secretary` |
+| `warden`, `clerk`, `vestry_member` | `/parish/governance` |
+| `clergy` | `/parish/worship` |
+| `volunteer_coordinator` | `/parish/volunteers` |
+| `member` or `dashboard.view` | `/me` |
 
 Old `/dashboard` and `/treasurer/dashboard` are deprecated redirect shims.
 

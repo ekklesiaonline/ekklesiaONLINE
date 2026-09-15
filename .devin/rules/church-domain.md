@@ -32,6 +32,15 @@ trigger: always_on
 - Sacrament type comparisons must use `LOWER()` because the dropdown emits lowercase but the column is free-text.
 - `is_communicant` is attendance-based (`member_standing_summary.communion_count >= 3`), not derived from sacramental records.
 
+## Elevated Admin Scope Restrictions
+
+- Province admins have **read-only** access to church/parish data and are **blocked** from staff management (`staff`, `addStaff`, `promoteMember`, `removeStaffRole`, `demoteStaff`).
+- Tax ID editability:
+  - System Admin: all churches/parishes.
+  - Diocesan Admin: churches/parishes within their diocese.
+  - Church/Parish Admin: their own church/parish only.
+- Error key for province admin staff block: `Diocesan.provinceAdminStaffManagementDenied`.
+
 ## Registration Approvals
 
 - Use `RegistrationApprovalService` for all approve/dismiss/ban/delete actions.
@@ -54,3 +63,9 @@ trigger: always_on
 - Parish admin Sunday-attendance charts must use raw `service_metrics` values joined to `services`.
 - Do not bucket/average or apply derived ASA/ASC calculations.
 - Preserve separate service points when multiple Sunday services share a date.
+
+## Bootstrapping & Permissions
+
+- Fresh environment seeding: `php spark db:seed DatabaseSeeder`.
+- Sync role-to-menu permissions: `php spark db:seed PermissionRoleSyncSeeder`.
+- Canonical policy table: `docs/ROLE_MENU_PERMISSION_POLICY.md`.
