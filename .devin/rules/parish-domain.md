@@ -50,19 +50,11 @@ trigger: always_on
 
 ## Parish People Snapshot
 
-- After manual changes to `person`, `profile`, `user_person`, or `parish_affiliation`, re-sync:
-
-  ```bash
-  php spark parish-people:sync
-  # or for one parish:
-  php spark parish-people:integrity --repair --parish=<parish_id>
-  ```
+- See the `/parish-people-snapshot` skill for re-sync commands after manual changes to `person`, `profile`, `user_person`, or `parish_affiliation`.
 
 ## Sunday Attendance Graphics
 
-- Parish admin Sunday-attendance charts must use raw `service_metrics` values joined to `services`.
-- Do not bucket/average or apply derived ASA/ASC calculations.
-- Preserve separate service points when multiple Sunday services share a date.
+- See the `/sunday-attendance-charts` skill for chart-building guidance.
 
 ## Bootstrapping & Permissions
 

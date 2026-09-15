@@ -3,6 +3,7 @@
 ## Architecture
 
 - CodeIgniter 4.7+ with Shield 1.2 for auth.
+- Dependency management via Composer.
 - Backend: PHP 8.2+, MySQL 8.0. Frontend: Bootstrap 5, jQuery/vanilla JS, Chart.js.
 - Hierarchy: System → Province → Diocese → Parish → Personal.
 - `BaseController::resolveDashboardScope()` is the single source of truth for landing-path resolution.
@@ -34,6 +35,7 @@
 - For view/HTML rules, see `.devin/rules/views.md`.
 - For CI4/Shield coding rules, see `.devin/rules/codeigniter.md`.
 - For parish-domain data integrity rules, see `.devin/rules/parish-domain.md`.
-- For diagnostic playbooks, invoke the relevant skill (`/debug-no-parish`, `/debug-person-not-found`, `/sacrament-sync`, etc.).
+- For diagnostic playbooks, invoke the relevant skill (`/debug-no-parish`, `/debug-person-not-found`, `/sacrament-sync`, `/parish-people-snapshot`, etc.).
 - For permission/scope issues, use `/parish-permissions` or `/permission-denied`.
 - For audit, observability, and localization questions, use `/audit-logging` or `/localization`.
+- For Sunday attendance chart rules, use `/sunday-attendance-charts`.
