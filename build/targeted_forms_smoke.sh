@@ -186,7 +186,7 @@ member_attach_http=$(curl -sS -o "$AJAX3_JSON" -w '%{http_code}' --connect-timeo
   -H "X-CSRF-TOKEN: $ajax_csrf_token" \
   --data-urlencode "$csrf_name=$form_csrf_val" \
   --data-urlencode "profile_id=9999999" \
-  --data-urlencode "church_id=1" \
+  --data-urlencode "parish_id=1" \
   --data-urlencode "membership_status=active" \
   --data-urlencode "is_home=1")
 

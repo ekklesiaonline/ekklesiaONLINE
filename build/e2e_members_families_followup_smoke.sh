@@ -118,7 +118,7 @@ run_case() {
       -H "X-CSRF-TOKEN: $header_val" \
       --data-urlencode "$form_name=$form_val" \
       --data-urlencode 'profile_id=999999' \
-      --data-urlencode 'church_id=1')
+      --data-urlencode 'parish_id=1')
   elif [ "$case_name" = "FAMILIES" ]; then
     http=$(curl -s -o "$response_file" -w '%{http_code}' -b "$COOKIE_FILE" -X POST "$BASE_URL$endpoint" \
       -H 'X-Requested-With: XMLHttpRequest' \

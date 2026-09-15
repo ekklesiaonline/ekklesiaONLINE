@@ -28,10 +28,10 @@ CREATE TABLE `annual_pledge` (
   `created_at` datetime DEFAULT NULL,
   `updated_at` datetime DEFAULT NULL,
   PRIMARY KEY (`id`),
-  UNIQUE KEY `uniq_annual_pledges_user_church_year` (`user_id`,`parish_id`,`pledge_year`),
-  KEY `idx_annual_pledges_church_year` (`parish_id`,`pledge_year`),
+  UNIQUE KEY `uniq_annual_pledges_user_parish_year` (`user_id`,`parish_id`,`pledge_year`),
+  KEY `idx_annual_pledges_parish_year` (`parish_id`,`pledge_year`),
   KEY `idx_annual_pledges_user_year` (`user_id`,`pledge_year`),
-  CONSTRAINT `annual_pledges_church_id_foreign` FOREIGN KEY (`parish_id`) REFERENCES `parish` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `annual_pledges_parish_id_foreign` FOREIGN KEY (`parish_id`) REFERENCES `parish` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `annual_pledges_user_id_foreign` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 CREATE TABLE `attendance` (
@@ -69,8 +69,8 @@ CREATE TABLE `audit_log` (
   KEY `idx_audit_user_church` (`user_id`,`parish_id`),
   KEY `entity_type` (`entity_type`),
   KEY `entity_id` (`entity_id`),
-  KEY `audit_logs_church_id_foreign` (`parish_id`),
-  CONSTRAINT `audit_logs_church_id_foreign` FOREIGN KEY (`parish_id`) REFERENCES `parish` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  KEY `audit_logs_parish_id_foreign` (`parish_id`),
+  CONSTRAINT `audit_logs_parish_id_foreign` FOREIGN KEY (`parish_id`) REFERENCES `parish` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `audit_logs_user_id_foreign` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE SET NULL
 ) ENGINE=InnoDB AUTO_INCREMENT=325 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 CREATE TABLE `auth_groups_users` (
@@ -222,11 +222,11 @@ CREATE TABLE `call_task` (
   `created_at` datetime DEFAULT NULL,
   `updated_at` datetime DEFAULT NULL,
   PRIMARY KEY (`id`),
-  KEY `church_id_status` (`parish_id`,`status`),
+  KEY `parish_id_status` (`parish_id`,`status`),
   KEY `guest_id` (`guest_id`),
   KEY `assigned_to` (`assigned_to`),
   KEY `log_id` (`log_id`),
-  CONSTRAINT `call_tasks_church_id_foreign` FOREIGN KEY (`parish_id`) REFERENCES `parish` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `call_tasks_parish_id_foreign` FOREIGN KEY (`parish_id`) REFERENCES `parish` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `call_tasks_guest_id_foreign` FOREIGN KEY (`guest_id`) REFERENCES `guest` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `call_tasks_log_id_foreign` FOREIGN KEY (`log_id`) REFERENCES `followup_log` (`id`) ON DELETE CASCADE ON UPDATE SET NULL
 ) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -256,7 +256,7 @@ CREATE TABLE `chart_of_accounts` (
   UNIQUE KEY `code` (`code`),
   KEY `account_type_is_active` (`account_type`,`is_active`)
 ) ENGINE=InnoDB AUTO_INCREMENT=148 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-CREATE TABLE `church_role_catalog` (
+CREATE TABLE `parish_role_catalog` (
   `id` int unsigned NOT NULL AUTO_INCREMENT,
   `scope` enum('parish','diocese','province','system') COLLATE utf8mb4_general_ci NOT NULL DEFAULT 'parish',
   `role_key` varchar(100) COLLATE utf8mb4_general_ci NOT NULL,
@@ -407,10 +407,10 @@ CREATE TABLE `diocesan_attendance_monthly` (
   `created_at` datetime DEFAULT NULL,
   `updated_at` datetime DEFAULT NULL,
   PRIMARY KEY (`id`),
-  UNIQUE KEY `uq_da_diocese_church_month` (`diocese_id`,`parish_id`,`period_month`),
+  UNIQUE KEY `uq_da_diocese_parish_month` (`diocese_id`,`parish_id`,`period_month`),
   KEY `idx_da_month_diocese` (`diocese_id`,`period_month`),
   KEY `idx_da_month_church` (`parish_id`,`period_month`),
-  CONSTRAINT `diocesan_attendance_monthly_church_id_foreign` FOREIGN KEY (`parish_id`) REFERENCES `parish` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `diocesan_attendance_monthly_parish_id_foreign` FOREIGN KEY (`parish_id`) REFERENCES `parish` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `diocesan_attendance_monthly_diocese_id_foreign` FOREIGN KEY (`diocese_id`) REFERENCES `diocese` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=13 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 CREATE TABLE `diocesan_sunday_monthly_metrics` (
@@ -442,8 +442,8 @@ CREATE TABLE `diocesan_sunday_service_metrics` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `uq_dssm_service` (`service_id`),
   KEY `idx_dssm_diocese_date` (`diocese_id`,`service_date`),
-  KEY `idx_dssm_church_date` (`parish_id`,`service_date`),
-  CONSTRAINT `diocesan_sunday_service_metrics_church_id_foreign` FOREIGN KEY (`parish_id`) REFERENCES `parish` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  KEY `idx_dssm_parish_date` (`parish_id`,`service_date`),
+  CONSTRAINT `diocesan_sunday_service_metrics_parish_id_foreign` FOREIGN KEY (`parish_id`) REFERENCES `parish` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `diocesan_sunday_service_metrics_diocese_id_foreign` FOREIGN KEY (`diocese_id`) REFERENCES `diocese` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `diocesan_sunday_service_metrics_service_id_foreign` FOREIGN KEY (`service_id`) REFERENCES `service` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=62 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -508,14 +508,14 @@ CREATE TABLE `donation` (
   `restriction_purpose` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT 'Describes the restriction if is_restricted=1',
   `deleted_at` datetime DEFAULT NULL,
   PRIMARY KEY (`id`),
-  KEY `church_id` (`parish_id`),
+  KEY `parish_id` (`parish_id`),
   KEY `user_id` (`user_id`),
   KEY `date` (`date`),
-  KEY `idx_church_date` (`parish_id`,`date`),
+  KEY `idx_parish_date` (`parish_id`,`date`),
   KEY `idx_donations_chart_account` (`chart_account_id`),
   KEY `idx_donations_fund_id` (`fund_id`),
   KEY `idx_date_range` (`date`,`parish_id`),
-  CONSTRAINT `donations_church_id_foreign` FOREIGN KEY (`parish_id`) REFERENCES `parish` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `donations_parish_id_foreign` FOREIGN KEY (`parish_id`) REFERENCES `parish` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `donations_user_id_foreign` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE SET NULL,
   CONSTRAINT `fk_donations_chart_account` FOREIGN KEY (`chart_account_id`) REFERENCES `chart_of_accounts` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
   CONSTRAINT `fk_donations_fund_id` FOREIGN KEY (`fund_id`) REFERENCES `fund` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
@@ -572,14 +572,14 @@ CREATE TABLE `event` (
   `deleted_at` datetime DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `events_created_by_foreign` (`created_by`),
-  KEY `church_id_start_at` (`parish_id`,`start_at`),
+  KEY `parish_id_start_at` (`parish_id`,`start_at`),
   KEY `status` (`status`),
   KEY `idx_events_calendar_start` (`calendar_id`,`start_at`),
   KEY `idx_events_scope_dates` (`scope_level`,`scope_diocese_id`,`parish_id`,`start_at`),
   KEY `fk_events_scope_diocese_id` (`scope_diocese_id`),
   KEY `idx_event_audience_team_id` (`audience_team_id`),
   KEY `idx_event_audience_family_id` (`audience_family_id`),
-  CONSTRAINT `events_church_id_foreign` FOREIGN KEY (`parish_id`) REFERENCES `parish` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `events_parish_id_foreign` FOREIGN KEY (`parish_id`) REFERENCES `parish` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `events_created_by_foreign` FOREIGN KEY (`created_by`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE SET NULL,
   CONSTRAINT `fk_event_audience_family` FOREIGN KEY (`audience_family_id`) REFERENCES `family` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
   CONSTRAINT `fk_event_audience_team` FOREIGN KEY (`audience_team_id`) REFERENCES `team` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
@@ -615,8 +615,8 @@ CREATE TABLE `event_calendar` (
   KEY `event_calendars_diocese_id_foreign` (`diocese_id`),
   KEY `event_calendars_created_by_foreign` (`created_by`),
   KEY `idx_event_calendars_scope` (`scope_level`,`parish_id`,`diocese_id`,`is_active`),
-  KEY `event_calendars_church_id_foreign` (`parish_id`),
-  CONSTRAINT `event_calendars_church_id_foreign` FOREIGN KEY (`parish_id`) REFERENCES `parish` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  KEY `event_calendars_parish_id_foreign` (`parish_id`),
+  CONSTRAINT `event_calendars_parish_id_foreign` FOREIGN KEY (`parish_id`) REFERENCES `parish` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `event_calendars_created_by_foreign` FOREIGN KEY (`created_by`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE SET NULL,
   CONSTRAINT `event_calendars_diocese_id_foreign` FOREIGN KEY (`diocese_id`) REFERENCES `diocese` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=6864 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -657,8 +657,8 @@ CREATE TABLE `event_registration` (
   PRIMARY KEY (`id`),
   KEY `event_registrations_user_id_foreign` (`user_id`),
   KEY `event_id_status` (`event_id`,`status`),
-  KEY `church_id` (`parish_id`),
-  CONSTRAINT `event_registrations_church_id_foreign` FOREIGN KEY (`parish_id`) REFERENCES `parish` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  KEY `parish_id` (`parish_id`),
+  CONSTRAINT `event_registrations_parish_id_foreign` FOREIGN KEY (`parish_id`) REFERENCES `parish` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `event_registrations_event_id_foreign` FOREIGN KEY (`event_id`) REFERENCES `event` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `event_registrations_user_id_foreign` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE SET NULL
 ) ENGINE=InnoDB AUTO_INCREMENT=20 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -687,14 +687,14 @@ CREATE TABLE `expense` (
   `is_capital` tinyint(1) NOT NULL DEFAULT '0' COMMENT 'TEC Parochial: capital vs. operating expense',
   PRIMARY KEY (`id`),
   KEY `expenses_approved_by_foreign` (`approved_by`),
-  KEY `church_id` (`parish_id`),
+  KEY `parish_id` (`parish_id`),
   KEY `date` (`date`),
   KEY `idx_expenses_chart_account` (`chart_account_id`),
   KEY `idx_expenses_fund_id` (`fund_id`),
-  KEY `idx_church_date` (`parish_id`,`date`),
+  KEY `idx_parish_date` (`parish_id`,`date`),
   KEY `idx_date_range` (`date`,`parish_id`),
   CONSTRAINT `expenses_approved_by_foreign` FOREIGN KEY (`approved_by`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE SET NULL,
-  CONSTRAINT `expenses_church_id_foreign` FOREIGN KEY (`parish_id`) REFERENCES `parish` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `expenses_parish_id_foreign` FOREIGN KEY (`parish_id`) REFERENCES `parish` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `fk_expenses_chart_account` FOREIGN KEY (`chart_account_id`) REFERENCES `chart_of_accounts` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
   CONSTRAINT `fk_expenses_fund_id` FOREIGN KEY (`fund_id`) REFERENCES `fund` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -761,8 +761,8 @@ CREATE TABLE `family` (
   `deleted_at` datetime DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `families_head_of_household_id_foreign` (`head_of_household_id`),
-  KEY `church_id` (`parish_id`),
-  CONSTRAINT `families_church_id_foreign` FOREIGN KEY (`parish_id`) REFERENCES `parish` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  KEY `parish_id` (`parish_id`),
+  CONSTRAINT `families_parish_id_foreign` FOREIGN KEY (`parish_id`) REFERENCES `parish` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `families_head_of_household_id_foreign` FOREIGN KEY (`head_of_household_id`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE SET NULL
 ) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 CREATE TABLE `family_member` (
@@ -852,9 +852,9 @@ CREATE TABLE `followup_sequence` (
   `created_at` datetime DEFAULT NULL,
   `updated_at` datetime DEFAULT NULL,
   PRIMARY KEY (`id`),
-  KEY `church_id` (`parish_id`),
+  KEY `parish_id` (`parish_id`),
   KEY `is_active` (`is_active`),
-  CONSTRAINT `followup_sequences_church_id_foreign` FOREIGN KEY (`parish_id`) REFERENCES `parish` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+  CONSTRAINT `followup_sequences_parish_id_foreign` FOREIGN KEY (`parish_id`) REFERENCES `parish` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=1406 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
  1 AS `id`,
  1 AS `parish_id`,
@@ -875,9 +875,9 @@ CREATE TABLE `followup_template` (
   `created_at` datetime DEFAULT NULL,
   `updated_at` datetime DEFAULT NULL,
   PRIMARY KEY (`id`),
-  KEY `church_id` (`parish_id`),
+  KEY `parish_id` (`parish_id`),
   KEY `channel` (`channel`),
-  CONSTRAINT `followup_templates_church_id_foreign` FOREIGN KEY (`parish_id`) REFERENCES `parish` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+  CONSTRAINT `followup_templates_parish_id_foreign` FOREIGN KEY (`parish_id`) REFERENCES `parish` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
  1 AS `id`,
  1 AS `parish_id`,
@@ -903,13 +903,13 @@ CREATE TABLE `fund` (
   `created_at` datetime DEFAULT NULL,
   `updated_at` datetime DEFAULT NULL,
   PRIMARY KEY (`id`),
-  UNIQUE KEY `uq_church_fund_name` (`parish_id`,`name`),
+  UNIQUE KEY `uq_parish_fund_name` (`parish_id`,`name`),
   KEY `funds_created_by_foreign` (`created_by`),
-  KEY `church_id` (`parish_id`),
-  KEY `church_id_is_active` (`parish_id`,`is_active`),
+  KEY `parish_id` (`parish_id`),
+  KEY `parish_id_is_active` (`parish_id`,`is_active`),
   KEY `chart_account_id` (`chart_account_id`),
   CONSTRAINT `funds_chart_account_id_foreign` FOREIGN KEY (`chart_account_id`) REFERENCES `chart_of_accounts` (`id`) ON DELETE CASCADE ON UPDATE SET NULL,
-  CONSTRAINT `funds_church_id_foreign` FOREIGN KEY (`parish_id`) REFERENCES `parish` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `funds_parish_id_foreign` FOREIGN KEY (`parish_id`) REFERENCES `parish` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `funds_created_by_foreign` FOREIGN KEY (`created_by`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE SET NULL
 ) ENGINE=InnoDB AUTO_INCREMENT=172 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 CREATE TABLE `governance_term` (
@@ -952,16 +952,16 @@ CREATE TABLE `guest` (
   `created_at` datetime DEFAULT NULL,
   `updated_at` datetime DEFAULT NULL,
   PRIMARY KEY (`id`),
-  KEY `church_id` (`parish_id`),
+  KEY `parish_id` (`parish_id`),
   KEY `idx_visit_date` (`visit_date`),
-  KEY `idx_church_followup` (`parish_id`,`followed_up`),
+  KEY `idx_parish_followup` (`parish_id`,`followed_up`),
   KEY `idx_guests_converted_user_id` (`converted_user_id`),
-  KEY `idx_guests_church_converted` (`parish_id`,`converted_to_member_at`),
+  KEY `idx_guests_parish_converted` (`parish_id`,`converted_to_member_at`),
   KEY `guests_converted_by_user_id_foreign` (`converted_by_user_id`),
   KEY `idx_guests_email_hash` (`email_hash`),
   KEY `idx_guests_phone_hash` (`phone_hash`),
   KEY `idx_guests_source` (`source`),
-  CONSTRAINT `guests_church_id_foreign` FOREIGN KEY (`parish_id`) REFERENCES `parish` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `guests_parish_id_foreign` FOREIGN KEY (`parish_id`) REFERENCES `parish` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `guests_converted_by_user_id_foreign` FOREIGN KEY (`converted_by_user_id`) REFERENCES `users` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
   CONSTRAINT `guests_converted_user_id_foreign` FOREIGN KEY (`converted_user_id`) REFERENCES `users` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=1425 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -979,9 +979,9 @@ CREATE TABLE `guest_visit` (
   `updated_at` datetime DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `guest_id` (`guest_id`),
-  KEY `church_id_visit_date` (`parish_id`,`visit_date`),
+  KEY `parish_id_visit_date` (`parish_id`,`visit_date`),
   KEY `service_id` (`service_id`),
-  CONSTRAINT `guest_visits_church_id_foreign` FOREIGN KEY (`parish_id`) REFERENCES `parish` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `guest_visits_parish_id_foreign` FOREIGN KEY (`parish_id`) REFERENCES `parish` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `guest_visits_guest_id_foreign` FOREIGN KEY (`guest_id`) REFERENCES `guest` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `guest_visits_service_id_foreign` FOREIGN KEY (`service_id`) REFERENCES `service` (`id`) ON DELETE CASCADE ON UPDATE SET NULL
 ) ENGINE=InnoDB AUTO_INCREMENT=1486 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -1060,12 +1060,12 @@ CREATE TABLE `leadership_position` (
   PRIMARY KEY (`id`),
   KEY `leadership_positions_appointed_by_user_id_foreign` (`appointed_by_user_id`),
   KEY `idx_leadership_scope_active` (`scope_type`,`active`),
-  KEY `idx_leadership_church_active` (`parish_id`,`active`),
+  KEY `idx_leadership_parish_active` (`parish_id`,`active`),
   KEY `idx_leadership_diocese_active` (`diocese_id`,`active`),
   KEY `idx_leadership_province_active` (`province_id`,`active`),
   KEY `idx_leadership_user_active` (`user_id`,`active`),
   CONSTRAINT `leadership_positions_appointed_by_user_id_foreign` FOREIGN KEY (`appointed_by_user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE SET NULL,
-  CONSTRAINT `leadership_positions_church_id_foreign` FOREIGN KEY (`parish_id`) REFERENCES `parish` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `leadership_positions_parish_id_foreign` FOREIGN KEY (`parish_id`) REFERENCES `parish` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `leadership_positions_diocese_id_foreign` FOREIGN KEY (`diocese_id`) REFERENCES `diocese` (`id`) ON DELETE CASCADE ON UPDATE SET NULL,
   CONSTRAINT `leadership_positions_province_id_foreign` FOREIGN KEY (`province_id`) REFERENCES `province` (`id`) ON DELETE CASCADE ON UPDATE SET NULL,
   CONSTRAINT `leadership_positions_user_id_foreign` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
@@ -1091,7 +1091,7 @@ CREATE TABLE `liturgical_calendar_entries` (
   `updated_at` datetime DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `code` (`code`),
-  KEY `church_id` (`parish_id`),
+  KEY `parish_id` (`parish_id`),
   KEY `season` (`season`),
   KEY `observance_type` (`observance_type`),
   KEY `sort_order` (`sort_order`),
@@ -1103,11 +1103,11 @@ CREATE TABLE `liturgical_calendar_entries` (
   CONSTRAINT `fk_liturgical_created_by_user` FOREIGN KEY (`created_by_user_id`) REFERENCES `users` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
   CONSTRAINT `fk_liturgical_owner_diocese` FOREIGN KEY (`owner_diocese_id`) REFERENCES `diocese` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
   CONSTRAINT `fk_liturgical_owner_province` FOREIGN KEY (`owner_province_id`) REFERENCES `province` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
-  CONSTRAINT `liturgical_calendar_entries_church_id_foreign` FOREIGN KEY (`parish_id`) REFERENCES `parish` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+  CONSTRAINT `liturgical_calendar_entries_parish_id_foreign` FOREIGN KEY (`parish_id`) REFERENCES `parish` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=70 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
  1 AS `id`,
  1 AS `user_id`,
- 1 AS `church_id`,
+ 1 AS `parish_id`,
  1 AS `diocese_id`,
  1 AS `membership_status`,
  1 AS `is_member`,
@@ -1297,13 +1297,13 @@ CREATE TABLE `parish_budget` (
   `updated_at` datetime DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `uq_parish_budgets` (`parish_id`,`chart_account_id`,`fiscal_year`),
-  KEY `church_budgets_chart_account_id_foreign` (`chart_account_id`),
-  KEY `church_budgets_created_by_foreign` (`created_by`),
-  KEY `church_budgets_updated_by_foreign` (`updated_by`),
-  KEY `church_id_fiscal_year` (`parish_id`,`fiscal_year`),
-  CONSTRAINT `church_budgets_chart_account_id_foreign` FOREIGN KEY (`chart_account_id`) REFERENCES `chart_of_accounts` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
-  CONSTRAINT `church_budgets_created_by_foreign` FOREIGN KEY (`created_by`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE SET NULL,
-  CONSTRAINT `church_budgets_updated_by_foreign` FOREIGN KEY (`updated_by`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE SET NULL,
+  KEY `parish_budgets_chart_account_id_foreign` (`chart_account_id`),
+  KEY `parish_budgets_created_by_foreign` (`created_by`),
+  KEY `parish_budgets_updated_by_foreign` (`updated_by`),
+  KEY `parish_id_fiscal_year` (`parish_id`,`fiscal_year`),
+  CONSTRAINT `parish_budgets_chart_account_id_foreign` FOREIGN KEY (`chart_account_id`) REFERENCES `chart_of_accounts` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `parish_budgets_created_by_foreign` FOREIGN KEY (`created_by`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE SET NULL,
+  CONSTRAINT `parish_budgets_updated_by_foreign` FOREIGN KEY (`updated_by`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE SET NULL,
   CONSTRAINT `parish_budgets_parish_id_foreign` FOREIGN KEY (`parish_id`) REFERENCES `parish` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=30 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 CREATE TABLE `parish_integration` (
@@ -1320,7 +1320,7 @@ CREATE TABLE `parish_integration` (
   `created_at` datetime DEFAULT NULL,
   `updated_at` datetime DEFAULT NULL,
   PRIMARY KEY (`id`),
-  KEY `idx_church_provider` (`parish_id`,`provider`),
+  KEY `idx_parish_provider` (`parish_id`,`provider`),
   KEY `idx_active` (`is_active`),
   CONSTRAINT `parish_integration_parish_id_foreign` FOREIGN KEY (`parish_id`) REFERENCES `parish` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -1363,7 +1363,7 @@ CREATE TABLE `parish_provider_credential` (
   PRIMARY KEY (`id`),
   KEY `idx_integration_credential` (`integration_id`,`credential_key`),
   KEY `idx_cred_active` (`is_active`),
-  CONSTRAINT `church_provider_credentials_integration_id_foreign` FOREIGN KEY (`integration_id`) REFERENCES `parish_integration` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+  CONSTRAINT `parish_provider_credentials_integration_id_foreign` FOREIGN KEY (`integration_id`) REFERENCES `parish_integration` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 CREATE TABLE `parish_report` (
   `id` int unsigned NOT NULL AUTO_INCREMENT,
@@ -1461,8 +1461,8 @@ CREATE TABLE `parish_report_storage` (
   `created_at` datetime DEFAULT NULL,
   `updated_at` datetime DEFAULT NULL,
   PRIMARY KEY (`id`),
-  UNIQUE KEY `church_id_report_year` (`parish_id`,`report_year`),
-  CONSTRAINT `church_financial_summary_church_id_foreign` FOREIGN KEY (`parish_id`) REFERENCES `parish` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+  UNIQUE KEY `parish_id_report_year` (`parish_id`,`report_year`),
+  CONSTRAINT `parish_financial_summary_parish_id_foreign` FOREIGN KEY (`parish_id`) REFERENCES `parish` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 CREATE TABLE `parish_role_audit_log` (
   `id` int unsigned NOT NULL AUTO_INCREMENT,
@@ -1474,12 +1474,12 @@ CREATE TABLE `parish_role_audit_log` (
   `details` text COLLATE utf8mb4_general_ci,
   `created_at` datetime DEFAULT NULL,
   PRIMARY KEY (`id`),
-  KEY `church_id` (`parish_id`),
+  KEY `parish_id` (`parish_id`),
   KEY `actor_user_id` (`actor_user_id`),
   KEY `target_user_id` (`target_user_id`),
   KEY `created_at` (`created_at`),
-  CONSTRAINT `church_role_audit_logs_actor_user_id_foreign` FOREIGN KEY (`actor_user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
-  CONSTRAINT `church_role_audit_logs_target_user_id_foreign` FOREIGN KEY (`target_user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `parish_role_audit_logs_actor_user_id_foreign` FOREIGN KEY (`actor_user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `parish_role_audit_logs_target_user_id_foreign` FOREIGN KEY (`target_user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `parish_role_audit_log_parish_id_foreign` FOREIGN KEY (`parish_id`) REFERENCES `parish` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=55 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 CREATE TABLE `parish_setting` (
@@ -1491,7 +1491,7 @@ CREATE TABLE `parish_setting` (
   `created_at` datetime DEFAULT NULL,
   `updated_at` datetime DEFAULT NULL,
   PRIMARY KEY (`id`),
-  KEY `idx_church_setting` (`parish_id`,`key`),
+  KEY `idx_parish_setting` (`parish_id`,`key`),
   CONSTRAINT `parish_setting_parish_id_foreign` FOREIGN KEY (`parish_id`) REFERENCES `parish` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 CREATE TABLE `parish_user_role` (
@@ -1720,9 +1720,9 @@ CREATE TABLE `profile` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `user_id` (`user_id`),
   KEY `person_id` (`person_id`),
-  KEY `church_id` (`parish_id`),
+  KEY `parish_id` (`parish_id`),
   KEY `idx_membership_status` (`membership_status`),
-  KEY `idx_church_status` (`parish_id`,`membership_status`),
+  KEY `idx_parish_status` (`parish_id`,`membership_status`),
   KEY `idx_profiles_diocese_id` (`diocese_id`),
   KEY `idx_profiles_province_id` (`province_id`),
   KEY `idx_profiles_phone_hash` (`phone_hash`),
@@ -1874,11 +1874,11 @@ CREATE TABLE `service` (
   `created_at` datetime DEFAULT NULL,
   `updated_at` datetime DEFAULT NULL,
   PRIMARY KEY (`id`),
-  KEY `church_id` (`parish_id`),
-  KEY `idx_church_date_composite` (`parish_id`),
-  KEY `idx_church_date` (`parish_id`),
+  KEY `parish_id` (`parish_id`),
+  KEY `idx_parish_date_composite` (`parish_id`),
+  KEY `idx_parish_date` (`parish_id`),
   KEY `idx_date_range` (`parish_id`),
-  CONSTRAINT `services_church_id_foreign` FOREIGN KEY (`parish_id`) REFERENCES `parish` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+  CONSTRAINT `services_parish_id_foreign` FOREIGN KEY (`parish_id`) REFERENCES `parish` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=30 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 CREATE TABLE `service_metric` (
   `service_id` int unsigned NOT NULL,
@@ -2024,7 +2024,7 @@ CREATE TABLE `sms_queue` (
   `updated_at` datetime DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `status_scheduled_at` (`status`,`scheduled_at`),
-  KEY `church_id` (`parish_id`)
+  KEY `parish_id` (`parish_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 CREATE TABLE `social_media_post` (
   `id` int unsigned NOT NULL AUTO_INCREMENT,
@@ -2059,8 +2059,8 @@ CREATE TABLE `team` (
   `updated_at` datetime DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `volunteer_teams_leader_id_foreign` (`leader_id`),
-  KEY `church_id` (`parish_id`),
-  CONSTRAINT `volunteer_teams_church_id_foreign` FOREIGN KEY (`parish_id`) REFERENCES `parish` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  KEY `parish_id` (`parish_id`),
+  CONSTRAINT `volunteer_teams_parish_id_foreign` FOREIGN KEY (`parish_id`) REFERENCES `parish` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `volunteer_teams_leader_id_foreign` FOREIGN KEY (`leader_id`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE SET NULL
 ) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 CREATE TABLE `team_member` (
@@ -2094,7 +2094,7 @@ CREATE TABLE `user_registration_requests` (
   `user_id` int unsigned NOT NULL,
   `province_id` int unsigned NOT NULL,
   `diocese_id` int unsigned DEFAULT NULL,
-  `requested_church_id` int unsigned DEFAULT NULL,
+  `requested_parish_id` int unsigned DEFAULT NULL,
   `status` enum('pending_profile','pending_review','approved','dismissed','banned') COLLATE utf8mb4_general_ci NOT NULL DEFAULT 'pending_profile',
   `requested_role` varchar(50) COLLATE utf8mb4_general_ci DEFAULT NULL,
   `reviewed_by` int unsigned DEFAULT NULL,
@@ -2109,10 +2109,10 @@ CREATE TABLE `user_registration_requests` (
   KEY `province_id` (`province_id`),
   KEY `diocese_id` (`diocese_id`),
   KEY `status` (`status`),
-  KEY `urr_requested_church_idx` (`requested_church_id`),
+  KEY `urr_requested_parish_idx` (`requested_parish_id`),
   CONSTRAINT `user_registration_requests_diocese_id_foreign` FOREIGN KEY (`diocese_id`) REFERENCES `diocese` (`id`) ON DELETE CASCADE ON UPDATE SET NULL,
   CONSTRAINT `user_registration_requests_province_id_foreign` FOREIGN KEY (`province_id`) REFERENCES `province` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
-  CONSTRAINT `user_registration_requests_requested_parish_id_foreign` FOREIGN KEY (`requested_church_id`) REFERENCES `parish` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT `user_registration_requests_requested_parish_id_foreign` FOREIGN KEY (`requested_parish_id`) REFERENCES `parish` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
   CONSTRAINT `user_registration_requests_reviewed_by_foreign` FOREIGN KEY (`reviewed_by`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE SET NULL,
   CONSTRAINT `user_registration_requests_user_id_foreign` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -2291,8 +2291,8 @@ CREATE TABLE `worship_song` (
   `created_at` datetime DEFAULT NULL,
   `updated_at` datetime DEFAULT NULL,
   PRIMARY KEY (`id`),
-  KEY `church_id_title` (`parish_id`,`title`),
-  CONSTRAINT `worship_songs_church_id_foreign` FOREIGN KEY (`parish_id`) REFERENCES `parish` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+  KEY `parish_id_title` (`parish_id`,`title`),
+  CONSTRAINT `worship_songs_parish_id_foreign` FOREIGN KEY (`parish_id`) REFERENCES `parish` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 CREATE TABLE `worship_template` (
   `id` int unsigned NOT NULL AUTO_INCREMENT,

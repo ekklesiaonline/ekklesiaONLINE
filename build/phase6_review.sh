@@ -14,7 +14,7 @@ BASE_URL="${BASE_URL:-}"
 LOGIN_EMAIL="${LOGIN_EMAIL:-}"
 LOGIN_PASSWORD="${LOGIN_PASSWORD:-}"
 REPEAT="${REPEAT:-3}"
-CHURCH_ID="${CHURCH_ID:-}"
+PARISH_ID="${PARISH_ID:-}"
 START_DATE="${START_DATE:-}"
 END_DATE="${END_DATE:-}"
 ENABLE_SLOW_LOG="${ENABLE_SLOW_LOG:-1}"
@@ -43,8 +43,8 @@ run_and_capture() {
 }
 
 benchmark_args=""
-if [ -n "$CHURCH_ID" ]; then
-  benchmark_args="$benchmark_args --church $CHURCH_ID"
+if [ -n "$PARISH_ID" ]; then
+  benchmark_args="$benchmark_args --parish $PARISH_ID"
 fi
 if [ -n "$START_DATE" ]; then
   benchmark_args="$benchmark_args --start-date $START_DATE"
