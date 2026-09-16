@@ -24,7 +24,7 @@ class MembershipStatusServiceTest extends CIUnitTestCase
     {
         $this->assertSame('visitor', MembershipStatusService::affiliationToProfile('visitor'));
         $this->assertSame('regular_attender', MembershipStatusService::affiliationToProfile('regular_attender'));
-        $this->assertSame('active', MembershipStatusService::affiliationToProfile('member'));
+        $this->assertSame('member', MembershipStatusService::affiliationToProfile('member'));
         $this->assertSame('inactive', MembershipStatusService::affiliationToProfile('inactive'));
         $this->assertSame('inactive', MembershipStatusService::affiliationToProfile('transferred'));
         $this->assertSame('inactive', MembershipStatusService::affiliationToProfile('deceased'));

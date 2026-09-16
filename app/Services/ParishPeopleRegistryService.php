@@ -133,7 +133,7 @@ class ParishPeopleRegistryService
                     $updateBatch[] = $payload;
 
                     $statusChanges[] = [
-                        'profile_id' => (int) ($existing['profile_id'] ?? $payload['profile_id'] ?? 0),
+                        'person_id' => (int) ($row['person_id'] ?? 0),
                         'parish_id' => (int) $payload['parish_id'],
                         'old_status' => (string) ($existing['membership_status'] ?? ''),
                         'new_status' => (string) $payload['membership_status'],
@@ -142,7 +142,7 @@ class ParishPeopleRegistryService
                     $insertBatch[] = $payload;
 
                     $statusChanges[] = [
-                        'profile_id' => (int) ($payload['profile_id'] ?? 0),
+                        'person_id' => (int) ($row['person_id'] ?? 0),
                         'parish_id' => (int) $payload['parish_id'],
                         'old_status' => null,
                         'new_status' => (string) $payload['membership_status'],
@@ -163,7 +163,7 @@ class ParishPeopleRegistryService
             // M5: Record status changes (still per-row, but separated from DB writes)
             foreach ($statusChanges as $change) {
                 $this->recordStatusChange(
-                    $change['profile_id'],
+                    $change['person_id'],
                     $change['parish_id'],
                     $change['old_status'],
                     $change['new_status']
@@ -231,6 +231,12 @@ class ParishPeopleRegistryService
             : 'user_id';
         $hasPortalAccess = in_array('portal_access', array_map('strtolower', $profileColumns), true);
         $portalAccessSelect = $hasPortalAccess ? 'p.portal_access' : '"none" as portal_access';
+        // Canonical person key: needed to join person-owned tables
+        // (sacramental_record, person_membership_details) and to record
+        // status history against person.id — never profile.id.
+        $personIdSelect = in_array('person_id', array_map('strtolower', $profileColumns), true)
+            ? 'p.person_id AS person_id'
+            : 'NULL AS person_id';
 
         $nicknameSelect = in_array('nickname', array_map('strtolower', $profileColumns), true) ? ', p.nickname' : '';
 
@@ -249,7 +255,7 @@ class ParishPeopleRegistryService
         $sacramentBaptizedExpr    = $hasSacramentTable ? 'MAX(CASE WHEN LOWER(sr.sacrament_type) = "baptism" THEN 1 ELSE NULL END)' : null;
         $sacramentConfirmedExpr   = $hasSacramentTable ? 'MAX(CASE WHEN LOWER(sr.sacrament_type) = "confirmation" THEN 1 ELSE NULL END)' : null;
         $sacramentJoin = $hasSacramentTable
-            ? 'LEFT JOIN sacramental_record sr ON sr.person_id = p.id AND sr.parish_id = mca.parish_id AND LOWER(sr.sacrament_type) IN ("baptism","confirmation")'
+            ? 'LEFT JOIN sacramental_record sr ON sr.person_id = p.person_id AND sr.parish_id = mca.parish_id AND LOWER(sr.sacrament_type) IN ("baptism","confirmation")'
             : '';
 
         $ageExpr = 'CASE WHEN p.birth_date IS NOT NULL AND TIMESTAMPDIFF(YEAR, p.birth_date, CURDATE()) < 16 THEN 1 ELSE 0 END';
@@ -287,7 +293,7 @@ class ParishPeopleRegistryService
         }
 
         $query = db_connect()->table($affiliationTable . ' mca')
-            ->select('mca.parish_id AS parish_id, mca.' . $affiliationUserColumn . ' AS user_id, p.id as profile_id, p.first_name, p.last_name' . $nicknameSelect . ', p.profile_picture, p.phone, ' . $portalAccessSelect . ', SUBSTRING_INDEX(GROUP_CONCAT(mca.membership_status ORDER BY COALESCE(mca.is_primary, 0) DESC, mca.id DESC), \',\', 1) AS membership_status, SUBSTRING_INDEX(GROUP_CONCAT(mca.is_member ORDER BY COALESCE(mca.is_primary, 0) DESC, mca.id DESC), \',\', 1) AS is_member, ' . $pmdBaptized . ' AS is_baptized, ' . $pmdConfirmed . ' AS is_confirmed, ' . $pmdCommunicant . ' AS is_communicant, ' . $pmdDependent . ' AS is_dependent, ' . $ageExpr . ' AS is_under_16, ' . $pmdHasPledge . ' AS has_pledge, ' . $isLeaderExpr . ' AS is_leader, ' . $leaderTitlesExpr . ' AS leader_titles, ' . $mssSelect . ' as is_good_standing, MAX(ai.secret) as email, MAX(COALESCE(ai.force_reset, 0)) as force_reset', false)
+            ->select('mca.parish_id AS parish_id, mca.' . $affiliationUserColumn . ' AS user_id, p.id as profile_id, ' . $personIdSelect . ', p.first_name, p.last_name' . $nicknameSelect . ', p.profile_picture, p.phone, ' . $portalAccessSelect . ', SUBSTRING_INDEX(GROUP_CONCAT(mca.membership_status ORDER BY COALESCE(mca.is_primary, 0) DESC, mca.id DESC), \',\', 1) AS membership_status, SUBSTRING_INDEX(GROUP_CONCAT(mca.is_member ORDER BY COALESCE(mca.is_primary, 0) DESC, mca.id DESC), \',\', 1) AS is_member, ' . $pmdBaptized . ' AS is_baptized, ' . $pmdConfirmed . ' AS is_confirmed, ' . $pmdCommunicant . ' AS is_communicant, ' . $pmdDependent . ' AS is_dependent, ' . $ageExpr . ' AS is_under_16, ' . $pmdHasPledge . ' AS has_pledge, ' . $isLeaderExpr . ' AS is_leader, ' . $leaderTitlesExpr . ' AS leader_titles, ' . $mssSelect . ' as is_good_standing, MAX(ai.secret) as email, MAX(COALESCE(ai.force_reset, 0)) as force_reset', false)
             ->join('users u', 'u.id = mca.' . $affiliationUserColumn, 'inner')
             ->join($profileTable . ' p', 'p.user_id = mca.' . $affiliationUserColumn . ' AND (p.parish_id = mca.parish_id OR p.parish_id IS NULL)', 'inner')
             ->join('auth_identities ai', 'ai.user_id = mca.' . $affiliationUserColumn . ' AND ai.type = "email_password"', 'left')
@@ -307,11 +313,11 @@ class ParishPeopleRegistryService
         }
 
         if ($personMembershipDetailsTable !== null) {
-            $query->join($personMembershipDetailsTable . ' pmd', 'pmd.person_id = p.id AND pmd.parish_id = mca.parish_id', 'left');
+            $query->join($personMembershipDetailsTable . ' pmd', 'pmd.person_id = p.person_id AND pmd.parish_id = mca.parish_id', 'left');
         }
 
         if ($sacramentJoin !== '') {
-            $query->join('sacramental_record sr', 'sr.person_id = p.id AND sr.parish_id = mca.parish_id AND LOWER(sr.sacrament_type) IN ("baptism","confirmation")', 'left');
+            $query->join('sacramental_record sr', 'sr.person_id = p.person_id AND sr.parish_id = mca.parish_id AND LOWER(sr.sacrament_type) IN ("baptism","confirmation")', 'left');
         }
 
         return $query

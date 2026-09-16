@@ -48,7 +48,7 @@ class PeopleMetricsService
             'total_guests' => $totalGuests,
             'total_people' => $totalPeople,
             'total_members' => $affiliationModel->countDistinctMembers($parishId),
-            'active_members' => $affiliationModel->countDistinctMembers($parishId, ['active']),
+            'active_members' => $affiliationModel->countDistinctMembers($parishId, ['member']),
             'inactive_members' => $affiliationModel->countDistinctMembers($parishId, ['inactive']),
             'good_standing_members' => (int) ($goodStandingRow['count'] ?? 0),
             'leadership_members' => $leadershipModel->countActiveForParish($parishId),

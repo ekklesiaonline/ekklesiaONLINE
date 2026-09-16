@@ -98,7 +98,7 @@ class MembershipStatusService
     private static array $affiliationToProfile = [
         'visitor' => 'visitor',
         'regular_attender' => 'regular_attender',
-        'member' => 'active',
+        'member' => 'member',
         'guest' => 'visitor',
         'attendee' => 'regular_attender',
         'inactive' => 'inactive',
