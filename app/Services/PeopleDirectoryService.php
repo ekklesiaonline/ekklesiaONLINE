@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Libraries\SchemaResolver;
 use CodeIgniter\Database\BaseBuilder;
 use CodeIgniter\Database\BaseConnection;
 
@@ -18,10 +19,12 @@ class PeopleDirectoryService
     ];
 
     private BaseConnection $db;
+    private SchemaResolver $schemaResolver;
 
     public function __construct(?BaseConnection $db = null)
     {
         $this->db = $db ?? db_connect();
+        $this->schemaResolver = new SchemaResolver($this->db);
     }
 
     /**
@@ -178,7 +181,7 @@ class PeopleDirectoryService
         $term = strtolower(trim($search));
 
         if (str_contains($term, '@')) {
-            $hash = PersonContactService::hash($term);
+            $hash = PersonContactService::emailIndex($term);
             if ($hash !== null) {
                 $builder->where('p.email_hash', $hash);
             }
@@ -187,7 +190,7 @@ class PeopleDirectoryService
         }
 
         if (ctype_digit($term)) {
-            $hash = PersonContactService::hash($term);
+            $hash = PersonContactService::phoneIndex($term);
             if ($hash !== null) {
                 $builder->where('p.phone_hash', $hash);
             }
@@ -203,28 +206,12 @@ class PeopleDirectoryService
 
     private function resolveSnapshotTable(): ?string
     {
-        foreach (['parish_people', 'parish_people'] as $candidate) {
-            if ($this->db->tableExists($candidate)) {
-                return $candidate;
-            }
-        }
-
-        return null;
+        return $this->schemaResolver->resolveSnapshotTable();
     }
 
     private function resolveSnapshotScopeColumn(string $table): string
     {
-        $columns = array_map('strtolower', $this->db->getFieldNames($table));
-
-        if (in_array('parish_id', $columns, true)) {
-            return 'parish_id';
-        }
-
-        if (in_array('parish_id', $columns, true)) {
-            return 'parish_id';
-        }
-
-        return 'parish_id';
+        return $this->schemaResolver->resolveSnapshotScopeColumn($table);
     }
 
     private function formatRow(array $row): array

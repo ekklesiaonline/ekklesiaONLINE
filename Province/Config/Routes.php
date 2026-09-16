@@ -19,13 +19,13 @@ $routes->group('', ['filter' => 'session'], function ($routes) {
         $routes->post('events/store', '\\Province\\Controllers\\Events::store', ['filter' => 'permission:province.event.create']);
         $routes->get('events/edit/(:num)', '\\Province\\Controllers\\Events::edit/$1', ['filter' => 'permission:province.event.edit']);
         $routes->post('events/update/(:num)', '\\Province\\Controllers\\Events::update/$1', ['filter' => 'permission:province.event.edit']);
-        $routes->get('events/delete/(:num)', '\\Province\\Controllers\\Events::delete/$1', ['filter' => 'permission:province.event.delete']);
+        $routes->post('events/delete/(:num)', '\\Province\\Controllers\\Events::delete/$1', ['filter' => 'permission:province.event.delete']);
         $routes->get('event-calendars', '\\Province\\Controllers\\EventCalendars::index', ['filter' => 'permission:province.calendar.manage']);
         $routes->get('event-calendars/create', '\\Province\\Controllers\\EventCalendars::create', ['filter' => 'permission:province.calendar.manage']);
         $routes->post('event-calendars/store', '\\Province\\Controllers\\EventCalendars::store', ['filter' => 'permission:province.calendar.manage']);
         $routes->get('event-calendars/edit/(:num)', '\\Province\\Controllers\\EventCalendars::edit/$1', ['filter' => 'permission:province.calendar.manage']);
         $routes->post('event-calendars/update/(:num)', '\\Province\\Controllers\\EventCalendars::update/$1', ['filter' => 'permission:province.calendar.manage']);
-        $routes->get('event-calendars/delete/(:num)', '\\Province\\Controllers\\EventCalendars::delete/$1', ['filter' => 'permission:province.calendar.manage']);
+        $routes->post('event-calendars/delete/(:num)', '\\Province\\Controllers\\EventCalendars::delete/$1', ['filter' => 'permission:province.calendar.manage']);
 
         // Legacy redirects/mappings (old /province/calendar/* URLs)
         $routes->get('calendar', static fn() => redirect()->to(base_url('province/events/calendar')));

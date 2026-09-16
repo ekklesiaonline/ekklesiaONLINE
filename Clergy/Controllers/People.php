@@ -9,6 +9,7 @@ use App\Models\ParishPeopleModel;
 use App\Services\ParishPeopleRegistryService;
 use App\Services\MemberAccessService;
 use App\Services\PeopleDirectoryService;
+use App\Services\PeopleViewDataService;
 use App\Services\PersonMembershipDetailsService;
 use App\Services\PersonProfileSyncService;
 
@@ -20,6 +21,7 @@ class People extends BaseController
     private MemberParishAffiliationModel $affiliationModel;
     private ParishPeopleRegistryService $registryService;
     private MemberAccessService $memberAccessService;
+    private PeopleViewDataService $peopleViewDataService;
 
     public function __construct()
     {
@@ -27,16 +29,12 @@ class People extends BaseController
         $this->affiliationModel = model(MemberParishAffiliationModel::class);
         $this->registryService = new ParishPeopleRegistryService($this->parishPeopleModel);
         $this->memberAccessService = service('memberAccess');
+        $this->peopleViewDataService = service('peopleViewData');
     }
 
     /**
      * Ensure the profile.person_id and user_person mapping are in sync
-     * with the canonical person row. This prevents the /people list from
-     * showing an empty profile picture after a member-tag toggle when the
-     * profile row had drifted out of sync.
-     *
-     * Works for both portal profiles (with user_id) and non-portal profiles
-     * (user_id = 0) by looking up the profile directly.
+     * with the canonical person row. Delegates to PeopleViewDataService.
      *
      * @param int      $profileId The profile ID to repair (preferred).
      * @param int|null $userId    Optional: the user_id to look up by if
@@ -44,98 +42,19 @@ class People extends BaseController
      */
     private function ensureProfilePersonLink(int $profileId, ?int $userId = null): void
     {
-        $db = db_connect();
-
-        if (! $db->tableExists('profile')) {
-            return;
-        }
-
-        // Look up the profile by ID first, then fall back to user_id.
-        $profile = null;
-        if ($profileId > 0) {
-            $profile = $db->table('profile')
-                ->where('id', $profileId)
-                ->where('deleted_at', null)
-                ->get()
-                ->getRowArray();
-        } elseif ($userId !== null && $userId > 0) {
-            $profile = $db->table('profile')
-                ->where('user_id', $userId)
-                ->where('deleted_at', null)
-                ->get()
-                ->getRowArray();
-        }
-
-        if (! $profile) {
-            return;
-        }
-
-        $personId = (int) ($profile['person_id'] ?? 0);
-
-        if ($personId > 0) {
-            // Verify the person row still exists.
-            $person = $db->table('person')
-                ->where('id', $personId)
-                ->where('deleted_at', null)
-                ->countAllResults();
-
-            if ($person > 0) {
-                return;
-            }
-        }
-
-        // Profile.person_id is missing or stale — repair via the sync service.
-        try {
-            (new PersonProfileSyncService())->syncFromProfile((int) $profile['id']);
-        } catch (\Throwable $e) {
-            // Best-effort; do not block the member-tag toggle.
-        }
+        $this->peopleViewDataService->ensureProfilePersonLink($profileId, $userId);
     }
 
     /**
      * Enrich status history rows with the actor's display name.
+     * Delegates to PeopleViewDataService.
      *
      * @param array<int, array<string, mixed>> $history
      * @return array<int, array<string, mixed>>
      */
     private function enrichStatusHistory(array $history): array
     {
-        if ($history === []) {
-            return $history;
-        }
-
-        $actorIds = [];
-        foreach ($history as $entry) {
-            $actorId = (int) ($entry['changed_by'] ?? 0);
-            if ($actorId > 0) {
-                $actorIds[] = $actorId;
-            }
-        }
-
-        $actorNames = [];
-        if ($actorIds !== []) {
-            $actorIds = array_values(array_unique($actorIds));
-            $db       = db_connect();
-            $rows     = $db->table('users u')
-                ->select('u.id, u.username, ai.secret AS email')
-                ->join('auth_identities ai', 'ai.user_id = u.id AND ai.type = "email_password"', 'left')
-                ->whereIn('u.id', $actorIds)
-                ->get()
-                ->getResultArray();
-
-            foreach ($rows as $row) {
-                $id              = (int) ($row['id'] ?? 0);
-                $actorNames[$id] = trim((string) ($row['username'] ?? $row['email'] ?? ''));
-            }
-        }
-
-        foreach ($history as &$entry) {
-            $actorId         = (int) ($entry['changed_by'] ?? 0);
-            $entry['actor']  = $actorNames[$actorId] ?? '';
-        }
-        unset($entry);
-
-        return $history;
+        return $this->peopleViewDataService->enrichStatusHistory($history);
     }
 
     private function canManagePortalAccess(): bool

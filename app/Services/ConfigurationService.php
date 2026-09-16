@@ -152,18 +152,18 @@ class ConfigurationService
     }
 
     /**
-     * Get all diocese-level settings
+     * Get all diocese-level settings for a specific diocese
      */
     public function getAllDioceseSettings(int $dioceseId): array
     {
-        return $this->dioceseModel->findAll();
+        return $this->dioceseModel->getAll($dioceseId);
     }
 
     /**
-     * Get all province-level settings
+     * Get all province-level settings for a specific province
      */
     public function getAllProvinceSettings(int $provinceId): array
     {
-        return $this->provinceModel->findAll();
+        return $this->provinceModel->getAll($provinceId);
     }
 }

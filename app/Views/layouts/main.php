@@ -36,6 +36,8 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <!-- SweetAlert2 -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <!-- L4: Shared CSRF helper for native fetch POST calls -->
+    <script src="<?= base_url('assets/js/csrf.js') ?>"></script>
 
     <style>
         :root {
@@ -494,14 +496,14 @@
                 <!-- Flash Messages -->
                 <?php if (session()->has('success')): ?>
                     <div class="alert alert-success alert-dismissible fade show" role="alert">
-                        <?= session('success') ?>
+                        <?= esc(session('success')) ?>
                         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                     </div>
                 <?php endif; ?>
 
                 <?php if (session()->has('error')): ?>
                     <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                        <?= session('error') ?>
+                        <?= esc(session('error')) ?>
                         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                     </div>
                 <?php endif; ?>

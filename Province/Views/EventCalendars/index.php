@@ -29,7 +29,10 @@
                                 <td><?= (int) $calendar['sort_order'] ?></td>
                                 <td class="text-end">
                                     <a class="btn btn-sm btn-outline-primary" href="<?= base_url('province/event-calendars/edit/' . (int) $calendar['id']) ?>"><?= lang('App.edit') ?></a>
-                                    <a class="btn btn-sm btn-outline-danger" href="<?= base_url('province/event-calendars/delete/' . (int) $calendar['id']) ?>" onclick="return confirm('<?= lang('App.confirmDelete') ?>')"><?= lang('App.delete') ?></a>
+                                    <form method="post" action="<?= base_url('province/event-calendars/delete/' . (int) $calendar['id']) ?>" class="d-inline" onsubmit="return confirm('<?= lang('App.confirmDelete') ?>')">
+                                        <?= csrf_field() ?>
+                                        <button type="submit" class="btn btn-sm btn-outline-danger"><?= lang('App.delete') ?></button>
+                                    </form>
                                 </td>
                             </tr>
                         <?php endforeach; ?>

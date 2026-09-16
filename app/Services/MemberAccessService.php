@@ -2,17 +2,20 @@
 
 namespace App\Services;
 
+use App\Libraries\SchemaResolver;
 use CodeIgniter\Database\BaseConnection;
 
 class MemberAccessService
 {
     private BaseConnection $db;
     private NonPortalMemberProvisioningService $nonPortalProvisioning;
+    private SchemaResolver $schemaResolver;
 
     public function __construct(?BaseConnection $db = null)
     {
         $this->db = $db ?? db_connect();
         $this->nonPortalProvisioning = new NonPortalMemberProvisioningService($this->db);
+        $this->schemaResolver = new SchemaResolver($this->db);
     }
 
     /**
@@ -434,32 +437,12 @@ class MemberAccessService
      */
     private function getColumnsForTable(string $baseTable): array
     {
-        $prefixed = $this->db->getPrefix() . $baseTable;
-        $candidates = array_values(array_unique([$prefixed, $baseTable]));
-
-        foreach ($candidates as $table) {
-            try {
-                $columns = $this->db->getFieldNames($table);
-                if ($columns !== []) {
-                    return $columns;
-                }
-            } catch (\Throwable $e) {
-                // Try next table-name variant.
-            }
-        }
-
-        return [];
+        return $this->schemaResolver->getColumnsForTable($baseTable);
     }
 
     private function resolveExistingProfileTable(): ?string
     {
-        $candidate = 'profile';
-        $columns = $this->getColumnsForTable($candidate);
-        if ($columns !== []) {
-            return $this->db->getPrefix() . $candidate;
-        }
-
-        return null;
+        return $this->schemaResolver->resolveExistingProfileTable();
     }
 
     /**

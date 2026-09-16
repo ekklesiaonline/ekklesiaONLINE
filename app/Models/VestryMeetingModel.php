@@ -61,4 +61,16 @@ class VestryMeetingModel extends Model
 
         return $meeting;
     }
+
+    /**
+     * Get a meeting only if it belongs to the given parish.
+     *
+     * @return array<string, mixed>|null
+     */
+    public function getScopedMeeting(int $meetingId, int $parishId): ?array
+    {
+        return $this->where('id', $meetingId)
+            ->where('parish_id', $parishId)
+            ->first();
+    }
 }

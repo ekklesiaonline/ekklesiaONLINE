@@ -171,7 +171,7 @@
                 <?php endif; ?>
             <?php endif; ?>
 
-            <?php if (!$isSystemAdminSidebar && !$isProvinceAdminSidebar && (auth()->user()->can('parishes.edit') || auth()->user()->can('parishes.edit'))): ?>
+            <?php if (!$isSystemAdminSidebar && !$isProvinceAdminSidebar && auth()->user()->can('parishes.edit')): ?>
                 <li class="nav-item">
                     <a class="nav-link <?= (str_starts_with(uri_string(), 'parish_list')) ? 'active' : '' ?>" href="<?= base_url('parish_list') ?>">
                         <i class="bi bi-building"></i> <?= lang('App.navParishList') ?>

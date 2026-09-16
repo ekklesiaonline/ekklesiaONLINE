@@ -137,7 +137,6 @@ class Filters extends BaseFilters
                 'except' => [
                     'session/device-verify',
                     'session/device-verify/',
-                    'session/device-verify/resend',
                 ],
             ],
             'localeSet',

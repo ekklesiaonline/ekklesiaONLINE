@@ -115,7 +115,7 @@ $routes->group('', ['filter' => 'session'], function ($routes) {
         $routes->post('event-calendars/store', '\\App\\Controllers\\SystemEventCalendars::store');
         $routes->get('event-calendars/edit/(:num)', '\\App\\Controllers\\SystemEventCalendars::edit/$1');
         $routes->post('event-calendars/update/(:num)', '\\App\\Controllers\\SystemEventCalendars::update/$1');
-        $routes->get('event-calendars/delete/(:num)', '\\App\\Controllers\\SystemEventCalendars::delete/$1');
+        $routes->post('event-calendars/delete/(:num)', '\\App\\Controllers\\SystemEventCalendars::delete/$1');
 
         $routes->group('events', function ($routes) {
             $routes->get('/', '\\App\\Controllers\\SystemEvents::index');
@@ -125,7 +125,7 @@ $routes->group('', ['filter' => 'session'], function ($routes) {
             $routes->post('store', '\\App\\Controllers\\SystemEvents::store');
             $routes->get('edit/(:num)', '\\App\\Controllers\\SystemEvents::edit/$1');
             $routes->post('update/(:num)', '\\App\\Controllers\\SystemEvents::update/$1');
-            $routes->get('delete/(:num)', '\\App\\Controllers\\SystemEvents::delete/$1');
+            $routes->post('delete/(:num)', '\\App\\Controllers\\SystemEvents::delete/$1');
         });
     });
 

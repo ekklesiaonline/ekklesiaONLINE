@@ -119,12 +119,17 @@ class AuthGroups extends ShieldAuthGroups
     public array $permissions = [
         // Admin Levels
         'system.admin'              => 'System admin access to global governance operations',
+        'admin.system'              => 'Legacy alias for system.admin (kept for backward compatibility)',
         'province.admin'            => 'Province admin access (view diocesan attendance/membership summaries only; no parish CRUD, no finance)',
         'province.diocese_admin.manage' => 'Manage diocesan administrator accounts within the assigned province',
         'diocese.admin'             => 'Diocese admin access to all diocesan operations',
         'parish.edit'               => 'Edit parish contact information',
+        'parishes.edit'             => 'Edit parish profiles (diocesan admin scope)',
+        'parishes.delete'           => 'Delete parishes (diocesan admin scope)',
         'parish.manage'             => 'Manage parishes (create, delete)',
         'parish.manage.official'    => 'Edit official parish identification (diocese, tax ID, address)',
+        'parishes.manage.official'  => 'Edit official parish identification (diocese, tax ID, address) — plural form used by controllers',
+        'portal.manage'             => 'Manage member portal features and family management',
 
         // Members Management
         'member.view'          => 'View member list',
@@ -184,6 +189,14 @@ class AuthGroups extends ShieldAuthGroups
         'event.register'       => 'Register attendees for events',
         'event.checkin'        => 'Check in and update event registrations',
         'event.manage.registration' => 'Manage event registrations',
+
+        // Province & National Events
+        'province.event.create'     => 'Create province-scoped events',
+        'province.event.edit'       => 'Edit province-scoped events',
+        'province.event.delete'     => 'Delete province-scoped events',
+        'province.calendar.manage'  => 'Manage province-level event calendars',
+        'national.event.manage'     => 'Create, edit, and delete national Episcopal events',
+        'national.calendar.manage'  => 'Manage the national Episcopal event calendar',
 
         // Worship Planning
         'worship.view'          => 'View worship planning module',
@@ -289,6 +302,9 @@ class AuthGroups extends ShieldAuthGroups
             'governance.report.approve_warden',
             'governance.report.finalize_clergy',
             'governance.diocese.approve',
+            'national.event.manage',
+            'national.calendar.manage',
+            'parishes.manage.official',
         ],
         'provinceadmin' => [
             'province.admin',
@@ -298,6 +314,10 @@ class AuthGroups extends ShieldAuthGroups
             'province.admin.update',
             'province.admin.delete',
             'province.admin.reset_password',
+            'province.event.create',
+            'province.event.edit',
+            'province.event.delete',
+            'province.calendar.manage',
             'member.view',
             'dashboard.view',
             'profile.edit',

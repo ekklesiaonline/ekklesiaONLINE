@@ -35,68 +35,79 @@ class AdminCreationService
             throw new \RuntimeException('ADMIN_EMAIL_ALREADY_EXISTS');
         }
 
-        $users = auth()->getProvider();
-        $user = new \CodeIgniter\Shield\Entities\User([
-            'username' => $email,
-            'email'    => $email,
-            'password' => bin2hex(random_bytes(32)),
-        ]);
+        $db->transBegin();
 
-        $users->save($user);
-        $created = $users->findById($users->getInsertID());
-        if (!$created) {
-            throw new \RuntimeException('User creation failed');
-        }
-        $created->activate();
-
-        $this->assignGroup((int) $created->id, $group);
-
-        $db->table('auth_identities')
-            ->where('user_id', (int) $created->id)
-            ->where('type', 'email_password')
-            ->update([
-                'force_reset' => 1,
-                'updated_at'  => date('Y-m-d H:i:s'),
+        try {
+            $users = auth()->getProvider();
+            $user = new \CodeIgniter\Shield\Entities\User([
+                'username' => $email,
+                'email'    => $email,
+                'password' => bin2hex(random_bytes(32)),
             ]);
 
-        // A diocese belongs to exactly one province; derive it when the caller
-        // only supplied a diocese (e.g. a diocese admin creating a co-admin)
-        // so both the profile and the registration request carry a consistent scope.
-        $resolvedProvinceId = $provinceId > 0 ? $provinceId : null;
-        if ($resolvedProvinceId === null && $dioceseId > 0) {
-            $diocese = $db->table('diocese')->select('province_id')->where('id', $dioceseId)->get()->getRowArray();
-            $resolvedProvinceId = (int) ($diocese['province_id'] ?? 0) ?: null;
+            $users->save($user);
+            $created = $users->findById($users->getInsertID());
+            if (!$created) {
+                throw new \RuntimeException('User creation failed');
+            }
+            $created->activate();
+
+            $this->assignGroup((int) $created->id, $group);
+
+            $db->table('auth_identities')
+                ->where('user_id', (int) $created->id)
+                ->where('type', 'email_password')
+                ->update([
+                    'force_reset' => 1,
+                    'updated_at'  => date('Y-m-d H:i:s'),
+                ]);
+
+            // A diocese belongs to exactly one province; derive it when the caller
+            // only supplied a diocese (e.g. a diocese admin creating a co-admin)
+            // so both the profile and the registration request carry a consistent scope.
+            $resolvedProvinceId = $provinceId > 0 ? $provinceId : null;
+            if ($resolvedProvinceId === null && $dioceseId > 0) {
+                $diocese = $db->table('diocese')->select('province_id')->where('id', $dioceseId)->get()->getRowArray();
+                $resolvedProvinceId = (int) ($diocese['province_id'] ?? 0) ?: null;
+            }
+
+            model('ProfileModel')->insert([
+                'user_id'         => (int) $created->id,
+                'parish_id'       => null,
+                'province_id'     => $resolvedProvinceId,
+                'diocese_id'      => $dioceseId > 0 ? $dioceseId : null,
+                'first_name'      => $firstName,
+                'last_name'       => $lastName,
+                'phone'           => preg_replace('/[^0-9+\s-]/', '', (string) ($phone ?? '')),
+                // profile.membership_status is an ENUM of visitor/regular_attender/
+                // member/non_active/inactive/transferred/deceased — 'active' is not
+                // a valid value and MySQL silently stores '' for it. 'member' is the
+                // value MembershipStatusService normalizes/displays as "Active".
+                'membership_status' => 'member',
+            ]);
+
+            // user_registration_requests.province_id is NOT NULL, so we can only
+            // record an approved request when a province can be resolved. A
+            // system admin has no province/diocese scope; those accounts keep
+            // relying on "no registration_request row" being treated as approved
+            // everywhere else in the app (RegistrationGateFilter, Profile state).
+            if ($resolvedProvinceId !== null) {
+                $this->recordApprovedRegistrationRequest(
+                    (int) $created->id,
+                    $group,
+                    $resolvedProvinceId,
+                    $dioceseId > 0 ? $dioceseId : null
+                );
+            }
+
+            $db->transCommit();
+        } catch (\Throwable $e) {
+            $db->transRollback();
+            throw $e;
         }
 
-        model('ProfileModel')->insert([
-            'user_id'         => (int) $created->id,
-            'parish_id'       => null,
-            'province_id'     => $resolvedProvinceId,
-            'diocese_id'      => $dioceseId > 0 ? $dioceseId : null,
-            'first_name'      => $firstName,
-            'last_name'       => $lastName,
-            'phone'           => preg_replace('/[^0-9+\s-]/', '', (string) ($phone ?? '')),
-            // profile.membership_status is an ENUM of visitor/regular_attender/
-            // member/non_active/inactive/transferred/deceased — 'active' is not
-            // a valid value and MySQL silently stores '' for it. 'member' is the
-            // value MembershipStatusService normalizes/displays as "Active".
-            'membership_status' => 'member',
-        ]);
-
-        // user_registration_requests.province_id is NOT NULL, so we can only
-        // record an approved request when a province can be resolved. A
-        // system admin has no province/diocese scope; those accounts keep
-        // relying on "no registration_request row" being treated as approved
-        // everywhere else in the app (RegistrationGateFilter, Profile state).
-        if ($resolvedProvinceId !== null) {
-            $this->recordApprovedRegistrationRequest(
-                (int) $created->id,
-                $group,
-                $resolvedProvinceId,
-                $dioceseId > 0 ? $dioceseId : null
-            );
-        }
-
+        // Send the invitation email only after the DB transaction commits,
+        // so a failure to send does not leave a partially-created account.
         try {
             (new AdminInvitationService())->send($email, (int) $created->id);
         } catch (\Throwable $e) {

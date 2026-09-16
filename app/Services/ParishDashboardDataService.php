@@ -115,6 +115,10 @@ class ParishDashboardDataService
 
     /**
      * Count members with birthdays in the current week, excluding province/diocese admins.
+     *
+     * M6: Uses portable SQL date logic instead of loading all birthday rows
+     * and counting in PHP. Detects the DB driver to use the appropriate
+     * date formatting function (DATE_FORMAT for MySQL, strftime for SQLite).
      */
     private function countBirthdaysThisWeek($db, int $parishId, \DateTimeImmutable $weekStart, \DateTimeImmutable $weekEnd): int
     {
@@ -123,47 +127,37 @@ class ParishDashboardDataService
             return 0;
         }
 
-        $birthdayRows = $db->table('parish_affiliation mca')
-            ->select('p.birth_date')
+        $startMonthDay = $weekStart->format('m-d');
+        $endMonthDay   = $weekEnd->format('m-d');
+
+        // M6: Use driver-appropriate date formatting function
+        $dateExpr = $db->DBDriver === 'SQLite3'
+            ? "strftime('%m-%d', p.birth_date)"
+            : "DATE_FORMAT(p.birth_date, '%m-%d')";
+
+        $builder = $db->table('parish_affiliation mca')
+            ->select('1')
             ->join($profileTable . ' p', 'p.user_id = mca.linked_user_id')
             ->join('users u', 'u.id = mca.linked_user_id')
             ->join('auth_groups_users agu', 'agu.user_id = u.id AND agu.group IN ("provinceadmin","diocesanadmin")', 'left')
             ->where('mca.parish_id', $parishId)
             ->where('mca.is_member', 1)
             ->where('p.birth_date IS NOT NULL')
-            ->where('agu.id IS NULL')
-            ->get()
-            ->getResultArray();
+            ->where('agu.id IS NULL');
 
-        $count = 0;
-        foreach ($birthdayRows as $row) {
-            $birthDateValue = (string) ($row['birth_date'] ?? '');
-            if ($birthDateValue === '') {
-                continue;
-            }
-
-            $birthTimestamp = strtotime($birthDateValue);
-            if ($birthTimestamp === false) {
-                continue;
-            }
-
-            $monthDay = date('m-d', $birthTimestamp);
-            $startMonthDay = $weekStart->format('m-d');
-            $endMonthDay = $weekEnd->format('m-d');
-
-            if ($startMonthDay <= $endMonthDay) {
-                if ($monthDay >= $startMonthDay && $monthDay <= $endMonthDay) {
-                    $count++;
-                }
-                continue;
-            }
-
-            if ($monthDay >= $startMonthDay || $monthDay <= $endMonthDay) {
-                $count++;
-            }
+        if ($startMonthDay <= $endMonthDay) {
+            // Normal week (does not span year-end)
+            $builder->where("{$dateExpr} >= ", $startMonthDay)
+                    ->where("{$dateExpr} <= ", $endMonthDay);
+        } else {
+            // Week spans year-end (e.g., Dec 30 - Jan 5)
+            $builder->groupStart()
+                    ->where("{$dateExpr} >= ", $startMonthDay)
+                    ->orWhere("{$dateExpr} <= ", $endMonthDay)
+                    ->groupEnd();
         }
 
-        return $count;
+        return $builder->countAllResults();
     }
 
     /**

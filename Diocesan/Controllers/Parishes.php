@@ -1185,7 +1185,6 @@ class Parishes extends BaseController
     protected function hasParishEditPermission(): bool
     {
         return $this->checkPermission('parishes.edit')
-            || $this->checkPermission('parishes.edit')
             || $this->checkPermission('parish.edit')
             || $this->checkPermission('diocese.admin');
     }

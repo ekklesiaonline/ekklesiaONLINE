@@ -128,7 +128,10 @@ class PersonMembershipDetailsService
      */
     public function resolveAgeBand(int $personId): ?bool
     {
-        $profile = $this->profileModel->find($personId);
+        // The $personId parameter is the canonical person.id, not a profile.id.
+        // ProfileModel::find() looks up by profile.id (the primary key), so we
+        // must query by the person_id column instead.
+        $profile = $this->profileModel->where('person_id', $personId)->first();
         if (!is_array($profile) || empty($profile['birth_date'])) {
             return null;
         }

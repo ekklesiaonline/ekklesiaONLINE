@@ -25,65 +25,76 @@ class PersonProvisioningService
         }
 
         $now = date('Y-m-d H:i:s');
+        $db  = db_connect();
 
-        $userId = self::resolveUserId($data, $now);
+        $db->transBegin();
 
-        $personData = [
-            'first_name'    => (string) ($data['first_name'] ?? ''),
-            'last_name'     => (string) ($data['last_name'] ?? ''),
-            'email'         => (string) ($data['email'] ?? '') ?: null,
-            'phone'         => (string) ($data['phone'] ?? '') ?: null,
-            'address'       => (string) ($data['address'] ?? '') ?: null,
-            'preferred_contact_method' => (string) ($data['preferred_contact_method'] ?? 'email') ?: 'email',
-            'preferred_timezone'       => (string) ($data['preferred_timezone'] ?? '') ?: null,
-            'opted_out_channels'       => (string) ($data['opted_out_channels'] ?? '') ?: '',
-            'birthdate'     => (string) ($data['birthdate'] ?? $data['birth_date'] ?? '') ?: null,
-            'gender'        => (string) ($data['gender'] ?? '') ?: null,
-            'source'        => (string) ($data['source'] ?? 'system') ?: 'system',
-            'is_active'     => (int) ($data['is_active'] ?? 1),
-        ];
+        try {
+            $userId = self::resolveUserId($data, $now);
 
-        $personModel = model(PersonModel::class);
-        $personId    = $personModel->insert($personData, true);
+            $personData = [
+                'first_name'    => (string) ($data['first_name'] ?? ''),
+                'last_name'     => (string) ($data['last_name'] ?? ''),
+                'email'         => (string) ($data['email'] ?? '') ?: null,
+                'phone'         => (string) ($data['phone'] ?? '') ?: null,
+                'address'       => (string) ($data['address'] ?? '') ?: null,
+                'preferred_contact_method' => (string) ($data['preferred_contact_method'] ?? 'email') ?: 'email',
+                'preferred_timezone'       => (string) ($data['preferred_timezone'] ?? '') ?: null,
+                'opted_out_channels'       => (string) ($data['opted_out_channels'] ?? '') ?: '',
+                'birthdate'     => (string) ($data['birthdate'] ?? $data['birth_date'] ?? '') ?: null,
+                'gender'        => (string) ($data['gender'] ?? '') ?: null,
+                'source'        => (string) ($data['source'] ?? 'system') ?: 'system',
+                'is_active'     => (int) ($data['is_active'] ?? 1),
+            ];
 
-        if (! is_int($personId) || $personId <= 0) {
-            throw new \RuntimeException('Failed to create person.');
+            $personModel = model(PersonModel::class);
+            $personId    = $personModel->insert($personData, true);
+
+            if (! is_int($personId) || $personId <= 0) {
+                throw new \RuntimeException('Failed to create person.');
+            }
+
+            $membershipStatus  = (string) ($data['membership_status'] ?? 'visitor');
+            $isMember          = (int) ($data['is_member'] ?? (int) MembershipStatusService::isMember($membershipStatus));
+            $affiliationType   = (string) ($data['affiliation_type'] ?? MembershipStatusService::affiliationTypeForStatus($membershipStatus));
+            $canonicalStatus   = (string) ($data['canonical_status'] ?? $membershipStatus);
+
+            $db->table('parish_affiliation')->insert([
+                'parish_id'        => $parishId,
+                'person_id'        => $personId,
+                'linked_user_id'   => $userId,
+                'affiliation_type' => $affiliationType,
+                'membership_status' => $membershipStatus,
+                'canonical_status'  => $canonicalStatus,
+                'is_member'        => $isMember,
+                'source'           => (string) ($data['source'] ?? 'system'),
+                'start_date'       => (string) ($data['start_date'] ?? date('Y-m-d')),
+                'created_at'       => $now,
+                'updated_at'       => $now,
+            ]);
+
+            $profileId = null;
+            if ($userId !== null && $userId > 0) {
+                self::linkToUser($userId, $personId, $now);
+                $profileId = self::createProfile($userId, $personId, $parishId, $data, $now);
+            }
+
+            $db->transCommit();
+        } catch (\Throwable $e) {
+            $db->transRollback();
+            throw $e;
         }
 
-        $membershipStatus  = (string) ($data['membership_status'] ?? 'visitor');
-        $isMember          = (int) ($data['is_member'] ?? (int) MembershipStatusService::isMember($membershipStatus));
-        $affiliationType   = (string) ($data['affiliation_type'] ?? MembershipStatusService::affiliationTypeForStatus($membershipStatus));
-        $canonicalStatus   = (string) ($data['canonical_status'] ?? $membershipStatus);
-
-        $db = db_connect();
-        $db->table('parish_affiliation')->insert([
-            'parish_id'        => $parishId,
-            'person_id'        => $personId,
-            'linked_user_id'   => $userId,
-            'affiliation_type' => $affiliationType,
-            'membership_status' => $membershipStatus,
-            'canonical_status'  => $canonicalStatus,
-            'is_member'        => $isMember,
-            'source'           => (string) ($data['source'] ?? 'system'),
-            'start_date'       => (string) ($data['start_date'] ?? date('Y-m-d')),
-            'created_at'       => $now,
-            'updated_at'       => $now,
-        ]);
-
-        $profileId = null;
-        if ($userId !== null && $userId > 0) {
-            self::linkToUser($userId, $personId, $now);
-            $profileId = self::createProfile($userId, $personId, $parishId, $data, $now);
-
-            if ($profileId !== null && $profileId > 0) {
-                (new PersonProfileSyncService())->syncFromProfile($profileId);
-            }
+        // Sync the canonical person record outside the transaction to avoid
+        // nested transaction conflicts in PersonProfileSyncService.
+        if (isset($profileId) && $profileId !== null && $profileId > 0) {
+            (new PersonProfileSyncService())->syncFromProfile($profileId);
         }
 
         return [
-            'user_id'    => $userId,
+            'user_id'    => $userId ?? null,
             'person_id'  => $personId,
-            'profile_id' => $profileId,
+            'profile_id' => $profileId ?? null,
         ];
     }
 

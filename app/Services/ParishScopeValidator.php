@@ -90,6 +90,10 @@ class ParishScopeValidator
     /**
      * Return the parish IDs the actor is allowed to access.
      *
+     * Returns an empty array for system admins, which represents
+     * unrestricted access. Callers should check hasUnrestrictedAccess()
+     * before interpreting an empty result as "no access".
+     *
      * @return list<int>
      */
     public function getAccessibleParishIds(?User $user): array
@@ -138,5 +142,16 @@ class ParishScopeValidator
         }
 
         return array_map(static fn(array $row): int => (int) $row['id'], $builder->get()->getResultArray());
+    }
+
+    /**
+     * Return true if the actor has unrestricted (system-admin) access to all parishes.
+     *
+     * Callers should check this before interpreting getAccessibleParishIds()
+     * returning [] as "no access" — for system admins, [] means "all parishes".
+     */
+    public function hasUnrestrictedAccess(?User $user): bool
+    {
+        return $user !== null && $user->inGroup(AuthGroups::SYSTEM_ADMIN);
     }
 }

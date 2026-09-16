@@ -49,13 +49,13 @@ class PersonModel extends Model
 
         if (isset($data['email'])) {
             $plain = (string) $data['email'];
-            $data['email_hash'] = PersonContactService::hash($plain);
+            $data['email_hash'] = PersonContactService::emailIndex($plain);
             $data['email']      = PersonContactService::encrypt($plain) ?? $plain;
         }
 
         if (isset($data['phone'])) {
             $plain = (string) $data['phone'];
-            $data['phone_hash'] = PersonContactService::hash($plain);
+            $data['phone_hash'] = PersonContactService::phoneIndex($plain);
             $data['phone']      = PersonContactService::encrypt($plain) ?? $plain;
         }
 

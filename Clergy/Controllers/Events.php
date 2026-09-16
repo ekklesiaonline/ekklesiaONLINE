@@ -311,7 +311,7 @@ class Events extends BaseController
             }
 
             $this->syncEventInvitees((int) $id, (string) ($payload['visibility'] ?? 'members'));
-            $this->removeSelectedAttachments();
+            $this->removeSelectedAttachments((int) $id);
             $this->handleEventAttachments((int) $id);
 
             return redirect()->to('/events/view/' . (int) $id)->with('success', lang('Members.eventUpdated'));
@@ -761,14 +761,20 @@ class Events extends BaseController
         }
     }
 
-    private function removeSelectedAttachments(): void
+    private function removeSelectedAttachments(int $eventId): void
     {
         $attachmentIds = array_map('intval', (array) ($this->request->getPost('remove_attachment_ids') ?? []));
         if ($attachmentIds === []) {
             return;
         }
 
-        $attachments = $this->eventAttachmentModel->whereIn('id', $attachmentIds)->findAll();
+        // Scope the delete to attachments owned by the event being edited,
+        // so a user cannot remove attachments belonging to a different event
+        // by submitting foreign attachment IDs.
+        $attachments = $this->eventAttachmentModel
+            ->whereIn('id', $attachmentIds)
+            ->where('event_id', $eventId)
+            ->findAll();
         foreach ($attachments as $attachment) {
             $path = $this->resolveStoredUploadAbsolutePath((string) ($attachment['stored_name'] ?? ''), (int) ($attachment['event_id'] ?? 0));
             if ($path !== null && is_file($path)) {

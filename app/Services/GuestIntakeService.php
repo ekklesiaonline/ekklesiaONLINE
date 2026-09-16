@@ -23,46 +23,56 @@ class GuestIntakeService
 
         $email      = isset($data['email']) ? trim((string) $data['email']) : '';
         $phone      = isset($data['phone']) ? trim((string) $data['phone']) : '';
-        $emailHash  = PersonContactService::hash($email);
-        $phoneHash  = PersonContactService::hash($phone);
+        $emailHash  = PersonContactService::emailIndex($email);
+        $phoneHash  = PersonContactService::phoneIndex($phone);
 
         $personId   = self::findExistingPerson($parishId, $emailHash, $phoneHash);
         $isNew      = $personId === null;
 
-        if ($isNew) {
-            $provisioned = PersonProvisioningService::provision([
-                'parish_id'                => $parishId,
-                'first_name'               => $data['first_name'] ?? '',
-                'last_name'                => $data['last_name'] ?? '',
-                'email'                    => $email,
-                'phone'                    => $phone,
-                'address'                  => $data['address'] ?? null,
-                'preferred_contact_method' => $data['preferred_contact_method'] ?? 'email',
-                'source'                   => $data['source'] ?? 'guest_intake',
-                'membership_status'        => 'visitor',
-                'notes'                    => $data['notes'] ?? null,
-            ]);
+        $db = db_connect();
+        $db->transBegin();
 
-            $personId = $provisioned['person_id'];
-        }
+        try {
+            if ($isNew) {
+                $provisioned = PersonProvisioningService::provision([
+                    'parish_id'                => $parishId,
+                    'first_name'               => $data['first_name'] ?? '',
+                    'last_name'                => $data['last_name'] ?? '',
+                    'email'                    => $email,
+                    'phone'                    => $phone,
+                    'address'                  => $data['address'] ?? null,
+                    'preferred_contact_method' => $data['preferred_contact_method'] ?? 'email',
+                    'source'                   => $data['source'] ?? 'guest_intake',
+                    'membership_status'        => 'visitor',
+                    'notes'                    => $data['notes'] ?? null,
+                ]);
 
-        $visitType = self::resolveVisitType($personId, $parishId);
+                $personId = $provisioned['person_id'];
+            }
 
-        $personVisitId = model(PersonVisitModel::class)->insert([
-            'person_id'      => $personId,
-            'parish_id'      => $parishId,
-            'visit_date'     => $data['visit_date'] ?? date('Y-m-d'),
-            'visit_type'     => $visitType,
-            'service_id'     => $data['service_id'] ?? null,
-            'attended_event' => $data['service_attended'] ?? ($data['attended_event'] ?? null),
-            'gift_given'     => (int) ($data['gift_given'] ?? 0),
-            'notes'          => $data['notes'] ?? null,
-            'created_at'     => date('Y-m-d H:i:s'),
-            'updated_at'     => date('Y-m-d H:i:s'),
-        ], true);
+            $visitType = self::resolveVisitType($personId, $parishId);
 
-        if (! is_int($personVisitId) || $personVisitId <= 0) {
-            throw new \RuntimeException('Failed to record person_visit.');
+            $personVisitId = model(PersonVisitModel::class)->insert([
+                'person_id'      => $personId,
+                'parish_id'      => $parishId,
+                'visit_date'     => $data['visit_date'] ?? date('Y-m-d'),
+                'visit_type'     => $visitType,
+                'service_id'     => $data['service_id'] ?? null,
+                'attended_event' => $data['service_attended'] ?? ($data['attended_event'] ?? null),
+                'gift_given'     => (int) ($data['gift_given'] ?? 0),
+                'notes'          => $data['notes'] ?? null,
+                'created_at'     => date('Y-m-d H:i:s'),
+                'updated_at'     => date('Y-m-d H:i:s'),
+            ], true);
+
+            if (! is_int($personVisitId) || $personVisitId <= 0) {
+                throw new \RuntimeException('Failed to record person_visit.');
+            }
+
+            $db->transCommit();
+        } catch (\Throwable $e) {
+            $db->transRollback();
+            throw $e;
         }
 
         return [

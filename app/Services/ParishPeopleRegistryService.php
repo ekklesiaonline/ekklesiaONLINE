@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Libraries\DataEncryption;
+use App\Libraries\SchemaResolver;
 use App\Models\ParishPeopleModel;
 use App\Services\MembershipStatusService;
 use App\Services\PersonStatusHistoryService;
@@ -11,11 +12,13 @@ class ParishPeopleRegistryService
 {
     private ParishPeopleModel $parishPeopleModel;
     private PersonStatusHistoryService $history;
+    private SchemaResolver $schemaResolver;
 
     public function __construct(?ParishPeopleModel $parishPeopleModel = null, ?PersonStatusHistoryService $history = null)
     {
         $this->parishPeopleModel = $parishPeopleModel ?? model(ParishPeopleModel::class);
         $this->history           = $history ?? new PersonStatusHistoryService();
+        $this->schemaResolver    = new SchemaResolver();
     }
 
     public function syncParish(int $parishId): void
@@ -32,6 +35,195 @@ class ParishPeopleRegistryService
             return;
         }
 
+        $snapshotTable = $this->resolveSnapshotTable();
+        if ($snapshotTable === null) {
+            return;
+        }
+        $snapshotScopeColumn = $this->resolveSnapshotScopeColumn($snapshotTable);
+
+        $db = $this->db();
+        $db->transBegin();
+
+        try {
+            $rows = $this->querySnapshotRows(
+                $parishId,
+                $year,
+                $profileTable,
+                $affiliationTable,
+                $pledgeTable,
+                $leaderTable,
+                $personMembershipDetailsTable
+            );
+
+            // M5: Batch upsert — fetch all existing snapshot rows in one query
+            // instead of per-row select/update/insert.
+            $existingRows = $db->table($snapshotTable)
+                ->where($snapshotScopeColumn, $parishId)
+                ->where('deleted_at', null)
+                ->get()
+                ->getResultArray();
+
+            $existingMap = [];
+            foreach ($existingRows as $existing) {
+                $key = (int) ($existing['user_id'] ?? 0);
+                if ($key > 0) {
+                    $existingMap[$key] = $existing;
+                }
+            }
+
+            $seenUserIds = [];
+            $updateBatch = [];
+            $insertBatch = [];
+            $statusChanges = [];
+
+            foreach ($rows as $row) {
+                $userId = (int) ($row['user_id'] ?? 0);
+                $seenUserIds[] = $userId;
+
+                $membershipStatus = MembershipStatusService::normalizeAffiliationStatus((string) ($row['membership_status'] ?? ''));
+                if (!in_array($membershipStatus, MembershipStatusService::affiliationStatuses(), true)) {
+                    $membershipStatus = 'visitor';
+                }
+
+                $portalAccess = strtolower(trim((string) ($row['portal_access'] ?? '')));
+                if (!in_array($portalAccess, ['none', 'invited', 'enabled'], true)) {
+                    $portalAccess = 'none';
+                }
+                $hasPortalIdentity = trim((string) ($row['email'] ?? '')) !== '';
+                $requiresReset = (int) ($row['force_reset'] ?? 0) === 1;
+
+                if ($hasPortalIdentity) {
+                    if ($requiresReset) {
+                        $portalAccess = 'invited';
+                    } elseif ($portalAccess === 'none' || $portalAccess === 'invited') {
+                        $portalAccess = 'enabled';
+                    }
+                }
+
+                $payload = [
+                    'parish_id' => (int) ($row['parish_id'] ?? 0),
+                    'user_id' => $userId,
+                    'profile_id' => isset($row['profile_id']) ? (int) $row['profile_id'] : null,
+                    'first_name' => (string) ($row['first_name'] ?? ''),
+                    'last_name' => (string) ($row['last_name'] ?? ''),
+                    'nickname' => isset($row['nickname']) && $row['nickname'] !== '' ? (string) $row['nickname'] : null,
+                    'profile_picture' => isset($row['profile_picture']) && $row['profile_picture'] !== '' ? (string) $row['profile_picture'] : null,
+                    'email' => (string) ($row['email'] ?? ''),
+                    'phone' => DataEncryption::decrypt((string) ($row['phone'] ?? '')) ?? '',
+                    'portal_access' => $portalAccess,
+                    'membership_status' => $membershipStatus,
+                    'is_member' => (int) ($row['is_member'] ?? 0),
+                    'is_baptized' => (int) ($row['is_baptized'] ?? 0),
+                    'is_confirmed' => (int) ($row['is_confirmed'] ?? 0),
+                    'is_communicant' => (int) ($row['is_communicant'] ?? 0),
+                    'is_dependent' => (int) ($row['is_dependent'] ?? 0),
+                    'is_under_16' => (int) ($row['is_under_16'] ?? 0),
+                    'has_pledge' => (int) ($row['has_pledge'] ?? 0),
+                    'is_good_standing' => (int) ($row['is_good_standing'] ?? 0),
+                    'is_leader' => (int) ($row['is_leader'] ?? 0),
+                    'leader_titles' => (string) ($row['leader_titles'] ?? ''),
+                    'source' => 'user_profile',
+                    'synced_at' => $now,
+                ];
+
+                $existing = $existingMap[$userId] ?? null;
+
+                if ($existing) {
+                    $payload['id'] = (int) $existing['id'];
+                    $updateBatch[] = $payload;
+
+                    $statusChanges[] = [
+                        'profile_id' => (int) ($existing['profile_id'] ?? $payload['profile_id'] ?? 0),
+                        'parish_id' => (int) $payload['parish_id'],
+                        'old_status' => (string) ($existing['membership_status'] ?? ''),
+                        'new_status' => (string) $payload['membership_status'],
+                    ];
+                } else {
+                    $insertBatch[] = $payload;
+
+                    $statusChanges[] = [
+                        'profile_id' => (int) ($payload['profile_id'] ?? 0),
+                        'parish_id' => (int) $payload['parish_id'],
+                        'old_status' => null,
+                        'new_status' => (string) $payload['membership_status'],
+                    ];
+                }
+            }
+
+            // M5: Batch update existing rows
+            if ($updateBatch !== []) {
+                $db->table($snapshotTable)->updateBatch($updateBatch, 'id');
+            }
+
+            // M5: Batch insert new rows
+            if ($insertBatch !== []) {
+                $db->table($snapshotTable)->insertBatch($insertBatch);
+            }
+
+            // M5: Record status changes (still per-row, but separated from DB writes)
+            foreach ($statusChanges as $change) {
+                $this->recordStatusChange(
+                    $change['profile_id'],
+                    $change['parish_id'],
+                    $change['old_status'],
+                    $change['new_status']
+                );
+            }
+
+            $deleteBuilder = $db->table($snapshotTable)
+                ->where($snapshotScopeColumn, $parishId);
+
+            if ($seenUserIds !== []) {
+                $deleteBuilder->whereNotIn('user_id', $seenUserIds);
+            }
+
+            $deleteBuilder->delete();
+
+            $db->transCommit();
+        } catch (\Throwable $e) {
+            $db->transRollback();
+            throw $e;
+        }
+    }
+
+    public function syncAll(): array
+    {
+        $parishRows = db_connect()->table('parish')
+            ->select('id')
+            ->orderBy('id', 'ASC')
+            ->get()
+            ->getResultArray();
+
+        $synced = 0;
+        foreach ($parishRows as $row) {
+            $parishId = (int) ($row['id'] ?? 0);
+            if ($parishId <= 0) {
+                continue;
+            }
+
+            $this->syncParish($parishId);
+            $synced++;
+        }
+
+        return [
+            'parishes_synced' => $synced,
+        ];
+    }
+
+    /**
+     * Query the source tables for snapshot rows.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    private function querySnapshotRows(
+        int $parishId,
+        int $year,
+        string $profileTable,
+        string $affiliationTable,
+        ?string $pledgeTable,
+        ?string $leaderTable,
+        ?string $personMembershipDetailsTable
+    ): array {
         $profileColumns = $this->getColumnsForTable($profileTable);
         $affiliationColumns = $this->getColumnsForTable($affiliationTable);
         $affiliationUserColumn = in_array('linked_user_id', array_map('strtolower', $affiliationColumns), true)
@@ -122,7 +314,7 @@ class ParishPeopleRegistryService
             $query->join('sacramental_record sr', 'sr.person_id = p.id AND sr.parish_id = mca.parish_id AND LOWER(sr.sacrament_type) IN ("baptism","confirmation")', 'left');
         }
 
-        $rows = $query
+        return $query
             ->where('mca.parish_id', $parishId)
             ->where('mca.deleted_at', null)
             ->where('p.deleted_at', null)
@@ -131,126 +323,6 @@ class ParishPeopleRegistryService
             ->groupBy('mca.parish_id, mca.' . $affiliationUserColumn . ', p.id', false)
             ->get()
             ->getResultArray();
-
-        $snapshotTable = $this->resolveSnapshotTable();
-        if ($snapshotTable === null) {
-            return;
-        }
-        $snapshotScopeColumn = $this->resolveSnapshotScopeColumn($snapshotTable);
-
-        $seenUserIds = [];
-        foreach ($rows as $row) {
-            $seenUserIds[] = (int) ($row['user_id'] ?? 0);
-
-            $membershipStatus = MembershipStatusService::normalizeAffiliationStatus((string) ($row['membership_status'] ?? ''));
-            if (!in_array($membershipStatus, MembershipStatusService::affiliationStatuses(), true)) {
-                $membershipStatus = 'visitor';
-            }
-
-            $portalAccess = strtolower(trim((string) ($row['portal_access'] ?? '')));
-            if (!in_array($portalAccess, ['none', 'invited', 'enabled'], true)) {
-                $portalAccess = 'none';
-            }
-            $hasPortalIdentity = trim((string) ($row['email'] ?? '')) !== '';
-            $requiresReset = (int) ($row['force_reset'] ?? 0) === 1;
-
-            if ($hasPortalIdentity) {
-                if ($requiresReset) {
-                    $portalAccess = 'invited';
-                } elseif ($portalAccess === 'none' || $portalAccess === 'invited') {
-                    $portalAccess = 'enabled';
-                }
-            }
-
-            $payload = [
-                'parish_id' => (int) ($row['parish_id'] ?? 0),
-                'user_id' => (int) ($row['user_id'] ?? 0),
-                'profile_id' => isset($row['profile_id']) ? (int) $row['profile_id'] : null,
-                'first_name' => (string) ($row['first_name'] ?? ''),
-                'last_name' => (string) ($row['last_name'] ?? ''),
-                'nickname' => isset($row['nickname']) && $row['nickname'] !== '' ? (string) $row['nickname'] : null,
-                'profile_picture' => isset($row['profile_picture']) && $row['profile_picture'] !== '' ? (string) $row['profile_picture'] : null,
-                'email' => (string) ($row['email'] ?? ''),
-                'phone' => DataEncryption::decrypt((string) ($row['phone'] ?? '')) ?? '',
-                'portal_access' => $portalAccess,
-                'membership_status' => $membershipStatus,
-                'is_member' => (int) ($row['is_member'] ?? 0),
-                'is_baptized' => (int) ($row['is_baptized'] ?? 0),
-                'is_confirmed' => (int) ($row['is_confirmed'] ?? 0),
-                'is_communicant' => (int) ($row['is_communicant'] ?? 0),
-                'is_dependent' => (int) ($row['is_dependent'] ?? 0),
-                'is_under_16' => (int) ($row['is_under_16'] ?? 0),
-                'has_pledge' => (int) ($row['has_pledge'] ?? 0),
-                'is_good_standing' => (int) ($row['is_good_standing'] ?? 0),
-                'is_leader' => (int) ($row['is_leader'] ?? 0),
-                'leader_titles' => (string) ($row['leader_titles'] ?? ''),
-                'source' => 'user_profile',
-                'synced_at' => $now,
-            ];
-
-            $existing = db_connect()->table($snapshotTable)
-                ->where($snapshotScopeColumn, $payload['parish_id'])
-                ->where('user_id', $payload['user_id'])
-                ->where('deleted_at', null)
-                ->get()
-                ->getRowArray();
-
-            if ($existing) {
-                db_connect()->table($snapshotTable)
-                    ->where('id', (int) $existing['id'])
-                    ->update($payload);
-
-                $this->recordStatusChange(
-                    (int) ($existing['profile_id'] ?? $payload['profile_id'] ?? 0),
-                    (int) $payload['parish_id'],
-                    (string) ($existing['membership_status'] ?? ''),
-                    (string) $payload['membership_status']
-                );
-                continue;
-            }
-
-            db_connect()->table($snapshotTable)->insert($payload);
-
-            $this->recordStatusChange(
-                (int) ($payload['profile_id'] ?? 0),
-                (int) $payload['parish_id'],
-                null,
-                (string) $payload['membership_status']
-            );
-        }
-
-        $deleteBuilder = db_connect()->table($snapshotTable)
-            ->where($snapshotScopeColumn, $parishId);
-
-        if ($seenUserIds !== []) {
-            $deleteBuilder->whereNotIn('user_id', $seenUserIds);
-        }
-
-        $deleteBuilder->delete();
-    }
-
-    public function syncAll(): array
-    {
-        $parishRows = db_connect()->table('parish')
-            ->select('id')
-            ->orderBy('id', 'ASC')
-            ->get()
-            ->getResultArray();
-
-        $synced = 0;
-        foreach ($parishRows as $row) {
-            $parishId = (int) ($row['id'] ?? 0);
-            if ($parishId <= 0) {
-                continue;
-            }
-
-            $this->syncParish($parishId);
-            $synced++;
-        }
-
-        return [
-            'parishes_synced' => $synced,
-        ];
     }
 
     /**
@@ -258,60 +330,22 @@ class ParishPeopleRegistryService
      */
     private function getColumnsForTable(string $baseTable): array
     {
-        $db = db_connect();
-        $prefixed = $db->getPrefix() . $baseTable;
-        $candidates = array_values(array_unique([$prefixed, $baseTable]));
-
-        foreach ($candidates as $table) {
-            try {
-                $columns = $db->getFieldNames($table);
-                if ($columns !== []) {
-                    return $columns;
-                }
-            } catch (\Throwable $e) {
-                // Try next name variant.
-            }
-        }
-
-        return [];
+        return $this->schemaResolver->getColumnsForTable($baseTable);
     }
 
     private function resolveExistingTable(array $baseCandidates): ?string
     {
-        foreach ($baseCandidates as $candidate) {
-            if ($this->getColumnsForTable($candidate) !== []) {
-                return $candidate;
-            }
-        }
-
-        return null;
+        return $this->schemaResolver->resolveExistingTable($baseCandidates);
     }
 
     private function resolveSnapshotTable(): ?string
     {
-        foreach (['parish_people', 'parish_people'] as $candidate) {
-            if ($this->getColumnsForTable($candidate) !== []) {
-                return $candidate;
-            }
-        }
-
-        return null;
+        return $this->schemaResolver->resolveSnapshotTable();
     }
 
     private function resolveSnapshotScopeColumn(string $table): string
     {
-        $columns = $this->getColumnsForTable($table);
-        $lowered = array_map('strtolower', $columns);
-
-        if (in_array('parish_id', $lowered, true)) {
-            return 'parish_id';
-        }
-
-        if (in_array('parish_id', $lowered, true)) {
-            return 'parish_id';
-        }
-
-        return 'parish_id';
+        return $this->schemaResolver->resolveSnapshotScopeColumn($table);
     }
 
     private function db(): \CodeIgniter\Database\BaseConnection

@@ -154,6 +154,12 @@ class RegistrationApprovalService
 
         $this->db->transComplete();
 
+        // Refresh the parish_people snapshot so the deleted member is
+        // removed from the parish directory immediately, not just after cron.
+        if ($this->db->transStatus() && $parishId !== null && $parishId > 0) {
+            (new \App\Services\ParishPeopleRegistryService())->syncParish($parishId);
+        }
+
         return $this->db->transStatus() ? null : lang('Diocesan.registrationDeleteFailed');
     }
 
@@ -225,6 +231,12 @@ class RegistrationApprovalService
             'reviewed_at' => date('Y-m-d H:i:s'),
         ]);
 
+        // Refresh the parish_people snapshot so the newly-approved member
+        // appears in the parish directory immediately, not just after cron.
+        if ($parishId > 0) {
+            (new \App\Services\ParishPeopleRegistryService())->syncParish($parishId);
+        }
+
         $this->logModerationAudit(
             $parishId > 0 ? $parishId : null,
             $actorUserId,
@@ -282,6 +294,13 @@ class RegistrationApprovalService
         }
 
         $this->db->transComplete();
+
+        // Refresh the parish_people snapshot so a banned/dismissed member is
+        // removed from the parish directory immediately (syncParish filters
+        // on u.active = 1), not just after the next cron run.
+        if ($this->db->transStatus() && $deactivateUser && $parishId !== null && $parishId > 0) {
+            (new \App\Services\ParishPeopleRegistryService())->syncParish($parishId);
+        }
 
         return $this->db->transStatus() ? null : lang('Diocesan.registrationUpdateFailed');
     }

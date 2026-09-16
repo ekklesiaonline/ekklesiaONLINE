@@ -421,4 +421,11 @@ return [
     'voteYea'                  => 'Pour',
     'voteNay'                  => 'Contre',
     'voteAbstain'              => 'Abstention',
+
+    // Finance dashboard (parish-tier)
+    'noExpenses'               => 'Aucune dépense pour cette période.',
+    'noDonationsInPeriod'      => 'Aucun don pour cette période.',
+    'trend12Months'            => 'Tendance sur 12 mois',
+    'chartLabelIncome'         => 'Revenus',
+    'chartLabelExpenses'       => 'Dépenses',
 ];

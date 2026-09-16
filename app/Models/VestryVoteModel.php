@@ -41,23 +41,32 @@ class VestryVoteModel extends Model
     /**
      * Tally votes for a motion.
      *
+     * M6: Uses SQL SUM instead of loading all vote rows and counting in PHP.
+     *
      * @return array{yea: int, nay: int, abstain: int, total: int}
      */
     public function tallyVotes(int $motionId): array
     {
-        $votes = $this->where('motion_id', $motionId)->findAll();
+        $result = $this->select(
+            "SUM(CASE WHEN vote = 'yea' THEN 1 ELSE 0 END) AS yea,
+             SUM(CASE WHEN vote = 'nay' THEN 1 ELSE 0 END) AS nay,
+             SUM(CASE WHEN vote = 'abstain' THEN 1 ELSE 0 END) AS abstain,
+             COUNT(*) AS total"
+        )
+            ->where('motion_id', $motionId)
+            ->get()
+            ->getRowArray();
 
-        $tally = ['yea' => 0, 'nay' => 0, 'abstain' => 0, 'total' => 0];
-
-        foreach ($votes as $vote) {
-            $choice = (string) ($vote['vote'] ?? '');
-            if (isset($tally[$choice])) {
-                $tally[$choice]++;
-            }
-            $tally['total']++;
+        if ($result === null) {
+            return ['yea' => 0, 'nay' => 0, 'abstain' => 0, 'total' => 0];
         }
 
-        return $tally;
+        return [
+            'yea'     => (int) ($result['yea'] ?? 0),
+            'nay'     => (int) ($result['nay'] ?? 0),
+            'abstain' => (int) ($result['abstain'] ?? 0),
+            'total'   => (int) ($result['total'] ?? 0),
+        ];
     }
 
     /**

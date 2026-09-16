@@ -142,8 +142,8 @@ class MemberDashboardDataService
         $profile = $this->profileModel->where('user_id', $userId)->first();
 
         if (!$profile) {
-            // Fallback: try by person_id
-            $profile = $this->profileModel->find($personId);
+            // Fallback: try by person_id (profile.person_id, not profile.id)
+            $profile = $this->profileModel->where('person_id', $personId)->first();
         }
 
         $parish = $this->parishModel->find($parishId);

@@ -454,4 +454,13 @@ return [
     'voteAbstain'              => 'Abstain',
     'sacramentDiscrepancyHeading' => 'Sacrament data mismatch',
     'sacramentDiscrepancyIntro' => 'Your sacramental records disagree with the membership flags shown below:',
+
+    // -------------------------------------------------------------------------
+    // Finance dashboard (parish-tier)
+    // -------------------------------------------------------------------------
+    'noExpenses'               => 'No expenses in this period.',
+    'noDonationsInPeriod'      => 'No donations in this period.',
+    'trend12Months'            => '12-Month Trend',
+    'chartLabelIncome'         => 'Income',
+    'chartLabelExpenses'       => 'Expenses',
 ];

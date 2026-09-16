@@ -71,14 +71,23 @@ class PersonCleanupService
             }
         }
 
-        if ($this->db->tableExists('user_person')) {
-            $this->db->table('user_person')
-                ->where('user_id', $userId)
-                ->delete();
-        }
+        $this->db->transBegin();
 
-        foreach (array_keys($personIds) as $personId) {
-            $this->deleteIfOrphaned($personId);
+        try {
+            if ($this->db->tableExists('user_person')) {
+                $this->db->table('user_person')
+                    ->where('user_id', $userId)
+                    ->delete();
+            }
+
+            foreach (array_keys($personIds) as $personId) {
+                $this->deleteIfOrphaned($personId);
+            }
+
+            $this->db->transCommit();
+        } catch (\Throwable $e) {
+            $this->db->transRollback();
+            throw $e;
         }
     }
 

@@ -46,11 +46,19 @@ class Vestry extends BaseController
             return $redirect;
         }
 
-        $meeting = model('VestryMeetingModel')->getMeetingWithMotions($meetingId);
+        $parishId = $this->getOperationalParishId();
+
+        if (!$parishId) {
+            return redirect()->to('/parish/governance')->with('error', lang('App.errorNotFound'));
+        }
+
+        $meeting = model('VestryMeetingModel')->getScopedMeeting($meetingId, (int) $parishId);
 
         if (!$meeting) {
             return redirect()->to('/parish/governance')->with('error', lang('App.errorNotFound'));
         }
+
+        $meeting['motions'] = model('VestryMotionModel')->getMotionsForMeeting($meetingId);
 
         $data = array_merge($this->getCommonViewData(lang('Dashboard.vestryMeetings')), [
             'meeting' => $meeting,
@@ -140,7 +148,13 @@ class Vestry extends BaseController
             return $redirect;
         }
 
-        $meeting = model('VestryMeetingModel')->find($meetingId);
+        $parishId = $this->getOperationalParishId();
+
+        if (!$parishId) {
+            return redirect()->to('/parish/governance')->with('error', lang('App.errorNotFound'));
+        }
+
+        $meeting = model('VestryMeetingModel')->getScopedMeeting($meetingId, (int) $parishId);
 
         if (!$meeting) {
             return redirect()->to('/parish/governance')->with('error', lang('App.errorNotFound'));
@@ -195,7 +209,13 @@ class Vestry extends BaseController
             return $this->response->setJSON(['success' => false, 'message' => 'Not authorized'])->setStatusCode(403);
         }
 
-        $motion = model('VestryMotionModel')->find($motionId);
+        $parishId = $this->getOperationalParishId();
+
+        if (!$parishId) {
+            return $this->response->setJSON(['success' => false, 'message' => 'No parish scope'])->setStatusCode(403);
+        }
+
+        $motion = model('VestryMotionModel')->getScopedMotion($motionId, (int) $parishId);
 
         if (!$motion) {
             return $this->response->setJSON(['success' => false, 'message' => 'Motion not found'])->setStatusCode(404);
@@ -242,7 +262,13 @@ class Vestry extends BaseController
             return $redirect;
         }
 
-        $motion = model('VestryMotionModel')->find($motionId);
+        $parishId = $this->getOperationalParishId();
+
+        if (!$parishId) {
+            return redirect()->to('/parish/governance')->with('error', lang('App.errorNotFound'));
+        }
+
+        $motion = model('VestryMotionModel')->getScopedMotion($motionId, (int) $parishId);
 
         if (!$motion) {
             return redirect()->to('/parish/governance')->with('error', lang('App.errorNotFound'));

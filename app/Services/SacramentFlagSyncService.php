@@ -95,56 +95,66 @@ class SacramentFlagSyncService
     {
         $computed = $this->recomputeForPerson($personId, $parishId);
 
-        // 1. Sync person_membership_details flags (preserve the other flags).
-        $existing = $this->membershipDetails->forPerson($personId, $parishId);
-        $flagPayload = [
-            'is_baptized'  => $computed['is_baptized'] ? 1 : 0,
-            'is_confirmed' => $computed['is_confirmed'] ? 1 : 0,
-            // Preserve unchanged fields so saveForPerson does not reset them.
-            'is_communicant'         => (int) ($existing['is_communicant'] ?? 0),
-            'is_dependent'           => (int) ($existing['is_dependent'] ?? 0),
-            'has_pledge'             => (int) ($existing['has_pledge'] ?? 0),
-            'good_standing_override' => (int) ($existing['good_standing_override'] ?? 0),
-        ];
+        $db = db_connect();
+        $db->transBegin();
 
-        $flagChanged = ((int) ($existing['is_baptized'] ?? 0) !== $flagPayload['is_baptized'])
-            || ((int) ($existing['is_confirmed'] ?? 0) !== $flagPayload['is_confirmed']);
+        try {
+            // 1. Sync person_membership_details flags (preserve the other flags).
+            $existing = $this->membershipDetails->forPerson($personId, $parishId);
+            $flagPayload = [
+                'is_baptized'  => $computed['is_baptized'] ? 1 : 0,
+                'is_confirmed' => $computed['is_confirmed'] ? 1 : 0,
+                // Preserve unchanged fields so saveForPerson does not reset them.
+                'is_communicant'         => (int) ($existing['is_communicant'] ?? 0),
+                'is_dependent'           => (int) ($existing['is_dependent'] ?? 0),
+                'has_pledge'             => (int) ($existing['has_pledge'] ?? 0),
+                'good_standing_override' => (int) ($existing['good_standing_override'] ?? 0),
+            ];
 
-        if ($flagChanged) {
-            $this->membershipDetails->saveForPerson($personId, $flagPayload, $parishId, $reason ?? 'Synced from sacramental record');
-        }
+            $flagChanged = ((int) ($existing['is_baptized'] ?? 0) !== $flagPayload['is_baptized'])
+                || ((int) ($existing['is_confirmed'] ?? 0) !== $flagPayload['is_confirmed']);
 
-        // 2. Sync profile.baptism_date / confirmation_date / is_confirmed.
-        $profile = $this->profileModel->where('person_id', $personId)->first();
-
-        if ($profile) {
-            $profileUpdate = [];
-            $currentBaptism       = $profile['baptism_date'] ?? null;
-            $currentConfirmation  = $profile['confirmation_date'] ?? null;
-            $currentIsConfirmed   = (int) ($profile['is_confirmed'] ?? 0);
-
-            // Baptism date: only set if we have a date; only clear if we have
-            // no baptism record AND the existing date is set.
-            if ($computed['baptism_date'] !== null && $currentBaptism !== $computed['baptism_date']) {
-                $profileUpdate['baptism_date'] = $computed['baptism_date'];
-            } elseif (! $computed['is_baptized'] && $currentBaptism !== null && $currentBaptism !== '') {
-                $profileUpdate['baptism_date'] = null;
+            if ($flagChanged) {
+                $this->membershipDetails->saveForPerson($personId, $flagPayload, $parishId, $reason ?? 'Synced from sacramental record');
             }
 
-            if ($computed['confirmation_date'] !== null && $currentConfirmation !== $computed['confirmation_date']) {
-                $profileUpdate['confirmation_date'] = $computed['confirmation_date'];
-            } elseif (! $computed['is_confirmed'] && $currentConfirmation !== null && $currentConfirmation !== '') {
-                $profileUpdate['confirmation_date'] = null;
+            // 2. Sync profile.baptism_date / confirmation_date / is_confirmed.
+            $profile = $this->profileModel->where('person_id', $personId)->first();
+
+            if ($profile) {
+                $profileUpdate = [];
+                $currentBaptism       = $profile['baptism_date'] ?? null;
+                $currentConfirmation  = $profile['confirmation_date'] ?? null;
+                $currentIsConfirmed   = (int) ($profile['is_confirmed'] ?? 0);
+
+                // Baptism date: only set if we have a date; only clear if we have
+                // no baptism record AND the existing date is set.
+                if ($computed['baptism_date'] !== null && $currentBaptism !== $computed['baptism_date']) {
+                    $profileUpdate['baptism_date'] = $computed['baptism_date'];
+                } elseif (! $computed['is_baptized'] && $currentBaptism !== null && $currentBaptism !== '') {
+                    $profileUpdate['baptism_date'] = null;
+                }
+
+                if ($computed['confirmation_date'] !== null && $currentConfirmation !== $computed['confirmation_date']) {
+                    $profileUpdate['confirmation_date'] = $computed['confirmation_date'];
+                } elseif (! $computed['is_confirmed'] && $currentConfirmation !== null && $currentConfirmation !== '') {
+                    $profileUpdate['confirmation_date'] = null;
+                }
+
+                $newIsConfirmed = $computed['is_confirmed'] ? 1 : 0;
+                if ($currentIsConfirmed !== $newIsConfirmed) {
+                    $profileUpdate['is_confirmed'] = $newIsConfirmed;
+                }
+
+                if ($profileUpdate !== []) {
+                    $this->profileModel->update((int) $profile['id'], $profileUpdate);
+                }
             }
 
-            $newIsConfirmed = $computed['is_confirmed'] ? 1 : 0;
-            if ($currentIsConfirmed !== $newIsConfirmed) {
-                $profileUpdate['is_confirmed'] = $newIsConfirmed;
-            }
-
-            if ($profileUpdate !== []) {
-                $this->profileModel->update((int) $profile['id'], $profileUpdate);
-            }
+            $db->transCommit();
+        } catch (\Throwable $e) {
+            $db->transRollback();
+            throw $e;
         }
 
         return $computed;

@@ -96,5 +96,5 @@ class Autoload extends AutoloadConfig
      *
      * @var list<string>
      */
-    public $helpers = ['auth', 'setting', 'coa_i18n', 'fund_i18n', 'liturgy_i18n', 'followup_template'];
+    public $helpers = ['auth', 'setting', 'coa_i18n', 'fund_i18n', 'liturgy_i18n', 'followup_template', 'format'];
 }

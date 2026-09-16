@@ -2,15 +2,18 @@
 
 namespace App\Services;
 
+use App\Libraries\SchemaResolver;
 use CodeIgniter\Database\BaseConnection;
 
 class NonPortalMemberProvisioningService
 {
     private BaseConnection $db;
+    private SchemaResolver $schemaResolver;
 
     public function __construct(?BaseConnection $db = null)
     {
         $this->db = $db ?? db_connect();
+        $this->schemaResolver = new SchemaResolver($this->db);
     }
 
     /**
@@ -264,23 +267,7 @@ class NonPortalMemberProvisioningService
      */
     private function getColumnsForTable(string $baseTable): array
     {
-        $prefix = $this->db->getPrefix();
-        if ($prefix !== '') {
-            $prefixed = $prefix . $baseTable;
-            try {
-                $this->db->resetDataCache();
-                return $this->db->getFieldNames($prefixed);
-            } catch (\Throwable $e) {
-                return [];
-            }
-        }
-
-        try {
-            $this->db->resetDataCache();
-            return $this->db->getFieldNames($baseTable);
-        } catch (\Throwable $e) {
-            return [];
-        }
+        return $this->schemaResolver->getColumnsForTable($baseTable);
     }
 
     /**

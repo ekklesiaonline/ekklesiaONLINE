@@ -3,9 +3,6 @@
 <?= $this->section('content') ?>
 
 <?php
-$formatCurrency = static function ($amount): string {
-    return number_format((float) ($amount ?? 0), 2);
-};
 $locale = service('request')->getLocale() ?: config('App')->defaultLocale;
 ?>
 
@@ -32,7 +29,7 @@ $locale = service('request')->getLocale() ?: config('App')->defaultLocale;
                 <input type="date" name="end_date" class="form-control" value="<?= esc($end_date ?? '') ?>">
             </div>
             <div class="col-md-3">
-                <button type="submit" class="btn btn-primary w-100"><i class="bi bi-funnel"></i> <?= lang('App.filter') ?></button>
+                <button type="submit" class="btn btn-primary w-100" aria-label="<?= esc(lang('App.filter')) ?>"><i class="bi bi-funnel" aria-hidden="true"></i> <?= lang('App.filter') ?></button>
             </div>
         </form>
     </div>
@@ -44,7 +41,7 @@ $locale = service('request')->getLocale() ?: config('App')->defaultLocale;
         <div class="card stat-card success h-100">
             <div class="card-body">
                 <h6 class="text-muted mb-1"><?= lang('Dashboard.totalDonations') ?></h6>
-                <h3 class="mb-0"><?= esc($formatCurrency($total_income ?? 0)) ?></h3>
+                <h3 class="mb-0"><?= esc(format_currency($total_income ?? 0)) ?></h3>
             </div>
         </div>
     </div>
@@ -52,15 +49,15 @@ $locale = service('request')->getLocale() ?: config('App')->defaultLocale;
         <div class="card stat-card danger h-100">
             <div class="card-body">
                 <h6 class="text-muted mb-1"><?= lang('Dashboard.totalExpenses') ?></h6>
-                <h3 class="mb-0"><?= esc($formatCurrency($total_expenses ?? 0)) ?></h3>
+                <h3 class="mb-0"><?= esc(format_currency($total_expenses ?? 0)) ?></h3>
             </div>
         </div>
     </div>
     <div class="col-md-4">
         <div class="card stat-card primary h-100">
             <div class="card-body">
-                <h6 class="text-muted mb-1">Net</h6>
-                <h3 class="mb-0 <?= ($net_amount ?? 0) >= 0 ? 'text-success' : 'text-danger' ?>"><?= esc($formatCurrency($net_amount ?? 0)) ?></h3>
+                <h6 class="text-muted mb-1"><?= lang('Dashboard.netLabel') ?></h6>
+                <h3 class="mb-0 <?= ($net_amount ?? 0) >= 0 ? 'text-success' : 'text-danger' ?>"><?= esc(format_currency($net_amount ?? 0)) ?></h3>
             </div>
         </div>
     </div>
@@ -69,7 +66,7 @@ $locale = service('request')->getLocale() ?: config('App')->defaultLocale;
 <!-- 12-month trend chart -->
 <div class="card mb-4">
     <div class="card-header">
-        <h5 class="mb-0"><i class="bi bi-graph-up"></i> 12-Month Trend</h5>
+        <h5 class="mb-0"><i class="bi bi-graph-up" aria-hidden="true"></i> <?= lang('Dashboard.trend12Months') ?></h5>
     </div>
     <div class="card-body" style="min-height: 300px;">
         <canvas id="financeTrendChart"></canvas>
@@ -87,19 +84,19 @@ $locale = service('request')->getLocale() ?: config('App')->defaultLocale;
                 <?php if (!empty($recent_donations)): ?>
                     <div class="table-responsive">
                         <table class="table table-sm">
-                            <thead><tr><th>Date</th><th class="text-end">Amount</th></tr></thead>
+                            <thead><tr><th scope="col"><?= lang('Dashboard.colDate') ?></th><th scope="col" class="text-end"><?= lang('Dashboard.colAmount') ?></th></tr></thead>
                             <tbody>
                                 <?php foreach ($recent_donations as $donation): ?>
                                     <tr>
                                         <td><?= esc($donation['date'] ?? '-') ?></td>
-                                        <td class="text-end"><?= esc($formatCurrency($donation['amount'] ?? 0)) ?></td>
+                                        <td class="text-end"><?= esc(format_currency($donation['amount'] ?? 0)) ?></td>
                                     </tr>
                                 <?php endforeach; ?>
                             </tbody>
                         </table>
                     </div>
                 <?php else: ?>
-                    <p class="text-muted small mb-0">No donations in this period.</p>
+                    <p class="text-muted small mb-0"><?= lang('Dashboard.noDonationsInPeriod') ?></p>
                 <?php endif; ?>
             </div>
         </div>
@@ -113,19 +110,19 @@ $locale = service('request')->getLocale() ?: config('App')->defaultLocale;
                 <?php if (!empty($recent_expenses)): ?>
                     <div class="table-responsive">
                         <table class="table table-sm">
-                            <thead><tr><th>Date</th><th class="text-end">Amount</th></tr></thead>
+                            <thead><tr><th scope="col"><?= lang('Dashboard.colDate') ?></th><th scope="col" class="text-end"><?= lang('Dashboard.colAmount') ?></th></tr></thead>
                             <tbody>
                                 <?php foreach ($recent_expenses as $expense): ?>
                                     <tr>
                                         <td><?= esc($expense['date'] ?? '-') ?></td>
-                                        <td class="text-end"><?= esc($formatCurrency($expense['amount'] ?? 0)) ?></td>
+                                        <td class="text-end"><?= esc(format_currency($expense['amount'] ?? 0)) ?></td>
                                     </tr>
                                 <?php endforeach; ?>
                             </tbody>
                         </table>
                     </div>
                 <?php else: ?>
-                    <p class="text-muted small mb-0">No expenses in this period.</p>
+                    <p class="text-muted small mb-0"><?= lang('Dashboard.noExpenses') ?></p>
                 <?php endif; ?>
             </div>
         </div>
@@ -146,8 +143,8 @@ $locale = service('request')->getLocale() ?: config('App')->defaultLocale;
             data: {
                 labels: trendLabels,
                 datasets: [
-                    { label: 'Income', data: incomeTrend, backgroundColor: 'rgba(25, 135, 84, 0.7)' },
-                    { label: 'Expenses', data: expenseTrend, backgroundColor: 'rgba(220, 53, 69, 0.7)' },
+                    { label: '<?= esc(lang('Dashboard.chartLabelIncome')) ?>', data: incomeTrend, backgroundColor: 'rgba(25, 135, 84, 0.7)' },
+                    { label: '<?= esc(lang('Dashboard.chartLabelExpenses')) ?>', data: expenseTrend, backgroundColor: 'rgba(220, 53, 69, 0.7)' },
                 ],
             },
             options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } } },

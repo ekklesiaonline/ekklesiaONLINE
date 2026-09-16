@@ -18,6 +18,7 @@
 	"require-dev": {
 		"fakerphp/faker": "^1.9",
 		"mikey179/vfsstream": "^1.6",
+		"phpstan/phpstan": "^2.2",
 		"phpunit/phpunit": "^10.5.16"
 	},
 	"autoload": {
@@ -27,6 +28,7 @@
 			"Province\\": "Province/",
 			"Diocesan\\": "Diocesan/",
 			"Clergy\\": "Clergy/",
+			"Parish\\": "Parish/",
 			"Worship\\": "Worship/",
 			"Treasurer\\": "Treasurer/",
 			"Volunteer\\": "Volunteer/",

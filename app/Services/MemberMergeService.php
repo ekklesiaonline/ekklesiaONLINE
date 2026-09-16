@@ -43,10 +43,12 @@ class MemberMergeService
 {
     private BaseConnection $db;
     private ?string $profileScopeColumn = null;
+    private \App\Libraries\SchemaResolver $schemaResolver;
 
     public function __construct(?BaseConnection $db = null)
     {
         $this->db = $db ?? db_connect();
+        $this->schemaResolver = new \App\Libraries\SchemaResolver($this->db);
     }
 
     // -------------------------------------------------------------------------
@@ -660,21 +662,7 @@ class MemberMergeService
 
     private function resolveExistingProfileTable(): ?string
     {
-        $candidates = [
-            $this->db->getPrefix() . 'profile',
-            'profile',
-        ];
-        foreach (array_unique($candidates) as $table) {
-            try {
-                $columns = $this->db->getFieldNames($table);
-                if ($columns !== []) {
-                    return $table;
-                }
-            } catch (\Throwable $e) {
-                // Table doesn't exist.
-            }
-        }
-        return null;
+        return $this->schemaResolver->resolveExistingProfileTable();
     }
 
     /**

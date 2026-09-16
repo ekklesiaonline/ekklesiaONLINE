@@ -380,10 +380,37 @@ class Profile extends BaseController
             return null;
         }
 
-        $newName = $file->getRandomName();
+        // Normalize the extension to a safe whitelist based on the detected MIME type.
+        // Never trust the client-supplied extension — a file named evil.php with image
+        // MIME headers could otherwise be stored with a .php extension.
+        $safeExtension = $this->resolveSafeImageExtension($file);
+        if ($safeExtension === null) {
+            return null;
+        }
+
+        $newName = bin2hex(random_bytes(16)) . '.' . $safeExtension;
         $file->move($targetDir, $newName);
 
         return $folder . '/' . $newName;
+    }
+
+    /**
+     * Resolve a safe image extension from the uploaded file's detected MIME type.
+     * Returns null if the MIME type is not in the whitelist.
+     *
+     * @return string|null
+     */
+    private function resolveSafeImageExtension($file): ?string
+    {
+        $mimeType = strtolower((string) $file->getMimeType());
+
+        return match ($mimeType) {
+            'image/jpeg', 'image/jpg' => 'jpg',
+            'image/png'              => 'png',
+            'image/gif'              => 'gif',
+            'image/webp'             => 'webp',
+            default                  => null,
+        };
     }
 
     /**

@@ -59,6 +59,16 @@ class Services extends BaseService
         return new \App\Services\EventVisibilityService();
     }
 
+    public static function peopleViewData(bool $getShared = true): \App\Services\PeopleViewDataService
+    {
+        if ($getShared) {
+            /** @var \App\Services\PeopleViewDataService */
+            return static::getSharedInstance('peopleViewData');
+        }
+
+        return new \App\Services\PeopleViewDataService();
+    }
+
     public static function systemSettings(bool $getShared = true): \App\Services\SystemSettingService
     {
         if ($getShared) {

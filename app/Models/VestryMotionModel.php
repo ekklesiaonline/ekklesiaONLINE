@@ -74,6 +74,20 @@ class VestryMotionModel extends Model
     }
 
     /**
+     * Get a motion only if its parent meeting belongs to the given parish.
+     *
+     * @return array<string, mixed>|null
+     */
+    public function getScopedMotion(int $motionId, int $parishId): ?array
+    {
+        return $this->select('vestry_motion.*')
+            ->join('vestry_meeting', 'vestry_meeting.id = vestry_motion.meeting_id', 'inner')
+            ->where('vestry_motion.id', $motionId)
+            ->where('vestry_meeting.parish_id', $parishId)
+            ->first();
+    }
+
+    /**
      * Close a motion by tallying votes and setting the status.
      */
     public function closeMotion(int $motionId): array

@@ -138,6 +138,10 @@ class BaseTenantModel extends Model
     {
         $builder = $this->builder();
 
+        if ($this->tenantScoped) {
+            $this->applyScopeToBuilder($builder);
+        }
+
         if ($this->tempUseSoftDeletes) {
             $builder->where($this->deletedField, null);
         }
@@ -162,5 +166,23 @@ class BaseTenantModel extends Model
         }
 
         return $rows;
+    }
+
+    /**
+     * Apply the tenant scope to a specific builder instance.
+     * Used by doFind() which builds its own query outside the model's
+     * normal find()/findAll() path.
+     */
+    protected function applyScopeToBuilder(\CodeIgniter\Database\BaseBuilder $builder): void
+    {
+        $parishId = $this->currentParishId();
+        $scopeColumn = $this->table . '.' . $this->scopeColumn;
+
+        if ($parishId <= 0) {
+            $builder->where($scopeColumn, -1);
+            return;
+        }
+
+        $builder->where($scopeColumn, $parishId);
     }
 }

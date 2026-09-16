@@ -117,9 +117,12 @@ $eventsFiltersActive = trim((string) ($search ?? '')) !== '' || trim((string) ($
                                             </a>
                                         <?php endif; ?>
                                         <?php if (!empty($event['can_delete'])): ?>
-                                            <a href="<?= base_url('system/events/delete/' . (int) $event['id']) ?>" class="btn btn-sm btn-danger" onclick="return confirm('<?= lang('Events.confirmDelete') ?>')" title="<?= lang('App.delete') ?>">
-                                                <i class="bi bi-trash"></i>
-                                            </a>
+                                            <form method="post" action="<?= base_url('system/events/delete/' . (int) $event['id']) ?>" class="d-inline" onsubmit="return confirm('<?= lang('Events.confirmDelete') ?>')">
+                                                <?= csrf_field() ?>
+                                                <button type="submit" class="btn btn-sm btn-danger" title="<?= lang('App.delete') ?>">
+                                                    <i class="bi bi-trash"></i>
+                                                </button>
+                                            </form>
                                         <?php endif; ?>
                                     </div>
                                 </td>
