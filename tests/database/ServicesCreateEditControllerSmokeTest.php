@@ -217,6 +217,15 @@ final class ServicesCreateEditControllerSmokeTest extends CIUnitTestCase
             updated_at TEXT NULL
         )');
 
+        // A previously-run test class may have created a narrower service table
+        // in this shared in-memory database; guarantee the columns we exercise.
+        $this->ensureColumnExists($this->physicalTableName('service'), 'parish_id', 'INTEGER NULL');
+        $this->ensureColumnExists('service', 'parish_id', 'INTEGER NULL');
+        foreach (['service_date', 'service_time', 'service', 'liturgical_day', 'place', 'preacher', 'celebrant', 'notes', 'created_at', 'updated_at'] as $column) {
+            $this->ensureColumnExists($this->physicalTableName('service'), $column, 'TEXT NULL');
+            $this->ensureColumnExists('service', $column, 'TEXT NULL');
+        }
+
         if (!$this->tableExists('service_metric')) {
             $this->db->query('CREATE TABLE IF NOT EXISTS ' . $this->physicalTableName('service_metric') . ' (
                 service_id INTEGER PRIMARY KEY,
@@ -327,6 +336,24 @@ final class ServicesCreateEditControllerSmokeTest extends CIUnitTestCase
                     // Keep setup resilient in mixed schema test environments.
                 }
             }
+        }
+    }
+
+    private function ensureColumnExists(string $table, string $column, string $definition): void
+    {
+        try {
+            $columns = $this->db->getFieldNames($table);
+            if (in_array($column, $columns, true)) {
+                return;
+            }
+        } catch (\Throwable $e) {
+            return;
+        }
+
+        try {
+            $this->db->query('ALTER TABLE ' . $table . ' ADD COLUMN ' . $column . ' ' . $definition);
+        } catch (\Throwable $e) {
+            // Best-effort for shared in-memory schema variations.
         }
     }
 

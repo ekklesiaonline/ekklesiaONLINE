@@ -245,8 +245,12 @@ final class StandingRefreshWorkflowTest extends CIUnitTestCase
 
         $profilesTable = $this->resolveTableName('profile');
         $this->ensureColumnExists($profilesTable, 'is_confirmed', 'INTEGER DEFAULT 0');
+        // A previously-run test class may have created a person-centric profile
+        // table (person_id, no user_id) in this shared in-memory database.
+        $this->ensureColumnExists($profilesTable, 'user_id', 'INTEGER NULL');
         $prefixedProfiles = $prefix . 'profile';
         $this->ensureColumnExists($prefixedProfiles, 'is_confirmed', 'INTEGER DEFAULT 0');
+        $this->ensureColumnExists($prefixedProfiles, 'user_id', 'INTEGER NULL');
 
         if (!in_array($prefix . 'parish_affiliation', $tables, true) && !in_array('parish_affiliation', $tables, true)) {
             $this->db->query('CREATE TABLE IF NOT EXISTS ' . $prefix . 'parish_affiliation (

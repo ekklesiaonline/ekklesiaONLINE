@@ -158,7 +158,7 @@ class PersonCleanupService
      */
     private function hasActiveReferences(int $personId): bool
     {
-        if ($this->db->tableExists('user_person')) {
+        if ($this->db->tableExists('user_person') && $this->db->fieldExists('person_id', 'user_person')) {
             $count = $this->db->table('user_person')
                 ->where('person_id', $personId)
                 ->countAllResults();
@@ -167,39 +167,24 @@ class PersonCleanupService
             }
         }
 
-        if ($this->db->tableExists('profile')) {
-            $count = $this->db->table('profile')
-                ->where('person_id', $personId)
-                ->where('deleted_at', null)
-                ->countAllResults();
-            if ($count > 0) {
+        foreach (['profile', 'parish_affiliation', 'parish_people'] as $table) {
+            if (! $this->db->tableExists($table) || ! $this->db->fieldExists('person_id', $table)) {
+                continue;
+            }
+
+            $builder = $this->db->table($table)->where('person_id', $personId);
+            if ($this->db->fieldExists('deleted_at', $table)) {
+                $builder->where('deleted_at', null);
+            }
+
+            if ($builder->countAllResults() > 0) {
                 return true;
             }
         }
 
-        if ($this->db->tableExists('parish_affiliation')) {
-            $count = $this->db->table('parish_affiliation')
-                ->where('person_id', $personId)
-                ->where('deleted_at', null)
-                ->countAllResults();
-            if ($count > 0) {
-                return true;
-            }
-        }
-
-        if ($this->db->tableExists('leadership_position')) {
+        if ($this->db->tableExists('leadership_position') && $this->db->fieldExists('person_id', 'leadership_position')) {
             $count = $this->db->table('leadership_position')
                 ->where('person_id', $personId)
-                ->countAllResults();
-            if ($count > 0) {
-                return true;
-            }
-        }
-
-        if ($this->db->tableExists('parish_people')) {
-            $count = $this->db->table('parish_people')
-                ->where('person_id', $personId)
-                ->where('deleted_at', null)
                 ->countAllResults();
             if ($count > 0) {
                 return true;
@@ -224,7 +209,7 @@ class PersonCleanupService
         ];
 
         foreach ($childTables as $table) {
-            if (! $this->db->tableExists($table)) {
+            if (! $this->db->tableExists($table) || ! $this->db->fieldExists('person_id', $table)) {
                 continue;
             }
 

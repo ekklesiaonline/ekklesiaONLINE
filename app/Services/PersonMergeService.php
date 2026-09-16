@@ -171,6 +171,7 @@ class PersonMergeService
             return $this->result(false, 'Merge blocked by conflicts: ' . implode('; ', $conflicts));
         }
 
+        $this->db->transException(true);
         $this->db->transStart();
         // Clear any stale failure flag left by earlier queries during long test runs.
         $this->db->resetTransStatus();
@@ -206,8 +207,9 @@ class PersonMergeService
 
             return $this->result(true, 'Person records merged successfully.');
         } catch (\Throwable $e) {
+            $lastQuery = (string) $this->db->getLastQuery();
             $this->db->transRollback();
-            log_message('error', 'PersonMergeService::merge failed: ' . $e->getMessage());
+            log_message('error', 'PersonMergeService::merge failed: ' . $e->getMessage() . ' | last query: ' . $lastQuery);
             return $this->result(false, 'Merge failed: ' . $e->getMessage());
         }
     }
@@ -228,7 +230,9 @@ class PersonMergeService
         $conflicts = [];
 
         // Same user linked to both persons.
-        if ($this->db->tableExists('user_person')) {
+        if ($this->db->tableExists('user_person')
+            && $this->db->fieldExists('person_id', 'user_person')
+            && $this->db->fieldExists('user_id', 'user_person')) {
             $userPersonTable = $this->db->prefixTable('user_person');
             $commonUsers = $this->db->query(
                 "SELECT up1.user_id FROM {$userPersonTable} up1 INNER JOIN {$userPersonTable} up2 ON up2.user_id = up1.user_id WHERE up1.person_id = ? AND up2.person_id = ?",
@@ -240,7 +244,10 @@ class PersonMergeService
         }
 
         // Both persons have a profile in the same parish.
-        if ($this->db->tableExists('profile')) {
+        if ($this->db->tableExists('profile')
+            && $this->db->fieldExists('person_id', 'profile')
+            && $this->db->fieldExists('user_id', 'profile')
+            && $this->db->fieldExists('parish_id', 'profile')) {
             $profileTable = $this->db->prefixTable('profile');
             $commonProfiles = $this->db->query(
                 "SELECT pr1.parish_id FROM {$profileTable} pr1 INNER JOIN {$profileTable} pr2 ON pr2.user_id = pr1.user_id AND pr2.parish_id = pr1.parish_id WHERE pr1.person_id = ? AND pr2.person_id = ?",
@@ -257,7 +264,9 @@ class PersonMergeService
             'person_onboarding' => 'parish_id',
         ];
         foreach ($childTables as $table => $parishColumn) {
-            if (! $this->db->tableExists($table)) {
+            if (! $this->db->tableExists($table)
+                || ! $this->db->fieldExists('person_id', $table)
+                || ! $this->db->fieldExists($parishColumn, $table)) {
                 continue;
             }
             $tableName = $this->db->prefixTable($table);

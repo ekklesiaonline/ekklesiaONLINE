@@ -1095,6 +1095,32 @@ final class SystemAdminCreateAdminUiIntegrationTest extends CIUnitTestCase
         )');
 
         $this->ensureColumnExists($this->resolveTableName('profile'), 'is_confirmed', 'INTEGER DEFAULT 0');
+        // A previously-run test class may have created a person-centric profile
+        // table (person_id, no user_id) in this shared in-memory database. Apply
+        // column guarantees to the physical prefixed table the query builder
+        // will actually write to.
+        $prefixedProfile = $this->createTableName('profile');
+        foreach ([
+            'user_id'           => 'INTEGER NULL',
+            'person_id'         => 'INTEGER NULL',
+            'parish_id'         => 'INTEGER NULL',
+            'province_id'       => 'INTEGER NULL',
+            'diocese_id'        => 'INTEGER NULL',
+            'first_name'        => 'TEXT NULL',
+            'last_name'         => 'TEXT NULL',
+            'phone'             => 'TEXT NULL',
+            'locale'            => 'TEXT NULL',
+            'membership_status' => 'TEXT NULL',
+            'portal_access'     => 'TEXT NULL',
+            'is_confirmed'      => 'INTEGER DEFAULT 0',
+            'deleted_at'        => 'TEXT NULL',
+            'created_at'        => 'TEXT NULL',
+            'updated_at'        => 'TEXT NULL',
+        ] as $column => $definition) {
+            $this->ensureColumnExists($prefixedProfile, $column, $definition);
+            // insertProfile() mirrors rows into the unprefixed shadow table too.
+            $this->ensureColumnExists('profile', $column, $definition);
+        }
         if ($this->db->tableExists('profile')) {
             $this->ensureColumnExists('profile', 'is_confirmed', 'INTEGER DEFAULT 0');
         }
