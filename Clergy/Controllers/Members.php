@@ -7,10 +7,14 @@ use App\Controllers\BaseController;
 use App\Libraries\AddressHelper;
 use App\Libraries\DataEncryption;
 use App\Libraries\PhoneHelper;
+use App\Libraries\SchemaResolver;
+use App\Services\HierarchyService;
+use App\Services\MemberAffiliationService;
 use App\Services\ParishPeopleRegistryService;
 use App\Services\NonPortalMemberProvisioningService;
 use App\Services\MembershipStatusService;
 use App\Services\PersonStatusHistoryService;
+use App\Services\ProvinceStaffDirectoryService;
 use App\Services\UploadPathService;
 
 class Members extends BaseController
@@ -21,10 +25,16 @@ class Members extends BaseController
     protected $parishModel;
     protected $memberParishAffiliationModel;
     protected $nonPortalProvisioningService;
+    private MemberAffiliationService $memberAffiliations;
+    private ProvinceStaffDirectoryService $provinceStaffDirectory;
+    private HierarchyService $hierarchyService;
 
     public function __construct()
     {
         $this->parishModel = model('ParishModel');
+        $this->memberAffiliations = new MemberAffiliationService();
+        $this->provinceStaffDirectory = new ProvinceStaffDirectoryService();
+        $this->hierarchyService = new HierarchyService();
     }
 
     protected function getProfileModel()
@@ -98,26 +108,13 @@ class Members extends BaseController
             // Diocese filter for the diocesan section: GET param takes precedence over session.
             $requestedDioceseId = (int) $this->request->getGet('diocese_scope_id');
             if ($requestedDioceseId > 0) {
-                $valid = $db->table('diocese')
-                    ->where('id', $requestedDioceseId)
-                    ->where('province_id', $provinceId)
-                    ->countAllResults() > 0;
-                $selectedDioceseId = $valid ? $requestedDioceseId : null;
+                $selectedDioceseId = $this->hierarchyService->dioceseInProvince($requestedDioceseId, $provinceId) ? $requestedDioceseId : null;
             } else {
                 $selectedDioceseId = $this->resolveSelectedDioceseForProvince($provinceId);
             }
 
             // --- Province staff: provinceadmin group users scoped to this province ---
-            $provinceStaff = $db->table($profileTable . ' p')
-                ->select('p.id as profile_id, p.user_id, p.first_name, p.last_name, p.phone, ai.secret as email')
-                ->join('users u', 'u.id = p.user_id')
-                ->join('auth_identities ai', 'ai.user_id = u.id AND ai.type = "email_password"', 'left')
-                ->join('auth_groups_users agu', 'agu.user_id = p.user_id AND agu.group = "provinceadmin"')
-                ->where('p.province_id', $provinceId)
-                ->orderBy('p.last_name', 'ASC')
-                ->orderBy('p.first_name', 'ASC')
-                ->get()
-                ->getResultArray();
+            $provinceStaff = $this->provinceStaffDirectory->provinceStaff($profileTable, $provinceId);
             $provinceStaff = array_map(static function (array $row): array {
                 $row['phone'] = DataEncryption::decrypt($row['phone'] ?? null);
                 return $row;
@@ -125,26 +122,7 @@ class Members extends BaseController
             $provinceStaff = $this->annotateRowsWithProfilePending($provinceStaff, 'user_id', 'profile_id');
 
             // --- Diocesan staff: diocesanadmin, parishadmin, clergy — read-only for province admin ---
-            $diocesanStaffBuilder = $db->table($profileTable . ' p')
-                ->select('p.id as profile_id, p.user_id, p.first_name, p.last_name, p.phone, ai.secret as email, agu.group as role, c.id as parish_id, c.name as parish_name, d.id as diocese_id, d.name as diocese_name')
-                ->join('users u', 'u.id = p.user_id')
-                ->join('auth_identities ai', 'ai.user_id = u.id AND ai.type = "email_password"', 'left')
-                ->join('auth_groups_users agu', 'agu.user_id = p.user_id')
-                ->join('parish c', 'c.id = p.parish_id', 'left')
-                ->join('diocese d', 'd.id = COALESCE(p.diocese_id, c.diocese_id)', 'left')
-                ->whereIn('agu.group', ['diocesanadmin', 'parishadmin', 'clergy'])
-                ->where('d.province_id', $provinceId);
-
-            if ($selectedDioceseId !== null) {
-                $diocesanStaffBuilder->where('d.id', $selectedDioceseId);
-            }
-
-            $diocesanStaff = $diocesanStaffBuilder
-                ->orderBy('agu.group', 'ASC')
-                ->orderBy('d.name', 'ASC')
-                ->orderBy('p.last_name', 'ASC')
-                ->get()
-                ->getResultArray();
+            $diocesanStaff = $this->provinceStaffDirectory->diocesanStaff($profileTable, $provinceId, $selectedDioceseId);
             $diocesanStaff = array_map(static function (array $row): array {
                 $row['phone'] = DataEncryption::decrypt($row['phone'] ?? null);
                 return $row;
@@ -152,11 +130,7 @@ class Members extends BaseController
             $diocesanStaff = $this->annotateRowsWithProfilePending($diocesanStaff, 'user_id', 'profile_id');
 
             // Dioceses list for the diocesan section filter dropdown.
-            $diocesesInProvince = $db->table('diocese')
-                ->where('province_id', $provinceId)
-                ->orderBy('name', 'ASC')
-                ->get()
-                ->getResultArray();
+            $diocesesInProvince = $this->hierarchyService->diocesesInProvince($provinceId);
 
             $data = array_merge($this->getCommonViewData('Staff Management'), [
                 'is_admin_management' => true,
@@ -846,37 +820,7 @@ class Members extends BaseController
      */
     protected function deactivateActiveAffiliationsForUser(int $userId): array
     {
-        if ($userId <= 0) {
-            return [];
-        }
-
-        $rows = db_connect()->table('parish_affiliation')
-            ->select('parish_id AS parish_id')
-            ->where('linked_user_id', $userId)
-            ->where('is_member', 1)
-            ->get()
-            ->getResultArray();
-
-        $parishIds = array_values(array_unique(array_map(
-            static fn(array $row): int => (int) ($row['parish_id'] ?? 0),
-            $rows
-        )));
-        $parishIds = array_values(array_filter($parishIds, static fn(int $id): bool => $id > 0));
-
-        if ($parishIds === []) {
-            return [];
-        }
-
-        db_connect()->table('parish_affiliation')
-            ->where('linked_user_id', $userId)
-            ->where('is_member', 1)
-            ->update([
-                'is_member'  => 0,
-                'end_date'   => date('Y-m-d'),
-                'updated_at' => date('Y-m-d H:i:s'),
-            ]);
-
-        return $parishIds;
+        return $this->memberAffiliations->deactivateActiveAffiliationsForUser($userId);
     }
 
     /**
@@ -885,48 +829,7 @@ class Members extends BaseController
      */
     private function deactivatePersonsForUser(int $userId): void
     {
-        if ($userId <= 0) {
-            return;
-        }
-
-        $db = db_connect();
-        $service = new \App\Services\PersonCleanupService($db);
-
-        $personIds = [];
-
-        if ($db->tableExists('user_person')) {
-            $rows = $db->table('user_person')
-                ->distinct()
-                ->select('person_id')
-                ->where('user_id', $userId)
-                ->get()
-                ->getResultArray();
-            foreach ($rows as $row) {
-                $id = (int) ($row['person_id'] ?? 0);
-                if ($id > 0) {
-                    $personIds[$id] = true;
-                }
-            }
-        }
-
-        if ($db->tableExists('profile')) {
-            $rows = $db->table('profile')
-                ->distinct()
-                ->select('person_id')
-                ->where('user_id', $userId)
-                ->get()
-                ->getResultArray();
-            foreach ($rows as $row) {
-                $id = (int) ($row['person_id'] ?? 0);
-                if ($id > 0) {
-                    $personIds[$id] = true;
-                }
-            }
-        }
-
-        foreach (array_keys($personIds) as $personId) {
-            $service->deactivateIfNoActiveProfiles($personId);
-        }
+        $this->memberAffiliations->deactivatePersonsForUser($userId);
     }
 
     /**
@@ -984,28 +887,23 @@ class Members extends BaseController
             return $this->jsonResponse($this->apiErrorPayload(lang('Clergy.targetParishOutsideScope'), 403, 'PARISH_OUTSIDE_SCOPE'), 403);
         }
 
-        $db = db_connect();
-        $db->transStart();
+        $failure = $this->memberAffiliations->attachToParish(
+            (int) $profile['user_id'],
+            $parishId,
+            $status,
+            $isHome,
+            (int) $profile['id'],
+            isset($profile['province_id']) ? (int) $profile['province_id'] : null,
+            isset($profile['diocese_id']) ? (int) $profile['diocese_id'] : null
+        );
 
-        $ok = $this->getMemberParishAffiliationModel()->attachToParish((int) $profile['user_id'], $parishId, false, $status);
-        if (!$ok) {
-            $db->transRollback();
-            return $this->jsonResponse($this->apiErrorPayload(lang('Clergy.unableAttachParish'), 500, 'PARISH_ATTACH_FAILED'), 500);
-        }
-
-        if ($isHome && !$this->getMemberParishAffiliationModel()->setHomeParish((int) $profile['user_id'], $parishId)) {
-            $db->transRollback();
-            return $this->jsonResponse($this->apiErrorPayload(lang('Clergy.unableSetHomeParish'), 500, 'HOME_PARISH_UPDATE_FAILED'), 500);
-        }
-
-        if (!$this->syncProfileParishMirror((int) $profile['id'], (int) $profile['user_id'], isset($profile['province_id']) ? (int) $profile['province_id'] : null, isset($profile['diocese_id']) ? (int) $profile['diocese_id'] : null)) {
-            $db->transRollback();
-            return $this->jsonResponse($this->apiErrorPayload(lang('Clergy.unableSyncProfileCompat'), 500, 'PROFILE_COMPAT_SYNC_FAILED'), 500);
-        }
-
-        $db->transComplete();
-        if ($db->transStatus() === false) {
-            return $this->jsonResponse($this->apiErrorPayload(lang('Clergy.attachTransactionFailed'), 500, 'PARISH_ATTACH_TRANSACTION_FAILED'), 500);
+        if ($failure !== null) {
+            return match ($failure) {
+                'attach' => $this->jsonResponse($this->apiErrorPayload(lang('Clergy.unableAttachParish'), 500, 'PARISH_ATTACH_FAILED'), 500),
+                'home' => $this->jsonResponse($this->apiErrorPayload(lang('Clergy.unableSetHomeParish'), 500, 'HOME_PARISH_UPDATE_FAILED'), 500),
+                'sync' => $this->jsonResponse($this->apiErrorPayload(lang('Clergy.unableSyncProfileCompat'), 500, 'PROFILE_COMPAT_SYNC_FAILED'), 500),
+                default => $this->jsonResponse($this->apiErrorPayload(lang('Clergy.attachTransactionFailed'), 500, 'PARISH_ATTACH_TRANSACTION_FAILED'), 500),
+            };
         }
 
         $this->audit()->log('member.parish_attached', [
@@ -1058,23 +956,20 @@ class Members extends BaseController
             return $this->jsonResponse($this->apiErrorPayload(lang('Clergy.targetParishOutsideScope'), 403, 'PARISH_OUTSIDE_SCOPE'), 403);
         }
 
-        $db = db_connect();
-        $db->transStart();
+        $failure = $this->memberAffiliations->detachFromParish(
+            (int) $profile['user_id'],
+            $parishId,
+            (int) $profile['id'],
+            isset($profile['province_id']) ? (int) $profile['province_id'] : null,
+            isset($profile['diocese_id']) ? (int) $profile['diocese_id'] : null
+        );
 
-        $ok = $this->getMemberParishAffiliationModel()->detachFromParish((int) $profile['user_id'], $parishId);
-        if (!$ok) {
-            $db->transRollback();
-            return $this->jsonResponse($this->apiErrorPayload(lang('Clergy.unableDetachParish'), 500, 'PARISH_DETACH_FAILED'), 500);
-        }
-
-        if (!$this->syncProfileParishMirror((int) $profile['id'], (int) $profile['user_id'], isset($profile['province_id']) ? (int) $profile['province_id'] : null, isset($profile['diocese_id']) ? (int) $profile['diocese_id'] : null)) {
-            $db->transRollback();
-            return $this->jsonResponse($this->apiErrorPayload(lang('Clergy.unableSyncProfileCompat'), 500, 'PROFILE_COMPAT_SYNC_FAILED'), 500);
-        }
-
-        $db->transComplete();
-        if ($db->transStatus() === false) {
-            return $this->jsonResponse($this->apiErrorPayload(lang('Clergy.detachTransactionFailed'), 500, 'PARISH_DETACH_TRANSACTION_FAILED'), 500);
+        if ($failure !== null) {
+            return match ($failure) {
+                'detach' => $this->jsonResponse($this->apiErrorPayload(lang('Clergy.unableDetachParish'), 500, 'PARISH_DETACH_FAILED'), 500),
+                'sync' => $this->jsonResponse($this->apiErrorPayload(lang('Clergy.unableSyncProfileCompat'), 500, 'PROFILE_COMPAT_SYNC_FAILED'), 500),
+                default => $this->jsonResponse($this->apiErrorPayload(lang('Clergy.detachTransactionFailed'), 500, 'PARISH_DETACH_TRANSACTION_FAILED'), 500),
+            };
         }
 
         $this->audit()->log('member.parish_detached', [
@@ -1125,23 +1020,20 @@ class Members extends BaseController
             return $this->jsonResponse($this->apiErrorPayload(lang('Clergy.targetParishOutsideScope'), 403, 'PARISH_OUTSIDE_SCOPE'), 403);
         }
 
-        $db = db_connect();
-        $db->transStart();
+        $failure = $this->memberAffiliations->setHomeParish(
+            (int) $profile['user_id'],
+            $parishId,
+            (int) $profile['id'],
+            isset($profile['province_id']) ? (int) $profile['province_id'] : null,
+            isset($profile['diocese_id']) ? (int) $profile['diocese_id'] : null
+        );
 
-        $ok = $this->getMemberParishAffiliationModel()->setHomeParish((int) $profile['user_id'], $parishId);
-        if (!$ok) {
-            $db->transRollback();
-            return $this->jsonResponse($this->apiErrorPayload(lang('Clergy.unableSetHomeParish'), 500, 'HOME_PARISH_UPDATE_FAILED'), 500);
-        }
-
-        if (!$this->syncProfileParishMirror((int) $profile['id'], (int) $profile['user_id'], isset($profile['province_id']) ? (int) $profile['province_id'] : null, isset($profile['diocese_id']) ? (int) $profile['diocese_id'] : null)) {
-            $db->transRollback();
-            return $this->jsonResponse($this->apiErrorPayload(lang('Clergy.unableSyncProfileCompat'), 500, 'PROFILE_COMPAT_SYNC_FAILED'), 500);
-        }
-
-        $db->transComplete();
-        if ($db->transStatus() === false) {
-            return $this->jsonResponse($this->apiErrorPayload(lang('Clergy.setHomeTransactionFailed'), 500, 'HOME_PARISH_TRANSACTION_FAILED'), 500);
+        if ($failure !== null) {
+            return match ($failure) {
+                'home' => $this->jsonResponse($this->apiErrorPayload(lang('Clergy.unableSetHomeParish'), 500, 'HOME_PARISH_UPDATE_FAILED'), 500),
+                'sync' => $this->jsonResponse($this->apiErrorPayload(lang('Clergy.unableSyncProfileCompat'), 500, 'PROFILE_COMPAT_SYNC_FAILED'), 500),
+                default => $this->jsonResponse($this->apiErrorPayload(lang('Clergy.setHomeTransactionFailed'), 500, 'HOME_PARISH_TRANSACTION_FAILED'), 500),
+            };
         }
 
         $this->audit()->log('member.home_parish_changed', [
@@ -1175,14 +1067,7 @@ class Members extends BaseController
 
         $provinceId = !empty($profile['province_id']) ? (int) $profile['province_id'] : null;
         if ($provinceId === null && !empty($profile['diocese_id'])) {
-            $diocese = db_connect()->table('diocese')
-                ->select('province_id')
-                ->where('id', (int) $profile['diocese_id'])
-                ->get()
-                ->getRowArray();
-            if (!empty($diocese['province_id'])) {
-                $provinceId = (int) $diocese['province_id'];
-            }
+            $provinceId = $this->hierarchyService->provinceIdForDiocese((int) $profile['diocese_id']);
         }
 
         if ($provinceId === null) {
@@ -1220,16 +1105,7 @@ class Members extends BaseController
         $existingAffiliations = $this->getMemberParishAffiliationModel()->getUserAffiliations($userId);
         $existingParishIds = array_map(static fn(array $row): int => (int) ($row['parish_id'] ?? 0), $existingAffiliations);
 
-        $builder = db_connect()->table('parish')
-            ->select('id, name')
-            ->where('diocese_id', $dioceseId)
-            ->orderBy('name', 'ASC');
-
-        if (!empty($existingParishIds)) {
-            $builder->whereNotIn('id', $existingParishIds);
-        }
-
-        return $builder->get()->getResultArray();
+        return $this->memberAffiliations->attachableParishes($dioceseId, $existingParishIds);
     }
 
     protected function isParishWithinCurrentDioceseScope(int $targetDioceseId): bool
@@ -1255,36 +1131,7 @@ class Members extends BaseController
 
     protected function syncProfileParishMirror(int $profileId, int $userId, ?int $fallbackProvinceId = null, ?int $fallbackDioceseId = null): bool
     {
-        $affiliation = db_connect()->table('parish_affiliation')
-            ->select('parish_id as parish_id, diocese_id')
-            ->where('linked_user_id', $userId)
-            ->where('is_member', 1)
-            ->orderBy('is_primary', 'DESC')
-            ->orderBy('updated_at', 'DESC')
-            ->get()
-            ->getFirstRow('array');
-
-        $parishId = isset($affiliation['parish_id']) ? (int) $affiliation['parish_id'] : null;
-        $dioceseId = isset($affiliation['diocese_id']) ? (int) $affiliation['diocese_id'] : null;
-        $provinceId = $fallbackProvinceId;
-
-        if ($parishId) {
-            $parish = $this->parishModel->findWithHierarchy($parishId);
-            if ($parish) {
-                $provinceId = isset($parish['province_id']) ? (int) $parish['province_id'] : $provinceId;
-                $dioceseId = isset($parish['diocese_id']) ? (int) $parish['diocese_id'] : $dioceseId;
-            }
-        }
-
-        if ($dioceseId === null) {
-            $dioceseId = $fallbackDioceseId;
-        }
-
-        return $this->getProfileModel()->update($profileId, [
-            'parish_id' => $parishId,
-            'diocese_id' => $dioceseId,
-            'province_id' => $provinceId,
-        ]);
+        return $this->memberAffiliations->syncProfileParishMirror($profileId, $userId, $fallbackProvinceId, $fallbackDioceseId);
     }
 
     protected function resolveSelectedDioceseForProvince(int $provinceId): ?int
@@ -1299,12 +1146,7 @@ class Members extends BaseController
             return null;
         }
 
-        $exists = db_connect()->table('diocese')
-            ->where('id', $candidate)
-            ->where('province_id', $provinceId)
-            ->countAllResults() > 0;
-
-        if (!$exists) {
+        if (!$this->hierarchyService->dioceseInProvince($candidate, $provinceId)) {
             return null;
         }
 
@@ -1390,23 +1232,7 @@ class Members extends BaseController
 
     private function resolveExistingProfileTable($db): ?string
     {
-        $prefix = (string) $db->getPrefix();
-        $candidates = [];
-        if ($prefix !== '') {
-            $candidates[] = $prefix . 'profile';
-        }
-        $candidates[] = 'profile';
-
-        foreach ($candidates as $table) {
-            try {
-                $db->getFieldNames($table);
-                return $table;
-            } catch (\Throwable $e) {
-                // Try next candidate.
-            }
-        }
-
-        return null;
+        return (new SchemaResolver($db))->resolveExistingProfileTable();
     }
 
     // -------------------------------------------------------------------------

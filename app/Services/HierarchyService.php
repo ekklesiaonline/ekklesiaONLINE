@@ -94,6 +94,34 @@ class HierarchyService
         return $grouped;
     }
 
+    /**
+     * Dioceses within one province, name-ordered.
+     *
+     * @return list<array<string, mixed>>
+     */
+    public function diocesesInProvince(int $provinceId): array
+    {
+        return $this->db->table('diocese')
+            ->where('province_id', $provinceId)
+            ->orderBy('name', 'ASC')
+            ->get()
+            ->getResultArray();
+    }
+
+    /**
+     * Province a diocese belongs to, or null when unresolvable.
+     */
+    public function provinceIdForDiocese(int $dioceseId): ?int
+    {
+        $diocese = $this->db->table('diocese')
+            ->select('province_id')
+            ->where('id', $dioceseId)
+            ->get()
+            ->getRowArray();
+
+        return ! empty($diocese['province_id']) ? (int) $diocese['province_id'] : null;
+    }
+
     public function dioceseInProvince(int $dioceseId, int $provinceId): bool
     {
         return $this->db->table('diocese')
