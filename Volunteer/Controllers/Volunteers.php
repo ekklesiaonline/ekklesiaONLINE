@@ -28,6 +28,50 @@ class Volunteers extends BaseController
     }
 
     /**
+     * Resolve the canonical person id for a portal user (null when unlinked).
+     */
+    private function resolvePersonIdForUser(int $userId): ?int
+    {
+        if ($userId <= 0) {
+            return null;
+        }
+
+        try {
+            $row = db_connect()->table('user_person')
+                ->select('person_id')
+                ->where('user_id', $userId)
+                ->orderBy('is_primary', 'DESC')
+                ->get()
+                ->getRowArray();
+        } catch (\Throwable $e) {
+            return null;
+        }
+
+        $personId = (int) ($row['person_id'] ?? 0);
+
+        return $personId > 0 ? $personId : null;
+    }
+
+    /**
+     * Best-effort pathway stage recompute after a team roster change.
+     * Team placement is the Stage 3 criterion.
+     */
+    private function recomputePathwayStage(?int $personId): void
+    {
+        $parishId = (int) ($this->getOperationalParishId() ?? 0);
+
+        if ($personId === null || $personId <= 0 || $parishId <= 0) {
+            return;
+        }
+
+        try {
+            (new \App\Services\PathwayStageService())->recompute($personId, $parishId);
+        } catch (\Throwable $e) {
+            log_message('error', 'Pathway stage recompute failed after team change: ' . $e->getMessage());
+        }
+    }
+
+    /**
      * Display volunteer teams
      */
     public function index()
@@ -175,14 +219,18 @@ class Volunteers extends BaseController
             return $this->jsonResponse(['success' => false, 'message' => lang('Volunteer.invalidMemberSelection')]);
         }
 
+        $personId = $this->resolvePersonIdForUser((int) $userId);
+
         $data = [
-            'team_id' => $teamId,
-            'user_id' => $userId,
-            'role' => $role ?? 'member',
+            'team_id'   => $teamId,
+            'user_id'   => $userId,
+            'person_id' => $personId,
+            'role'      => $role ?? 'member',
         ];
 
         if ($this->teamMemberModel->insert($data)) {
             $teamMemberId = (int) $this->teamMemberModel->getInsertID();
+            $this->recomputePathwayStage($personId);
             $this->audit()->log('team_member.add', [
                 'parish_id' => (int) ($this->getOperationalParishId() ?? 0),
                 'entity_type' => 'team_member',
@@ -237,6 +285,8 @@ class Volunteers extends BaseController
         }
 
         if ($this->teamMemberModel->delete($id)) {
+            $memberPersonId = (int) ($member['person_id'] ?? 0);
+            $this->recomputePathwayStage($memberPersonId > 0 ? $memberPersonId : $this->resolvePersonIdForUser((int) ($member['user_id'] ?? 0)));
             $this->audit()->log('team_member.remove', [
                 'parish_id' => (int) ($this->getOperationalParishId() ?? 0),
                 'entity_type' => 'team_member',

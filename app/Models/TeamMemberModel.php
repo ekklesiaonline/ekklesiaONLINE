@@ -15,7 +15,9 @@ class TeamMemberModel extends Model
     protected $allowedFields    = [
         'team_id',
         'user_id',
+        'person_id',
         'role',
+        'joined_at',
     ];
 
     // Dates

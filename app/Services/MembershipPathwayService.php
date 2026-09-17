@@ -254,6 +254,16 @@ class MembershipPathwayService
             } catch (\Throwable $e) {
                 log_message('error', 'MembershipPathwayService: parish_people sync failed for parish ' . $parishId . ': ' . $e->getMessage());
             }
+
+            if ($personId > 0) {
+                // Keep the denormalized pathway stage in step with the new
+                // status (member gains stage 1; terminal statuses clear it).
+                try {
+                    (new PathwayStageService($db))->recompute($personId, $parishId);
+                } catch (\Throwable $e) {
+                    log_message('error', 'MembershipPathwayService: pathway stage recompute failed for person ' . $personId . ': ' . $e->getMessage());
+                }
+            }
         }
 
         return $this->result(true, null, $classification, $from, $to, $affiliationId);

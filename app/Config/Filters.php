@@ -280,6 +280,8 @@ class Filters extends BaseFilters
                 'guests/*',
                 'followup',
                 'followup/*',
+                'groups',
+                'groups/*',
                 'donations',
                 'donations/*',
                 'expenses',

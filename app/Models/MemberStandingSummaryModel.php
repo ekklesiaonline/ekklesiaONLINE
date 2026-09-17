@@ -21,6 +21,7 @@ class MemberStandingSummaryModel extends Model
         'has_pledged',
         'is_under_discipline',
         'is_good_standing',
+        'is_integrated',
         'last_updated',
     ];
 
@@ -127,6 +128,8 @@ class MemberStandingSummaryModel extends Model
             }
         }
 
+        $integratedByUser = $this->integratedUserIds();
+
         $payload = [];
         foreach ($users as $user) {
             $uid = (int) ($user['id'] ?? 0);
@@ -140,6 +143,7 @@ class MemberStandingSummaryModel extends Model
             $communionCount = (int) ($attendanceByUser[$uid]['communion_count'] ?? 0);
             $hasPledged = isset($hasPledgedByUser[$uid]);
             $isUnderDiscipline = isset($isUnderDisciplineByUser[$uid]);
+            $isIntegrated = isset($integratedByUser[$uid]);
 
             $rowPayload = [
                 'user_id' => $uid,
@@ -150,6 +154,7 @@ class MemberStandingSummaryModel extends Model
                 'has_pledged' => $hasPledged ? 1 : 0,
                 'is_under_discipline' => $isUnderDiscipline ? 1 : 0,
                 'is_good_standing' => ($isActiveMember && $isConfirmed && $communionCount >= 3 && $hasPledged && ! $isUnderDiscipline) ? 1 : 0,
+                'is_integrated' => $isIntegrated ? 1 : 0,
                 'last_updated' => $lastUpdated,
             ];
             $rowPayload = $this->filterSummaryPayload($rowPayload);
@@ -289,6 +294,7 @@ class MemberStandingSummaryModel extends Model
             && $communionCount >= 3
             && $hasPledged
             && ! $isUnderDiscipline;
+        $isIntegrated = $this->isUserIntegrated($userId);
 
         $lastUpdated = date('Y-m-d H:i:s');
 
@@ -303,12 +309,119 @@ class MemberStandingSummaryModel extends Model
             'has_pledged' => $hasPledged ? 1 : 0,
             'is_under_discipline' => $isUnderDiscipline ? 1 : 0,
             'is_good_standing' => $isGoodStanding ? 1 : 0,
+            'is_integrated' => $isIntegrated ? 1 : 0,
             'last_updated' => $lastUpdated,
         ]);
 
         $this->builder()->insert($singlePayload);
 
         return true;
+    }
+
+    /**
+     * User ids placed in a small group or ministry team — the integration
+     * component of the framework's "Active Member" category
+     * (is_good_standing && is_integrated).
+     *
+     * @return array<int, bool>
+     */
+    private function integratedUserIds(): array
+    {
+        $ids = [];
+
+        if ($this->tableExistsSafe('group_membership') && $this->tableExistsSafe('small_group') && $this->tableExistsSafe('user_person')) {
+            $rows = $this->db->table('user_person up')
+                ->distinct()
+                ->select('up.user_id')
+                ->join('group_membership gm', 'gm.person_id = up.person_id')
+                ->join('small_group sg', 'sg.id = gm.small_group_id')
+                ->where('gm.status', 'active')
+                ->where('sg.deleted_at IS NULL', null, false)
+                ->get()
+                ->getResultArray();
+            foreach ($rows as $row) {
+                $ids[(int) $row['user_id']] = true;
+            }
+        }
+
+        if ($this->tableExistsSafe('team_member')) {
+            $rows = $this->db->table('team_member')
+                ->distinct()
+                ->select('user_id')
+                ->get()
+                ->getResultArray();
+            foreach ($rows as $row) {
+                $ids[(int) $row['user_id']] = true;
+            }
+
+            // Rows keyed by person_id resolve to users via user_person.
+            if ($this->tableExistsSafe('user_person')) {
+                $rows = $this->db->table('user_person up')
+                    ->distinct()
+                    ->select('up.user_id')
+                    ->join('team_member tm', 'tm.person_id = up.person_id')
+                    ->get()
+                    ->getResultArray();
+                foreach ($rows as $row) {
+                    $ids[(int) $row['user_id']] = true;
+                }
+            }
+        }
+
+        return $ids;
+    }
+
+    private function isUserIntegrated(int $userId): bool
+    {
+        if ($userId <= 0) {
+            return false;
+        }
+
+        if ($this->tableExistsSafe('team_member')) {
+            $byUser = $this->db->table('team_member')
+                ->where('user_id', $userId)
+                ->countAllResults() > 0;
+            if ($byUser) {
+                return true;
+            }
+        }
+
+        $personIds = [];
+        if ($this->tableExistsSafe('user_person')) {
+            $personRows = $this->db->table('user_person')
+                ->select('person_id')
+                ->where('user_id', $userId)
+                ->get()
+                ->getResultArray();
+            $personIds = array_values(array_filter(array_map(
+                static fn (array $row): int => (int) ($row['person_id'] ?? 0),
+                $personRows
+            )));
+        }
+
+        if ($personIds === []) {
+            return false;
+        }
+
+        if ($this->tableExistsSafe('group_membership') && $this->tableExistsSafe('small_group')) {
+            $inGroup = $this->db->table('group_membership gm')
+                ->join('small_group sg', 'sg.id = gm.small_group_id')
+                ->whereIn('gm.person_id', $personIds)
+                ->where('gm.status', 'active')
+                ->where('sg.deleted_at IS NULL', null, false)
+                ->countAllResults() > 0;
+            if ($inGroup) {
+                return true;
+            }
+        }
+
+        if ($this->tableExistsSafe('team_member')) {
+            return $this->db->table('team_member')
+                ->whereIn('person_id', $personIds)
+                ->countAllResults() > 0;
+        }
+
+        return false;
     }
 
     private function tableExistsSafe(string $table): bool

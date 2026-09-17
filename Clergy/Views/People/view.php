@@ -5,6 +5,8 @@ $person = $person ?? [];
 $family = $family ?? [];
 $affiliations = $affiliations ?? [];
 $membership_details = $membership_details ?? [];
+$group_memberships = $group_memberships ?? [];
+$pathway_stage = $pathway_stage ?? null;
 $status_history = $status_history ?? [];
 $leadership = $leadership ?? [];
 $onboarding = $onboarding ?? [];
@@ -275,6 +277,34 @@ $portalAccess = strtolower(trim((string) ($profile['portal_access'] ?? 'none')))
                                 </li>
                             <?php endforeach; ?>
                         </ul>
+                    </div>
+                </div>
+            <?php endif; ?>
+
+            <?php if (auth()->user()->can('groups.view') && (!empty($group_memberships) || $pathway_stage !== null)): ?>
+                <?php
+                $stageMeta = \App\Services\PathwayStageService::stageMeta($pathway_stage);
+                $gmRoleKeys = ['member' => 'Groups.roleMember', 'leader' => 'Groups.roleLeader', 'co_leader' => 'Groups.roleCoLeader', 'host' => 'Groups.roleHost'];
+                ?>
+                <div class="card mb-3">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h6 class="mb-0"><?= lang('Groups.groupMemberships') ?></h6>
+                        <?php $stageColor = $stageMeta['badge'] ?? 'secondary'; ?>
+                        <span class="badge border border-<?= $stageColor ?> text-<?= $stageColor ?> fw-normal"><?= lang($stageMeta['labelKey'] ?? 'Groups.stageNone') ?></span>
+                    </div>
+                    <div class="card-body">
+                        <?php if (empty($group_memberships)): ?>
+                            <p class="text-muted mb-0"><?= lang('Groups.noMembers') ?></p>
+                        <?php else: ?>
+                            <ul class="list-group list-group-flush">
+                                <?php foreach ($group_memberships as $gm): ?>
+                                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                                        <a href="<?= base_url('groups/view/' . (int) $gm['small_group_id']) ?>"><?= esc($gm['group_name'] ?? '') ?></a>
+                                        <span class="badge border border-secondary text-secondary fw-normal"><?= lang($gmRoleKeys[$gm['role'] ?? 'member'] ?? 'Groups.roleMember') ?></span>
+                                    </li>
+                                <?php endforeach; ?>
+                            </ul>
+                        <?php endif; ?>
                     </div>
                 </div>
             <?php endif; ?>

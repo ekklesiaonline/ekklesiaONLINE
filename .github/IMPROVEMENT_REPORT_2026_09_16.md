@@ -250,7 +250,37 @@ second-order hardening (MySQL verification, CI enforcement, PHPStan depth, a11y 
    `BankReconciliationServiceTest` covers scoping, lifecycle, balance
    gating, and cross-tenant rejection. Journal-entry linking is reserved
    for the future journal module.
-5. **Small groups** and **bulk messaging** — new modules; design before building.
+5. **Small groups + pathway stages** — ✅ implemented as the **Groups**
+   module (`/groups/*`, Clergy namespace). Migration
+   `2026-09-17-153813_CreateSmallGroupTables` adds `small_group`
+   (parish-scoped, soft-deleted, capacity, meeting day/time/location) and
+   `group_membership` (canonical `person_id` key, `role` in
+   member/leader/co_leader/host — leadership is a membership role, not a
+   separate owner FK; unique `(small_group_id, person_id)` pair so rejoining
+   reactivates the same row; multiple groups per person allowed), plus
+   `parish_affiliation.pathway_stage` and `member_standing_summary.is_integrated`
+   — verified against dev MySQL. `SmallGroupService` owns the roster
+   lifecycle (add/remove/role, capacity guard, duplicate-active guard, and a
+   parish-affiliation check so a person outside the parish cannot be placed),
+   and `PathwayStageService` derives the 1–3 stage (member → placed in a
+   group → placed on a ministry `team_member` row, with legacy `user_id`
+   fallback via `user_person`) and persists it on the affiliation; recompute
+   fires after `MembershipPathwayService` transitions, group roster changes,
+   volunteer team add/remove (`Volunteers` now also populates
+   `team_member.person_id` at insert), and group archival.
+   `MemberStandingSummaryModel` computes `is_integrated` (active group or
+   team placement) in both bulk and single-user refreshes — deliberately
+   kept separate from `is_good_standing`, whose gate is unchanged.
+   `Clergy\Controllers\Groups` + index/form/roster views (permission gates:
+   `groups.view`/`groups.manage`/`groups.assign`, matrix + policy doc
+   updated; province/diocesan admins get `groups.view` read-only), a
+   pathway-stage + group-memberships card on the person profile, sidebar
+   entry, and `Groups.php` lang files with full en/es/fr parity.
+   `SmallGroupServiceTest` + `PathwayStageServiceTest` cover scoping,
+   capacity, duplicates, rejoin semantics, multi-group membership,
+   cross-parish rejection, stage derivation incl. the legacy team fallback,
+   and parish-wide recompute.
+6. **Bulk messaging** — new module; design before building.
 
 ### Tier 4 — Legacy retirement (evidence-gated)
 

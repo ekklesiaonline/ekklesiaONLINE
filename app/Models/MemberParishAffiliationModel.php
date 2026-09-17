@@ -25,6 +25,7 @@ class MemberParishAffiliationModel extends BaseTenantModel
         'affiliation_type',
         'membership_status',
         'canonical_status',
+        'pathway_stage',
         'is_member',
         'is_good_standing',
         'source',

@@ -18,6 +18,8 @@ This table defines the baseline least-privilege policy used by the canonical sid
 | Members / Staff | `members.view` | `provinceadmin`, `diocesanadmin`, `parishadmin`, `pastor`, `treasurer` |
 | Members edit actions | `members.edit` | `provinceadmin`, `diocesanadmin`, `parishadmin`, `pastor` |
 | Families | `families.view` | `parishadmin`, `pastor` |
+| Small Groups | `groups.view` | `provinceadmin`, `diocesanadmin`, `parishadmin`, `clergy` |
+| Small group manage / roster | `groups.manage`, `groups.assign` | `parishadmin`, `clergy` |
 | Services | `services.view` | `diocesanadmin`, `parishadmin`, `pastor`, `volunteer_coordinator` |
 | Attendance reports | `attendance.view` | `parishadmin`, `pastor` |
 | Guests | `guests.view` | `parishadmin`, `pastor` |

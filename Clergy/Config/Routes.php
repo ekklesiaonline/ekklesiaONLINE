@@ -85,6 +85,19 @@ $routes->group('', ['filter' => 'session'], function ($routes) {
         });
     });
 
+    $routes->group('groups', ['filter' => 'permission:groups.view'], function ($routes) {
+        $routes->get('/', '\\Clergy\\Controllers\\Groups::index');
+        $routes->get('view/(:num)', '\\Clergy\\Controllers\\Groups::view/$1');
+        $routes->get('create', '\\Clergy\\Controllers\\Groups::create', ['filter' => 'permission:groups.manage']);
+        $routes->post('store', '\\Clergy\\Controllers\\Groups::store', ['filter' => 'permission:groups.manage']);
+        $routes->get('edit/(:num)', '\\Clergy\\Controllers\\Groups::edit/$1', ['filter' => 'permission:groups.manage']);
+        $routes->post('update/(:num)', '\\Clergy\\Controllers\\Groups::update/$1', ['filter' => 'permission:groups.manage']);
+        $routes->post('delete/(:num)', '\\Clergy\\Controllers\\Groups::delete/$1', ['filter' => 'permission:groups.manage']);
+        $routes->post('members/(:num)', '\\Clergy\\Controllers\\Groups::addMember/$1', ['filter' => 'permission:groups.assign']);
+        $routes->post('members/(:num)/remove', '\\Clergy\\Controllers\\Groups::removeMember/$1', ['filter' => 'permission:groups.assign']);
+        $routes->post('members/(:num)/role', '\\Clergy\\Controllers\\Groups::updateMemberRole/$1', ['filter' => 'permission:groups.assign']);
+    });
+
     $routes->group('guests', ['filter' => 'permission:guest.view'], function ($routes) {
         $routes->get('/', '\\Clergy\\Controllers\\Guest::index');
         $routes->get('dashboard', '\\Clergy\\Controllers\\Guest::dashboard');

@@ -13,6 +13,7 @@ return [
     'navMembers'          => 'Membres',
     'navPeople'           => 'Personnes',
     'navFamilies'         => 'Familles',
+    'navGroups'           => 'Petits groupes',
     'navServices'         => 'Cultes',
     'navAttendance'       => 'Présences',
     'navGuests'           => 'Visiteurs',

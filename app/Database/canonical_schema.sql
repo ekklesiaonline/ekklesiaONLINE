@@ -1589,6 +1589,29 @@ CREATE TABLE `guest_visit` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
+-- Table structure for table `group_membership`
+--
+
+DROP TABLE IF EXISTS `group_membership`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `group_membership` (
+  `id` int unsigned NOT NULL AUTO_INCREMENT,
+  `small_group_id` int unsigned NOT NULL,
+  `person_id` int unsigned NOT NULL,
+  `role` enum('member','leader','co_leader','host') COLLATE utf8mb4_general_ci NOT NULL DEFAULT 'member',
+  `status` enum('active','inactive') COLLATE utf8mb4_general_ci NOT NULL DEFAULT 'active',
+  `joined_on` date DEFAULT NULL,
+  `left_on` date DEFAULT NULL,
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `small_group_id_person_id` (`small_group_id`,`person_id`),
+  KEY `person_id` (`person_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
 -- Table structure for table `journal_entry`
 --
 
@@ -1827,6 +1850,7 @@ CREATE TABLE `member_standing_summary` (
   `has_pledged` tinyint(1) NOT NULL DEFAULT '0',
   `is_under_discipline` tinyint(1) NOT NULL DEFAULT '0',
   `is_good_standing` tinyint(1) NOT NULL DEFAULT '0',
+  `is_integrated` tinyint(1) NOT NULL DEFAULT '0',
   `last_updated` datetime DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `uniq_member_standing_summary_user_year` (`user_id`,`year`),
@@ -2032,7 +2056,8 @@ CREATE TABLE `parish_affiliation` (
   `person_id` int unsigned NOT NULL,
   `linked_user_id` int unsigned DEFAULT NULL,
   `affiliation_type` enum('guest','attendee','member','clergy','staff') COLLATE utf8mb4_general_ci NOT NULL DEFAULT 'guest',
-  `membership_status` enum('guest','attendee','member','inactive','transferred','deceased') COLLATE utf8mb4_general_ci NOT NULL DEFAULT 'guest',
+  `membership_status` enum('visitor','regular_attender','member','inactive','transferred','deceased') COLLATE utf8mb4_general_ci NOT NULL DEFAULT 'visitor',
+  `pathway_stage` tinyint unsigned DEFAULT NULL,
   `canonical_status` varchar(50) COLLATE utf8mb4_general_ci DEFAULT NULL,
   `is_member` tinyint(1) NOT NULL DEFAULT '0',
   `is_good_standing` tinyint(1) NOT NULL DEFAULT '0',
@@ -3147,6 +3172,33 @@ CREATE TABLE `settings_audit_log` (
   KEY `scope_type_scope_id` (`scope_type`,`scope_id`),
   KEY `setting_key` (`setting_key`),
   KEY `created_at` (`created_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `small_group`
+--
+
+DROP TABLE IF EXISTS `small_group`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `small_group` (
+  `id` int unsigned NOT NULL AUTO_INCREMENT,
+  `parish_id` int unsigned NOT NULL,
+  `name` varchar(120) COLLATE utf8mb4_general_ci NOT NULL,
+  `description` text COLLATE utf8mb4_general_ci,
+  `meeting_day` varchar(20) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `meeting_time` time DEFAULT NULL,
+  `location` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `capacity` int unsigned DEFAULT NULL,
+  `is_active` tinyint(1) NOT NULL DEFAULT '1',
+  `created_by` int unsigned DEFAULT NULL,
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  `deleted_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `parish_id` (`parish_id`),
+  KEY `is_active` (`is_active`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 

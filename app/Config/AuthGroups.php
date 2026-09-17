@@ -143,6 +143,11 @@ class AuthGroups extends ShieldAuthGroups
         'family.view'          => 'View families',
         'family.manage'        => 'Create and manage families',
 
+        // Small Groups
+        'groups.view'          => 'View small groups',
+        'groups.manage'        => 'Create and manage small groups',
+        'groups.assign'        => 'Assign members to small groups',
+
         // Service & Attendance
         'service.view'         => 'View services',
         'service.create'       => 'Create services',
@@ -319,6 +324,7 @@ class AuthGroups extends ShieldAuthGroups
             'province.event.delete',
             'province.calendar.manage',
             'member.view',
+            'groups.view',
             'dashboard.view',
             'profile.edit',
             'report.export',
@@ -332,6 +338,7 @@ class AuthGroups extends ShieldAuthGroups
             'member.create',
             'member.edit',
             'member.view',
+            'groups.view',
             'service.view',
             'event.view',
             'event.create',
@@ -358,6 +365,7 @@ class AuthGroups extends ShieldAuthGroups
             'parish.admin.reset_password',
             'member.*',
             'family.*',
+            'groups.*',
             'service.*',
             'attendance.*',
             'guest.*',
@@ -394,6 +402,9 @@ class AuthGroups extends ShieldAuthGroups
         'clergy' => [
             'member.view',
             'family.view',
+            'groups.view',
+            'groups.manage',
+            'groups.assign',
             'service.view',
             'service.create',
             'service.edit',

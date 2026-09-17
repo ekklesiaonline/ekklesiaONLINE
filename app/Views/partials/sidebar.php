@@ -230,6 +230,14 @@
                 </li>
             <?php endif; ?>
 
+            <?php if (!$isSystemAdminSidebar && !$isProvinceAdminSidebar && !$isDioceseAdminSidebar && auth()->user()->can('groups.view')): ?>
+                <li class="nav-item">
+                    <a class="nav-link <?= (str_starts_with(uri_string(), 'groups')) ? 'active' : '' ?>" href="<?= base_url('groups') ?>">
+                        <i class="bi bi-people-fill" aria-hidden="true"></i> <?= lang('App.navGroups') ?>
+                    </a>
+                </li>
+            <?php endif; ?>
+
             <?php if (!$isSystemAdminSidebar && !$isProvinceAdminSidebar && !$isDioceseAdminSidebar && auth()->user()->can('service.view')): ?>
                 <li class="nav-item">
                     <a class="nav-link <?= (str_starts_with(uri_string(), 'services')) ? 'active' : '' ?>" href="<?= base_url('services') ?>">

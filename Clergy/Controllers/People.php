@@ -546,6 +546,25 @@ class People extends BaseController
         $data['family'] = $family;
         $data['family_members'] = $familyMembers;
 
+        $personAffiliation = null;
+        if ($personId > 0 && $parishId > 0) {
+            $personAffiliation = $this->affiliationModel->db->table('parish_affiliation')
+                ->where('person_id', $personId)
+                ->where('parish_id', $parishId)
+                ->where('deleted_at IS NULL', null, false)
+                ->orderBy('id', 'DESC')
+                ->get()
+                ->getRowArray();
+        }
+
+        $data['group_memberships'] = ($personId > 0 && auth()->user()->can('groups.view'))
+            ? model('GroupMembershipModel')->activeForPersonInParish($personId, $parishId)
+            : [];
+        $data['pathway_stage'] = isset($personAffiliation['pathway_stage']) && $personAffiliation['pathway_stage'] !== null
+            ? (int) $personAffiliation['pathway_stage']
+            : null;
+        $data['can_assign_groups'] = auth()->user()->can('groups.assign');
+
         return view('Clergy\Views\People/view', array_merge($data, [
             'profile' => $profile,
             'donations' => ($userId > 0 && auth()->user()->can('donation.view'))
