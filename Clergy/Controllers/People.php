@@ -6,6 +6,8 @@ use App\Controllers\AdminHierarchyGuard;
 use App\Controllers\BaseController;
 use App\Models\MemberParishAffiliationModel;
 use App\Models\ParishPeopleModel;
+use App\Services\AnnualPledgeService;
+use App\Services\DonationService;
 use App\Services\LeadershipPositionService;
 use App\Services\ParishPeopleRegistryService;
 use App\Services\MemberAccessService;
@@ -24,6 +26,8 @@ class People extends BaseController
     private MemberAccessService $memberAccessService;
     private PeopleViewDataService $peopleViewDataService;
     private LeadershipPositionService $leadershipPositionService;
+    private DonationService $donationService;
+    private AnnualPledgeService $annualPledgeService;
 
     public function __construct()
     {
@@ -33,6 +37,8 @@ class People extends BaseController
         $this->memberAccessService = service('memberAccess');
         $this->peopleViewDataService = service('peopleViewData');
         $this->leadershipPositionService = new LeadershipPositionService();
+        $this->donationService = new DonationService();
+        $this->annualPledgeService = new AnnualPledgeService();
     }
 
     /**
@@ -923,17 +929,7 @@ class People extends BaseController
             return $this->jsonResponse($this->apiErrorPayload($this->hierarchyGuardMessage($code), 403, 'TARGET_OUTRANKS_ACTOR'), 403);
         }
 
-        $rules = [
-            'date' => 'required|valid_date',
-            'amount' => 'required|decimal|greater_than[0]',
-            'fund_id' => 'required|is_not_unique[fund.id]',
-            'category' => 'permit_empty|max_length[100]',
-            'chart_account_id' => 'required|is_not_unique[chart_of_accounts.id]',
-            'payment_method' => 'permit_empty|max_length[50]',
-            'notes' => 'permit_empty|max_length[500]',
-        ];
-
-        if (!$this->validate($rules)) {
+        if (!$this->validate($this->donationService->validationRules())) {
             return $this->jsonResponse([
                 'success' => false,
                 'code' => 'VALIDATION_FAILED',
@@ -943,18 +939,14 @@ class People extends BaseController
         }
 
         $fundId = (int) $this->request->getPost('fund_id');
-        $fund = model('FundModel')->find($fundId);
-        if (!$fund || (int) ($fund['parish_id'] ?? 0) !== $parishId || (int) ($fund['is_locked'] ?? 0) === 1) {
+        $fund = $this->donationService->findUsableFund($fundId, $parishId);
+        if ($fund === null) {
             return $this->jsonResponse($this->apiErrorPayload(lang('Treasurer.validFundRequired'), 400, 'INVALID_FUND'), 400);
         }
 
-        $chartAccount = model('ChartOfAccountModel')
-            ->where('id', (int) $this->request->getPost('chart_account_id'))
-            ->where('is_active', 1)
-            ->where('account_type', 'income')
-            ->first();
+        $chartAccount = $this->donationService->findIncomeAccount((int) $this->request->getPost('chart_account_id'));
 
-        if (empty($chartAccount)) {
+        if ($chartAccount === null) {
             return $this->jsonResponse($this->apiErrorPayload(lang('Treasurer.validIncomeAccountRequired'), 400, 'INVALID_CHART_ACCOUNT'), 400);
         }
 
@@ -972,16 +964,15 @@ class People extends BaseController
             'restriction_purpose' => (string) ($this->request->getPost('restriction_purpose') ?? ''),
         ];
 
-        $donationModel = new \App\Models\DonationModel();
-        $donationId = (int) $donationModel->insert($data, true);
-        if ($donationId <= 0) {
+        $donationId = $this->donationService->create($data);
+        if ($donationId === null) {
             return $this->jsonResponse([
                 'success' => false,
                 'message' => lang('Treasurer.donationRecordFailed'),
             ], 500);
         }
 
-        $receipt = $donationModel->issueReceipt($donationId);
+        $receipt = $this->donationService->issueReceipt($donationId);
 
         $this->audit()->log('donation.create', [
             'parish_id' => $parishId,
@@ -1028,9 +1019,8 @@ class People extends BaseController
             return $this->jsonResponse($this->apiErrorPayload(lang('App.errorNoParishScope'), 403, 'NO_PARISH'), 403);
         }
 
-        $donationModel = new \App\Models\DonationModel();
-        $donation = $donationModel->find($donationId);
-        if (!$donation || (int) ($donation['parish_id'] ?? 0) !== $parishId) {
+        $donation = $this->donationService->findInParish($donationId, $parishId);
+        if ($donation === null) {
             return $this->jsonResponse($this->apiErrorPayload(lang('Treasurer.donationNotFound'), 404, 'DONATION_NOT_FOUND'), 404);
         }
 
@@ -1038,17 +1028,7 @@ class People extends BaseController
             return $this->jsonResponse($this->apiErrorPayload($this->hierarchyGuardMessage($code), 403, 'TARGET_OUTRANKS_ACTOR'), 403);
         }
 
-        $rules = [
-            'date' => 'required|valid_date',
-            'amount' => 'required|decimal|greater_than[0]',
-            'fund_id' => 'required|is_not_unique[fund.id]',
-            'category' => 'permit_empty|max_length[100]',
-            'chart_account_id' => 'required|is_not_unique[chart_of_accounts.id]',
-            'payment_method' => 'permit_empty|max_length[50]',
-            'notes' => 'permit_empty|max_length[500]',
-        ];
-
-        if (!$this->validate($rules)) {
+        if (!$this->validate($this->donationService->validationRules())) {
             return $this->jsonResponse([
                 'success' => false,
                 'code' => 'VALIDATION_FAILED',
@@ -1058,18 +1038,14 @@ class People extends BaseController
         }
 
         $fundId = (int) $this->request->getPost('fund_id');
-        $fund = model('FundModel')->find($fundId);
-        if (!$fund || (int) ($fund['parish_id'] ?? 0) !== $parishId || (int) ($fund['is_locked'] ?? 0) === 1) {
+        $fund = $this->donationService->findUsableFund($fundId, $parishId);
+        if ($fund === null) {
             return $this->jsonResponse($this->apiErrorPayload(lang('Treasurer.validFundRequired'), 400, 'INVALID_FUND'), 400);
         }
 
-        $chartAccount = model('ChartOfAccountModel')
-            ->where('id', (int) $this->request->getPost('chart_account_id'))
-            ->where('is_active', 1)
-            ->where('account_type', 'income')
-            ->first();
+        $chartAccount = $this->donationService->findIncomeAccount((int) $this->request->getPost('chart_account_id'));
 
-        if (empty($chartAccount)) {
+        if ($chartAccount === null) {
             return $this->jsonResponse($this->apiErrorPayload(lang('Treasurer.validIncomeAccountRequired'), 400, 'INVALID_CHART_ACCOUNT'), 400);
         }
 
@@ -1085,7 +1061,7 @@ class People extends BaseController
             'restriction_purpose' => (string) ($this->request->getPost('restriction_purpose') ?? ''),
         ];
 
-        if (!$donationModel->update($donationId, $data)) {
+        if (!$this->donationService->update($donationId, $data)) {
             return $this->jsonResponse([
                 'success' => false,
                 'message' => lang('Treasurer.donationUpdateFailed') ?? 'Failed to update donation.',
@@ -1129,9 +1105,8 @@ class People extends BaseController
             return $this->jsonResponse($this->apiErrorPayload(lang('App.errorNoParishScope'), 403, 'NO_PARISH'), 403);
         }
 
-        $donationModel = new \App\Models\DonationModel();
-        $donation = $donationModel->find($donationId);
-        if (!$donation || (int) ($donation['parish_id'] ?? 0) !== $parishId) {
+        $donation = $this->donationService->findInParish($donationId, $parishId);
+        if ($donation === null) {
             return $this->jsonResponse($this->apiErrorPayload(lang('Treasurer.donationNotFound'), 404, 'DONATION_NOT_FOUND'), 404);
         }
 
@@ -1139,7 +1114,7 @@ class People extends BaseController
             return $this->jsonResponse($this->apiErrorPayload($this->hierarchyGuardMessage($code), 403, 'TARGET_OUTRANKS_ACTOR'), 403);
         }
 
-        if (!$donationModel->delete($donationId)) {
+        if (!$this->donationService->delete($donationId)) {
             return $this->jsonResponse([
                 'success' => false,
                 'message' => lang('Treasurer.donationDeleteFailed'),
@@ -1196,16 +1171,7 @@ class People extends BaseController
             return $this->jsonResponse($this->apiErrorPayload($this->hierarchyGuardMessage($code), 403, 'TARGET_OUTRANKS_ACTOR'), 403);
         }
 
-        $rules = [
-            'pledge_year' => 'required|integer|greater_than_equal_to[2000]',
-            'pledged_amount' => 'permit_empty|decimal',
-            'fulfilled_amount' => 'permit_empty|decimal',
-            'fulfillment_status' => 'required|in_list[pledged,partial,fulfilled,cancelled]',
-            'pledged_at' => 'permit_empty|valid_date',
-            'notes' => 'permit_empty|max_length[500]',
-        ];
-
-        if (!$this->validate($rules)) {
+        if (!$this->validate($this->annualPledgeService->validationRules(true))) {
             return $this->jsonResponse([
                 'success' => false,
                 'code' => 'VALIDATION_FAILED',
@@ -1214,7 +1180,6 @@ class People extends BaseController
             ], 422);
         }
 
-        $model = model('AnnualPledgeModel');
         $payload = [
             'user_id' => $userId,
             'parish_id' => $parishId,
@@ -1226,14 +1191,13 @@ class People extends BaseController
             'notes' => trim((string) ($this->request->getPost('notes') ?? '')),
         ];
 
-        if ($model->insert($payload) === false) {
+        $pledgeId = $this->annualPledgeService->create($payload);
+        if ($pledgeId === null) {
             return $this->jsonResponse([
                 'success' => false,
-                'message' => implode(' ', array_values($model->errors() ?: [lang('Pledges.saveFailed')])),
+                'message' => implode(' ', array_values($this->annualPledgeService->errors() ?: [lang('Pledges.saveFailed')])),
             ], 500);
         }
-
-        $pledgeId = (int) $model->getInsertID();
 
         $this->audit()->log('annual_pledge.create', [
             'parish_id' => $parishId,
@@ -1272,9 +1236,8 @@ class People extends BaseController
             return $this->jsonResponse($this->apiErrorPayload(lang('App.errorNoParishScope'), 403, 'NO_PARISH'), 403);
         }
 
-        $model = model('AnnualPledgeModel');
-        $pledge = $model->find($pledgeId);
-        if (!$pledge || (int) ($pledge['parish_id'] ?? 0) !== $parishId) {
+        $pledge = $this->annualPledgeService->findInParish($pledgeId, $parishId);
+        if ($pledge === null) {
             return $this->jsonResponse($this->apiErrorPayload(lang('App.pledgeNotFound'), 404, 'PLEDGE_NOT_FOUND'), 404);
         }
 
@@ -1282,15 +1245,7 @@ class People extends BaseController
             return $this->jsonResponse($this->apiErrorPayload($this->hierarchyGuardMessage($code), 403, 'TARGET_OUTRANKS_ACTOR'), 403);
         }
 
-        $rules = [
-            'pledged_amount' => 'permit_empty|decimal',
-            'fulfilled_amount' => 'permit_empty|decimal',
-            'fulfillment_status' => 'required|in_list[pledged,partial,fulfilled,cancelled]',
-            'pledged_at' => 'permit_empty|valid_date',
-            'notes' => 'permit_empty|max_length[500]',
-        ];
-
-        if (!$this->validate($rules)) {
+        if (!$this->validate($this->annualPledgeService->validationRules(false))) {
             return $this->jsonResponse([
                 'success' => false,
                 'code' => 'VALIDATION_FAILED',
@@ -1307,10 +1262,10 @@ class People extends BaseController
             'notes' => trim((string) ($this->request->getPost('notes') ?? '')),
         ];
 
-        if (!$model->update($pledgeId, $payload)) {
+        if (!$this->annualPledgeService->update($pledgeId, $payload)) {
             return $this->jsonResponse([
                 'success' => false,
-                'message' => implode(' ', array_values($model->errors() ?: [lang('Pledges.updateFailed')])),
+                'message' => implode(' ', array_values($this->annualPledgeService->errors() ?: [lang('Pledges.updateFailed')])),
             ], 500);
         }
 
@@ -1351,9 +1306,8 @@ class People extends BaseController
             return $this->jsonResponse($this->apiErrorPayload(lang('App.errorNoParishScope'), 403, 'NO_PARISH'), 403);
         }
 
-        $model = model('AnnualPledgeModel');
-        $pledge = $model->find($pledgeId);
-        if (!$pledge || (int) ($pledge['parish_id'] ?? 0) !== $parishId) {
+        $pledge = $this->annualPledgeService->findInParish($pledgeId, $parishId);
+        if ($pledge === null) {
             return $this->jsonResponse($this->apiErrorPayload(lang('App.pledgeNotFound'), 404, 'PLEDGE_NOT_FOUND'), 404);
         }
 
@@ -1361,7 +1315,7 @@ class People extends BaseController
             return $this->jsonResponse($this->apiErrorPayload($this->hierarchyGuardMessage($code), 403, 'TARGET_OUTRANKS_ACTOR'), 403);
         }
 
-        if (!$model->delete($pledgeId)) {
+        if (!$this->annualPledgeService->delete($pledgeId)) {
             return $this->jsonResponse([
                 'success' => false,
                 'message' => lang('Pledges.deleteFailed') ?? 'Failed to delete pledge.',

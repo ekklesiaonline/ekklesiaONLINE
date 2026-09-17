@@ -3,16 +3,19 @@
 namespace Treasurer\Controllers;
 
 use App\Controllers\BaseController;
+use App\Services\DonationService;
 
 class Donations extends BaseController
 {
     protected $donationModel;
     protected $profileModel;
     protected $fundModel;
+    protected DonationService $donationService;
 
     public function __construct()
     {
         $this->donationModel = model('DonationModel');
+        $this->donationService = new DonationService($this->donationModel);
     }
 
     protected function getProfileModel()
@@ -355,13 +358,9 @@ class Donations extends BaseController
             return redirect()->back()->withInput()->with('error', lang('App.errorNoParishScope'));
         }
 
-        $chartAccount = model('ChartOfAccountModel')
-            ->where('id', (int) $this->request->getPost('chart_account_id'))
-            ->where('is_active', 1)
-            ->where('account_type', 'income')
-            ->first();
+        $chartAccount = $this->donationService->findIncomeAccount((int) $this->request->getPost('chart_account_id'));
 
-        if (empty($chartAccount)) {
+        if ($chartAccount === null) {
             return redirect()->back()->withInput()->with('error', lang('Treasurer.validIncomeAccountRequired'));
         }
 
