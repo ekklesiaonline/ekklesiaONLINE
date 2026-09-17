@@ -49,7 +49,7 @@ class AuditLogs extends BaseController
 
         $auditModel = model('AuditLogModel');
         $profileTable = $this->auditQuery->profileTable();
-        $builder = $auditModel
+        $builder = $auditModel->builder()
             ->select('audit_log.*, c.name AS parish_name, p.first_name AS actor_first_name, p.last_name AS actor_last_name')
             ->join('parish c', 'c.id = audit_log.parish_id', 'left')
             ->join($profileTable . ' p', 'p.user_id = audit_log.user_id', 'left');
@@ -57,7 +57,7 @@ class AuditLogs extends BaseController
         $this->auditQuery->applyScopeFilter($builder, $this->auditScopeRole(), $scopeParishIds, (int) $filters['parish_id']);
         $this->auditQuery->applyOptionalFilters($builder, $filters, $this->isSystemAdmin());
 
-        $rows = $builder
+        $rows = $auditModel
             ->orderBy('audit_log.created_at', 'DESC')
             ->paginate(40);
 
