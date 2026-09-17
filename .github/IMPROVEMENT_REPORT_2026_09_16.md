@@ -124,6 +124,33 @@ second-order hardening (MySQL verification, CI enforcement, PHPStan depth, a11y 
 4. **i18n completion** — `L5` covered selected strings; a sweep for remaining hardcoded
    English in views is still open.
 
+**Status (implemented 2026-09-16):**
+
+- ✅ PHPStan raised to **level 3**, green with no baseline growth. Fixes along the
+  way: `PersonStatusHistoryModel::getTableName()` accessor (protected-property
+  access), `VestryVoteModel::tallyVotes()` rewritten on an explicit builder, a
+  stale `sunday_attendance_trend` docblock key removed from
+  `ParishDashboardDataService::assemble()`, `WRITEPATH`/CI4 constants added to
+  the PHPStan stub. Level 4 produces 42 narrowing/`alwaysTrue` findings — a
+  reasonable next burn-down target.
+- ✅ `MemberChurchAffiliationModel` PSR-4 mismatch fixed (proper alias class;
+  PHPStan exclusion removed).
+- 🔄 Fat-controller extraction — `Clergy\Controllers\People` (2,396 → ~2,000
+  lines) is fully service-mediated on its write paths:
+  - `LeadershipPositionService` — scope resolution + position CRUD + registry sync
+  - `DonationService` — fund/income-account validation, parish-scoped lookup,
+    persistence, receipt issuance; also adopted by `Treasurer\Controllers\Donations`
+  - `AnnualPledgeService` — validation rules, parish-scoped lookup, pledge CRUD
+  - `SacramentalRecordService` — record/participant rules, parish scoping,
+    duplicate checks, `SacramentFlagSyncService` invocation
+  - `FamilyService` — family rules, membership checks, transactional
+    create-family-with-head
+  - Remaining: `SystemAdminUsers` (47 raw `db_connect`/`->table()` calls,
+    entangled with MFA/rate-limit/lockout helpers), `Diocesan\Parishes` (30),
+    `MemberPortal\Profile` (22), `MemberPortal\AuditLogs` (18),
+    `Clergy\Members`/`Guests` (16 each).
+- ⬜ a11y sweep and i18n sweep still open.
+
 ### Tier 3 — Product backlog (from the original report, still valid)
 
 1. **Leadership appointment gate** — enforce good-standing at insert; smallest and
