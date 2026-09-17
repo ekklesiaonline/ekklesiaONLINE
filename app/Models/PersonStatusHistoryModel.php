@@ -12,6 +12,11 @@ class PersonStatusHistoryModel extends Model
     protected $returnType       = 'array';
     protected $useSoftDeletes   = false;
     protected $protectFields    = true;
+    public function getTableName(): string
+    {
+        return $this->table;
+    }
+
     protected $allowedFields    = [
         'person_id',
         'parish_id',

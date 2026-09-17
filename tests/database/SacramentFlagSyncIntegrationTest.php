@@ -219,98 +219,10 @@ final class SacramentFlagSyncIntegrationTest extends CIUnitTestCase
 
     private function buildSchema(): void
     {
-        $forge = \Config\Database::forge();
-
+        // Reset the shared tables to the canonical union schema so this test
+        // neither depends on nor pollutes the shared :memory: schema shape.
         foreach (['person_status_history', 'sacramental_record', 'person_membership_details', 'profile', 'person', 'parish'] as $t) {
-            $forge->dropTable($t, true);
+            \Tests\Support\Database\CanonicalTestSchema::reset($this->db, $t);
         }
-
-        $forge->addField([
-            'id'         => ['type' => 'INTEGER', 'auto_increment' => true],
-            'name'       => ['type' => 'VARCHAR', 'constraint' => 255],
-            'created_at' => ['type' => 'DATETIME', 'null' => true],
-            'updated_at' => ['type' => 'DATETIME', 'null' => true],
-            'deleted_at' => ['type' => 'DATETIME', 'null' => true],
-        ]);
-        $forge->addKey('id', true);
-        $forge->createTable('parish', true);
-
-        $forge->addField([
-            'id'         => ['type' => 'INTEGER', 'auto_increment' => true],
-            'first_name' => ['type' => 'VARCHAR', 'constraint' => 255, 'null' => true],
-            'last_name'  => ['type' => 'VARCHAR', 'constraint' => 255, 'null' => true],
-            'created_at' => ['type' => 'DATETIME', 'null' => true],
-            'updated_at' => ['type' => 'DATETIME', 'null' => true],
-            'deleted_at' => ['type' => 'DATETIME', 'null' => true],
-        ]);
-        $forge->addKey('id', true);
-        $forge->createTable('person', true);
-
-        $forge->addField([
-            'id'                => ['type' => 'INTEGER', 'auto_increment' => true],
-            'person_id'         => ['type' => 'INTEGER', 'null' => true],
-            'parish_id'         => ['type' => 'INTEGER', 'null' => true],
-            'first_name'        => ['type' => 'VARCHAR', 'constraint' => 255, 'null' => true],
-            'last_name'         => ['type' => 'VARCHAR', 'constraint' => 255, 'null' => true],
-            'birth_date'        => ['type' => 'DATE', 'null' => true],
-            'baptism_date'      => ['type' => 'DATE', 'null' => true],
-            'confirmation_date' => ['type' => 'DATE', 'null' => true],
-            'is_confirmed'      => ['type' => 'INTEGER', 'default' => 0],
-            'is_dependent'      => ['type' => 'INTEGER', 'default' => 0],
-            'membership_status' => ['type' => 'VARCHAR', 'constraint' => 32, 'default' => 'visitor'],
-            'created_at'        => ['type' => 'DATETIME', 'null' => true],
-            'updated_at'        => ['type' => 'DATETIME', 'null' => true],
-            'deleted_at'        => ['type' => 'DATETIME', 'null' => true],
-        ]);
-        $forge->addKey('id', true);
-        $forge->createTable('profile', true);
-
-        $forge->addField([
-            'id'                  => ['type' => 'INTEGER', 'auto_increment' => true],
-            'parish_id'           => ['type' => 'INTEGER'],
-            'person_id'           => ['type' => 'INTEGER'],
-            'sacrament_type'      => ['type' => 'VARCHAR', 'constraint' => 50],
-            'sacrament_date'      => ['type' => 'DATE', 'null' => true],
-            'register_ref'        => ['type' => 'VARCHAR', 'constraint' => 100, 'null' => true],
-            'certificate_number'  => ['type' => 'VARCHAR', 'constraint' => 100, 'null' => true],
-            'officiant_person_id' => ['type' => 'INTEGER', 'null' => true],
-            'location_notes'      => ['type' => 'VARCHAR', 'constraint' => 255, 'null' => true],
-            'notes'               => ['type' => 'TEXT', 'null' => true],
-            'created_at'          => ['type' => 'DATETIME', 'null' => true],
-            'updated_at'          => ['type' => 'DATETIME', 'null' => true],
-        ]);
-        $forge->addKey('id', true);
-        $forge->createTable('sacramental_record', true);
-
-        $forge->addField([
-            'id'                     => ['type' => 'INTEGER', 'auto_increment' => true],
-            'person_id'              => ['type' => 'INTEGER'],
-            'parish_id'              => ['type' => 'INTEGER'],
-            'is_baptized'            => ['type' => 'INTEGER', 'default' => 0],
-            'is_confirmed'           => ['type' => 'INTEGER', 'default' => 0],
-            'is_communicant'         => ['type' => 'INTEGER', 'default' => 0],
-            'is_dependent'           => ['type' => 'INTEGER', 'default' => 0],
-            'has_pledge'             => ['type' => 'INTEGER', 'default' => 0],
-            'pledge_status'          => ['type' => 'VARCHAR', 'constraint' => 50, 'null' => true],
-            'good_standing_override' => ['type' => 'INTEGER', 'default' => 0],
-            'created_at'             => ['type' => 'DATETIME', 'null' => true],
-            'updated_at'             => ['type' => 'DATETIME', 'null' => true],
-        ]);
-        $forge->addKey('id', true);
-        $forge->createTable('person_membership_details', true);
-
-        $forge->addField([
-            'id'          => ['type' => 'INTEGER', 'auto_increment' => true],
-            'person_id'   => ['type' => 'INTEGER'],
-            'parish_id'   => ['type' => 'INTEGER', 'null' => true],
-            'status_type' => ['type' => 'VARCHAR', 'constraint' => 32],
-            'from_status' => ['type' => 'VARCHAR', 'constraint' => 100, 'null' => true],
-            'to_status'   => ['type' => 'VARCHAR', 'constraint' => 100],
-            'changed_by'  => ['type' => 'INTEGER', 'null' => true],
-            'reason'      => ['type' => 'VARCHAR', 'constraint' => 255, 'null' => true],
-            'created_at'  => ['type' => 'DATETIME', 'null' => true],
-        ]);
-        $forge->addKey('id', true);
-        $forge->createTable('person_status_history', true);
     }
 }

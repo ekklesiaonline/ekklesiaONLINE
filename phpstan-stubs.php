@@ -4,6 +4,15 @@
 // These functions are defined by CI4 at runtime but PHPStan can't discover them.
 
 namespace {
+    // CI4 bootstraps these path constants at runtime.
+    const ROOTPATH = __DIR__ . '/';
+    const APPPATH = __DIR__ . '/app/';
+    const SYSTEMPATH = __DIR__ . '/vendor/codeigniter4/framework/system/';
+    const WRITEPATH = __DIR__ . '/writable/';
+    const SUPPORTPATH = __DIR__ . '/tests/_support/';
+    const TESTPATH = __DIR__ . '/tests/';
+    const FCPATH = __DIR__ . '/public/';
+
     function db_connect(?string $group = null): \CodeIgniter\Database\BaseConnection
     {
     }

@@ -1,5 +1,5 @@
 parameters:
-    level: 0
+    level: 3
     paths:
         - app/Services
         - app/Libraries
@@ -8,7 +8,6 @@ parameters:
         - phpstan-stubs.php
     excludePaths:
         - app/Database/Migrations/*
-        - app/Models/MemberChurchAffiliationModel.php
     reportUnmatchedIgnoredErrors: false
 
 includes:

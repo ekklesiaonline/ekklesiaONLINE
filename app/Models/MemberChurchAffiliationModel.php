@@ -3,17 +3,11 @@
 namespace App\Models;
 
 /**
- * Legacy class alias kept for compatibility with older references.
- * Provides backward-compatible method aliases for singular/plural naming transitions.
+ * Legacy alias kept for compatibility with older references that still
+ * resolve MemberChurchAffiliationModel (e.g. model('MemberChurchAffiliationModel')).
+ *
+ * The canonical implementation is MemberParishAffiliationModel.
  */
-class MemberParishAffiliationModel extends MemberParishAffiliationModel
+class MemberChurchAffiliationModel extends MemberParishAffiliationModel
 {
-    /**
-     * Compatibility alias for searchParishMembers.
-     * Maintained for legacy test and controller references during singular/plural transition.
-     */
-    public function searchParishMembers(int $parishId, string $keyword, bool $membersOnly = true): array
-    {
-        return $this->searchParishMembers($parishId, $keyword, $membersOnly);
-    }
 }

@@ -46,6 +46,12 @@ class CreateCanonicalSchema extends Migration
         } finally {
             $this->db->query('SET FOREIGN_KEY_CHECKS=1');
         }
+
+        // The dump just created ~140 tables outside the forge, so the
+        // connection's cached table list is stale. Later migrations guard on
+        // tableExists(), which would read the stale cache and try to recreate
+        // existing tables.
+        $this->db->resetDataCache();
     }
 
     public function down()

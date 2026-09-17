@@ -57,7 +57,6 @@ class CreateSystemSettingsTable extends Migration
         ]);
 
         $this->forge->addKey('id', true);
-        $this->forge->addKey('setting_key');
         $this->forge->addKey('category');
         $this->forge->addUniqueKey('setting_key');
         $this->forge->createTable('system_settings', true);

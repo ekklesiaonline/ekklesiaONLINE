@@ -213,7 +213,7 @@ class MemberDashboardDataService
         return [
             'attended_count'  => (int) ($summary['attended_count'] ?? 0),
             'total_services'  => (int) ($summary['total_services'] ?? 0),
-            'communion_count' => (int) ($communionCount ?? 0),
+            'communion_count' => (int) $communionCount,
         ];
     }
 }

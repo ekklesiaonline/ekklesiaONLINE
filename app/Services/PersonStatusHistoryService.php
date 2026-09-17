@@ -48,7 +48,7 @@ class PersonStatusHistoryService
             'created_at'  => date('Y-m-d H:i:s'),
         ];
 
-        if (! $this->model->db->tableExists($this->model->table)) {
+        if (! $this->model->db->tableExists($this->model->getTableName())) {
             return true;
         }
 

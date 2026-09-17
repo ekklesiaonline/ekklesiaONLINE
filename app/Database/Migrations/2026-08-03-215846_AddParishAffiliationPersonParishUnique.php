@@ -27,10 +27,16 @@ class AddParishAffiliationPersonParishUnique extends Migration
 
         // Drop the old non-unique parish_id/person_id key if it exists, then
         // add the unique constraint.
-        $this->dropIndexIfExists('parish_id_person_id');
-        $this->dropIndexIfExists('idx_parish_affiliation_person_parish');
+        $uniqueExists = $this->db->query(
+            "SHOW INDEX FROM `parish_affiliation` WHERE Key_name = 'uniq_parish_affiliation_person_parish'"
+        )->getNumRows() > 0;
 
-        $this->db->query('ALTER TABLE `parish_affiliation` ADD UNIQUE KEY `uniq_parish_affiliation_person_parish` (`parish_id`, `person_id`)');
+        if (! $uniqueExists) {
+            $this->dropIndexIfExists('parish_id_person_id');
+            $this->dropIndexIfExists('idx_parish_affiliation_person_parish');
+
+            $this->db->query('ALTER TABLE `parish_affiliation` ADD UNIQUE KEY `uniq_parish_affiliation_person_parish` (`parish_id`, `person_id`)');
+        }
     }
 
     public function down()

@@ -27,7 +27,12 @@ class PermissionsAndRolesSeeder extends Seeder
 
         // Insert permissions
         foreach ($permissions as $permission) {
-            $this->db->table('auth_permissions')->insert($permission);
+            $exists = $this->db->table('auth_permissions')
+                ->where('name', $permission['name'])
+                ->countAllResults() > 0;
+            if (! $exists) {
+                $this->db->table('auth_permissions')->insert($permission);
+            }
         }
 
         // Create groups (roles)
@@ -40,7 +45,12 @@ class PermissionsAndRolesSeeder extends Seeder
         }
 
         foreach ($groups as $group) {
-            $this->db->table('auth_groups')->insert($group);
+            $exists = $this->db->table('auth_groups')
+                ->where('name', $group['name'])
+                ->countAllResults() > 0;
+            if (! $exists) {
+                $this->db->table('auth_groups')->insert($group);
+            }
         }
 
         // Assign permissions to groups
@@ -64,10 +74,16 @@ class PermissionsAndRolesSeeder extends Seeder
                         continue;
                     }
 
-                    $this->db->table('auth_groups_permissions')->insert([
-                        'group' => $role['name'],
-                        'permission' => $perm['name'],
-                    ]);
+                    $exists = $this->db->table('auth_groups_permissions')
+                        ->where('group', $role['name'])
+                        ->where('permission', $perm['name'])
+                        ->countAllResults() > 0;
+                    if (! $exists) {
+                        $this->db->table('auth_groups_permissions')->insert([
+                            'group' => $role['name'],
+                            'permission' => $perm['name'],
+                        ]);
+                    }
                 }
             }
         }

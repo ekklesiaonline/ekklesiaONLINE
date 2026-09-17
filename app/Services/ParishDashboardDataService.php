@@ -25,7 +25,6 @@ class ParishDashboardDataService
      *   events_this_month: int,
      *   recent_services: array<int, array<string, mixed>>,
      *   recent_guests: array<int, array<string, mixed>>,
-     *   sunday_attendance_trend: array<string, mixed>,
      *   pending_registrations_count: int,
      * }
      */

@@ -875,6 +875,8 @@ final class EventsAudienceIntegrationTest extends CIUnitTestCase
                 updated_at TEXT NULL
             )');
         }
+
+        $this->ensureColumnExists($this->createTableName('leadership_position'), 'person_id', 'INTEGER NULL');
     }
 
     private function ensureEventAttachmentsTable(): void

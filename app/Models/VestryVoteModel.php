@@ -47,12 +47,13 @@ class VestryVoteModel extends Model
      */
     public function tallyVotes(int $motionId): array
     {
-        $result = $this->select(
-            "SUM(CASE WHEN vote = 'yea' THEN 1 ELSE 0 END) AS yea,
-             SUM(CASE WHEN vote = 'nay' THEN 1 ELSE 0 END) AS nay,
-             SUM(CASE WHEN vote = 'abstain' THEN 1 ELSE 0 END) AS abstain,
-             COUNT(*) AS total"
-        )
+        $result = $this->builder()
+            ->select(
+                "SUM(CASE WHEN vote = 'yea' THEN 1 ELSE 0 END) AS yea,
+                 SUM(CASE WHEN vote = 'nay' THEN 1 ELSE 0 END) AS nay,
+                 SUM(CASE WHEN vote = 'abstain' THEN 1 ELSE 0 END) AS abstain,
+                 COUNT(*) AS total"
+            )
             ->where('motion_id', $motionId)
             ->get()
             ->getRowArray();

@@ -2,7 +2,7 @@
 <phpunit
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/10.5/phpunit.xsd"
-    bootstrap="vendor/codeigniter4/framework/system/Test/bootstrap.php"
+    bootstrap="tests/bootstrap.php"
     backupGlobals="false"
     beStrictAboutOutputDuringTests="true"
     colors="true"
@@ -22,6 +22,9 @@
             <text outputFile="php://stdout" showUncoveredFiles="false"/>
         </report>
     </coverage>
+    <extensions>
+        <bootstrap class="Tests\Support\CanonicalSchemaExtension"/>
+    </extensions>
     <testsuites>
         <testsuite name="App">
             <directory>./tests</directory>

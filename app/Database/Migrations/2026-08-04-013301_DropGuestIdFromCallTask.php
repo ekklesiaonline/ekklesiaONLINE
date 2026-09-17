@@ -15,16 +15,17 @@ class DropGuestIdFromCallTask extends Migration
         $prefix = $this->db->getPrefix();
         $dbName = $this->db->getDatabase();
 
-        $fk = $this->db->query("
+        $fks = $this->db->query("
             SELECT CONSTRAINT_NAME
-            FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS
+            FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE
             WHERE TABLE_SCHEMA = '{$dbName}'
               AND TABLE_NAME = '{$prefix}call_task'
-              AND CONSTRAINT_NAME = 'fk_call_guest'
-        ")->getRowArray();
+              AND COLUMN_NAME = 'guest_id'
+              AND REFERENCED_TABLE_NAME IS NOT NULL
+        ")->getResultArray();
 
-        if ($fk !== null) {
-            $this->db->query('ALTER TABLE ' . $prefix . 'call_task DROP FOREIGN KEY fk_call_guest');
+        foreach ($fks as $fk) {
+            $this->db->query('ALTER TABLE `' . $prefix . 'call_task` DROP FOREIGN KEY `' . $fk['CONSTRAINT_NAME'] . '`');
         }
 
         $this->forge->dropColumn('call_task', 'guest_id');
