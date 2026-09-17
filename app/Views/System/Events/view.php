@@ -2,11 +2,11 @@
 <?= $this->section('content') ?>
 <div class="d-flex justify-content-start align-items-center flex-wrap gap-2 mb-3">
     <a href="<?= base_url('system/events/calendar') ?>" class="btn btn-outline-secondary btn-sm">
-        <i class="bi bi-arrow-left"></i> <?= lang('Events.calendarBoard') ?>
+        <i class="bi bi-arrow-left" aria-hidden="true"></i> <?= lang('Events.calendarBoard') ?>
     </a>
     <?php if (!empty($can_manage_event)): ?>
         <a href="<?= base_url('system/events/edit/' . (int) ($event['id'] ?? 0)) ?>" class="btn btn-warning btn-sm">
-            <i class="bi bi-pencil"></i> <?= lang('App.edit') ?>
+            <i class="bi bi-pencil" aria-hidden="true"></i> <?= lang('App.edit') ?>
         </a>
     <?php endif; ?>
 </div>
@@ -65,9 +65,9 @@
                 <table class="table table-sm table-hover">
                     <thead>
                         <tr>
-                            <th><?= lang('Events.colParticipant') ?></th>
-                            <th><?= lang('Events.colRegistered') ?></th>
-                            <th><?= lang('Events.colStatus') ?></th>
+                            <th scope="col"><?= lang('Events.colParticipant') ?></th>
+                            <th scope="col"><?= lang('Events.colRegistered') ?></th>
+                            <th scope="col"><?= lang('Events.colStatus') ?></th>
                         </tr>
                     </thead>
                     <tbody>

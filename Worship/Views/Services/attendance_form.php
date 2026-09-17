@@ -29,9 +29,9 @@
                 <table class="table table-bordered table-hover align-middle">
                     <thead>
                         <tr>
-                            <th><input type="checkbox" id="selectAllMembers"></th>
-                            <th><?= lang('App.name') ?></th>
-                            <th><?= lang('Services.colCommunion') ?></th>
+                            <th scope="col"><input type="checkbox" id="selectAllMembers"></th>
+                            <th scope="col"><?= lang('App.name') ?></th>
+                            <th scope="col"><?= lang('Services.colCommunion') ?></th>
                         </tr>
                     </thead>
                     <tbody>
@@ -51,9 +51,9 @@
                 <table class="table table-bordered table-hover align-middle">
                     <thead>
                         <tr>
-                            <th><input type="checkbox" id="selectAllGuests"></th>
-                            <th><?= lang('App.name') ?></th>
-                            <th><?= lang('Services.colCommunion') ?></th>
+                            <th scope="col"><input type="checkbox" id="selectAllGuests"></th>
+                            <th scope="col"><?= lang('App.name') ?></th>
+                            <th scope="col"><?= lang('Services.colCommunion') ?></th>
                         </tr>
                     </thead>
                     <tbody>
@@ -72,7 +72,7 @@
         </div>
         <div class="mt-3">
             <button type="submit" class="btn btn-success" id="saveAttendanceBtn">
-                <i class="bi bi-save"></i> <?= lang('App.save') ?>
+                <i class="bi bi-save" aria-hidden="true"></i> <?= lang('App.save') ?>
             </button>
         </div>
     </form>

@@ -50,10 +50,10 @@ $roleLabelMap = [
                         <table class="table table-sm align-middle">
                             <thead>
                                 <tr>
-                                    <th><?= lang('App.colName') ?></th>
-                                    <th><?= lang('App.colEmail') ?></th>
-                                    <th><?= lang('Parishes.textRole') ?></th>
-                                    <th><?= lang('App.colActions') ?></th>
+                                    <th scope="col"><?= lang('App.colName') ?></th>
+                                    <th scope="col"><?= lang('App.colEmail') ?></th>
+                                    <th scope="col"><?= lang('Parishes.textRole') ?></th>
+                                    <th scope="col"><?= lang('App.colActions') ?></th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -178,11 +178,11 @@ $roleLabelMap = [
                 <table class="table table-sm align-middle mb-0">
                     <thead>
                         <tr>
-                            <th><?= lang('Parishes.textWhen') ?></th>
-                            <th><?= lang('Parishes.textActor') ?></th>
-                            <th><?= lang('Parishes.textAction') ?></th>
-                            <th><?= lang('Parishes.textTarget') ?></th>
-                            <th><?= lang('Parishes.textRole') ?></th>
+                            <th scope="col"><?= lang('Parishes.textWhen') ?></th>
+                            <th scope="col"><?= lang('Parishes.textActor') ?></th>
+                            <th scope="col"><?= lang('Parishes.textAction') ?></th>
+                            <th scope="col"><?= lang('Parishes.textTarget') ?></th>
+                            <th scope="col"><?= lang('Parishes.textRole') ?></th>
                         </tr>
                     </thead>
                     <tbody>

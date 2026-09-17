@@ -15,7 +15,7 @@ $badge = $channelBadge[$template['channel']] ?? 'border border-secondary text-bo
 
 <div class="d-flex justify-content-start align-items-center flex-wrap gap-2 mb-3">
     <a href="<?= base_url('followup-workflow/templates') ?>" class="btn btn-outline-secondary">
-        <i class="bi bi-arrow-left"></i> <?= lang('Guests.tplBackToTemplates') ?>
+        <i class="bi bi-arrow-left" aria-hidden="true"></i> <?= lang('Guests.tplBackToTemplates') ?>
     </a>
     <?php if (!empty($template['parish_id']) && auth()->user()->can('guest.edit')): ?>
         <button type="button"
@@ -27,7 +27,7 @@ $badge = $channelBadge[$template['channel']] ?? 'border border-secondary text-bo
             data-body-text="<?= esc($template['body_text'], 'attr') ?>"
             data-body-html="<?= esc($template['body_html'] ?? '', 'attr') ?>"
             data-variables="<?= esc($template['variables'] ?? '', 'attr') ?>">
-            <i class="bi bi-pencil"></i> <?= lang('Guests.tplEditTemplateBtn') ?>
+            <i class="bi bi-pencil" aria-hidden="true"></i> <?= lang('Guests.tplEditTemplateBtn') ?>
         </button>
     <?php endif; ?>
 </div>
@@ -80,7 +80,7 @@ $badge = $channelBadge[$template['channel']] ?? 'border border-secondary text-bo
         <div class="card mb-3">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <span class="fw-semibold">
-                    <i class="bi bi-file-text me-1"></i> <?= lang('Guests.tplPreviewPlainText') ?>
+                    <i class="bi bi-file-text me-1" aria-hidden="true"></i> <?= lang('Guests.tplPreviewPlainText') ?>
                 </span>
                 <small class="text-muted"><?= lang('Guests.tplPreviewSampleApplied') ?></small>
             </div>
@@ -100,7 +100,7 @@ $badge = $channelBadge[$template['channel']] ?? 'border border-secondary text-bo
             <div class="card mb-3">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <span class="fw-semibold">
-                        <i class="bi bi-code-slash me-1"></i> <?= lang('Guests.tplPreviewHtmlTitle') ?>
+                        <i class="bi bi-code-slash me-1" aria-hidden="true"></i> <?= lang('Guests.tplPreviewHtmlTitle') ?>
                     </span>
                     <div class="btn-group btn-group-sm" role="group">
                         <button class="btn btn-outline-secondary active" id="btnHtmlRendered"><?= lang('Guests.tplPreviewRendered') ?></button>
@@ -125,14 +125,14 @@ $badge = $channelBadge[$template['channel']] ?? 'border border-secondary text-bo
         <!-- Sample substitution table -->
         <div class="card">
             <div class="card-header fw-semibold">
-                <i class="bi bi-table me-1"></i> <?= lang('Guests.tplSampleValuesTitle') ?>
+                <i class="bi bi-table me-1" aria-hidden="true"></i> <?= lang('Guests.tplSampleValuesTitle') ?>
             </div>
             <div class="card-body p-0">
                 <table class="table table-sm mb-0">
                     <thead>
                         <tr>
-                            <th><?= lang('Guests.tplTokenCol') ?></th>
-                            <th><?= lang('Guests.tplSampleValueCol') ?></th>
+                            <th scope="col"><?= lang('Guests.tplTokenCol') ?></th>
+                            <th scope="col"><?= lang('Guests.tplSampleValueCol') ?></th>
                         </tr>
                     </thead>
                     <tbody>

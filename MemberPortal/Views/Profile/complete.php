@@ -65,7 +65,7 @@ $localPhoneValue = old('phone', $storedLocalPhone ?? '');
 
             <?php if ($legacyCompletionMode): ?>
                 <div class="alert alert-warning" role="alert">
-                    <i class="bi bi-exclamation-triangle"></i>
+                    <i class="bi bi-exclamation-triangle" aria-hidden="true"></i>
                     <?= esc(lang('Profile.profilePendingWarningBody')) ?>
                 </div>
             <?php endif; ?>

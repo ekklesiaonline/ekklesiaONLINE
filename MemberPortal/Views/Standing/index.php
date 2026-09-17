@@ -17,7 +17,7 @@
                     <small class="text-muted"><?= lang('Standing.scopeLabel') ?>: <?= esc($scopeKey) ?></small>
                 </div>
                 <div class="text-info fs-1">
-                    <i class="bi bi-award"></i>
+                    <i class="bi bi-award" aria-hidden="true"></i>
                 </div>
             </div>
         </div>
@@ -31,7 +31,7 @@
                     <small class="text-muted"><?= lang('Standing.yearLabel') ?>: <?= (int) ($selected_year ?? date('Y')) ?></small>
                 </div>
                 <div class="text-primary fs-1">
-                    <i class="bi bi-clipboard-data"></i>
+                    <i class="bi bi-clipboard-data" aria-hidden="true"></i>
                 </div>
             </div>
         </div>
@@ -40,7 +40,7 @@
 
 <div class="card mt-3">
     <div class="card-header">
-        <h5 class="mb-0"><i class="bi bi-arrow-repeat"></i> <?= lang('Standing.refreshTitle') ?></h5>
+        <h5 class="mb-0"><i class="bi bi-arrow-repeat" aria-hidden="true"></i> <?= lang('Standing.refreshTitle') ?></h5>
     </div>
     <div class="card-body">
         <p class="text-muted mb-3">
@@ -56,7 +56,7 @@
             </div>
             <div class="col-md-9 text-md-end">
                 <button type="submit" class="btn btn-primary">
-                    <i class="bi bi-arrow-repeat"></i> <?= lang('Standing.runRefresh') ?>
+                    <i class="bi bi-arrow-repeat" aria-hidden="true"></i> <?= lang('Standing.runRefresh') ?>
                 </button>
             </div>
         </form>

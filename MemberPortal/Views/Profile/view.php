@@ -90,7 +90,7 @@ $adminParishNames = $hasAdminScope
                             onerror="this.classList.add('d-none');this.nextElementSibling.classList.remove('d-none');">
                     <?php endif; ?>
                     <div class="profile-avatar-wrap <?= $profilePictureUrl !== '' ? 'd-none' : '' ?>">
-                        <i class="bi bi-person-circle profile-avatar-placeholder"></i>
+                        <i class="bi bi-person-circle profile-avatar-placeholder" aria-hidden="true"></i>
                     </div>
                 </div>
                 <div class="flex-grow-1 text-center text-md-start">
@@ -123,19 +123,19 @@ $adminParishNames = $hasAdminScope
             <?php if (empty($profile['parish_id']) && !$isElevatedAdmin): ?>
                 <?php if (($registrationStatus ?? '') === 'pending_review'): ?>
                     <button type="button" class="btn btn-warning" disabled>
-                        <i class="bi bi-hourglass-split"></i> <?= lang('Profile.joinParishPendingApproval') ?>
+                        <i class="bi bi-hourglass-split" aria-hidden="true"></i> <?= lang('Profile.joinParishPendingApproval') ?>
                     </button>
                 <?php else: ?>
                     <a href="<?= base_url('profile/join-parish') ?>" class="btn btn-success">
-                        <i class="bi bi-building-add"></i> <?= lang('Profile.joinParishTitle') ?>
+                        <i class="bi bi-building-add" aria-hidden="true"></i> <?= lang('Profile.joinParishTitle') ?>
                     </a>
                 <?php endif; ?>
             <?php endif; ?>
             <a href="<?= base_url('profile/edit') ?>" class="btn btn-primary">
-                <i class="bi bi-pencil"></i> <?= lang('Profile.editProfile') ?>
+                <i class="bi bi-pencil" aria-hidden="true"></i> <?= lang('Profile.editProfile') ?>
             </a>
             <a href="<?= base_url('dashboard') ?>" class="btn btn-outline-secondary">
-                <i class="bi bi-house"></i> <?= lang('Profile.backToDashboard') ?>
+                <i class="bi bi-house" aria-hidden="true"></i> <?= lang('Profile.backToDashboard') ?>
             </a>
         </div>
     </div>
@@ -144,27 +144,27 @@ $adminParishNames = $hasAdminScope
     <ul class="nav nav-tabs profile-tabs mb-0" id="profileTabPanes" role="tablist">
         <li class="nav-item" role="presentation">
             <button class="nav-link active" id="overview-tab" data-bs-toggle="tab" data-bs-target="#overview-pane" type="button" role="tab" aria-selected="true">
-                <i class="bi bi-grid-3x3-gap"></i> <?= lang('Profile.tabOverview') ?>
+                <i class="bi bi-grid-3x3-gap" aria-hidden="true"></i> <?= lang('Profile.tabOverview') ?>
             </button>
         </li>
         <li class="nav-item" role="presentation">
             <button class="nav-link" id="personal-tab" data-bs-toggle="tab" data-bs-target="#personal-pane" type="button" role="tab">
-                <i class="bi bi-person"></i> <?= lang('Profile.tabPersonal') ?>
+                <i class="bi bi-person" aria-hidden="true"></i> <?= lang('Profile.tabPersonal') ?>
             </button>
         </li>
         <li class="nav-item" role="presentation">
             <button class="nav-link" id="contact-tab" data-bs-toggle="tab" data-bs-target="#contact-pane" type="button" role="tab">
-                <i class="bi bi-telephone"></i> <?= lang('Profile.tabContact') ?>
+                <i class="bi bi-telephone" aria-hidden="true"></i> <?= lang('Profile.tabContact') ?>
             </button>
         </li>
         <li class="nav-item" role="presentation">
             <button class="nav-link" id="spiritual-tab" data-bs-toggle="tab" data-bs-target="#spiritual-pane" type="button" role="tab">
-                <i class="bi bi-heart"></i> <?= lang('Profile.tabSpiritual') ?>
+                <i class="bi bi-heart" aria-hidden="true"></i> <?= lang('Profile.tabSpiritual') ?>
             </button>
         </li>
         <li class="nav-item" role="presentation">
             <button class="nav-link" id="account-tab" data-bs-toggle="tab" data-bs-target="#account-pane" type="button" role="tab">
-                <i class="bi bi-gear"></i> <?= lang('Profile.tabAccount') ?>
+                <i class="bi bi-gear" aria-hidden="true"></i> <?= lang('Profile.tabAccount') ?>
             </button>
         </li>
     </ul>
@@ -178,7 +178,7 @@ $adminParishNames = $hasAdminScope
                 <div class="col-md-6">
                     <div class="card h-100">
                         <div class="card-header bg-primary text-white">
-                            <h5 class="mb-0"><i class="bi bi-person"></i> <?= lang('Profile.sectionPersonal') ?></h5>
+                            <h5 class="mb-0"><i class="bi bi-person" aria-hidden="true"></i> <?= lang('Profile.sectionPersonal') ?></h5>
                         </div>
                         <div class="card-body">
                             <ul class="list-group list-group-flush">
@@ -206,7 +206,7 @@ $adminParishNames = $hasAdminScope
                 <div class="col-md-6">
                     <div class="card h-100">
                         <div class="card-header bg-primary text-white">
-                            <h5 class="mb-0"><i class="bi bi-building"></i> <?= lang('Profile.parishAffiliation') ?></h5>
+                            <h5 class="mb-0"><i class="bi bi-building" aria-hidden="true"></i> <?= lang('Profile.parishAffiliation') ?></h5>
                         </div>
                         <div class="card-body">
                             <?php if ($hasAdminScope): ?>
@@ -228,7 +228,7 @@ $adminParishNames = $hasAdminScope
                                     <dd class="col-sm-8"><?= esc($parishAffiliation['parish'] ?: '-') ?></dd>
                                 </dl>
                             <?php else: ?>
-                                <p class="text-muted mb-0"><i class="bi bi-info-circle"></i> <?= lang('Profile.noAffiliation') ?></p>
+                                <p class="text-muted mb-0"><i class="bi bi-info-circle" aria-hidden="true"></i> <?= lang('Profile.noAffiliation') ?></p>
                             <?php endif; ?>
                         </div>
                     </div>
@@ -237,7 +237,7 @@ $adminParishNames = $hasAdminScope
                 <div class="col-md-6">
                     <div class="card h-100">
                         <div class="card-header bg-info text-white">
-                            <h5 class="mb-0"><i class="bi bi-gear"></i> <?= lang('Profile.accountInformation') ?></h5>
+                            <h5 class="mb-0"><i class="bi bi-gear" aria-hidden="true"></i> <?= lang('Profile.accountInformation') ?></h5>
                         </div>
                         <div class="card-body">
                             <ul class="list-group list-group-flush">
@@ -273,7 +273,7 @@ $adminParishNames = $hasAdminScope
                 <div class="col-md-6">
                     <div class="card h-100">
                         <div class="card-header bg-primary text-white">
-                            <h5 class="mb-0"><i class="bi bi-heart"></i> <?= lang('Profile.spiritualInformation') ?></h5>
+                            <h5 class="mb-0"><i class="bi bi-heart" aria-hidden="true"></i> <?= lang('Profile.spiritualInformation') ?></h5>
                         </div>
                         <div class="card-body">
                             <ul class="list-group list-group-flush">
@@ -291,7 +291,7 @@ $adminParishNames = $hasAdminScope
                 <div class="col-12">
                     <div class="card h-100">
                         <div class="card-header bg-primary text-white">
-                            <h5 class="mb-0"><i class="bi bi-buildings"></i> <?= lang('Profile.otherParishes') ?></h5>
+                            <h5 class="mb-0"><i class="bi bi-buildings" aria-hidden="true"></i> <?= lang('Profile.otherParishes') ?></h5>
                         </div>
                         <div class="card-body">
                             <?php if (!empty($otherAffiliations)): ?>
@@ -317,7 +317,7 @@ $adminParishNames = $hasAdminScope
                                     <?php endforeach; ?>
                                 </ul>
                             <?php else: ?>
-                                <p class="text-muted mb-0"><i class="bi bi-info-circle"></i> <?= lang('Profile.noOtherParishes') ?></p>
+                                <p class="text-muted mb-0"><i class="bi bi-info-circle" aria-hidden="true"></i> <?= lang('Profile.noOtherParishes') ?></p>
                             <?php endif; ?>
                         </div>
                     </div>
@@ -396,7 +396,7 @@ $adminParishNames = $hasAdminScope
                 <div class="card-body">
                     <ul class="list-group list-group-flush">
                         <li class="list-group-item px-0">
-                            <div class="text-muted small"><i class="bi bi-telephone"></i> <?= lang('Profile.phone') ?></div>
+                            <div class="text-muted small"><i class="bi bi-telephone" aria-hidden="true"></i> <?= lang('Profile.phone') ?></div>
                             <div><?= esc(\App\Libraries\PhoneHelper::display($profile['phone'] ?? null) ?: '-') ?></div>
                         </li>
                         <li class="list-group-item px-0">
@@ -520,7 +520,7 @@ $adminParishNames = $hasAdminScope
                 <div class="col-md-6">
                     <div class="card h-100">
                         <div class="card-header bg-primary text-white">
-                            <h5 class="mb-0"><i class="bi bi-building"></i> <?= lang('Profile.parishAffiliation') ?></h5>
+                            <h5 class="mb-0"><i class="bi bi-building" aria-hidden="true"></i> <?= lang('Profile.parishAffiliation') ?></h5>
                         </div>
                         <div class="card-body">
                             <?php if ($hasAdminScope): ?>
@@ -542,7 +542,7 @@ $adminParishNames = $hasAdminScope
                                     <dd class="col-sm-8"><?= esc($parishAffiliation['parish'] ?: '-') ?></dd>
                                 </dl>
                             <?php else: ?>
-                                <p class="text-muted mb-0"><i class="bi bi-info-circle"></i> <?= lang('Profile.noAffiliation') ?></p>
+                                <p class="text-muted mb-0"><i class="bi bi-info-circle" aria-hidden="true"></i> <?= lang('Profile.noAffiliation') ?></p>
                             <?php endif; ?>
                         </div>
                     </div>

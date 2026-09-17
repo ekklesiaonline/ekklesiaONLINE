@@ -34,7 +34,7 @@ $typeKey = 'vestryMeetingType' . ucfirst($meeting['meeting_type'] ?? 'regular');
     <h5><?= lang('Dashboard.vestryMotions') ?></h5>
     <?php if (!empty($can_manage)): ?>
         <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#newMotionModal">
-            <i class="bi bi-plus-circle"></i> New Motion
+            <i class="bi bi-plus-circle" aria-hidden="true"></i> New Motion
         </button>
     <?php endif; ?>
 </div>
@@ -140,7 +140,7 @@ $typeKey = 'vestryMeetingType' . ucfirst($meeting['meeting_type'] ?? 'regular');
 <?php endif; ?>
 
 <a href="<?= base_url('/parish/governance') ?>" class="btn btn-outline-secondary mt-3">
-    <i class="bi bi-arrow-left"></i> Back to Governance
+    <i class="bi bi-arrow-left" aria-hidden="true"></i> Back to Governance
 </a>
 
 <?= $this->endSection() ?>

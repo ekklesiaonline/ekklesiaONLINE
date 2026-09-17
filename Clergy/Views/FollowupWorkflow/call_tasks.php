@@ -4,10 +4,10 @@
 
 <div class="d-flex justify-content-start align-items-center flex-wrap gap-2 mb-3">
     <a href="<?= base_url('followup-workflow/sequences') ?>" class="btn btn-outline-secondary">
-        <i class="bi bi-diagram-3"></i> <?= lang('Guests.callTasksSequencesBtn') ?>
+        <i class="bi bi-diagram-3" aria-hidden="true"></i> <?= lang('Guests.callTasksSequencesBtn') ?>
     </a>
     <a href="<?= base_url('guests/dashboard') ?>" class="btn btn-outline-secondary">
-        <i class="bi bi-arrow-left"></i> <?= lang('Guests.backToGuests') ?>
+        <i class="bi bi-arrow-left" aria-hidden="true"></i> <?= lang('Guests.backToGuests') ?>
     </a>
 </div>
 
@@ -37,7 +37,7 @@
     <div class="card-body p-0">
         <?php if (empty($tasks)): ?>
             <div class="text-center py-5 text-muted">
-                <i class="bi bi-telephone-x fs-2 d-block mb-2"></i>
+                <i class="bi bi-telephone-x fs-2 d-block mb-2" aria-hidden="true"></i>
                 <?= lang('Guests.callTasksEmpty') ?>
             </div>
         <?php else: ?>
@@ -45,13 +45,13 @@
                 <table class="table table-hover align-middle mb-0" id="callTasksTable">
                     <thead>
                         <tr>
-                            <th><?= lang('Guests.callTasksColGuest') ?></th>
-                            <th><?= lang('Guests.colPhone') ?></th>
-                            <th><?= lang('Guests.scheduledLabel') ?></th>
-                            <th><?= lang('App.colNotes') ?></th>
-                            <th class="text-center"><?= lang('Guests.colStatus') ?></th>
+                            <th scope="col"><?= lang('Guests.callTasksColGuest') ?></th>
+                            <th scope="col"><?= lang('Guests.colPhone') ?></th>
+                            <th scope="col"><?= lang('Guests.scheduledLabel') ?></th>
+                            <th scope="col"><?= lang('App.colNotes') ?></th>
+                            <th scope="col" class="text-center"><?= lang('Guests.colStatus') ?></th>
                             <?php if (auth()->user()->can('guest.edit')): ?>
-                                <th class="text-center"><?= lang('App.colActions') ?></th>
+                                <th scope="col" class="text-center"><?= lang('App.colActions') ?></th>
                             <?php endif; ?>
                         </tr>
                     </thead>
@@ -112,7 +112,7 @@
                                                 class="btn btn-sm btn-outline-success complete-task-btn"
                                                 data-task-id="<?= (int) $task['id'] ?>"
                                                 data-guest="<?= esc($task['first_name'] . ' ' . $task['last_name'], 'attr') ?>">
-                                                <i class="bi bi-check2-circle"></i> <?= lang('Guests.callTasksDoneBtn') ?>
+                                                <i class="bi bi-check2-circle" aria-hidden="true"></i> <?= lang('Guests.callTasksDoneBtn') ?>
                                             </button>
                                         <?php else: ?>
                                             <span class="text-muted small">

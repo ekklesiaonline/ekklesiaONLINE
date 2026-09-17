@@ -4,7 +4,7 @@
 
 <div class="d-flex justify-content-start align-items-center mb-3">
     <a href="<?= base_url('worship-planning/songs') ?>" class="btn btn-outline-primary">
-        <i class="bi bi-music-note-list"></i> <?= lang('Worship.songLibrary') ?>
+        <i class="bi bi-music-note-list" aria-hidden="true"></i> <?= lang('Worship.songLibrary') ?>
     </a>
 </div>
 
@@ -14,11 +14,11 @@
             <table class="table table-hover">
                 <thead>
                     <tr>
-                        <th><?= lang('Worship.colDate') ?></th>
-                        <th><?= lang('Worship.colService') ?></th>
-                        <th><?= lang('Worship.colLiturgicalDay') ?></th>
-                        <th><?= lang('Worship.colPlanItems') ?></th>
-                        <th><?= lang('Worship.colActions') ?></th>
+                        <th scope="col"><?= lang('Worship.colDate') ?></th>
+                        <th scope="col"><?= lang('Worship.colService') ?></th>
+                        <th scope="col"><?= lang('Worship.colLiturgicalDay') ?></th>
+                        <th scope="col"><?= lang('Worship.colPlanItems') ?></th>
+                        <th scope="col"><?= lang('Worship.colActions') ?></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -49,10 +49,10 @@
                                 </td>
                                 <td>
                                     <a href="<?= base_url('worship-planning/service/' . (int) $service['id']) ?>" class="btn btn-sm btn-primary">
-                                        <i class="bi bi-list-task"></i> <?= lang('Worship.plan') ?>
+                                        <i class="bi bi-list-task" aria-hidden="true"></i> <?= lang('Worship.plan') ?>
                                     </a>
                                     <a href="<?= base_url('worship-planning/print/' . (int) $service['id']) ?>" class="btn btn-sm btn-outline-secondary" target="_blank" rel="noopener noreferrer">
-                                        <i class="bi bi-printer"></i> <?= lang('Worship.print') ?>
+                                        <i class="bi bi-printer" aria-hidden="true"></i> <?= lang('Worship.print') ?>
                                     </a>
                                 </td>
                             </tr>

@@ -170,8 +170,8 @@ $errorId = uniqid('error', true);
                     <table>
                         <thead>
                             <tr>
-                                <th>Key</th>
-                                <th>Value</th>
+                                <th scope="col">Key</th>
+                                <th scope="col">Value</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -200,8 +200,8 @@ $errorId = uniqid('error', true);
                     <table>
                         <thead>
                             <tr>
-                                <th>Key</th>
-                                <th>Value</th>
+                                <th scope="col">Key</th>
+                                <th scope="col">Value</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -275,8 +275,8 @@ $errorId = uniqid('error', true);
                     <table style="width: 100%">
                         <thead>
                             <tr>
-                                <th>Key</th>
-                                <th>Value</th>
+                                <th scope="col">Key</th>
+                                <th scope="col">Value</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -313,8 +313,8 @@ $errorId = uniqid('error', true);
                     <table>
                         <thead>
                             <tr>
-                                <th>Header</th>
-                                <th>Value</th>
+                                <th scope="col">Header</th>
+                                <th scope="col">Value</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -360,8 +360,8 @@ $errorId = uniqid('error', true);
                     <table>
                         <thead>
                             <tr>
-                                <th>Header</th>
-                                <th>Value</th>
+                                <th scope="col">Header</th>
+                                <th scope="col">Value</th>
                             </tr>
                         </thead>
                         <tbody>

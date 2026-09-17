@@ -51,11 +51,11 @@ $portalAccess = strtolower(trim((string) ($profile['portal_access'] ?? 'none')))
             <div class="d-flex gap-2">
                 <?php if ($can_edit && $profileId > 0): ?>
                     <a href="<?= base_url('members/edit/' . $profileId) ?>" class="btn btn-warning btn-sm">
-                        <i class="bi bi-pencil"></i> <?= lang('App.edit') ?>
+                        <i class="bi bi-pencil" aria-hidden="true"></i> <?= lang('App.edit') ?>
                     </a>
                 <?php endif; ?>
                 <a href="<?= base_url('people') ?>" class="btn btn-outline-secondary btn-sm">
-                    <i class="bi bi-arrow-left"></i> <?= lang('App.back') ?>
+                    <i class="bi bi-arrow-left" aria-hidden="true"></i> <?= lang('App.back') ?>
                 </a>
             </div>
         </div>
@@ -76,7 +76,7 @@ $portalAccess = strtolower(trim((string) ($profile['portal_access'] ?? 'none')))
                         <img src="<?= esc($profilePictureUrl, 'attr') ?>" alt="" class="people-profile-avatar mb-3">
                     <?php else: ?>
                         <div class="people-profile-avatar-fallback mb-3">
-                            <i class="bi bi-person people-profile-avatar-fallback-icon"></i>
+                            <i class="bi bi-person people-profile-avatar-fallback-icon" aria-hidden="true"></i>
                         </div>
                     <?php endif; ?>
 
@@ -139,7 +139,7 @@ $portalAccess = strtolower(trim((string) ($profile['portal_access'] ?? 'none')))
         <div class="col-md-8">
             <?php if (!empty($sacrament_discrepancies)): ?>
                 <div class="alert alert-warning d-flex align-items-start gap-2 mb-3" role="alert">
-                    <i class="bi bi-exclamation-triangle-fill flex-shrink-0"></i>
+                    <i class="bi bi-exclamation-triangle-fill flex-shrink-0" aria-hidden="true"></i>
                     <div class="small">
                         <strong><?= lang('People.sacramentDiscrepancyHeading') ?? 'Sacrament data mismatch' ?></strong>
                         <p class="mb-1"><?= lang('People.sacramentDiscrepancyIntro') ?? 'The sacramental register disagrees with the membership flags or profile dates:' ?></p>
@@ -161,7 +161,7 @@ $portalAccess = strtolower(trim((string) ($profile['portal_access'] ?? 'none')))
                         <h6 class="mb-0"><?= lang('Members.membershipDetails') ?></h6>
                         <?php if ($can_edit): ?>
                             <button type="button" class="btn btn-sm btn-outline-primary" id="toggleMembershipDetailsEdit">
-                                <i class="bi bi-pencil"></i> <?= lang('App.edit') ?>
+                                <i class="bi bi-pencil" aria-hidden="true"></i> <?= lang('App.edit') ?>
                             </button>
                         <?php endif; ?>
                     </div>
@@ -239,21 +239,21 @@ $portalAccess = strtolower(trim((string) ($profile['portal_access'] ?? 'none')))
                     <div class="card-body">
                         <div class="d-flex flex-wrap gap-2">
                             <a href="<?= base_url('leadership') ?>" class="btn btn-outline-secondary btn-sm">
-                                <i class="bi bi-person-badge"></i> <?= lang('App.navLeadership') ?>
+                                <i class="bi bi-person-badge" aria-hidden="true"></i> <?= lang('App.navLeadership') ?>
                             </a>
                             <?php if (auth()->user()->can('donation.view') || auth()->user()->can('finance.manage')): ?>
                                 <a href="<?= base_url('donations') ?>" class="btn btn-outline-secondary btn-sm">
-                                    <i class="bi bi-cash-coin"></i> <?= lang('App.navDonations') ?>
+                                    <i class="bi bi-cash-coin" aria-hidden="true"></i> <?= lang('App.navDonations') ?>
                                 </a>
                             <?php endif; ?>
                             <?php if (auth()->user()->can('finance.manage') || auth()->user()->can('annual_pledge.manage')): ?>
                                 <a href="<?= base_url('pledges') ?>" class="btn btn-outline-secondary btn-sm">
-                                    <i class="bi bi-calendar-check"></i> <?= lang('App.navPledges') ?>
+                                    <i class="bi bi-calendar-check" aria-hidden="true"></i> <?= lang('App.navPledges') ?>
                                 </a>
                             <?php endif; ?>
                             <?php if (auth()->user()->can('family.view')): ?>
                                 <a href="<?= base_url('families') ?>" class="btn btn-outline-secondary btn-sm">
-                                    <i class="bi bi-people"></i> <?= lang('App.navFamilies') ?>
+                                    <i class="bi bi-people" aria-hidden="true"></i> <?= lang('App.navFamilies') ?>
                                 </a>
                             <?php endif; ?>
                         </div>
@@ -290,15 +290,15 @@ $portalAccess = strtolower(trim((string) ($profile['portal_access'] ?? 'none')))
                         <?php if ($canManageFamily && !$isInFamily && $userId > 0): ?>
                             <div class="d-flex gap-1">
                                 <button type="button" class="btn btn-sm btn-outline-primary" id="createFamilyBtn">
-                                    <i class="bi bi-plus-lg"></i> <?= lang('Families.create') ?>
+                                    <i class="bi bi-plus-lg" aria-hidden="true"></i> <?= lang('Families.create') ?>
                                 </button>
                                 <button type="button" class="btn btn-sm btn-outline-secondary" id="joinFamilyBtn">
-                                    <i class="bi bi-box-arrow-in-right"></i> <?= lang('Families.join') ?>
+                                    <i class="bi bi-box-arrow-in-right" aria-hidden="true"></i> <?= lang('Families.join') ?>
                                 </button>
                             </div>
                         <?php elseif ($canManageFamily && $isInFamily): ?>
                             <button type="button" class="btn btn-sm btn-outline-primary" id="addFamilyMemberBtn">
-                                <i class="bi bi-plus-lg"></i> <?= lang('Families.addMember') ?>
+                                <i class="bi bi-plus-lg" aria-hidden="true"></i> <?= lang('Families.addMember') ?>
                             </button>
                         <?php endif; ?>
                     </div>
@@ -344,7 +344,7 @@ $portalAccess = strtolower(trim((string) ($profile['portal_access'] ?? 'none')))
                                                                 data-family-member-id="<?= $memberRelationId ?>"
                                                                 data-name="<?= esc(($familyMember['first_name'] ?? '') . ' ' . ($familyMember['last_name'] ?? ''), 'attr') ?>"
                                                                 title="<?= esc(lang('App.delete'), 'attr') ?>">
-                                                                <i class="bi bi-trash3 text-danger"></i>
+                                                                <i class="bi bi-trash3 text-danger" aria-hidden="true"></i>
                                                             </button>
                                                         <?php endif; ?>
                                                     </div>
@@ -369,7 +369,7 @@ $portalAccess = strtolower(trim((string) ($profile['portal_access'] ?? 'none')))
                         <h6 class="mb-0"><?= lang('Members.leadership') ?></h6>
                         <?php if ($can_edit && $profileId > 0 && $userId > 0): ?>
                             <button type="button" class="btn btn-sm btn-outline-primary" id="addLeadershipPositionBtn">
-                                <i class="bi bi-plus-lg"></i> <?= lang('Leadership.addPosition') ?>
+                                <i class="bi bi-plus-lg" aria-hidden="true"></i> <?= lang('Leadership.addPosition') ?>
                             </button>
                         <?php endif; ?>
                     </div>
@@ -420,13 +420,13 @@ $portalAccess = strtolower(trim((string) ($profile['portal_access'] ?? 'none')))
                                                     <button type="button" class="btn btn-sm btn-link p-0 edit-leadership-position-btn"
                                                         data-position="<?= esc(json_encode($position), 'attr') ?>"
                                                         title="<?= esc(lang('App.edit'), 'attr') ?>">
-                                                        <i class="bi bi-pencil text-warning"></i>
+                                                        <i class="bi bi-pencil text-warning" aria-hidden="true"></i>
                                                     </button>
                                                     <button type="button" class="btn btn-sm btn-link p-0 delete-leadership-position-btn"
                                                         data-position-id="<?= (int) ($position['id'] ?? 0) ?>"
                                                         data-title="<?= esc($position['title'] ?? '', 'attr') ?>"
                                                         title="<?= esc(lang('App.delete'), 'attr') ?>">
-                                                        <i class="bi bi-trash3 text-danger"></i>
+                                                        <i class="bi bi-trash3 text-danger" aria-hidden="true"></i>
                                                     </button>
                                                 <?php endif; ?>
                                             </div>
@@ -468,7 +468,7 @@ $portalAccess = strtolower(trim((string) ($profile['portal_access'] ?? 'none')))
                         <h6 class="mb-0"><?= lang('Finance.donationsTitle') ?></h6>
                         <?php if (auth()->user()->can('donation.create') && $userId > 0): ?>
                             <button type="button" class="btn btn-sm btn-outline-primary" id="addDonationBtn">
-                                <i class="bi bi-plus-lg"></i> <?= lang('Finance.recordDonation') ?>
+                                <i class="bi bi-plus-lg" aria-hidden="true"></i> <?= lang('Finance.recordDonation') ?>
                             </button>
                         <?php endif; ?>
                     </div>
@@ -494,7 +494,7 @@ $portalAccess = strtolower(trim((string) ($profile['portal_access'] ?? 'none')))
                                                     <button type="button" class="btn btn-sm btn-link p-0 edit-donation-btn"
                                                         data-donation="<?= esc(json_encode($donation), 'attr') ?>"
                                                         title="<?= esc(lang('App.edit'), 'attr') ?>">
-                                                        <i class="bi bi-pencil text-warning"></i>
+                                                        <i class="bi bi-pencil text-warning" aria-hidden="true"></i>
                                                     </button>
                                                 <?php endif; ?>
                                                 <?php if (auth()->user()->can('donation.delete')): ?>
@@ -502,7 +502,7 @@ $portalAccess = strtolower(trim((string) ($profile['portal_access'] ?? 'none')))
                                                         data-donation-id="<?= (int) ($donation['id'] ?? 0) ?>"
                                                         data-amount="<?= esc(number_format((float) ($donation['amount'] ?? 0), 2)) ?>"
                                                         title="<?= esc(lang('App.delete'), 'attr') ?>">
-                                                        <i class="bi bi-trash3 text-danger"></i>
+                                                        <i class="bi bi-trash3 text-danger" aria-hidden="true"></i>
                                                     </button>
                                                 <?php endif; ?>
                                             </div>
@@ -527,7 +527,7 @@ $portalAccess = strtolower(trim((string) ($profile['portal_access'] ?? 'none')))
                         <h6 class="mb-0"><?= lang('Pledges.pageTitle') ?></h6>
                         <?php if (auth()->user()->can('annual_pledge.manage') && $userId > 0): ?>
                             <button type="button" class="btn btn-sm btn-outline-primary" id="addPledgeBtn">
-                                <i class="bi bi-plus-lg"></i> <?= lang('Pledges.addAnnualPledge') ?>
+                                <i class="bi bi-plus-lg" aria-hidden="true"></i> <?= lang('Pledges.addAnnualPledge') ?>
                             </button>
                         <?php endif; ?>
                     </div>
@@ -566,13 +566,13 @@ $portalAccess = strtolower(trim((string) ($profile['portal_access'] ?? 'none')))
                                                     <button type="button" class="btn btn-sm btn-link p-0 edit-pledge-btn"
                                                         data-pledge="<?= esc(json_encode($pledge), 'attr') ?>"
                                                         title="<?= esc(lang('App.edit'), 'attr') ?>">
-                                                        <i class="bi bi-pencil text-warning"></i>
+                                                        <i class="bi bi-pencil text-warning" aria-hidden="true"></i>
                                                     </button>
                                                     <button type="button" class="btn btn-sm btn-link p-0 delete-pledge-btn"
                                                         data-pledge-id="<?= (int) ($pledge['id'] ?? 0) ?>"
                                                         data-year="<?= (int) ($pledge['pledge_year'] ?? 0) ?>"
                                                         title="<?= esc(lang('App.delete'), 'attr') ?>">
-                                                        <i class="bi bi-trash3 text-danger"></i>
+                                                        <i class="bi bi-trash3 text-danger" aria-hidden="true"></i>
                                                     </button>
                                                 <?php endif; ?>
                                             </div>
@@ -594,7 +594,7 @@ $portalAccess = strtolower(trim((string) ($profile['portal_access'] ?? 'none')))
                         <h6 class="mb-0"><?= lang('Sacraments.title') ?></h6>
                         <?php if (auth()->user()->can('member.edit') && $personId > 0): ?>
                             <button type="button" class="btn btn-sm btn-outline-primary" id="addSacramentBtn">
-                                <i class="bi bi-plus-lg"></i> <?= lang('Sacraments.addSacrament') ?>
+                                <i class="bi bi-plus-lg" aria-hidden="true"></i> <?= lang('Sacraments.addSacrament') ?>
                             </button>
                         <?php endif; ?>
                     </div>
@@ -617,13 +617,13 @@ $portalAccess = strtolower(trim((string) ($profile['portal_access'] ?? 'none')))
                                                     <button type="button" class="btn btn-sm btn-link p-0 edit-sacrament-btn"
                                                         data-sacrament="<?= esc(json_encode($sacrament), 'attr') ?>"
                                                         title="<?= esc(lang('App.edit'), 'attr') ?>">
-                                                        <i class="bi bi-pencil text-warning"></i>
+                                                        <i class="bi bi-pencil text-warning" aria-hidden="true"></i>
                                                     </button>
                                                     <button type="button" class="btn btn-sm btn-link p-0 delete-sacrament-btn"
                                                         data-sacrament-id="<?= (int) ($sacrament['id'] ?? 0) ?>"
                                                         data-sacrament-type="<?= esc((string) ($sacrament['sacrament_type'] ?? ''), 'attr') ?>"
                                                         title="<?= esc(lang('App.delete'), 'attr') ?>">
-                                                        <i class="bi bi-trash3 text-danger"></i>
+                                                        <i class="bi bi-trash3 text-danger" aria-hidden="true"></i>
                                                     </button>
                                                 <?php endif; ?>
                                             </div>
@@ -659,7 +659,7 @@ $portalAccess = strtolower(trim((string) ($profile['portal_access'] ?? 'none')))
                                                     <button type="button" class="btn btn-sm btn-link p-0 add-sacrament-participant-btn"
                                                         data-sacrament-id="<?= $sacramentId ?>"
                                                         title="<?= esc(lang('Sacraments.addParticipant'), 'attr') ?>">
-                                                        <i class="bi bi-plus-lg text-primary"></i>
+                                                        <i class="bi bi-plus-lg text-primary" aria-hidden="true"></i>
                                                     </button>
                                                 <?php endif; ?>
                                             </div>
@@ -683,7 +683,7 @@ $portalAccess = strtolower(trim((string) ($profile['portal_access'] ?? 'none')))
                                                                         data-participant-id="<?= (int) ($participant['id'] ?? 0) ?>"
                                                                         data-name="<?= esc(($participant['first_name'] ?? '') . ' ' . ($participant['last_name'] ?? ''), 'attr') ?>"
                                                                         title="<?= esc(lang('App.delete'), 'attr') ?>">
-                                                                        <i class="bi bi-trash3 text-danger"></i>
+                                                                        <i class="bi bi-trash3 text-danger" aria-hidden="true"></i>
                                                                     </button>
                                                                 </div>
                                                             <?php else: ?>
@@ -723,7 +723,7 @@ $portalAccess = strtolower(trim((string) ($profile['portal_access'] ?? 'none')))
                                         <div>
                                             <?php if (!empty($entry['from_status'])): ?>
                                                 <span class="badge border border-secondary text-secondary fw-normal me-1"><?= esc($entry['from_status']) ?></span>
-                                                <i class="bi bi-arrow-right small text-muted"></i>
+                                                <i class="bi bi-arrow-right small text-muted" aria-hidden="true"></i>
                                             <?php endif; ?>
                                             <strong><?= esc($entry['to_status'] ?? '') ?></strong>
                                         </div>

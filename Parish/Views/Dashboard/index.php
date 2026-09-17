@@ -23,14 +23,14 @@ $formatLocalizedDate = static function (?string $value, string $pattern, string 
     <div class="col-12">
         <div class="alert alert-warning d-flex align-items-center justify-content-between shadow-sm mb-0" role="alert">
             <div class="d-flex align-items-center">
-                <i class="bi bi-exclamation-triangle-fill me-2 fs-5"></i>
+                <i class="bi bi-exclamation-triangle-fill me-2 fs-5" aria-hidden="true"></i>
                 <div>
                     <strong><?= lang('Members.pendingRegistrationsTitle') ?></strong>
                     <span class="ms-1">(<?= (int) $pending_registrations_count ?>)</span>
                 </div>
             </div>
             <a href="<?= base_url('people#pendingRegistrationsCard') ?>" class="btn btn-sm btn-warning">
-                <i class="bi bi-person-check me-1"></i> <?= lang('Members.pendingRegistrationsTitle') ?>
+                <i class="bi bi-person-check me-1" aria-hidden="true"></i> <?= lang('Members.pendingRegistrationsTitle') ?>
             </a>
         </div>
     </div>
@@ -124,7 +124,7 @@ $formatLocalizedDate = static function (?string $value, string $pattern, string 
     <div class="col-md-6">
         <div class="card h-100">
             <div class="card-header d-flex justify-content-between align-items-center">
-                <h5 class="mb-0"><i class="bi bi-calendar-event"></i> <?= lang('Dashboard.recentServices') ?></h5>
+                <h5 class="mb-0"><i class="bi bi-calendar-event" aria-hidden="true"></i> <?= lang('Dashboard.recentServices') ?></h5>
                 <?php if (auth()->user()->can('service.view')): ?>
                     <a href="<?= base_url('services') ?>" class="btn btn-sm btn-outline-primary"><?= lang('App.viewAll') ?></a>
                 <?php endif; ?>
@@ -135,9 +135,9 @@ $formatLocalizedDate = static function (?string $value, string $pattern, string 
                         <table class="table table-sm">
                             <thead>
                                 <tr>
-                                    <th><?= lang('App.colDate') ?></th>
-                                    <th><?= lang('Dashboard.colService') ?></th>
-                                    <th class="text-end"><?= lang('Dashboard.colAttendComm') ?></th>
+                                    <th scope="col"><?= lang('App.colDate') ?></th>
+                                    <th scope="col"><?= lang('Dashboard.colService') ?></th>
+                                    <th scope="col" class="text-end"><?= lang('Dashboard.colAttendComm') ?></th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -160,7 +160,7 @@ $formatLocalizedDate = static function (?string $value, string $pattern, string 
     <div class="col-md-6">
         <div class="card h-100">
             <div class="card-header">
-                <h5 class="mb-0"><i class="bi bi-graph-up-arrow"></i> <?= lang('Dashboard.parishSundayAttendanceTitle') ?></h5>
+                <h5 class="mb-0"><i class="bi bi-graph-up-arrow" aria-hidden="true"></i> <?= lang('Dashboard.parishSundayAttendanceTitle') ?></h5>
             </div>
             <div class="card-body" style="min-height: 420px;">
                 <?php if (empty($sunday_attendance_has_data)): ?>

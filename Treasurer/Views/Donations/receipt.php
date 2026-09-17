@@ -34,9 +34,9 @@
             <table class="table table-bordered">
                 <thead class="table-light">
                     <tr>
-                        <th><?= lang('Finance.colCategory') ?? 'Category' ?></th>
-                        <th><?= lang('Finance.colFund') ?? 'Fund' ?></th>
-                        <th class="text-end"><?= lang('Finance.colAmount') ?? 'Amount' ?></th>
+                        <th scope="col"><?= lang('Finance.colCategory') ?? 'Category' ?></th>
+                        <th scope="col"><?= lang('Finance.colFund') ?? 'Fund' ?></th>
+                        <th scope="col" class="text-end"><?= lang('Finance.colAmount') ?? 'Amount' ?></th>
                     </tr>
                 </thead>
                 <tbody>

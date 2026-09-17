@@ -13,7 +13,7 @@ if (!in_array($selectedPerPage, [25, 50, 100], true)) {
 <div class="d-flex justify-content-start align-items-center mb-3 gap-2">
     <?php if (auth()->user()->can('service.create')): ?>
         <a href="<?= base_url('services/create') ?>" class="btn btn-primary">
-            <i class="bi bi-plus-circle"></i> <?= lang('Services.pageTitleAdd') ?>
+            <i class="bi bi-plus-circle" aria-hidden="true"></i> <?= lang('Services.pageTitleAdd') ?>
         </a>
     <?php endif; ?>
     <!-- Attendance registration button removed as requested -->
@@ -36,14 +36,14 @@ if (!in_array($selectedPerPage, [25, 50, 100], true)) {
             <table class="table table-hover">
                 <thead>
                     <tr>
-                        <th><?= lang('Services.colDate') ?></th>
-                        <th><?= lang('Services.colTime') ?></th>
-                        <th><?= lang('Services.colServiceType') ?></th>
-                        <th><?= lang('Services.colLiturgicalDay') ?></th>
-                        <th><?= lang('Services.colPlace') ?></th>
-                        <th><?= lang('Services.colPresent') ?></th>
-                        <th><?= lang('Services.colCommunicants') ?></th>
-                        <th><?= lang('Services.colEdit') ?></th>
+                        <th scope="col"><?= lang('Services.colDate') ?></th>
+                        <th scope="col"><?= lang('Services.colTime') ?></th>
+                        <th scope="col"><?= lang('Services.colServiceType') ?></th>
+                        <th scope="col"><?= lang('Services.colLiturgicalDay') ?></th>
+                        <th scope="col"><?= lang('Services.colPlace') ?></th>
+                        <th scope="col"><?= lang('Services.colPresent') ?></th>
+                        <th scope="col"><?= lang('Services.colCommunicants') ?></th>
+                        <th scope="col"><?= lang('Services.colEdit') ?></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -82,7 +82,7 @@ if (!in_array($selectedPerPage, [25, 50, 100], true)) {
                                     <div class="d-inline-flex flex-nowrap gap-1 align-items-center">
                                         <?php if (auth()->user()->can('service.edit')): ?>
                                             <a href="<?= base_url('services/edit/' . $service['id']) ?>" class="btn btn-sm btn-warning" title="<?= lang('App.edit') ?>">
-                                                <i class="bi bi-pencil"></i>
+                                                <i class="bi bi-pencil" aria-hidden="true"></i>
                                             </a>
                                         <?php endif; ?>
                                     </div>

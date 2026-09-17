@@ -51,12 +51,12 @@ $returnUrl = current_url() . ((string) service('request')->getServer('QUERY_STRI
 ?>
     <header class="container py-3 d-flex justify-content-end gap-2">
         <button type="button" class="btn btn-outline-secondary btn-sm" id="themeToggleBtn" aria-label="<?= esc(lang('App.themeDark'), 'attr') ?>" aria-pressed="false">
-            <i class="bi bi-moon-stars" id="themeToggleIcon"></i>
+            <i class="bi bi-moon-stars" id="themeToggleIcon" aria-hidden="true"></i>
             <span class="visually-hidden" id="themeToggleLabel"><?= lang('App.themeDark') ?></span>
         </button>
         <div class="dropdown">
             <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="<?= esc(lang('Auth.interfaceLanguage'), 'attr') ?>">
-                <i class="bi bi-translate"></i>
+                <i class="bi bi-translate" aria-hidden="true"></i>
                 <span><?= esc((string) $localeMap[$activeLocale]['label']) ?></span>
             </button>
             <ul class="dropdown-menu dropdown-menu-end">

@@ -12,7 +12,7 @@ $saveUrl    = $isNew
 
 <div class="d-flex justify-content-start align-items-center flex-wrap gap-2 mb-3">
     <a href="<?= base_url('followup-workflow/sequences') ?>" class="btn btn-outline-secondary">
-        <i class="bi bi-arrow-left"></i> <?= lang('Guests.pageTitleSequences') ?>
+        <i class="bi bi-arrow-left" aria-hidden="true"></i> <?= lang('Guests.pageTitleSequences') ?>
     </a>
 </div>
 
@@ -55,7 +55,7 @@ $saveUrl    = $isNew
 
             <div class="mt-3 d-flex gap-2">
                 <button type="submit" class="btn btn-primary">
-                    <i class="bi bi-check-lg"></i> <?= $isNew ? lang('Guests.seqBtnCreate') : lang('Guests.seqBtnSave') ?>
+                    <i class="bi bi-check-lg" aria-hidden="true"></i> <?= $isNew ? lang('Guests.seqBtnCreate') : lang('Guests.seqBtnSave') ?>
                 </button>
                 <a href="<?= base_url('followup-workflow/sequences') ?>" class="btn btn-outline-secondary"><?= lang('Guests.seqBtnCancel') ?></a>
             </div>
@@ -69,7 +69,7 @@ $saveUrl    = $isNew
         <div class="card-header d-flex justify-content-between align-items-center">
             <span class="fw-semibold"><?= lang('Guests.seqCardSteps') ?></span>
             <button type="button" class="btn btn-sm btn-outline-primary" id="btnAddAction">
-                <i class="bi bi-plus-circle"></i> <?= lang('Guests.seqBtnAddStep') ?>
+                <i class="bi bi-plus-circle" aria-hidden="true"></i> <?= lang('Guests.seqBtnAddStep') ?>
             </button>
         </div>
         <div class="card-body p-0">
@@ -329,7 +329,7 @@ $saveUrl    = $isNew
                 if (!actions || actions.length === 0) {
                     wrapper.innerHTML = `
                 <div class="text-center py-4 text-muted">
-                    <i class="bi bi-list-task fs-2 d-block mb-2"></i>
+                    <i class="bi bi-list-task fs-2 d-block mb-2" aria-hidden="true"></i>
                     ${<?= json_encode(lang('Guests.seqStepsEmpty')) ?>}
                 </div>`;
                     return;
@@ -366,13 +366,13 @@ $saveUrl    = $isNew
                         data-day-offset="${escHtml(String(a.day_offset))}"
                         data-channel="${escHtml(a.channel)}"
                         data-template-id="${a.template_id ?? ''}"
-                        data-automated="${escHtml(String(a.is_automated))}">
-                        <i class="bi bi-pencil"></i>
+                        data-automated="${escHtml(String(a.is_automated))}" aria-label="<?= esc(lang('App.edit')) ?>">
+                        <i class="bi bi-pencil" aria-hidden="true"></i>
                     </button>
                     <button type="button" class="btn btn-sm btn-outline-danger btn-delete-action"
                         data-id="${escHtml(String(a.id))}"
-                        data-channel="${escHtml(a.channel)}">
-                        <i class="bi bi-trash"></i>
+                        data-channel="${escHtml(a.channel)}" aria-label="<?= esc(lang('App.delete')) ?>">
+                        <i class="bi bi-trash" aria-hidden="true"></i>
                     </button>
                 </td>
             </tr>`;
@@ -383,12 +383,12 @@ $saveUrl    = $isNew
                 <table class="table table-hover align-middle mb-0">
                     <thead>
                         <tr>
-                            <th>${<?= json_encode(lang('Guests.seqColWeek')) ?>}</th>
-                            <th>${<?= json_encode(lang('Guests.seqColDayOffset')) ?>}</th>
-                            <th>${<?= json_encode(lang('Guests.seqColChannel')) ?>}</th>
-                            <th>${<?= json_encode(lang('Guests.seqColTemplate')) ?>}</th>
-                            <th>${<?= json_encode(lang('Guests.seqColType')) ?>}</th>
-                            <th class="text-end">${<?= json_encode(lang('App.colActions')) ?>}</th>
+                            <th scope="col">${<?= json_encode(lang('Guests.seqColWeek')) ?>}</th>
+                            <th scope="col">${<?= json_encode(lang('Guests.seqColDayOffset')) ?>}</th>
+                            <th scope="col">${<?= json_encode(lang('Guests.seqColChannel')) ?>}</th>
+                            <th scope="col">${<?= json_encode(lang('Guests.seqColTemplate')) ?>}</th>
+                            <th scope="col">${<?= json_encode(lang('Guests.seqColType')) ?>}</th>
+                            <th scope="col" class="text-end">${<?= json_encode(lang('App.colActions')) ?>}</th>
                         </tr>
                     </thead>
                     <tbody>${rows}</tbody>

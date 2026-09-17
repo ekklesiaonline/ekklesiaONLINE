@@ -4,7 +4,7 @@
 
 <div class="d-flex justify-content-start align-items-center mb-3">
     <a href="<?= base_url('guests/dashboard') ?>" class="btn btn-secondary">
-        <i class="bi bi-arrow-left"></i> <?= lang('Guests.backToGuests') ?>
+        <i class="bi bi-arrow-left" aria-hidden="true"></i> <?= lang('Guests.backToGuests') ?>
     </a>
 </div>
 
@@ -97,7 +97,7 @@
             <div class="d-flex justify-content-end gap-2 mt-4">
                 <a href="<?= base_url('guests') ?>" class="btn btn-secondary"><?= lang('App.cancel') ?></a>
                 <button type="submit" class="btn btn-primary">
-                    <i class="bi bi-save"></i> <?= lang('Guests.pageTitleAdd') ?>
+                    <i class="bi bi-save" aria-hidden="true"></i> <?= lang('Guests.pageTitleAdd') ?>
                 </button>
             </div>
         </form>

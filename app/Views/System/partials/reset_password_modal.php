@@ -6,7 +6,7 @@
                 <?= csrf_field() ?>
                 <div class="modal-header">
                     <h5 class="modal-title" id="resetPasswordModalLabel">
-                        <i class="bi bi-key me-2"></i><?= lang('System.resetPasswordTitle') ?>
+                        <i class="bi bi-key me-2" aria-hidden="true"></i><?= lang('System.resetPasswordTitle') ?>
                     </h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>

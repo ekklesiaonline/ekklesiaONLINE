@@ -63,31 +63,31 @@ $profilePictureUrl = ($profilePicturePath !== '' && $profileUserId > 0)
     <div class="d-flex align-items-center gap-2 flex-wrap">
         <?php if ($can_edit_member ?? false): ?>
             <a href="<?= base_url('members/edit/' . $profile['id']) ?>" class="btn btn-warning">
-                <i class="bi bi-pencil"></i> <?= lang('App.edit') ?>
+                <i class="bi bi-pencil" aria-hidden="true"></i> <?= lang('App.edit') ?>
             </a>
         <?php endif; ?>
         <?php if (($can_revoke_portal ?? false) && $isPortalFullyEnabled): ?>
             <button type="button" class="btn btn-outline-danger" id="revokePortalBtn"
                 data-profile-id="<?= (int) $profile['id'] ?>"
                 data-member-name="<?= esc($profile['first_name'] . ' ' . $profile['last_name'], 'attr') ?>">
-                <i class="bi bi-shield-x"></i> Revoke Portal Access
+                <i class="bi bi-shield-x" aria-hidden="true"></i> Revoke Portal Access
             </button>
         <?php endif; ?>
         <?php if ($can_hard_delete ?? false): ?>
             <a href="<?= base_url('members/dedup/hard-delete/' . (int) $profile['id']) ?>"
                 class="btn btn-outline-danger">
-                <i class="bi bi-trash3"></i> <?= lang('Members.hardDeleteExecuteBtn') ?>
+                <i class="bi bi-trash3" aria-hidden="true"></i> <?= lang('Members.hardDeleteExecuteBtn') ?>
             </a>
         <?php endif; ?>
         <a href="<?= base_url('members') ?>" class="btn btn-secondary">
-            <i class="bi bi-arrow-left"></i> <?= lang('App.back') ?>
+            <i class="bi bi-arrow-left" aria-hidden="true"></i> <?= lang('App.back') ?>
         </a>
     </div>
 </div>
 
 <?php if (!empty($profile['is_confirmed']) && empty($profile['confirmation_date'])): ?>
     <div class="alert alert-warning d-flex align-items-center gap-2 mb-3" role="alert">
-        <i class="bi bi-exclamation-triangle-fill flex-shrink-0"></i>
+        <i class="bi bi-exclamation-triangle-fill flex-shrink-0" aria-hidden="true"></i>
         <div>
             <?= lang('Members.confirmationDateMissing') ?>
             <?php if ($can_edit_member ?? false): ?>
@@ -99,7 +99,7 @@ $profilePictureUrl = ($profilePicturePath !== '' && $profileUserId > 0)
 
 <?php if (!empty($show_profile_pending_indicator) && (int) ($profile['profile_pending_completion'] ?? 0) === 1): ?>
     <div class="alert alert-warning d-flex align-items-center gap-2 mb-3" role="alert">
-        <i class="bi bi-exclamation-circle flex-shrink-0"></i>
+        <i class="bi bi-exclamation-circle flex-shrink-0" aria-hidden="true"></i>
         <div><?= lang('Members.profilePendingHelp') ?></div>
     </div>
 <?php endif; ?>
@@ -113,11 +113,11 @@ $profilePictureUrl = ($profilePicturePath !== '' && $profileUserId > 0)
                     <?php if ($profilePictureUrl !== ''): ?>
                         <img src="<?= esc($profilePictureUrl, 'attr') ?>" alt="" class="member-profile-avatar" onerror="this.classList.add('d-none');this.nextElementSibling.classList.remove('d-none');">
                         <div class="member-profile-avatar-fallback d-none">
-                            <i class="bi bi-person-circle member-profile-avatar-fallback-icon"></i>
+                            <i class="bi bi-person-circle member-profile-avatar-fallback-icon" aria-hidden="true"></i>
                         </div>
                     <?php else: ?>
                         <div class="member-profile-avatar-fallback">
-                            <i class="bi bi-person-circle member-profile-avatar-fallback-icon"></i>
+                            <i class="bi bi-person-circle member-profile-avatar-fallback-icon" aria-hidden="true"></i>
                         </div>
                     <?php endif; ?>
                 </div>
@@ -158,19 +158,19 @@ $profilePictureUrl = ($profilePicturePath !== '' && $profileUserId > 0)
                 <hr>
 
                 <div class="text-start">
-                    <p class="mb-2"><strong><i class="bi bi-telephone"></i> <?= lang('Members.phone') ?>:</strong><br>
+                    <p class="mb-2"><strong><i class="bi bi-telephone" aria-hidden="true"></i> <?= lang('Members.phone') ?>:</strong><br>
                         <?= esc(\App\Libraries\PhoneHelper::display($profile['phone'] ?? null) ?: lang('Members.notProvided')) ?>
                     </p>
 
-                    <p class="mb-2"><strong><i class="bi bi-cake2"></i> <?= lang('Members.birthDate') ?>:</strong><br>
+                    <p class="mb-2"><strong><i class="bi bi-cake2" aria-hidden="true"></i> <?= lang('Members.birthDate') ?>:</strong><br>
                         <?= $profile['birth_date'] ? date('F j, Y', strtotime($profile['birth_date'])) : lang('Members.notProvided') ?>
                     </p>
 
-                    <p class="mb-2"><strong><i class="bi bi-droplet"></i> <?= lang('Members.baptismDate') ?>:</strong><br>
+                    <p class="mb-2"><strong><i class="bi bi-droplet" aria-hidden="true"></i> <?= lang('Members.baptismDate') ?>:</strong><br>
                         <?= $profile['baptism_date'] ? date('F j, Y', strtotime($profile['baptism_date'])) : lang('Members.notProvided') ?>
                     </p>
 
-                    <p class="mb-2"><strong><i class="bi bi-patch-check"></i> <?= lang('Members.isConfirmed') ?>:</strong><br>
+                    <p class="mb-2"><strong><i class="bi bi-patch-check" aria-hidden="true"></i> <?= lang('Members.isConfirmed') ?>:</strong><br>
                         <?php if (!empty($profile['is_confirmed'])): ?>
                             <span class="badge border border-success text-success fw-normal"><?= lang('App.yes') ?></span>
                         <?php else: ?>
@@ -178,15 +178,15 @@ $profilePictureUrl = ($profilePicturePath !== '' && $profileUserId > 0)
                         <?php endif; ?>
                     </p>
 
-                    <p class="mb-2"><strong><i class="bi bi-calendar-check"></i> <?= lang('Members.confirmationDate') ?>:</strong><br>
+                    <p class="mb-2"><strong><i class="bi bi-calendar-check" aria-hidden="true"></i> <?= lang('Members.confirmationDate') ?>:</strong><br>
                         <?php if (!empty($profile['is_confirmed']) && empty($profile['confirmation_date'])): ?>
-                            <span class="text-warning fw-semibold"><i class="bi bi-exclamation-triangle"></i> <?= lang('Members.notProvided') ?></span>
+                            <span class="text-warning fw-semibold"><i class="bi bi-exclamation-triangle" aria-hidden="true"></i> <?= lang('Members.notProvided') ?></span>
                         <?php else: ?>
                             <?= !empty($profile['confirmation_date']) ? date('F j, Y', strtotime($profile['confirmation_date'])) : lang('Members.notProvided') ?>
                         <?php endif; ?>
                     </p>
 
-                    <p class="mb-0"><strong><i class="bi bi-calendar-plus"></i> <?= lang('Members.colMemberSince') ?>:</strong><br>
+                    <p class="mb-0"><strong><i class="bi bi-calendar-plus" aria-hidden="true"></i> <?= lang('Members.colMemberSince') ?>:</strong><br>
                         <?= date('F j, Y', strtotime($profile['created_at'])) ?>
                     </p>
                 </div>
@@ -196,7 +196,7 @@ $profilePictureUrl = ($profilePicturePath !== '' && $profileUserId > 0)
         <?php if ($family): ?>
             <div class="card mt-3">
                 <div class="card-header">
-                    <h6 class="mb-0"><i class="bi bi-house-heart"></i> <?= lang('Members.colFamily') ?></h6>
+                    <h6 class="mb-0"><i class="bi bi-house-heart" aria-hidden="true"></i> <?= lang('Members.colFamily') ?></h6>
                 </div>
                 <div class="card-body">
                     <p class="mb-0">
@@ -263,10 +263,10 @@ $profilePictureUrl = ($profilePicturePath !== '' && $profileUserId > 0)
 
                     <div class="tab-pane fade" id="parishAffiliations">
                         <div class="d-flex justify-content-between align-items-center mb-3">
-                            <h5 class="mb-0"><i class="bi bi-geo"></i> <?= lang('Members.parishAffiliations') ?></h5>
+                            <h5 class="mb-0"><i class="bi bi-geo" aria-hidden="true"></i> <?= lang('Members.parishAffiliations') ?></h5>
                             <?php if (auth()->user()->can('member.edit')): ?>
                                 <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="collapse" data-bs-target="#attachParishPanel" aria-expanded="false" aria-controls="attachParishPanel">
-                                    <i class="bi bi-plus-circle"></i> <?= lang('Members.attachParish') ?>
+                                    <i class="bi bi-plus-circle" aria-hidden="true"></i> <?= lang('Members.attachParish') ?>
                                 </button>
                             <?php endif; ?>
                         </div>
@@ -363,10 +363,10 @@ $profilePictureUrl = ($profilePicturePath !== '' && $profileUserId > 0)
                                 <table class="table table-sm">
                                     <thead>
                                         <tr>
-                                            <th><?= lang('App.colDate') ?></th>
-                                            <th><?= lang('Members.colServiceType') ?></th>
-                                            <th><?= lang('Members.colLiturgicalDay') ?></th>
-                                            <th><?= lang('Members.colCommunion') ?></th>
+                                            <th scope="col"><?= lang('App.colDate') ?></th>
+                                            <th scope="col"><?= lang('Members.colServiceType') ?></th>
+                                            <th scope="col"><?= lang('Members.colLiturgicalDay') ?></th>
+                                            <th scope="col"><?= lang('Members.colCommunion') ?></th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -406,10 +406,10 @@ $profilePictureUrl = ($profilePicturePath !== '' && $profileUserId > 0)
                                 <table class="table table-sm">
                                     <thead>
                                         <tr>
-                                            <th><?= lang('App.colDate') ?></th>
-                                            <th><?= lang('Members.colCategory') ?></th>
-                                            <th><?= lang('Members.colAmount') ?></th>
-                                            <th><?= lang('Members.colMethod') ?></th>
+                                            <th scope="col"><?= lang('App.colDate') ?></th>
+                                            <th scope="col"><?= lang('Members.colCategory') ?></th>
+                                            <th scope="col"><?= lang('Members.colAmount') ?></th>
+                                            <th scope="col"><?= lang('Members.colMethod') ?></th>
                                         </tr>
                                     </thead>
                                     <tbody>

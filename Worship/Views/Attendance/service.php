@@ -20,7 +20,7 @@
         </p>
     </div>
     <a href="<?= base_url('services/view/' . $service['id']) ?>" class="btn btn-secondary">
-        <i class="bi bi-arrow-left"></i> <?= lang('Services.backToService') ?>
+        <i class="bi bi-arrow-left" aria-hidden="true"></i> <?= lang('Services.backToService') ?>
     </a>
 </div>
 
@@ -43,13 +43,13 @@
                 <table class="table table-striped table-hover">
                     <thead>
                         <tr>
-                            <th style="width: 50px;">
+                            <th scope="col" style="width: 50px;">
                                 <input type="checkbox" id="checkAll" onchange="toggleAll(this)">
                             </th>
-                            <th><?= lang('App.colName') ?></th>
-                            <th><?= lang('App.colEmail') ?></th>
-                            <th><?= lang('App.colPhone') ?></th>
-                            <th style="width: 100px;"><?= lang('Services.colCommunion') ?></th>
+                            <th scope="col"><?= lang('App.colName') ?></th>
+                            <th scope="col"><?= lang('App.colEmail') ?></th>
+                            <th scope="col"><?= lang('App.colPhone') ?></th>
+                            <th scope="col" style="width: 100px;"><?= lang('Services.colCommunion') ?></th>
                         </tr>
                     </thead>
                     <tbody>
@@ -82,7 +82,7 @@
                     <span id="selectedCount">0</span> / <?= count($members) ?>
                 </div>
                 <button type="submit" class="btn btn-primary">
-                    <i class="bi bi-save"></i> <?= lang('Services.saveAttendance') ?>
+                    <i class="bi bi-save" aria-hidden="true"></i> <?= lang('Services.saveAttendance') ?>
                 </button>
             </div>
         </form>

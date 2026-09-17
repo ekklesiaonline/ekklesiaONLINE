@@ -13,7 +13,7 @@ $status = $status ?? 'all';
     <div class="card-header d-flex justify-content-between align-items-center">
         <strong><?= lang('System.sectionDioceseAdmins') ?></strong>
         <a href="<?= base_url('province/dashboard') ?>" class="btn btn-sm btn-outline-secondary" aria-label="<?= esc(lang('App.back')) ?>">
-            <i class="bi bi-arrow-left me-1"></i><?= lang('App.back') ?>
+            <i class="bi bi-arrow-left me-1" aria-hidden="true"></i><?= lang('App.back') ?>
         </a>
     </div>
     <div class="card-body border-bottom">
@@ -28,10 +28,10 @@ $status = $status ?? 'all';
             <table class="table table-sm table-hover align-middle mb-0">
                 <thead>
                     <tr>
-                        <th><?= lang('App.colName') ?></th>
-                        <th class="d-none d-md-table-cell"><?= lang('App.colEmail') ?></th>
-                        <th><?= lang('System.dioceseName') ?></th>
-                        <th><?= lang('App.colStatus') ?></th>
+                        <th scope="col"><?= lang('App.colName') ?></th>
+                        <th scope="col" class="d-none d-md-table-cell"><?= lang('App.colEmail') ?></th>
+                        <th scope="col"><?= lang('System.dioceseName') ?></th>
+                        <th scope="col"><?= lang('App.colStatus') ?></th>
                     </tr>
                 </thead>
                 <tbody>

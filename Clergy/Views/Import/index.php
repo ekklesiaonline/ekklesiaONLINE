@@ -9,7 +9,7 @@ $importErrors = session('import_errors');
 
 <div class="d-flex justify-content-start align-items-center flex-wrap gap-2 mb-3">
     <a href="<?= base_url('guests/dashboard') ?>" class="btn btn-outline-secondary">
-        <i class="bi bi-arrow-left"></i> <?= lang('Guests.backToGuests') ?>
+        <i class="bi bi-arrow-left" aria-hidden="true"></i> <?= lang('Guests.backToGuests') ?>
     </a>
 </div>
 
@@ -30,7 +30,7 @@ $importErrors = session('import_errors');
     <?php if (! empty($importResult['row_errors'])): ?>
         <div class="card mb-4 border-warning">
             <div class="card-header bg-warning text-dark fw-semibold">
-                <i class="bi bi-exclamation-triangle me-1"></i> Row Errors
+                <i class="bi bi-exclamation-triangle me-1" aria-hidden="true"></i> Row Errors
             </div>
             <ul class="list-group list-group-flush">
                 <?php foreach ($importResult['row_errors'] as $re): ?>
@@ -59,7 +59,7 @@ $importErrors = session('import_errors');
     <div class="col-lg-7">
         <div class="card">
             <div class="card-header fw-semibold">
-                <i class="bi bi-filetype-csv me-1"></i> Import from CSV
+                <i class="bi bi-filetype-csv me-1" aria-hidden="true"></i> Import from CSV
             </div>
             <div class="card-body">
                 <p class="text-muted small mb-3">
@@ -74,9 +74,9 @@ $importErrors = session('import_errors');
                     <table class="table table-bordered table-sm align-middle mb-0">
                         <thead>
                             <tr>
-                                <th>Column</th>
-                                <th>Required?</th>
-                                <th>Notes</th>
+                                <th scope="col">Column</th>
+                                <th scope="col">Required?</th>
+                                <th scope="col">Notes</th>
                             </tr>
                         </thead>
                         <tbody class="small">
@@ -120,7 +120,7 @@ $importErrors = session('import_errors');
                 </div>
 
                 <a href="<?= base_url('guests/import/sample-csv') ?>" class="btn btn-sm btn-outline-secondary mb-3">
-                    <i class="bi bi-download me-1"></i> Download sample CSV
+                    <i class="bi bi-download me-1" aria-hidden="true"></i> Download sample CSV
                 </a>
 
                 <!-- Upload form -->
@@ -147,7 +147,7 @@ $importErrors = session('import_errors');
 
                     <button type="submit" class="btn btn-primary" id="btnImportCsv">
                         <span class="spinner-border spinner-border-sm d-none me-1" id="importSpinner"></span>
-                        <i class="bi bi-upload me-1"></i> Import CSV
+                        <i class="bi bi-upload me-1" aria-hidden="true"></i> Import CSV
                     </button>
                 </form>
             </div>
@@ -158,7 +158,7 @@ $importErrors = session('import_errors');
     <div class="col-lg-5">
         <div class="card">
             <div class="card-header fw-semibold">
-                <i class="bi bi-qr-code me-1"></i> Digital Connection Card
+                <i class="bi bi-qr-code me-1" aria-hidden="true"></i> Digital Connection Card
             </div>
             <div class="card-body text-center">
                 <p class="text-muted small mb-3">
@@ -183,7 +183,7 @@ $importErrors = session('import_errors');
                             readonly>
                         <button class="btn btn-outline-secondary btn-sm" type="button" id="btnCopyLink"
                             title="Copy link">
-                            <i class="bi bi-clipboard"></i>
+                            <i class="bi bi-clipboard" aria-hidden="true"></i>
                         </button>
                     </div>
 
@@ -191,13 +191,13 @@ $importErrors = session('import_errors');
                     <a href="<?= base_url('guests/import/qr') ?>"
                         download="connection-card-qr.png"
                         class="btn btn-outline-secondary btn-sm">
-                        <i class="bi bi-download me-1"></i> Download QR Image
+                        <i class="bi bi-download me-1" aria-hidden="true"></i> Download QR Image
                     </a>
 
                     <!-- Open in new tab -->
                     <a href="<?= esc($cardUrl) ?>" target="_blank" rel="noopener noreferrer"
                         class="btn btn-outline-primary btn-sm">
-                        <i class="bi bi-box-arrow-up-right me-1"></i> Preview Card Form
+                        <i class="bi bi-box-arrow-up-right me-1" aria-hidden="true"></i> Preview Card Form
                     </a>
                 </div>
             </div>
@@ -206,7 +206,7 @@ $importErrors = session('import_errors');
         <!-- Interests hint card -->
         <div class="card mt-3">
             <div class="card-header fw-semibold small">
-                <i class="bi bi-tags me-1"></i> Recognised Interest Slugs
+                <i class="bi bi-tags me-1" aria-hidden="true"></i> Recognised Interest Slugs
             </div>
             <div class="card-body p-2">
                 <div class="d-flex flex-wrap gap-1">

@@ -5,7 +5,7 @@
 <div class="d-flex justify-content-start align-items-center mb-3">
     <?php if (auth()->user()->can('family.manage')): ?>
         <a href="<?= base_url('families/create') ?>" class="btn btn-primary">
-            <i class="bi bi-plus-circle"></i> <?= lang('Families.create') ?>
+            <i class="bi bi-plus-circle" aria-hidden="true"></i> <?= lang('Families.create') ?>
         </a>
     <?php endif; ?>
 </div>
@@ -14,7 +14,7 @@
     <div class="card-body">
         <?php if (empty($families)): ?>
             <div class="text-center py-5">
-                <i class="bi bi-people text-muted mb-3" style="font-size: 3rem;"></i>
+                <i class="bi bi-people text-muted mb-3" style="font-size: 3rem;" aria-hidden="true"></i>
                 <h5 class="text-muted"><?= lang('Families.notFound') ?></h5>
                 <?php if (auth()->user()->can('family.manage')): ?>
                     <a href="<?= base_url('families/create') ?>" class="btn btn-primary mt-3">
@@ -27,11 +27,11 @@
                 <table class="table table-hover">
                     <thead>
                         <tr>
-                            <th><?= lang('Families.colFamilyName') ?></th>
-                            <th><?= lang('Families.colHeadOfHousehold') ?></th>
-                            <th><?= lang('Families.colMembers') ?></th>
-                            <th><?= lang('Families.colAddress') ?></th>
-                            <th><?= lang('App.colActions') ?></th>
+                            <th scope="col"><?= lang('Families.colFamilyName') ?></th>
+                            <th scope="col"><?= lang('Families.colHeadOfHousehold') ?></th>
+                            <th scope="col"><?= lang('Families.colMembers') ?></th>
+                            <th scope="col"><?= lang('Families.colAddress') ?></th>
+                            <th scope="col"><?= lang('App.colActions') ?></th>
                         </tr>
                     </thead>
                     <tbody>
@@ -57,16 +57,16 @@
                                     <div class="table-actions d-inline-flex flex-nowrap gap-1 align-items-center">
                                         <a href="<?= base_url('families/view/' . $family['id']) ?>"
                                             class="btn btn-sm btn-info" title="<?= lang('App.view') ?>">
-                                            <i class="bi bi-eye"></i>
+                                            <i class="bi bi-eye" aria-hidden="true"></i>
                                         </a>
                                         <?php if (auth()->user()->can('family.manage')): ?>
                                             <a href="<?= base_url('families/edit/' . $family['id']) ?>"
                                                 class="btn btn-sm btn-warning" title="<?= lang('App.edit') ?>">
-                                                <i class="bi bi-pencil"></i>
+                                                <i class="bi bi-pencil" aria-hidden="true"></i>
                                             </a>
                                             <button onclick="deleteFamily(<?= $family['id'] ?>)"
                                                 class="btn btn-sm btn-danger" title="<?= lang('App.delete') ?>">
-                                                <i class="bi bi-trash"></i>
+                                                <i class="bi bi-trash" aria-hidden="true"></i>
                                             </button>
                                         <?php endif; ?>
                                     </div>

@@ -3,7 +3,7 @@
 <div class="card">
     <div class="card-header d-flex justify-content-between align-items-center">
         <strong><?= lang('Events.pageTitleCalendars') ?></strong>
-        <a class="btn btn-sm btn-primary" href="<?= base_url('system/event-calendars/create') ?>"><i class="bi bi-plus-circle"></i> <?= lang('App.addNew') ?></a>
+        <a class="btn btn-sm btn-primary" href="<?= base_url('system/event-calendars/create') ?>"><i class="bi bi-plus-circle" aria-hidden="true"></i> <?= lang('App.addNew') ?></a>
     </div>
     <div class="card-body">
         <?php if (empty($calendars)): ?>
@@ -13,11 +13,11 @@
                 <table class="table table-hover mb-0">
                     <thead>
                         <tr>
-                            <th><?= lang('Events.calendarName') ?></th>
-                            <th><?= lang('Events.calendarColor') ?></th>
-                            <th><?= lang('App.colStatus') ?></th>
-                            <th><?= lang('App.sortOrder') ?></th>
-                            <th class="text-end"><?= lang('App.actions') ?></th>
+                            <th scope="col"><?= lang('Events.calendarName') ?></th>
+                            <th scope="col"><?= lang('Events.calendarColor') ?></th>
+                            <th scope="col"><?= lang('App.colStatus') ?></th>
+                            <th scope="col"><?= lang('App.sortOrder') ?></th>
+                            <th scope="col" class="text-end"><?= lang('App.actions') ?></th>
                         </tr>
                     </thead>
                     <tbody>

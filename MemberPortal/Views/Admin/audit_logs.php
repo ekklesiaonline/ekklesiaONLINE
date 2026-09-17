@@ -102,22 +102,22 @@ $exportFilterParams = array_filter([
 <div class="d-flex justify-content-end align-items-center mb-3">
     <div class="dropdown">
         <button class="btn btn-outline-primary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
-            <i class="bi bi-download"></i> <?= lang('App.auditExport') ?>
+            <i class="bi bi-download" aria-hidden="true"></i> <?= lang('App.auditExport') ?>
         </button>
         <ul class="dropdown-menu">
             <li>
                 <a class="dropdown-item" href="<?= base_url('admin/audit-logs/export-csv' . (!empty($exportFilterParams) ? '?' . http_build_query($exportFilterParams) : '')) ?>">
-                    <i class="bi bi-filetype-csv me-2"></i> <?= lang('App.auditExportCsv') ?>
+                    <i class="bi bi-filetype-csv me-2" aria-hidden="true"></i> <?= lang('App.auditExportCsv') ?>
                 </a>
             </li>
             <li>
                 <a class="dropdown-item" href="<?= base_url('admin/audit-logs/export-json' . (!empty($exportFilterParams) ? '?' . http_build_query($exportFilterParams) : '')) ?>">
-                    <i class="bi bi-filetype-json me-2"></i> <?= lang('App.auditExportJson') ?>
+                    <i class="bi bi-filetype-json me-2" aria-hidden="true"></i> <?= lang('App.auditExportJson') ?>
                 </a>
             </li>
             <li>
                 <a class="dropdown-item" href="<?= base_url('admin/audit-logs/export-pdf' . (!empty($exportFilterParams) ? '?' . http_build_query($exportFilterParams) : '')) ?>">
-                    <i class="bi bi-filetype-pdf me-2"></i> <?= lang('App.auditExportPdf') ?>
+                    <i class="bi bi-filetype-pdf me-2" aria-hidden="true"></i> <?= lang('App.auditExportPdf') ?>
                 </a>
             </li>
         </ul>
@@ -171,12 +171,12 @@ $exportFilterParams = array_filter([
                 <div class="d-flex align-items-center">
                     <strong><?= lang('App.auditActivityChart') ?></strong>
                     <span id="liveIndicator" class="badge bg-success ms-2" style="display: none;">
-                        <i class="bi bi-circle-fill" style="font-size: 8px;"></i> <?= lang('App.auditLive') ?>
+                        <i class="bi bi-circle-fill" style="font-size: 8px;" aria-hidden="true"></i> <?= lang('App.auditLive') ?>
                     </span>
                 </div>
                 <div class="d-flex align-items-center gap-2">
                     <button id="toggleLiveBtn" class="btn btn-sm btn-outline-secondary" data-enable-live="<?= lang('App.auditEnableLive') ?>" data-disable-live="<?= lang('App.auditDisableLive') ?>">
-                        <i class="bi bi-play-circle"></i> <?= lang('App.auditEnableLive') ?>
+                        <i class="bi bi-play-circle" aria-hidden="true"></i> <?= lang('App.auditEnableLive') ?>
                     </button>
                     <select id="timeRangeSelector" class="form-select form-select-sm" style="width: auto;">
                         <option value="24h"><?= lang('App.auditLast24Hours') ?></option>
@@ -213,7 +213,7 @@ $auditFiltersActive = ((int) ($filter_parish_id ?? 0) > 0)
             data-bs-toggle="collapse"
             data-bs-target="#auditLogFilterPanel"
             aria-expanded="<?= $auditFiltersActive ? 'true' : 'false' ?>">
-            <i class="bi bi-funnel"></i> <?= lang('App.filter') ?>
+            <i class="bi bi-funnel" aria-hidden="true"></i> <?= lang('App.filter') ?>
         </button>
     </div>
     <div id="auditLogFilterPanel" class="collapse <?= $auditFiltersActive ? 'show' : '' ?>">
@@ -275,7 +275,7 @@ $auditFiltersActive = ((int) ($filter_parish_id ?? 0) > 0)
                 </div>
                 <div class="col-md-2 d-flex gap-2">
                     <button type="submit" class="btn btn-sm btn-primary flex-fill">
-                        <i class="bi bi-search"></i> <?= lang('Services.apply') ?>
+                        <i class="bi bi-search" aria-hidden="true"></i> <?= lang('Services.apply') ?>
                     </button>
                     <a href="<?= base_url('admin/audit-logs') ?>" class="btn btn-sm btn-outline-secondary flex-fill">
                         <?= lang('App.clear') ?>
@@ -298,14 +298,14 @@ $auditFiltersActive = ((int) ($filter_parish_id ?? 0) > 0)
                 <table class="table table-sm table-striped mb-0">
                     <thead>
                         <tr>
-                            <th><?= lang('App.colDate') ?></th>
-                            <th><?= lang('App.navParishes') ?></th>
-                            <th><?= lang('App.colName') ?></th>
-                            <th><?= lang('App.colActions') ?></th>
-                            <th><?= lang('App.auditReason') ?></th>
-                            <th><?= lang('App.auditEntity') ?></th>
-                            <th><?= lang('App.auditIp') ?></th>
-                            <th><?= lang('App.auditChanges') ?></th>
+                            <th scope="col"><?= lang('App.colDate') ?></th>
+                            <th scope="col"><?= lang('App.navParishes') ?></th>
+                            <th scope="col"><?= lang('App.colName') ?></th>
+                            <th scope="col"><?= lang('App.colActions') ?></th>
+                            <th scope="col"><?= lang('App.auditReason') ?></th>
+                            <th scope="col"><?= lang('App.auditEntity') ?></th>
+                            <th scope="col"><?= lang('App.auditIp') ?></th>
+                            <th scope="col"><?= lang('App.auditChanges') ?></th>
                         </tr>
                     </thead>
                     <tbody>
@@ -323,7 +323,7 @@ $auditFiltersActive = ((int) ($filter_parish_id ?? 0) > 0)
                                         <span class="badge bg-<?= esc($actionFormatted['badge_class'] ?? 'secondary') ?> me-1">
                                             <?= esc($actionFormatted['scope'] ?? '') ?>
                                         </span>
-                                        <i class="bi bi-<?= esc($actionFormatted['icon'] ?? 'activity') ?> me-1"></i>
+                                        <i class="bi bi-<?= esc($actionFormatted['icon'] ?? 'activity') ?> me-1" aria-hidden="true"></i>
                                         <?= esc($actionFormatted['entity'] ?? '') ?> <?= esc($actionFormatted['action'] ?? '') ?>
                                     <?php else: ?>
                                         <code><?= esc((string) ($row['action'] ?? '')) ?></code>
@@ -355,7 +355,7 @@ $auditFiltersActive = ((int) ($filter_parish_id ?? 0) > 0)
                                         <button type="button" class="btn btn-sm btn-outline-primary audit-diff-btn"
                                             data-old="<?= esc(json_encode($oldValues), 'attr') ?>"
                                             data-new="<?= esc(json_encode($newValues), 'attr') ?>">
-                                            <i class="bi bi-eye"></i> <?= lang('App.auditViewDiff') ?>
+                                            <i class="bi bi-eye" aria-hidden="true"></i> <?= lang('App.auditViewDiff') ?>
                                         </button>
                                     <?php endif; ?>
                                 </td>

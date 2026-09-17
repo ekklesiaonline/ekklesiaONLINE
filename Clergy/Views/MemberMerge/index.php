@@ -5,7 +5,7 @@
 <div class="d-flex justify-content-start align-items-center mb-3">
     <div class="d-flex align-items-center gap-2 flex-wrap">
         <a href="<?= base_url('members') ?>" class="btn btn-outline-secondary">
-            <i class="bi bi-arrow-left"></i> <?= lang('App.back') ?>
+            <i class="bi bi-arrow-left" aria-hidden="true"></i> <?= lang('App.back') ?>
         </a>
     </div>
 </div>
@@ -19,19 +19,19 @@
 
 <div class="card">
     <div class="card-header d-flex justify-content-between align-items-center">
-        <span><i class="bi bi-person-exclamation me-1"></i> <?= lang('Members.dedupTitle') ?></span>
+        <span><i class="bi bi-person-exclamation me-1" aria-hidden="true"></i> <?= lang('Members.dedupTitle') ?></span>
         <span class="badge border border-secondary text-secondary fw-normal"><?= count($pairs) ?> <?= lang('Members.dedupPairsFound') ?></span>
     </div>
 
     <?php if (empty($pairs)): ?>
         <div class="card-body text-center text-muted py-5">
-            <i class="bi bi-check-circle text-success" style="font-size: 3rem;"></i>
+            <i class="bi bi-check-circle text-success" style="font-size: 3rem;" aria-hidden="true"></i>
             <p class="mt-3 mb-0"><?= lang('Members.dedupNoDuplicates') ?></p>
         </div>
     <?php else: ?>
         <div class="card-body pb-0 pt-3 px-3">
             <p class="text-muted small mb-0">
-                <i class="bi bi-sort-numeric-up me-1"></i><?= lang('Members.dedupOldestFirst') ?>
+                <i class="bi bi-sort-numeric-up me-1" aria-hidden="true"></i><?= lang('Members.dedupOldestFirst') ?>
             </p>
         </div>
         <div class="card-body p-0">
@@ -39,13 +39,13 @@
                 <table class="table table-hover align-middle mb-0">
                     <thead>
                         <tr>
-                            <th>
+                            <th scope="col">
                                 <?= lang('Members.dedupColPersonA') ?>
                                 <span class="badge text-bg-success ms-1 fw-normal" style="font-size:.7em"><?= lang('Members.dedupSuggestedCanonical') ?></span>
                             </th>
-                            <th><?= lang('Members.dedupColPersonB') ?></th>
-                            <th class="text-center"><?= lang('Members.dedupColMatchReason') ?></th>
-                            <th class="text-center"><?= lang('Members.dedupColActions') ?></th>
+                            <th scope="col"><?= lang('Members.dedupColPersonB') ?></th>
+                            <th scope="col" class="text-center"><?= lang('Members.dedupColMatchReason') ?></th>
+                            <th scope="col" class="text-center"><?= lang('Members.dedupColActions') ?></th>
                         </tr>
                     </thead>
                     <tbody>
@@ -99,9 +99,9 @@
                                 <!-- Match reason -->
                                 <td class="text-center">
                                     <?php if ($pair['match_reason'] === 'name'): ?>
-                                        <span class="badge border border-warning text-warning fw-normal"><i class="bi bi-person-fill"></i> <?= lang('Members.matchByName') ?></span>
+                                        <span class="badge border border-warning text-warning fw-normal"><i class="bi bi-person-fill" aria-hidden="true"></i> <?= lang('Members.matchByName') ?></span>
                                     <?php else: ?>
-                                        <span class="badge border border-info text-info fw-normal"><i class="bi bi-telephone-fill"></i> <?= lang('Members.matchByPhone') ?></span>
+                                        <span class="badge border border-info text-info fw-normal"><i class="bi bi-telephone-fill" aria-hidden="true"></i> <?= lang('Members.matchByPhone') ?></span>
                                     <?php endif; ?>
                                 </td>
 
@@ -109,12 +109,12 @@
                                 <td class="text-center">
                                     <a href="<?= base_url('members/dedup/preview?canonical=' . (int) $pair['profile_id_a'] . '&duplicate=' . (int) $pair['profile_id_b']) ?>"
                                         class="btn btn-sm btn-outline-primary">
-                                        <i class="bi bi-arrows-collapse"></i> <?= lang('Members.mergeReview') ?>
+                                        <i class="bi bi-arrows-collapse" aria-hidden="true"></i> <?= lang('Members.mergeReview') ?>
                                     </a>
                                     <a href="<?= base_url('members/dedup/preview?canonical=' . (int) $pair['profile_id_b'] . '&duplicate=' . (int) $pair['profile_id_a']) ?>"
                                         class="btn btn-sm btn-outline-secondary ms-1"
                                         title="<?= lang('Members.swapCanonicalHint') ?>">
-                                        <i class="bi bi-arrow-left-right"></i>
+                                        <i class="bi bi-arrow-left-right" aria-hidden="true"></i>
                                     </a>
                                 </td>
                             </tr>

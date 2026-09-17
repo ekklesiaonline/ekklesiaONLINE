@@ -17,12 +17,12 @@ $staff_roles = $staff_roles ?? [];
 <div class="card mb-4">
     <div class="card-header d-flex justify-content-between align-items-center">
         <div>
-            <h5 class="mb-0"><i class="bi bi-building me-2"></i><?= lang('Members.provinceAdministrators') ?></h5>
+            <h5 class="mb-0"><i class="bi bi-building me-2" aria-hidden="true"></i><?= lang('Members.provinceAdministrators') ?></h5>
             <small class="text-muted"><?= lang('Members.provinceAdminsManagedDesc') ?></small>
         </div>
         <?php if ($canManageProvinceStaff): ?>
             <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#createProvinceStaffModal">
-                <i class="bi bi-plus-circle me-1"></i><?= lang('Members.addProvinceAdmin') ?>
+                <i class="bi bi-plus-circle me-1" aria-hidden="true"></i><?= lang('Members.addProvinceAdmin') ?>
             </button>
         <?php else: ?>
             <span class="badge border border-secondary text-secondary fw-normal"><?= lang('Diocesan.readOnlyProvinceScope') ?></span>
@@ -34,11 +34,11 @@ $staff_roles = $staff_roles ?? [];
                 <table class="table table-hover mb-0" id="provinceStaffTable">
                     <thead>
                         <tr>
-                            <th><?= lang('App.colName') ?></th>
-                            <th><?= lang('App.colEmail') ?></th>
-                            <th><?= lang('App.colPhone') ?></th>
+                            <th scope="col"><?= lang('App.colName') ?></th>
+                            <th scope="col"><?= lang('App.colEmail') ?></th>
+                            <th scope="col"><?= lang('App.colPhone') ?></th>
                             <?php if ($canManageProvinceStaff): ?>
-                                <th class="text-end"><?= lang('App.colActions') ?></th>
+                                <th scope="col" class="text-end"><?= lang('App.colActions') ?></th>
                             <?php endif; ?>
                         </tr>
                     </thead>
@@ -63,13 +63,13 @@ $staff_roles = $staff_roles ?? [];
                                             <button class="btn btn-sm btn-outline-primary"
                                                 onclick="openEditProvinceStaff(<?= (int) $staff['profile_id'] ?>)"
                                                 title="<?= lang('App.edit') ?>">
-                                                <i class="bi bi-pencil"></i>
+                                                <i class="bi bi-pencil" aria-hidden="true"></i>
                                             </button>
                                             <?php if (!$isSelf): ?>
                                                 <button class="btn btn-sm btn-outline-danger"
                                                     onclick="confirmDeleteProvinceStaff(<?= (int) $staff['profile_id'] ?>, '<?= esc(addslashes(trim((string) ($staff['first_name'] ?? '') . ' ' . (string) ($staff['last_name'] ?? '')))) ?>')"
                                                     title="<?= lang('App.delete') ?>">
-                                                    <i class="bi bi-trash"></i>
+                                                    <i class="bi bi-trash" aria-hidden="true"></i>
                                                 </button>
                                             <?php endif; ?>
                                         </div>
@@ -82,7 +82,7 @@ $staff_roles = $staff_roles ?? [];
             </div>
         <?php else: ?>
             <div class="p-4 text-center text-muted">
-                <i class="bi bi-person-x fs-3 d-block mb-2"></i>
+                <i class="bi bi-person-x fs-3 d-block mb-2" aria-hidden="true"></i>
                 <?= lang('Members.noProvinceAdminsFound') ?>
                 <?php if ($canManageProvinceStaff): ?>
                     <a href="#" data-bs-toggle="modal" data-bs-target="#createProvinceStaffModal" class="ms-1"><?= lang('Members.addFirstOne') ?></a>
@@ -98,7 +98,7 @@ $staff_roles = $staff_roles ?? [];
 <div class="card mb-4">
     <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2 filter-panel-header">
         <div>
-            <h5 class="mb-0"><i class="bi bi-diagram-3 me-2"></i><?= lang('Members.diocesanStaffTitle') ?></h5>
+            <h5 class="mb-0"><i class="bi bi-diagram-3 me-2" aria-hidden="true"></i><?= lang('Members.diocesanStaffTitle') ?></h5>
             <small class="text-muted"><?= lang('Members.diocesanStaffReadonlyDesc') ?></small>
         </div>
         <button
@@ -108,7 +108,7 @@ $staff_roles = $staff_roles ?? [];
             data-bs-target="#diocesanStaffFilterPanel"
             aria-expanded="<?= $request->getGet('diocese_scope_id') !== null ? 'true' : 'false' ?>"
             aria-controls="diocesanStaffFilterPanel">
-            <i class="bi bi-funnel"></i> <?= lang('App.filter') ?>
+            <i class="bi bi-funnel" aria-hidden="true"></i> <?= lang('App.filter') ?>
         </button>
     </div>
     <div id="diocesanStaffFilterPanel" class="collapse <?= $request->getGet('diocese_scope_id') !== null ? 'show' : '' ?>">
@@ -130,7 +130,7 @@ $staff_roles = $staff_roles ?? [];
     <div class="card-body p-0">
         <?php if (!empty($diocesan_staff)): ?>
             <div class="alert alert-info m-3 mb-2 py-2 small">
-                <i class="bi bi-info-circle me-1"></i>
+                <i class="bi bi-info-circle me-1" aria-hidden="true"></i>
                 <?= lang('Members.provinceAdminsCannotManageDiocesanStaff') ?>
                 <?= !empty($scope_diocese_id) ? lang('Members.showingSelectedDioceseOnly') : lang('Members.showingAllDiocesanStaffInProvince') ?>
             </div>
@@ -138,12 +138,12 @@ $staff_roles = $staff_roles ?? [];
                 <table class="table table-hover mb-0" id="diocesanStaffTable">
                     <thead>
                         <tr>
-                            <th><?= lang('App.colName') ?></th>
-                            <th><?= lang('App.colEmail') ?></th>
-                            <th><?= lang('App.colPhone') ?></th>
-                            <th><?= lang('Members.role') ?></th>
-                            <th><?= lang('Dashboard.colDiocese') ?></th>
-                            <th><?= lang('Dashboard.parishLabel') ?></th>
+                            <th scope="col"><?= lang('App.colName') ?></th>
+                            <th scope="col"><?= lang('App.colEmail') ?></th>
+                            <th scope="col"><?= lang('App.colPhone') ?></th>
+                            <th scope="col"><?= lang('Members.role') ?></th>
+                            <th scope="col"><?= lang('Dashboard.colDiocese') ?></th>
+                            <th scope="col"><?= lang('Dashboard.parishLabel') ?></th>
                         </tr>
                     </thead>
                     <tbody>
@@ -179,7 +179,7 @@ $staff_roles = $staff_roles ?? [];
             </div>
         <?php else: ?>
             <div class="p-4 text-center text-muted">
-                <i class="bi bi-diagram-3 fs-3 d-block mb-2"></i>
+                <i class="bi bi-diagram-3 fs-3 d-block mb-2" aria-hidden="true"></i>
                 <?= lang('Members.noDiocesanStaffFound') ?>
                 <?= !empty($scope_diocese_id) ? lang('Members.forSelectedDiocese') : lang('Members.withinYourProvince') ?>
             </div>
@@ -198,7 +198,7 @@ $staff_roles = $staff_roles ?? [];
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title" id="createProvinceStaffLabel">
-                        <i class="bi bi-person-plus me-2"></i><?= lang('Members.addProvinceAdministrator') ?>
+                        <i class="bi bi-person-plus me-2" aria-hidden="true"></i><?= lang('Members.addProvinceAdministrator') ?>
                     </h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
@@ -247,7 +247,7 @@ $staff_roles = $staff_roles ?? [];
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title" id="editProvinceStaffLabel">
-                        <i class="bi bi-pencil me-2"></i><?= lang('Members.editProvinceAdministrator') ?>
+                        <i class="bi bi-pencil me-2" aria-hidden="true"></i><?= lang('Members.editProvinceAdministrator') ?>
                     </h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
@@ -256,7 +256,7 @@ $staff_roles = $staff_roles ?? [];
                     <div class="modal-body">
                         <div id="editErrors" class="alert alert-danger d-none"></div>
                         <div class="mb-2 text-muted small">
-                            <i class="bi bi-envelope me-1"></i><span id="editEmailDisplay"></span>
+                            <i class="bi bi-envelope me-1" aria-hidden="true"></i><span id="editEmailDisplay"></span>
                         </div>
                         <div class="row g-3">
                             <div class="col-md-6">
@@ -290,7 +290,7 @@ $staff_roles = $staff_roles ?? [];
         <div class="modal-dialog modal-sm">
             <div class="modal-content">
                 <div class="modal-header bg-danger text-white">
-                    <h5 class="modal-title"><i class="bi bi-trash me-2"></i><?= lang('App.confirm') ?> <?= lang('App.delete') ?></h5>
+                    <h5 class="modal-title"><i class="bi bi-trash me-2" aria-hidden="true"></i><?= lang('App.confirm') ?> <?= lang('App.delete') ?></h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">

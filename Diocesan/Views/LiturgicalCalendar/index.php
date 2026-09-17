@@ -119,7 +119,7 @@ $defaultIconClass = is_object($liturgicalIcons) && isset($liturgicalIcons->defau
                 </div>
                 <div class="col-md-2 d-flex align-items-end justify-content-end">
                     <button type="submit" class="btn btn-primary">
-                        <i class="bi bi-plus-circle"></i> <?= lang('Diocesan.liturgicalBtnAdd') ?>
+                        <i class="bi bi-plus-circle" aria-hidden="true"></i> <?= lang('Diocesan.liturgicalBtnAdd') ?>
                     </button>
                 </div>
             </form>
@@ -136,15 +136,15 @@ $defaultIconClass = is_object($liturgicalIcons) && isset($liturgicalIcons->defau
             <table class="table table-sm table-hover mb-0">
                 <thead>
                     <tr>
-                        <th><?= lang('Diocesan.liturgicalLabelName') ?></th>
-                        <th><?= lang('Diocesan.liturgicalLabelSeason') ?></th>
-                        <th><?= lang('Diocesan.liturgicalLabelType') ?></th>
-                        <th><?= lang('Diocesan.liturgicalLabelColor') ?></th>
-                        <th><?= lang('Diocesan.liturgicalColSort') ?></th>
-                        <th><?= lang('Diocesan.liturgicalColIcons') ?></th>
-                        <th><?= lang('Diocesan.liturgicalColScope') ?></th>
-                        <th><?= lang('Diocesan.liturgicalColStatus') ?></th>
-                        <th class="text-end"><?= lang('App.colActions') ?></th>
+                        <th scope="col"><?= lang('Diocesan.liturgicalLabelName') ?></th>
+                        <th scope="col"><?= lang('Diocesan.liturgicalLabelSeason') ?></th>
+                        <th scope="col"><?= lang('Diocesan.liturgicalLabelType') ?></th>
+                        <th scope="col"><?= lang('Diocesan.liturgicalLabelColor') ?></th>
+                        <th scope="col"><?= lang('Diocesan.liturgicalColSort') ?></th>
+                        <th scope="col"><?= lang('Diocesan.liturgicalColIcons') ?></th>
+                        <th scope="col"><?= lang('Diocesan.liturgicalColScope') ?></th>
+                        <th scope="col"><?= lang('Diocesan.liturgicalColStatus') ?></th>
+                        <th scope="col" class="text-end"><?= lang('App.colActions') ?></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -218,15 +218,15 @@ $defaultIconClass = is_object($liturgicalIcons) && isset($liturgicalIcons->defau
                                 <td class="text-end">
                                     <?php if (!empty($can_manage_liturgical_source) && $isEditable): ?>
                                         <div class="d-inline-flex flex-nowrap gap-1 align-items-center">
-                                            <a href="<?= base_url(($liturgical_write_base ?? 'system/liturgical-source') . '/edit/' . $entry['id']) ?>" class="btn btn-sm btn-outline-primary">
-                                                <i class="bi bi-pencil"></i>
+                                            <a href="<?= base_url(($liturgical_write_base ?? 'system/liturgical-source') . '/edit/' . $entry['id']) ?>" class="btn btn-sm btn-outline-primary" aria-label="<?= esc(lang('App.edit')) ?>">
+                                                <i class="bi bi-pencil" aria-hidden="true"></i>
                                             </a>
                                             <form action="<?= base_url(($liturgical_write_base ?? 'system/liturgical-source') . '/delete/' . $entry['id']) ?>" method="post" class="d-inline"
                                                 data-confirm-title="<?= esc(lang('App.confirm'), 'attr') ?>"
                                                 data-confirm-body="<?= esc(lang('Diocesan.liturgicalDeleteEntryConfirm'), 'attr') ?>">
                                                 <?= csrf_field() ?>
-                                                <button type="submit" class="btn btn-sm btn-outline-danger">
-                                                    <i class="bi bi-trash"></i>
+                                                <button type="submit" class="btn btn-sm btn-outline-danger" aria-label="<?= esc(lang('App.delete')) ?>">
+                                                    <i class="bi bi-trash" aria-hidden="true"></i>
                                                 </button>
                                             </form>
                                         </div>

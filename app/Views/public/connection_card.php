@@ -5,7 +5,7 @@
 <div class="card card-public">
     <div class="brand-bar">
         <h4 class="mb-0 fw-bold">
-            <i class="bi bi-person-lines-fill me-2"></i>
+            <i class="bi bi-person-lines-fill me-2" aria-hidden="true"></i>
             <?= esc($parish['name'] ?? 'Connection Card') ?>
         </h4>
         <p class="mb-0 mt-1 opacity-75 small">We're glad you're here! Fill in your details below.</p>
@@ -110,7 +110,7 @@
 
             <div class="d-grid gap-2">
                 <button type="submit" class="btn btn-primary btn-lg">
-                    <i class="bi bi-send me-1"></i> Submit Connection Card
+                    <i class="bi bi-send me-1" aria-hidden="true"></i> Submit Connection Card
                 </button>
                 <button type="button" class="btn btn-outline-secondary" id="btnNoThanks">
                     No, thanks
@@ -123,7 +123,7 @@
                     if (!closed) {
                         this.closest('.card-body').innerHTML =
                             '<div class="text-center py-4 text-muted">' +
-                            '<i class="bi bi-check2-circle fs-2 d-block mb-2"></i>' +
+                            '<i class="bi bi-check2-circle fs-2 d-block mb-2" aria-hidden="true"></i>' +
                             'You can close this window.' +
                             '</div>';
                     }
@@ -133,7 +133,7 @@
     </div><!-- /card-body -->
 
     <div class="card-footer text-center text-muted small py-2">
-        <i class="bi bi-shield-lock me-1"></i> Your information is kept private and secure.
+        <i class="bi bi-shield-lock me-1" aria-hidden="true"></i> Your information is kept private and secure.
     </div>
 </div>
 

@@ -4,17 +4,17 @@
 
 <div class="mb-4 d-flex justify-content-end gap-2">
     <a class="btn btn-outline-secondary" href="#" onclick="window.print(); return false;">
-        <i class="bi bi-printer"></i> <?= lang('Treasurer.reportPrint') ?>
+        <i class="bi bi-printer" aria-hidden="true"></i> <?= lang('Treasurer.reportPrint') ?>
     </a>
     <a
         class="btn btn-outline-primary"
         href="<?= base_url('reports/export?start_date=' . urlencode((string) ($report_start_date ?? date('Y-01-01'))) . '&end_date=' . urlencode((string) ($report_end_date ?? date('Y-m-d')))) ?>">
-        <i class="bi bi-file-csv"></i> CSV
+        <i class="bi bi-file-csv" aria-hidden="true"></i> CSV
     </a>
     <a
         class="btn btn-primary"
         href="<?= base_url('reports/export-pdf?start_date=' . urlencode((string) ($report_start_date ?? date('Y-01-01'))) . '&end_date=' . urlencode((string) ($report_end_date ?? date('Y-m-d')))) ?>">
-        <i class="bi bi-file-pdf"></i> PDF
+        <i class="bi bi-file-pdf" aria-hidden="true"></i> PDF
     </a>
 </div>
 
@@ -29,7 +29,7 @@
             data-bs-target="#treasurerReportsFilterPanel"
             aria-expanded="<?= ($request->getGet('start_date') !== null || $request->getGet('end_date') !== null) ? 'true' : 'false' ?>"
             aria-controls="treasurerReportsFilterPanel">
-            <i class="bi bi-funnel"></i> <?= lang('App.filter') ?>
+            <i class="bi bi-funnel" aria-hidden="true"></i> <?= lang('App.filter') ?>
         </button>
     </div>
     <div id="treasurerReportsFilterPanel" class="collapse <?= ($request->getGet('start_date') !== null || $request->getGet('end_date') !== null) ? 'show' : '' ?>">
@@ -45,7 +45,7 @@
                 </div>
                 <div class="col-md-2">
                     <button type="submit" class="btn btn-outline-primary w-100">
-                        <i class="bi bi-funnel"></i> <?= lang('Treasurer.reportApply') ?>
+                        <i class="bi bi-funnel" aria-hidden="true"></i> <?= lang('Treasurer.reportApply') ?>
                     </button>
                 </div>
             </form>
@@ -129,17 +129,17 @@
                 <table class="table table-striped mb-0">
                     <thead>
                         <tr>
-                            <th><?= lang('Treasurer.reportDiocese') ?></th>
-                            <th><?= lang('Treasurer.reportParishes') ?></th>
-                            <th><?= lang('Treasurer.reportPeople') ?></th>
-                            <th><?= lang('Treasurer.reportGuests') ?></th>
-                            <th><?= lang('Treasurer.reportMembers') ?></th>
-                            <th><?= lang('Treasurer.reportGoodStanding') ?></th>
-                            <th><?= lang('Treasurer.reportServices') ?></th>
-                            <th><?= lang('Treasurer.reportAttendance') ?></th>
-                            <th><?= lang('Treasurer.reportDonations') ?></th>
-                            <th><?= lang('Treasurer.reportExpenses') ?></th>
-                            <th><?= lang('Treasurer.reportNet') ?></th>
+                            <th scope="col"><?= lang('Treasurer.reportDiocese') ?></th>
+                            <th scope="col"><?= lang('Treasurer.reportParishes') ?></th>
+                            <th scope="col"><?= lang('Treasurer.reportPeople') ?></th>
+                            <th scope="col"><?= lang('Treasurer.reportGuests') ?></th>
+                            <th scope="col"><?= lang('Treasurer.reportMembers') ?></th>
+                            <th scope="col"><?= lang('Treasurer.reportGoodStanding') ?></th>
+                            <th scope="col"><?= lang('Treasurer.reportServices') ?></th>
+                            <th scope="col"><?= lang('Treasurer.reportAttendance') ?></th>
+                            <th scope="col"><?= lang('Treasurer.reportDonations') ?></th>
+                            <th scope="col"><?= lang('Treasurer.reportExpenses') ?></th>
+                            <th scope="col"><?= lang('Treasurer.reportNet') ?></th>
                         </tr>
                     </thead>
                     <tbody>

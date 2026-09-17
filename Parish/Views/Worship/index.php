@@ -49,7 +49,7 @@ $formatLocalizedDate = static function (?string $value): string {
     <div class="col-md-6">
         <div class="card h-100">
             <div class="card-header d-flex justify-content-between align-items-center">
-                <h5 class="mb-0"><i class="bi bi-calendar-event"></i> <?= lang('Dashboard.recentServices') ?></h5>
+                <h5 class="mb-0"><i class="bi bi-calendar-event" aria-hidden="true"></i> <?= lang('Dashboard.recentServices') ?></h5>
                 <a href="<?= base_url('services') ?>" class="btn btn-sm btn-outline-primary"><?= lang('App.viewAll') ?></a>
             </div>
             <div class="card-body" style="min-height: 350px;">
@@ -58,9 +58,9 @@ $formatLocalizedDate = static function (?string $value): string {
                         <table class="table table-sm">
                             <thead>
                                 <tr>
-                                    <th><?= lang('App.colDate') ?></th>
-                                    <th><?= lang('Dashboard.colService') ?></th>
-                                    <th class="text-end"><?= lang('Dashboard.colAttendComm') ?></th>
+                                    <th scope="col"><?= lang('App.colDate') ?></th>
+                                    <th scope="col"><?= lang('Dashboard.colService') ?></th>
+                                    <th scope="col" class="text-end"><?= lang('Dashboard.colAttendComm') ?></th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -85,7 +85,7 @@ $formatLocalizedDate = static function (?string $value): string {
     <div class="col-md-6">
         <div class="card h-100">
             <div class="card-header">
-                <h5 class="mb-0"><i class="bi bi-graph-up-arrow"></i> <?= lang('Dashboard.parishSundayAttendanceTitle') ?></h5>
+                <h5 class="mb-0"><i class="bi bi-graph-up-arrow" aria-hidden="true"></i> <?= lang('Dashboard.parishSundayAttendanceTitle') ?></h5>
             </div>
             <div class="card-body" style="min-height: 350px;">
                 <?php if (empty($sunday_attendance_has_data)): ?>

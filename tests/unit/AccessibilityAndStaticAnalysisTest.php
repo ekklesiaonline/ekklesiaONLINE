@@ -45,6 +45,118 @@ final class AccessibilityAndStaticAnalysisTest extends CIUnitTestCase
     }
 
     /**
+     * View directories covered by the accessibility sweep.
+     *
+     * @var list<string>
+     */
+    private const VIEW_DIRS = [
+        'Clergy/Views',
+        'MemberPortal/Views',
+        'Diocesan/Views',
+        'Treasurer/Views',
+        'Worship/Views',
+        'Parish/Views',
+        'Province/Views',
+        'Volunteer/Views',
+        'app/Views',
+    ];
+
+    /**
+     * L6: no <a>/<button> may be icon-only without an accessible name
+     * (aria-label, title, or visually-hidden text).
+     */
+    public function testNoIconOnlyControlsWithoutAccessibleNames(): void
+    {
+        $tagPattern = '/<(a|button)\b((?:"(?:[^"\\\\]|\\\\.)*"|\'(?:[^\'\\\\]|\\\\.)*\'|[^\'">])*)>(.*?)<\/\1>/s';
+        $violations = [];
+
+        foreach ($this->viewFiles() as $file) {
+            $src = (string) file_get_contents($file);
+            if (!preg_match_all($tagPattern, $src, $matches, PREG_SET_ORDER | PREG_OFFSET_CAPTURE)) {
+                continue;
+            }
+            foreach ($matches as $m) {
+                $attrs = $m[2][0];
+                $inner = $m[3][0];
+                if (!preg_match('/<i[^>]*class="[^"]*\bbi-[a-z0-9-]+/', $inner)) {
+                    continue;
+                }
+                // PHP echoes render text; php code blocks do not.
+                $probe = preg_replace('/<\?=.*?\x3f\x3e/s', 'X', $inner);
+                $probe = preg_replace('/<\?(php)?[\s][\s\S]*?\x3f\x3e/s', '', (string) $probe);
+                $text  = trim(html_entity_decode(strip_tags((string) $probe), ENT_QUOTES | ENT_HTML5));
+                $named = str_contains($attrs, 'aria-label')
+                    || str_contains($attrs, 'title=')
+                    || str_contains($inner, 'aria-label')
+                    || str_contains($inner, 'visually-hidden')
+                    || str_contains($inner, 'sr-only');
+                if ($text === '' && !$named) {
+                    $line = substr_count(substr($src, 0, $m[0][1]), "\n") + 1;
+                    $violations[] = $file . ':' . $line;
+                }
+            }
+        }
+
+        $this->assertSame(
+            [],
+            $violations,
+            'Icon-only controls must expose an accessible name: ' . implode(', ', $violations)
+        );
+    }
+
+    /**
+     * L6: every <th> inside <thead> must declare scope="col".
+     */
+    public function testTableHeadersDeclareScope(): void
+    {
+        $violations = [];
+
+        foreach ($this->viewFiles() as $file) {
+            $src = (string) file_get_contents($file);
+            if (!preg_match_all('/<thead\b[^>]*>([\s\S]*?)<\/thead>/', $src, $heads, PREG_OFFSET_CAPTURE)) {
+                continue;
+            }
+            foreach ($heads[1] as $head) {
+                if (!preg_match_all('/<th\b[^>]*>/', $head[0], $ths, PREG_OFFSET_CAPTURE)) {
+                    continue;
+                }
+                foreach ($ths[0] as $th) {
+                    if (!str_contains($th[0], 'scope=')) {
+                        $line = substr_count(substr($src, 0, $head[1] + $th[1]), "\n") + 1;
+                        $violations[] = $file . ':' . $line;
+                    }
+                }
+            }
+        }
+
+        $this->assertSame(
+            [],
+            $violations,
+            '<th> elements inside <thead> must declare scope="col": ' . implode(', ', $violations)
+        );
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function viewFiles(): array
+    {
+        $files = [];
+        foreach (self::VIEW_DIRS as $dir) {
+            $iterator = new RecursiveIteratorIterator(
+                new RecursiveDirectoryIterator(ROOTPATH . $dir)
+            );
+            foreach ($iterator as $file) {
+                if ($file->isFile() && $file->getExtension() === 'php') {
+                    $files[] = $file->getPathname();
+                }
+            }
+        }
+
+        return $files;
+    }
+
+    /**
      * L10: PHPStan is installed.
      */
     public function testPhpstanInstalled(): void

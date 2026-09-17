@@ -4,7 +4,7 @@
 
 <div class="d-flex justify-content-start align-items-center mb-3">
     <a href="<?= base_url('volunteers') ?>" class="btn btn-secondary">
-        <i class="bi bi-arrow-left"></i> <?= lang('App.back') ?>
+        <i class="bi bi-arrow-left" aria-hidden="true"></i> <?= lang('App.back') ?>
     </a>
 </div>
 
@@ -28,7 +28,7 @@
             <div class="d-flex justify-content-end gap-2 mt-4">
                 <a href="<?= base_url('volunteers') ?>" class="btn btn-secondary"><?= lang('App.cancel') ?></a>
                 <button type="submit" class="btn btn-primary">
-                    <i class="bi bi-save"></i> <?= lang('Volunteer.createTeam') ?>
+                    <i class="bi bi-save" aria-hidden="true"></i> <?= lang('Volunteer.createTeam') ?>
                 </button>
             </div>
         </form>

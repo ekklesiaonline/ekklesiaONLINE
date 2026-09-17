@@ -49,10 +49,10 @@
                 <table class="table table-sm align-middle mb-0">
                     <thead>
                         <tr>
-                            <th><?= lang('Volunteer.volunteer') ?></th>
-                            <th><?= lang('Volunteer.role') ?></th>
+                            <th scope="col"><?= lang('Volunteer.volunteer') ?></th>
+                            <th scope="col"><?= lang('Volunteer.role') ?></th>
                             <?php if (auth()->user()->can('volunteer.assign')): ?>
-                                <th class="text-end"><?= lang('App.colActions') ?></th>
+                                <th scope="col" class="text-end"><?= lang('App.colActions') ?></th>
                             <?php endif; ?>
                         </tr>
                     </thead>
@@ -86,7 +86,7 @@
     <div class="card-header d-flex align-items-center justify-content-between">
         <h6 class="mb-0"><?= lang('Volunteer.recentSchedules') ?></h6>
         <a href="<?= base_url('volunteers/schedules?team_id=' . (int) $team['id']) ?>" class="btn btn-sm btn-outline-secondary">
-            <i class="bi bi-calendar3"></i> <?= lang('Volunteer.viewAllSchedules') ?>
+            <i class="bi bi-calendar3" aria-hidden="true"></i> <?= lang('Volunteer.viewAllSchedules') ?>
         </a>
     </div>
     <div class="card-body">

@@ -42,7 +42,7 @@ $formatLocalizedDateTime = static function (?string $value, string $locale): str
                         <h4 class="mb-0\"><?= number_format((int) ($total_parishes ?? 0)) ?></h4>
                     </div>
                     <div class="text-primary fs-1">
-                        <i class="bi bi-building"></i>
+                        <i class="bi bi-building" aria-hidden="true"></i>
                     </div>
                 </div>
             </div>
@@ -58,7 +58,7 @@ $formatLocalizedDateTime = static function (?string $value, string $locale): str
                         <small class="text-muted"><?= lang('Dashboard.systemOverviewLast7Days') ?></small>
                     </div>
                     <div class="text-success fs-1">
-                        <i class="bi bi-lightning-charge"></i>
+                        <i class="bi bi-lightning-charge" aria-hidden="true"></i>
                     </div>
                 </div>
             </div>
@@ -74,7 +74,7 @@ $formatLocalizedDateTime = static function (?string $value, string $locale): str
                         <small class="text-muted"><?= lang('Dashboard.systemOverviewLast7Days') ?></small>
                     </div>
                     <div class="text-warning fs-1">
-                        <i class="bi bi-journal-text"></i>
+                        <i class="bi bi-journal-text" aria-hidden="true"></i>
                     </div>
                 </div>
             </div>
@@ -90,7 +90,7 @@ $formatLocalizedDateTime = static function (?string $value, string $locale): str
                         <small class="text-muted"><?= lang('Dashboard.systemOverviewAllTables') ?></small>
                     </div>
                     <div class="text-danger fs-1">
-                        <i class="bi bi-database"></i>
+                        <i class="bi bi-database" aria-hidden="true"></i>
                     </div>
                 </div>
             </div>
@@ -102,7 +102,7 @@ $formatLocalizedDateTime = static function (?string $value, string $locale): str
     <div class="col-lg-4">
         <div class="card h-100">
             <div class="card-header">
-                <h5 class="mb-0"><i class="bi bi-cpu"></i> <?= lang('Dashboard.systemOverviewHealthTitle') ?></h5>
+                <h5 class="mb-0"><i class="bi bi-cpu" aria-hidden="true"></i> <?= lang('Dashboard.systemOverviewHealthTitle') ?></h5>
             </div>
             <div class="card-body">
                 <div class="mb-3 d-flex justify-content-between">
@@ -147,7 +147,7 @@ $formatLocalizedDateTime = static function (?string $value, string $locale): str
     <div class="col-lg-8">
         <div class="card h-100">
             <div class="card-header">
-                <h5 class="mb-0"><i class="bi bi-lightning-charge"></i> <?= lang('Dashboard.systemOverviewRecentActivity') ?></h5>
+                <h5 class="mb-0"><i class="bi bi-lightning-charge" aria-hidden="true"></i> <?= lang('Dashboard.systemOverviewRecentActivity') ?></h5>
             </div>
             <div class="card-body p-0">
                 <div class="list-group list-group-flush" style="max-height: 420px; overflow-y: auto;">

@@ -25,14 +25,14 @@ $isSelf = $isSelf ?? false;
         <?php if (!empty($admin['province_id'])): ?>data-province-id="<?= (int) $admin['province_id'] ?>"<?php endif; ?>
         <?php if (!empty($admin['diocese_id'])): ?>data-diocese-id="<?= (int) $admin['diocese_id'] ?>"<?php endif; ?>
         title="<?= esc(lang('App.edit')) ?>">
-        <i class="bi bi-pencil"></i>
+        <i class="bi bi-pencil" aria-hidden="true"></i>
     </button>
     <?php endif; ?>
     <?php if ($canResendInvitation): ?>
     <form action="<?= base_url('system/admins/resend-invitation/' . (int) $admin['user_id']) ?>" method="post">
         <?= csrf_field() ?>
         <button type="submit" class="btn btn-outline-info" title="<?= esc(lang('System.resendAdminInvitation')) ?>">
-            <i class="bi bi-envelope-arrow-up"></i>
+            <i class="bi bi-envelope-arrow-up" aria-hidden="true"></i>
         </button>
     </form>
     <?php endif; ?>
@@ -46,7 +46,7 @@ $isSelf = $isSelf ?? false;
         data-can-delete="<?= !empty($admin['delegation_permissions']['system.admin.delete']) ? '1' : '0' ?>"
         data-can-reset-password="<?= !empty($admin['delegation_permissions']['system.admin.reset_password']) ? '1' : '0' ?>"
         title="<?= esc(lang('System.managePermissions')) ?>">
-        <i class="bi bi-shield-lock"></i>
+        <i class="bi bi-shield-lock" aria-hidden="true"></i>
     </button>
     <?php endif; ?>
     <?php if ($canResetPassword): ?>
@@ -55,7 +55,7 @@ $isSelf = $isSelf ?? false;
         data-id="<?= (int) $admin['user_id'] ?>"
         data-name="<?= esc($adminRawName, 'attr') ?>"
         title="<?= esc(lang('System.resetPasswordTitle')) ?>">
-        <i class="bi bi-key"></i>
+        <i class="bi bi-key" aria-hidden="true"></i>
     </button>
     <?php endif; ?>
     <?php if ($showTransferPrimary): ?>
@@ -71,14 +71,14 @@ $isSelf = $isSelf ?? false;
                 tabindex="-1"
             <?php endif; ?>
             title="<?= esc(lang('System.btnTransferPrimary')) ?>">
-            <i class="bi bi-arrow-left-right"></i>
+            <i class="bi bi-arrow-left-right" aria-hidden="true"></i>
         </button>
     <?php endif; ?>
     <?php if ($canDelete): ?>
         <?php if ($isSelf): ?>
             <button type="button" class="btn btn-outline-danger disabled" aria-disabled="true" tabindex="-1"
                 title="<?= esc(lang('App.cannotDeleteSelf')) ?>">
-                <i class="bi bi-trash3"></i>
+                <i class="bi bi-trash3" aria-hidden="true"></i>
             </button>
         <?php else: ?>
             <form action="<?= base_url('system/admins/delete/' . (int) $admin['user_id']) ?>" method="post"
@@ -88,7 +88,7 @@ $isSelf = $isSelf ?? false;
                 data-confirm-swal-title="<?= esc(lang('System.confirmDeleteAdminUserFinal', [$adminFullName]), 'attr') ?>">
                 <?= csrf_field() ?>
                 <button type="submit" class="btn btn-outline-danger" title="<?= esc(lang('App.delete')) ?>">
-                    <i class="bi bi-trash3"></i>
+                    <i class="bi bi-trash3" aria-hidden="true"></i>
                 </button>
             </form>
         <?php endif; ?>

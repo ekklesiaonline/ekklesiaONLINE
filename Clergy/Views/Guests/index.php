@@ -4,11 +4,11 @@
 
 <div class="d-flex justify-content-start align-items-center flex-wrap gap-2 mb-3">
     <a href="<?= base_url('guests/dashboard') ?>" class="btn btn-outline-secondary">
-        <i class="bi bi-arrow-left"></i> <?= lang('Guests.backToGuests') ?>
+        <i class="bi bi-arrow-left" aria-hidden="true"></i> <?= lang('Guests.backToGuests') ?>
     </a>
     <?php if (auth()->user()->can('guest.create')): ?>
         <a href="<?= base_url('guests/create') ?>" class="btn btn-outline-primary">
-            <i class="bi bi-plus-circle"></i> <?= lang('Guests.pageTitleAdd') ?>
+            <i class="bi bi-plus-circle" aria-hidden="true"></i> <?= lang('Guests.pageTitleAdd') ?>
         </a>
     <?php endif; ?>
 </div>
@@ -54,7 +54,7 @@ $formatLocalizedDate = static function (?string $value, string $pattern, string 
             data-bs-target="#guestsFilterPanel"
             aria-expanded="<?= ($request->getGet('search') !== null || $request->getGet('followed_up') !== null) ? 'true' : 'false' ?>"
             aria-controls="guestsFilterPanel">
-            <i class="bi bi-funnel"></i> <?= lang('App.filter') ?>
+            <i class="bi bi-funnel" aria-hidden="true"></i> <?= lang('App.filter') ?>
         </button>
     </div>
     <div id="guestsFilterPanel" class="collapse <?= ($request->getGet('search') !== null || $request->getGet('followed_up') !== null) ? 'show' : '' ?>">
@@ -73,7 +73,7 @@ $formatLocalizedDate = static function (?string $value, string $pattern, string 
                     </div>
                     <div class="col-md-2">
                         <button type="submit" class="btn btn-primary w-100">
-                            <i class="bi bi-search"></i> <?= lang('App.filter') ?>
+                            <i class="bi bi-search" aria-hidden="true"></i> <?= lang('App.filter') ?>
                         </button>
                     </div>
                 </div>
@@ -88,12 +88,12 @@ $formatLocalizedDate = static function (?string $value, string $pattern, string 
             <table class="table table-hover">
                 <thead>
                     <tr>
-                        <th><?= lang('Guests.colName') ?></th>
-                        <th><?= lang('Guests.colContact') ?></th>
-                        <th><?= lang('Guests.colVisitDate') ?></th>
-                        <th><?= lang('Guests.colFollowUp') ?></th>
-                        <th><?= lang('Guests.colService') ?></th>
-                        <th><?= lang('App.colActions') ?></th>
+                        <th scope="col"><?= lang('Guests.colName') ?></th>
+                        <th scope="col"><?= lang('Guests.colContact') ?></th>
+                        <th scope="col"><?= lang('Guests.colVisitDate') ?></th>
+                        <th scope="col"><?= lang('Guests.colFollowUp') ?></th>
+                        <th scope="col"><?= lang('Guests.colService') ?></th>
+                        <th scope="col"><?= lang('App.colActions') ?></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -137,18 +137,18 @@ $formatLocalizedDate = static function (?string $value, string $pattern, string 
                                             data-bs-toggle="dropdown"
                                             aria-expanded="false"
                                             title="<?= esc(lang('App.colActions')) ?>">
-                                            <i class="bi bi-three-dots-vertical"></i>
+                                            <i class="bi bi-three-dots-vertical" aria-hidden="true"></i>
                                         </button>
                                         <ul class="dropdown-menu dropdown-menu-end shadow-sm">
                                             <li>
                                                 <a class="dropdown-item" href="<?= base_url('guests/view/' . $guest['id']) ?>">
-                                                    <i class="bi bi-eye me-2"></i><?= lang('App.view') ?>
+                                                    <i class="bi bi-eye me-2" aria-hidden="true"></i><?= lang('App.view') ?>
                                                 </a>
                                             </li>
                                             <?php if (auth()->user()->can('guest.edit')): ?>
                                                 <li>
                                                     <a class="dropdown-item" href="<?= base_url('guests/edit/' . $guest['id']) ?>">
-                                                        <i class="bi bi-pencil me-2"></i><?= lang('App.edit') ?>
+                                                        <i class="bi bi-pencil me-2" aria-hidden="true"></i><?= lang('App.edit') ?>
                                                     </a>
                                                 </li>
                                             <?php endif; ?>
@@ -164,7 +164,7 @@ $formatLocalizedDate = static function (?string $value, string $pattern, string 
                                                         data-guest-id="<?= $guest['id'] ?>"
                                                         data-guest-name="<?= esc($guest['first_name'] . ' ' . $guest['last_name']) ?>"
                                                         data-pending-sequences="<?= (int) ($progressMap[(int) ($guest['person_id'] ?? 0)]['pending'] ?? 0) ?>">
-                                                        <i class="bi bi-trash me-2"></i><?= lang('App.delete') ?>
+                                                        <i class="bi bi-trash me-2" aria-hidden="true"></i><?= lang('App.delete') ?>
                                                     </button>
                                                 </li>
                                             <?php endif; ?>
@@ -197,7 +197,7 @@ $formatLocalizedDate = static function (?string $value, string $pattern, string 
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="guestDeleteModalLabel">
-                    <i class="bi bi-trash3 me-2 text-danger"></i><?= esc(lang('Guests.deleteModalTitle')) ?>
+                    <i class="bi bi-trash3 me-2 text-danger" aria-hidden="true"></i><?= esc(lang('Guests.deleteModalTitle')) ?>
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
@@ -208,12 +208,12 @@ $formatLocalizedDate = static function (?string $value, string $pattern, string 
                 </p>
 
                 <div id="guestDeleteSequenceWarning" class="alert alert-warning d-none py-2 mt-2" role="alert">
-                    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                    <i class="bi bi-exclamation-triangle-fill me-2" aria-hidden="true"></i>
                     <span id="guestDeleteSequenceMsg"></span>
                 </div>
 
                 <p class="text-danger small mt-3 mb-2">
-                    <i class="bi bi-exclamation-circle me-1"></i>
+                    <i class="bi bi-exclamation-circle me-1" aria-hidden="true"></i>
                     <?= esc(lang('Guests.deleteModalWarningIrreversible')) ?>
                 </p>
 
@@ -232,7 +232,7 @@ $formatLocalizedDate = static function (?string $value, string $pattern, string 
                     <?= esc(lang('App.cancel')) ?>
                 </button>
                 <button type="button" class="btn btn-danger" id="guestDeleteConfirmBtn" disabled>
-                    <i class="bi bi-trash3 me-1"></i><?= esc(lang('Guests.deleteConfirmBtn')) ?>
+                    <i class="bi bi-trash3 me-1" aria-hidden="true"></i><?= esc(lang('Guests.deleteConfirmBtn')) ?>
                 </button>
             </div>
         </div>
@@ -350,13 +350,13 @@ $formatLocalizedDate = static function (?string $value, string $pattern, string 
                         } else {
                             showAppToast(contractErrorMessage(data, errFallback), 'danger');
                             confirmBtn.disabled = false;
-                            confirmBtn.innerHTML = '<i class="bi bi-trash3 me-1"></i><?= esc(lang('Guests.deleteConfirmBtn'), 'js') ?>';
+                            confirmBtn.innerHTML = '<i class="bi bi-trash3 me-1" aria-hidden="true"></i><?= esc(lang('Guests.deleteConfirmBtn'), 'js') ?>';
                         }
                     })
                     .catch(function() {
                         showAppToast(errFallback, 'danger');
                         confirmBtn.disabled = false;
-                        confirmBtn.innerHTML = '<i class="bi bi-trash3 me-1"></i><?= esc(lang('Guests.deleteConfirmBtn'), 'js') ?>';
+                        confirmBtn.innerHTML = '<i class="bi bi-trash3 me-1" aria-hidden="true"></i><?= esc(lang('Guests.deleteConfirmBtn'), 'js') ?>';
                     });
             });
         }

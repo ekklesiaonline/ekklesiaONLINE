@@ -13,7 +13,7 @@ if (!in_array($selectedPerPage, [25, 50, 100], true)) {
 <div class="d-flex justify-content-start align-items-center mb-3">
     <?php if (auth()->user()->can('volunteer.manage')): ?>
         <a href="<?= base_url('volunteers/createTeam') ?>" class="btn btn-outline-primary">
-            <i class="bi bi-plus-circle"></i> <?= lang('Volunteer.createTeam') ?>
+            <i class="bi bi-plus-circle" aria-hidden="true"></i> <?= lang('Volunteer.createTeam') ?>
         </a>
     <?php endif; ?>
 </div>
@@ -45,7 +45,7 @@ if (!in_array($selectedPerPage, [25, 50, 100], true)) {
                         <hr>
                         <div class="d-flex justify-content-between align-items-center">
                             <span class="text-muted small">
-                                <i class="bi bi-people"></i> <?= lang('Volunteer.membersCount', [(int) ($team['member_count'] ?? 0)]) ?>
+                                <i class="bi bi-people" aria-hidden="true"></i> <?= lang('Volunteer.membersCount', [(int) ($team['member_count'] ?? 0)]) ?>
                             </span>
                             <a href="<?= base_url('volunteers/viewTeam/' . $team['id']) ?>" class="btn btn-sm btn-outline-primary">
                                 <?= lang('Volunteer.viewTeam') ?>
@@ -59,7 +59,7 @@ if (!in_array($selectedPerPage, [25, 50, 100], true)) {
         <div class="col-12">
             <div class="card">
                 <div class="card-body text-center text-muted py-5">
-                    <i class="bi bi-people display-1"></i>
+                    <i class="bi bi-people display-1" aria-hidden="true"></i>
                     <p class="mt-3"><?= lang('Volunteer.noTeamsYet') ?></p>
                 </div>
             </div>

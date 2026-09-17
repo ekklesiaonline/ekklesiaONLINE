@@ -8,7 +8,7 @@
         <div class="card shadow-sm border-0">
             <div class="card-header bg-warning-subtle">
                 <h4 class="mb-0">
-                    <i class="bi bi-shield-lock me-2"></i>
+                    <i class="bi bi-shield-lock me-2" aria-hidden="true"></i>
                     <?= lang('Auth.verifyNewDeviceHeading') ?>
                 </h4>
             </div>

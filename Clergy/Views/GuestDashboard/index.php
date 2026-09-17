@@ -250,7 +250,7 @@ $kpiTile = static function (
     <div class="col-lg-7">
         <div class="card shadow-sm h-100">
             <div class="card-header d-flex justify-content-between align-items-center">
-                <span><i class="bi bi-clock-history me-1"></i><?= lang('Guests.pageTitle') ?></span>
+                <span><i class="bi bi-clock-history me-1" aria-hidden="true"></i><?= lang('Guests.pageTitle') ?></span>
                 <a href="<?= base_url('guests') ?>" class="btn btn-sm btn-outline-primary">
                     <?= lang('App.viewAll') ?>
                 </a>
@@ -258,7 +258,7 @@ $kpiTile = static function (
             <div class="card-body p-0">
                 <?php if (empty($recentGuests)): ?>
                     <p class="text-muted text-center py-4 mb-0">
-                        <i class="bi bi-people fs-2 d-block mb-2"></i>
+                        <i class="bi bi-people fs-2 d-block mb-2" aria-hidden="true"></i>
                         <?= lang('Guests.noGuestsFound') ?>
                     </p>
                 <?php else: ?>
@@ -266,9 +266,9 @@ $kpiTile = static function (
                         <table class="table table-hover align-middle mb-0">
                             <thead>
                                 <tr>
-                                    <th><?= lang('Guests.colName') ?></th>
-                                    <th><?= lang('Guests.colVisitDate') ?></th>
-                                    <th><?= lang('Guests.colStatus') ?></th>
+                                    <th scope="col"><?= lang('Guests.colName') ?></th>
+                                    <th scope="col"><?= lang('Guests.colVisitDate') ?></th>
+                                    <th scope="col"><?= lang('Guests.colStatus') ?></th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -317,7 +317,7 @@ $kpiTile = static function (
         <div class="col-lg-5">
             <div class="card shadow-sm h-100">
                 <div class="card-header d-flex justify-content-between align-items-center">
-                    <span><i class="bi bi-telephone me-1"></i><?= lang('Guests.hubLinkCallTasks') ?></span>
+                    <span><i class="bi bi-telephone me-1" aria-hidden="true"></i><?= lang('Guests.hubLinkCallTasks') ?></span>
                     <?php if ($pendingCalls > 0): ?>
                         <span class="badge border border-warning text-warning fw-normal">
                             <?= (int) $pendingCalls ?>
@@ -327,7 +327,7 @@ $kpiTile = static function (
                 <div class="card-body p-0">
                     <?php if (empty($pendingCallTasks)): ?>
                         <p class="text-muted text-center py-4 mb-0">
-                            <i class="bi bi-telephone-x fs-2 d-block mb-2"></i>
+                            <i class="bi bi-telephone-x fs-2 d-block mb-2" aria-hidden="true"></i>
                             <?= lang('Guests.callTasksEmpty') ?>
                         </p>
                     <?php else: ?>
@@ -343,8 +343,9 @@ $kpiTile = static function (
                                         </div>
                                     </div>
                                     <a href="<?= base_url('followup-workflow/call-tasks') ?>"
-                                        class="btn btn-sm btn-outline-warning">
-                                        <i class="bi bi-telephone"></i>
+                                        class="btn btn-sm btn-outline-warning"
+                                        aria-label="<?= esc(lang('Guests.hubLinkCallTasks')) ?>">
+                                        <i class="bi bi-telephone" aria-hidden="true"></i>
                                     </a>
                                 </li>
                             <?php endforeach; ?>

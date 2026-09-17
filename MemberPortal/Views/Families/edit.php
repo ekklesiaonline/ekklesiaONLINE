@@ -34,7 +34,7 @@ $formatLocalizedDate = static function (?string $value, string $pattern, string 
 
 <div class="d-flex justify-content-start align-items-center mb-3">
     <a href="<?= base_url('families') ?>" class="btn btn-secondary">
-        <i class="bi bi-arrow-left"></i> <?= lang('Families.backToList') ?>
+        <i class="bi bi-arrow-left" aria-hidden="true"></i> <?= lang('Families.backToList') ?>
     </a>
 </div>
 
@@ -89,7 +89,7 @@ $formatLocalizedDate = static function (?string $value, string $pattern, string 
 
                     <div class="d-flex gap-2">
                         <button type="submit" class="btn btn-primary">
-                            <i class="bi bi-floppy"></i> <?= lang('Families.updateFamily') ?>
+                            <i class="bi bi-floppy" aria-hidden="true"></i> <?= lang('Families.updateFamily') ?>
                         </button>
                         <a href="<?= base_url('families/view/' . $family['id']) ?>" class="btn btn-secondary"><?= lang('App.cancel') ?></a>
                     </div>
@@ -102,13 +102,13 @@ $formatLocalizedDate = static function (?string $value, string $pattern, string 
         <div class="card bg-light">
             <div class="card-body">
                 <h6 class="card-title">
-                    <i class="bi bi-info-circle"></i> <?= lang('Families.editingFamily') ?>
+                    <i class="bi bi-info-circle" aria-hidden="true"></i> <?= lang('Families.editingFamily') ?>
                 </h6>
                 <p class="card-text small">
                     <?= lang('Families.editingFamilyHelp') ?>
                 </p>
                 <a href="<?= base_url('families/view/' . $family['id']) ?>" class="btn btn-sm btn-info">
-                    <i class="bi bi-eye"></i> <?= lang('Families.viewFamilyDetails') ?>
+                    <i class="bi bi-eye" aria-hidden="true"></i> <?= lang('Families.viewFamilyDetails') ?>
                 </a>
             </div>
         </div>

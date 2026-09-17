@@ -4,7 +4,7 @@
 
 <div class="d-flex justify-content-start align-items-center mb-3">
     <a href="<?= base_url('families') ?>" class="btn btn-secondary">
-        <i class="bi bi-arrow-left"></i> <?= lang('Families.backToList') ?>
+        <i class="bi bi-arrow-left" aria-hidden="true"></i> <?= lang('Families.backToList') ?>
     </a>
 </div>
 
@@ -59,7 +59,7 @@
 
                     <div class="d-flex gap-2">
                         <button type="submit" class="btn btn-primary">
-                            <i class="bi bi-floppy"></i> <?= lang('Families.create') ?>
+                            <i class="bi bi-floppy" aria-hidden="true"></i> <?= lang('Families.create') ?>
                         </button>
                         <a href="<?= base_url('families') ?>" class="btn btn-secondary"><?= lang('App.cancel') ?></a>
                     </div>
@@ -72,7 +72,7 @@
         <div class="card bg-light">
             <div class="card-body">
                 <h6 class="card-title">
-                    <i class="bi bi-info-circle"></i> <?= lang('Families.familyManagement') ?>
+                    <i class="bi bi-info-circle" aria-hidden="true"></i> <?= lang('Families.familyManagement') ?>
                 </h6>
                 <p class="card-text small">
                     <?= lang('Families.familyManagementIntro') ?>

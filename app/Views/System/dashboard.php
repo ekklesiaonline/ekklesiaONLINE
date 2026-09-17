@@ -83,7 +83,7 @@ $auditEventCount = $has_audit_logs_table ? (int) ($audit_event_count ?? 0) : 0;
         <strong><?= lang('System.sectionManageProvinces') ?></strong>
         <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal"
             data-bs-target="#addProvinceModal">
-            <i class="bi bi-plus-circle me-1"></i><?= lang('System.btnCreateProvince') ?>
+            <i class="bi bi-plus-circle me-1" aria-hidden="true"></i><?= lang('System.btnCreateProvince') ?>
         </button>
     </div>
     <div class="card-body p-0">
@@ -91,12 +91,12 @@ $auditEventCount = $has_audit_logs_table ? (int) ($audit_event_count ?? 0) : 0;
             <table class="table table-sm table-hover align-middle mb-0">
                 <thead>
                     <tr>
-                        <th><?= lang('System.provinceNumber') ?></th>
-                        <th><?= lang('System.provinceName') ?></th>
-                        <th><?= lang('System.sortOrder') ?></th>
-                        <th><?= lang('System.totalDioceses') ?></th>
-                        <th><?= lang('System.totalParishes') ?></th>
-                        <th class="text-end"><?= lang('App.colActions') ?></th>
+                        <th scope="col"><?= lang('System.provinceNumber') ?></th>
+                        <th scope="col"><?= lang('System.provinceName') ?></th>
+                        <th scope="col"><?= lang('System.sortOrder') ?></th>
+                        <th scope="col"><?= lang('System.totalDioceses') ?></th>
+                        <th scope="col"><?= lang('System.totalParishes') ?></th>
+                        <th scope="col" class="text-end"><?= lang('App.colActions') ?></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -118,7 +118,7 @@ $auditEventCount = $has_audit_logs_table ? (int) ($audit_event_count ?? 0) : 0;
                                     data-name="<?= esc((string) ($province['name'] ?? ''), 'attr') ?>"
                                     data-sort-order="<?= esc((string) ($province['sort_order'] ?? 0), 'attr') ?>"
                                     title="<?= esc(lang('App.edit')) ?>">
-                                    <i class="bi bi-pencil"></i>
+                                    <i class="bi bi-pencil" aria-hidden="true"></i>
                                 </button>
                                 <form action="<?= base_url('system/provinces/delete/' . (int) $province['id']) ?>"
                                     method="post" class="d-inline"
@@ -126,7 +126,7 @@ $auditEventCount = $has_audit_logs_table ? (int) ($audit_event_count ?? 0) : 0;
                                     data-confirm-body="<?= esc(lang('System.confirmDeleteProvince'), 'attr') ?>">
                                     <?= csrf_field() ?>
                                     <button class="btn btn-sm btn-outline-danger" type="submit"
-                                        title="<?= esc(lang('App.delete')) ?>"><i class="bi bi-trash3"></i></button>
+                                        title="<?= esc(lang('App.delete')) ?>"><i class="bi bi-trash3" aria-hidden="true"></i></button>
                                 </form>
                             </td>
                         </tr>
@@ -153,7 +153,7 @@ $auditEventCount = $has_audit_logs_table ? (int) ($audit_event_count ?? 0) : 0;
             </form>
             <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal"
                 data-bs-target="#addDioceseModal">
-                <i class="bi bi-plus-circle me-1"></i><?= lang('System.btnCreateDiocese') ?>
+                <i class="bi bi-plus-circle me-1" aria-hidden="true"></i><?= lang('System.btnCreateDiocese') ?>
             </button>
         </div>
     </div>
@@ -162,10 +162,10 @@ $auditEventCount = $has_audit_logs_table ? (int) ($audit_event_count ?? 0) : 0;
             <table class="table table-sm table-hover align-middle mb-0">
                 <thead>
                     <tr>
-                        <th><?= lang('System.provinceName') ?></th>
-                        <th><?= lang('System.dioceseName') ?></th>
-                        <th><?= lang('System.totalParishes') ?></th>
-                        <th class="text-end"><?= lang('App.colActions') ?></th>
+                        <th scope="col"><?= lang('System.provinceName') ?></th>
+                        <th scope="col"><?= lang('System.dioceseName') ?></th>
+                        <th scope="col"><?= lang('System.totalParishes') ?></th>
+                        <th scope="col" class="text-end"><?= lang('App.colActions') ?></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -182,7 +182,7 @@ $auditEventCount = $has_audit_logs_table ? (int) ($audit_event_count ?? 0) : 0;
                                     data-province-id="<?= (int) ($diocese['province_id'] ?? 0) ?>"
                                     data-name="<?= esc((string) ($diocese['name'] ?? ''), 'attr') ?>"
                                     title="<?= esc(lang('App.edit')) ?>">
-                                    <i class="bi bi-pencil"></i>
+                                    <i class="bi bi-pencil" aria-hidden="true"></i>
                                 </button>
                                 <form action="<?= base_url('system/dioceses/delete/' . (int) $diocese['id']) ?>"
                                     method="post" class="d-inline"
@@ -209,7 +209,7 @@ $auditEventCount = $has_audit_logs_table ? (int) ($audit_event_count ?? 0) : 0;
             <div class="card-header d-flex justify-content-between align-items-center">
                 <strong><?= lang('App.navMissionOutcomes') ?></strong>
                 <a href="<?= base_url('system/mission-outcomes') ?>" class="btn btn-sm btn-outline-primary">
-                    <i class="bi bi-graph-up-arrow me-1"></i><?= lang('System.openMissionOutcomes') ?>
+                    <i class="bi bi-graph-up-arrow me-1" aria-hidden="true"></i><?= lang('System.openMissionOutcomes') ?>
                 </a>
             </div>
             <div class="card-body">
@@ -223,7 +223,7 @@ $auditEventCount = $has_audit_logs_table ? (int) ($audit_event_count ?? 0) : 0;
             <div class="card-header d-flex justify-content-between align-items-center">
                 <strong><?= lang('App.navSystemOverview') ?></strong>
                 <a href="<?= base_url('system/overview') ?>" class="btn btn-sm btn-outline-secondary">
-                    <i class="bi bi-speedometer me-1"></i><?= lang('App.navSystemOverview') ?>
+                    <i class="bi bi-speedometer me-1" aria-hidden="true"></i><?= lang('App.navSystemOverview') ?>
                 </a>
             </div>
             <div class="card-body">

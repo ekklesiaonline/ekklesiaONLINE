@@ -20,15 +20,15 @@
 <!-- Top action row -->
 <div class="d-flex justify-content-start align-items-center mb-3 gap-2">
     <a href="<?= base_url('guests') ?>" class="btn btn-outline-secondary btn-sm">
-        <i class="bi bi-arrow-left"></i> Guests
+        <i class="bi bi-arrow-left" aria-hidden="true"></i> Guests
     </a>
     <a href="<?= base_url('guests/reports/roi-second-visit?start_date=' . esc($report_start_date, 'url') . '&end_date=' . esc($report_end_date, 'url')) ?>"
         class="btn btn-outline-primary btn-sm">
-        <i class="bi bi-bar-chart-line"></i> ROI Report
+        <i class="bi bi-bar-chart-line" aria-hidden="true"></i> ROI Report
     </a>
     <a href="<?= base_url('guests/reports/export-csv/followup-completion?start_date=' . esc($report_start_date, 'url') . '&end_date=' . esc($report_end_date, 'url')) ?>"
         class="btn btn-outline-success btn-sm ms-auto">
-        <i class="bi bi-download"></i> Export CSV
+        <i class="bi bi-download" aria-hidden="true"></i> Export CSV
     </a>
 </div>
 
@@ -52,11 +52,11 @@
             </div>
             <div class="col-auto">
                 <button type="submit" class="btn btn-primary btn-sm">
-                    <i class="bi bi-funnel"></i> Apply
+                    <i class="bi bi-funnel" aria-hidden="true"></i> Apply
                 </button>
             </div>
             <div class="col-auto ms-auto text-muted small align-self-end pb-1">
-                <i class="bi bi-calendar3"></i>
+                <i class="bi bi-calendar3" aria-hidden="true"></i>
                 <?= esc($report_start_date) ?> – <?= esc($report_end_date) ?>
             </div>
         </form>
@@ -65,7 +65,7 @@
 
 <?php if (empty($rows)): ?>
     <div class="alert alert-info">
-        <i class="bi bi-info-circle me-2"></i>
+        <i class="bi bi-info-circle me-2" aria-hidden="true"></i>
         No followup log data found for the selected date range.
     </div>
 <?php else: ?>
@@ -73,7 +73,7 @@
     <!-- Bar chart -->
     <div class="card mb-4">
         <div class="card-header d-flex align-items-center gap-2">
-            <i class="bi bi-bar-chart-fill text-primary"></i>
+            <i class="bi bi-bar-chart-fill text-primary" aria-hidden="true"></i>
             <span class="fw-semibold">Action Completion Rate by Sequence Week</span>
             <small class="text-muted ms-auto">% of scheduled actions marked sent</small>
         </div>
@@ -87,7 +87,7 @@
     <!-- Detail table -->
     <div class="card">
         <div class="card-header d-flex align-items-center gap-2">
-            <i class="bi bi-table text-secondary"></i>
+            <i class="bi bi-table text-secondary" aria-hidden="true"></i>
             <span class="fw-semibold">Week-by-Week Detail</span>
         </div>
         <div class="table-responsive">

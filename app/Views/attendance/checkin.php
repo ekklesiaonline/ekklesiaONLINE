@@ -5,7 +5,7 @@
     <div class="col-lg-8 mx-auto">
         <div class="card shadow-sm">
             <div class="card-header d-flex justify-content-between align-items-center">
-                <h5 class="mb-0"><i class="bi bi-person-check"></i> Check-in</h5>
+                <h5 class="mb-0"><i class="bi bi-person-check" aria-hidden="true"></i> Check-in</h5>
                 <span class="badge text-bg-primary">Kiosk Mode</span>
             </div>
             <div class="card-body">

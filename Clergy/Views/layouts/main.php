@@ -351,7 +351,7 @@
             <div class="modal-content">
                 <div class="modal-header bg-warning-subtle">
                     <h5 class="modal-title" id="sessionExpiryModalLabel">
-                        <i class="bi bi-clock-history me-2 text-warning"></i>
+                        <i class="bi bi-clock-history me-2 text-warning" aria-hidden="true"></i>
                         <?= lang('App.sessionExpiringTitle') ?>
                     </h5>
                 </div>
@@ -367,7 +367,7 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-primary" id="sessionStayLoggedInBtn">
-                        <i class="bi bi-check-circle me-1"></i>
+                        <i class="bi bi-check-circle me-1" aria-hidden="true"></i>
                         <?= lang('App.sessionStayLoggedIn', [], null, 'Stay Logged In') ?>
                     </button>
                 </div>
@@ -442,7 +442,7 @@
                 ?>
                 <!-- Top Navbar -->
                 <div class="top-header-bar d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom px-3 sticky-top">
-                    <h1 class="h4 top-header-title"><i class="bi bi-speedometer2 me-2"></i><?= esc($headerTitle) ?></h1>
+                    <h1 class="h4 top-header-title"><i class="bi bi-speedometer2 me-2" aria-hidden="true"></i><?= esc($headerTitle) ?></h1>
                     <div class="btn-toolbar mb-2 mb-md-0">
                         <div class="top-header-meta ms-auto">
                             <!-- Pending calls badge – populated by the JS poller below -->
@@ -451,16 +451,16 @@
                                 class="btn btn-sm btn-outline-warning d-none"
                                 title="<?= esc(lang('App.pendingCallsBadgeTitle')) ?>"
                                 aria-label="<?= esc(lang('App.pendingCallsAriaLabelSingle')) ?>">
-                                <i class="bi bi-telephone-fill"></i>
+                                <i class="bi bi-telephone-fill" aria-hidden="true"></i>
                                 <span id="pendingCallsCount"></span>
                             </a>
                             <button type="button" class="btn btn-outline-secondary btn-sm theme-toggle-btn" id="themeToggleBtn" aria-label="Toggle color theme">
-                                <i class="bi bi-moon-stars" id="themeToggleIcon"></i>
+                                <i class="bi bi-moon-stars" id="themeToggleIcon" aria-hidden="true"></i>
                                 <span id="themeToggleLabel"><?= lang('App.themeDark') ?></span>
                             </button>
                             <div class="dropdown">
                                 <button class="btn btn-outline-secondary btn-sm dropdown-toggle language-toggle-btn" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Change language">
-                                    <i class="bi bi-person-circle"></i>
+                                    <i class="bi bi-person-circle" aria-hidden="true"></i>
                                     <span class="language-flag"><?= esc($localeMap[$activeLocale]['flag']) ?></span>
                                     <span><?= esc($localeMap[$activeLocale]['label']) ?></span>
                                 </button>
@@ -468,7 +468,7 @@
                                     <?php foreach ($localeMap as $localeCode => $localeMeta): ?>
                                         <li>
                                             <a class="dropdown-item <?= $activeLocale === $localeCode ? 'active' : '' ?>" href="<?= base_url('locale/set/' . $localeCode . '?return=' . rawurlencode(current_url() . ((string) service('request')->getServer('QUERY_STRING') !== '' ? ('?' . (string) service('request')->getServer('QUERY_STRING')) : ''))) ?>">
-                                                <i class="bi bi-person-circle"></i>
+                                                <i class="bi bi-person-circle" aria-hidden="true"></i>
                                                 <span class="language-flag"><?= esc($localeMeta['flag']) ?></span>
                                                 <span><?= esc($localeMeta['name']) ?></span>
                                             </a>
@@ -480,7 +480,7 @@
                                 <i class="bi <?= esc($scopeIcon) ?>"></i> <?= esc($scopeName) ?>
                             </span>
                             <span class="text-muted">
-                                <i class="bi bi-person-circle"></i> <?= esc($loggedInName) ?>
+                                <i class="bi bi-person-circle" aria-hidden="true"></i> <?= esc($loggedInName) ?>
                                 <?php if (!empty($role_label)): ?>
                                     <span class="badge text-bg-secondary ms-1" title="<?= esc(lang('App.roleBadgeTitle')) ?>"><?= esc($role_label) ?></span>
                                 <?php endif; ?>

@@ -119,7 +119,7 @@ $formatLocalizedDateTime = static function (?string $value, string $locale): str
                     <div class="d-flex flex-column gap-2">
                         <?php foreach (($attachments ?? []) as $attachment): ?>
                             <a href="<?= base_url('media/event-attachment/' . (int) ($attachment['id'] ?? 0)) ?>" class="btn btn-outline-secondary justify-content-start" target="_blank" rel="noopener noreferrer">
-                                <i class="bi <?= ($attachment['attachment_type'] ?? '') === 'image' ? 'bi-image' : 'bi-paperclip' ?>"></i>
+                                <i class="bi <?= ($attachment['attachment_type'] ?? '') === 'image' ? 'bi-image' : 'bi-paperclip' ?>" aria-hidden="true"></i>
                                 <span class="ms-2"><?= esc((string) ($attachment['original_name'] ?? '')) ?></span>
                             </a>
                         <?php endforeach; ?>
@@ -138,11 +138,11 @@ $formatLocalizedDateTime = static function (?string $value, string $locale): str
                     <table class="table table-hover">
                         <thead>
                             <tr>
-                                <th><?= lang('Events.colParticipant') ?></th>
-                                <th><?= lang('Events.colContact') ?></th>
-                                <th><?= lang('Events.colStatus') ?></th>
-                                <th><?= lang('Events.colRegistered') ?></th>
-                                <th><?= lang('Events.colAction') ?></th>
+                                <th scope="col"><?= lang('Events.colParticipant') ?></th>
+                                <th scope="col"><?= lang('Events.colContact') ?></th>
+                                <th scope="col"><?= lang('Events.colStatus') ?></th>
+                                <th scope="col"><?= lang('Events.colRegistered') ?></th>
+                                <th scope="col"><?= lang('Events.colAction') ?></th>
                             </tr>
                         </thead>
                         <tbody>

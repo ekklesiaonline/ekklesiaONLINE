@@ -5,7 +5,7 @@
     <div class="col-lg-8">
         <div class="card shadow-sm">
             <div class="card-header">
-                <h5 class="mb-0"><i class="bi bi-list-check"></i> Manual Attendance Entry</h5>
+                <h5 class="mb-0"><i class="bi bi-list-check" aria-hidden="true"></i> Manual Attendance Entry</h5>
             </div>
             <div class="card-body">
                 <form id="bulkAttendanceForm" method="post" action="<?= base_url('attendance/bulk') ?>">
@@ -73,10 +73,10 @@
                     <table class="table table-sm mb-0 align-middle">
                         <thead class="sticky-top">
                             <tr>
-                                <th>Member</th>
-                                <th class="text-center">A</th>
-                                <th class="text-center">C</th>
-                                <th class="text-end">Actions</th>
+                                <th scope="col">Member</th>
+                                <th scope="col" class="text-center">A</th>
+                                <th scope="col" class="text-center">C</th>
+                                <th scope="col" class="text-end">Actions</th>
                             </tr>
                         </thead>
                         <tbody id="recentAttendanceRows">

@@ -6,7 +6,7 @@
     <h4><?= lang('Dashboard.vestryMeetings') ?></h4>
     <?php if (!empty($can_manage)): ?>
         <a href="<?= base_url('vestry/create') ?>" class="btn btn-primary btn-sm">
-            <i class="bi bi-plus-circle"></i> New Meeting
+            <i class="bi bi-plus-circle" aria-hidden="true"></i> New Meeting
         </a>
     <?php endif; ?>
 </div>
@@ -18,9 +18,9 @@
             <table class="table table-sm table-hover">
                 <thead>
                     <tr>
-                        <th>Date</th>
-                        <th>Type</th>
-                        <th></th>
+                        <th scope="col">Date</th>
+                        <th scope="col">Type</th>
+                        <th scope="col"></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -33,7 +33,7 @@
                             </td>
                             <td>
                                 <a href="<?= base_url('vestry/view/' . (int) ($meeting['id'] ?? 0)) ?>" class="btn btn-sm btn-outline-secondary">
-                                    <i class="bi bi-eye"></i> View
+                                    <i class="bi bi-eye" aria-hidden="true"></i> View
                                 </a>
                             </td>
                         </tr>

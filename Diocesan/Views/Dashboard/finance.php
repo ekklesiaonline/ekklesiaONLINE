@@ -57,7 +57,7 @@ $currentPeriodLabel = $periodLabels[$current_period] ?? $current_period;
             data-bs-target="#financeFilterPanel"
             aria-expanded="<?= $current_period === 'custom' ? 'true' : 'false' ?>"
             aria-controls="financeFilterPanel">
-            <i class="bi bi-funnel"></i> <?= lang('App.filter') ?>
+            <i class="bi bi-funnel" aria-hidden="true"></i> <?= lang('App.filter') ?>
         </button>
     </div>
     <div id="financeFilterPanel" class="collapse <?= $current_period === 'custom' ? 'show' : '' ?>">
@@ -83,7 +83,7 @@ $currentPeriodLabel = $periodLabels[$current_period] ?? $current_period;
                 </div>
                 <div class="col-md-3 d-flex align-items-end">
                     <button type="submit" class="btn btn-primary w-100">
-                        <i class="bi bi-funnel"></i> <?= lang('Dashboard.applyFilter') ?>
+                        <i class="bi bi-funnel" aria-hidden="true"></i> <?= lang('Dashboard.applyFilter') ?>
                     </button>
                 </div>
             </form>
@@ -101,7 +101,7 @@ $currentPeriodLabel = $periodLabels[$current_period] ?? $current_period;
                         <h3 class="mb-0 text-success" id="financeTileIncome">$<?= number_format($total_income, 2) ?></h3>
                     </div>
                     <div class="text-success fs-1">
-                        <i class="bi bi-arrow-down-circle"></i>
+                        <i class="bi bi-arrow-down-circle" aria-hidden="true"></i>
                     </div>
                 </div>
             </div>
@@ -116,7 +116,7 @@ $currentPeriodLabel = $periodLabels[$current_period] ?? $current_period;
                         <h3 class="mb-0 text-danger" id="financeTileExpenses">$<?= number_format($total_expenses, 2) ?></h3>
                     </div>
                     <div class="text-danger fs-1">
-                        <i class="bi bi-arrow-up-circle"></i>
+                        <i class="bi bi-arrow-up-circle" aria-hidden="true"></i>
                     </div>
                 </div>
             </div>
@@ -132,7 +132,7 @@ $currentPeriodLabel = $periodLabels[$current_period] ?? $current_period;
                         <small class="text-muted" id="financeTileNetStatus"><?= $net_amount >= 0 ? lang('Dashboard.surplusLabel') : lang('Dashboard.deficitLabel') ?></small>
                     </div>
                     <div class="<?= $net_amount >= 0 ? 'text-primary' : 'text-warning' ?> fs-1">
-                        <i class="bi bi-cash-coin"></i>
+                        <i class="bi bi-cash-coin" aria-hidden="true"></i>
                     </div>
                 </div>
             </div>
@@ -144,7 +144,7 @@ $currentPeriodLabel = $periodLabels[$current_period] ?? $current_period;
     <div class="col-md-6">
         <div class="card h-100">
             <div class="card-header">
-                <h5 class="mb-0"><i class="bi bi-cash-stack"></i> <?= lang('Dashboard.financialSummaryPeriod', [$currentPeriodLabel]) ?></h5>
+                <h5 class="mb-0"><i class="bi bi-cash-stack" aria-hidden="true"></i> <?= lang('Dashboard.financialSummaryPeriod', [$currentPeriodLabel]) ?></h5>
             </div>
             <div class="card-body">
                 <div class="row">
@@ -181,7 +181,7 @@ $currentPeriodLabel = $periodLabels[$current_period] ?? $current_period;
     <div class="col-md-6">
         <div class="card h-100">
             <div class="card-header d-flex justify-content-between align-items-center">
-                <h5 class="mb-0"><i class="bi bi-bank"></i> <?= lang('Dashboard.periodSnapshot') ?></h5>
+                <h5 class="mb-0"><i class="bi bi-bank" aria-hidden="true"></i> <?= lang('Dashboard.periodSnapshot') ?></h5>
                 <a href="<?= base_url('parish_list') ?>" class="btn btn-sm btn-outline-primary"><?= lang('Dashboard.manageParishes') ?></a>
             </div>
             <div class="card-body">
@@ -210,7 +210,7 @@ $currentPeriodLabel = $periodLabels[$current_period] ?? $current_period;
     <div class="col-lg-6">
         <div class="card h-100">
             <div class="card-header">
-                <h5 class="mb-0"><i class="bi bi-bar-chart-line"></i> <?= lang('Dashboard.incomeVsExpensesByParish') ?></h5>
+                <h5 class="mb-0"><i class="bi bi-bar-chart-line" aria-hidden="true"></i> <?= lang('Dashboard.incomeVsExpensesByParish') ?></h5>
             </div>
             <div class="card-body">
                 <div class="finance-chart-wrap">
@@ -222,7 +222,7 @@ $currentPeriodLabel = $periodLabels[$current_period] ?? $current_period;
     <div class="col-lg-6">
         <div class="card h-100">
             <div class="card-header">
-                <h5 class="mb-0"><i class="bi bi-graph-up-arrow"></i> <?= lang('Dashboard.monthlyTrendLast12Months') ?></h5>
+                <h5 class="mb-0"><i class="bi bi-graph-up-arrow" aria-hidden="true"></i> <?= lang('Dashboard.monthlyTrendLast12Months') ?></h5>
             </div>
             <div class="card-body">
                 <div class="finance-chart-wrap">
@@ -237,7 +237,7 @@ $currentPeriodLabel = $periodLabels[$current_period] ?? $current_period;
     <div class="col-md-12">
         <div class="card">
             <div class="card-header d-flex justify-content-between align-items-center">
-                <h5 class="mb-0"><i class="bi bi-bar-chart"></i> <?= lang('Dashboard.parishesComparison') ?></h5>
+                <h5 class="mb-0"><i class="bi bi-bar-chart" aria-hidden="true"></i> <?= lang('Dashboard.parishesComparison') ?></h5>
                 <span class="text-muted small"><?= lang('Dashboard.incomeExpensesNetByParish') ?></span>
             </div>
             <div class="card-body">
@@ -245,10 +245,10 @@ $currentPeriodLabel = $periodLabels[$current_period] ?? $current_period;
                     <table class="table table-hover">
                         <thead>
                             <tr>
-                                <th><?= lang('Dashboard.parishLabel') ?></th>
-                                <th class="text-end"><?= lang('Dashboard.incomeLabel') ?></th>
-                                <th class="text-end"><?= lang('Dashboard.expenseLabel') ?></th>
-                                <th class="text-end"><?= lang('Dashboard.netLabel') ?></th>
+                                <th scope="col"><?= lang('Dashboard.parishLabel') ?></th>
+                                <th scope="col" class="text-end"><?= lang('Dashboard.incomeLabel') ?></th>
+                                <th scope="col" class="text-end"><?= lang('Dashboard.expenseLabel') ?></th>
+                                <th scope="col" class="text-end"><?= lang('Dashboard.netLabel') ?></th>
                             </tr>
                         </thead>
                         <tbody id="financeComparisonBody">

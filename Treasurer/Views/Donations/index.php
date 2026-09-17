@@ -6,7 +6,7 @@
     <div class="d-flex flex-wrap gap-2">
         <?php if (auth()->user()->can('donation.create')): ?>
             <a href="<?= base_url('donations/create') ?>" class="btn btn-primary">
-                <i class="bi bi-plus-circle"></i> <?= lang('Finance.recordDonation') ?>
+                <i class="bi bi-plus-circle" aria-hidden="true"></i> <?= lang('Finance.recordDonation') ?>
             </a>
         <?php endif; ?>
     </div>
@@ -108,7 +108,7 @@ $donationMethodLabelMap = [
             data-bs-target="#donationsFilterPanel"
             aria-expanded="<?= ($request->getGet('start_date') !== null || $request->getGet('end_date') !== null) ? 'true' : 'false' ?>"
             aria-controls="donationsFilterPanel">
-            <i class="bi bi-funnel"></i> <?= lang('App.filter') ?>
+            <i class="bi bi-funnel" aria-hidden="true"></i> <?= lang('App.filter') ?>
         </button>
     </div>
     <div id="donationsFilterPanel" class="collapse <?= ($request->getGet('start_date') !== null || $request->getGet('end_date') !== null) ? 'show' : '' ?>">
@@ -143,7 +143,7 @@ $donationMethodLabelMap = [
                     </div>
                     <div class="col-md-2">
                         <button type="submit" class="btn btn-primary w-100">
-                            <i class="bi bi-filter"></i> <?= lang('App.filter') ?>
+                            <i class="bi bi-filter" aria-hidden="true"></i> <?= lang('App.filter') ?>
                         </button>
                     </div>
                 </div>
@@ -203,10 +203,10 @@ $donationMethodLabelMap = [
         <div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-3">
             <div class="d-flex flex-wrap gap-2">
                 <a href="<?= base_url('donations/export' . (!empty($exportFilterParams) ? '?' . http_build_query($exportFilterParams) : '')) ?>" class="btn btn-outline-secondary btn-sm">
-                    <i class="bi bi-download"></i> <?= lang('Finance.exportCsv') ?>
+                    <i class="bi bi-download" aria-hidden="true"></i> <?= lang('Finance.exportCsv') ?>
                 </a>
                 <a href="<?= base_url('donations/export-pdf' . (!empty($exportFilterParams) ? '?' . http_build_query($exportFilterParams) : '')) ?>" class="btn btn-outline-secondary btn-sm" target="_blank" rel="noopener noreferrer">
-                    <i class="bi bi-file-earmark-pdf"></i> <?= lang('Finance.exportPdf') ?>
+                    <i class="bi bi-file-earmark-pdf" aria-hidden="true"></i> <?= lang('Finance.exportPdf') ?>
                 </a>
             </div>
             <span class="text-muted small"><?= lang('Treasurer.donationExportsRespectFilters') ?></span>
@@ -259,7 +259,7 @@ $donationMethodLabelMap = [
                     </div>
                     <div class="col-md-2">
                         <button type="submit" class="btn btn-outline-primary w-100">
-                            <i class="bi bi-receipt"></i> <?= lang('Finance.generatePdf') ?>
+                            <i class="bi bi-receipt" aria-hidden="true"></i> <?= lang('Finance.generatePdf') ?>
                         </button>
                     </div>
                 </form>
@@ -270,15 +270,15 @@ $donationMethodLabelMap = [
             <table class="table table-hover">
                 <thead>
                     <tr>
-                        <th><?= lang('App.colDate') ?></th>
-                        <th><?= lang('Finance.colDonor') ?></th>
-                        <th><?= lang('Finance.colFund') ?></th>
-                        <th><?= lang('Finance.colFundType') ?></th>
-                        <th><?= lang('Finance.colCategory') ?></th>
-                        <th><?= lang('Finance.colAmount') ?></th>
-                        <th><?= lang('Finance.colPaymentMethod') ?></th>
-                        <th><?= lang('Finance.colReceiptNumber') ?? 'Receipt' ?></th>
-                        <th><?= lang('App.colActions') ?></th>
+                        <th scope="col"><?= lang('App.colDate') ?></th>
+                        <th scope="col"><?= lang('Finance.colDonor') ?></th>
+                        <th scope="col"><?= lang('Finance.colFund') ?></th>
+                        <th scope="col"><?= lang('Finance.colFundType') ?></th>
+                        <th scope="col"><?= lang('Finance.colCategory') ?></th>
+                        <th scope="col"><?= lang('Finance.colAmount') ?></th>
+                        <th scope="col"><?= lang('Finance.colPaymentMethod') ?></th>
+                        <th scope="col"><?= lang('Finance.colReceiptNumber') ?? 'Receipt' ?></th>
+                        <th scope="col"><?= lang('App.colActions') ?></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -314,8 +314,8 @@ $donationMethodLabelMap = [
                                 <td>
                                     <div class="d-inline-flex flex-nowrap gap-1 align-items-center">
                                         <?php if (auth()->user()->can('donation.delete')): ?>
-                                            <button class="btn btn-sm btn-danger" onclick="deleteDonation(<?= $donation['id'] ?>)">
-                                                <i class="bi bi-trash"></i>
+                                            <button class="btn btn-sm btn-danger" onclick="deleteDonation(<?= $donation['id'] ?>)" aria-label="<?= esc(lang('App.delete')) ?>">
+                                                <i class="bi bi-trash" aria-hidden="true"></i>
                                             </button>
                                         <?php endif; ?>
                                     </div>

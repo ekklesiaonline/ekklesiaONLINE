@@ -63,36 +63,36 @@ if (!$canPortalAccessManage) {
     <div class="d-flex gap-2">
         <?php if (auth()->user()->can('member.create')): ?>
             <a href="<?= base_url('members/create') ?>" class="btn btn-outline-primary btn-sm">
-                <i class="bi bi-person-plus"></i> <?= lang('Services.addPerson') ?>
+                <i class="bi bi-person-plus" aria-hidden="true"></i> <?= lang('Services.addPerson') ?>
             </a>
             <button type="button" class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#createNonPortalPersonModal">
-                <i class="bi bi-person-exclamation"></i> <?= lang('Members.createStandaloneNonPortal') ?>
+                <i class="bi bi-person-exclamation" aria-hidden="true"></i> <?= lang('Members.createStandaloneNonPortal') ?>
             </button>
         <?php endif; ?>
         <?php if (auth()->user()->can('member.delete')): ?>
             <button type="button" id="bulk-delete-people-btn" class="btn btn-outline-danger btn-sm d-none">
-                <i class="bi bi-trash3"></i> <?= lang('Members.bulkDeleteSelected') ?>
+                <i class="bi bi-trash3" aria-hidden="true"></i> <?= lang('Members.bulkDeleteSelected') ?>
             </button>
         <?php endif; ?>
         <?php if (auth()->user()->can('member.edit')): ?>
             <button type="button" id="bulk-mark-member-btn" class="btn btn-outline-success btn-sm d-none">
-                <i class="bi bi-house-check"></i> <?= lang('People.markAsMember') ?>
+                <i class="bi bi-house-check" aria-hidden="true"></i> <?= lang('People.markAsMember') ?>
             </button>
             <button type="button" id="bulk-remove-member-btn" class="btn btn-outline-secondary btn-sm d-none">
-                <i class="bi bi-person-dash"></i> <?= lang('People.removeMemberTag') ?>
+                <i class="bi bi-person-dash" aria-hidden="true"></i> <?= lang('People.removeMemberTag') ?>
             </button>
         <?php endif; ?>
         <form id="people-export-form" method="post" action="<?= base_url('people/export') ?>">
             <?= csrf_field() ?>
             <div id="bulk-export-ids"></div>
             <button type="submit" id="bulk-export-btn" class="btn btn-outline-secondary btn-sm d-none">
-                <i class="bi bi-download"></i> <?= lang('App.export') ?>
+                <i class="bi bi-download" aria-hidden="true"></i> <?= lang('App.export') ?>
             </button>
         </form>
     </div>
     <?php if (!empty($can_moderate_registrations) && (int) ($pending_registrations_count ?? 0) > 0): ?>
         <a href="#pendingRegistrationsCard" class="btn btn-outline-warning btn-sm">
-            <i class="bi bi-person-check"></i> <?= lang('Members.pendingRegistrationsTitle') ?>
+            <i class="bi bi-person-check" aria-hidden="true"></i> <?= lang('Members.pendingRegistrationsTitle') ?>
             <span class="badge border border-warning text-warning fw-normal ms-1"><?= (int) ($pending_registrations_count ?? 0) ?></span>
         </a>
     <?php endif; ?>
@@ -101,7 +101,7 @@ if (!$canPortalAccessManage) {
 <div class="card mb-3">
     <div class="card-header d-flex align-items-center justify-content-end filter-panel-header">
         <button class="btn btn-outline-secondary btn-sm" type="button" data-bs-toggle="collapse" data-bs-target="#peopleFilterPanel" aria-expanded="false">
-            <i class="bi bi-funnel"></i> <?= lang('App.filter') ?>
+            <i class="bi bi-funnel" aria-hidden="true"></i> <?= lang('App.filter') ?>
         </button>
     </div>
     <div id="peopleFilterPanel" class="collapse">
@@ -180,15 +180,15 @@ if (!$canPortalAccessManage) {
                 <table class="table table-hover align-middle">
                     <thead>
                         <tr>
-                            <th style="width:2.5rem">
+                            <th scope="col" style="width:2.5rem">
                                 <input class="form-check-input" type="checkbox" id="people-select-all" title="Select all">
                             </th>
-                            <th><?= lang('People.colName') ?></th>
-                            <th><?= lang('People.colEmail') ?></th>
-                            <th><?= lang('Members.phone') ?></th>
-                            <th><?= lang('People.colTags') ?></th>
+                            <th scope="col"><?= lang('People.colName') ?></th>
+                            <th scope="col"><?= lang('People.colEmail') ?></th>
+                            <th scope="col"><?= lang('Members.phone') ?></th>
+                            <th scope="col"><?= lang('People.colTags') ?></th>
                             <?php if ($canPortalAccessManage): ?>
-                                <th><?= lang('App.colActions') ?></th>
+                                <th scope="col"><?= lang('App.colActions') ?></th>
                             <?php endif; ?>
                         </tr>
                     </thead>
@@ -226,9 +226,9 @@ if (!$canPortalAccessManage) {
                                     <div class="d-flex align-items-center gap-2">
                                         <?php if ($picUrl !== ''): ?>
                                             <img src="<?= $picUrl ?>" alt="" class="person-avatar" onerror="this.classList.add('d-none');this.nextElementSibling.classList.remove('d-none');">
-                                            <span class="person-avatar-fallback d-none"><i class="bi bi-person-circle person-avatar-fallback-icon"></i></span>
+                                            <span class="person-avatar-fallback d-none"><i class="bi bi-person-circle person-avatar-fallback-icon" aria-hidden="true"></i></span>
                                         <?php else: ?>
-                                            <span class="person-avatar-fallback"><i class="bi bi-person-circle person-avatar-fallback-icon"></i></span>
+                                            <span class="person-avatar-fallback"><i class="bi bi-person-circle person-avatar-fallback-icon" aria-hidden="true"></i></span>
                                         <?php endif; ?>
                                         <div>
                                             <?php if ($profileId > 0): ?>
@@ -253,7 +253,7 @@ if (!$canPortalAccessManage) {
                                     <?php endif; ?>
                                     <?php if (!empty($person['leader_titles'])): ?>
                                         <span class="badge border border-primary text-primary fw-normal me-1" title="<?= esc((string) $person['leader_titles'], 'attr') ?>">
-                                            <i class="bi bi-award"></i> <?= esc((string) $person['leader_titles']) ?>
+                                            <i class="bi bi-award" aria-hidden="true"></i> <?= esc((string) $person['leader_titles']) ?>
                                         </span>
                                     <?php endif; ?>
                                     <?php if (!empty($person['is_baptized'])): ?><span class="badge border border-success text-success fw-normal me-1">B</span><?php endif; ?>
@@ -270,7 +270,7 @@ if (!$canPortalAccessManage) {
                                                 <a href="<?= base_url('members/edit/' . $profileId) ?>"
                                                     class="btn btn-sm btn-outline-warning"
                                                     title="<?= esc(lang('App.edit'), 'attr') ?>">
-                                                    <i class="bi bi-pencil"></i>
+                                                    <i class="bi bi-pencil" aria-hidden="true"></i>
                                                 </a>
                                             <?php endif; ?>
                                             <?php if (auth()->user()->can('member.edit') && !$isMember): ?>
@@ -279,7 +279,7 @@ if (!$canPortalAccessManage) {
                                                     data-user-id="<?= (int) ($person['user_id'] ?? 0) ?>"
                                                     data-person-name="<?= esc($fullName, 'attr') ?>"
                                                     title="<?= esc(lang('People.markAsMember'), 'attr') ?>">
-                                                    <i class="bi bi-house-check"></i>
+                                                    <i class="bi bi-house-check" aria-hidden="true"></i>
                                                 </button>
                                             <?php endif; ?>
                                             <?php if ($isNonPortal): ?>
@@ -289,7 +289,7 @@ if (!$canPortalAccessManage) {
                                                     data-person-name="<?= esc($fullName, 'attr') ?>"
                                                     data-person-email="<?= esc((string) ($person['email'] ?? ''), 'attr') ?>"
                                                     title="<?= esc(lang('People.enablePortalAccess'), 'attr') ?>">
-                                                    <i class="bi bi-box-arrow-in-right"></i>
+                                                    <i class="bi bi-box-arrow-in-right" aria-hidden="true"></i>
                                                 </button>
                                             <?php endif; ?>
                                             <?php if (auth()->user()->can('member.delete') && $profileId > 0 && !$isMember): ?>
@@ -299,7 +299,7 @@ if (!$canPortalAccessManage) {
                                                     data-person-name="<?= esc($fullName, 'attr') ?>"
                                                     data-person-email="<?= esc((string) ($person['email'] ?? ''), 'attr') ?>"
                                                     title="<?= esc(lang('App.delete'), 'attr') ?>">
-                                                    <i class="bi bi-trash3"></i>
+                                                    <i class="bi bi-trash3" aria-hidden="true"></i>
                                                 </button>
                                             <?php endif; ?>
                                         </div>
@@ -338,7 +338,7 @@ if (!$canPortalAccessManage) {
             <?php endif; ?>
         <?php else: ?>
             <div class="text-center py-5 text-muted">
-                <i class="bi bi-people fs-1"></i>
+                <i class="bi bi-people fs-1" aria-hidden="true"></i>
                 <p class="mt-2 mb-0"><?= lang('People.noPeopleFound') ?></p>
             </div>
         <?php endif; ?>
@@ -350,7 +350,7 @@ if (!$canPortalAccessManage) {
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title"><i class="bi bi-exclamation-triangle-fill text-warning me-2"></i><?= lang('App.delete') ?></h5>
+                    <h5 class="modal-title"><i class="bi bi-exclamation-triangle-fill text-warning me-2" aria-hidden="true"></i><?= lang('App.delete') ?></h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
@@ -373,7 +373,7 @@ if (!$canPortalAccessManage) {
         <div class="modal-dialog modal-lg modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title"><i class="bi bi-exclamation-triangle-fill text-warning me-2"></i><?= lang('App.bulkDeleteWarningTitle') ?></h5>
+                    <h5 class="modal-title"><i class="bi bi-exclamation-triangle-fill text-warning me-2" aria-hidden="true"></i><?= lang('App.bulkDeleteWarningTitle') ?></h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
@@ -430,7 +430,7 @@ if (!$canPortalAccessManage) {
         <form id="bulkActionForm" action="<?= base_url('members/registrations/bulk-action') ?>" method="post" class="p-2 border-bottom bg-light d-flex align-items-center gap-2 flex-wrap">
             <?= csrf_field() ?>
             <input type="hidden" name="bulk_action" id="pendingBulkAction" value="">
-            <button type="button" class="btn btn-sm btn-success pending-action-btn" data-action="approve" data-title="<?= esc(lang('Dashboard.approveLabel'), 'attr') ?>" data-template="<?= esc(lang('Dashboard.confirmBulkApprove'), 'attr') ?>"><i class="bi bi-person-check"></i> <?= lang('Dashboard.approveLabel') ?></button>
+            <button type="button" class="btn btn-sm btn-success pending-action-btn" data-action="approve" data-title="<?= esc(lang('Dashboard.approveLabel'), 'attr') ?>" data-template="<?= esc(lang('Dashboard.confirmBulkApprove'), 'attr') ?>"><i class="bi bi-person-check" aria-hidden="true"></i> <?= lang('Dashboard.approveLabel') ?></button>
             <button type="button" class="btn btn-sm btn-outline-secondary pending-action-btn" data-action="dismiss" data-title="<?= esc(lang('Dashboard.dismissLabel'), 'attr') ?>" data-template="<?= esc(lang('Dashboard.confirmBulkDismiss'), 'attr') ?>"><?= lang('Dashboard.dismissLabel') ?></button>
             <button type="button" class="btn btn-sm btn-outline-warning pending-action-btn" data-action="ban" data-title="<?= esc(lang('Dashboard.banLabel'), 'attr') ?>" data-template="<?= esc(lang('Dashboard.confirmBulkBan'), 'attr') ?>"><?= lang('Dashboard.banLabel') ?></button>
             <?php if (auth()->user()?->can('member.delete')): ?>
@@ -462,10 +462,10 @@ if (!$canPortalAccessManage) {
                 <table class="table table-sm table-hover align-middle mb-0">
                     <thead>
                         <tr>
-                            <th class="text-center" style="width: 2.5rem;"><input type="checkbox" class="form-check-input" id="pending-select-all" onchange="document.querySelectorAll('.pending-reg-check').forEach(c => c.checked = this.checked)"></th>
-                            <th><?= lang('App.colName') ?></th>
-                            <th><?= lang('App.colEmail') ?></th>
-                            <th><?= lang('App.colPhone') ?></th>
+                            <th scope="col" class="text-center" style="width: 2.5rem;"><input type="checkbox" class="form-check-input" id="pending-select-all" onchange="document.querySelectorAll('.pending-reg-check').forEach(c => c.checked = this.checked)"></th>
+                            <th scope="col"><?= lang('App.colName') ?></th>
+                            <th scope="col"><?= lang('App.colEmail') ?></th>
+                            <th scope="col"><?= lang('App.colPhone') ?></th>
                         </tr>
                     </thead>
                     <tbody>

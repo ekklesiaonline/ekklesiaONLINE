@@ -7,7 +7,7 @@
     <div class="col-md-6">
         <div class="card h-100">
             <div class="card-header">
-                <h5 class="mb-0"><i class="bi bi-journal-text"></i> Recent Vestry Minutes</h5>
+                <h5 class="mb-0"><i class="bi bi-journal-text" aria-hidden="true"></i> Recent Vestry Minutes</h5>
             </div>
             <div class="card-body">
                 <?php if (!empty($recent_minutes)): ?>
@@ -33,10 +33,10 @@
     <div class="col-md-6">
         <div class="card h-100">
             <div class="card-header d-flex justify-content-between align-items-center">
-                <h5 class="mb-0"><i class="bi bi-file-earmark-text"></i> Recent Reports</h5>
+                <h5 class="mb-0"><i class="bi bi-file-earmark-text" aria-hidden="true"></i> Recent Reports</h5>
                 <?php if (!empty($can_export)): ?>
                     <a href="<?= base_url('reports/export') ?>" class="btn btn-sm btn-outline-primary">
-                        <i class="bi bi-download"></i> Export
+                        <i class="bi bi-download" aria-hidden="true"></i> Export
                     </a>
                 <?php endif; ?>
             </div>
@@ -44,7 +44,7 @@
                 <?php if (!empty($recent_reports)): ?>
                     <div class="table-responsive">
                         <table class="table table-sm">
-                            <thead><tr><th>Year</th><th>Status</th></tr></thead>
+                            <thead><tr><th scope="col">Year</th><th scope="col">Status</th></tr></thead>
                             <tbody>
                                 <?php foreach ($recent_reports as $report): ?>
                                     <tr>

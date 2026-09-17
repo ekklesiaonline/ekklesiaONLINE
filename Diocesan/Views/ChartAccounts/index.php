@@ -3,7 +3,7 @@
 <?= $this->section('content') ?>
 
 <div class="d-flex justify-content-between align-items-center mb-3">
-    <a href="<?= base_url('chart-accounts/create') ?>" class="btn btn-primary"><i class="bi bi-plus-circle"></i> <?= lang('ChartAccounts.btn_newAccount') ?></a>
+    <a href="<?= base_url('chart-accounts/create') ?>" class="btn btn-primary"><i class="bi bi-plus-circle" aria-hidden="true"></i> <?= lang('ChartAccounts.btn_newAccount') ?></a>
 </div>
 
 <?php $request = service('request'); ?>
@@ -17,7 +17,7 @@
             data-bs-target="#chartAccountsFilterPanel"
             aria-expanded="<?= ($request->getGet('type') !== null || $request->getGet('status') !== null || $request->getGet('section') !== null) ? 'true' : 'false' ?>"
             aria-controls="chartAccountsFilterPanel">
-            <i class="bi bi-funnel"></i> <?= lang('ChartAccounts.btn_filter') ?>
+            <i class="bi bi-funnel" aria-hidden="true"></i> <?= lang('ChartAccounts.btn_filter') ?>
         </button>
     </div>
     <div id="chartAccountsFilterPanel" class="collapse <?= ($request->getGet('type') !== null || $request->getGet('status') !== null || $request->getGet('section') !== null) ? 'show' : '' ?>">
@@ -57,7 +57,7 @@
                         <?php endforeach; ?>
                     </select>
                 </div>
-                <div class="col-md-2"><button type="submit" class="btn btn-outline-primary w-100"><i class="bi bi-filter"></i> <?= lang('ChartAccounts.btn_filter') ?></button></div>
+                <div class="col-md-2"><button type="submit" class="btn btn-outline-primary w-100"><i class="bi bi-filter" aria-hidden="true"></i> <?= lang('ChartAccounts.btn_filter') ?></button></div>
             </form>
         </div>
     </div>
@@ -69,14 +69,14 @@
             <table class="table table-hover align-middle">
                 <thead>
                     <tr>
-                        <th><?= lang('ChartAccounts.colCode') ?></th>
-                        <th><?= lang('ChartAccounts.colName') ?></th>
-                        <th><?= lang('ChartAccounts.colType') ?></th>
-                        <th><?= lang('ChartAccounts.colCategory') ?></th>
-                        <th><?= lang('ChartAccounts.colBudgetable') ?></th>
-                        <th><?= lang('ChartAccounts.colStatus') ?></th>
-                        <th><?= lang('ChartAccounts.colSort') ?></th>
-                        <th><?= lang('ChartAccounts.colActions') ?></th>
+                        <th scope="col"><?= lang('ChartAccounts.colCode') ?></th>
+                        <th scope="col"><?= lang('ChartAccounts.colName') ?></th>
+                        <th scope="col"><?= lang('ChartAccounts.colType') ?></th>
+                        <th scope="col"><?= lang('ChartAccounts.colCategory') ?></th>
+                        <th scope="col"><?= lang('ChartAccounts.colBudgetable') ?></th>
+                        <th scope="col"><?= lang('ChartAccounts.colStatus') ?></th>
+                        <th scope="col"><?= lang('ChartAccounts.colSort') ?></th>
+                        <th scope="col"><?= lang('ChartAccounts.colActions') ?></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -110,8 +110,8 @@
                                 <td><?= (int) ($account['sort_order'] ?? 0) ?></td>
                                 <td>
                                     <div class="d-inline-flex flex-nowrap gap-1 align-items-center">
-                                        <a href="<?= base_url('chart-accounts/edit/' . $account['id']) ?>" class="btn btn-sm btn-warning"><i class="bi bi-pencil"></i></a>
-                                        <form action="<?= base_url('chart-accounts/toggle/' . $account['id']) ?>" method="post" class="d-inline"><?= csrf_field() ?><button type="submit" class="btn btn-sm btn-outline-secondary"><i class="bi bi-arrow-repeat"></i></button></form>
+                                        <a href="<?= base_url('chart-accounts/edit/' . $account['id']) ?>" class="btn btn-sm btn-warning" aria-label="<?= esc(lang('App.edit')) ?>"><i class="bi bi-pencil" aria-hidden="true"></i></a>
+                                        <form action="<?= base_url('chart-accounts/toggle/' . $account['id']) ?>" method="post" class="d-inline"><?= csrf_field() ?><button type="submit" class="btn btn-sm btn-outline-secondary" aria-label="<?= esc(lang('ChartAccounts.actionToggle')) ?>"><i class="bi bi-arrow-repeat" aria-hidden="true"></i></button></form>
                                     </div>
                                 </td>
                             </tr>

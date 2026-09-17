@@ -46,25 +46,25 @@
     <div class="d-flex gap-2">
         <?php if (auth()->user()->can('member.create') && !auth()->user()->inGroup('provinceadmin')): ?>
             <a href="<?= base_url('members/create') ?>" class="btn btn-outline-primary btn-sm">
-                <i class="bi bi-plus-circle"></i> <?= lang('Members.createPortalMember') ?>
+                <i class="bi bi-plus-circle" aria-hidden="true"></i> <?= lang('Members.createPortalMember') ?>
             </a>
             <button type="button" class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#createStandaloneNonPortalModal">
-                <i class="bi bi-person-plus"></i> <?= lang('Members.createStandaloneNonPortal') ?>
+                <i class="bi bi-person-plus" aria-hidden="true"></i> <?= lang('Members.createStandaloneNonPortal') ?>
             </button>
         <?php endif; ?>
 
         <?php if (!empty($members) && auth()->user()->can('member.delete')): ?>
             <button type="button" class="btn btn-outline-danger btn-sm d-none" id="bulkDeleteMembersBtn">
-                <i class="bi bi-trash3"></i> <?= lang('Members.bulkDeleteSelected') ?>
+                <i class="bi bi-trash3" aria-hidden="true"></i> <?= lang('Members.bulkDeleteSelected') ?>
             </button>
         <?php endif; ?>
 
         <?php if (!empty($members) && auth()->user()->can('member.edit')): ?>
             <button type="button" id="bulk-mark-member-btn" class="btn btn-outline-success btn-sm d-none">
-                <i class="bi bi-person-check"></i> <?= lang('People.markAsMember') ?>
+                <i class="bi bi-person-check" aria-hidden="true"></i> <?= lang('People.markAsMember') ?>
             </button>
             <button type="button" id="bulk-remove-member-btn" class="btn btn-outline-secondary btn-sm d-none">
-                <i class="bi bi-person-dash"></i> <?= lang('People.removeMemberTag') ?>
+                <i class="bi bi-person-dash" aria-hidden="true"></i> <?= lang('People.removeMemberTag') ?>
             </button>
         <?php endif; ?>
 
@@ -73,20 +73,20 @@
                 <?= csrf_field() ?>
                 <div id="bulk-export-ids"></div>
                 <button type="submit" id="bulk-export-btn" class="btn btn-outline-secondary btn-sm d-none">
-                    <i class="bi bi-download"></i> <?= lang('App.export') ?>
+                    <i class="bi bi-download" aria-hidden="true"></i> <?= lang('App.export') ?>
                 </button>
             </form>
         <?php endif; ?>
 
         <?php if (!empty($members) && !empty($isProvinceAdmin)): ?>
             <button type="button" class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#bulkTransferModal">
-                <i class="bi bi-arrow-left-right"></i> <?= lang('Members.bulkTransferSelected') ?>
+                <i class="bi bi-arrow-left-right" aria-hidden="true"></i> <?= lang('Members.bulkTransferSelected') ?>
             </button>
         <?php endif; ?>
     </div>
     <?php if (!empty($can_moderate_registrations)): ?>
         <a href="#pendingRegistrationsCard" class="btn btn-outline-warning btn-sm">
-            <i class="bi bi-person-check"></i> <?= lang('Members.pendingRegistrationsTitle') ?>
+            <i class="bi bi-person-check" aria-hidden="true"></i> <?= lang('Members.pendingRegistrationsTitle') ?>
             <span class="badge border border-warning text-warning fw-normal ms-1"><?= (int) ($pending_registrations_count ?? 0) ?></span>
         </a>
     <?php endif; ?>
@@ -133,7 +133,7 @@ if (!in_array($selectedPerPage, [25, 50, 100], true)) {
             data-bs-target="#membersFilterPanel"
             aria-expanded="<?= $request->getGet('status') !== null ? 'true' : 'false' ?>"
             aria-controls="membersFilterPanel">
-            <i class="bi bi-funnel"></i> <?= lang('App.filter') ?>
+            <i class="bi bi-funnel" aria-hidden="true"></i> <?= lang('App.filter') ?>
         </button>
     </div>
     <div id="membersFilterPanel" class="collapse <?= $request->getGet('status') !== null ? 'show' : '' ?>">
@@ -159,8 +159,8 @@ if (!in_array($selectedPerPage, [25, 50, 100], true)) {
                 <div class="col-md-6">
                     <div class="input-group">
                         <input type="text" class="form-control" id="memberSearch" placeholder="<?= lang('Members.searchPlaceholder') ?>">
-                        <button class="btn btn-outline-secondary" type="button">
-                            <i class="bi bi-search"></i>
+                        <button class="btn btn-outline-secondary" type="button" aria-label="<?= esc(lang('App.search')) ?>">
+                            <i class="bi bi-search" aria-hidden="true"></i>
                         </button>
                     </div>
                 </div>
@@ -193,16 +193,16 @@ if (!in_array($selectedPerPage, [25, 50, 100], true)) {
                     <thead>
                         <tr>
                             <?php if ($allowBulkSelection): ?>
-                                <th style="width: 40px;">
+                                <th scope="col" style="width: 40px;">
                                     <input type="checkbox" id="selectAllMembers" class="form-check-input">
                                 </th>
                             <?php endif; ?>
-                            <th><?= lang('Members.colName') ?></th>
-                            <th><?= lang('Members.colEmail') ?></th>
-                            <th><?= lang('Members.colPhone') ?></th>
-                            <th><?= lang('Members.colStatus') ?></th>
-                            <th><?= lang('People.colTags') ?></th>
-                            <th class="text-end"><?= lang('App.colActions') ?></th>
+                            <th scope="col"><?= lang('Members.colName') ?></th>
+                            <th scope="col"><?= lang('Members.colEmail') ?></th>
+                            <th scope="col"><?= lang('Members.colPhone') ?></th>
+                            <th scope="col"><?= lang('Members.colStatus') ?></th>
+                            <th scope="col"><?= lang('People.colTags') ?></th>
+                            <th scope="col" class="text-end"><?= lang('App.colActions') ?></th>
                         </tr>
                     </thead>
                     <tbody>
@@ -231,9 +231,9 @@ if (!in_array($selectedPerPage, [25, 50, 100], true)) {
                                     <div class="d-flex align-items-center gap-2">
                                         <?php if ($memberPicUrl !== ''): ?>
                                             <img src="<?= $memberPicUrl ?>" alt="" class="member-avatar" onerror="this.classList.add('d-none');this.nextElementSibling.classList.remove('d-none');">
-                                            <span class="member-avatar-fallback d-none"><i class="bi bi-person-circle member-avatar-fallback-icon"></i></span>
+                                            <span class="member-avatar-fallback d-none"><i class="bi bi-person-circle member-avatar-fallback-icon" aria-hidden="true"></i></span>
                                         <?php else: ?>
-                                            <span class="member-avatar-fallback"><i class="bi bi-person-circle member-avatar-fallback-icon"></i></span>
+                                            <span class="member-avatar-fallback"><i class="bi bi-person-circle member-avatar-fallback-icon" aria-hidden="true"></i></span>
                                         <?php endif; ?>
                                         <div>
                                             <?php if ($memberProfileId > 0): ?>
@@ -292,18 +292,18 @@ if (!in_array($selectedPerPage, [25, 50, 100], true)) {
                                             data-bs-toggle="dropdown"
                                             aria-expanded="false"
                                             title="<?= esc(lang('App.colActions')) ?>">
-                                            <i class="bi bi-three-dots-vertical"></i>
+                                            <i class="bi bi-three-dots-vertical" aria-hidden="true"></i>
                                         </button>
                                         <ul class="dropdown-menu dropdown-menu-end shadow-sm">
                                             <li>
                                                 <a class="dropdown-item" href="<?= base_url('members/view/' . (int) $member['id']) ?>">
-                                                    <i class="bi bi-eye me-2"></i><?= lang('App.view') ?>
+                                                    <i class="bi bi-eye me-2" aria-hidden="true"></i><?= lang('App.view') ?>
                                                 </a>
                                             </li>
                                             <?php if (auth()->user()->can('member.edit')): ?>
                                                 <li>
                                                     <a class="dropdown-item" href="<?= base_url('members/edit/' . (int) $member['id']) ?>">
-                                                        <i class="bi bi-pencil me-2"></i><?= lang('App.edit') ?>
+                                                        <i class="bi bi-pencil me-2" aria-hidden="true"></i><?= lang('App.edit') ?>
                                                     </a>
                                                 </li>
                                             <?php endif; ?>
@@ -315,7 +315,7 @@ if (!in_array($selectedPerPage, [25, 50, 100], true)) {
                                                     <button class="dropdown-item text-danger"
                                                         type="button"
                                                         onclick="openSingleDeleteMemberModal(<?= (int) $member['id'] ?>, '<?= esc(trim((string) (($member['first_name'] ?? '') . ' ' . ($member['last_name'] ?? ''))), 'js') ?>', '<?= esc((string) ($member['email'] ?? ''), 'js') ?>'); return false;">
-                                                        <i class="bi bi-trash me-2"></i><?= lang('App.delete') ?>
+                                                        <i class="bi bi-trash me-2" aria-hidden="true"></i><?= lang('App.delete') ?>
                                                     </button>
                                                 </li>
                                             <?php endif; ?>
@@ -362,11 +362,11 @@ if (!in_array($selectedPerPage, [25, 50, 100], true)) {
             <?php endif; ?>
         <?php else: ?>
             <div class="text-center py-5">
-                <i class="bi bi-people fs-1 text-muted"></i>
+                <i class="bi bi-people fs-1 text-muted" aria-hidden="true"></i>
                 <p class="text-muted mt-3"><?= lang('Members.noMembersFound') ?></p>
                 <?php if (auth()->user()->can('member.create')): ?>
                     <a href="<?= base_url('members/create') ?>" class="btn btn-primary">
-                        <i class="bi bi-plus-circle"></i> <?= lang('Members.createFirstPortalMember') ?>
+                        <i class="bi bi-plus-circle" aria-hidden="true"></i> <?= lang('Members.createFirstPortalMember') ?>
                     </a>
                 <?php endif; ?>
             </div>
@@ -385,10 +385,10 @@ if (!in_array($selectedPerPage, [25, 50, 100], true)) {
                 <table class="table table-sm table-hover align-middle mb-0">
                     <thead>
                         <tr>
-                            <th><?= lang('App.colName') ?></th>
-                            <th><?= lang('App.colEmail') ?></th>
-                            <th><?= lang('App.colPhone') ?></th>
-                            <th class="text-end"><?= lang('App.colActions') ?></th>
+                            <th scope="col"><?= lang('App.colName') ?></th>
+                            <th scope="col"><?= lang('App.colEmail') ?></th>
+                            <th scope="col"><?= lang('App.colPhone') ?></th>
+                            <th scope="col" class="text-end"><?= lang('App.colActions') ?></th>
                         </tr>
                     </thead>
                     <tbody>
@@ -468,7 +468,7 @@ if (!in_array($selectedPerPage, [25, 50, 100], true)) {
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title"><i class="bi bi-exclamation-triangle-fill text-warning me-2"></i><?= lang('App.delete') ?></h5>
+                    <h5 class="modal-title"><i class="bi bi-exclamation-triangle-fill text-warning me-2" aria-hidden="true"></i><?= lang('App.delete') ?></h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
@@ -491,7 +491,7 @@ if (!in_array($selectedPerPage, [25, 50, 100], true)) {
         <div class="modal-dialog modal-lg modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title"><i class="bi bi-exclamation-triangle-fill text-warning me-2"></i><?= lang('App.bulkDeleteWarningTitle') ?></h5>
+                    <h5 class="modal-title"><i class="bi bi-exclamation-triangle-fill text-warning me-2" aria-hidden="true"></i><?= lang('App.bulkDeleteWarningTitle') ?></h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">

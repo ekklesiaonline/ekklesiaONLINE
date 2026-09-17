@@ -31,7 +31,7 @@
                     <?php else: ?>
                         <div class="border bg-body-secondary rounded d-flex align-items-center justify-content-center mb-2"
                             style="width: 150px; height: 150px; margin: 0 auto;">
-                            <i class="bi bi-building text-body-tertiary" style="font-size: 3rem;"></i>
+                            <i class="bi bi-building text-body-tertiary" style="font-size: 3rem;" aria-hidden="true"></i>
                         </div>
                     <?php endif; ?>
                 </div>
@@ -64,7 +64,7 @@
                     <?php else: ?>
                         <div class="border bg-body-secondary rounded d-flex align-items-center justify-content-center mb-2"
                             style="width: 100%; height: 180px; margin: 0 auto;">
-                            <i class="bi bi-image text-body-tertiary" style="font-size: 3rem;"></i>
+                            <i class="bi bi-image text-body-tertiary" style="font-size: 3rem;" aria-hidden="true"></i>
                         </div>
                     <?php endif; ?>
                 </div>

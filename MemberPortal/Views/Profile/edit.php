@@ -17,7 +17,7 @@
     <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
         <h4 class="mb-0"><?= lang('Profile.editProfile') ?></h4>
         <a href="<?= base_url('profile') ?>" class="btn btn-outline-secondary btn-sm">
-            <i class="bi bi-arrow-left"></i> <?= lang('Profile.back') ?>
+            <i class="bi bi-arrow-left" aria-hidden="true"></i> <?= lang('Profile.back') ?>
         </a>
     </div>
 
@@ -32,7 +32,7 @@
                     </div>
                     <div class="card-body">
                         <p class="small text-muted mb-2">
-                            <i class="bi bi-info-circle"></i> <?= lang('Profile.canonicalIdentityEditHint') ?>
+                            <i class="bi bi-info-circle" aria-hidden="true"></i> <?= lang('Profile.canonicalIdentityEditHint') ?>
                         </p>
                         <div class="row g-3">
                             <div class="col-md-4">
@@ -105,16 +105,16 @@
                                 id="currentPicture"
                                 onerror="this.classList.add('d-none');this.nextElementSibling.classList.remove('d-none');">
                             <div class="mb-3 mx-auto profile-avatar-wrap d-none">
-                                <i class="bi bi-person-circle profile-avatar-placeholder"></i>
+                                <i class="bi bi-person-circle profile-avatar-placeholder" aria-hidden="true"></i>
                             </div>
                             <div class="mb-3">
                                 <button type="button" class="btn btn-sm btn-danger" onclick="deletePicture()">
-                                    <i class="bi bi-trash"></i> <?= lang('Profile.removePicture') ?>
+                                    <i class="bi bi-trash" aria-hidden="true"></i> <?= lang('Profile.removePicture') ?>
                                 </button>
                             </div>
                         <?php else: ?>
                             <div class="mb-3 mx-auto profile-avatar-wrap">
-                                <i class="bi bi-person-circle profile-avatar-placeholder"></i>
+                                <i class="bi bi-person-circle profile-avatar-placeholder" aria-hidden="true"></i>
                             </div>
                             <small class="text-muted d-block mb-3"><?= lang('Profile.noPictureUploaded') ?></small>
                         <?php endif; ?>
@@ -247,7 +247,7 @@
         <!-- Parish Affiliations Section -->
         <div class="card mb-3 form-section-card">
             <div class="card-header bg-primary text-white">
-                <h5 class="mb-0"><i class="bi bi-buildings"></i> <?= lang('Profile.parishAffiliation') ?></h5>
+                <h5 class="mb-0"><i class="bi bi-buildings" aria-hidden="true"></i> <?= lang('Profile.parishAffiliation') ?></h5>
             </div>
             <div class="card-body">
                 <?php
@@ -281,11 +281,11 @@
                         <div class="mt-2">
                             <?php if (($registrationStatus ?? '') === 'pending_review'): ?>
                                 <button type="button" class="btn btn-warning btn-sm" disabled>
-                                    <i class="bi bi-hourglass-split"></i> <?= lang('Profile.joinParishPendingApproval') ?>
+                                    <i class="bi bi-hourglass-split" aria-hidden="true"></i> <?= lang('Profile.joinParishPendingApproval') ?>
                                 </button>
                             <?php else: ?>
                                 <a href="<?= base_url('profile/join-parish') ?>" class="btn btn-success btn-sm">
-                                    <i class="bi bi-building-add"></i> <?= lang('Profile.joinParishTitle') ?>
+                                    <i class="bi bi-building-add" aria-hidden="true"></i> <?= lang('Profile.joinParishTitle') ?>
                                 </a>
                             <?php endif; ?>
                         </div>
@@ -334,8 +334,8 @@
                             </select>
                         </div>
                         <div class="col-md-1">
-                            <button type="button" class="btn btn-outline-danger btn-sm remove-affiliation">
-                                <i class="bi bi-trash"></i>
+                            <button type="button" class="btn btn-outline-danger btn-sm remove-affiliation" aria-label="<?= esc(lang('App.delete')) ?>">
+                                <i class="bi bi-trash" aria-hidden="true"></i>
                             </button>
                         </div>
                     </div>
@@ -343,7 +343,7 @@
                 </div>
 
                 <button type="button" class="btn btn-outline-primary btn-sm" id="add-affiliation">
-                    <i class="bi bi-plus-circle"></i> <?= lang('Profile.addParish') ?>
+                    <i class="bi bi-plus-circle" aria-hidden="true"></i> <?= lang('Profile.addParish') ?>
                 </button>
 
                 <script type="text/template" id="affiliation-row-template">
@@ -378,8 +378,8 @@
                             </select>
                         </div>
                         <div class="col-md-1">
-                            <button type="button" class="btn btn-outline-danger btn-sm remove-affiliation">
-                                <i class="bi bi-trash"></i>
+                            <button type="button" class="btn btn-outline-danger btn-sm remove-affiliation" aria-label="<?= esc(lang('App.delete')) ?>">
+                                <i class="bi bi-trash" aria-hidden="true"></i>
                             </button>
                         </div>
                     </div>
@@ -390,7 +390,7 @@
         <!-- Preferences Section -->
         <div class="card mb-3 form-section-card">
             <div class="card-header bg-primary text-white">
-                <h5 class="mb-0"><i class="bi bi-sliders"></i> <?= lang('Profile.sectionPreferences') ?></h5>
+                <h5 class="mb-0"><i class="bi bi-sliders" aria-hidden="true"></i> <?= lang('Profile.sectionPreferences') ?></h5>
             </div>
             <div class="card-body">
                 <div class="row g-3">
@@ -420,10 +420,10 @@
         <div class="card">
             <div class="card-body d-flex gap-2">
                 <button type="submit" class="btn btn-primary">
-                    <i class="bi bi-check-circle"></i> <?= lang('Profile.saveChanges') ?>
+                    <i class="bi bi-check-circle" aria-hidden="true"></i> <?= lang('Profile.saveChanges') ?>
                 </button>
                 <a href="<?= base_url('profile') ?>" class="btn btn-outline-secondary">
-                    <i class="bi bi-x-circle"></i> <?= lang('App.cancel') ?>
+                    <i class="bi bi-x-circle" aria-hidden="true"></i> <?= lang('App.cancel') ?>
                 </a>
             </div>
         </div>

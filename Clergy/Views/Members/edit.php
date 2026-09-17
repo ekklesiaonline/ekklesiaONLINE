@@ -4,7 +4,7 @@
 
 <div class="d-flex justify-content-start align-items-center mb-3">
     <a href="<?= base_url('members') ?>" class="btn btn-secondary">
-        <i class="bi bi-arrow-left"></i> <?= lang('Members.backToMembers') ?>
+        <i class="bi bi-arrow-left" aria-hidden="true"></i> <?= lang('Members.backToMembers') ?>
     </a>
 </div>
 
@@ -40,12 +40,12 @@
                                     <div id="currentMemberPictureFallback"
                                         class="bg-light border rounded d-flex align-items-center justify-content-center mb-2 mx-auto d-none"
                                         style="width: 120px; height: 120px;">
-                                        <i class="bi bi-person-circle" style="font-size: 3rem; color: #ccc;"></i>
+                                        <i class="bi bi-person-circle" style="font-size: 3rem; color: #ccc;" aria-hidden="true"></i>
                                     </div>
                                 <?php else: ?>
                                     <div class="bg-light border rounded d-flex align-items-center justify-content-center mb-2"
                                         style="width: 120px; height: 120px; margin: 0 auto;">
-                                        <i class="bi bi-person-circle" style="font-size: 3rem; color: #ccc;"></i>
+                                        <i class="bi bi-person-circle" style="font-size: 3rem; color: #ccc;" aria-hidden="true"></i>
                                     </div>
                                 <?php endif; ?>
                             </div>
@@ -105,7 +105,7 @@
                 <div class="col-md-6">
                     <h5 class="mb-2"><?= lang('Members.sectionPersonalInfo') ?></h5>
                     <p class="small text-muted mb-3">
-                        <i class="bi bi-info-circle"></i> <?= lang('Members.editCanonicalHint') ?>
+                        <i class="bi bi-info-circle" aria-hidden="true"></i> <?= lang('Members.editCanonicalHint') ?>
                     </p>
 
                     <div class="mb-3">
@@ -301,7 +301,7 @@
             <div class="d-flex justify-content-end gap-2 mt-4">
                 <a href="<?= base_url('members') ?>" class="btn btn-secondary"><?= lang('App.cancel') ?></a>
                 <button type="submit" class="btn btn-primary">
-                    <i class="bi bi-save"></i> <?= lang('Members.updateMember') ?>
+                    <i class="bi bi-save" aria-hidden="true"></i> <?= lang('Members.updateMember') ?>
                 </button>
             </div>
         </form>

@@ -5,7 +5,7 @@
 <div class="d-flex justify-content-between align-items-center mb-3">
     <?php if ($canManageBudget): ?>
         <button type="submit" form="budgetForm" class="btn btn-primary">
-            <i class="bi bi-save"></i> <?= lang('Treasurer.saveBudget') ?>
+            <i class="bi bi-save" aria-hidden="true"></i> <?= lang('Treasurer.saveBudget') ?>
         </button>
     <?php endif; ?>
 </div>
@@ -21,7 +21,7 @@
             data-bs-target="#budgetFilterPanel"
             aria-expanded="<?= $request->getGet('year') !== null ? 'true' : 'false' ?>"
             aria-controls="budgetFilterPanel">
-            <i class="bi bi-funnel"></i> <?= lang('App.filter') ?>
+            <i class="bi bi-funnel" aria-hidden="true"></i> <?= lang('App.filter') ?>
         </button>
     </div>
     <div id="budgetFilterPanel" class="collapse <?= $request->getGet('year') !== null ? 'show' : '' ?>">
@@ -37,7 +37,7 @@
                 </div>
                 <div class="col-md-2">
                     <button type="submit" class="btn btn-outline-primary w-100">
-                        <i class="bi bi-filter"></i> <?= lang('Treasurer.loadYear') ?>
+                        <i class="bi bi-filter" aria-hidden="true"></i> <?= lang('Treasurer.loadYear') ?>
                     </button>
                 </div>
             </form>
@@ -112,13 +112,13 @@
                     <table class="table table-hover align-middle">
                         <thead>
                             <tr>
-                                <th><?= lang('Treasurer.colCode') ?></th>
-                                <th><?= lang('Treasurer.colAccount') ?></th>
-                                <th><?= lang('Treasurer.colType') ?></th>
-                                <th class="text-end"><?= lang('Finance.budgetAmount') ?></th>
-                                <th class="text-end"><?= lang('Finance.actualAmount') ?></th>
-                                <th class="text-end"><?= lang('Finance.variance') ?></th>
-                                <th class="text-end"><?= lang('Treasurer.colUtilization') ?></th>
+                                <th scope="col"><?= lang('Treasurer.colCode') ?></th>
+                                <th scope="col"><?= lang('Treasurer.colAccount') ?></th>
+                                <th scope="col"><?= lang('Treasurer.colType') ?></th>
+                                <th scope="col" class="text-end"><?= lang('Finance.budgetAmount') ?></th>
+                                <th scope="col" class="text-end"><?= lang('Finance.actualAmount') ?></th>
+                                <th scope="col" class="text-end"><?= lang('Finance.variance') ?></th>
+                                <th scope="col" class="text-end"><?= lang('Treasurer.colUtilization') ?></th>
                             </tr>
                         </thead>
                         <tbody>
@@ -151,7 +151,7 @@
                     </table>
                 </div>
                 <?php if ($canManageBudget): ?>
-                    <div class="d-flex justify-content-end mt-3"><button type="submit" class="btn btn-primary"><i class="bi bi-save"></i> <?= lang('Treasurer.saveBudget') ?></button></div>
+                    <div class="d-flex justify-content-end mt-3"><button type="submit" class="btn btn-primary"><i class="bi bi-save" aria-hidden="true"></i> <?= lang('Treasurer.saveBudget') ?></button></div>
                 <?php endif; ?>
             </div>
         </div>

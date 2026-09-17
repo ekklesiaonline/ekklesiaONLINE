@@ -34,7 +34,7 @@ $formatLocalizedDate = static function (?string $value, string $pattern, string 
 
 <div class="d-flex justify-content-start align-items-center mb-3">
     <a href="<?= base_url('guests/dashboard') ?>" class="btn btn-outline-secondary">
-        <i class="bi bi-arrow-left"></i> <?= lang('Guests.backToGuests') ?>
+        <i class="bi bi-arrow-left" aria-hidden="true"></i> <?= lang('Guests.backToGuests') ?>
     </a>
 </div>
 
@@ -44,7 +44,7 @@ $formatLocalizedDate = static function (?string $value, string $pattern, string 
             data-bs-toggle="collapse"
             data-bs-target="#guestConvFilterPanel"
             aria-expanded="<?= !empty($search) ? 'true' : 'false' ?>">
-            <i class="bi bi-funnel"></i> <?= lang('App.filter') ?>
+            <i class="bi bi-funnel" aria-hidden="true"></i> <?= lang('App.filter') ?>
         </button>
     </div>
     <div id="guestConvFilterPanel" class="collapse <?= !empty($search) ? 'show' : '' ?>">
@@ -64,7 +64,7 @@ $formatLocalizedDate = static function (?string $value, string $pattern, string 
                 </div>
                 <div class="col-md-4 d-flex gap-2 align-items-end">
                     <button type="submit" class="btn btn-sm btn-primary flex-fill">
-                        <i class="bi bi-search"></i> <?= lang('Services.apply') ?>
+                        <i class="bi bi-search" aria-hidden="true"></i> <?= lang('Services.apply') ?>
                     </button>
                     <a href="<?= base_url('guest-conversions') ?>" class="btn btn-sm btn-outline-secondary flex-fill"><?= lang('App.clear') ?></a>
                 </div>
@@ -75,7 +75,7 @@ $formatLocalizedDate = static function (?string $value, string $pattern, string 
 
 <div class="card">
     <div class="card-header d-flex justify-content-between align-items-center">
-        <h5 class="mb-0"><i class="bi bi-person-plus"></i> <?= lang('Guests.conversionsTitle') ?></h5>
+        <h5 class="mb-0"><i class="bi bi-person-plus" aria-hidden="true"></i> <?= lang('Guests.conversionsTitle') ?></h5>
         <span class="badge border border-secondary text-secondary fw-normal"><?= (int) ($total_rows ?? count($guests ?? [])) ?> <?= lang('Guests.records') ?></span>
     </div>
     <div class="card-body p-0">
@@ -86,11 +86,11 @@ $formatLocalizedDate = static function (?string $value, string $pattern, string 
                 <table class="table table-hover mb-0 align-middle">
                     <thead>
                         <tr>
-                            <th><?= lang('Guests.guestLabel') ?></th>
-                            <th><?= lang('Guests.colVisitDate') ?></th>
-                            <th><?= lang('Guests.colContact') ?></th>
-                            <th><?= lang('Guests.colConversion') ?></th>
-                            <th><?= lang('Guests.colAction') ?></th>
+                            <th scope="col"><?= lang('Guests.guestLabel') ?></th>
+                            <th scope="col"><?= lang('Guests.colVisitDate') ?></th>
+                            <th scope="col"><?= lang('Guests.colContact') ?></th>
+                            <th scope="col"><?= lang('Guests.colConversion') ?></th>
+                            <th scope="col"><?= lang('Guests.colAction') ?></th>
                         </tr>
                     </thead>
                     <tbody>

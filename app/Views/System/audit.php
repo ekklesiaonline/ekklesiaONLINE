@@ -45,7 +45,7 @@ $formatJson = static function (?string $value): string {
 <div class="d-flex justify-content-between align-items-center mb-3">
     <h5 class="mb-0"><?= lang('System.sectionAuditLog') ?></h5>
     <a href="<?= base_url('system/dashboard') ?>" class="btn btn-sm btn-outline-secondary">
-        <i class="bi bi-arrow-left me-1"></i><?= lang('App.back') ?>
+        <i class="bi bi-arrow-left me-1" aria-hidden="true"></i><?= lang('App.back') ?>
     </a>
 </div>
 
@@ -98,7 +98,7 @@ $formatJson = static function (?string $value): string {
                 </div>
                 <div class="col-md-3 d-flex align-items-end">
                     <button type="submit" class="btn btn-primary btn-sm">
-                        <i class="bi bi-search me-1"></i><?= lang('App.search') ?>
+                        <i class="bi bi-search me-1" aria-hidden="true"></i><?= lang('App.search') ?>
                     </button>
                     <a href="<?= base_url('system/audit') ?>" class="btn btn-outline-secondary btn-sm ms-2">
                         <?= lang('App.reset') ?>
@@ -120,14 +120,14 @@ $formatJson = static function (?string $value): string {
                 <table class="table table-sm table-hover align-middle mb-0">
                     <thead>
                         <tr>
-                            <th><?= lang('App.colTimestamp') ?></th>
-                            <th><?= lang('System.auditFilterAction') ?></th>
-                            <th><?= lang('System.auditFilterEntityType') ?></th>
-                            <th>ID</th>
-                            <th><?= lang('System.auditFilterUser') ?></th>
-                            <th>IP</th>
-                            <th><?= lang('App.oldValues') ?></th>
-                            <th><?= lang('App.newValues') ?></th>
+                            <th scope="col"><?= lang('App.colTimestamp') ?></th>
+                            <th scope="col"><?= lang('System.auditFilterAction') ?></th>
+                            <th scope="col"><?= lang('System.auditFilterEntityType') ?></th>
+                            <th scope="col">ID</th>
+                            <th scope="col"><?= lang('System.auditFilterUser') ?></th>
+                            <th scope="col">IP</th>
+                            <th scope="col"><?= lang('App.oldValues') ?></th>
+                            <th scope="col"><?= lang('App.newValues') ?></th>
                         </tr>
                     </thead>
                     <tbody>

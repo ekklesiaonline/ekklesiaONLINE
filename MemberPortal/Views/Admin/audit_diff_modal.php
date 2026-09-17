@@ -29,7 +29,7 @@ function showAuditDiff(oldValues, newValues) {
     
     let html = '<div class="table-responsive">';
     html += '<table class="table table-sm table-bordered" style="color: var(--bs-body-color);">';
-    html += '<thead><tr><th>Field</th><th>Old Value</th><th>New Value</th><th>Change</th></tr></thead>';
+    html += '<thead><tr><th scope="col">Field</th><th scope="col">Old Value</th><th scope="col">New Value</th><th scope="col">Change</th></tr></thead>';
     html += '<tbody>';
     
     const allKeys = new Set([
@@ -299,11 +299,11 @@ function toggleLiveUpdates() {
         // Stop live updates
         clearInterval(liveUpdatesInterval);
         liveUpdatesInterval = null;
-        toggleBtn.innerHTML = '<i class="bi bi-play-circle"></i> ' + (toggleBtn.dataset.enableLive || 'Enable Live');
+        toggleBtn.innerHTML = '<i class="bi bi-play-circle" aria-hidden="true"></i> ' + (toggleBtn.dataset.enableLive || 'Enable Live');
         liveIndicator.style.display = 'none';
     } else {
         // Start live updates
-        toggleBtn.innerHTML = '<i class="bi bi-stop-circle"></i> ' + (toggleBtn.dataset.disableLive || 'Disable Live');
+        toggleBtn.innerHTML = '<i class="bi bi-stop-circle" aria-hidden="true"></i> ' + (toggleBtn.dataset.disableLive || 'Disable Live');
         liveIndicator.style.display = 'inline';
         
         // Get the highest audit ID from the current table
@@ -355,7 +355,7 @@ function showNewEventsNotification(count) {
     toast.style.zIndex = '9999';
     toast.innerHTML = `
         <div class="toast-header bg-success text-white">
-            <i class="bi bi-bell me-2"></i>
+            <i class="bi bi-bell me-2" aria-hidden="true"></i>
             <strong class="me-auto">New Audit Events</strong>
             <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast"></button>
         </div>

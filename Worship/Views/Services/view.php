@@ -7,7 +7,7 @@
     <div>
         <?php if (auth()->user()->can('worship.view')): ?>
             <a href="<?= base_url('worship-planning/service/' . $service['id']) ?>" class="btn btn-primary">
-                <i class="bi bi-music-note-list"></i> <?= lang('Services.worshipPlanning') ?>
+                <i class="bi bi-music-note-list" aria-hidden="true"></i> <?= lang('Services.worshipPlanning') ?>
             </a>
         <?php endif; ?>
         <?php
@@ -20,16 +20,16 @@
         ):
         ?>
             <a href="<?= base_url('attendance/form/' . $service['id']) ?>" class="btn btn-outline-success">
-                <i class="bi bi-check2-square"></i> <?= lang('Services.markAttendance') ?>
+                <i class="bi bi-check2-square" aria-hidden="true"></i> <?= lang('Services.markAttendance') ?>
             </a>
         <?php endif; ?>
         <?php if (auth()->user()->can('service.edit')): ?>
             <a href="<?= base_url('services/edit/' . $service['id']) ?>" class="btn btn-warning">
-                <i class="bi bi-pencil"></i> <?= lang('App.edit') ?>
+                <i class="bi bi-pencil" aria-hidden="true"></i> <?= lang('App.edit') ?>
             </a>
         <?php endif; ?>
         <a href="<?= base_url('services') ?>" class="btn btn-secondary">
-            <i class="bi bi-arrow-left"></i> <?= lang('Services.backToServices') ?>
+            <i class="bi bi-arrow-left" aria-hidden="true"></i> <?= lang('Services.backToServices') ?>
         </a>
     </div>
 </div>
@@ -63,10 +63,10 @@
             <div class="card-body">
                 <h4><?= esc(liturgical_day_label((string) ($service['liturgical_day'] ?? '')) ?: lang('Services.serviceFallback')) ?></h4>
                 <p class="text-muted">
-                    <i class="bi bi-calendar3"></i> <?= esc(liturgy_format_long_date((string) ($service['service_date'] ?? ''))) ?><br>
-                    <i class="bi bi-clock"></i> <?= !empty($service['service_time']) ? esc(liturgy_format_time((string) ($service['service_time'] ?? ''))) : lang('Services.notAvailable') ?>
+                    <i class="bi bi-calendar3" aria-hidden="true"></i> <?= esc(liturgy_format_long_date((string) ($service['service_date'] ?? ''))) ?><br>
+                    <i class="bi bi-clock" aria-hidden="true"></i> <?= !empty($service['service_time']) ? esc(liturgy_format_time((string) ($service['service_time'] ?? ''))) : lang('Services.notAvailable') ?>
                     <?php if (!empty($service['place'])): ?>
-                        <br><i class="bi bi-geo-alt"></i> <?= esc($service['place']) ?>
+                        <br><i class="bi bi-geo-alt" aria-hidden="true"></i> <?= esc($service['place']) ?>
                     <?php endif; ?>
                 </p>
 
@@ -219,9 +219,9 @@
                 <table class="table table-sm">
                     <thead>
                         <tr>
-                            <th><?= lang('Services.name') ?></th>
-                            <th><?= lang('Services.email') ?></th>
-                            <th><?= lang('Services.colCommunion') ?></th>
+                            <th scope="col"><?= lang('Services.name') ?></th>
+                            <th scope="col"><?= lang('Services.email') ?></th>
+                            <th scope="col"><?= lang('Services.colCommunion') ?></th>
                         </tr>
                     </thead>
                     <tbody>

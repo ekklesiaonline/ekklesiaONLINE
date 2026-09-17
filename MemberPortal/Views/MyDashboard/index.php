@@ -71,7 +71,7 @@ if (!empty($attendance_summary['total_services']) && $attendance_summary['total_
                             <img src="<?= esc($profilePictureUrl) ?>" alt="" class="rounded-circle" style="width: 64px; height: 64px; object-fit: cover;">
                         <?php else: ?>
                             <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center" style="width: 64px; height: 64px;">
-                                <i class="bi bi-person-fill fs-3"></i>
+                                <i class="bi bi-person-fill fs-3" aria-hidden="true"></i>
                             </div>
                         <?php endif; ?>
                     </div>
@@ -83,13 +83,13 @@ if (!empty($attendance_summary['total_services']) && $attendance_summary['total_
                                 <span class="badge bg-success"><?= lang('Dashboard.goodStanding') ?></span>
                             <?php endif; ?>
                             <?php if (!empty($parishName)): ?>
-                                <small class="text-muted"><i class="bi bi-geo-alt"></i> <?= esc($parishName) ?></small>
+                                <small class="text-muted"><i class="bi bi-geo-alt" aria-hidden="true"></i> <?= esc($parishName) ?></small>
                             <?php endif; ?>
                         </div>
                     </div>
                     <div>
                         <a href="<?= base_url('profile') ?>" class="btn btn-sm btn-outline-primary">
-                            <i class="bi bi-pencil"></i> <?= lang('App.edit') ?>
+                            <i class="bi bi-pencil" aria-hidden="true"></i> <?= lang('App.edit') ?>
                         </a>
                     </div>
                 </div>
@@ -101,7 +101,7 @@ if (!empty($attendance_summary['total_services']) && $attendance_summary['total_
     <div class="col-md-6">
         <?php if (!empty($sacrament_discrepancies)): ?>
             <div class="alert alert-warning small mb-3" role="alert">
-                <i class="bi bi-exclamation-triangle-fill"></i>
+                <i class="bi bi-exclamation-triangle-fill" aria-hidden="true"></i>
                 <strong><?= lang('Dashboard.sacramentDiscrepancyHeading') ?? 'Sacrament data mismatch' ?></strong>
                 <p class="mb-1"><?= lang('Dashboard.sacramentDiscrepancyIntro') ?? 'Your sacramental records disagree with the membership flags shown below:' ?></p>
                 <ul class="mb-0">
@@ -113,40 +113,40 @@ if (!empty($attendance_summary['total_services']) && $attendance_summary['total_
         <?php endif; ?>
         <div class="card h-100">
             <div class="card-header">
-                <h5 class="mb-0"><i class="bi bi-person-badge"></i> <?= lang('Dashboard.myMembership') ?></h5>
+                <h5 class="mb-0"><i class="bi bi-person-badge" aria-hidden="true"></i> <?= lang('Dashboard.myMembership') ?></h5>
             </div>
             <div class="card-body">
                 <div class="row g-3">
                     <div class="col-md-6">
                         <div class="d-flex align-items-center gap-2">
-                            <i class="bi bi-droplet-fill <?= $isBaptized ? 'text-primary' : 'text-muted' ?>"></i>
+                            <i class="bi bi-droplet-fill <?= $isBaptized ? 'text-primary' : 'text-muted' ?>" aria-hidden="true"></i>
                             <span><?= lang('Dashboard.sacramentBaptism') ?></span>
                             <?php if ($isBaptized): ?>
-                                <i class="bi bi-check-circle-fill text-success ms-auto"></i>
+                                <i class="bi bi-check-circle-fill text-success ms-auto" aria-hidden="true"></i>
                             <?php else: ?>
-                                <i class="bi bi-circle text-muted ms-auto"></i>
+                                <i class="bi bi-circle text-muted ms-auto" aria-hidden="true"></i>
                             <?php endif; ?>
                         </div>
                     </div>
                     <div class="col-md-6">
                         <div class="d-flex align-items-center gap-2">
-                            <i class="bi bi-droplet-half <?= $isConfirmed ? 'text-primary' : 'text-muted' ?>"></i>
+                            <i class="bi bi-droplet-half <?= $isConfirmed ? 'text-primary' : 'text-muted' ?>" aria-hidden="true"></i>
                             <span><?= lang('Dashboard.sacramentConfirmation') ?></span>
                             <?php if ($isConfirmed): ?>
-                                <i class="bi bi-check-circle-fill text-success ms-auto"></i>
+                                <i class="bi bi-check-circle-fill text-success ms-auto" aria-hidden="true"></i>
                             <?php else: ?>
-                                <i class="bi bi-circle text-muted ms-auto"></i>
+                                <i class="bi bi-circle text-muted ms-auto" aria-hidden="true"></i>
                             <?php endif; ?>
                         </div>
                     </div>
                     <div class="col-md-6">
                         <div class="d-flex align-items-center gap-2">
-                            <i class="bi bi-bread-slice <?= $isCommunicant ? 'text-primary' : 'text-muted' ?>"></i>
+                            <i class="bi bi-bread-slice <?= $isCommunicant ? 'text-primary' : 'text-muted' ?>" aria-hidden="true"></i>
                             <span><?= lang('Dashboard.sacramentCommunicant') ?></span>
                             <?php if ($isCommunicant): ?>
-                                <i class="bi bi-check-circle-fill text-success ms-auto"></i>
+                                <i class="bi bi-check-circle-fill text-success ms-auto" aria-hidden="true"></i>
                             <?php else: ?>
-                                <i class="bi bi-circle text-muted ms-auto"></i>
+                                <i class="bi bi-circle text-muted ms-auto" aria-hidden="true"></i>
                             <?php endif; ?>
                         </div>
                     </div>
@@ -178,7 +178,7 @@ if (!empty($attendance_summary['total_services']) && $attendance_summary['total_
     <div class="col-md-6">
         <div class="card h-100">
             <div class="card-header">
-                <h5 class="mb-0"><i class="bi bi-calendar-check"></i> <?= lang('Dashboard.myAttendance') ?></h5>
+                <h5 class="mb-0"><i class="bi bi-calendar-check" aria-hidden="true"></i> <?= lang('Dashboard.myAttendance') ?></h5>
             </div>
             <div class="card-body">
                 <div class="row text-center g-3 mb-3">
@@ -204,8 +204,8 @@ if (!empty($attendance_summary['total_services']) && $attendance_summary['total_
                     <table class="table table-sm">
                         <thead>
                             <tr>
-                                <th><?= lang('App.colDate') ?></th>
-                                <th><?= lang('Dashboard.colService') ?></th>
+                                <th scope="col"><?= lang('App.colDate') ?></th>
+                                <th scope="col"><?= lang('Dashboard.colService') ?></th>
                             </tr>
                         </thead>
                         <tbody>
@@ -228,7 +228,7 @@ if (!empty($attendance_summary['total_services']) && $attendance_summary['total_
     <div class="col-md-6">
         <div class="card h-100">
             <div class="card-header">
-                <h5 class="mb-0"><i class="bi bi-bible"></i> <?= lang('Dashboard.mySacraments') ?></h5>
+                <h5 class="mb-0"><i class="bi bi-bible" aria-hidden="true"></i> <?= lang('Dashboard.mySacraments') ?></h5>
             </div>
             <div class="card-body">
                 <?php if (!empty($sacraments)): ?>
@@ -236,9 +236,9 @@ if (!empty($attendance_summary['total_services']) && $attendance_summary['total_
                         <table class="table table-sm">
                             <thead>
                                 <tr>
-                                    <th><?= lang('Dashboard.colSacrament') ?></th>
-                                    <th><?= lang('App.colDate') ?></th>
-                                    <th><?= lang('Dashboard.colOfficiant') ?></th>
+                                    <th scope="col"><?= lang('Dashboard.colSacrament') ?></th>
+                                    <th scope="col"><?= lang('App.colDate') ?></th>
+                                    <th scope="col"><?= lang('Dashboard.colOfficiant') ?></th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -263,7 +263,7 @@ if (!empty($attendance_summary['total_services']) && $attendance_summary['total_
     <div class="col-md-6">
         <div class="card h-100">
             <div class="card-header">
-                <h5 class="mb-0"><i class="bi bi-award"></i> <?= lang('Dashboard.myLeadership') ?></h5>
+                <h5 class="mb-0"><i class="bi bi-award" aria-hidden="true"></i> <?= lang('Dashboard.myLeadership') ?></h5>
             </div>
             <div class="card-body">
                 <?php if (!empty($leadership)): ?>
@@ -271,9 +271,9 @@ if (!empty($attendance_summary['total_services']) && $attendance_summary['total_
                         <table class="table table-sm">
                             <thead>
                                 <tr>
-                                    <th><?= lang('Dashboard.colTitle') ?></th>
-                                    <th><?= lang('Dashboard.colScope') ?></th>
-                                    <th><?= lang('Dashboard.colStatus') ?></th>
+                                    <th scope="col"><?= lang('Dashboard.colTitle') ?></th>
+                                    <th scope="col"><?= lang('Dashboard.colScope') ?></th>
+                                    <th scope="col"><?= lang('Dashboard.colStatus') ?></th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -309,7 +309,7 @@ if (!empty($attendance_summary['total_services']) && $attendance_summary['total_
     <div class="col-md-6">
         <div class="card h-100">
             <div class="card-header">
-                <h5 class="mb-0"><i class="bi bi-house-heart"></i> <?= lang('Dashboard.myFamily') ?></h5>
+                <h5 class="mb-0"><i class="bi bi-house-heart" aria-hidden="true"></i> <?= lang('Dashboard.myFamily') ?></h5>
             </div>
             <div class="card-body">
                 <?php if (!empty($family)): ?>
@@ -318,8 +318,8 @@ if (!empty($attendance_summary['total_services']) && $attendance_summary['total_
                         <table class="table table-sm">
                             <thead>
                                 <tr>
-                                    <th><?= lang('Dashboard.colName') ?></th>
-                                    <th><?= lang('Dashboard.colRelationship') ?></th>
+                                    <th scope="col"><?= lang('Dashboard.colName') ?></th>
+                                    <th scope="col"><?= lang('Dashboard.colRelationship') ?></th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -345,7 +345,7 @@ if (!empty($attendance_summary['total_services']) && $attendance_summary['total_
     <div class="col-md-6">
         <div class="card h-100">
             <div class="card-header">
-                <h5 class="mb-0"><i class="bi bi-cash-coin"></i> <?= lang('Dashboard.myPledges') ?></h5>
+                <h5 class="mb-0"><i class="bi bi-cash-coin" aria-hidden="true"></i> <?= lang('Dashboard.myPledges') ?></h5>
             </div>
             <div class="card-body">
                 <?php if (!empty($pledges)): ?>
@@ -353,10 +353,10 @@ if (!empty($attendance_summary['total_services']) && $attendance_summary['total_
                         <table class="table table-sm">
                             <thead>
                                 <tr>
-                                    <th><?= lang('Dashboard.colYear') ?></th>
-                                    <th class="text-end"><?= lang('Dashboard.colPledged') ?></th>
-                                    <th class="text-end"><?= lang('Dashboard.colFulfilled') ?></th>
-                                    <th><?= lang('Dashboard.colStatus') ?></th>
+                                    <th scope="col"><?= lang('Dashboard.colYear') ?></th>
+                                    <th scope="col" class="text-end"><?= lang('Dashboard.colPledged') ?></th>
+                                    <th scope="col" class="text-end"><?= lang('Dashboard.colFulfilled') ?></th>
+                                    <th scope="col"><?= lang('Dashboard.colStatus') ?></th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -393,7 +393,7 @@ if (!empty($attendance_summary['total_services']) && $attendance_summary['total_
     <div class="col-md-6">
         <div class="card h-100">
             <div class="card-header">
-                <h5 class="mb-0"><i class="bi bi-receipt"></i> <?= lang('Dashboard.myGiving') ?></h5>
+                <h5 class="mb-0"><i class="bi bi-receipt" aria-hidden="true"></i> <?= lang('Dashboard.myGiving') ?></h5>
             </div>
             <div class="card-body">
                 <?php if (!empty($donations)): ?>
@@ -401,9 +401,9 @@ if (!empty($attendance_summary['total_services']) && $attendance_summary['total_
                         <table class="table table-sm">
                             <thead>
                                 <tr>
-                                    <th><?= lang('App.colDate') ?></th>
-                                    <th class="text-end"><?= lang('Dashboard.colAmount') ?></th>
-                                    <th><?= lang('Dashboard.colFund') ?></th>
+                                    <th scope="col"><?= lang('App.colDate') ?></th>
+                                    <th scope="col" class="text-end"><?= lang('Dashboard.colAmount') ?></th>
+                                    <th scope="col"><?= lang('Dashboard.colFund') ?></th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -428,7 +428,7 @@ if (!empty($attendance_summary['total_services']) && $attendance_summary['total_
     <div class="col-12">
         <div class="card">
             <div class="card-header">
-                <h5 class="mb-0"><i class="bi bi-list-check"></i> <?= lang('Dashboard.myOnboarding') ?></h5>
+                <h5 class="mb-0"><i class="bi bi-list-check" aria-hidden="true"></i> <?= lang('Dashboard.myOnboarding') ?></h5>
             </div>
             <div class="card-body">
                 <?php if (!empty($onboarding)): ?>
@@ -445,7 +445,7 @@ if (!empty($attendance_summary['total_services']) && $attendance_summary['total_
                         ?>
                             <div class="col-md-3">
                                 <div class="d-flex align-items-center gap-2">
-                                    <i class="bi <?= $done ? 'bi-check-circle-fill text-success' : 'bi-circle text-muted' ?>"></i>
+                                    <i class="bi <?= $done ? 'bi-check-circle-fill text-success' : 'bi-circle text-muted' ?>" aria-hidden="true"></i>
                                     <span class="small <?= $done ? '' : 'text-muted' ?>"><?= esc($label) ?></span>
                                 </div>
                             </div>

@@ -4,7 +4,7 @@
 
 <div class="d-flex justify-content-start align-items-center mb-3">
     <a href="<?= base_url('services') ?>" class="btn btn-secondary">
-        <i class="bi bi-arrow-left"></i> <?= lang('Services.backToServices') ?>
+        <i class="bi bi-arrow-left" aria-hidden="true"></i> <?= lang('Services.backToServices') ?>
     </a>
 </div>
 
@@ -355,13 +355,13 @@
                     <?php endforeach; ?>
                 </div>
                 <button type="button" id="add-person" class="btn btn-outline-secondary btn-sm mt-2">
-                    <i class="bi bi-plus-circle"></i> <?= lang('Services.addPerson') ?>
+                    <i class="bi bi-plus-circle" aria-hidden="true"></i> <?= lang('Services.addPerson') ?>
                 </button>
 
                 <div class="d-flex justify-content-end gap-2 mt-4">
                     <a href="<?= base_url('services') ?>" class="btn btn-secondary"><?= lang('App.cancel') ?></a>
                     <button type="submit" class="btn btn-primary">
-                        <i class="bi bi-save"></i> <?= lang('Services.updateService') ?>
+                        <i class="bi bi-save" aria-hidden="true"></i> <?= lang('Services.updateService') ?>
                     </button>
                 </div>
         </form>

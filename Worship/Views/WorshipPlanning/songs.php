@@ -38,14 +38,14 @@
                     <table class="table table-hover">
                         <thead>
                             <tr>
-                                <th><?= lang('Worship.title') ?></th>
-                                <th><?= lang('Worship.artist') ?></th>
-                                <th><?= lang('Worship.key') ?></th>
-                                <th><?= lang('Worship.tempo') ?></th>
-                                <th><?= lang('Worship.ccli') ?></th>
-                                <th><?= lang('Worship.status') ?></th>
+                                <th scope="col"><?= lang('Worship.title') ?></th>
+                                <th scope="col"><?= lang('Worship.artist') ?></th>
+                                <th scope="col"><?= lang('Worship.key') ?></th>
+                                <th scope="col"><?= lang('Worship.tempo') ?></th>
+                                <th scope="col"><?= lang('Worship.ccli') ?></th>
+                                <th scope="col"><?= lang('Worship.status') ?></th>
                                 <?php if (auth()->user()->can('worship.manage')): ?>
-                                    <th><?= lang('Worship.colActions') ?></th>
+                                    <th scope="col"><?= lang('Worship.colActions') ?></th>
                                 <?php endif; ?>
                             </tr>
                         </thead>
@@ -77,7 +77,7 @@
                                                         data-bs-toggle="dropdown"
                                                         aria-expanded="false"
                                                         title="<?= esc(lang('App.colActions')) ?>">
-                                                        <i class="bi bi-three-dots-vertical"></i>
+                                                        <i class="bi bi-three-dots-vertical" aria-hidden="true"></i>
                                                     </button>
                                                     <ul class="dropdown-menu dropdown-menu-end shadow-sm">
                                                         <?php if (!empty($song['lyrics'])): ?>
@@ -87,13 +87,13 @@
                                                                     data-bs-target="#lyricsPreviewModal"
                                                                     data-song-title="<?= esc((string) ($song['title'] ?? ''), 'attr') ?>"
                                                                     data-song-lyrics="<?= esc((string) ($song['lyrics'] ?? ''), 'attr') ?>">
-                                                                    <i class="bi bi-file-earmark-text me-2"></i><?= lang('Worship.previewLyrics') ?>
+                                                                    <i class="bi bi-file-earmark-text me-2" aria-hidden="true"></i><?= lang('Worship.previewLyrics') ?>
                                                                 </button>
                                                             </li>
                                                         <?php endif; ?>
                                                         <li>
                                                             <a class="dropdown-item" href="<?= base_url('worship-planning/songs/edit/' . (int) $song['id']) ?>">
-                                                                <i class="bi bi-pencil me-2"></i><?= lang('App.edit') ?>
+                                                                <i class="bi bi-pencil me-2" aria-hidden="true"></i><?= lang('App.edit') ?>
                                                             </a>
                                                         </li>
                                                         <li>
@@ -106,7 +106,7 @@
                                                                     data-confirm-body="<?= esc(lang('Worship.confirmDeactivateSong'), 'attr') ?>">
                                                                     <?= csrf_field() ?>
                                                                     <button type="submit" class="dropdown-item text-warning">
-                                                                        <i class="bi bi-pause-circle me-2"></i><?= lang('Worship.deactivate') ?>
+                                                                        <i class="bi bi-pause-circle me-2" aria-hidden="true"></i><?= lang('Worship.deactivate') ?>
                                                                     </button>
                                                                 </form>
                                                             </li>
@@ -115,7 +115,7 @@
                                                                 <form method="post" action="<?= base_url('worship-planning/songs/reactivate/' . (int) $song['id']) ?>">
                                                                     <?= csrf_field() ?>
                                                                     <button type="submit" class="dropdown-item text-success">
-                                                                        <i class="bi bi-arrow-clockwise me-2"></i><?= lang('Worship.reactivate') ?>
+                                                                        <i class="bi bi-arrow-clockwise me-2" aria-hidden="true"></i><?= lang('Worship.reactivate') ?>
                                                                     </button>
                                                                 </form>
                                                             </li>
@@ -126,7 +126,7 @@
                                                                 data-confirm-body="<?= esc(lang('Worship.confirmDeleteSong'), 'attr') ?>">
                                                                 <?= csrf_field() ?>
                                                                 <button type="submit" class="dropdown-item text-danger">
-                                                                    <i class="bi bi-trash me-2"></i><?= lang('Worship.delete') ?>
+                                                                    <i class="bi bi-trash me-2" aria-hidden="true"></i><?= lang('Worship.delete') ?>
                                                                 </button>
                                                             </form>
                                                         </li>

@@ -3,7 +3,7 @@
 <?= $this->section('content') ?>
 
 <div class="d-flex justify-content-start align-items-center mb-3">
-    <a href="<?= base_url('chart-accounts') ?>" class="btn btn-secondary"><i class="bi bi-arrow-left"></i> <?= lang('ChartAccounts.btn_back') ?></a>
+    <a href="<?= base_url('chart-accounts') ?>" class="btn btn-secondary"><i class="bi bi-arrow-left" aria-hidden="true"></i> <?= lang('ChartAccounts.btn_back') ?></a>
 </div>
 
 <div class="card">
@@ -32,7 +32,7 @@
                 </div>
             </div>
             <div class="mb-3"><label for="description" class="form-label"><?= lang('ChartAccounts.labelDescription') ?></label><textarea class="form-control" id="description" name="description" rows="3"><?= esc(old('description', $account['description'] ?? '')) ?></textarea></div>
-            <div class="d-flex justify-content-end gap-2"><a href="<?= base_url('chart-accounts') ?>" class="btn btn-secondary"><?= lang('ChartAccounts.btn_cancel') ?></a><button type="submit" class="btn btn-primary"><i class="bi bi-save"></i> <?= lang('ChartAccounts.btn_updateAccount') ?></button></div>
+            <div class="d-flex justify-content-end gap-2"><a href="<?= base_url('chart-accounts') ?>" class="btn btn-secondary"><?= lang('ChartAccounts.btn_cancel') ?></a><button type="submit" class="btn btn-primary"><i class="bi bi-save" aria-hidden="true"></i> <?= lang('ChartAccounts.btn_updateAccount') ?></button></div>
         </form>
     </div>
 </div>

@@ -5,7 +5,7 @@
 <div class="d-flex justify-content-between align-items-center mb-3">
     <h2><?= lang('People.personMergeTitle') ?></h2>
     <a href="<?= base_url('/people') ?>" class="btn btn-secondary">
-        <i class="bi bi-arrow-left"></i> <?= lang('People.backToPeople') ?>
+        <i class="bi bi-arrow-left" aria-hidden="true"></i> <?= lang('People.backToPeople') ?>
     </a>
 </div>
 
@@ -19,12 +19,12 @@
         <table class="table table-hover">
             <thead>
                 <tr>
-                    <th><?= lang('People.canonicalPersonId') ?> A</th>
-                    <th><?= lang('People.canonicalPersonName') ?></th>
-                    <th><?= lang('People.canonicalPersonId') ?> B</th>
-                    <th><?= lang('People.canonicalPersonName') ?></th>
-                    <th><?= lang('People.personMergeReason') ?></th>
-                    <th></th>
+                    <th scope="col"><?= lang('People.canonicalPersonId') ?> A</th>
+                    <th scope="col"><?= lang('People.canonicalPersonName') ?></th>
+                    <th scope="col"><?= lang('People.canonicalPersonId') ?> B</th>
+                    <th scope="col"><?= lang('People.canonicalPersonName') ?></th>
+                    <th scope="col"><?= lang('People.personMergeReason') ?></th>
+                    <th scope="col"></th>
                 </tr>
             </thead>
             <tbody>

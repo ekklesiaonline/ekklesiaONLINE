@@ -6,7 +6,7 @@
     <div class="d-flex flex-wrap gap-2">
         <?php if (auth()->user()->can('expense.create')): ?>
             <a href="<?= base_url('expenses/create') ?>" class="btn btn-primary">
-                <i class="bi bi-plus-circle"></i> <?= lang('Finance.recordExpense') ?>
+                <i class="bi bi-plus-circle" aria-hidden="true"></i> <?= lang('Finance.recordExpense') ?>
             </a>
         <?php endif; ?>
     </div>
@@ -66,7 +66,7 @@ $formatLocalizedDate = static function (?string $value, string $pattern, string 
             data-bs-target="#expensesFilterPanel"
             aria-expanded="<?= ($request->getGet('start_date') !== null || $request->getGet('end_date') !== null) ? 'true' : 'false' ?>"
             aria-controls="expensesFilterPanel">
-            <i class="bi bi-funnel"></i> <?= lang('App.filter') ?>
+            <i class="bi bi-funnel" aria-hidden="true"></i> <?= lang('App.filter') ?>
         </button>
     </div>
     <div id="expensesFilterPanel" class="collapse <?= ($request->getGet('start_date') !== null || $request->getGet('end_date') !== null) ? 'show' : '' ?>">
@@ -102,7 +102,7 @@ $formatLocalizedDate = static function (?string $value, string $pattern, string 
                     </div>
                     <div class="col-md-2">
                         <button type="submit" class="btn btn-primary w-100">
-                            <i class="bi bi-filter"></i> <?= lang('App.filter') ?>
+                            <i class="bi bi-filter" aria-hidden="true"></i> <?= lang('App.filter') ?>
                         </button>
                     </div>
                 </div>
@@ -169,10 +169,10 @@ $formatLocalizedDate = static function (?string $value, string $pattern, string 
         <div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-3">
             <div class="d-flex flex-wrap gap-2">
                 <a href="<?= base_url('expenses/export' . (!empty($exportFilterParams) ? '?' . http_build_query($exportFilterParams) : '')) ?>" class="btn btn-outline-secondary btn-sm">
-                    <i class="bi bi-download"></i> <?= lang('Finance.exportCsv') ?>
+                    <i class="bi bi-download" aria-hidden="true"></i> <?= lang('Finance.exportCsv') ?>
                 </a>
                 <a href="<?= base_url('expenses/export-pdf' . (!empty($exportFilterParams) ? '?' . http_build_query($exportFilterParams) : '')) ?>" class="btn btn-outline-secondary btn-sm" target="_blank" rel="noopener noreferrer">
-                    <i class="bi bi-file-earmark-pdf"></i> <?= lang('Finance.exportPdf') ?>
+                    <i class="bi bi-file-earmark-pdf" aria-hidden="true"></i> <?= lang('Finance.exportPdf') ?>
                 </a>
             </div>
             <span class="text-muted small"><?= lang('Treasurer.exportsRespectFilters') ?></span>
@@ -201,14 +201,14 @@ $formatLocalizedDate = static function (?string $value, string $pattern, string 
             <table class="table table-hover">
                 <thead>
                     <tr>
-                        <th><?= lang('Finance.colDate') ?></th>
-                        <th><?= lang('Finance.colDescription') ?></th>
-                        <th><?= lang('Finance.colFund') ?></th>
-                        <th><?= lang('Finance.colFundType') ?></th>
-                        <th><?= lang('Finance.colCategory') ?></th>
-                        <th><?= lang('Finance.colNotes') ?></th>
-                        <th><?= lang('Finance.colAmount') ?></th>
-                        <th><?= lang('App.colActions') ?></th>
+                        <th scope="col"><?= lang('Finance.colDate') ?></th>
+                        <th scope="col"><?= lang('Finance.colDescription') ?></th>
+                        <th scope="col"><?= lang('Finance.colFund') ?></th>
+                        <th scope="col"><?= lang('Finance.colFundType') ?></th>
+                        <th scope="col"><?= lang('Finance.colCategory') ?></th>
+                        <th scope="col"><?= lang('Finance.colNotes') ?></th>
+                        <th scope="col"><?= lang('Finance.colAmount') ?></th>
+                        <th scope="col"><?= lang('App.colActions') ?></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -236,13 +236,13 @@ $formatLocalizedDate = static function (?string $value, string $pattern, string 
                                 <td>
                                     <div class="d-inline-flex flex-nowrap gap-1 align-items-center">
                                         <?php if (auth()->user()->can('expense.edit')): ?>
-                                            <a href="<?= base_url('expenses/edit/' . $expense['id']) ?>" class="btn btn-sm btn-warning">
-                                                <i class="bi bi-pencil"></i>
+                                            <a href="<?= base_url('expenses/edit/' . $expense['id']) ?>" class="btn btn-sm btn-warning" aria-label="<?= esc(lang('App.edit')) ?>">
+                                                <i class="bi bi-pencil" aria-hidden="true"></i>
                                             </a>
                                         <?php endif; ?>
                                         <?php if (auth()->user()->can('expense.delete')): ?>
-                                            <button class="btn btn-sm btn-danger" onclick="deleteExpense(<?= $expense['id'] ?>)">
-                                                <i class="bi bi-trash"></i>
+                                            <button class="btn btn-sm btn-danger" onclick="deleteExpense(<?= $expense['id'] ?>)" aria-label="<?= esc(lang('App.delete')) ?>">
+                                                <i class="bi bi-trash" aria-hidden="true"></i>
                                             </button>
                                         <?php endif; ?>
                                     </div>

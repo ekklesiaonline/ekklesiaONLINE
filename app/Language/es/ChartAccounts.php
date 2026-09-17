@@ -43,6 +43,7 @@ return [
     'colStatus'             => 'Estado',
     'colSort'               => 'Orden',
     'colActions'            => 'Acciones',
+    'actionToggle'          => 'Cambiar estado',
 
     // Valores de celda
     'valueYes'              => 'Sí',

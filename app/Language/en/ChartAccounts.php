@@ -43,6 +43,7 @@ return [
     'colStatus'             => 'Status',
     'colSort'               => 'Sort',
     'colActions'            => 'Actions',
+    'actionToggle'          => 'Toggle status',
 
     // Cell values
     'valueYes'              => 'Yes',

@@ -4,7 +4,7 @@
 
 <div class="d-flex justify-content-start align-items-center mb-3">
     <a href="<?= base_url('expenses') ?>" class="btn btn-secondary">
-        <i class="bi bi-arrow-left"></i> <?= lang('App.back') ?>
+        <i class="bi bi-arrow-left" aria-hidden="true"></i> <?= lang('App.back') ?>
     </a>
 </div>
 

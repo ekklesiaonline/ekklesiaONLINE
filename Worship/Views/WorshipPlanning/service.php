@@ -52,7 +52,7 @@ if (empty($existingRows)) {
     </div>
     <div class="d-flex gap-2">
         <a href="<?= base_url('worship-planning/print/' . (int) $service['id']) ?>" target="_blank" rel="noopener noreferrer" class="btn btn-outline-secondary">
-            <i class="bi bi-printer"></i> <?= lang('Worship.printRunSheet') ?>
+            <i class="bi bi-printer" aria-hidden="true"></i> <?= lang('Worship.printRunSheet') ?>
         </a>
         <a href="<?= base_url('worship-planning') ?>" class="btn btn-outline-secondary"><?= lang('Worship.back') ?></a>
     </div>
@@ -114,10 +114,10 @@ if (empty($existingRows)) {
 
             <div class="mt-3 d-flex gap-2">
                 <button type="button" id="add-row" class="btn btn-outline-secondary btn-sm">
-                    <i class="bi bi-plus-circle"></i> <?= lang('Worship.addItem') ?>
+                    <i class="bi bi-plus-circle" aria-hidden="true"></i> <?= lang('Worship.addItem') ?>
                 </button>
                 <button type="submit" class="btn btn-primary btn-sm">
-                    <i class="bi bi-save"></i> <?= lang('Worship.savePlan') ?>
+                    <i class="bi bi-save" aria-hidden="true"></i> <?= lang('Worship.savePlan') ?>
                 </button>
             </div>
         </form>

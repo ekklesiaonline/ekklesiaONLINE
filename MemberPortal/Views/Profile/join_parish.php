@@ -80,7 +80,7 @@ $selectedParish = (int) old('parish_id', 0);
 
                 <div class="d-flex justify-content-between mt-4">
                     <a href="<?= base_url('profile') ?>" class="btn btn-outline-secondary">
-                        <i class="bi bi-arrow-left"></i> <?= lang('Profile.back') ?>
+                        <i class="bi bi-arrow-left" aria-hidden="true"></i> <?= lang('Profile.back') ?>
                     </a>
                     <button type="submit" class="btn btn-primary"><?= lang('Profile.submitForReview') ?></button>
                 </div>

@@ -51,7 +51,7 @@ $to   = min($total, $page * $perPage);
 
 <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
     <div>
-        <h4 class="mb-1"><i class="bi bi-activity"></i> <?= lang('Dashboard.systemOverviewRecentActivity') ?></h4>
+        <h4 class="mb-1"><i class="bi bi-activity" aria-hidden="true"></i> <?= lang('Dashboard.systemOverviewRecentActivity') ?></h4>
         <div class="text-muted small"><?= lang('Dashboard.dioceseWideScope') ?> · <?= number_format($from) ?>–<?= number_format($to) ?> / <?= number_format($total) ?></div>
     </div>
     <div class="d-flex gap-2">

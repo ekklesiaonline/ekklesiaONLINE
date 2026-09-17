@@ -5,7 +5,7 @@
 <div class="d-flex justify-content-between align-items-center mb-3">
     <h2><?= lang('People.personMergePreviewTitle') ?></h2>
     <a href="<?= base_url('/people/merge') ?>" class="btn btn-secondary">
-        <i class="bi bi-arrow-left"></i> <?= lang('App.back') ?>
+        <i class="bi bi-arrow-left" aria-hidden="true"></i> <?= lang('App.back') ?>
     </a>
 </div>
 
@@ -83,9 +83,9 @@
                 <table class="table table-sm">
                     <thead>
                         <tr>
-                            <th><?= lang('People.personMergeField') ?></th>
-                            <th><?= lang('People.personMergeKeepSource') ?></th>
-                            <th><?= lang('People.personMergeKeepTarget') ?></th>
+                            <th scope="col"><?= lang('People.personMergeField') ?></th>
+                            <th scope="col"><?= lang('People.personMergeKeepSource') ?></th>
+                            <th scope="col"><?= lang('People.personMergeKeepTarget') ?></th>
                         </tr>
                     </thead>
                     <tbody>

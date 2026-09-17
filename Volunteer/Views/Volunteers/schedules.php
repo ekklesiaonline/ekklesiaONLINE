@@ -91,7 +91,7 @@ if (in_array($calView, ['week', 'month'], true)) {
             data-bs-toggle="collapse"
             data-bs-target="#schedulesFilterPanel"
             aria-expanded="<?= $schedulesFiltersActive ? 'true' : 'false' ?>">
-            <i class="bi bi-funnel"></i> <?= lang('App.filter') ?>
+            <i class="bi bi-funnel" aria-hidden="true"></i> <?= lang('App.filter') ?>
         </button>
     </div>
     <div id="schedulesFilterPanel" class="collapse <?= $schedulesFiltersActive ? 'show' : '' ?>">
@@ -145,7 +145,7 @@ if (in_array($calView, ['week', 'month'], true)) {
                         <div class="col-md-7 d-flex gap-2">
                         <?php endif; ?>
                         <button type="submit" class="btn btn-sm btn-primary flex-fill">
-                            <i class="bi bi-funnel"></i> <?= lang('Services.apply') ?>
+                            <i class="bi bi-funnel" aria-hidden="true"></i> <?= lang('Services.apply') ?>
                         </button>
                         <a href="<?= base_url('volunteers/schedules?view=' . esc($calView)
                                         . ($calView === 'week' ? '&week_start=' . esc($weekStart) : '')
@@ -185,12 +185,12 @@ if (in_array($calView, ['week', 'month'], true)) {
                     <table class="table table-hover">
                         <thead>
                             <tr>
-                                <th><?= lang('Volunteer.date') ?></th>
-                                <th><?= lang('Volunteer.team') ?></th>
-                                <th><?= lang('Volunteer.volunteer') ?></th>
-                                <th><?= lang('Volunteer.timeSlot') ?></th>
-                                <th><?= lang('Volunteer.status') ?></th>
-                                <th><?= lang('App.colActions') ?></th>
+                                <th scope="col"><?= lang('Volunteer.date') ?></th>
+                                <th scope="col"><?= lang('Volunteer.team') ?></th>
+                                <th scope="col"><?= lang('Volunteer.volunteer') ?></th>
+                                <th scope="col"><?= lang('Volunteer.timeSlot') ?></th>
+                                <th scope="col"><?= lang('Volunteer.status') ?></th>
+                                <th scope="col"><?= lang('App.colActions') ?></th>
                             </tr>
                         </thead>
                         <tbody>
@@ -210,19 +210,19 @@ if (in_array($calView, ['week', 'month'], true)) {
                                     <td>
                                         <?php if ($rowStatus === 'cancelled'): ?>
                                             <a href="<?= base_url('volunteers/schedules/edit/' . (int) $schedule['id']) ?>" class="btn btn-sm btn-outline-secondary">
-                                                <i class="bi bi-pencil me-1"></i><?= lang('App.edit') ?>
+                                                <i class="bi bi-pencil me-1" aria-hidden="true"></i><?= lang('App.edit') ?>
                                             </a>
                                         <?php else: ?>
                                             <div class="dropdown">
                                                 <button class="btn btn-sm btn-outline-secondary" type="button"
                                                     data-bs-toggle="dropdown" aria-expanded="false"
                                                     title="<?= esc(lang('App.colActions')) ?>">
-                                                    <i class="bi bi-three-dots-vertical"></i>
+                                                    <i class="bi bi-three-dots-vertical" aria-hidden="true"></i>
                                                 </button>
                                                 <ul class="dropdown-menu dropdown-menu-end shadow-sm">
                                                     <li>
                                                         <a class="dropdown-item" href="<?= base_url('volunteers/schedules/edit/' . (int) $schedule['id']) ?>">
-                                                            <i class="bi bi-pencil me-2"></i><?= lang('App.edit') ?>
+                                                            <i class="bi bi-pencil me-2" aria-hidden="true"></i><?= lang('App.edit') ?>
                                                         </a>
                                                     </li>
                                                     <?php if ($rowStatus === 'scheduled'): ?>
@@ -232,7 +232,7 @@ if (in_array($calView, ['week', 'month'], true)) {
                                                                 data-confirm-body="<?= esc(lang('Volunteer.confirmScheduleConfirm'), 'attr') ?>">
                                                                 <?= csrf_field() ?>
                                                                 <button type="submit" class="dropdown-item text-success">
-                                                                    <i class="bi bi-check-circle me-2"></i><?= lang('Volunteer.confirmAction') ?>
+                                                                    <i class="bi bi-check-circle me-2" aria-hidden="true"></i><?= lang('Volunteer.confirmAction') ?>
                                                                 </button>
                                                             </form>
                                                         </li>
@@ -246,7 +246,7 @@ if (in_array($calView, ['week', 'month'], true)) {
                                                             data-confirm-body="<?= esc(lang('Volunteer.cancelScheduleConfirm'), 'attr') ?>">
                                                             <?= csrf_field() ?>
                                                             <button type="submit" class="dropdown-item text-danger">
-                                                                <i class="bi bi-x-circle me-2"></i><?= lang('App.cancel') ?>
+                                                                <i class="bi bi-x-circle me-2" aria-hidden="true"></i><?= lang('App.cancel') ?>
                                                             </button>
                                                         </form>
                                                     </li>

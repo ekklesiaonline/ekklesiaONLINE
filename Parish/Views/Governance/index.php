@@ -4,7 +4,7 @@
 
 <?php if (empty($has_vestry_tables)): ?>
 <div class="alert alert-info">
-    <i class="bi bi-info-circle"></i> Vestry governance tables have not been migrated yet. Please run <code>php spark migrate</code>.
+    <i class="bi bi-info-circle" aria-hidden="true"></i> Vestry governance tables have not been migrated yet. Please run <code>php spark migrate</code>.
 </div>
 <?php endif; ?>
 
@@ -12,7 +12,7 @@
     <h4><?= lang('Dashboard.vestryMeetings') ?></h4>
     <?php if (!empty($can_manage_meetings) && !empty($has_vestry_tables)): ?>
         <a href="<?= base_url('vestry/create') ?>" class="btn btn-primary btn-sm">
-            <i class="bi bi-plus-circle"></i> New Meeting
+            <i class="bi bi-plus-circle" aria-hidden="true"></i> New Meeting
         </a>
     <?php endif; ?>
 </div>
@@ -21,12 +21,12 @@
 <?php if (!empty($open_motions)): ?>
 <div class="card mb-4">
     <div class="card-header">
-        <h5 class="mb-0"><i class="bi bi-lightning-fill text-warning"></i> Open Motions</h5>
+        <h5 class="mb-0"><i class="bi bi-lightning-fill text-warning" aria-hidden="true"></i> Open Motions</h5>
     </div>
     <div class="card-body">
         <div class="table-responsive">
             <table class="table table-sm">
-                <thead><tr><th>Motion</th><th>Meeting Date</th><th>Status</th><th></th></tr></thead>
+                <thead><tr><th scope="col">Motion</th><th scope="col">Meeting Date</th><th scope="col">Status</th><th scope="col"></th></tr></thead>
                 <tbody>
                     <?php foreach ($open_motions as $motion): ?>
                         <tr>
@@ -50,13 +50,13 @@
 <!-- Recent meetings -->
 <div class="card">
     <div class="card-header">
-        <h5 class="mb-0"><i class="bi bi-calendar-week"></i> Recent Meetings</h5>
+        <h5 class="mb-0"><i class="bi bi-calendar-week" aria-hidden="true"></i> Recent Meetings</h5>
     </div>
     <div class="card-body">
         <?php if (!empty($recent_meetings)): ?>
             <div class="table-responsive">
                 <table class="table table-sm">
-                    <thead><tr><th>Date</th><th>Type</th><th></th></tr></thead>
+                    <thead><tr><th scope="col">Date</th><th scope="col">Type</th><th scope="col"></th></tr></thead>
                     <tbody>
                         <?php foreach ($recent_meetings as $meeting): ?>
                             <tr>
@@ -67,7 +67,7 @@
                                 </td>
                                 <td>
                                     <a href="<?= base_url('vestry/view/' . (int) ($meeting['id'] ?? 0)) ?>" class="btn btn-sm btn-outline-secondary">
-                                        <i class="bi bi-eye"></i> View
+                                        <i class="bi bi-eye" aria-hidden="true"></i> View
                                     </a>
                                 </td>
                             </tr>

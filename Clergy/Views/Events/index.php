@@ -36,16 +36,16 @@ $formatLocalizedDateTime = static function (?string $value, string $locale): str
 
 <div class="d-flex justify-content-start align-items-center flex-wrap gap-2 mb-3">
     <a href="<?= base_url('events/calendar') ?>" class="btn btn-outline-primary">
-        <i class="bi bi-calendar3"></i> <?= lang('Events.calendarBoard') ?>
+        <i class="bi bi-calendar3" aria-hidden="true"></i> <?= lang('Events.calendarBoard') ?>
     </a>
     <?php if (auth()->user()->can('event.create')): ?>
         <a href="<?= base_url('events/create') ?>" class="btn btn-outline-primary">
-            <i class="bi bi-plus-circle"></i> <?= lang('Events.createEvent') ?>
+            <i class="bi bi-plus-circle" aria-hidden="true"></i> <?= lang('Events.createEvent') ?>
         </a>
     <?php endif; ?>
     <?php if (auth()->user()->can('event.edit')): ?>
         <a href="<?= base_url('event-calendars') ?>" class="btn btn-outline-secondary">
-            <i class="bi bi-palette"></i> <?= lang('Events.manageCalendars') ?>
+            <i class="bi bi-palette" aria-hidden="true"></i> <?= lang('Events.manageCalendars') ?>
         </a>
     <?php endif; ?>
 </div>
@@ -59,7 +59,7 @@ $eventsFiltersActive = trim((string) ($search ?? '')) !== '' || trim((string) ($
             data-bs-toggle="collapse"
             data-bs-target="#eventsFilterPanel"
             aria-expanded="<?= $eventsFiltersActive ? 'true' : 'false' ?>">
-            <i class="bi bi-funnel"></i> <?= lang('App.filter') ?>
+            <i class="bi bi-funnel" aria-hidden="true"></i> <?= lang('App.filter') ?>
         </button>
     </div>
     <div id="eventsFilterPanel" class="collapse <?= $eventsFiltersActive ? 'show' : '' ?>">
@@ -81,7 +81,7 @@ $eventsFiltersActive = trim((string) ($search ?? '')) !== '' || trim((string) ($
                 </div>
                 <div class="col-md-4 d-flex gap-2">
                     <button type="submit" class="btn btn-sm btn-primary flex-fill">
-                        <i class="bi bi-funnel"></i> <?= lang('Services.apply') ?>
+                        <i class="bi bi-funnel" aria-hidden="true"></i> <?= lang('Services.apply') ?>
                     </button>
                     <a href="<?= base_url('events') ?>" class="btn btn-sm btn-outline-secondary flex-fill"><?= lang('App.clear') ?></a>
                 </div>
@@ -96,13 +96,13 @@ $eventsFiltersActive = trim((string) ($search ?? '')) !== '' || trim((string) ($
             <table class="table table-hover">
                 <thead>
                     <tr>
-                        <th><?= lang('Events.colTitle') ?></th>
-                        <th><?= lang('Events.colType') ?></th>
-                        <th><?= lang('Events.colSchedule') ?></th>
-                        <th><?= lang('Events.colLocation') ?></th>
-                        <th><?= lang('Events.colStatus') ?></th>
-                        <th><?= lang('Events.colRegistrations') ?></th>
-                        <th><?= lang('Events.colActions') ?></th>
+                        <th scope="col"><?= lang('Events.colTitle') ?></th>
+                        <th scope="col"><?= lang('Events.colType') ?></th>
+                        <th scope="col"><?= lang('Events.colSchedule') ?></th>
+                        <th scope="col"><?= lang('Events.colLocation') ?></th>
+                        <th scope="col"><?= lang('Events.colStatus') ?></th>
+                        <th scope="col"><?= lang('Events.colRegistrations') ?></th>
+                        <th scope="col"><?= lang('Events.colActions') ?></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -149,16 +149,16 @@ $eventsFiltersActive = trim((string) ($search ?? '')) !== '' || trim((string) ($
                                 <td>
                                     <div class="d-inline-flex flex-nowrap gap-1 align-items-center">
                                         <a href="<?= base_url('events/view/' . (int) $event['id']) ?>" class="btn btn-sm btn-info" title="<?= lang('App.view') ?>">
-                                            <i class="bi bi-eye"></i>
+                                            <i class="bi bi-eye" aria-hidden="true"></i>
                                         </a>
                                         <?php if (!empty($event['can_manage'])): ?>
                                             <a href="<?= base_url('events/edit/' . (int) $event['id']) ?>" class="btn btn-sm btn-warning" title="<?= lang('App.edit') ?>">
-                                                <i class="bi bi-pencil"></i>
+                                                <i class="bi bi-pencil" aria-hidden="true"></i>
                                             </a>
                                         <?php endif; ?>
                                         <?php if (!empty($event['can_delete'])): ?>
                                             <button type="button" class="btn btn-sm btn-danger" onclick="showDeleteEventModal(<?= (int) $event['id'] ?>, this)" title="<?= lang('App.delete') ?>">
-                                                <i class="bi bi-trash"></i>
+                                                <i class="bi bi-trash" aria-hidden="true"></i>
                                             </button>
                                         <?php endif; ?>
                                     </div>

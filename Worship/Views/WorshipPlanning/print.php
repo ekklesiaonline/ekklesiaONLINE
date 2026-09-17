@@ -62,11 +62,11 @@
     <table>
         <thead>
             <tr>
-                <th style="width: 4%;">#</th>
-                <th style="width: 12%;"><?= lang('Worship.type') ?></th>
-                <th style="width: 34%;"><?= lang('Worship.title') ?></th>
-                <th style="width: 18%;"><?= lang('Worship.leader') ?></th>
-                <th><?= lang('Worship.notes') ?></th>
+                <th scope="col" style="width: 4%;">#</th>
+                <th scope="col" style="width: 12%;"><?= lang('Worship.type') ?></th>
+                <th scope="col" style="width: 34%;"><?= lang('Worship.title') ?></th>
+                <th scope="col" style="width: 18%;"><?= lang('Worship.leader') ?></th>
+                <th scope="col"><?= lang('Worship.notes') ?></th>
             </tr>
         </thead>
         <tbody>

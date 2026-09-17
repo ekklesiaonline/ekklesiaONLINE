@@ -68,10 +68,10 @@ $canEdit = auth()->user()->can('guest.edit');
 <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
     <div class="d-flex align-items-center gap-2 flex-wrap">
         <a href="<?= base_url('guests/dashboard') ?>" class="btn btn-outline-secondary btn-sm">
-            <i class="bi bi-arrow-left"></i> <?= lang('Guests.backToGuests') ?>
+            <i class="bi bi-arrow-left" aria-hidden="true"></i> <?= lang('Guests.backToGuests') ?>
         </a>
         <a href="<?= base_url('guests/view/' . (int) $guest['id']) ?>" class="btn btn-outline-primary btn-sm">
-            <i class="bi bi-person"></i> <?= lang('Guests.guestLabel') ?>
+            <i class="bi bi-person" aria-hidden="true"></i> <?= lang('Guests.guestLabel') ?>
         </a>
     </div>
     <div class="d-flex align-items-center gap-2 flex-wrap">
@@ -86,18 +86,18 @@ $canEdit = auth()->user()->can('guest.edit');
     <div class="col-md-3">
         <div class="card mb-3">
             <div class="card-header py-2">
-                <h6 class="mb-0"><i class="bi bi-person-circle"></i> <?= lang('Guests.guestLabel') ?></h6>
+                <h6 class="mb-0"><i class="bi bi-person-circle" aria-hidden="true"></i> <?= lang('Guests.guestLabel') ?></h6>
             </div>
             <div class="card-body small">
                 <p class="mb-1"><strong><?= esc($guest['first_name'] . ' ' . $guest['last_name']) ?></strong></p>
                 <?php if (!empty($guest['email'])): ?>
-                    <p class="mb-1"><i class="bi bi-envelope text-muted"></i> <?= esc($guest['email']) ?></p>
+                    <p class="mb-1"><i class="bi bi-envelope text-muted" aria-hidden="true"></i> <?= esc($guest['email']) ?></p>
                 <?php endif; ?>
                 <?php if (!empty($guest['phone'])): ?>
-                    <p class="mb-1"><i class="bi bi-telephone text-muted"></i> <?= esc($guest['phone']) ?></p>
+                    <p class="mb-1"><i class="bi bi-telephone text-muted" aria-hidden="true"></i> <?= esc($guest['phone']) ?></p>
                 <?php endif; ?>
                 <?php if (!empty($guest['address'])): ?>
-                    <p class="mb-1"><i class="bi bi-geo-alt text-muted"></i> <?= nl2br((string) esc($guest['address'])) ?></p>
+                    <p class="mb-1"><i class="bi bi-geo-alt text-muted" aria-hidden="true"></i> <?= nl2br((string) esc($guest['address'])) ?></p>
                 <?php endif; ?>
                 <hr class="my-2">
                 <p class="mb-1 text-muted"><?= lang('Guests.colVisitDate') ?>: <?= $formatDate($guest['visit_date'] ?? null) ?></p>
@@ -122,7 +122,7 @@ $canEdit = auth()->user()->can('guest.edit');
         ?>
         <div class="card">
             <div class="card-header py-2">
-                <h6 class="mb-0 small"><i class="bi bi-bar-chart-line"></i> <?= lang('Guests.followupProgressTitle') ?></h6>
+                <h6 class="mb-0 small"><i class="bi bi-bar-chart-line" aria-hidden="true"></i> <?= lang('Guests.followupProgressTitle') ?></h6>
             </div>
             <div class="card-body py-2 small">
                 <?php foreach ($counts as $status => $n): ?>
@@ -151,7 +151,7 @@ $canEdit = auth()->user()->can('guest.edit');
     <div class="col-md-9">
         <div class="card">
             <div class="card-header py-2 d-flex align-items-center gap-2">
-                <h6 class="mb-0"><i class="bi bi-clock-history"></i> <?= lang('Guests.followupTimelineTitle') ?></h6>
+                <h6 class="mb-0"><i class="bi bi-clock-history" aria-hidden="true"></i> <?= lang('Guests.followupTimelineTitle') ?></h6>
             </div>
             <div class="card-body p-3">
                 <?php if (empty($timeline)): ?>
@@ -182,7 +182,7 @@ $canEdit = auth()->user()->can('guest.edit');
                             <?php if ($weekNum !== null && $weekNum !== $lastWeekNum): ?>
                                 <?php $lastWeekNum = $weekNum; ?>
                                 <div class="list-group-item bg-body py-1 px-3 d-flex align-items-center gap-2">
-                                    <i class="bi bi-layers text-body-secondary small"></i>
+                                    <i class="bi bi-layers text-body-secondary small" aria-hidden="true"></i>
                                     <small class="fw-semibold text-uppercase">
                                         <?= lang('Guests.followupWeekLabel') ?> <?= (int) $weekNum ?>
                                     </small>
@@ -204,9 +204,9 @@ $canEdit = auth()->user()->can('guest.edit');
                                                 <span class="badge border border-secondary text-secondary fw-normal small"><?= lang('Guests.callTaskSourceBadge') ?></span>
                                             <?php else: ?>
                                                 <?php if ($isAutomated): ?>
-                                                    <span class="badge border border-info text-info fw-normal small"><i class="bi bi-lightning-charge"></i> <?= lang('Guests.automatedBadge') ?></span>
+                                                    <span class="badge border border-info text-info fw-normal small"><i class="bi bi-lightning-charge" aria-hidden="true"></i> <?= lang('Guests.automatedBadge') ?></span>
                                                 <?php else: ?>
-                                                    <span class="badge border border-secondary text-secondary fw-normal small"><i class="bi bi-person"></i> <?= lang('Guests.manualBadge') ?></span>
+                                                    <span class="badge border border-secondary text-secondary fw-normal small"><i class="bi bi-person" aria-hidden="true"></i> <?= lang('Guests.manualBadge') ?></span>
                                                 <?php endif; ?>
                                                 <?php if (!empty($row['sequence_name'])): ?>
                                                     <span class="badge border border-secondary text-secondary fw-normal small"><?= esc($row['sequence_name']) ?></span>
@@ -216,7 +216,7 @@ $canEdit = auth()->user()->can('guest.edit');
                                         <div class="small text-muted mb-1">
                                             <span class="me-2 text-capitalize"><?= esc(lang('Guests.channel' . ucfirst($channel)) ?: ucfirst($channel)) ?></span>
                                             <span id="scheduledDate-<?= (int) $row['id'] ?>">
-                                                <i class="bi bi-calendar3<?= $isOverdue ? ' text-danger' : '' ?>"></i>
+                                                <i class="bi bi-calendar3<?= $isOverdue ? ' text-danger' : '' ?>" aria-hidden="true"></i>
                                                 <?= lang('Guests.scheduledLabel') ?>:
                                                 <span class="<?= $isOverdue ? 'text-danger fw-semibold' : '' ?>">
                                                     <?= esc($formatDate($row['scheduled_date'] ?? null)) ?>
@@ -226,18 +226,18 @@ $canEdit = auth()->user()->can('guest.edit');
                                                 <?= $isOverdue ? esc(lang('Guests.overdueLabel')) : esc($cfg['label']) ?>
                                             </span>
                                             <?php if (!$isPending && !empty($row['executed_at'])): ?>
-                                                <span class="ms-2"><i class="bi bi-check2-circle"></i> <?= lang('Guests.completedLabel') ?>: <?= esc($formatDateTime($row['executed_at'])) ?></span>
+                                                <span class="ms-2"><i class="bi bi-check2-circle" aria-hidden="true"></i> <?= lang('Guests.completedLabel') ?>: <?= esc($formatDateTime($row['executed_at'])) ?></span>
                                             <?php endif; ?>
                                         </div>
                                         <?php if (!empty($row['notes'])): ?>
                                             <div class="small text-muted mb-1">
-                                                <i class="bi bi-sticky"></i>
+                                                <i class="bi bi-sticky" aria-hidden="true"></i>
                                                 <?= nl2br((string) esc($row['notes'])) ?>
                                             </div>
                                         <?php endif; ?>
                                         <?php if (!empty($meta['left_voicemail'])): ?>
                                             <div class="small text-muted">
-                                                <i class="bi bi-voicemail"></i> <?= lang('Guests.leftVoicemailLabel') ?>
+                                                <i class="bi bi-voicemail" aria-hidden="true"></i> <?= lang('Guests.leftVoicemailLabel') ?>
                                             </div>
                                         <?php endif; ?>
                                     </div>
@@ -247,8 +247,9 @@ $canEdit = auth()->user()->can('guest.edit');
                                         <?php if ($isCallTask): ?>
                                             <button type="button"
                                                 class="btn btn-sm btn-outline-success flex-shrink-0"
-                                                data-ct-id="<?= (int) $row['id'] ?>">
-                                                <i class="bi bi-check-circle"></i>
+                                                data-ct-id="<?= (int) $row['id'] ?>"
+                                                aria-label="<?= esc(lang('Guests.markDoneBtn')) ?>">
+                                                <i class="bi bi-check-circle" aria-hidden="true"></i>
                                             </button>
                                         <?php else: ?>
                                             <div class="dropdown flex-shrink-0">
@@ -257,7 +258,7 @@ $canEdit = auth()->user()->can('guest.edit');
                                                     data-bs-toggle="dropdown"
                                                     aria-expanded="false"
                                                     title="<?= esc(lang('App.colActions')) ?>">
-                                                    <i class="bi bi-three-dots-vertical"></i>
+                                                    <i class="bi bi-three-dots-vertical" aria-hidden="true"></i>
                                                 </button>
                                                 <ul class="dropdown-menu dropdown-menu-end shadow-sm">
                                                     <li>
@@ -267,7 +268,7 @@ $canEdit = auth()->user()->can('guest.edit');
                                                             data-log-id="<?= (int) $row['id'] ?>"
                                                             data-channel="<?= esc($channel, 'attr') ?>"
                                                             data-scheduled="<?= esc($row['scheduled_date'] ?? '', 'attr') ?>">
-                                                            <i class="bi bi-check-circle me-2"></i><?= lang('Guests.markDoneBtn') ?>
+                                                            <i class="bi bi-check-circle me-2" aria-hidden="true"></i><?= lang('Guests.markDoneBtn') ?>
                                                         </button>
                                                     </li>
                                                     <li>
@@ -276,7 +277,7 @@ $canEdit = auth()->user()->can('guest.edit');
                                                             data-bs-target="#rescheduleModal"
                                                             data-log-id="<?= (int) $row['id'] ?>"
                                                             data-current-date="<?= esc($row['scheduled_date'] ?? '', 'attr') ?>">
-                                                            <i class="bi bi-calendar-plus me-2"></i><?= lang('Guests.rescheduleBtn') ?>
+                                                            <i class="bi bi-calendar-plus me-2" aria-hidden="true"></i><?= lang('Guests.rescheduleBtn') ?>
                                                         </button>
                                                     </li>
                                                     <li>
@@ -284,7 +285,7 @@ $canEdit = auth()->user()->can('guest.edit');
                                                             data-bs-toggle="modal"
                                                             data-bs-target="#skipModal"
                                                             data-log-id="<?= (int) $row['id'] ?>">
-                                                            <i class="bi bi-skip-forward me-2"></i><?= lang('Guests.skipBtn') ?>
+                                                            <i class="bi bi-skip-forward me-2" aria-hidden="true"></i><?= lang('Guests.skipBtn') ?>
                                                         </button>
                                                     </li>
                                                     <?php if ($channel === 'mail'): ?>
@@ -292,7 +293,7 @@ $canEdit = auth()->user()->can('guest.edit');
                                                             <button class="dropdown-item"
                                                                 data-bs-toggle="modal"
                                                                 data-bs-target="#printLabelModal">
-                                                                <i class="bi bi-printer me-2"></i><?= lang('Guests.printLabelBtn') ?>
+                                                                <i class="bi bi-printer me-2" aria-hidden="true"></i><?= lang('Guests.printLabelBtn') ?>
                                                             </button>
                                                         </li>
                                                     <?php endif; ?>
@@ -304,7 +305,7 @@ $canEdit = auth()->user()->can('guest.edit');
                                                             data-bs-toggle="modal"
                                                             data-bs-target="#markFailedModal"
                                                             data-log-id="<?= (int) $row['id'] ?>">
-                                                            <i class="bi bi-x-circle me-2"></i><?= lang('Guests.markFailedBtn') ?>
+                                                            <i class="bi bi-x-circle me-2" aria-hidden="true"></i><?= lang('Guests.markFailedBtn') ?>
                                                         </button>
                                                     </li>
                                                 </ul>
@@ -329,7 +330,7 @@ $canEdit = auth()->user()->can('guest.edit');
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title" id="markDoneModalLabel">
-                        <i class="bi bi-check-circle-fill text-success"></i>
+                        <i class="bi bi-check-circle-fill text-success" aria-hidden="true"></i>
                         <?= lang('Guests.markDoneTitle') ?>
                     </h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
@@ -349,7 +350,7 @@ $canEdit = auth()->user()->can('guest.edit');
                         <div class="form-check mb-2">
                             <input class="form-check-input" type="checkbox" id="mdLeftVoicemail">
                             <label class="form-check-label" for="mdLeftVoicemail">
-                                <i class="bi bi-voicemail"></i> <?= lang('Guests.leftVoicemailCheckbox') ?>
+                                <i class="bi bi-voicemail" aria-hidden="true"></i> <?= lang('Guests.leftVoicemailCheckbox') ?>
                             </label>
                         </div>
                     </div>
@@ -358,7 +359,7 @@ $canEdit = auth()->user()->can('guest.edit');
                     <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal"><?= lang('App.cancel') ?></button>
                     <button type="button" class="btn btn-success" id="mdConfirmBtn">
                         <span class="md-spinner spinner-border spinner-border-sm me-1 d-none" role="status" aria-hidden="true"></span>
-                        <i class="bi bi-check-circle md-icon"></i>
+                        <i class="bi bi-check-circle md-icon" aria-hidden="true"></i>
                         <?= lang('Guests.markDoneConfirmBtn') ?>
                     </button>
                 </div>
@@ -372,7 +373,7 @@ $canEdit = auth()->user()->can('guest.edit');
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title" id="rescheduleModalLabel">
-                        <i class="bi bi-calendar-plus"></i>
+                        <i class="bi bi-calendar-plus" aria-hidden="true"></i>
                         <?= lang('Guests.rescheduleTitle') ?>
                     </h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
@@ -394,7 +395,7 @@ $canEdit = auth()->user()->can('guest.edit');
                     <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal"><?= lang('App.cancel') ?></button>
                     <button type="button" class="btn btn-primary" id="rsConfirmBtn">
                         <span class="rs-spinner spinner-border spinner-border-sm me-1 d-none" role="status" aria-hidden="true"></span>
-                        <i class="bi bi-calendar-check rs-icon"></i>
+                        <i class="bi bi-calendar-check rs-icon" aria-hidden="true"></i>
                         <?= lang('Guests.rescheduleConfirmBtn') ?>
                     </button>
                 </div>
@@ -408,7 +409,7 @@ $canEdit = auth()->user()->can('guest.edit');
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title" id="skipModalLabel">
-                        <i class="bi bi-skip-forward-circle"></i>
+                        <i class="bi bi-skip-forward-circle" aria-hidden="true"></i>
                         <?= lang('Guests.skipTitle') ?>
                     </h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
@@ -426,7 +427,7 @@ $canEdit = auth()->user()->can('guest.edit');
                     <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal"><?= lang('App.cancel') ?></button>
                     <button type="button" class="btn btn-secondary" id="skConfirmBtn">
                         <span class="sk-spinner spinner-border spinner-border-sm me-1 d-none" role="status" aria-hidden="true"></span>
-                        <i class="bi bi-skip-forward sk-icon"></i>
+                        <i class="bi bi-skip-forward sk-icon" aria-hidden="true"></i>
                         <?= lang('Guests.skipConfirmBtn') ?>
                     </button>
                 </div>
@@ -440,7 +441,7 @@ $canEdit = auth()->user()->can('guest.edit');
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title" id="markFailedModalLabel">
-                        <i class="bi bi-x-circle-fill text-danger"></i>
+                        <i class="bi bi-x-circle-fill text-danger" aria-hidden="true"></i>
                         <?= lang('Guests.markFailedTitle') ?>
                     </h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
@@ -461,7 +462,7 @@ $canEdit = auth()->user()->can('guest.edit');
                     <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal"><?= lang('App.cancel') ?></button>
                     <button type="button" class="btn btn-danger" id="mfConfirmBtn">
                         <span class="mf-spinner spinner-border spinner-border-sm me-1 d-none" role="status" aria-hidden="true"></span>
-                        <i class="bi bi-x-circle mf-icon"></i>
+                        <i class="bi bi-x-circle mf-icon" aria-hidden="true"></i>
                         <?= lang('Guests.markFailedConfirmBtn') ?>
                     </button>
                 </div>
@@ -475,7 +476,7 @@ $canEdit = auth()->user()->can('guest.edit');
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title" id="printLabelModalLabel">
-                        <i class="bi bi-printer"></i>
+                        <i class="bi bi-printer" aria-hidden="true"></i>
                         <?= lang('Guests.printLabelTitle') ?>
                     </h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
@@ -495,7 +496,7 @@ $canEdit = auth()->user()->can('guest.edit');
                 <div class="modal-footer">
                     <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal"><?= lang('App.cancel') ?></button>
                     <button type="button" class="btn btn-outline-info" id="printLabelBtn">
-                        <i class="bi bi-printer"></i> <?= lang('Guests.printLabelConfirmBtn') ?>
+                        <i class="bi bi-printer" aria-hidden="true"></i> <?= lang('Guests.printLabelConfirmBtn') ?>
                     </button>
                 </div>
             </div>
@@ -727,7 +728,7 @@ $canEdit = auth()->user()->can('guest.edit');
                                         month: 'short',
                                         day: 'numeric'
                                     });
-                                dateSpan.innerHTML = '<i class="bi bi-calendar3"></i> ' +
+                                dateSpan.innerHTML = '<i class="bi bi-calendar3" aria-hidden="true"></i> ' +
                                     <?= json_encode(lang('Guests.scheduledLabel') . ': ') ?> +
                                     formatted;
                             }

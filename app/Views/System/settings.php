@@ -43,7 +43,7 @@ HTML;
 <div class="d-flex justify-content-between align-items-center mb-3">
     <h5 class="mb-0"><?= lang('System.sectionSettings') ?></h5>
     <a href="<?= base_url('system/dashboard') ?>" class="btn btn-sm btn-outline-secondary">
-        <i class="bi bi-arrow-left me-1"></i><?= lang('App.back') ?>
+        <i class="bi bi-arrow-left me-1" aria-hidden="true"></i><?= lang('App.back') ?>
     </a>
 </div>
 
@@ -116,7 +116,7 @@ HTML;
 
     <div class="mt-4 d-flex justify-content-end">
         <button type="submit" class="btn btn-primary">
-            <i class="bi bi-save me-1"></i><?= lang('App.save') ?>
+            <i class="bi bi-save me-1" aria-hidden="true"></i><?= lang('App.save') ?>
         </button>
     </div>
 </form>

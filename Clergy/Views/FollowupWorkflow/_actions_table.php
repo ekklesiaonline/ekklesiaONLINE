@@ -13,7 +13,7 @@
 ?>
 <?php if (empty($actions)): ?>
     <div class="text-center py-4 text-muted" id="actionsEmpty">
-        <i class="bi bi-list-task fs-2 d-block mb-2"></i>
+        <i class="bi bi-list-task fs-2 d-block mb-2" aria-hidden="true"></i>
         <?= lang('Guests.seqStepsEmpty') ?>
     </div>
 <?php else: ?>
@@ -21,12 +21,12 @@
         <table class="table table-hover align-middle mb-0">
             <thead>
                 <tr>
-                    <th><?= lang('Guests.seqColWeek') ?></th>
-                    <th><?= lang('Guests.seqColDayOffset') ?></th>
-                    <th><?= lang('Guests.seqColChannel') ?></th>
-                    <th><?= lang('Guests.seqColTemplate') ?></th>
-                    <th><?= lang('Guests.seqColType') ?></th>
-                    <th class="text-end"><?= lang('App.colActions') ?></th>
+                    <th scope="col"><?= lang('Guests.seqColWeek') ?></th>
+                    <th scope="col"><?= lang('Guests.seqColDayOffset') ?></th>
+                    <th scope="col"><?= lang('Guests.seqColChannel') ?></th>
+                    <th scope="col"><?= lang('Guests.seqColTemplate') ?></th>
+                    <th scope="col"><?= lang('Guests.seqColType') ?></th>
+                    <th scope="col" class="text-end"><?= lang('App.colActions') ?></th>
                 </tr>
             </thead>
             <tbody>
@@ -70,14 +70,14 @@
                                 data-day-offset="<?= (int) $a['day_offset'] ?>"
                                 data-channel="<?= esc($a['channel'], 'attr') ?>"
                                 data-template-id="<?= esc((string) ($a['template_id'] ?? ''), 'attr') ?>"
-                                data-automated="<?= (int) $a['is_automated'] ?>">
-                                <i class="bi bi-pencil"></i>
+                                data-automated="<?= (int) $a['is_automated'] ?>" aria-label="<?= esc(lang('App.edit')) ?>">
+                                <i class="bi bi-pencil" aria-hidden="true"></i>
                             </button>
                             <button type="button"
                                 class="btn btn-sm btn-outline-danger btn-delete-action"
                                 data-id="<?= (int) $a['id'] ?>"
-                                data-channel="<?= esc($a['channel'], 'attr') ?>">
-                                <i class="bi bi-trash"></i>
+                                data-channel="<?= esc($a['channel'], 'attr') ?>" aria-label="<?= esc(lang('App.delete')) ?>">
+                                <i class="bi bi-trash" aria-hidden="true"></i>
                             </button>
                         </td>
                     </tr>

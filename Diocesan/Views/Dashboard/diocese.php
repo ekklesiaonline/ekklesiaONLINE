@@ -50,7 +50,7 @@ $formatLocalizedDateTime = static function (?string $value, string $locale): str
                 data-bs-toggle="collapse" data-bs-target="#dioceseDashboardFilterPanel"
                 aria-expanded="<?= $current_period === 'custom' ? 'true' : 'false' ?>"
                 aria-controls="dioceseDashboardFilterPanel">
-            <i class="bi bi-funnel"></i> <?= lang('App.filter') ?>
+            <i class="bi bi-funnel" aria-hidden="true"></i> <?= lang('App.filter') ?>
         </button>
     </div>
     <div id="dioceseDashboardFilterPanel" class="collapse <?= $current_period === 'custom' ? 'show' : '' ?>">
@@ -91,7 +91,7 @@ $formatLocalizedDateTime = static function (?string $value, string $locale): str
                     <input type="date" name="end_date" class="form-control" value="<?= esc($end_date) ?>">
                 </div>
                 <div class="col-md-1 d-flex align-items-end">
-                    <button type="submit" class="btn btn-primary w-100"><i class="bi bi-funnel"></i></button>
+                    <button type="submit" class="btn btn-primary w-100" aria-label="<?= esc(lang('App.filter')) ?>"><i class="bi bi-funnel" aria-hidden="true"></i></button>
                 </div>
             </form>
         </div>
@@ -192,7 +192,7 @@ $formatLocalizedDateTime = static function (?string $value, string $locale): str
 <!-- Pending registration approvals (diocese oversight only — parish admins moderate) -->
 <div class="card border-warning mb-4">
     <div class="card-header bg-warning bg-opacity-10 d-flex justify-content-between align-items-center" data-bs-toggle="collapse" data-bs-target="#diocesePendingRegistrations" aria-expanded="true" aria-controls="diocesePendingRegistrations" role="button">
-        <h6 class="mb-0"><i class="bi bi-person-exclamation"></i> <?= lang('Dashboard.diocesePendingRegistrationsTitle') ?></h6>
+        <h6 class="mb-0"><i class="bi bi-person-exclamation" aria-hidden="true"></i> <?= lang('Dashboard.diocesePendingRegistrationsTitle') ?></h6>
         <span class="badge border border-warning text-warning fw-normal"><?= (int) $pending_admin_reviews_count ?></span>
     </div>
     <div class="card-body">
@@ -202,10 +202,10 @@ $formatLocalizedDateTime = static function (?string $value, string $locale): str
                 <table class="table table-sm table-striped mb-0">
                     <thead>
                         <tr>
-                            <th><?= lang('App.colName') ?></th>
-                            <th><?= lang('App.colEmail') ?></th>
-                            <th><?= lang('Dashboard.parishLabel') ?></th>
-                            <th><?= lang('Dashboard.submittedOn') ?></th>
+                            <th scope="col"><?= lang('App.colName') ?></th>
+                            <th scope="col"><?= lang('App.colEmail') ?></th>
+                            <th scope="col"><?= lang('Dashboard.parishLabel') ?></th>
+                            <th scope="col"><?= lang('Dashboard.submittedOn') ?></th>
                         </tr>
                     </thead>
                     <tbody>
@@ -228,7 +228,7 @@ $formatLocalizedDateTime = static function (?string $value, string $locale): str
 <!-- Attendance averages by period -->
 <div class="card mb-4">
     <div class="card-header">
-        <h6 class="mb-0"><i class="bi bi-clock-history"></i> <?= lang('Dashboard.attendanceAveragesByPeriod') ?></h6>
+        <h6 class="mb-0"><i class="bi bi-clock-history" aria-hidden="true"></i> <?= lang('Dashboard.attendanceAveragesByPeriod') ?></h6>
     </div>
     <div class="card-body">
         <div class="row text-center">
@@ -269,20 +269,20 @@ $formatLocalizedDateTime = static function (?string $value, string $locale): str
 <!-- Per-parish summary table -->
 <div class="card mb-4">
     <div class="card-header d-flex justify-content-between align-items-center">
-        <h6 class="mb-0"><i class="bi bi-table"></i> <?= lang('Dashboard.parishSummaryTable') ?></h6>
+        <h6 class="mb-0"><i class="bi bi-table" aria-hidden="true"></i> <?= lang('Dashboard.parishSummaryTable') ?></h6>
     </div>
     <div class="card-body p-0">
         <div class="table-responsive">
             <table class="table table-striped mb-0">
                 <thead>
                     <tr>
-                        <th><?= lang('Dashboard.parishLabel') ?></th>
-                        <th class="text-end"><?= lang('Dashboard.colMembers') ?></th>
-                        <th class="text-end"><?= lang('Dashboard.activeLabel') ?></th>
-                        <th class="text-end"><?= lang('Dashboard.colAttendance') ?></th>
-                        <th class="text-end"><?= lang('Dashboard.servicesLogged') ?></th>
-                        <th class="text-end"><?= lang('Dashboard.asaLabel') ?></th>
-                        <th class="text-end"><?= lang('Dashboard.awaLabel') ?></th>
+                        <th scope="col"><?= lang('Dashboard.parishLabel') ?></th>
+                        <th scope="col" class="text-end"><?= lang('Dashboard.colMembers') ?></th>
+                        <th scope="col" class="text-end"><?= lang('Dashboard.activeLabel') ?></th>
+                        <th scope="col" class="text-end"><?= lang('Dashboard.colAttendance') ?></th>
+                        <th scope="col" class="text-end"><?= lang('Dashboard.servicesLogged') ?></th>
+                        <th scope="col" class="text-end"><?= lang('Dashboard.asaLabel') ?></th>
+                        <th scope="col" class="text-end"><?= lang('Dashboard.awaLabel') ?></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -323,7 +323,7 @@ $formatLocalizedDateTime = static function (?string $value, string $locale): str
 <?php if (!empty($sunday_attendance_has_data)): ?>
     <div class="card mb-4">
         <div class="card-header">
-            <h6 class="mb-0"><i class="bi bi-graph-up-arrow"></i> <?= lang('Dashboard.sundayAttendanceTrend') ?></h6>
+            <h6 class="mb-0"><i class="bi bi-graph-up-arrow" aria-hidden="true"></i> <?= lang('Dashboard.sundayAttendanceTrend') ?></h6>
         </div>
         <div class="card-body">
             <canvas id="dioceseSundayChart" style="max-height: 320px;"></canvas>
@@ -336,7 +336,7 @@ $formatLocalizedDateTime = static function (?string $value, string $locale): str
     <div class="col-md-6">
         <div class="card h-100">
             <div class="card-header d-flex justify-content-between align-items-center">
-                <h5 class="mb-0"><i class="bi bi-activity"></i> <?= lang('Dashboard.systemOverviewNetworkActivity') ?></h5>
+                <h5 class="mb-0"><i class="bi bi-activity" aria-hidden="true"></i> <?= lang('Dashboard.systemOverviewNetworkActivity') ?></h5>
                 <a class="btn btn-sm btn-outline-secondary" href="<?= base_url('diocese/dashboard/recent-activity') ?>"><?= lang('App.viewAll') ?></a>
             </div>
             <div class="card-body p-0" style="max-height: 420px; overflow-y: auto;">
@@ -373,7 +373,7 @@ $formatLocalizedDateTime = static function (?string $value, string $locale): str
         <div class="card h-100">
             <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-3">
                 <div>
-                    <h5 class="mb-0"><i class="bi bi-journal-text"></i> <?= lang('Dashboard.systemOverviewAuditLog') ?></h5>
+                    <h5 class="mb-0"><i class="bi bi-journal-text" aria-hidden="true"></i> <?= lang('Dashboard.systemOverviewAuditLog') ?></h5>
                     <small class="text-muted"><?= lang('Dashboard.systemOverviewModerationEventsLast7Days', [number_format((int) ($recent_audit_count_7d ?? 0))]) ?></small>
                 </div>
                 <div class="btn-group btn-group-sm audit-filter-controls" role="group">

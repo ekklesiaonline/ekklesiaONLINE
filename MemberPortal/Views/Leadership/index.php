@@ -22,7 +22,7 @@
                 </select>
             </div>
             <div class="col-md-5 text-md-end">
-                <button type="submit" class="btn btn-outline-primary"><i class="bi bi-funnel"></i> <?= lang('Leadership.applyScope') ?></button>
+                <button type="submit" class="btn btn-outline-primary"><i class="bi bi-funnel" aria-hidden="true"></i> <?= lang('Leadership.applyScope') ?></button>
             </div>
         </form>
     </div>
@@ -30,9 +30,9 @@
 
 <div class="card mb-4">
     <div class="card-header d-flex justify-content-between align-items-center">
-        <h5 class="mb-0"><i class="bi bi-person-badge"></i> <?= lang('Leadership.addLeadershipPosition') ?></h5>
+        <h5 class="mb-0"><i class="bi bi-person-badge" aria-hidden="true"></i> <?= lang('Leadership.addLeadershipPosition') ?></h5>
         <button class="btn btn-outline-secondary btn-sm" type="button" data-bs-toggle="collapse" data-bs-target="#addLeadershipPositionPanel" aria-expanded="false" aria-controls="addLeadershipPositionPanel">
-            <i class="bi bi-plus-lg"></i> <?= lang('App.add') ?>
+            <i class="bi bi-plus-lg" aria-hidden="true"></i> <?= lang('App.add') ?>
         </button>
     </div>
     <div id="addLeadershipPositionPanel" class="collapse">
@@ -125,7 +125,7 @@
 
 <div class="card">
     <div class="card-header d-flex justify-content-between align-items-center">
-        <h5 class="mb-0"><i class="bi bi-list-ul"></i> <?= lang('Leadership.positionsTitle') ?></h5>
+        <h5 class="mb-0"><i class="bi bi-list-ul" aria-hidden="true"></i> <?= lang('Leadership.positionsTitle') ?></h5>
         <span class="badge border border-secondary text-secondary fw-normal"><?= (int) ($total_rows ?? count($positions ?? [])) ?> <?= lang('Leadership.records') ?></span>
     </div>
     <div class="card-body p-0">
@@ -136,12 +136,12 @@
                 <table class="table table-hover mb-0 align-middle">
                     <thead>
                         <tr>
-                            <th><?= lang('Leadership.member') ?></th>
-                            <th><?= lang('Leadership.title') ?></th>
-                            <th><?= lang('Leadership.scope') ?></th>
-                            <th><?= lang('Leadership.period') ?></th>
-                            <th><?= lang('App.colStatus') ?></th>
-                            <th><?= lang('App.colActions') ?></th>
+                            <th scope="col"><?= lang('Leadership.member') ?></th>
+                            <th scope="col"><?= lang('Leadership.title') ?></th>
+                            <th scope="col"><?= lang('Leadership.scope') ?></th>
+                            <th scope="col"><?= lang('Leadership.period') ?></th>
+                            <th scope="col"><?= lang('App.colStatus') ?></th>
+                            <th scope="col"><?= lang('App.colActions') ?></th>
                         </tr>
                     </thead>
                     <tbody>

@@ -22,19 +22,19 @@
 <!-- Top action row -->
 <div class="d-flex justify-content-start align-items-center mb-3 gap-2">
     <a href="<?= base_url('guests') ?>" class="btn btn-outline-secondary btn-sm">
-        <i class="bi bi-arrow-left"></i> Guests
+        <i class="bi bi-arrow-left" aria-hidden="true"></i> Guests
     </a>
     <a href="<?= base_url('guests/reports/followup-completion?start_date=' . esc($report_start_date, 'url') . '&end_date=' . esc($report_end_date, 'url')) ?>"
         class="btn btn-outline-primary btn-sm">
-        <i class="bi bi-check2-square"></i> Completion Report
+        <i class="bi bi-check2-square" aria-hidden="true"></i> Completion Report
     </a>
     <a href="<?= base_url('guests/reports/export-csv/roi-second-visit?start_date=' . esc($report_start_date, 'url') . '&end_date=' . esc($report_end_date, 'url')) ?>"
         class="btn btn-outline-success btn-sm">
-        <i class="bi bi-download"></i> Export Summary CSV
+        <i class="bi bi-download" aria-hidden="true"></i> Export Summary CSV
     </a>
     <a href="<?= base_url('guests/reports/export-csv/guests-all?start_date=' . esc($report_start_date, 'url') . '&end_date=' . esc($report_end_date, 'url')) ?>"
         class="btn btn-outline-secondary btn-sm ms-auto">
-        <i class="bi bi-file-earmark-spreadsheet"></i> Mail-merge CSV
+        <i class="bi bi-file-earmark-spreadsheet" aria-hidden="true"></i> Mail-merge CSV
     </a>
 </div>
 
@@ -45,7 +45,7 @@
             data-bs-toggle="collapse"
             data-bs-target="#roiFilterPanel"
             aria-expanded="false">
-            <i class="bi bi-funnel"></i> <?= lang('App.filter') ?>
+            <i class="bi bi-funnel" aria-hidden="true"></i> <?= lang('App.filter') ?>
         </button>
     </div>
     <div id="roiFilterPanel" class="collapse">
@@ -67,11 +67,11 @@
                 </div>
                 <div class="col-auto">
                     <button type="submit" class="btn btn-primary btn-sm">
-                        <i class="bi bi-funnel"></i> <?= lang('Services.apply') ?>
+                        <i class="bi bi-funnel" aria-hidden="true"></i> <?= lang('Services.apply') ?>
                     </button>
                 </div>
                 <div class="col-auto ms-auto text-muted small align-self-end pb-1">
-                    <i class="bi bi-calendar3"></i>
+                    <i class="bi bi-calendar3" aria-hidden="true"></i>
                     <?= esc($report_start_date) ?> – <?= esc($report_end_date) ?>
                 </div>
             </form>
@@ -105,7 +105,7 @@
                         <p class="text-muted small mb-1">Total Guests</p>
                         <h3 class="mb-0"><?= $totalGuests ?></h3>
                     </div>
-                    <i class="bi bi-people fs-1 text-secondary opacity-50"></i>
+                    <i class="bi bi-people fs-1 text-secondary opacity-50" aria-hidden="true"></i>
                 </div>
             </div>
         </div>
@@ -120,7 +120,7 @@
                         <h3 class="mb-0 text-success"><?= $wfPct ?>%</h3>
                         <small class="text-muted"><?= $wfConv ?> of <?= $wfTotal ?></small>
                     </div>
-                    <i class="bi bi-envelope-check fs-1 text-success opacity-50"></i>
+                    <i class="bi bi-envelope-check fs-1 text-success opacity-50" aria-hidden="true"></i>
                 </div>
             </div>
         </div>
@@ -135,7 +135,7 @@
                         <h3 class="mb-0 text-danger"><?= $nfPct ?>%</h3>
                         <small class="text-muted"><?= $nfConv ?> of <?= $nfTotal ?></small>
                     </div>
-                    <i class="bi bi-envelope-slash fs-1 text-danger opacity-50"></i>
+                    <i class="bi bi-envelope-slash fs-1 text-danger opacity-50" aria-hidden="true"></i>
                 </div>
             </div>
         </div>
@@ -153,7 +153,7 @@
                         </h3>
                         <small class="text-muted">percentage-point difference</small>
                     </div>
-                    <i class="bi bi-graph-up-arrow fs-1 text-primary opacity-50"></i>
+                    <i class="bi bi-graph-up-arrow fs-1 text-primary opacity-50" aria-hidden="true"></i>
                 </div>
             </div>
         </div>
@@ -164,7 +164,7 @@
 <!-- Grouped bar chart -->
 <div class="card mb-4">
     <div class="card-header d-flex align-items-center gap-2">
-        <i class="bi bi-bar-chart-fill text-primary"></i>
+        <i class="bi bi-bar-chart-fill text-primary" aria-hidden="true"></i>
         <span class="fw-semibold">Followup Impact – Guest Count vs Conversions</span>
         <small class="text-muted ms-auto">"Conversion" = joined as member within period</small>
     </div>
@@ -178,7 +178,7 @@
 <!-- Cohort summary table -->
 <div class="card mb-4">
     <div class="card-header d-flex align-items-center gap-2">
-        <i class="bi bi-table text-secondary"></i>
+        <i class="bi bi-table text-secondary" aria-hidden="true"></i>
         <span class="fw-semibold">Cohort Summary</span>
     </div>
     <div class="table-responsive">
@@ -240,7 +240,7 @@
 <?php if (! empty($week_breakdown)): ?>
     <div class="card">
         <div class="card-header d-flex align-items-center gap-2">
-            <i class="bi bi-calendar-week text-secondary"></i>
+            <i class="bi bi-calendar-week text-secondary" aria-hidden="true"></i>
             <span class="fw-semibold">Weekly Breakdown</span>
         </div>
         <div class="table-responsive">

@@ -16,7 +16,7 @@
 
 <div class="row mt-4" id="followupStatsSection">
     <div class="col-12 mb-2 d-flex align-items-center gap-2">
-        <h5 class="mb-0"><i class="bi bi-person-lines-fill"></i> <?= lang('Dashboard.followupOverviewTitle') ?></h5>
+        <h5 class="mb-0"><i class="bi bi-person-lines-fill" aria-hidden="true"></i> <?= lang('Dashboard.followupOverviewTitle') ?></h5>
         <div id="fuSpinner" class="spinner-border spinner-border-sm text-secondary d-none" role="status" aria-hidden="true"></div>
         <small class="text-muted ms-auto" id="fusLastUpdated"></small>
     </div>
@@ -31,7 +31,7 @@
                         <h3 class="mb-0" id="fusPendingFollowup">—</h3>
                     </div>
                     <div class="text-warning fs-1">
-                        <i class="bi bi-hourglass-split"></i>
+                        <i class="bi bi-hourglass-split" aria-hidden="true"></i>
                     </div>
                 </div>
             </div>
@@ -47,7 +47,7 @@
                         <h3 class="mb-0" id="fusPendingCalls">—</h3>
                     </div>
                     <div class="text-danger fs-1">
-                        <i class="bi bi-telephone-outbound"></i>
+                        <i class="bi bi-telephone-outbound" aria-hidden="true"></i>
                     </div>
                 </div>
             </div>
@@ -63,7 +63,7 @@
                         <h3 class="mb-0" id="fusFailedMsgs">—</h3>
                     </div>
                     <div class="text-info fs-1">
-                        <i class="bi bi-envelope-exclamation"></i>
+                        <i class="bi bi-envelope-exclamation" aria-hidden="true"></i>
                     </div>
                 </div>
             </div>
@@ -74,7 +74,7 @@
     <div class="col-12 mb-3">
         <div class="card">
             <div class="card-header">
-                <h5 class="mb-0"><i class="bi bi-people"></i> <?= lang('Dashboard.followupNewGuestsPerWeek') ?></h5>
+                <h5 class="mb-0"><i class="bi bi-people" aria-hidden="true"></i> <?= lang('Dashboard.followupNewGuestsPerWeek') ?></h5>
             </div>
             <div class="card-body" style="min-height: 220px;">
                 <div style="height: 200px; max-height: 200px;">

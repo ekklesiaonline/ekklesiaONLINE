@@ -113,14 +113,14 @@ $formatLocalizedDateTime = static function (?string $value, string $locale): str
     <div class="col-12">
         <div class="alert alert-warning d-flex align-items-center justify-content-between shadow-sm mb-0" role="alert">
             <div class="d-flex align-items-center">
-                <i class="bi bi-exclamation-triangle-fill me-2 fs-5"></i>
+                <i class="bi bi-exclamation-triangle-fill me-2 fs-5" aria-hidden="true"></i>
                 <div>
                     <strong><?= lang('Members.pendingRegistrationsTitle') ?></strong>
                     <span class="ms-1">(<?= (int) $pending_registrations_count ?>)</span>
                 </div>
             </div>
             <a href="<?= base_url('people#pendingRegistrationsCard') ?>" class="btn btn-sm btn-warning">
-                <i class="bi bi-person-check me-1"></i> <?= lang('Members.pendingRegistrationsTitle') ?>
+                <i class="bi bi-person-check me-1" aria-hidden="true"></i> <?= lang('Members.pendingRegistrationsTitle') ?>
             </a>
         </div>
     </div>
@@ -140,7 +140,7 @@ $formatLocalizedDateTime = static function (?string $value, string $locale): str
                             <small class="text-muted">&nbsp;</small>
                         </div>
                         <div class="text-primary fs-1">
-                            <i class="bi bi-people"></i>
+                            <i class="bi bi-people" aria-hidden="true"></i>
                         </div>
                     </div>
                 </div>
@@ -159,7 +159,7 @@ $formatLocalizedDateTime = static function (?string $value, string $locale): str
                             <small class="text-muted"><?= lang('Dashboard.inLeadership', [number_format((int) ($leadership_members ?? 0))]) ?></small>
                         </div>
                         <div class="text-info fs-1">
-                            <i class="bi bi-person-check"></i>
+                            <i class="bi bi-person-check" aria-hidden="true"></i>
                         </div>
                     </div>
                 </div>
@@ -178,7 +178,7 @@ $formatLocalizedDateTime = static function (?string $value, string $locale): str
                             <small class="text-muted">&nbsp;</small>
                         </div>
                         <div class="text-success fs-1">
-                            <i class="bi bi-person-check"></i>
+                            <i class="bi bi-person-check" aria-hidden="true"></i>
                         </div>
                     </div>
                 </div>
@@ -197,7 +197,7 @@ $formatLocalizedDateTime = static function (?string $value, string $locale): str
                             <small class="text-muted">&nbsp;</small>
                         </div>
                         <div class="text-warning fs-1">
-                            <i class="bi bi-house-heart"></i>
+                            <i class="bi bi-house-heart" aria-hidden="true"></i>
                         </div>
                     </div>
                 </div>
@@ -215,7 +215,7 @@ $formatLocalizedDateTime = static function (?string $value, string $locale): str
                             <h3 class="mb-0"><?= number_format((int) ($birthdays_this_week ?? 0)) ?></h3>
                         </div>
                         <div class="text-primary fs-1">
-                            <i class="bi bi-gift"></i>
+                            <i class="bi bi-gift" aria-hidden="true"></i>
                         </div>
                     </div>
                 </div>
@@ -233,7 +233,7 @@ $formatLocalizedDateTime = static function (?string $value, string $locale): str
                             <h3 class="mb-0"><?= number_format((int) ($pending_followups_this_month ?? 0)) ?></h3>
                         </div>
                         <div class="text-warning fs-1">
-                            <i class="bi bi-hourglass-split"></i>
+                            <i class="bi bi-hourglass-split" aria-hidden="true"></i>
                         </div>
                     </div>
                 </div>
@@ -251,7 +251,7 @@ $formatLocalizedDateTime = static function (?string $value, string $locale): str
                             <h3 class="mb-0"><?= number_format((int) ($done_followups_this_month_admins ?? 0)) ?></h3>
                         </div>
                         <div class="text-success fs-1">
-                            <i class="bi bi-check2-circle"></i>
+                            <i class="bi bi-check2-circle" aria-hidden="true"></i>
                         </div>
                     </div>
                 </div>
@@ -269,7 +269,7 @@ $formatLocalizedDateTime = static function (?string $value, string $locale): str
                             <h3 class="mb-0"><?= number_format((int) ($events_this_month ?? 0)) ?></h3>
                         </div>
                         <div class="text-info fs-1">
-                            <i class="bi bi-calendar-event"></i>
+                            <i class="bi bi-calendar-event" aria-hidden="true"></i>
                         </div>
                     </div>
                 </div>
@@ -282,7 +282,7 @@ $formatLocalizedDateTime = static function (?string $value, string $locale): str
             <div class="card h-100">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h5 class="mb-0">
-                        <i class="bi bi-calendar-event"></i>
+                        <i class="bi bi-calendar-event" aria-hidden="true"></i>
                         <?= lang('Dashboard.recentServices') ?>
                     </h5>
                     <?php if (auth()->user()->can('service.view')): ?>
@@ -295,10 +295,10 @@ $formatLocalizedDateTime = static function (?string $value, string $locale): str
                             <table class="table table-sm">
                                 <thead>
                                     <tr>
-                                        <th><?= lang('App.colDate') ?></th>
-                                        <th><?= lang('Dashboard.colService') ?></th>
-                                        <th><?= lang('Dashboard.colLiturgicalDay') ?></th>
-                                        <th class="text-end"><?= lang('Dashboard.colAttendComm') ?></th>
+                                        <th scope="col"><?= lang('App.colDate') ?></th>
+                                        <th scope="col"><?= lang('Dashboard.colService') ?></th>
+                                        <th scope="col"><?= lang('Dashboard.colLiturgicalDay') ?></th>
+                                        <th scope="col" class="text-end"><?= lang('Dashboard.colAttendComm') ?></th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -339,7 +339,7 @@ $formatLocalizedDateTime = static function (?string $value, string $locale): str
         <div class="col-md-6">
             <div class="card h-100">
                 <div class="card-header d-flex justify-content-between align-items-center gap-3 flex-wrap">
-                    <h5 class="mb-0"><i class="bi bi-graph-up-arrow"></i> <?= lang('Dashboard.parishSundayAttendanceTitle') ?></h5>
+                    <h5 class="mb-0"><i class="bi bi-graph-up-arrow" aria-hidden="true"></i> <?= lang('Dashboard.parishSundayAttendanceTitle') ?></h5>
                 </div>
                 <div class="card-body" style="min-height: 420px;">
                     <?php if (empty($sunday_attendance_has_data)): ?>

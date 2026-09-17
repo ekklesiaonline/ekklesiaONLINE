@@ -14,10 +14,10 @@ $status = $status ?? 'all';
         <strong><?= lang('System.sectionParishAdmins') ?></strong>
         <div>
             <button type="button" class="btn btn-sm btn-outline-primary me-2" data-bs-toggle="modal" data-bs-target="#createParishAdminModal">
-                <i class="bi bi-plus-circle me-1"></i><?= lang('App.addNew') ?>
+                <i class="bi bi-plus-circle me-1" aria-hidden="true"></i><?= lang('App.addNew') ?>
             </button>
             <a href="<?= base_url('diocese/dashboard') ?>" class="btn btn-sm btn-outline-secondary" aria-label="<?= esc(lang('App.back')) ?>">
-                <i class="bi bi-arrow-left me-1"></i><?= lang('App.back') ?>
+                <i class="bi bi-arrow-left me-1" aria-hidden="true"></i><?= lang('App.back') ?>
             </a>
         </div>
     </div>
@@ -40,11 +40,11 @@ $status = $status ?? 'all';
             <table class="table table-sm table-hover align-middle mb-0">
                 <thead>
                     <tr>
-                        <th><?= lang('App.colName') ?></th>
-                        <th class="d-none d-md-table-cell"><?= lang('App.colEmail') ?></th>
-                        <th><?= lang('App.navParishes') ?></th>
-                        <th><?= lang('App.colStatus') ?></th>
-                        <th class="text-end"><?= lang('App.colActions') ?></th>
+                        <th scope="col"><?= lang('App.colName') ?></th>
+                        <th scope="col" class="d-none d-md-table-cell"><?= lang('App.colEmail') ?></th>
+                        <th scope="col"><?= lang('App.navParishes') ?></th>
+                        <th scope="col"><?= lang('App.colStatus') ?></th>
+                        <th scope="col" class="text-end"><?= lang('App.colActions') ?></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -221,7 +221,7 @@ $status = $status ?? 'all';
                 </div>
                 <div class="modal-body">
                     <div class="alert alert-warning">
-                        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                        <i class="bi bi-exclamation-triangle-fill me-2" aria-hidden="true"></i>
                         <span id="deleteParishAdminBody"></span>
                     </div>
                     <div class="mb-3">

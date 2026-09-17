@@ -53,7 +53,7 @@ $renderDelta = static function ($delta, bool $float = false): string {
             data-bs-toggle="collapse"
             data-bs-target="#systemMissionOutcomeFilterPanel"
             aria-expanded="<?= $filtersActive ? 'true' : 'false' ?>">
-            <i class="bi bi-funnel"></i> <?= lang('App.filter') ?>
+            <i class="bi bi-funnel" aria-hidden="true"></i> <?= lang('App.filter') ?>
         </button>
     </div>
     <div id="systemMissionOutcomeFilterPanel" class="collapse <?= $filtersActive ? 'show' : '' ?>">
@@ -81,7 +81,7 @@ $renderDelta = static function ($delta, bool $float = false): string {
                 </div>
                 <div class="col-md-4 d-flex gap-2">
                     <button type="submit" class="btn btn-sm btn-primary flex-fill">
-                        <i class="bi bi-funnel"></i> <?= lang('Services.apply') ?>
+                        <i class="bi bi-funnel" aria-hidden="true"></i> <?= lang('Services.apply') ?>
                     </button>
                     <a href="<?= base_url('system/mission-outcomes') ?>" class="btn btn-sm btn-outline-secondary flex-fill"><?= lang('App.clear') ?></a>
                 </div>
@@ -189,10 +189,10 @@ $renderDelta = static function ($delta, bool $float = false): string {
                     <table class="table table-sm mb-0">
                         <thead>
                             <tr>
-                                <th><?= lang('System.provinceName') ?></th>
-                                <th><?= lang('System.currentValueLabel') ?></th>
-                                <th><?= lang('System.comparisonValueLabel') ?></th>
-                                <th><?= lang('System.deltaLabel') ?></th>
+                                <th scope="col"><?= lang('System.provinceName') ?></th>
+                                <th scope="col"><?= lang('System.currentValueLabel') ?></th>
+                                <th scope="col"><?= lang('System.comparisonValueLabel') ?></th>
+                                <th scope="col"><?= lang('System.deltaLabel') ?></th>
                             </tr>
                         </thead>
                         <tbody>
@@ -218,10 +218,10 @@ $renderDelta = static function ($delta, bool $float = false): string {
                     <table class="table table-sm mb-0">
                         <thead>
                             <tr>
-                                <th><?= lang('System.provinceName') ?></th>
-                                <th><?= lang('System.currentValueLabel') ?></th>
-                                <th><?= lang('System.comparisonValueLabel') ?></th>
-                                <th><?= lang('System.deltaLabel') ?></th>
+                                <th scope="col"><?= lang('System.provinceName') ?></th>
+                                <th scope="col"><?= lang('System.currentValueLabel') ?></th>
+                                <th scope="col"><?= lang('System.comparisonValueLabel') ?></th>
+                                <th scope="col"><?= lang('System.deltaLabel') ?></th>
                             </tr>
                         </thead>
                         <tbody>

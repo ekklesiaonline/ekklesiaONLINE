@@ -42,7 +42,7 @@ $pledgeFiltersActive = trim((string) ($search ?? '')) !== ''
             data-bs-toggle="collapse"
             data-bs-target="#pledgeFilterPanel"
             aria-expanded="<?= $pledgeFiltersActive ? 'true' : 'false' ?>">
-            <i class="bi bi-funnel"></i> <?= lang('App.filter') ?>
+            <i class="bi bi-funnel" aria-hidden="true"></i> <?= lang('App.filter') ?>
         </button>
     </div>
     <div id="pledgeFilterPanel" class="collapse <?= $pledgeFiltersActive ? 'show' : '' ?>">
@@ -66,7 +66,7 @@ $pledgeFiltersActive = trim((string) ($search ?? '')) !== ''
                 </div>
                 <div class="col-md-4 d-flex gap-2 align-items-end">
                     <button type="submit" class="btn btn-sm btn-primary flex-fill">
-                        <i class="bi bi-funnel"></i> <?= lang('Services.apply') ?>
+                        <i class="bi bi-funnel" aria-hidden="true"></i> <?= lang('Services.apply') ?>
                     </button>
                     <a href="<?= base_url('pledges') ?>?year=<?= (int) ($selected_year ?? date('Y')) ?>" class="btn btn-sm btn-outline-secondary flex-fill"><?= lang('App.clear') ?></a>
                 </div>
@@ -77,7 +77,7 @@ $pledgeFiltersActive = trim((string) ($search ?? '')) !== ''
 
 <div class="card mb-4">
     <div class="card-header">
-        <h5 class="mb-0"><i class="bi bi-plus-circle"></i> <?= lang('Pledges.addAnnualPledge') ?></h5>
+        <h5 class="mb-0"><i class="bi bi-plus-circle" aria-hidden="true"></i> <?= lang('Pledges.addAnnualPledge') ?></h5>
     </div>
     <div class="card-body">
         <form method="post" action="<?= base_url('pledges/store') ?>" class="row g-3">
@@ -135,7 +135,7 @@ $pledgeFiltersActive = trim((string) ($search ?? '')) !== ''
 
 <div class="card">
     <div class="card-header d-flex justify-content-between align-items-center">
-        <h5 class="mb-0"><i class="bi bi-list-ul"></i> <?= lang('Pledges.pledgesForYear', [(int) ($selected_year ?? date('Y'))]) ?></h5>
+        <h5 class="mb-0"><i class="bi bi-list-ul" aria-hidden="true"></i> <?= lang('Pledges.pledgesForYear', [(int) ($selected_year ?? date('Y'))]) ?></h5>
         <span class="badge border border-secondary text-secondary fw-normal"><?= lang('Pledges.recordsCount', [(int) ($total_rows ?? count($pledges ?? []))]) ?></span>
     </div>
     <div class="card-body p-0">
@@ -146,13 +146,13 @@ $pledgeFiltersActive = trim((string) ($search ?? '')) !== ''
                 <table class="table table-hover mb-0 align-middle">
                     <thead>
                         <tr>
-                            <th><?= lang('Pledges.member') ?></th>
-                            <th><?= lang('Pledges.year') ?></th>
-                            <th class="text-end"><?= lang('Pledges.pledged') ?></th>
-                            <th class="text-end"><?= lang('Pledges.fulfilled') ?></th>
-                            <th><?= lang('Pledges.status') ?></th>
-                            <th><?= lang('Pledges.pledgedAt') ?></th>
-                            <th><?= lang('Pledges.actions') ?></th>
+                            <th scope="col"><?= lang('Pledges.member') ?></th>
+                            <th scope="col"><?= lang('Pledges.year') ?></th>
+                            <th scope="col" class="text-end"><?= lang('Pledges.pledged') ?></th>
+                            <th scope="col" class="text-end"><?= lang('Pledges.fulfilled') ?></th>
+                            <th scope="col"><?= lang('Pledges.status') ?></th>
+                            <th scope="col"><?= lang('Pledges.pledgedAt') ?></th>
+                            <th scope="col"><?= lang('Pledges.actions') ?></th>
                         </tr>
                     </thead>
                     <tbody>

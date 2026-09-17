@@ -5,14 +5,14 @@
 <div class="d-flex justify-content-start align-items-center flex-wrap gap-2 mb-3">
     <?php if (auth()->user()->can('guest.edit')): ?>
         <button type="button" class="btn btn-outline-primary" id="btnNewTemplate">
-            <i class="bi bi-plus-circle"></i> <?= lang('Guests.tplNewBtn') ?>
+            <i class="bi bi-plus-circle" aria-hidden="true"></i> <?= lang('Guests.tplNewBtn') ?>
         </button>
     <?php endif; ?>
     <a href="<?= base_url('followup-workflow/sequences') ?>" class="btn btn-outline-secondary">
-        <i class="bi bi-diagram-3"></i> <?= lang('Guests.tplSequencesBtn') ?>
+        <i class="bi bi-diagram-3" aria-hidden="true"></i> <?= lang('Guests.tplSequencesBtn') ?>
     </a>
     <a href="<?= base_url('guests/dashboard') ?>" class="btn btn-outline-secondary">
-        <i class="bi bi-arrow-left"></i> <?= lang('Guests.backToGuests') ?>
+        <i class="bi bi-arrow-left" aria-hidden="true"></i> <?= lang('Guests.backToGuests') ?>
     </a>
 </div>
 
@@ -30,7 +30,7 @@ $channelBadge = [
     <div class="card-body p-0">
         <?php if (empty($templates)): ?>
             <div class="text-center py-5 text-muted">
-                <i class="bi bi-file-text fs-2 d-block mb-2"></i>
+                <i class="bi bi-file-text fs-2 d-block mb-2" aria-hidden="true"></i>
                 <?= lang('Guests.tplEmpty') ?>
                 <?php if (auth()->user()->can('guest.edit')): ?>
                     <a href="#" id="btnNewTemplateEmpty"><?= lang('Guests.tplEmptyCreate') ?></a>
@@ -41,12 +41,12 @@ $channelBadge = [
                 <table class="table table-hover align-middle mb-0">
                     <thead>
                         <tr>
-                            <th><?= lang('Guests.tplColStep') ?></th>
-                            <th><?= lang('Guests.tplColName') ?></th>
-                            <th><?= lang('Guests.tplColChannel') ?></th>
-                            <th><?= lang('Guests.tplColSubjectPreview') ?></th>
-                            <th><?= lang('Guests.tplColScope') ?></th>
-                            <th class="text-end"><?= lang('Guests.tplColActions') ?></th>
+                            <th scope="col"><?= lang('Guests.tplColStep') ?></th>
+                            <th scope="col"><?= lang('Guests.tplColName') ?></th>
+                            <th scope="col"><?= lang('Guests.tplColChannel') ?></th>
+                            <th scope="col"><?= lang('Guests.tplColSubjectPreview') ?></th>
+                            <th scope="col"><?= lang('Guests.tplColScope') ?></th>
+                            <th scope="col" class="text-end"><?= lang('Guests.tplColActions') ?></th>
                         </tr>
                     </thead>
                     <tbody>
@@ -86,12 +86,12 @@ $channelBadge = [
                                             data-bs-toggle="dropdown"
                                             aria-expanded="false"
                                             title="<?= esc(lang('App.colActions')) ?>">
-                                            <i class="bi bi-three-dots-vertical"></i>
+                                            <i class="bi bi-three-dots-vertical" aria-hidden="true"></i>
                                         </button>
                                         <ul class="dropdown-menu dropdown-menu-end shadow-sm">
                                             <li>
                                                 <a class="dropdown-item" href="<?= base_url('followup-workflow/templates/preview/' . $tpl['id']) ?>">
-                                                    <i class="bi bi-eye me-2"></i><?= lang('App.preview') ?>
+                                                    <i class="bi bi-eye me-2" aria-hidden="true"></i><?= lang('App.preview') ?>
                                                 </a>
                                             </li>
                                             <?php if (!$isGlobal && auth()->user()->can('guest.edit')): ?>
@@ -105,7 +105,7 @@ $channelBadge = [
                                                         data-body-text="<?= esc($tpl['body_text'], 'attr') ?>"
                                                         data-body-html="<?= esc($tpl['body_html'] ?? '', 'attr') ?>"
                                                         data-variables="<?= esc($tpl['variables'] ?? '', 'attr') ?>">
-                                                        <i class="bi bi-pencil me-2"></i><?= lang('App.edit') ?>
+                                                        <i class="bi bi-pencil me-2" aria-hidden="true"></i><?= lang('App.edit') ?>
                                                     </button>
                                                 </li>
                                                 <li>
@@ -116,7 +116,7 @@ $channelBadge = [
                                                         type="button"
                                                         data-id="<?= (int) $tpl['id'] ?>"
                                                         data-name="<?= esc($tpl['name'], 'attr') ?>">
-                                                        <i class="bi bi-trash me-2"></i><?= lang('App.delete') ?>
+                                                        <i class="bi bi-trash me-2" aria-hidden="true"></i><?= lang('App.delete') ?>
                                                     </button>
                                                 </li>
                                             <?php endif; ?>
@@ -198,7 +198,7 @@ $channelBadge = [
             <div class="modal-footer">
                 <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal"><?= lang('App.cancel') ?></button>
                 <button type="button" class="btn btn-outline-info me-auto" id="btnPreviewTemplate">
-                    <i class="bi bi-eye"></i> <?= lang('Guests.tplBtnPreview') ?>
+                    <i class="bi bi-eye" aria-hidden="true"></i> <?= lang('Guests.tplBtnPreview') ?>
                 </button>
                 <button type="button" class="btn btn-primary" id="btnSaveTemplate">
                     <span class="spinner-border spinner-border-sm d-none me-1" id="templateSpinner"></span>
@@ -383,7 +383,7 @@ $channelBadge = [
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="tplPreviewModalLabel">
-                    <i class="bi bi-eye me-1"></i> <?= lang('Guests.tplPreviewModalTitle') ?>
+                    <i class="bi bi-eye me-1" aria-hidden="true"></i> <?= lang('Guests.tplPreviewModalTitle') ?>
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
@@ -406,7 +406,7 @@ $channelBadge = [
                     <div class="col-md-4">
                         <button type="button" class="btn btn-sm btn-outline-secondary w-100" id="btnRefreshPreview">
                             <span class="spinner-border spinner-border-sm d-none me-1" id="previewSpinner"></span>
-                            <i class="bi bi-arrow-clockwise"></i> <?= lang('Guests.tplPreviewRefreshBtn') ?>
+                            <i class="bi bi-arrow-clockwise" aria-hidden="true"></i> <?= lang('Guests.tplPreviewRefreshBtn') ?>
                         </button>
                     </div>
                 </div>

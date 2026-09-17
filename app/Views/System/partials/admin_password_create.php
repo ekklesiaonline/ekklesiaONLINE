@@ -27,11 +27,11 @@ $specialRegexJs     = preg_replace_callback('/[\\\\[\]\-\^]/', static fn($m) => 
     <input id="<?= $passwordId ?>" name="<?= $passwordName ?>" type="password"
            class="form-control" autocomplete="new-password" minlength="<?= (int) $minLength ?>" required>
     <ul id="<?= $requirementsId ?>" class="list-unstyled small mt-2 mb-0 d-none">
-        <li id="<?= $requirementsId ?>Length" class="text-danger<?= $minLength <= 0 ? ' d-none' : '' ?>"><i class="bi bi-x-circle-fill me-1"></i><?= lang('System.passwordRequirementLength', ['minLength' => $minLength]) ?></li>
-        <li id="<?= $requirementsId ?>Upper" class="text-danger<?= $requireUppercase ? '' : ' d-none' ?>"><i class="bi bi-x-circle-fill me-1"></i><?= lang('System.passwordRequirementUppercase') ?></li>
-        <li id="<?= $requirementsId ?>Lower" class="text-danger<?= $requireLowercase ? '' : ' d-none' ?>"><i class="bi bi-x-circle-fill me-1"></i><?= lang('System.passwordRequirementLowercase') ?></li>
-        <li id="<?= $requirementsId ?>Number" class="text-danger<?= $requireDigit ? '' : ' d-none' ?>"><i class="bi bi-x-circle-fill me-1"></i><?= lang('System.passwordRequirementNumber') ?></li>
-        <li id="<?= $requirementsId ?>Special" class="text-danger<?= $requireSpecial ? '' : ' d-none' ?>"><i class="bi bi-x-circle-fill me-1"></i><?= lang('System.passwordRequirementSpecial') ?></li>
+        <li id="<?= $requirementsId ?>Length" class="text-danger<?= $minLength <= 0 ? ' d-none' : '' ?>"><i class="bi bi-x-circle-fill me-1" aria-hidden="true"></i><?= lang('System.passwordRequirementLength', ['minLength' => $minLength]) ?></li>
+        <li id="<?= $requirementsId ?>Upper" class="text-danger<?= $requireUppercase ? '' : ' d-none' ?>"><i class="bi bi-x-circle-fill me-1" aria-hidden="true"></i><?= lang('System.passwordRequirementUppercase') ?></li>
+        <li id="<?= $requirementsId ?>Lower" class="text-danger<?= $requireLowercase ? '' : ' d-none' ?>"><i class="bi bi-x-circle-fill me-1" aria-hidden="true"></i><?= lang('System.passwordRequirementLowercase') ?></li>
+        <li id="<?= $requirementsId ?>Number" class="text-danger<?= $requireDigit ? '' : ' d-none' ?>"><i class="bi bi-x-circle-fill me-1" aria-hidden="true"></i><?= lang('System.passwordRequirementNumber') ?></li>
+        <li id="<?= $requirementsId ?>Special" class="text-danger<?= $requireSpecial ? '' : ' d-none' ?>"><i class="bi bi-x-circle-fill me-1" aria-hidden="true"></i><?= lang('System.passwordRequirementSpecial') ?></li>
     </ul>
 </div>
 

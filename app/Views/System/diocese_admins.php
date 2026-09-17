@@ -13,10 +13,10 @@ $admins = $admins ?? [];
         <strong><?= lang('System.sectionDioceseAdmins') ?></strong>
         <div>
             <button type="button" class="btn btn-sm btn-outline-primary me-2" data-bs-toggle="modal" data-bs-target="#createDioceseAdminModal">
-                <i class="bi bi-plus-circle me-1"></i><?= lang('App.addNew') ?>
+                <i class="bi bi-plus-circle me-1" aria-hidden="true"></i><?= lang('App.addNew') ?>
             </button>
             <a href="<?= base_url('system/dashboard') ?>" class="btn btn-sm btn-outline-secondary" aria-label="<?= esc(lang('App.back')) ?>">
-                <i class="bi bi-arrow-left me-1"></i><?= lang('App.back') ?>
+                <i class="bi bi-arrow-left me-1" aria-hidden="true"></i><?= lang('App.back') ?>
             </a>
         </div>
     </div>
@@ -25,11 +25,11 @@ $admins = $admins ?? [];
             <table class="table table-sm table-hover align-middle mb-0">
                 <thead>
                     <tr>
-                        <th><?= lang('App.colName') ?></th>
-                        <th class="d-none d-md-table-cell"><?= lang('App.colEmail') ?></th>
-                        <th class="d-none d-md-table-cell"><?= lang('System.provinceName') ?></th>
-                        <th><?= lang('System.dioceseName') ?></th>
-                        <th class="text-end"><?= lang('App.colActions') ?></th>
+                        <th scope="col"><?= lang('App.colName') ?></th>
+                        <th scope="col" class="d-none d-md-table-cell"><?= lang('App.colEmail') ?></th>
+                        <th scope="col" class="d-none d-md-table-cell"><?= lang('System.provinceName') ?></th>
+                        <th scope="col"><?= lang('System.dioceseName') ?></th>
+                        <th scope="col" class="text-end"><?= lang('App.colActions') ?></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -104,7 +104,7 @@ $admins = $admins ?? [];
                 <?= csrf_field() ?>
                 <div class="modal-header">
                     <h5 class="modal-title" id="createDioceseAdminModalLabel">
-                        <i class="bi bi-plus-circle me-2"></i><?= lang('System.btnCreateAdminUser') ?> &ndash; <?= lang('System.roleDioceseAdmin') ?>
+                        <i class="bi bi-plus-circle me-2" aria-hidden="true"></i><?= lang('System.btnCreateAdminUser') ?> &ndash; <?= lang('System.roleDioceseAdmin') ?>
                     </h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>

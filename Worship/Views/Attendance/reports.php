@@ -115,7 +115,7 @@
             data-bs-target="#attendanceFilterPanel"
             aria-expanded="<?= !empty($has_custom_filter) ? 'true' : 'false' ?>"
             aria-controls="attendanceFilterPanel">
-            <i class="bi bi-funnel"></i> <?= lang('Attendance.filter') ?>
+            <i class="bi bi-funnel" aria-hidden="true"></i> <?= lang('Attendance.filter') ?>
         </button>
     </div>
     <div id="attendanceFilterPanel" class="collapse <?= !empty($has_custom_filter) ? 'show' : '' ?>">
@@ -132,7 +132,7 @@
                     </div>
                     <div class="col-md-4 d-flex align-items-end gap-2">
                         <button type="submit" class="btn btn-primary">
-                            <i class="bi bi-search"></i> <?= lang('Attendance.apply') ?>
+                            <i class="bi bi-search" aria-hidden="true"></i> <?= lang('Attendance.apply') ?>
                         </button>
                         <a href="<?= base_url('attendance/reports') ?>" class="btn btn-light border"><?= lang('App.reset') ?></a>
                     </div>

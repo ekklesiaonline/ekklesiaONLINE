@@ -156,7 +156,7 @@ final class SidebarLandingPathAlignmentTest extends CIUnitTestCase
             // Continue with href extraction below; this guard keeps intent explicit.
         }
 
-        if (!preg_match('/<a class="nav-link[^\"]*" href="([^"]+)">\s*<i class="bi bi-speedometer2"><\/i>/m', $html, $matches)) {
+        if (!preg_match('/<a class="nav-link[^\"]*" href="([^"]+)">\s*<i class="bi bi-speedometer2"[^>]*><\/i>/m', $html, $matches)) {
             $this->fail('Could not find dashboard link in sidebar markup.');
         }
 

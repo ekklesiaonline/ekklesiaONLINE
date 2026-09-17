@@ -11,7 +11,7 @@
             data-bs-target="#provinceDashboardFilterPanel"
             aria-expanded="<?= $current_period === 'custom' ? 'true' : 'false' ?>"
             aria-controls="provinceDashboardFilterPanel">
-            <i class="bi bi-funnel"></i> <?= lang('App.filter') ?>
+            <i class="bi bi-funnel" aria-hidden="true"></i> <?= lang('App.filter') ?>
         </button>
     </div>
     <div id="provinceDashboardFilterPanel" class="collapse <?= $current_period === 'custom' ? 'show' : '' ?>">
@@ -52,8 +52,8 @@
                     <input type="date" name="end_date" class="form-control" value="<?= esc($end_date) ?>">
                 </div>
                 <div class="col-md-1 d-flex align-items-end">
-                    <button type="submit" class="btn btn-primary w-100">
-                        <i class="bi bi-funnel"></i>
+                    <button type="submit" class="btn btn-primary w-100" aria-label="<?= esc(lang('App.filter')) ?>">
+                        <i class="bi bi-funnel" aria-hidden="true"></i>
                     </button>
                 </div>
             </form>
@@ -157,7 +157,7 @@
 
 <div class="card mb-4">
     <div class="card-header">
-        <h6 class="mb-0"><i class="bi bi-clock-history"></i> <?= lang('Dashboard.attendanceAveragesByPeriod') ?></h6>
+        <h6 class="mb-0"><i class="bi bi-clock-history" aria-hidden="true"></i> <?= lang('Dashboard.attendanceAveragesByPeriod') ?></h6>
     </div>
     <div class="card-body">
         <div class="row text-center">
@@ -200,16 +200,16 @@
         <div class="col-lg-12">
             <div class="card h-100">
                 <div class="card-header">
-                    <h6 class="mb-0"><i class="bi bi-calendar-event"></i> <?= lang('Dashboard.servicesLogged') ?></h6>
+                    <h6 class="mb-0"><i class="bi bi-calendar-event" aria-hidden="true"></i> <?= lang('Dashboard.servicesLogged') ?></h6>
                 </div>
                 <div class="card-body p-0">
                     <div class="table-responsive">
                         <table class="table table-striped mb-0">
                             <thead>
                                 <tr>
-                                    <th><?= lang('App.colDate') ?></th>
-                                    <th><?= lang('Dashboard.parishLabel') ?></th>
-                                    <th><?= lang('Dashboard.serviceLabel') ?></th>
+                                    <th scope="col"><?= lang('App.colDate') ?></th>
+                                    <th scope="col"><?= lang('Dashboard.parishLabel') ?></th>
+                                    <th scope="col"><?= lang('Dashboard.serviceLabel') ?></th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -242,10 +242,10 @@
     <?php $healthByDiocese = array_column($diocese_health_rows ?? [], null, 'diocese_id'); ?>
     <div class="card mb-4">
         <div class="card-header d-flex justify-content-between align-items-center">
-            <div><h6 class="mb-0"><i class="bi bi-list-columns"></i> <?= lang('Dashboard.perDioceseSummaryAll') ?></h6><small class="text-muted"><?= lang('Dashboard.provinceReportDefinition') ?></small></div>
+            <div><h6 class="mb-0"><i class="bi bi-list-columns" aria-hidden="true"></i> <?= lang('Dashboard.perDioceseSummaryAll') ?></h6><small class="text-muted"><?= lang('Dashboard.provinceReportDefinition') ?></small></div>
             <?php if (auth()->user()->can('report.export')): ?>
                 <a class="btn btn-sm btn-outline-primary" href="<?= base_url('province/report-export?' . http_build_query(['diocese_id' => $selected_diocese_id ?? 'all', 'period' => $current_period, 'start_date' => $start_date, 'end_date' => $end_date])) ?>">
-                    <i class="bi bi-download"></i> <?= lang('Dashboard.exportCsv') ?>
+                    <i class="bi bi-download" aria-hidden="true"></i> <?= lang('Dashboard.exportCsv') ?>
                 </a>
             <?php endif; ?>
         </div>
@@ -254,18 +254,18 @@
                 <table class="table table-striped table-hover mb-0">
                     <thead>
                         <tr>
-                            <th><?= lang('Dashboard.colDiocese') ?></th>
-                            <th class="text-end"><?= lang('Dashboard.colParishes') ?></th>
-                            <th class="text-end"><?= lang('Dashboard.colPeople') ?></th>
-                            <th class="text-end"><?= lang('Dashboard.colGuests') ?></th>
-                            <th class="text-end"><?= lang('Dashboard.colMembers') ?></th>
-                            <th class="text-end"><?= lang('Dashboard.colActive') ?></th>
-                            <th class="text-end"><?= lang('Dashboard.colAttendance') ?></th>
-                            <th class="text-end"><?= lang('Dashboard.colServices') ?></th>
-                            <th class="text-end"><?= lang('Dashboard.colAvgPerService') ?></th>
-                            <th><?= lang('Dashboard.adminCoverage') ?></th>
-                            <th><?= lang('Dashboard.lastServiceDate') ?></th>
-                            <th><?= lang('Dashboard.healthStatus') ?></th>
+                            <th scope="col"><?= lang('Dashboard.colDiocese') ?></th>
+                            <th scope="col" class="text-end"><?= lang('Dashboard.colParishes') ?></th>
+                            <th scope="col" class="text-end"><?= lang('Dashboard.colPeople') ?></th>
+                            <th scope="col" class="text-end"><?= lang('Dashboard.colGuests') ?></th>
+                            <th scope="col" class="text-end"><?= lang('Dashboard.colMembers') ?></th>
+                            <th scope="col" class="text-end"><?= lang('Dashboard.colActive') ?></th>
+                            <th scope="col" class="text-end"><?= lang('Dashboard.colAttendance') ?></th>
+                            <th scope="col" class="text-end"><?= lang('Dashboard.colServices') ?></th>
+                            <th scope="col" class="text-end"><?= lang('Dashboard.colAvgPerService') ?></th>
+                            <th scope="col"><?= lang('Dashboard.adminCoverage') ?></th>
+                            <th scope="col"><?= lang('Dashboard.lastServiceDate') ?></th>
+                            <th scope="col"><?= lang('Dashboard.healthStatus') ?></th>
                         </tr>
                     </thead>
                     <tbody>

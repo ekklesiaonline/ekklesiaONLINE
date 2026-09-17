@@ -5,14 +5,14 @@
 <div class="d-flex justify-content-start align-items-center flex-wrap gap-2 mb-3">
     <?php if (auth()->user()->can('guest.edit')): ?>
         <a href="<?= base_url('followup-workflow/sequences/create') ?>" class="btn btn-outline-primary">
-            <i class="bi bi-plus-circle"></i> <?= lang('Guests.seqNewBtn') ?>
+            <i class="bi bi-plus-circle" aria-hidden="true"></i> <?= lang('Guests.seqNewBtn') ?>
         </a>
     <?php endif; ?>
     <a href="<?= base_url('followup-workflow/templates') ?>" class="btn btn-outline-secondary">
-        <i class="bi bi-file-text"></i> <?= lang('Guests.seqMsgTemplatesBtn') ?>
+        <i class="bi bi-file-text" aria-hidden="true"></i> <?= lang('Guests.seqMsgTemplatesBtn') ?>
     </a>
     <a href="<?= base_url('guests/dashboard') ?>" class="btn btn-outline-secondary">
-        <i class="bi bi-arrow-left"></i> <?= lang('Guests.backToGuests') ?>
+        <i class="bi bi-arrow-left" aria-hidden="true"></i> <?= lang('Guests.backToGuests') ?>
     </a>
 </div>
 
@@ -48,7 +48,7 @@ $translateSequenceDescription = static function (array $sequence): string {
     <div class="card-body p-0">
         <?php if (empty($sequences)): ?>
             <div class="text-center py-5 text-muted">
-                <i class="bi bi-diagram-3 fs-2 d-block mb-2"></i>
+                <i class="bi bi-diagram-3 fs-2 d-block mb-2" aria-hidden="true"></i>
                 <?= lang('Guests.seqEmpty') ?>
                 <?php if (auth()->user()->can('guest.edit')): ?>
                     <a href="<?= base_url('followup-workflow/sequences/create') ?>"><?= lang('Guests.seqCreateNow') ?></a>
@@ -59,13 +59,13 @@ $translateSequenceDescription = static function (array $sequence): string {
                 <table class="table table-hover align-middle mb-0">
                     <thead>
                         <tr>
-                            <th><?= lang('Guests.seqColName') ?></th>
-                            <th><?= lang('Guests.seqColDescription') ?></th>
-                            <th class="text-center"><?= lang('Guests.seqColSteps') ?></th>
-                            <th class="text-center"><?= lang('Guests.seqColStatus') ?></th>
-                            <th><?= lang('Guests.seqColScope') ?></th>
+                            <th scope="col"><?= lang('Guests.seqColName') ?></th>
+                            <th scope="col"><?= lang('Guests.seqColDescription') ?></th>
+                            <th scope="col" class="text-center"><?= lang('Guests.seqColSteps') ?></th>
+                            <th scope="col" class="text-center"><?= lang('Guests.seqColStatus') ?></th>
+                            <th scope="col"><?= lang('Guests.seqColScope') ?></th>
                             <?php if (auth()->user()->can('guest.edit')): ?>
-                                <th class="text-end"><?= lang('App.colActions') ?></th>
+                                <th scope="col" class="text-end"><?= lang('App.colActions') ?></th>
                             <?php endif; ?>
                         </tr>
                     </thead>
@@ -112,12 +112,12 @@ $translateSequenceDescription = static function (array $sequence): string {
                                                     data-bs-toggle="dropdown"
                                                     aria-expanded="false"
                                                     title="<?= esc(lang('App.colActions')) ?>">
-                                                    <i class="bi bi-three-dots-vertical"></i>
+                                                    <i class="bi bi-three-dots-vertical" aria-hidden="true"></i>
                                                 </button>
                                                 <ul class="dropdown-menu dropdown-menu-end shadow-sm">
                                                     <li>
                                                         <a class="dropdown-item" href="<?= base_url('followup-workflow/sequences/edit/' . $seq['id']) ?>">
-                                                            <i class="bi bi-pencil me-2"></i><?= lang('App.edit') ?>
+                                                            <i class="bi bi-pencil me-2" aria-hidden="true"></i><?= lang('App.edit') ?>
                                                         </a>
                                                     </li>
                                                     <li>
@@ -125,7 +125,7 @@ $translateSequenceDescription = static function (array $sequence): string {
                                                             type="button"
                                                             data-id="<?= (int) $seq['id'] ?>"
                                                             data-active="<?= (int) $seq['is_active'] ?>">
-                                                            <i class="bi <?= $seq['is_active'] ? 'bi-toggle-on' : 'bi-toggle-off' ?> me-2"></i><?= $seq['is_active'] ? lang('Guests.seqDeactivateTitle') : lang('Guests.seqActivateTitle') ?>
+                                                            <i class="bi <?= $seq['is_active'] ? 'bi-toggle-on' : 'bi-toggle-off' ?> me-2" aria-hidden="true"></i><?= $seq['is_active'] ? lang('Guests.seqDeactivateTitle') : lang('Guests.seqActivateTitle') ?>
                                                         </button>
                                                     </li>
                                                     <li>
@@ -136,7 +136,7 @@ $translateSequenceDescription = static function (array $sequence): string {
                                                             type="button"
                                                             data-id="<?= (int) $seq['id'] ?>"
                                                             data-name="<?= esc($seq['name'], 'attr') ?>">
-                                                            <i class="bi bi-trash me-2"></i><?= lang('App.delete') ?>
+                                                            <i class="bi bi-trash me-2" aria-hidden="true"></i><?= lang('App.delete') ?>
                                                         </button>
                                                     </li>
                                                 </ul>

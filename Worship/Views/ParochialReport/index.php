@@ -142,10 +142,10 @@ $emailRecipient = trim((string) (old('recipient_email', $summary['report_prepare
                 <option value="a4">A4</option>
             </select>
             <button type="submit" class="btn btn-sm btn-outline-secondary">
-                <i class="bi bi-printer me-2"></i><?= lang('App.prPrint') ?>
+                <i class="bi bi-printer me-2" aria-hidden="true"></i><?= lang('App.prPrint') ?>
             </button>
             <button type="submit" formaction="<?= base_url('parochial-report/export-pdf') ?>" class="btn btn-sm btn-outline-secondary">
-                <i class="bi bi-file-earmark-pdf me-2"></i><?= lang('Finance.exportPdf') ?>
+                <i class="bi bi-file-earmark-pdf me-2" aria-hidden="true"></i><?= lang('Finance.exportPdf') ?>
             </button>
         </form>
         <form method="post" action="<?= base_url('parochial-report/email-pdf') ?>" class="d-flex align-items-center gap-2 flex-wrap">
@@ -171,7 +171,7 @@ $emailRecipient = trim((string) (old('recipient_email', $summary['report_prepare
                 <option value="a4">A4</option>
             </select>
             <button type="submit" class="btn btn-sm btn-outline-secondary">
-                <i class="bi bi-envelope-paper me-2"></i><?= lang('App.prEmailPdfAction') ?>
+                <i class="bi bi-envelope-paper me-2" aria-hidden="true"></i><?= lang('App.prEmailPdfAction') ?>
             </button>
         </form>
         <span class="badge border border-secondary text-secondary fw-normal"><?= lang('App.prAuthoritativeSource') ?></span>
@@ -789,10 +789,10 @@ $emailRecipient = trim((string) (old('recipient_email', $summary['report_prepare
 
     <div class="d-flex justify-content-start align-items-center gap-2 mb-4">
         <button type="submit" class="btn btn-outline-primary">
-            <i class="bi bi-floppy me-2"></i><?= lang('App.prReportSaveDraft') ?>
+            <i class="bi bi-floppy me-2" aria-hidden="true"></i><?= lang('App.prReportSaveDraft') ?>
         </button>
         <button type="submit" name="mark_done" value="1" class="btn btn-outline-success">
-            <i class="bi bi-check2-circle me-2"></i><?= lang('App.prReportSaveAndMarkDone') ?>
+            <i class="bi bi-check2-circle me-2" aria-hidden="true"></i><?= lang('App.prReportSaveAndMarkDone') ?>
         </button>
     </div>
 </form>

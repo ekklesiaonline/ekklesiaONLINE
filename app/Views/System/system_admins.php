@@ -15,17 +15,17 @@ $permissionsHierarchy = $permissionsHierarchy ?? [];
         <div>
             <button type="button" class="btn btn-sm btn-outline-info me-2" data-bs-toggle="modal"
                 data-bs-target="#permissionsModal">
-                <i class="bi bi-shield-check me-1"></i>View Permissions
+                <i class="bi bi-shield-check me-1" aria-hidden="true"></i>View Permissions
             </button>
             <?php if ($can_create_system_admin ?? false): ?>
             <button type="button" class="btn btn-sm btn-primary me-2" data-bs-toggle="modal"
                 data-bs-target="#createSystemAdminModal">
-                <i class="bi bi-plus-lg me-1"></i>
+                <i class="bi bi-plus-lg me-1" aria-hidden="true"></i>
                 <?= lang('App.addNew') ?>
             </button>
             <?php endif; ?>
             <a href="<?= base_url('system/dashboard') ?>" class="btn btn-sm btn-outline-secondary" aria-label="<?= esc(lang('App.back')) ?>">
-                <i class="bi bi-arrow-left me-1"></i><?= lang('App.back') ?>
+                <i class="bi bi-arrow-left me-1" aria-hidden="true"></i><?= lang('App.back') ?>
             </a>
         </div>
     </div>
@@ -33,17 +33,17 @@ $permissionsHierarchy = $permissionsHierarchy ?? [];
         <form class="p-3 border-bottom" method="get" action="<?= base_url('system/system-admins') ?>">
             <div class="input-group">
                 <input type="search" class="form-control" name="q" value="<?= esc((string) ($search ?? ''), 'attr') ?>" placeholder="<?= esc(lang('App.search'), 'attr') ?>">
-                <button type="submit" class="btn btn-outline-secondary"><i class="bi bi-search"></i></button>
+                <button type="submit" class="btn btn-outline-secondary" aria-label="<?= esc(lang('App.search')) ?>"><i class="bi bi-search" aria-hidden="true"></i></button>
             </div>
         </form>
         <div class="table-responsive">
             <table class="table table-sm table-hover align-middle mb-0">
                 <thead>
                     <tr>
-                        <th><?= lang('App.colName') ?></th>
-                        <th class="d-none d-md-table-cell"><?= lang('App.colEmail') ?></th>
-                        <th class="d-none d-lg-table-cell"><?= lang('App.colStatus') ?></th>
-                        <th class="text-end"><?= lang('App.colActions') ?></th>
+                        <th scope="col"><?= lang('App.colName') ?></th>
+                        <th scope="col" class="d-none d-md-table-cell"><?= lang('App.colEmail') ?></th>
+                        <th scope="col" class="d-none d-lg-table-cell"><?= lang('App.colStatus') ?></th>
+                        <th scope="col" class="text-end"><?= lang('App.colActions') ?></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -127,7 +127,7 @@ $permissionsHierarchy = $permissionsHierarchy ?? [];
                 <?= csrf_field() ?>
                 <div class="modal-header">
                     <h5 class="modal-title" id="createSystemAdminModalLabel">
-                        <i class="bi bi-plus-circle me-2"></i>
+                        <i class="bi bi-plus-circle me-2" aria-hidden="true"></i>
                         <?= lang('System.btnCreateAdminUser') ?> &ndash;
                         <?= lang('System.roleSystemAdmin') ?>
                     </h5>
@@ -186,7 +186,7 @@ $permissionsHierarchy = $permissionsHierarchy ?? [];
                 <?= csrf_field() ?>
                 <div class="modal-header">
                     <h5 class="modal-title" id="managePermissionsModalLabel">
-                        <i class="bi bi-shield-lock me-2"></i>
+                        <i class="bi bi-shield-lock me-2" aria-hidden="true"></i>
                         <?= lang('System.managePermissions') ?>
                     </h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
@@ -275,7 +275,7 @@ $permissionsHierarchy = $permissionsHierarchy ?? [];
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="permissionsModalLabel">
-                    <i class="bi bi-shield-check me-2"></i>System Admin Permissions
+                    <i class="bi bi-shield-check me-2" aria-hidden="true"></i>System Admin Permissions
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>

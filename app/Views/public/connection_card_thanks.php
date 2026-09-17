@@ -20,11 +20,11 @@
         </p>
         <div class="d-flex flex-column flex-sm-row gap-2 justify-content-center">
             <button type="button" class="btn btn-primary" id="btnDone">
-                <i class="bi bi-check2 me-1"></i> Done
+                <i class="bi bi-check2 me-1" aria-hidden="true"></i> Done
             </button>
             <a href="<?= base_url('connect/' . esc($parish['public_token'] ?? '')) ?>"
                 class="btn btn-outline-secondary">
-                <i class="bi bi-arrow-counterclockwise me-1"></i> Fill in another card
+                <i class="bi bi-arrow-counterclockwise me-1" aria-hidden="true"></i> Fill in another card
             </a>
         </div>
 
@@ -40,7 +40,7 @@
     </div>
 
     <div class="card-footer text-center text-muted small py-2">
-        <i class="bi bi-shield-lock me-1"></i> Your information is kept private and secure.
+        <i class="bi bi-shield-lock me-1" aria-hidden="true"></i> Your information is kept private and secure.
     </div>
 </div>
 

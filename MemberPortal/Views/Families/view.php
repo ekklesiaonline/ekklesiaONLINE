@@ -35,11 +35,11 @@ $formatLocalizedDate = static function (?string $value, string $pattern, string 
 <div class="d-flex justify-content-start align-items-center mb-3 gap-2">
     <?php if (auth()->user()->can('family.manage')): ?>
         <a href="<?= base_url('families/edit/' . $family['id']) ?>" class="btn btn-outline-warning">
-            <i class="bi bi-pencil"></i> <?= lang('Families.editFamily') ?>
+            <i class="bi bi-pencil" aria-hidden="true"></i> <?= lang('Families.editFamily') ?>
         </a>
     <?php endif; ?>
     <a href="<?= base_url('families') ?>" class="btn btn-outline-secondary">
-        <i class="bi bi-arrow-left"></i> <?= lang('Families.backToList') ?>
+        <i class="bi bi-arrow-left" aria-hidden="true"></i> <?= lang('Families.backToList') ?>
     </a>
 </div>
 
@@ -52,11 +52,11 @@ $formatLocalizedDate = static function (?string $value, string $pattern, string 
             <div class="card-body">
                 <table class="table table-borderless">
                     <tr>
-                        <th style="width: 200px;"><?= lang('Families.colFamilyName') ?>:</th>
+                        <th scope="row" style="width: 200px;"><?= lang('Families.colFamilyName') ?>:</th>
                         <td><strong><?= esc($family['family_name']) ?></strong></td>
                     </tr>
                     <tr>
-                        <th><?= lang('Families.colHeadOfHousehold') ?>:</th>
+                        <th scope="row"><?= lang('Families.colHeadOfHousehold') ?>:</th>
                         <td>
                             <?php $headName = (string) ($family['head_name'] ?? ''); ?>
                             <?php if ($headName !== ''): ?>
@@ -67,11 +67,11 @@ $formatLocalizedDate = static function (?string $value, string $pattern, string 
                         </td>
                     </tr>
                     <tr>
-                        <th><?= lang('Families.colAddress') ?>:</th>
+                        <th scope="row"><?= lang('Families.colAddress') ?>:</th>
                         <td><?= esc($family['address'] ?: lang('Families.notProvided')) ?></td>
                     </tr>
                     <tr>
-                        <th><?= lang('Families.createdOn') ?>:</th>
+                        <th scope="row"><?= lang('Families.createdOn') ?>:</th>
                         <td><?= esc($formatLocalizedDate((string) ($family['created_at'] ?? ''), 'MMM d, y', $locale)) ?></td>
                     </tr>
                 </table>
@@ -84,10 +84,10 @@ $formatLocalizedDate = static function (?string $value, string $pattern, string 
                 <?php if (auth()->user()->can('family.manage')): ?>
                     <div class="d-flex gap-2">
                         <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#addNonPortalMemberModal">
-                            <i class="bi bi-person-plus"></i> <?= lang('Families.addNonPortalMember') ?>
+                            <i class="bi bi-person-plus" aria-hidden="true"></i> <?= lang('Families.addNonPortalMember') ?>
                         </button>
                         <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#addMemberModal">
-                            <i class="bi bi-plus-circle"></i> <?= lang('Families.addMember') ?>
+                            <i class="bi bi-plus-circle" aria-hidden="true"></i> <?= lang('Families.addMember') ?>
                         </button>
                     </div>
                 <?php endif; ?>
@@ -100,13 +100,13 @@ $formatLocalizedDate = static function (?string $value, string $pattern, string 
                         <table class="table table-hover">
                             <thead>
                                 <tr>
-                                    <th><?= lang('App.colName') ?></th>
-                                    <th><?= lang('App.colEmail') ?></th>
-                                    <th><?= lang('Families.relationship') ?></th>
-                                    <th><?= lang('Families.portalAccess') ?></th>
-                                    <th><?= lang('App.colStatus') ?></th>
+                                    <th scope="col"><?= lang('App.colName') ?></th>
+                                    <th scope="col"><?= lang('App.colEmail') ?></th>
+                                    <th scope="col"><?= lang('Families.relationship') ?></th>
+                                    <th scope="col"><?= lang('Families.portalAccess') ?></th>
+                                    <th scope="col"><?= lang('App.colStatus') ?></th>
                                     <?php if (auth()->user()->can('family.manage')): ?>
-                                        <th><?= lang('App.colActions') ?></th>
+                                        <th scope="col"><?= lang('App.colActions') ?></th>
                                     <?php endif; ?>
                                 </tr>
                             </thead>
@@ -168,12 +168,12 @@ $formatLocalizedDate = static function (?string $value, string $pattern, string 
                                                             data-user-id="<?= (int) $member['user_id'] ?>"
                                                             data-member-name="<?= esc($member['full_name'], 'attr') ?>"
                                                             title="<?= lang('Families.enablePortalAccess') ?>">
-                                                            <i class="bi bi-person-check"></i>
+                                                            <i class="bi bi-person-check" aria-hidden="true"></i>
                                                         </button>
                                                     <?php endif; ?>
                                                     <button onclick="removeMember(<?= $member['family_member_id'] ?>)"
                                                         class="btn btn-sm btn-danger" title="<?= lang('Families.removeFromFamily') ?>">
-                                                        <i class="bi bi-x-lg"></i>
+                                                        <i class="bi bi-x-lg" aria-hidden="true"></i>
                                                     </button>
                                                 </div>
                                             </td>

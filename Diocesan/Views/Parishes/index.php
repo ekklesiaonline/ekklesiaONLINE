@@ -55,16 +55,16 @@ $mailingDiffersOffUrl = base_url('parish_list?' . http_build_query($chipParams))
 <div class="d-flex justify-content-start align-items-center mb-3">
     <?php if ($isProvinceAdmin || ($isDiocesanAdmin ?? false) || $isSystemAdmin): ?>
         <a href="<?= base_url('parish_list/create') ?>" class="btn btn-outline-primary me-2">
-            <i class="bi bi-plus-circle"></i> <?= lang('Parishes.btn_addParish') ?>
+            <i class="bi bi-plus-circle" aria-hidden="true"></i> <?= lang('Parishes.btn_addParish') ?>
         </a>
     <?php endif; ?>
     <a href="<?= $filterMailingDiffers ? $mailingDiffersOffUrl : $mailingDiffersOnUrl ?>"
         class="btn btn-sm <?= $filterMailingDiffers ? 'btn-primary' : 'btn-outline-secondary' ?> me-2">
-        <i class="bi bi-signpost-split"></i> <?= lang('Parishes.filterChipMailingDiffers') ?>
+        <i class="bi bi-signpost-split" aria-hidden="true"></i> <?= lang('Parishes.filterChipMailingDiffers') ?>
     </a>
     <?php if (($isDiocesanAdmin ?? false)): ?>
         <button type="button" class="btn btn-outline-danger" id="bulkDeleteParishesBtn" disabled title="<?= esc(lang('Parishes.bulkDeleteSelected')) ?>">
-            <i class="bi bi-trash3"></i>
+            <i class="bi bi-trash3" aria-hidden="true"></i>
         </button>
     <?php endif; ?>
 </div>
@@ -76,7 +76,7 @@ $mailingDiffersOffUrl = base_url('parish_list?' . http_build_query($chipParams))
             data-bs-toggle="collapse"
             data-bs-target="#parishFilterPanel"
             aria-expanded="<?= $filtersActive ? 'true' : 'false' ?>">
-            <i class="bi bi-funnel"></i> <?= lang('App.filter') ?>
+            <i class="bi bi-funnel" aria-hidden="true"></i> <?= lang('App.filter') ?>
         </button>
     </div>
     <div id="parishFilterPanel" class="collapse <?= $filtersActive ? 'show' : '' ?>">
@@ -137,7 +137,7 @@ $mailingDiffersOffUrl = base_url('parish_list?' . http_build_query($chipParams))
 
                 <div class="col-md-2 d-flex gap-2">
                     <button type="submit" class="btn btn-sm btn-primary flex-fill">
-                        <i class="bi bi-funnel"></i> <?= lang('Services.apply') ?>
+                        <i class="bi bi-funnel" aria-hidden="true"></i> <?= lang('Services.apply') ?>
                     </button>
                     <a href="<?= $clearUrl ?>" class="btn btn-sm btn-outline-secondary flex-fill"><?= lang('App.clear') ?></a>
                 </div>
@@ -157,8 +157,9 @@ $mailingDiffersOffUrl = base_url('parish_list?' . http_build_query($chipParams))
                         style="min-width:2rem;padding:0.15rem 0.3rem;font-size:0.75rem;"><?= $ltr ?></a>
                 <?php endforeach; ?>
                 <?php if ($letter !== ''): ?>
-                    <a href="<?= $baseFilterUrl ?>" class="btn btn-sm btn-outline-danger" style="font-size:0.75rem;">
-                        <i class="bi bi-x"></i>
+                    <a href="<?= $baseFilterUrl ?>" class="btn btn-sm btn-outline-danger" style="font-size:0.75rem;"
+                        aria-label="<?= esc(lang('App.clear')) ?>">
+                        <i class="bi bi-x" aria-hidden="true"></i>
                     </a>
                 <?php endif; ?>
             </div>
@@ -229,14 +230,14 @@ $mailingDiffersOffUrl = base_url('parish_list?' . http_build_query($chipParams))
                     <thead>
                         <tr>
                             <?php if (($isDiocesanAdmin ?? false)): ?>
-                                <th style="width: 40px;"><input type="checkbox" id="selectAllParishes" class="form-check-input"></th>
+                                <th scope="col" style="width: 40px;"><input type="checkbox" id="selectAllParishes" class="form-check-input"></th>
                             <?php endif; ?>
-                            <th><?= lang('App.colName') ?></th>
-                            <th><?= lang('App.colParishUeid') ?></th>
-                            <th><?= lang('App.colEmail') ?></th>
-                            <th><?= lang('App.colPhone') ?></th>
-                            <th><?= lang('Diocesan.colMembers') ?></th>
-                            <th><?= lang('App.colActions') ?></th>
+                            <th scope="col"><?= lang('App.colName') ?></th>
+                            <th scope="col"><?= lang('App.colParishUeid') ?></th>
+                            <th scope="col"><?= lang('App.colEmail') ?></th>
+                            <th scope="col"><?= lang('App.colPhone') ?></th>
+                            <th scope="col"><?= lang('Diocesan.colMembers') ?></th>
+                            <th scope="col"><?= lang('App.colActions') ?></th>
                         </tr>
                     </thead>
                     <tbody>
@@ -272,22 +273,22 @@ $mailingDiffersOffUrl = base_url('parish_list?' . http_build_query($chipParams))
                                             data-bs-toggle="dropdown"
                                             aria-expanded="false"
                                             title="<?= esc(lang('App.colActions')) ?>">
-                                            <i class="bi bi-three-dots-vertical"></i>
+                                            <i class="bi bi-three-dots-vertical" aria-hidden="true"></i>
                                         </button>
                                         <ul class="dropdown-menu dropdown-menu-end shadow-sm">
                                             <li>
                                                 <a class="dropdown-item" href="<?= base_url('dashboard/switch/' . $parish['id']) ?>">
-                                                    <i class="bi bi-arrow-repeat me-2"></i><?= lang('Parishes.btn_switch') ?>
+                                                    <i class="bi bi-arrow-repeat me-2" aria-hidden="true"></i><?= lang('Parishes.btn_switch') ?>
                                                 </a>
                                             </li>
                                             <li>
                                                 <a class="dropdown-item" href="<?= base_url('parish_list/edit/' . $parish['id']) ?>">
-                                                    <i class="bi bi-pencil me-2"></i><?= lang('Parishes.btn_edit') ?>
+                                                    <i class="bi bi-pencil me-2" aria-hidden="true"></i><?= lang('Parishes.btn_edit') ?>
                                                 </a>
                                             </li>
                                             <li>
                                                 <a class="dropdown-item" href="<?= base_url('parish_list/' . $parish['id'] . '/staff') ?>">
-                                                    <i class="bi bi-people me-2"></i><?= lang('Parishes.btn_staff') ?>
+                                                    <i class="bi bi-people me-2" aria-hidden="true"></i><?= lang('Parishes.btn_staff') ?>
                                                 </a>
                                             </li>
                                             <?php if (($isDiocesanAdmin ?? false) && (int) $parish['id'] !== $selectedParishId): ?>
@@ -298,7 +299,7 @@ $mailingDiffersOffUrl = base_url('parish_list?' . http_build_query($chipParams))
                                                     <button class="dropdown-item text-danger"
                                                         type="button"
                                                         onclick="deleteParish(<?= (int) $parish['id'] ?>, '<?= esc((string) ($parish['name'] ?? ''), 'js') ?>')">
-                                                        <i class="bi bi-trash3 me-2"></i><?= lang('Parishes.btn_delete') ?>
+                                                        <i class="bi bi-trash3 me-2" aria-hidden="true"></i><?= lang('Parishes.btn_delete') ?>
                                                     </button>
                                                 </li>
                                             <?php endif; ?>
@@ -382,7 +383,7 @@ if ($filterMailingDiffers)   $paginationBase .= '&mailing_differs=1';
         <div class="modal-dialog modal-lg modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title"><i class="bi bi-exclamation-triangle-fill text-warning me-2"></i><?= lang('App.bulkDeleteWarningTitle') ?></h5>
+                    <h5 class="modal-title"><i class="bi bi-exclamation-triangle-fill text-warning me-2" aria-hidden="true"></i><?= lang('App.bulkDeleteWarningTitle') ?></h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">

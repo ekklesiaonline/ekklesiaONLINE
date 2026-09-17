@@ -52,9 +52,9 @@
                     <table class="table table-sm align-middle mb-0">
                         <thead>
                             <tr>
-                                <th><?= lang('Events.calendarName') ?></th>
-                                <th><?= lang('Events.scope') ?></th>
-                                <th><?= lang('Events.calendarColor') ?></th>
+                                <th scope="col"><?= lang('Events.calendarName') ?></th>
+                                <th scope="col"><?= lang('Events.scope') ?></th>
+                                <th scope="col"><?= lang('Events.calendarColor') ?></th>
                             </tr>
                         </thead>
                         <tbody>

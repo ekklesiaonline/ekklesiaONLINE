@@ -5,7 +5,7 @@
 <div class="d-flex justify-content-start align-items-center mb-3">
     <div class="d-flex align-items-center gap-2 flex-wrap">
         <a href="<?= base_url('members/dedup') ?>" class="btn btn-outline-secondary">
-            <i class="bi bi-arrow-left"></i> <?= lang('Members.backToDedup') ?>
+            <i class="bi bi-arrow-left" aria-hidden="true"></i> <?= lang('Members.backToDedup') ?>
         </a>
     </div>
 </div>
@@ -27,7 +27,7 @@ $mergeableFields = [
 
 <div class="card mb-3">
     <div class="card-header">
-        <i class="bi bi-arrows-collapse me-1"></i> <?= lang('Members.mergePreviewTitle') ?>
+        <i class="bi bi-arrows-collapse me-1" aria-hidden="true"></i> <?= lang('Members.mergePreviewTitle') ?>
     </div>
     <div class="card-body pb-0">
         <p class="text-muted small mb-3">
@@ -49,7 +49,7 @@ $mergeableFields = [
         <div class="col-md-4">
             <div class="card border-success">
                 <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
-                    <span><i class="bi bi-check-circle-fill me-1"></i> <?= lang('Members.mergeCanonicalLabel') ?></span>
+                    <span><i class="bi bi-check-circle-fill me-1" aria-hidden="true"></i> <?= lang('Members.mergeCanonicalLabel') ?></span>
                     <span class="badge border border-success text-success fw-normal">ID #<?= (int) $canonical['id'] ?></span>
                 </div>
                 <div class="card-body pb-1">
@@ -62,7 +62,7 @@ $mergeableFields = [
         <div class="col-md-4">
             <div class="card border-danger">
                 <div class="card-header bg-danger text-white d-flex justify-content-between align-items-center">
-                    <span><i class="bi bi-trash-fill me-1"></i> <?= lang('Members.mergeDuplicateLabel') ?></span>
+                    <span><i class="bi bi-trash-fill me-1" aria-hidden="true"></i> <?= lang('Members.mergeDuplicateLabel') ?></span>
                     <span class="badge border border-danger text-danger fw-normal">ID #<?= (int) $duplicate['id'] ?></span>
                 </div>
                 <div class="card-body pb-1">
@@ -87,7 +87,7 @@ $mergeableFields = [
         <div class="row g-2 mb-2 align-items-center <?= $same ? 'opacity-50' : '' ?>">
             <div class="col-md-1 text-end">
                 <?php if (!$same): ?>
-                    <i class="bi bi-exclamation-triangle-fill text-warning" title="<?= lang('Members.mergeFieldDiffers') ?>"></i>
+                    <i class="bi bi-exclamation-triangle-fill text-warning" title="<?= lang('Members.mergeFieldDiffers') ?>" aria-hidden="true"></i>
                 <?php endif; ?>
             </div>
             <div class="col-md-1">
@@ -141,7 +141,7 @@ $mergeableFields = [
     ?>
     <?php if ($duplicateHasPortal && !$canonicalHasPortal): ?>
         <div class="alert alert-warning mt-3">
-            <i class="bi bi-shield-exclamation me-1"></i>
+            <i class="bi bi-shield-exclamation me-1" aria-hidden="true"></i>
             <strong><?= lang('Members.mergePortalWarning') ?></strong>
             <?= lang('Members.mergePortalWarningBody') ?>
         </div>
@@ -150,7 +150,7 @@ $mergeableFields = [
     <!-- Reason + confirm -->
     <div class="card mt-4 border-warning">
         <div class="card-header bg-warning-subtle">
-            <i class="bi bi-exclamation-triangle-fill text-warning me-1"></i>
+            <i class="bi bi-exclamation-triangle-fill text-warning me-1" aria-hidden="true"></i>
             <?= lang('Members.mergeConfirmSection') ?>
         </div>
         <div class="card-body">
@@ -162,7 +162,7 @@ $mergeableFields = [
             </div>
             <div class="d-flex gap-2">
                 <button type="button" class="btn btn-success" id="mergeBtnSubmit">
-                    <i class="bi bi-arrows-collapse"></i> <?= lang('Members.executeMerge') ?>
+                    <i class="bi bi-arrows-collapse" aria-hidden="true"></i> <?= lang('Members.executeMerge') ?>
                 </button>
                 <a href="<?= base_url('members/dedup') ?>" class="btn btn-outline-secondary"><?= lang('App.cancel') ?></a>
             </div>
@@ -175,7 +175,7 @@ $mergeableFields = [
         <div class="modal-content border-warning">
             <div class="modal-header">
                 <h5 class="modal-title" id="mergeConfirmModalLabel">
-                    <i class="bi bi-exclamation-triangle-fill text-warning me-1"></i>
+                    <i class="bi bi-exclamation-triangle-fill text-warning me-1" aria-hidden="true"></i>
                     <?= lang('Members.mergeConfirmSection') ?>
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -190,7 +190,7 @@ $mergeableFields = [
             <div class="modal-footer">
                 <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal"><?= lang('App.cancel') ?></button>
                 <button type="button" class="btn btn-success" id="confirmMergeBtn">
-                    <i class="bi bi-arrows-collapse"></i> <?= lang('Members.executeMerge') ?>
+                    <i class="bi bi-arrows-collapse" aria-hidden="true"></i> <?= lang('Members.executeMerge') ?>
                 </button>
             </div>
         </div>
@@ -292,7 +292,7 @@ $mergeableFields = [
                         }
                         btn.disabled = false;
                         mergeBtnSubmit.disabled = false;
-                        btn.innerHTML = '<i class="bi bi-arrows-collapse"></i> <?= esc(lang('Members.executeMerge'), 'js') ?>';
+                        btn.innerHTML = '<i class="bi bi-arrows-collapse" aria-hidden="true"></i> <?= esc(lang('Members.executeMerge'), 'js') ?>';
                     }
                 })
                 .catch(function() {
@@ -302,7 +302,7 @@ $mergeableFields = [
                     }
                     btn.disabled = false;
                     mergeBtnSubmit.disabled = false;
-                    btn.innerHTML = '<i class="bi bi-arrows-collapse"></i> <?= esc(lang('Members.executeMerge'), 'js') ?>';
+                    btn.innerHTML = '<i class="bi bi-arrows-collapse" aria-hidden="true"></i> <?= esc(lang('Members.executeMerge'), 'js') ?>';
                 });
         });
     }());

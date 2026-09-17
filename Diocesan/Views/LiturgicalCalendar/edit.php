@@ -30,7 +30,7 @@ $colorMap = is_object($liturgicalIcons) && isset($liturgicalIcons->colors) && is
 
 <div class="d-flex justify-content-start align-items-center mb-3">
     <a href="<?= base_url($liturgical_write_base ?? 'system/liturgical-source') ?>" class="btn btn-secondary">
-        <i class="bi bi-arrow-left"></i> <?= lang('Diocesan.liturgicalBtnBack') ?>
+        <i class="bi bi-arrow-left" aria-hidden="true"></i> <?= lang('Diocesan.liturgicalBtnBack') ?>
     </a>
 </div>
 
@@ -115,7 +115,7 @@ $colorMap = is_object($liturgicalIcons) && isset($liturgicalIcons->colors) && is
 
             <div class="col-12 text-end">
                 <button type="submit" class="btn btn-primary">
-                    <i class="bi bi-save"></i> <?= lang('Diocesan.liturgicalBtnUpdateEntry') ?>
+                    <i class="bi bi-save" aria-hidden="true"></i> <?= lang('Diocesan.liturgicalBtnUpdateEntry') ?>
                 </button>
             </div>
         </form>

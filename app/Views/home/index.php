@@ -57,17 +57,17 @@
     <div class="container">
         <div class="hero-section">
             <div class="logo-section">
-                <i class="bi bi-parish"></i> EkklessiaONLINE
+                <i class="bi bi-parish" aria-hidden="true"></i> EkklessiaONLINE
             </div>
             <h1 class="display-4 mb-4"><?= lang('Home.heroHeading') ?></h1>
             <p class="lead mb-5"><?= lang('Home.heroSubheading') ?></p>
 
             <div class="d-flex justify-content-center flex-wrap">
                 <a href="<?= base_url('login') ?>" class="btn btn-light btn-custom">
-                    <i class="bi bi-box-arrow-in-right"></i> <?= lang('Home.login') ?>
+                    <i class="bi bi-box-arrow-in-right" aria-hidden="true"></i> <?= lang('Home.login') ?>
                 </a>
                 <a href="<?= base_url('register') ?>" class="btn btn-outline-light btn-custom">
-                    <i class="bi bi-person-plus"></i> <?= lang('Home.register') ?>
+                    <i class="bi bi-person-plus" aria-hidden="true"></i> <?= lang('Home.register') ?>
                 </a>
             </div>
         </div>
@@ -75,21 +75,21 @@
         <div class="row mt-5">
             <div class="col-md-4">
                 <div class="feature-card text-center">
-                    <i class="bi bi-people-fill text-primary" style="font-size: 3rem;"></i>
+                    <i class="bi bi-people-fill text-primary" style="font-size: 3rem;" aria-hidden="true"></i>
                     <h4 class="mt-3"><?= lang('Home.featureMemberManagementTitle') ?></h4>
                     <p><?= lang('Home.featureMemberManagementBody') ?></p>
                 </div>
             </div>
             <div class="col-md-4">
                 <div class="feature-card text-center">
-                    <i class="bi bi-calendar-check text-success" style="font-size: 3rem;"></i>
+                    <i class="bi bi-calendar-check text-success" style="font-size: 3rem;" aria-hidden="true"></i>
                     <h4 class="mt-3"><?= lang('Home.featureAttendanceTitle') ?></h4>
                     <p><?= lang('Home.featureAttendanceBody') ?></p>
                 </div>
             </div>
             <div class="col-md-4">
                 <div class="feature-card text-center">
-                    <i class="bi bi-cash-coin text-warning" style="font-size: 3rem;"></i>
+                    <i class="bi bi-cash-coin text-warning" style="font-size: 3rem;" aria-hidden="true"></i>
                     <h4 class="mt-3"><?= lang('Home.featureFinancialTitle') ?></h4>
                     <p><?= lang('Home.featureFinancialBody') ?></p>
                 </div>
@@ -99,21 +99,21 @@
         <div class="row mt-3">
             <div class="col-md-4">
                 <div class="feature-card text-center">
-                    <i class="bi bi-person-heart text-danger" style="font-size: 3rem;"></i>
+                    <i class="bi bi-person-heart text-danger" style="font-size: 3rem;" aria-hidden="true"></i>
                     <h4 class="mt-3"><?= lang('Home.featureGuestTitle') ?></h4>
                     <p><?= lang('Home.featureGuestBody') ?></p>
                 </div>
             </div>
             <div class="col-md-4">
                 <div class="feature-card text-center">
-                    <i class="bi bi-calendar3 text-info" style="font-size: 3rem;"></i>
+                    <i class="bi bi-calendar3 text-info" style="font-size: 3rem;" aria-hidden="true"></i>
                     <h4 class="mt-3"><?= lang('Home.featureVolunteerTitle') ?></h4>
                     <p><?= lang('Home.featureVolunteerBody') ?></p>
                 </div>
             </div>
             <div class="col-md-4">
                 <div class="feature-card text-center">
-                    <i class="bi bi-building text-secondary" style="font-size: 3rem;"></i>
+                    <i class="bi bi-building text-secondary" style="font-size: 3rem;" aria-hidden="true"></i>
                     <h4 class="mt-3"><?= lang('Home.featureMultiParishTitle') ?></h4>
                     <p><?= lang('Home.featureMultiParishBody') ?></p>
                 </div>
