@@ -4,6 +4,8 @@ namespace Diocesan\Controllers;
 
 use App\Controllers\AdminHierarchyGuard;
 use App\Controllers\BaseController;
+use App\Services\ParishDeletionService;
+use App\Services\ParishStaffService;
 
 class Parishes extends BaseController
 {
@@ -12,11 +14,15 @@ class Parishes extends BaseController
     protected $parishModel;
     protected $profileModel;
     protected $parishRoleAuditModel;
+    private ParishStaffService $staffService;
+    private ParishDeletionService $deletionService;
 
     public function __construct()
     {
         $this->parishModel = model('ParishModel');
         $this->parishRoleAuditModel = model('ParishRoleAuditModel');
+        $this->staffService = new ParishStaffService();
+        $this->deletionService = new ParishDeletionService();
     }
 
     protected function getProfileModel()
@@ -659,30 +665,11 @@ class Parishes extends BaseController
             return ['success' => false, 'status' => 409, 'message' => lang('Diocesan.parishDeleteCurrentSelectionBlocked')];
         }
 
+        if (!$this->deletionService->deleteParish($parishId, $purgeNullableRefs, $this->resolveExistingProfileTable())) {
+            return ['success' => false, 'status' => 500, 'message' => lang('Diocesan.parishDeleteFailed')];
+        }
+
         try {
-            $db = db_connect();
-            $db->transBegin();
-
-            if ($purgeNullableRefs) {
-                $db->table('parish_role_audit_log')->where('parish_id', $parishId)->delete();
-                $profileTable = $this->resolveExistingProfileTable();
-                if ($profileTable !== null) {
-                    $db->table($profileTable)->where('parish_id', $parishId)->delete();
-                }
-            }
-
-            if (!$this->parishModel->delete($parishId)) {
-                $db->transRollback();
-                return ['success' => false, 'status' => 500, 'message' => lang('Diocesan.parishDeleteFailed')];
-            }
-
-            if ($db->transStatus() === false) {
-                $db->transRollback();
-                return ['success' => false, 'status' => 500, 'message' => lang('Diocesan.parishDeleteFailed')];
-            }
-
-            $db->transCommit();
-
             // Capture old values for audit logging
             $oldValues = [
                 'id' => (int) ($parish['id'] ?? 0),
@@ -718,8 +705,16 @@ class Parishes extends BaseController
                 ],
             ];
         } catch (\Throwable $e) {
-            log_message('error', 'Parish delete failed: {message}', ['message' => $e->getMessage()]);
-            return ['success' => false, 'status' => 500, 'message' => lang('Diocesan.parishDeleteFailed')];
+            log_message('error', 'Parish delete audit failed: {message}', ['message' => $e->getMessage()]);
+            return [
+                'success' => true,
+                'status' => 200,
+                'message' => lang('Diocesan.parishDeleted'),
+                'parish' => [
+                    'id' => (int) ($parish['id'] ?? 0),
+                    'name' => (string) ($parish['name'] ?? ''),
+                ],
+            ];
         }
     }
 
@@ -756,7 +751,7 @@ class Parishes extends BaseController
                     'id' => (int) $parish['id'],
                     'name' => (string) $parish['name'],
                 ],
-                'impact' => $this->getDeleteImpactCounts($parishId),
+                'impact' => $this->deletionService->impactCounts($parishId, $this->resolveExistingProfileTable()),
             ]);
         } catch (\Throwable $e) {
             return $this->safeJsonError(lang('Parishes.textUnableLoadDeleteImpact'), 500, $e);
@@ -810,14 +805,7 @@ class Parishes extends BaseController
         $email = $this->normalizeEmail((string) $this->request->getPost('email'));
         $exists = $this->emailIdentityExists($email);
 
-        $rules = [
-            'first_name' => 'required|min_length[2]|max_length[100]',
-            'last_name' => 'required|min_length[2]|max_length[100]',
-            'email' => 'required|valid_email|max_length[255]',
-            'password' => $exists ? 'permit_empty' : 'required|min_length[8]',
-        ];
-
-        if (!$this->validate($rules)) {
+        if (!$this->validate($this->staffService->staffValidationRules($exists))) {
             return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
         }
 
@@ -829,19 +817,12 @@ class Parishes extends BaseController
             $parishScope = $this->parishModel->findWithHierarchy($parishId);
 
             if ($exists) {
-                $identityRow = $db->table('auth_identities')
-                    ->select('user_id')
-                    ->where('type', 'email_password')
-                    ->where('secret', $email)
-                    ->get()
-                    ->getRowArray();
+                $userId = $this->staffService->userIdForEmail($email);
 
-                if (empty($identityRow['user_id'])) {
+                if ($userId === null) {
                     $db->transRollback();
                     return redirect()->back()->withInput()->with('error', lang('Diocesan.userNotFound'));
                 }
-
-                $userId = (int) $identityRow['user_id'];
 
                 if ($code = $this->guardTargetUserMutation($userId)) {
                     $db->transRollback();
@@ -854,60 +835,36 @@ class Parishes extends BaseController
                     return redirect()->back()->withInput()->with('error', lang('Diocesan.userNotFound'));
                 }
 
-                $profile = $this->getProfileModel()->where('user_id', $userId)->first();
+                $profile = $this->staffService->profileForUser($userId);
                 if ($profile && !empty($profile['parish_id']) && (int) $profile['parish_id'] !== $parishId) {
                     $db->transRollback();
                     return redirect()->back()->withInput()->with('error', lang('Diocesan.emailBelongsToOtherParish'));
                 }
 
-                if (!$profile) {
-                    $this->getProfileModel()->insert([
-                        'user_id' => $userId,
-                        'parish_id' => $parishId,
-                        'province_id' => isset($parishScope['province_id']) ? (int) $parishScope['province_id'] : null,
-                        'diocese_id' => isset($parishScope['diocese_id']) ? (int) $parishScope['diocese_id'] : null,
-                        'first_name' => (string) $this->request->getPost('first_name'),
-                        'last_name' => (string) $this->request->getPost('last_name'),
-                        'membership_status' => 'active',
-                    ]);
-                } else {
-                    $updateProfile = [];
-                    if (empty($profile['parish_id'])) {
-                        $updateProfile['parish_id'] = $parishId;
-                    }
-                    if (empty($profile['province_id']) && isset($parishScope['province_id'])) {
-                        $updateProfile['province_id'] = (int) $parishScope['province_id'];
-                    }
-                    if (empty($profile['diocese_id']) && isset($parishScope['diocese_id'])) {
-                        $updateProfile['diocese_id'] = (int) $parishScope['diocese_id'];
-                    }
-                    if (empty($profile['first_name'])) {
-                        $updateProfile['first_name'] = (string) $this->request->getPost('first_name');
-                    }
-                    if (empty($profile['last_name'])) {
-                        $updateProfile['last_name'] = (string) $this->request->getPost('last_name');
-                    }
-                    if ($updateProfile !== []) {
-                        $this->getProfileModel()->update((int) $profile['id'], $updateProfile);
-                    }
-                }
+                $this->staffService->ensureStaffProfile(
+                    $profile,
+                    $userId,
+                    $parishId,
+                    $parishScope ?? [],
+                    (string) $this->request->getPost('first_name'),
+                    (string) $this->request->getPost('last_name')
+                );
 
-                $affiliationModel = model('MemberParishAffiliationModel');
-                if (!$affiliationModel->attachToParish($userId, $parishId, false, 'member')) {
+                if (!$this->staffService->attachToParish($userId, $parishId)) {
                     $db->transRollback();
                     return redirect()->back()->withInput()->with('error', lang('Diocesan.staffAffiliationCreateFailed'));
                 }
 
-                if (!$affiliationModel->setHomeParish($userId, $parishId)) {
+                if (!$this->staffService->setHomeParish($userId, $parishId)) {
                     $db->transRollback();
                     return redirect()->back()->withInput()->with('error', lang('Diocesan.homeParishUpdateFailed'));
                 }
 
-                if (!$this->userHasGroup($userId, $role)) {
+                if (!$this->staffService->userHasGroup($userId, $role)) {
                     $user->addGroup($role);
                 }
 
-                $this->logRoleAudit($parishId, $userId, 'promoted', $role, 'Assigned role to existing user');
+                $this->staffService->logRoleAudit($parishId, (int) ($this->user->id ?? 0), $userId, 'promoted', $role, 'Assigned role to existing user');
                 $db->transComplete();
                 if ($db->transStatus() === false) {
                     return redirect()->back()->withInput()->with('error', lang('Diocesan.staffAccountCreateFailed'));
@@ -916,7 +873,7 @@ class Parishes extends BaseController
                 return redirect()->to('/parish_list/' . $parishId . '/staff')->with('success', lang('Diocesan.staffExistingUserAssigned'));
             }
 
-            $username = $this->makeUniqueUsername($email);
+            $username = $this->staffService->makeUniqueUsername($email);
             $user = new \CodeIgniter\Shield\Entities\User([
                 'username' => $username,
                 'email' => $email,
@@ -928,24 +885,21 @@ class Parishes extends BaseController
             $user->activate();
             $user->addGroup($role);
 
-            $this->getProfileModel()->insert([
-                'user_id' => $user->id,
-                'parish_id' => $parishId,
-                'province_id' => isset($parishScope['province_id']) ? (int) $parishScope['province_id'] : null,
-                'diocese_id' => isset($parishScope['diocese_id']) ? (int) $parishScope['diocese_id'] : null,
-                'first_name' => (string) $this->request->getPost('first_name'),
-                'last_name' => (string) $this->request->getPost('last_name'),
-                'phone' => (string) $this->request->getPost('phone'),
-                'membership_status' => 'active',
-            ]);
+            $this->staffService->createStaffProfile(
+                (int) $user->id,
+                $parishId,
+                $parishScope ?? [],
+                (string) $this->request->getPost('first_name'),
+                (string) $this->request->getPost('last_name'),
+                (string) $this->request->getPost('phone')
+            );
 
-            $affiliationModel = model('MemberParishAffiliationModel');
-            if (!$affiliationModel->attachToParish((int) $user->id, $parishId, false, 'member')) {
+            if (!$this->staffService->attachToParish((int) $user->id, $parishId)) {
                 $db->transRollback();
                 return redirect()->back()->withInput()->with('error', lang('Diocesan.staffAffiliationCreateFailed'));
             }
 
-            if (!$affiliationModel->setHomeParish((int) $user->id, $parishId)) {
+            if (!$this->staffService->setHomeParish((int) $user->id, $parishId)) {
                 $db->transRollback();
                 return redirect()->back()->withInput()->with('error', lang('Diocesan.homeParishUpdateFailed'));
             }
@@ -985,7 +939,7 @@ class Parishes extends BaseController
             return redirect()->back()->with('error', $this->hierarchyGuardMessage($code));
         }
 
-        if (!$this->isUserInParish($userId, $parishId)) {
+        if (!$this->staffService->isUserInParish($userId, $parishId)) {
             return redirect()->back()->with('error', lang('Diocesan.memberNotInParish'));
         }
 
@@ -997,7 +951,7 @@ class Parishes extends BaseController
 
         $user->addGroup($role);
 
-        $this->logRoleAudit($parishId, $userId, 'promoted', $role, 'Assigned role to existing member');
+        $this->staffService->logRoleAudit($parishId, (int) ($this->user->id ?? 0), $userId, 'promoted', $role, 'Assigned role to existing member');
 
         return redirect()->to('/parish_list/' . $parishId . '/staff')->with('success', lang('Diocesan.roleAssigned'));
     }
@@ -1025,7 +979,7 @@ class Parishes extends BaseController
             return redirect()->back()->with('error', $this->hierarchyGuardMessage($code));
         }
 
-        if (!$this->isUserInParish($userId, $parishId)) {
+        if (!$this->staffService->isUserInParish($userId, $parishId)) {
             return redirect()->back()->with('error', lang('Diocesan.userNotInParish'));
         }
 
@@ -1033,19 +987,16 @@ class Parishes extends BaseController
             return redirect()->back()->with('error', lang('Diocesan.cannotRemoveOwnParishAdminRole'));
         }
 
-        if (!$this->userHasGroup($userId, $role)) {
+        if (!$this->staffService->userHasGroup($userId, $role)) {
             return redirect()->back()->with('error', lang('Diocesan.userMissingRole'));
         }
 
-        db_connect()->table('auth_groups_users')
-            ->where('user_id', $userId)
-            ->where('group', $role)
-            ->delete();
+        $this->staffService->removeGroup($userId, $role);
 
-        $this->logRoleAudit($parishId, $userId, 'role_removed', $role, 'Removed single role from user');
+        $this->staffService->logRoleAudit($parishId, (int) ($this->user->id ?? 0), $userId, 'role_removed', $role, 'Removed single role from user');
 
-        if (!$this->userHasAnyGroup($userId)) {
-            $this->addGroupIfMissing($userId, 'member');
+        if (!$this->staffService->userHasAnyGroup($userId)) {
+            $this->staffService->addGroupIfMissing($userId, 'member');
         }
 
         return redirect()->to('/parish_list/' . $parishId . '/staff')->with('success', lang('Diocesan.roleRemoved'));
@@ -1069,7 +1020,7 @@ class Parishes extends BaseController
             return redirect()->back()->with('error', $this->hierarchyGuardMessage($code));
         }
 
-        if (!$this->isUserInParish($userId, $parishId)) {
+        if (!$this->staffService->isUserInParish($userId, $parishId)) {
             return redirect()->back()->with('error', lang('Diocesan.userNotInParish'));
         }
 
@@ -1079,17 +1030,14 @@ class Parishes extends BaseController
 
         $rolesRemoved = 0;
         foreach ($this->allowedAssignableRoles() as $role) {
-            if ($this->userHasGroup($userId, $role)) {
-                db_connect()->table('auth_groups_users')
-                    ->where('user_id', $userId)
-                    ->where('group', $role)
-                    ->delete();
+            if ($this->staffService->userHasGroup($userId, $role)) {
+                $this->staffService->removeGroup($userId, $role);
                 $rolesRemoved++;
-                $this->logRoleAudit($parishId, $userId, 'demoted', $role, 'Demotion removed role');
+                $this->staffService->logRoleAudit($parishId, (int) ($this->user->id ?? 0), $userId, 'demoted', $role, 'Demotion removed role');
             }
         }
 
-        $this->addGroupIfMissing($userId, 'member');
+        $this->staffService->addGroupIfMissing($userId, 'member');
 
         if ($rolesRemoved === 0) {
             return redirect()->to('/parish_list/' . $parishId . '/staff')->with('error', lang('Diocesan.noAdminLeaderRolesFound'));
@@ -1264,131 +1212,11 @@ class Parishes extends BaseController
         return $grouped;
     }
 
-    protected function makeUniqueUsername(string $email): string
-    {
-        $base = preg_replace('/[^a-z0-9_]/', '', strtolower((string) strstr($email, '@', true)));
-        $base = $base ?: 'user';
-        $candidate = $base;
-        $counter = 1;
-
-        while (db_connect()->table('users')->where('username', $candidate)->countAllResults() > 0) {
-            $candidate = $base . $counter;
-            $counter++;
-        }
-
-        return $candidate;
-    }
-
     protected function isCurrentUser(int $userId): bool
     {
         return (int) ($this->user->id ?? 0) === $userId;
     }
 
-    protected function isUserInParish(int $userId, int $parishId): bool
-    {
-        return model('MemberParishAffiliationModel')
-            ->isUserAffiliatedWithParish($userId, $parishId, true);
-    }
-
-    protected function userHasGroup(int $userId, string $group): bool
-    {
-        return db_connect()->table('auth_groups_users')
-            ->where('user_id', $userId)
-            ->where('group', $group)
-            ->countAllResults() > 0;
-    }
-
-    protected function userHasAnyGroup(int $userId): bool
-    {
-        return db_connect()->table('auth_groups_users')
-            ->where('user_id', $userId)
-            ->countAllResults() > 0;
-    }
-
-    protected function addGroupIfMissing(int $userId, string $group): void
-    {
-        if ($this->userHasGroup($userId, $group)) {
-            return;
-        }
-
-        db_connect()->table('auth_groups_users')->insert([
-            'user_id' => $userId,
-            'group' => $group,
-            'created_at' => date('Y-m-d H:i:s'),
-        ]);
-    }
-
-    protected function logRoleAudit(int $parishId, int $targetUserId, string $action, ?string $role = null, ?string $details = null): void
-    {
-        $actorUserId = (int) ($this->user->id ?? 0);
-        if ($actorUserId <= 0 || $targetUserId <= 0) {
-            return;
-        }
-
-        $this->parishRoleAuditModel->insert([
-            'parish_id' => $parishId,
-            'actor_user_id' => $actorUserId,
-            'target_user_id' => $targetUserId,
-            'action' => $action,
-            'role' => $role,
-            'details' => $details,
-            'created_at' => date('Y-m-d H:i:s'),
-        ]);
-    }
-
-    /**
-     * @return array<string, int>
-     */
-    protected function getDeleteImpactCounts(int $parishId): array
-    {
-        $db = db_connect();
-        $profileTable = $this->resolveExistingProfileTable();
-        $profileCount = 0;
-        if ($profileTable !== null) {
-            $profileCount = (int) $db->table($profileTable)
-                ->where('parish_id', $parishId)
-                ->countAllResults();
-        }
-
-        return [
-            'members' => (int) $db->table('parish_affiliation')
-                ->where('parish_id', $parishId)
-                ->where('is_member', 1)
-                ->countAllResults(),
-            'profile_unscoped' => $profileCount,
-            'parish_role_audit_logs_unscoped' => (int) $db->table('parish_role_audit_log')
-                ->where('parish_id', $parishId)
-                ->countAllResults(),
-            'donations' => (int) $db->table('donation')
-                ->where('parish_id', $parishId)
-                ->countAllResults(),
-            'services' => (int) $db->table('service')
-                ->where('parish_id', $parishId)
-                ->countAllResults(),
-            'attendance' => (int) $db->table('attendance a')
-                ->join('service s', 's.id = a.service_id', 'inner')
-                ->where('s.parish_id', $parishId)
-                ->countAllResults(),
-            'events' => (int) $db->table('event')
-                ->where('parish_id', $parishId)
-                ->countAllResults(),
-            'event_registrations' => (int) $db->table('event_registration')
-                ->where('parish_id', $parishId)
-                ->countAllResults(),
-            'guests' => (int) $db->table('guest')
-                ->where('parish_id', $parishId)
-                ->countAllResults(),
-            'expenses' => (int) $db->table('expense')
-                ->where('parish_id', $parishId)
-                ->countAllResults(),
-            'families' => (int) $db->table('family')
-                ->where('parish_id', $parishId)
-                ->countAllResults(),
-            'volunteer_teams' => (int) $db->table('team')
-                ->where('parish_id', $parishId)
-                ->countAllResults(),
-        ];
-    }
 
     private function resolveExistingProfileTable(): ?string
     {
