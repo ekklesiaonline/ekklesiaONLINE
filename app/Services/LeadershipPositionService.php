@@ -111,6 +111,64 @@ class LeadershipPositionService
     }
 
     /**
+     * Whether the position requires the appointee to be in good standing.
+     * Canon I.17-style rule: lay leadership requires a communicant in good
+     * standing; ordained ministry (clergy) is the exception. An unset
+     * category is treated as lay (fail closed).
+     */
+    public function requiresGoodStanding(array $payload): bool
+    {
+        return (string) ($payload['role_category'] ?? '') !== 'clergy';
+    }
+
+    /**
+     * Whether the person is in good standing for appointment purposes:
+     * an admin-granted good_standing_override on their membership details
+     * (scoped to the appointment parish when known), or a current-year
+     * member_standing_summary row with is_good_standing = 1. Fails closed
+     * when the standing data cannot be verified.
+     */
+    public function isInGoodStanding(int $userId, int $personId, ?int $parishId = null, ?int $year = null): bool
+    {
+        $db = db_connect();
+        $year ??= (int) date('Y');
+
+        if ($this->tableExists($db, 'person_membership_details')) {
+            $override = $db->table('person_membership_details')
+                ->where('person_id', $personId)
+                ->where('good_standing_override', 1);
+            if ($parishId !== null && $parishId > 0) {
+                $override->where('parish_id', $parishId);
+            }
+            if ($override->countAllResults() > 0) {
+                return true;
+            }
+        }
+
+        if ($userId > 0 && $this->tableExists($db, 'member_standing_summary')) {
+            $row = $db->table('member_standing_summary')
+                ->select('is_good_standing')
+                ->where('user_id', $userId)
+                ->where('year', $year)
+                ->get()
+                ->getRowArray();
+
+            return (int) ($row['is_good_standing'] ?? 0) === 1;
+        }
+
+        return false;
+    }
+
+    private function tableExists(\CodeIgniter\Database\BaseConnection $db, string $table): bool
+    {
+        try {
+            return $db->tableExists($table);
+        } catch (\Throwable $e) {
+            return false;
+        }
+    }
+
+    /**
      * Insert a position. Returns the new ID or null on failure
      * (call errors() for details).
      */

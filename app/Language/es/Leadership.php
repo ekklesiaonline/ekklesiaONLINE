@@ -50,4 +50,5 @@ return [
     'updateFailed' => 'No se pudo actualizar el cargo de liderazgo.',
     'deleteSuccess' => 'Cargo de liderazgo eliminado exitosamente.',
     'deleteFailed' => 'No se pudo eliminar el cargo de liderazgo.',
+    'notGoodStanding' => 'Esta persona no consta como miembro en buen estado. Los cargos laicos requieren un comulgante en buen estado; establezca una excepción de buen estado en sus datos de membresía para otorgarla.',
 ];

@@ -195,8 +195,17 @@ second-order hardening (MySQL verification, CI enforcement, PHPStan depth, a11y 
 
 ### Tier 3 — Product backlog (from the original report, still valid)
 
-1. **Leadership appointment gate** — enforce good-standing at insert; smallest and
-   lowest-risk of the backlog items.
+1. **Leadership appointment gate** — ✅ implemented. `LeadershipPositionService`
+   now exposes `requiresGoodStanding()` (all non-`clergy` appointments are
+   gated; unset category fails closed) and `isInGoodStanding()` (current-year
+   `member_standing_summary.is_good_standing`, or the admin-managed
+   `person_membership_details.good_standing_override` scoped to the appointment
+   parish; missing tables fail closed). `Clergy\People::addLeadershipPosition`
+   returns `422 NOT_GOOD_STANDING` with a localized explanation naming the
+   override escape hatch. Update/delete paths are intentionally ungated —
+   standing loss does not prevent editing or closing a position.
+   `LeadershipPositionGateTest` covers the category matrix, current-year
+   semantics, and override scoping.
 2. **Guest-to-member conversion pre-fill** — wire flash data into the create form.
 3. **Membership pathway tracking** — stage model + transitions.
 4. **Bank reconciliation** — largest item; schema exists, needs full module.

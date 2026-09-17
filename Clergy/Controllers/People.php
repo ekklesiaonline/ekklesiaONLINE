@@ -725,6 +725,11 @@ class People extends BaseController
             'appointed_by_user_id' => (int) (auth()->id() ?? 0),
         ];
 
+        if ($this->leadershipPositionService->requiresGoodStanding($payload)
+            && ! $this->leadershipPositionService->isInGoodStanding($userId, $personId, $scopeIds['parish_id'])) {
+            return $this->jsonResponse($this->apiErrorPayload(lang('Leadership.notGoodStanding'), 422, 'NOT_GOOD_STANDING'), 422);
+        }
+
         $positionId = $this->leadershipPositionService->create($payload);
         if ($positionId === null) {
             return $this->jsonResponse([

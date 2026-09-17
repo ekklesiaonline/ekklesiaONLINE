@@ -50,4 +50,5 @@ return [
     'updateFailed' => 'Echec de la mise a jour du poste de leadership.',
     'deleteSuccess' => 'Poste de leadership supprime avec succes.',
     'deleteFailed' => 'Echec de la suppression du poste de leadership.',
+    'notGoodStanding' => 'Cette personne n\'est pas enregistrée comme membre en règle. Les postes laïcs exigent un communiant en règle ; accordez une dérogation dans ses données d\'adhésion pour faire exception.',
 ];

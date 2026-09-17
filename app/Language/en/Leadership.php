@@ -53,4 +53,5 @@ return [
     'updateFailed' => 'Failed to update leadership position.',
     'deleteSuccess' => 'Leadership position deleted successfully.',
     'deleteFailed' => 'Failed to delete leadership position.',
+    'notGoodStanding' => 'This person is not recorded as being in good standing. Lay leadership appointments require a communicant in good standing; set a good-standing override on their membership details to grant an exception.',
 ];
