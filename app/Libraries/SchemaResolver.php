@@ -97,6 +97,55 @@ class SchemaResolver
     }
 
     /**
+     * Drop payload keys that are not columns of the target table. Tries
+     * prefixed/unprefixed and singular/plural name variants; returns the
+     * payload untouched when no table variant can be resolved.
+     *
+     * @param array<string, mixed> $payload
+     * @return array<string, mixed>
+     */
+    public function filterPayloadByTableColumns(string $baseTable, array $payload): array
+    {
+        $tableVariants = [$baseTable];
+        if (str_ends_with($baseTable, 's')) {
+            $tableVariants[] = substr($baseTable, 0, -1);
+        } else {
+            $tableVariants[] = $baseTable . 's';
+        }
+
+        $candidates = [];
+        foreach (array_values(array_unique($tableVariants)) as $variant) {
+            $candidates[] = $this->db->getPrefix() . $variant;
+            $candidates[] = $variant;
+        }
+
+        $columns = [];
+        foreach (array_values(array_unique($candidates)) as $table) {
+            try {
+                $found = array_map('strtolower', $this->db->getFieldNames($table));
+                if ($found !== []) {
+                    $columns = $found;
+                    break;
+                }
+            } catch (\Throwable $e) {
+                // Try next table-name variant.
+            }
+        }
+
+        if ($columns === []) {
+            return $payload;
+        }
+
+        foreach (array_keys($payload) as $key) {
+            if (! in_array(strtolower((string) $key), $columns, true)) {
+                unset($payload[$key]);
+            }
+        }
+
+        return $payload;
+    }
+
+    /**
      * Resolve the existing parish_people snapshot table.
      * Returns the table name or null if it doesn't exist.
      */

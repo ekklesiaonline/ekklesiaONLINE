@@ -5,18 +5,27 @@ namespace MemberPortal\Controllers;
 use App\Controllers\BaseController;
 use App\Libraries\AddressHelper;
 use App\Libraries\PhoneHelper;
+use App\Libraries\SchemaResolver;
+use App\Services\HierarchyService;
 use App\Services\MembershipStatusService;
 use App\Services\PersonOnboardingService;
+use App\Services\RegistrationNotificationService;
 
 class Profile extends BaseController
 {
     protected $profileModel;
     protected $userModel;
     protected ?array $profileColumnsCache = null;
+    private HierarchyService $hierarchyService;
+    private RegistrationNotificationService $registrationNotifications;
+    private SchemaResolver $schemaResolver;
 
     public function __construct()
     {
         $this->userModel = model('UserModel');
+        $this->hierarchyService = new HierarchyService();
+        $this->registrationNotifications = new RegistrationNotificationService();
+        $this->schemaResolver = new SchemaResolver();
     }
 
     protected function getProfileModel()
@@ -105,14 +114,9 @@ class Profile extends BaseController
         $data['adminScope'] = $isElevatedAdmin ? $this->resolveElevatedAdminScopeLabel($user) : null;
         $data['parishAffiliation'] = $this->resolveParishAffiliation($profile);
         $data['otherAffiliations'] = $this->resolveAllParishAffiliations((int) $user->id, (int) ($profile['parish_id'] ?? 0));
-        $data['provinces'] = db_connect()->table('province')
-            ->select('id, province_number, name')
-            ->orderBy('sort_order', 'ASC')
-            ->orderBy('id', 'ASC')
-            ->get()
-            ->getResultArray();
-        $data['diocesesByProvince'] = $this->getDiocesesByProvinceOptions();
-        $data['parishesByDiocese'] = $this->getParishesByDioceseOptions();
+        $data['provinces'] = $this->hierarchyService->provincesList();
+        $data['diocesesByProvince'] = $this->hierarchyService->diocesesByProvince();
+        $data['parishesByDiocese'] = $this->hierarchyService->parishesByDiocese();
         $statusOptions = [];
         foreach (MembershipStatusService::profileStatuses() as $status) {
             $statusOptions[$status] = MembershipStatusService::label($status);
@@ -336,26 +340,7 @@ class Profile extends BaseController
 
     private function resolveExistingProfileTable(): ?string
     {
-        $db = db_connect();
-        $candidates = array_values(array_unique([
-            $db->getPrefix() . 'profile',
-            'profile',
-            $db->getPrefix() . 'profiles',
-            'profiles',
-        ]));
-
-        foreach ($candidates as $table) {
-            try {
-                $columns = $db->getFieldNames($table);
-                if ($columns !== []) {
-                    return $table;
-                }
-            } catch (\Throwable $e) {
-                // Try next table-name variant.
-            }
-        }
-
-        return null;
+        return $this->schemaResolver->resolveExistingProfileTable();
     }
 
     private function profileColumnExists(string $column): bool
@@ -481,26 +466,9 @@ class Profile extends BaseController
             return $result;
         }
 
-        $db = db_connect();
-
-        $provinceId = (int) ($profile['province_id'] ?? 0);
-        $dioceseId = (int) ($profile['diocese_id'] ?? 0);
-        $parishId = (int) ($profile['parish_id'] ?? 0);
-
-        if ($provinceId > 0) {
-            $row = $db->table('province')->select('name')->where('id', $provinceId)->get()->getRowArray();
-            $result['province'] = (string) ($row['name'] ?? '');
-        }
-
-        if ($dioceseId > 0) {
-            $row = $db->table('diocese')->select('name')->where('id', $dioceseId)->get()->getRowArray();
-            $result['diocese'] = (string) ($row['name'] ?? '');
-        }
-
-        if ($parishId > 0) {
-            $row = $db->table('parish')->select('name')->where('id', $parishId)->get()->getRowArray();
-            $result['parish'] = (string) ($row['name'] ?? '');
-        }
+        $result['province'] = $this->hierarchyService->nameFor('province', (int) ($profile['province_id'] ?? 0));
+        $result['diocese'] = $this->hierarchyService->nameFor('diocese', (int) ($profile['diocese_id'] ?? 0));
+        $result['parish'] = $this->hierarchyService->nameFor('parish', (int) ($profile['parish_id'] ?? 0));
 
         return $result;
     }
@@ -512,31 +480,7 @@ class Profile extends BaseController
      */
     private function resolveAllParishAffiliations(int $userId, int $primaryParishId): array
     {
-        $db = db_connect();
-
-        try {
-            $columns = array_map('strtolower', $db->getFieldNames('parish_people'));
-            if (! in_array('parish_id', $columns, true)) {
-                return [];
-            }
-
-            $rows = $db->table('parish_people pp')
-                ->select('pp.id, pp.parish_id, p.diocese_id, d.province_id, pp.membership_status, p.name as parish_name')
-                ->join('parish p', 'p.id = pp.parish_id', 'left')
-                ->join('diocese d', 'd.id = p.diocese_id', 'left')
-                ->where('pp.user_id', $userId)
-                ->orderBy('p.name', 'ASC')
-                ->get()
-                ->getResultArray();
-        } catch (\Throwable $e) {
-            return [];
-        }
-
-        foreach ($rows as &$row) {
-            $row['is_primary'] = ((int) $row['parish_id']) === $primaryParishId;
-        }
-
-        return $rows;
+        return $this->hierarchyService->parishAffiliationsForUser($userId, $primaryParishId);
     }
 
     /**
@@ -620,12 +564,7 @@ class Profile extends BaseController
             ];
         }
 
-        $provinces = db_connect()->table('province')
-            ->select('id, province_number, name')
-            ->orderBy('sort_order', 'ASC')
-            ->orderBy('id', 'ASC')
-            ->get()
-            ->getResultArray();
+        $provinces = $this->hierarchyService->provincesList();
 
         return view('MemberPortal\Views\Profile/complete', [
             'title' => 'Complete Profile',
@@ -634,8 +573,8 @@ class Profile extends BaseController
             'registration_request' => $registrationRequest,
             'legacy_completion_mode' => $legacyCompletionMode,
             'provinces' => $provinces,
-            'diocesesByProvince' => $this->getDiocesesByProvinceOptions(),
-            'parishesByDiocese' => $this->getParishesByDioceseOptions(),
+            'diocesesByProvince' => $this->hierarchyService->diocesesByProvince(),
+            'parishesByDiocese' => $this->hierarchyService->parishesByDiocese(),
         ]);
     }
 
@@ -701,21 +640,11 @@ class Profile extends BaseController
             $dioceseId = (int) $this->request->getPost('diocese_id');
             $parishId = (int) $this->request->getPost('parish_id');
 
-            $dioceseValid = db_connect()->table('diocese')
-                ->where('id', $dioceseId)
-                ->where('province_id', $provinceId)
-                ->countAllResults() > 0;
-
-            if (!$dioceseValid) {
+            if (!$this->hierarchyService->dioceseInProvince($dioceseId, $provinceId)) {
                 return redirect()->back()->withInput()->with('error', lang('Profile.dioceseMismatch'));
             }
 
-            $parishValid = db_connect()->table('parish')
-                ->where('id', $parishId)
-                ->where('diocese_id', $dioceseId)
-                ->countAllResults() > 0;
-
-            if (!$parishValid) {
+            if (!$this->hierarchyService->parishInDiocese($parishId, $dioceseId)) {
                 return redirect()->back()->withInput()->with('error', lang('Profile.parishDioceseMismatch'));
             }
         }
@@ -825,20 +754,24 @@ class Profile extends BaseController
                 ->with('success', lang('Profile.completionSuccess'));
         }
 
-        $this->logRegistrationAudit(
+        $this->registrationNotifications->logAudit(
             $parishId,
+            (int) auth()->id(),
             (int) $user->id,
             'registration_submitted_for_review',
             'Submitted onboarding profile and selected parish for parish-admin authorization.'
         );
 
-        $this->notifyParishAdminsOfPendingReview(
+        $this->registrationNotifications->notifyParishAdminsOfPendingReview(
             $parishId,
             (int) $registrationRequest['id'],
             (int) $user->id,
             (string) $this->request->getPost('first_name'),
             (string) $this->request->getPost('last_name'),
-            $user->email ?? $user->username ?? ''
+            $user->email ?? $user->username ?? '',
+            $this->resolveExistingProfileTable(),
+            array_map('strtolower', $this->getProfileColumns()),
+            (int) auth()->id()
         );
 
         return redirect()->to('/dashboard')->with('success', lang('Profile.completionSuccess'));
@@ -880,14 +813,9 @@ class Profile extends BaseController
             'title' => 'Join a Parish',
             'user' => $user,
             'profile' => $profileData,
-            'provinces' => db_connect()->table('province')
-                ->select('id, province_number, name')
-                ->orderBy('sort_order', 'ASC')
-                ->orderBy('id', 'ASC')
-                ->get()
-                ->getResultArray(),
-            'diocesesByProvince' => $this->getDiocesesByProvinceOptions(),
-            'parishesByDiocese' => $this->getParishesByDioceseOptions(),
+            'provinces' => $this->hierarchyService->provincesList(),
+            'diocesesByProvince' => $this->hierarchyService->diocesesByProvince(),
+            'parishesByDiocese' => $this->hierarchyService->parishesByDiocese(),
         ]);
     }
 
@@ -933,19 +861,11 @@ class Profile extends BaseController
         $dioceseId = (int) $this->request->getPost('diocese_id');
         $parishId = (int) $this->request->getPost('parish_id');
 
-        $dioceseValid = db_connect()->table('diocese')
-            ->where('id', $dioceseId)
-            ->where('province_id', $provinceId)
-            ->countAllResults() > 0;
-        if (!$dioceseValid) {
+        if (!$this->hierarchyService->dioceseInProvince($dioceseId, $provinceId)) {
             return redirect()->back()->withInput()->with('error', lang('Profile.dioceseMismatch'));
         }
 
-        $parishValid = db_connect()->table('parish')
-            ->where('id', $parishId)
-            ->where('diocese_id', $dioceseId)
-            ->countAllResults() > 0;
-        if (!$parishValid) {
+        if (!$this->hierarchyService->parishInDiocese($parishId, $dioceseId)) {
             return redirect()->back()->withInput()->with('error', lang('Profile.parishDioceseMismatch'));
         }
 
@@ -994,8 +914,6 @@ class Profile extends BaseController
             'diocese_id' => $dioceseId,
             'parish_id' => $parishId,
             'requested_parish_id' => $parishId,
-            'requested_parish_id' => $parishId,
-            'parish_id' => $parishId,
             'status' => 'pending_review',
             'profile_completed_at' => $now,
         ]);
@@ -1043,220 +961,20 @@ class Profile extends BaseController
         }
 
         if ($registrationRequest) {
-            $this->notifyParishAdminsOfPendingReview(
+            $this->registrationNotifications->notifyParishAdminsOfPendingReview(
                 $parishId,
                 (int) $registrationRequest['id'],
                 (int) $user->id,
                 $firstName,
                 $lastName,
-                $user->email ?? $user->username ?? ''
+                $user->email ?? $user->username ?? '',
+                $this->resolveExistingProfileTable(),
+                array_map('strtolower', $this->getProfileColumns()),
+                (int) auth()->id()
             );
         }
 
         return redirect()->to('/profile')->with('success', lang('Profile.joinParishSuccess'));
-    }
-
-    private function notifyParishAdminsOfPendingReview(int $parishId, int $requestId, int $requestUserId, string $firstName, string $lastName, string $emailAddress): void
-    {
-        if ($parishId <= 0) {
-            return;
-        }
-
-        $recipients = $this->getParishAdminRecipients($parishId);
-        if ($recipients === []) {
-            $this->logRegistrationAudit(
-                $parishId,
-                $requestUserId,
-                'registration_review_notification_missing_recipients',
-                'No admin recipients found for selected parish.'
-            );
-            return;
-        }
-
-        $parish = db_connect()->table('parish')
-            ->select('name')
-            ->where('id', $parishId)
-            ->get()
-            ->getRowArray();
-
-        $requesterName = trim($firstName . ' ' . $lastName);
-        $dashboardUrl = base_url('members');
-        $subject = 'New registration awaiting parish review';
-        $message = "A new user registration is awaiting review.\n\n"
-            . 'Parish: ' . ($parish['name'] ?? 'Unknown') . "\n"
-            . 'Applicant: ' . ($requesterName !== '' ? $requesterName : 'Name not provided') . "\n"
-            . 'Email: ' . $emailAddress . "\n\n"
-            . 'Action needed: authorize or ban this registration in the Members module.\n'
-            . 'Request ID: #' . $requestId . "\n"
-            . 'Review: ' . $dashboardUrl;
-
-        $email = service('email');
-        $delivered = 0;
-
-        foreach ($recipients as $recipient) {
-            try {
-                $email->clear(true);
-                $email->setTo($recipient);
-                $email->setSubject($subject);
-                $email->setMessage($message);
-                $email->send();
-                $delivered++;
-            } catch (\Throwable $e) {
-                log_message('warning', 'Failed sending parish pending review email to {email}: {message}', [
-                    'email' => $recipient,
-                    'message' => $e->getMessage(),
-                ]);
-            }
-        }
-
-        $this->logRegistrationAudit(
-            $parishId,
-            $requestUserId,
-            'registration_review_notification_sent',
-            'Pending registration notification dispatched to ' . $delivered . ' admin recipient(s).'
-        );
-    }
-
-    private function getParishAdminRecipients(int $parishId): array
-    {
-        $profileTable = $this->resolveExistingProfileTable();
-        if ($profileTable === null) {
-            return [];
-        }
-
-        $columns = array_map('strtolower', $this->getProfileColumns());
-        $parishColumn = in_array('parish_id', $columns, true) ? 'parish_id' : 'parish_id';
-        $hasDioceseId = in_array('diocese_id', $columns, true);
-        $hasProvinceId = in_array('province_id', $columns, true);
-
-        $parishColumns = array_map('strtolower', db_connect()->getFieldNames('parish'));
-        $parishSelect    = ['id'];
-        if (in_array('diocese_id', $parishColumns, true)) {
-            $parishSelect[] = 'diocese_id';
-        }
-        if (in_array('province_id', $parishColumns, true)) {
-            $parishSelect[] = 'province_id';
-        }
-
-        $parish = db_connect()->table('parish')
-            ->select(implode(', ', $parishSelect))
-            ->where('id', $parishId)
-            ->get()
-            ->getRowArray();
-
-        $dioceseId = (int) ($parish['diocese_id'] ?? 0);
-        $provinceId = (int) ($parish['province_id'] ?? 0);
-
-        $emails = $this->getAdminEmailsByScope($profileTable, $parishColumn, 'parishadmin', $parishId);
-
-        if ($dioceseId > 0 && $hasDioceseId) {
-            $emails = array_merge($emails, $this->getAdminEmailsByScope($profileTable, 'diocese_id', 'diocesanadmin', $dioceseId));
-        }
-
-        if ($provinceId > 0 && $hasProvinceId) {
-            $emails = array_merge($emails, $this->getAdminEmailsByScope($profileTable, 'province_id', 'provinceadmin', $provinceId));
-        }
-
-        return array_values(array_unique($emails));
-    }
-
-    private function getAdminEmailsByScope(string $profileTable, string $profileColumn, string $group, int $scopeId): array
-    {
-        $rows = db_connect()->table('auth_groups_users agu')
-            ->select('ai.secret as email')
-            ->distinct()
-            ->join('users u', 'u.id = agu.user_id', 'inner')
-            ->join($profileTable . ' p', 'p.user_id = u.id', 'left')
-            ->join('auth_identities ai', 'ai.user_id = u.id AND ai.type = "email_password"', 'inner')
-            ->where('agu.group', $group)
-            ->where('p.' . $profileColumn, $scopeId)
-            ->get()
-            ->getResultArray();
-
-        $emails = [];
-        foreach ($rows as $row) {
-            $email = trim((string) ($row['email'] ?? ''));
-            if ($email !== '') {
-                $emails[] = $email;
-            }
-        }
-
-        return $emails;
-    }
-
-    private function logRegistrationAudit(int $parishId, int $targetUserId, string $action, string $details): void
-    {
-        $actorUserId = (int) auth()->id();
-        if ($actorUserId <= 0 || $targetUserId <= 0) {
-            return;
-        }
-
-        try {
-            model('ParishRoleAuditModel')->insert([
-                'parish_id' => $parishId > 0 ? $parishId : null,
-                'actor_user_id' => $actorUserId,
-                'target_user_id' => $targetUserId,
-                'action' => $action,
-                'role' => null,
-                'details' => $details,
-                'created_at' => date('Y-m-d H:i:s'),
-            ]);
-        } catch (\Throwable $e) {
-            log_message('warning', 'Failed writing registration audit log: {message}', ['message' => $e->getMessage()]);
-        }
-    }
-
-    private function getDiocesesByProvinceOptions(): array
-    {
-        $rows = db_connect()->table('diocese')
-            ->select('id, province_id, name')
-            ->orderBy('province_id', 'ASC')
-            ->orderBy('name', 'ASC')
-            ->get()
-            ->getResultArray();
-
-        $grouped = [];
-
-        foreach ($rows as $row) {
-            $provinceId = (string) ((int) ($row['province_id'] ?? 0));
-            if ($provinceId === '0') {
-                continue;
-            }
-
-            $grouped[$provinceId][] = [
-                'id' => (int) $row['id'],
-                'name' => (string) $row['name'],
-            ];
-        }
-
-        return $grouped;
-    }
-
-    private function getParishesByDioceseOptions(): array
-    {
-        $rows = db_connect()->table('parish')
-            ->select('id, diocese_id, name, parish_ueid')
-            ->orderBy('diocese_id', 'ASC')
-            ->orderBy('name', 'ASC')
-            ->get()
-            ->getResultArray();
-
-        $grouped = [];
-
-        foreach ($rows as $row) {
-            $dioceseId = (string) ((int) ($row['diocese_id'] ?? 0));
-            if ($dioceseId === '0') {
-                continue;
-            }
-
-            $grouped[$dioceseId][] = [
-                'id' => (int) $row['id'],
-                'name' => (string) $row['name'],
-                'parish_ueid' => (string) ($row['parish_ueid'] ?? ''),
-            ];
-        }
-
-        return $grouped;
     }
 
     /**
@@ -1265,44 +983,6 @@ class Profile extends BaseController
      */
     private function filterPayloadByTableColumns(string $baseTable, array $payload): array
     {
-        $db = db_connect();
-        $tableVariants = [$baseTable];
-        if (str_ends_with($baseTable, 's')) {
-            $tableVariants[] = substr($baseTable, 0, -1);
-        } else {
-            $tableVariants[] = $baseTable . 's';
-        }
-
-        $candidates = [];
-        foreach (array_values(array_unique($tableVariants)) as $variant) {
-            $candidates[] = $db->getPrefix() . $variant;
-            $candidates[] = $variant;
-        }
-        $candidates = array_values(array_unique($candidates));
-
-        $columns = [];
-        foreach ($candidates as $table) {
-            try {
-                $found = array_map('strtolower', $db->getFieldNames($table));
-                if ($found !== []) {
-                    $columns = $found;
-                    break;
-                }
-            } catch (\Throwable $e) {
-                // Try next table-name variant.
-            }
-        }
-
-        if ($columns === []) {
-            return $payload;
-        }
-
-        foreach (array_keys($payload) as $key) {
-            if (!in_array(strtolower((string) $key), $columns, true)) {
-                unset($payload[$key]);
-            }
-        }
-
-        return $payload;
+        return $this->schemaResolver->filterPayloadByTableColumns($baseTable, $payload);
     }
 }
