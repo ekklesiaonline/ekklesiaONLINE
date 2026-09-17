@@ -3,9 +3,17 @@
 namespace MemberPortal\Controllers;
 
 use App\Controllers\BaseController;
+use App\Services\AuditLogQueryService;
 
 class AuditLogs extends BaseController
 {
+    private AuditLogQueryService $auditQuery;
+
+    public function __construct()
+    {
+        $this->auditQuery = new AuditLogQueryService();
+    }
+
     public function index()
     {
         if (!auth()->loggedIn()) {
@@ -40,17 +48,14 @@ class AuditLogs extends BaseController
         }
 
         $auditModel = model('AuditLogModel');
-        $profileTable = $this->resolveExistingProfileTable();
-        if ($profileTable === null) {
-            $profileTable = 'profile';
-        }
+        $profileTable = $this->auditQuery->profileTable();
         $builder = $auditModel
             ->select('audit_log.*, c.name AS parish_name, p.first_name AS actor_first_name, p.last_name AS actor_last_name')
             ->join('parish c', 'c.id = audit_log.parish_id', 'left')
             ->join($profileTable . ' p', 'p.user_id = audit_log.user_id', 'left');
 
-        $this->applyScopeFilter($builder, $scopeParishIds);
-        $this->applyOptionalFilters($builder, $filters);
+        $this->auditQuery->applyScopeFilter($builder, $this->auditScopeRole(), $scopeParishIds, (int) $filters['parish_id']);
+        $this->auditQuery->applyOptionalFilters($builder, $filters, $this->isSystemAdmin());
 
         $rows = $builder
             ->orderBy('audit_log.created_at', 'DESC')
@@ -68,8 +73,8 @@ class AuditLogs extends BaseController
         $data = array_merge($this->getCommonViewData(lang('App.navAuditLogs')), [
             'audit_rows' => $rows,
             'pager' => $auditModel->pager,
-            'audit_actions' => $this->getAvailableActions($scopeParishIds),
-            'audit_entity_types' => $this->getAvailableEntityTypes($scopeParishIds),
+            'audit_actions' => $this->auditQuery->availableActions($this->auditScopeRole(), $scopeParishIds, (int) $filters['parish_id']),
+            'audit_entity_types' => $this->auditQuery->availableEntityTypes($this->auditScopeRole(), $scopeParishIds, (int) $filters['parish_id']),
             'audit_parishes' => $this->getScopedParishes($scopeParishIds),
             'filter_parish_id' => $filters['parish_id'],
             'filter_action' => $filters['action'],
@@ -102,18 +107,10 @@ class AuditLogs extends BaseController
                 ->with('error', lang('App.auditLogsTableMissing'));
         }
 
-        $profileTable = $this->resolveExistingProfileTable();
-        if ($profileTable === null) {
-            $profileTable = 'profile';
-        }
+        $builder = $this->auditQuery->baseBuilder();
 
-        $builder = db_connect()->table('audit_log')
-            ->select('audit_log.*, c.name AS parish_name, p.first_name AS actor_first_name, p.last_name AS actor_last_name')
-            ->join('parish c', 'c.id = audit_log.parish_id', 'left')
-            ->join($profileTable . ' p', 'p.user_id = audit_log.user_id', 'left');
-
-        $this->applyScopeFilter($builder, $scopeParishIds);
-        $this->applyOptionalFilters($builder, $filters);
+        $this->auditQuery->applyScopeFilter($builder, $this->auditScopeRole(), $scopeParishIds, (int) $filters['parish_id']);
+        $this->auditQuery->applyOptionalFilters($builder, $filters, $this->isSystemAdmin());
 
         $rows = $builder
             ->orderBy('audit_log.created_at', 'DESC')
@@ -183,19 +180,10 @@ class AuditLogs extends BaseController
             return $this->response->setJSON(['error' => 'Audit logs table is missing'], 500);
         }
 
-        $auditModel = model('AuditLogModel');
-        $profileTable = $this->resolveExistingProfileTable();
-        if ($profileTable === null) {
-            $profileTable = 'profile';
-        }
+        $builder = $this->auditQuery->baseBuilder();
 
-        $builder = $auditModel
-            ->select('audit_log.*, c.name AS parish_name, p.first_name AS actor_first_name, p.last_name AS actor_last_name')
-            ->join('parish c', 'c.id = audit_log.parish_id', 'left')
-            ->join($profileTable . ' p', 'p.user_id = audit_log.user_id', 'left');
-
-        $this->applyScopeFilter($builder, $scopeParishIds);
-        $this->applyOptionalFilters($builder, $filters);
+        $this->auditQuery->applyScopeFilter($builder, $this->auditScopeRole(), $scopeParishIds, (int) $filters['parish_id']);
+        $this->auditQuery->applyOptionalFilters($builder, $filters, $this->isSystemAdmin());
 
         $rows = $builder
             ->orderBy('audit_log.created_at', 'DESC')
@@ -236,19 +224,10 @@ class AuditLogs extends BaseController
             return $this->response->setJSON(['error' => 'Audit logs table is missing'], 500);
         }
 
-        $auditModel = model('AuditLogModel');
-        $profileTable = $this->resolveExistingProfileTable();
-        if ($profileTable === null) {
-            $profileTable = 'profile';
-        }
+        $builder = $this->auditQuery->baseBuilder();
 
-        $builder = $auditModel
-            ->select('audit_log.*, c.name AS parish_name, p.first_name AS actor_first_name, p.last_name AS actor_last_name')
-            ->join('parish c', 'c.id = audit_log.parish_id', 'left')
-            ->join($profileTable . ' p', 'p.user_id = audit_log.user_id', 'left');
-
-        $this->applyScopeFilter($builder, $scopeParishIds);
-        $this->applyOptionalFilters($builder, $filters);
+        $this->auditQuery->applyScopeFilter($builder, $this->auditScopeRole(), $scopeParishIds, (int) $filters['parish_id']);
+        $this->auditQuery->applyOptionalFilters($builder, $filters, $this->isSystemAdmin());
 
         $rows = $builder
             ->orderBy('audit_log.created_at', 'DESC')
@@ -365,24 +344,12 @@ class AuditLogs extends BaseController
         }
 
         $scopeParishIds = $this->resolveScopedParishIds();
-        $profileTable = $this->resolveExistingProfileTable();
-        if ($profileTable === null) {
-            $profileTable = 'profile';
-        }
-
-        $builder = db_connect()->table('audit_log')
-            ->select('DISTINCT ' . $profileTable . '.user_id, ' . $profileTable . '.first_name, ' . $profileTable . '.last_name')
-            ->join($profileTable, $profileTable . '.user_id = audit_log.user_id', 'inner')
-            ->groupStart()
-                ->like($profileTable . '.first_name', $query)
-                ->orLike($profileTable . '.last_name', $query)
-            ->groupEnd()
-            ->groupBy($profileTable . '.user_id')
-            ->limit(10);
-
-        $this->applyScopeFilter($builder, $scopeParishIds);
-
-        $results = $builder->get()->getResultArray();
+        $results = $this->auditQuery->actorSuggestions(
+            $query,
+            $this->auditScopeRole(),
+            $scopeParishIds,
+            (int) ($this->request->getGet('parish_id') ?? 0)
+        );
 
         $actors = array_map(function (array $row): array {
             $name = trim((string) (($row['first_name'] ?? '') . ' ' . ($row['last_name'] ?? '')));
@@ -413,19 +380,10 @@ class AuditLogs extends BaseController
             return $this->response->setJSON(['rows' => [], 'has_more' => false]);
         }
 
-        $auditModel = model('AuditLogModel');
-        $profileTable = $this->resolveExistingProfileTable();
-        if ($profileTable === null) {
-            $profileTable = 'profile';
-        }
+        $builder = $this->auditQuery->baseBuilder();
 
-        $builder = $auditModel
-            ->select('audit_log.*, c.name AS parish_name, p.first_name AS actor_first_name, p.last_name AS actor_last_name')
-            ->join('parish c', 'c.id = audit_log.parish_id', 'left')
-            ->join($profileTable . ' p', 'p.user_id = audit_log.user_id', 'left');
-
-        $this->applyScopeFilter($builder, $scopeParishIds);
-        $this->applyOptionalFilters($builder, $filters);
+        $this->auditQuery->applyScopeFilter($builder, $this->auditScopeRole(), $scopeParishIds, (int) $filters['parish_id']);
+        $this->auditQuery->applyOptionalFilters($builder, $filters, $this->isSystemAdmin());
 
         if ($lastId > 0) {
             $builder->where('audit_log.id <', $lastId);
@@ -477,9 +435,34 @@ class AuditLogs extends BaseController
             ]);
         }
 
-        $stats = $this->getAuditStatistics($scopeParishIds, $filters, $timeRange);
+        $stats = $this->auditQuery->statistics(
+            $this->auditScopeRole(),
+            $scopeParishIds,
+            (int) $filters['parish_id'],
+            $timeRange
+        );
 
-        return $this->response->setJSON($stats);
+        return $this->response->setJSON([
+            'today_events' => $stats['today_events'],
+            'security_events' => $stats['security_events'],
+            'most_active_users' => array_map(function (array $row): array {
+                $name = trim((string) (($row['first_name'] ?? '') . ' ' . ($row['last_name'] ?? '')));
+                return [
+                    'name' => $name !== '' ? $name : 'Unknown',
+                    'count' => (int) ($row['event_count'] ?? 0),
+                ];
+            }, $stats['most_active_users']),
+            'top_operations' => array_map(function (array $row): array {
+                $actionFormatted = $this->formatActionName((string) ($row['action'] ?? ''));
+                $actionDisplay = !empty($actionFormatted)
+                    ? ($actionFormatted['scope'] ?? '') . ' ' . ($actionFormatted['entity'] ?? '') . ' ' . ($actionFormatted['action'] ?? '')
+                    : (string) ($row['action'] ?? '');
+                return [
+                    'action' => $actionDisplay,
+                    'count' => (int) ($row['event_count'] ?? 0),
+                ];
+            }, $stats['top_operations']),
+        ]);
     }
 
     public function realtimeUpdates()
@@ -499,21 +482,17 @@ class AuditLogs extends BaseController
             return $this->response->setJSON(['new_events' => [], 'has_more' => false]);
         }
 
-        $auditModel = model('AuditLogModel');
-        $profileTable = $this->resolveExistingProfileTable();
-        if ($profileTable === null) {
-            $profileTable = 'profile';
-        }
-
-        $builder = $auditModel
-            ->select('audit_log.*, c.name AS parish_name, p.first_name AS actor_first_name, p.last_name AS actor_last_name')
-            ->join('parish c', 'c.id = audit_log.parish_id', 'left')
-            ->join($profileTable . ' p', 'p.user_id = audit_log.user_id', 'left')
+        $builder = $this->auditQuery->baseBuilder()
             ->where('audit_log.id >', $lastId)
             ->orderBy('audit_log.id', 'ASC')
             ->limit(10);
 
-        $this->applyScopeFilter($builder, $scopeParishIds);
+        $this->auditQuery->applyScopeFilter(
+            $builder,
+            $this->auditScopeRole(),
+            $scopeParishIds,
+            (int) ($this->request->getGet('parish_id') ?? 0)
+        );
 
         $rows = $builder->get()->getResultArray();
 
@@ -534,119 +513,6 @@ class AuditLogs extends BaseController
         ]);
     }
 
-    private function getAuditStatistics(array $scopeParishIds, array $filters, string $timeRange): array
-    {
-        $db = db_connect();
-        $profileTable = $this->resolveExistingProfileTable();
-        if ($profileTable === null) {
-            $profileTable = 'profile';
-        }
-
-        // Calculate time range
-        $timeConditions = $this->getTimeRangeConditions($timeRange);
-
-        // Today's events count
-        $todayBuilder = $db->table('audit_log');
-        $this->applyScopeFilter($todayBuilder, $scopeParishIds);
-        $todayBuilder->where('DATE(audit_log.created_at)', date('Y-m-d'));
-        $todayEvents = $todayBuilder->countAllResults();
-
-        // Security events count
-        $securityBuilder = $db->table('audit_log');
-        $this->applyScopeFilter($securityBuilder, $scopeParishIds);
-        $securityBuilder->whereIn('audit_log.action', ['permission.denied', 'scope.denied']);
-        if (!empty($timeConditions)) {
-            $securityBuilder->where($timeConditions);
-        }
-        $securityEvents = $securityBuilder->countAllResults();
-
-        // Most active users
-        $usersBuilder = $db->table('audit_log')
-            ->select($profileTable . '.first_name, ' . $profileTable . '.last_name, COUNT(audit_log.id) as event_count')
-            ->join($profileTable, $profileTable . '.user_id = audit_log.user_id', 'inner')
-            ->groupBy($profileTable . '.user_id')
-            ->orderBy('event_count', 'DESC')
-            ->limit(5);
-        $this->applyScopeFilter($usersBuilder, $scopeParishIds);
-        if (!empty($timeConditions)) {
-            $usersBuilder->where($timeConditions);
-        }
-        $mostActiveUsers = $usersBuilder->get()->getResultArray();
-
-        // Top operations
-        $opsBuilder = $db->table('audit_log')
-            ->select('action, COUNT(id) as event_count')
-            ->groupBy('action')
-            ->orderBy('event_count', 'DESC')
-            ->limit(10);
-        $this->applyScopeFilter($opsBuilder, $scopeParishIds);
-        if (!empty($timeConditions)) {
-            $opsBuilder->where($timeConditions);
-        }
-        $topOperations = $opsBuilder->get()->getResultArray();
-
-        return [
-            'today_events' => $todayEvents,
-            'security_events' => $securityEvents,
-            'most_active_users' => array_map(function (array $row): array {
-                $name = trim((string) (($row['first_name'] ?? '') . ' ' . ($row['last_name'] ?? '')));
-                return [
-                    'name' => $name !== '' ? $name : 'Unknown',
-                    'count' => (int) ($row['event_count'] ?? 0),
-                ];
-            }, $mostActiveUsers),
-            'top_operations' => array_map(function (array $row): array {
-                $actionFormatted = $this->formatActionName((string) ($row['action'] ?? ''));
-                $actionDisplay = !empty($actionFormatted)
-                    ? ($actionFormatted['scope'] ?? '') . ' ' . ($actionFormatted['entity'] ?? '') . ' ' . ($actionFormatted['action'] ?? '')
-                    : (string) ($row['action'] ?? '');
-                return [
-                    'action' => $actionDisplay,
-                    'count' => (int) ($row['event_count'] ?? 0),
-                ];
-            }, $topOperations),
-        ];
-    }
-
-    private function getTimeRangeConditions(string $timeRange): array
-    {
-        switch ($timeRange) {
-            case '24h':
-                return ['audit_log.created_at >=' => date('Y-m-d H:i:s', strtotime('-24 hours'))];
-            case '7d':
-                return ['audit_log.created_at >=' => date('Y-m-d H:i:s', strtotime('-7 days'))];
-            case '30d':
-                return ['audit_log.created_at >=' => date('Y-m-d H:i:s', strtotime('-30 days'))];
-            default:
-                return [];
-        }
-    }
-
-    private function getActivityChartData(array $scopeParishIds, string $timeRange): array
-    {
-        $db = db_connect();
-        $timeConditions = $this->getTimeRangeConditions($timeRange);
-
-        $builder = $db->table('audit_log')
-            ->select('DATE(audit_log.created_at) as date, COUNT(id) as count')
-            ->groupBy('DATE(audit_log.created_at)')
-            ->orderBy('date', 'ASC');
-
-        $this->applyScopeFilter($builder, $scopeParishIds);
-        if (!empty($timeConditions)) {
-            $builder->where($timeConditions);
-        }
-
-        $results = $builder->get()->getResultArray();
-
-        return array_map(function (array $row): array {
-            return [
-                'date' => (string) ($row['date'] ?? ''),
-                'count' => (int) ($row['count'] ?? 0),
-            ];
-        }, $results);
-    }
-
     private function isAuditAdmin(): bool
     {
         if ($this->isSystemAdmin()) {
@@ -659,138 +525,35 @@ class AuditLogs extends BaseController
     }
 
     /**
+     * Scope role for audit queries: system admins see global events,
+     * province/diocese admins see their subtree, everyone else is a
+     * parish admin limited to the operational parish.
+     */
+    private function auditScopeRole(): string
+    {
+        if ($this->isSystemAdmin()) {
+            return 'system';
+        }
+        if ($this->isProvinceAdmin()) {
+            return 'province';
+        }
+        if ($this->isDioceseAdmin()) {
+            return 'diocese';
+        }
+        return 'parish';
+    }
+
+    /**
      * @return array<int>
      */
     private function resolveScopedParishIds(): array
     {
-        $db = db_connect();
-
-        // System admins can review cross-scope audit history, including
-        // global entries that are not tied to a specific parish.
-        if ($this->isSystemAdmin()) {
-            return [];
-        }
-
-        if ($this->isProvinceAdmin()) {
-            $provinceId = $this->resolveAdminProvinceId();
-            if ($provinceId <= 0) {
-                return [];
-            }
-
-            $rows = $db->table('parish c')
-                ->select('c.id')
-                ->join('diocese d', 'd.id = c.diocese_id', 'left')
-                ->where('d.province_id', $provinceId)
-                ->get()
-                ->getResultArray();
-
-            return array_map(static fn(array $row): int => (int) $row['id'], $rows);
-        }
-
-        if ($this->isDioceseAdmin()) {
-            $dioceseId = $this->resolveDiocesanScopeId();
-
-            if ($dioceseId <= 0) {
-                return [];
-            }
-
-            $rows = $db->table('parish')
-                ->select('id')
-                ->where('diocese_id', $dioceseId)
-                ->get()
-                ->getResultArray();
-
-            return array_map(static fn(array $row): int => (int) $row['id'], $rows);
-        }
-
-        return [(int) ($this->getOperationalParishId() ?? 0)];
-    }
-
-    private function applyScopeFilter($builder, array $scopeParishIds): void
-    {
-        if ($this->isSystemAdmin()) {
-            // If a specific parish is chosen, drill into all its logs.
-            $drillParish = (int) ($this->request->getGet('parish_id') ?? 0);
-            if ($drillParish > 0) {
-                $builder->where('audit_log.parish_id', $drillParish);
-                return;
-            }
-
-            // Default system-admin view: system-level events, security violations,
-            // destructive operations, and global cron entries.
-            // Parish-level operational noise is intentionally excluded.
-            $builder->groupStart()
-                ->where('audit_log.parish_id IS NULL')
-                ->orLike('audit_log.action', 'system.', 'after')
-                ->orWhereIn('audit_log.action', [
-                    'permission.denied',
-                    'scope.denied',
-                    'member.hard_delete',
-                    'member.merge',
-                    'parish.bulk_delete',
-                ])
-                ->groupEnd();
-            return;
-        }
-
-        $cleanScope = array_values(array_filter(array_unique(array_map('intval', $scopeParishIds)), static fn(int $id): bool => $id > 0));
-
-        if ($cleanScope === []) {
-            $builder->where('1 = 0');
-            return;
-        }
-
-        $builder->whereIn('audit_log.parish_id', $cleanScope);
-
-        if ($this->isProvinceAdmin()) {
-            // Province admins see significant cross-parish events:
-            // member management, parish governance, parochial reports,
-            // portal access changes, and key finance create/delete events.
-            $builder->groupStart()
-                ->like('audit_log.action', 'member.', 'after')
-                ->orLike('audit_log.action', 'parish.', 'after')
-                ->orLike('audit_log.action', 'parochial_report.', 'after')
-                ->orLike('audit_log.action', 'portal_access.', 'after')
-                ->orLike('audit_log.action', 'non_portal_member.', 'after')
-                ->orWhereIn('audit_log.action', [
-                    'permission.denied',
-                    'scope.denied',
-                    'donation.create',
-                    'donation.delete',
-                    'expense.create',
-                    'expense.delete',
-                ])
-                ->groupEnd();
-            return;
-        }
-
-        if ($this->isDioceseAdmin()) {
-            // Diocesan admins see member management, family, finance, parish,
-            // people, reports, and portal access events from their diocese.
-            $builder->groupStart()
-                ->like('audit_log.action', 'member.', 'after')
-                ->orLike('audit_log.action', 'parish.', 'after')
-                ->orLike('audit_log.action', 'donation.', 'after')
-                ->orLike('audit_log.action', 'expense.', 'after')
-                ->orLike('audit_log.action', 'annual_pledge.', 'after')
-                ->orLike('audit_log.action', 'family.', 'after')
-                ->orLike('audit_log.action', 'family_member.', 'after')
-                ->orLike('audit_log.action', 'parochial_report.', 'after')
-                ->orLike('audit_log.action', 'portal_access.', 'after')
-                ->orLike('audit_log.action', 'non_portal_member.', 'after')
-                ->orLike('audit_log.action', 'people.', 'after')
-                ->orWhereIn('audit_log.action', [
-                    'permission.denied',
-                    'scope.denied',
-                    'service.create',
-                    'service.update',
-                    'service.delete',
-                ])
-                ->groupEnd();
-            return;
-        }
-
-        // Parish admin (parishadmin): all logs for their parish — no action filter.
+        return $this->auditQuery->scopedParishIds(
+            $this->auditScopeRole(),
+            $this->isProvinceAdmin() ? $this->resolveAdminProvinceId() : 0,
+            $this->isDioceseAdmin() ? $this->resolveDiocesanScopeId() : 0,
+            $this->getOperationalParishId()
+        );
     }
 
     private function resolveFilters(array $scopeParishIds): array
@@ -811,124 +574,9 @@ class AuditLogs extends BaseController
         ];
     }
 
-    private function applyOptionalFilters($builder, array $filters): void
-    {
-        // Parish filter for system admin is already handled inside applyScopeFilter
-        // (drill-down mode). For other roles it is applied via whereIn scope above,
-        // so we only add an extra exact-match here for non-system scoped admins.
-        if (!$this->isSystemAdmin() && (int) ($filters['parish_id'] ?? 0) > 0) {
-            $builder->where('audit_log.parish_id', (int) $filters['parish_id']);
-        }
-
-        if ((string) ($filters['action'] ?? '') !== '') {
-            $builder->where('audit_log.action', (string) $filters['action']);
-        }
-
-        if ((string) ($filters['entity_type'] ?? '') !== '') {
-            $builder->where('audit_log.entity_type', (string) $filters['entity_type']);
-        }
-
-        if ((string) ($filters['actor_name'] ?? '') !== '') {
-            $profileTable = $this->resolveExistingProfileTable();
-            if ($profileTable !== null) {
-                $builder->groupStart()
-                    ->like($profileTable . '.first_name', (string) $filters['actor_name'])
-                    ->orLike($profileTable . '.last_name', (string) $filters['actor_name'])
-                    ->groupEnd();
-            }
-        }
-
-        if ((string) ($filters['quick_filter'] ?? '') !== '') {
-            $this->applyQuickFilter($builder, (string) $filters['quick_filter']);
-        }
-
-        if (!empty($filters['start_date'])) {
-            $builder->where('DATE(audit_log.created_at) >=', (string) $filters['start_date']);
-        }
-
-        if (!empty($filters['end_date'])) {
-            $builder->where('DATE(audit_log.created_at) <=', (string) $filters['end_date']);
-        }
-    }
-
-    private function applyQuickFilter($builder, string $quickFilter): void
-    {
-        switch ($quickFilter) {
-            case 'system_ops':
-                $builder->like('audit_log.action', 'system.', 'after');
-                break;
-            case 'security_events':
-                $builder->whereIn('audit_log.action', ['permission.denied', 'scope.denied']);
-                break;
-            case 'data_changes':
-                $builder->groupStart()
-                    ->like('audit_log.action', '.created', 'before')
-                    ->orLike('audit_log.action', '.updated', 'before')
-                    ->orLike('audit_log.action', '.deleted', 'before')
-                    ->groupEnd();
-                break;
-        }
-    }
-
-    private function getAvailableActions(array $scopeParishIds): array
-    {
-        if (!$this->hasAuditLogsTable()) {
-            return [];
-        }
-
-        $builder = db_connect()->table('audit_log')
-            ->select('action')
-            ->groupBy('action')
-            ->orderBy('action', 'ASC');
-
-        $this->applyScopeFilter($builder, $scopeParishIds);
-
-        $rows = $builder->get()->getResultArray();
-
-        return array_values(array_filter(array_map(static fn(array $row): string => (string) ($row['action'] ?? ''), $rows), static fn(string $value): bool => $value !== ''));
-    }
-
-    private function getAvailableEntityTypes(array $scopeParishIds): array
-    {
-        if (!$this->hasAuditLogsTable()) {
-            return [];
-        }
-
-        $builder = db_connect()->table('audit_log')
-            ->select('entity_type')
-            ->where('entity_type IS NOT NULL')
-            ->where('entity_type !=', '')
-            ->groupBy('entity_type')
-            ->orderBy('entity_type', 'ASC');
-
-        $this->applyScopeFilter($builder, $scopeParishIds);
-
-        $rows = $builder->get()->getResultArray();
-
-        return array_values(array_filter(array_map(static fn(array $row): string => (string) ($row['entity_type'] ?? ''), $rows), static fn(string $value): bool => $value !== ''));
-    }
-
     private function getScopedParishes(array $scopeParishIds): array
     {
-        if ($this->isSystemAdmin()) {
-            return db_connect()->table('parish')
-                ->select('id, name')
-                ->orderBy('name', 'ASC')
-                ->get()
-                ->getResultArray();
-        }
-
-        $cleanScope = array_values(array_filter(array_unique(array_map('intval', $scopeParishIds)), static fn(int $id): bool => $id > 0));
-        if ($cleanScope === []) {
-            return [];
-        }
-
-        return db_connect()->table('parish')
-            ->select('id, name')
-            ->whereIn('id', $cleanScope)
-            ->orderBy('name', 'ASC')
-            ->get()
-            ->getResultArray();
+        return $this->auditQuery->scopedParishes($this->isSystemAdmin(), $scopeParishIds);
     }
 
     private function normalizeDate(string $value): ?string
@@ -1006,30 +654,7 @@ class AuditLogs extends BaseController
 
     private function hasAuditLogsTable(): bool
     {
-        try {
-            return db_connect()->tableExists('audit_log');
-        } catch (\Throwable $e) {
-            return false;
-        }
-    }
-
-    private function resolveExistingProfileTable(): ?string
-    {
-        $db = db_connect();
-        $candidate = 'profile';
-        $variants = array_values(array_unique([$db->getPrefix() . $candidate, $candidate]));
-        foreach ($variants as $table) {
-            try {
-                $columns = $db->getFieldNames($table);
-                if ($columns !== []) {
-                    return $table;
-                }
-            } catch (\Throwable $e) {
-                // Try next table-name variant.
-            }
-        }
-
-        return null;
+        return $this->auditQuery->tableExists();
     }
 
     private function formatActionName(string $action): array
@@ -1132,67 +757,9 @@ class AuditLogs extends BaseController
         ];
     }
 
-    private function formatChangesDiff(?array $oldValues, ?array $newValues): array
-    {
-        $diff = [
-            'added' => [],
-            'removed' => [],
-            'changed' => [],
-            'unchanged' => [],
-        ];
-
-        if ($oldValues === null && $newValues === null) {
-            return $diff;
-        }
-
-        if ($oldValues === null) {
-            $diff['added'] = $newValues;
-            return $diff;
-        }
-
-        if ($newValues === null) {
-            $diff['removed'] = $oldValues;
-            return $diff;
-        }
-
-        $allKeys = array_unique(array_merge(array_keys($oldValues), array_keys($newValues)));
-
-        foreach ($allKeys as $key) {
-            $oldValue = $oldValues[$key] ?? null;
-            $newValue = $newValues[$key] ?? null;
-
-            if (!array_key_exists($key, $oldValues)) {
-                $diff['added'][$key] = $newValue;
-            } elseif (!array_key_exists($key, $newValues)) {
-                $diff['removed'][$key] = $oldValue;
-            } elseif ($oldValue !== $newValue) {
-                $diff['changed'][$key] = [
-                    'old' => $oldValue,
-                    'new' => $newValue,
-                ];
-            } else {
-                $diff['unchanged'][$key] = $oldValue;
-            }
-        }
-
-        return $diff;
-    }
-
-    private function getActionBadgeClass(string $action): string
-    {
-        $formatted = $this->formatActionName($action);
-        return $formatted['badge_class'] ?? 'secondary';
-    }
-
     private function isSecurityEvent(string $action): bool
     {
         $securityActions = ['permission.denied', 'scope.denied', 'system.primary_transfer.password_failed', 'system.primary_transfer.otp_failed'];
         return in_array($action, $securityActions, true);
-    }
-
-    private function getActionIcon(string $action): string
-    {
-        $formatted = $this->formatActionName($action);
-        return $formatted['icon'] ?? 'activity';
     }
 }
