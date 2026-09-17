@@ -238,6 +238,14 @@
                 </li>
             <?php endif; ?>
 
+            <?php if (!$isSystemAdminSidebar && !$isProvinceAdminSidebar && !$isDioceseAdminSidebar && auth()->user()->can('messaging.view')): ?>
+                <li class="nav-item">
+                    <a class="nav-link <?= (str_starts_with(uri_string(), 'messages')) ? 'active' : '' ?>" href="<?= base_url('messages') ?>">
+                        <i class="bi bi-chat-square-text" aria-hidden="true"></i> <?= lang('App.navMessages') ?>
+                    </a>
+                </li>
+            <?php endif; ?>
+
             <?php if (!$isSystemAdminSidebar && !$isProvinceAdminSidebar && !$isDioceseAdminSidebar && auth()->user()->can('service.view')): ?>
                 <li class="nav-item">
                     <a class="nav-link <?= (str_starts_with(uri_string(), 'services')) ? 'active' : '' ?>" href="<?= base_url('services') ?>">

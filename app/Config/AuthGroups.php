@@ -148,6 +148,10 @@ class AuthGroups extends ShieldAuthGroups
         'groups.manage'        => 'Create and manage small groups',
         'groups.assign'        => 'Assign members to small groups',
 
+        // Bulk Messaging
+        'messaging.view'       => 'View bulk message campaigns',
+        'messaging.send'       => 'Compose and send bulk messages; manage templates',
+
         // Service & Attendance
         'service.view'         => 'View services',
         'service.create'       => 'Create services',
@@ -325,6 +329,7 @@ class AuthGroups extends ShieldAuthGroups
             'province.calendar.manage',
             'member.view',
             'groups.view',
+            'messaging.view',
             'dashboard.view',
             'profile.edit',
             'report.export',
@@ -339,6 +344,7 @@ class AuthGroups extends ShieldAuthGroups
             'member.edit',
             'member.view',
             'groups.view',
+            'messaging.view',
             'service.view',
             'event.view',
             'event.create',
@@ -366,6 +372,7 @@ class AuthGroups extends ShieldAuthGroups
             'member.*',
             'family.*',
             'groups.*',
+            'messaging.*',
             'service.*',
             'attendance.*',
             'guest.*',
@@ -405,6 +412,8 @@ class AuthGroups extends ShieldAuthGroups
             'groups.view',
             'groups.manage',
             'groups.assign',
+            'messaging.view',
+            'messaging.send',
             'service.view',
             'service.create',
             'service.edit',

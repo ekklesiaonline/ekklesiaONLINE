@@ -1883,6 +1883,90 @@ CREATE TABLE `membership_stage_history` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
+-- Table structure for table `message_campaign`
+--
+
+DROP TABLE IF EXISTS `message_campaign`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `message_campaign` (
+  `id` int unsigned NOT NULL AUTO_INCREMENT,
+  `parish_id` int unsigned NOT NULL,
+  `channel` enum('email','sms','notification') COLLATE utf8mb4_general_ci NOT NULL,
+  `subject` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `body` text COLLATE utf8mb4_general_ci NOT NULL,
+  `audience` text COLLATE utf8mb4_general_ci COMMENT 'JSON descriptor: statuses, group_ids, team_ids, include_guests',
+  `status` enum('draft','sending','sent','cancelled') COLLATE utf8mb4_general_ci NOT NULL DEFAULT 'draft',
+  `total_recipients` int unsigned NOT NULL DEFAULT '0',
+  `sent_count` int unsigned NOT NULL DEFAULT '0',
+  `skipped_count` int unsigned NOT NULL DEFAULT '0',
+  `failed_count` int unsigned NOT NULL DEFAULT '0',
+  `created_by` int unsigned DEFAULT NULL,
+  `sent_at` datetime DEFAULT NULL,
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `parish_id` (`parish_id`),
+  KEY `status` (`status`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `message_recipient`
+--
+
+DROP TABLE IF EXISTS `message_recipient`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `message_recipient` (
+  `id` int unsigned NOT NULL AUTO_INCREMENT,
+  `campaign_id` int unsigned NOT NULL,
+  `person_id` int unsigned DEFAULT NULL,
+  `guest_id` int unsigned DEFAULT NULL,
+  `user_id` int unsigned DEFAULT NULL,
+  `name` varchar(160) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `first_name` varchar(80) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `last_name` varchar(80) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `address` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT 'Delivery address used (email or phone), like sms_queue.to_number',
+  `status` enum('pending','queued','sent','skipped','failed') COLLATE utf8mb4_general_ci NOT NULL DEFAULT 'pending',
+  `skip_reason` varchar(50) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `queue_id` int unsigned DEFAULT NULL,
+  `error` text COLLATE utf8mb4_general_ci,
+  `sent_at` datetime DEFAULT NULL,
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `campaign_id` (`campaign_id`),
+  KEY `person_id` (`person_id`),
+  KEY `status` (`status`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `message_template`
+--
+
+DROP TABLE IF EXISTS `message_template`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `message_template` (
+  `id` int unsigned NOT NULL AUTO_INCREMENT,
+  `parish_id` int unsigned NOT NULL,
+  `name` varchar(120) COLLATE utf8mb4_general_ci NOT NULL,
+  `channel` enum('email','sms','notification','any') COLLATE utf8mb4_general_ci NOT NULL DEFAULT 'any',
+  `subject` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `body` text COLLATE utf8mb4_general_ci NOT NULL,
+  `is_active` tinyint(1) NOT NULL DEFAULT '1',
+  `created_by` int unsigned DEFAULT NULL,
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  `deleted_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `parish_id` (`parish_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
 -- Table structure for table `migrations`
 --
 

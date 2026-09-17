@@ -14,6 +14,7 @@ return [
     'navPeople'           => 'Personas',
     'navFamilies'         => 'Familias',
     'navGroups'           => 'Grupos pequeños',
+    'navMessages'         => 'Mensajes',
     'navServices'         => 'Servicios',
     'navAttendance'       => 'Asistencia',
     'navGuests'           => 'Visitantes',

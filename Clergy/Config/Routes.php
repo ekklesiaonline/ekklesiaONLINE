@@ -98,6 +98,22 @@ $routes->group('', ['filter' => 'session'], function ($routes) {
         $routes->post('members/(:num)/role', '\\Clergy\\Controllers\\Groups::updateMemberRole/$1', ['filter' => 'permission:groups.assign']);
     });
 
+    $routes->group('messages', ['filter' => 'permission:messaging.view'], function ($routes) {
+        $routes->get('/', '\\Clergy\\Controllers\\Messages::index');
+        $routes->get('view/(:num)', '\\Clergy\\Controllers\\Messages::view/$1');
+        $routes->get('compose', '\\Clergy\\Controllers\\Messages::create', ['filter' => 'permission:messaging.send']);
+        $routes->post('store', '\\Clergy\\Controllers\\Messages::store', ['filter' => 'permission:messaging.send']);
+        $routes->get('preview/(:num)', '\\Clergy\\Controllers\\Messages::preview/$1', ['filter' => 'permission:messaging.send']);
+        $routes->post('send/(:num)', '\\Clergy\\Controllers\\Messages::send/$1', ['filter' => 'permission:messaging.send']);
+        $routes->post('cancel/(:num)', '\\Clergy\\Controllers\\Messages::cancel/$1', ['filter' => 'permission:messaging.send']);
+        $routes->get('templates', '\\Clergy\\Controllers\\Messages::templates', ['filter' => 'permission:messaging.send']);
+        $routes->get('templates/create', '\\Clergy\\Controllers\\Messages::templateForm', ['filter' => 'permission:messaging.send']);
+        $routes->get('templates/edit/(:num)', '\\Clergy\\Controllers\\Messages::templateForm/$1', ['filter' => 'permission:messaging.send']);
+        $routes->post('templates/save', '\\Clergy\\Controllers\\Messages::templateSave', ['filter' => 'permission:messaging.send']);
+        $routes->post('templates/save/(:num)', '\\Clergy\\Controllers\\Messages::templateSave/$1', ['filter' => 'permission:messaging.send']);
+        $routes->post('templates/delete/(:num)', '\\Clergy\\Controllers\\Messages::templateDelete/$1', ['filter' => 'permission:messaging.send']);
+    });
+
     $routes->group('guests', ['filter' => 'permission:guest.view'], function ($routes) {
         $routes->get('/', '\\Clergy\\Controllers\\Guest::index');
         $routes->get('dashboard', '\\Clergy\\Controllers\\Guest::dashboard');

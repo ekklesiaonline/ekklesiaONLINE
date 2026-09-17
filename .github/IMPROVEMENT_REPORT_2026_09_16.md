@@ -280,7 +280,25 @@ second-order hardening (MySQL verification, CI enforcement, PHPStan depth, a11y 
    capacity, duplicates, rejoin semantics, multi-group membership,
    cross-parish rejection, stage derivation incl. the legacy team fallback,
    and parish-wide recompute.
-6. **Bulk messaging** — new module; design before building.
+6. **Bulk messaging** — done. `BulkMessageService` resolves a parish-scoped
+   audience (membership statuses, small groups, ministry teams incl. the
+   legacy `user_id` → `user_person` fallback, and unconverted guests) into
+   distinct canonical recipients, persists `message_campaign` +
+   `message_recipient` drafts, and dispatches per channel: email via
+   `MessagingService::sendEmail`, SMS via `queueSms` (rate-limited by the
+   existing `sms:process` cron), in-app via `notification` +
+   `notification_recipient`. `person.opted_out_channels` /
+   `guest.opted_out_channels` are honored with channel synonyms; undeliverable
+   recipients are recorded as `skipped` with a reason, never silently dropped.
+   `Clergy\Controllers\Messages` under `/messages/*` provides compose →
+   draft → preview (deliverable vs skipped tallies) → send/cancel plus a
+   parish-scoped template library (`message_template`), gated by
+   `messaging.view`/`messaging.send` (parishadmin + clergy write; read-only
+   view for elevated tiers), with `parishScope` + permission filters on every
+   route and audit events on draft/send/cancel/template mutations.
+   `BulkMessageServiceTest` covers audience selectors, dedupe across
+   selectors, opt-out/address/no-user skips, token substitution, per-channel
+   dispatch, tenant isolation, and draft-state transitions.
 
 ### Tier 4 — Legacy retirement (evidence-gated)
 

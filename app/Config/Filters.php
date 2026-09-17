@@ -282,6 +282,8 @@ class Filters extends BaseFilters
                 'followup/*',
                 'groups',
                 'groups/*',
+                'messages',
+                'messages/*',
                 'donations',
                 'donations/*',
                 'expenses',
