@@ -167,7 +167,15 @@ second-order hardening (MySQL verification, CI enforcement, PHPStan depth, a11y 
 - ✅ `Clergy\Guests` — `GuestFollowupService` (progress badges, next pending
   action, status counts, timeline with orphaned `call_task` merge, dashboard
   aggregates); 16 → 0 raw calls.
-- ⬜ a11y sweep and i18n sweep still open.
+- ✅ a11y sweep — `scope="col"` on 442 `<thead>` header cells across 73 views,
+  `scope="row"` on the key/value row labels in `MemberPortal/Views/Families/view.php`;
+  accessible names added to all 20 icon-only controls found by a
+  quoted-attribute-aware detector (localized `aria-label`s plus a new
+  `ChartAccounts.actionToggle` key in en/es/fr); 747 decorative icons marked
+  `aria-hidden="true"` across 123 views. Two detector-based regression guards
+  added to `AccessibilityAndStaticAnalysisTest` (icon-only controls must expose
+  a name; `<thead>` `<th>` must declare scope).
+- ⬜ i18n sweep still open.
 
 ### Tier 3 — Product backlog (from the original report, still valid)
 
