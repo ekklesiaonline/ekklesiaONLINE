@@ -5,14 +5,14 @@
     <div class="col-lg-8">
         <div class="card shadow-sm">
             <div class="card-header">
-                <h5 class="mb-0"><i class="bi bi-list-check" aria-hidden="true"></i> Manual Attendance Entry</h5>
+                <h5 class="mb-0"><i class="bi bi-list-check" aria-hidden="true"></i> <?= lang('Attendance.manualEntryTitle') ?></h5>
             </div>
             <div class="card-body">
                 <form id="bulkAttendanceForm" method="post" action="<?= base_url('attendance/bulk') ?>">
                     <?= csrf_field() ?>
 
                     <div class="mb-3">
-                        <label for="service_id" class="form-label">Service</label>
+                        <label for="service_id" class="form-label"><?= lang('Attendance.colService') ?></label>
                         <select id="service_id" name="service_id" class="form-select" required>
                             <?php foreach ($services as $service): ?>
                                 <?php
@@ -29,34 +29,34 @@
                     </div>
 
                     <div class="mb-3">
-                        <label for="user_ids" class="form-label">Select Members</label>
-                        <select id="user_ids" name="user_ids[]" class="form-select" multiple required data-placeholder="Search and select members">
+                        <label for="user_ids" class="form-label"><?= lang('Attendance.selectMembersLabel') ?></label>
+                        <select id="user_ids" name="user_ids[]" class="form-select" multiple required data-placeholder="<?= esc(lang('Attendance.selectMembersPlaceholder')) ?>">
                             <?php foreach ($member_options as $member): ?>
                                 <option value="<?= (int) $member['id'] ?>">
                                     <?= esc($member['full_name'] . ($member['email'] !== '' ? ' (' . $member['email'] . ')' : '')) ?>
                                 </option>
                             <?php endforeach; ?>
                         </select>
-                        <div class="form-text">Use search in the field above to select multiple members.</div>
+                        <div class="form-text"><?= lang('Attendance.selectMembersHint') ?></div>
                     </div>
 
                     <div class="row g-3 mb-3">
                         <div class="col-md-6">
                             <div class="form-check form-switch">
                                 <input class="form-check-input" type="checkbox" role="switch" id="attended" name="attended" value="1" checked>
-                                <label class="form-check-label" for="attended">Attended</label>
+                                <label class="form-check-label" for="attended"><?= lang('Attendance.attendedLabel') ?></label>
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="form-check form-switch">
                                 <input class="form-check-input" type="checkbox" role="switch" id="communicant" name="communicant" value="1">
-                                <label class="form-check-label" for="communicant">Communicant</label>
+                                <label class="form-check-label" for="communicant"><?= lang('Dashboard.sacramentCommunicant') ?></label>
                             </div>
                         </div>
                     </div>
 
                     <div class="d-grid">
-                        <button type="submit" class="btn btn-primary">Record Attendance for Selected Members</button>
+                        <button type="submit" class="btn btn-primary"><?= lang('Attendance.recordAttendanceBtn') ?></button>
                     </div>
                 </form>
             </div>
@@ -66,22 +66,22 @@
     <div class="col-lg-4">
         <div class="card shadow-sm h-100">
             <div class="card-header">
-                <h6 class="mb-0">Recent Attendance (Selected Service)</h6>
+                <h6 class="mb-0"><?= lang('Attendance.recentAttendanceTitle') ?></h6>
             </div>
             <div class="card-body p-0">
                 <div class="table-responsive" style="max-height: 520px; overflow-y: auto;">
                     <table class="table table-sm mb-0 align-middle">
                         <thead class="sticky-top">
                             <tr>
-                                <th scope="col">Member</th>
+                                <th scope="col"><?= lang('Attendance.colMember') ?></th>
                                 <th scope="col" class="text-center">A</th>
                                 <th scope="col" class="text-center">C</th>
-                                <th scope="col" class="text-end">Actions</th>
+                                <th scope="col" class="text-end"><?= lang('Dashboard.colActions') ?></th>
                             </tr>
                         </thead>
                         <tbody id="recentAttendanceRows">
                             <tr>
-                                <td colspan="4" class="text-center text-muted py-3">Loading...</td>
+                                <td colspan="4" class="text-center text-muted py-3"><?= lang('App.loading') ?></td>
                             </tr>
                         </tbody>
                     </table>
@@ -95,7 +95,7 @@
     <div id="attendanceToast" class="toast align-items-center text-bg-dark border-0" role="status" aria-live="polite" aria-atomic="true">
         <div class="d-flex">
             <div class="toast-body" id="attendanceToastBody"></div>
-            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="<?= esc(lang('App.close')) ?>"></button>
         </div>
     </div>
 </div>
@@ -169,7 +169,7 @@
 
         const renderRows = (records) => {
             if (!Array.isArray(records) || records.length === 0) {
-                rowsEl.innerHTML = '<tr><td colspan="4" class="text-center text-muted py-3">No attendance records.</td></tr>';
+                rowsEl.innerHTML = '<tr><td colspan="4" class="text-center text-muted py-3"><?= esc(lang('Attendance.noAttendanceRecords'), 'js') ?></td></tr>';
                 return;
             }
 
@@ -186,8 +186,8 @@
                         <input type="checkbox" class="form-check-input js-communicant" ${record.communicant ? 'checked' : ''} ${record.attended ? '' : 'disabled'}>
                     </td>
                     <td class="text-end">
-                        <button type="button" class="btn btn-sm btn-outline-primary js-save">Save</button>
-                        <button type="button" class="btn btn-sm btn-outline-danger js-delete">Delete</button>
+                        <button type="button" class="btn btn-sm btn-outline-primary js-save"><?= esc(lang('App.save'), 'js') ?></button>
+                        <button type="button" class="btn btn-sm btn-outline-danger js-delete"><?= esc(lang('App.delete'), 'js') ?></button>
                     </td>
                 </tr>
             `).join('');
@@ -213,7 +213,7 @@
                 return;
             }
 
-            rowsEl.innerHTML = '<tr><td colspan="4" class="text-center text-muted py-3">Loading...</td></tr>';
+            rowsEl.innerHTML = '<tr><td colspan="4" class="text-center text-muted py-3"><?= esc(lang('App.loading'), 'js') ?></td></tr>';
 
             try {
                 const response = await fetch(`<?= base_url('attendance/recent') ?>/${serviceId}`);
@@ -261,21 +261,21 @@
                     updateCsrf(payload);
 
                     if (!response.ok || !payload.success) {
-                        showToast(payload.message || 'Update failed.', false);
+                        showToast(payload.message || '<?= esc(lang('Attendance.updateFailed'), 'js') ?>', false);
                         return;
                     }
 
-                    showToast(payload.message || 'Attendance updated.');
+                    showToast(payload.message || '<?= esc(lang('Attendance.attendanceUpdated'), 'js') ?>');
                     loadRecent();
                 } catch (error) {
-                    showToast('Network error while updating.', false);
+                    showToast('<?= esc(lang('Attendance.networkErrorUpdate'), 'js') ?>', false);
                 }
             }
 
             if (target.classList.contains('js-delete')) {
                 showAppConfirm(
                     '<?= esc(lang('App.confirm'), 'js') ?>',
-                    'Delete this attendance record?',
+                    '<?= esc(lang('Attendance.deleteRecordConfirm'), 'js') ?>',
                     async function() {
                         const body = new URLSearchParams();
                         body.set(csrfName, csrfHash);
@@ -293,14 +293,14 @@
                             updateCsrf(payload);
 
                             if (!response.ok || !payload.success) {
-                                showToast(payload.message || 'Delete failed.', false);
+                                showToast(payload.message || '<?= esc(lang('Attendance.deleteFailed'), 'js') ?>', false);
                                 return;
                             }
 
-                            showToast(payload.message || 'Attendance deleted.');
+                            showToast(payload.message || '<?= esc(lang('Attendance.attendanceDeleted'), 'js') ?>');
                             loadRecent();
                         } catch (error) {
-                            showToast('Network error while deleting.', false);
+                            showToast('<?= esc(lang('Attendance.networkErrorDelete'), 'js') ?>', false);
                         }
                     }
                 );

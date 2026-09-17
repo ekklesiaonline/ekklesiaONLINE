@@ -40,6 +40,7 @@ return [
     'remove' => 'Quitar',
     'removeVolunteerConfirm' => 'Quitar este voluntario del equipo?',
     'noMembersAssigned' => 'No hay miembros asignados a este equipo todavia.',
+    'upcomingSchedules' => 'Próximos horarios',
     'recentSchedules'   => 'Horarios Recientes',
     'viewAllSchedules'  => 'Ver Todos los Horarios',
     'noSchedulesYet' => 'Todavia no hay horarios.',

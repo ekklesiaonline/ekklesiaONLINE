@@ -6,7 +6,7 @@
     <h4><?= lang('Dashboard.vestryMeetings') ?></h4>
     <?php if (!empty($can_manage)): ?>
         <a href="<?= base_url('vestry/create') ?>" class="btn btn-primary btn-sm">
-            <i class="bi bi-plus-circle" aria-hidden="true"></i> New Meeting
+            <i class="bi bi-plus-circle" aria-hidden="true"></i> <?= lang('Dashboard.vestryNewMeeting') ?>
         </a>
     <?php endif; ?>
 </div>
@@ -18,8 +18,8 @@
             <table class="table table-sm table-hover">
                 <thead>
                     <tr>
-                        <th scope="col">Date</th>
-                        <th scope="col">Type</th>
+                        <th scope="col"><?= lang('App.colDate') ?></th>
+                        <th scope="col"><?= lang('App.colType') ?></th>
                         <th scope="col"></th>
                     </tr>
                 </thead>
@@ -33,7 +33,7 @@
                             </td>
                             <td>
                                 <a href="<?= base_url('vestry/view/' . (int) ($meeting['id'] ?? 0)) ?>" class="btn btn-sm btn-outline-secondary">
-                                    <i class="bi bi-eye" aria-hidden="true"></i> View
+                                    <i class="bi bi-eye" aria-hidden="true"></i> <?= lang('App.view') ?>
                                 </a>
                             </td>
                         </tr>
@@ -44,7 +44,7 @@
     </div>
 </div>
 <?php else: ?>
-<div class="alert alert-info">No vestry meetings recorded yet.</div>
+<div class="alert alert-info"><?= lang('Dashboard.vestryNoMeetings') ?></div>
 <?php endif; ?>
 
 <?= $this->endSection() ?>

@@ -67,10 +67,10 @@
         <?php if (! empty($message)) : ?>
             <p><?= esc($message) ?></p>
         <?php endif; ?>
-        <p>You do not have permission to access this resource. If you think this is a mistake, contact your administrator and include what action you were trying to perform.</p>
+        <p><?= lang('Errors.forbiddenHint') ?></p>
         <div class="actions">
-            <a class="btn btn-primary" href="<?= base_url('dashboard') ?>">Go to Dashboard</a>
-            <a class="btn btn-secondary" href="<?= base_url('/') ?>">Go Home</a>
+            <a class="btn btn-primary" href="<?= base_url('dashboard') ?>"><?= lang('Errors.goToDashboard') ?></a>
+            <a class="btn btn-secondary" href="<?= base_url('/') ?>"><?= lang('Errors.goHome') ?></a>
         </div>
     </div>
 </body>

@@ -164,4 +164,5 @@ return [
     'deleteReason' => 'Reason for deletion',
     'deleteReasonPlaceholder' => 'Please provide a reason for deleting this event (required, min 8 characters)',
     'deleteIrreversibleWarning' => 'This action is irreversible. The event and all related data will be permanently deleted.',
+    'deleteReasonMinLength' => 'Reason must be at least 8 characters.',
 ];

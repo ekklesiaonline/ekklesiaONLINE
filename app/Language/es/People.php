@@ -30,4 +30,15 @@ return [
     'quickActions' => 'Acciones rapidas',
     'membershipDetailsSaved' => 'Detalles de membresia guardados.',
     'membershipDetailsSaveFailed' => 'No se pudieron guardar los detalles de membresia.',
+
+    'filterBaptized'    => 'Bautizado',
+    'filterConfirmed'   => 'Confirmado',
+    'filterCommunicant' => 'Comulgante',
+    'filterDependent'   => 'Dependiente',
+    'filterUnder16'     => 'Menor de 16',
+    'filterHasPledge'   => 'Con promesa',
+    'filterLeader'      => 'Lider',
+    'badgeCommunicant'  => 'Com',
+    'badgeDependent'    => 'Dep',
+    'badgePledge'       => 'Promesa',
 ];

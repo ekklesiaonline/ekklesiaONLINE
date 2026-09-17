@@ -283,15 +283,15 @@ $eventsFiltersActive = trim((string) ($search ?? '')) !== '' || trim((string) ($
                 <div class="mb-3">
                     <label for="deleteEventReason" class="form-label"><?= lang('Events.deleteReason') ?> <span class="text-danger">*</span></label>
                     <textarea id="deleteEventReason" class="form-control" rows="3" minlength="8" required placeholder="<?= lang('Events.deleteReasonPlaceholder') ?>"></textarea>
-                    <div class="invalid-feedback">Reason must be at least 8 characters.</div>
+                    <div class="invalid-feedback"><?= lang('Events.deleteReasonMinLength') ?></div>
                 </div>
                 <div class="alert alert-warning small mb-0">
                     <?= lang('Events.deleteIrreversibleWarning') ?>
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-danger" onclick="confirmDeleteEvent()">Delete</button>
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal"><?= lang('App.cancel') ?></button>
+                <button type="button" class="btn btn-danger" onclick="confirmDeleteEvent()"><?= lang('App.delete') ?></button>
             </div>
         </div>
     </div>

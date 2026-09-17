@@ -25,7 +25,7 @@
                 <div class="col-md-3 text-center">
                     <?php if (!empty($parish['logo'])): ?>
                         <img src="<?= base_url('media/parish-logo/' . (int) $parish['id']) ?>"
-                            alt="Parish Logo"
+                            alt="<?= esc(lang('App.parishLogo')) ?>"
                             class="img-thumbnail mb-2"
                             style="max-width: 150px; max-height: 150px; object-fit: contain;">
                     <?php else: ?>
@@ -48,7 +48,7 @@
                     </small>
                     <div id="logo_preview_box" class="mt-3" style="display: none;">
                         <p class="small text-muted mb-2"><?= lang('Parishes.logoPreviewLabel') ?></p>
-                        <img id="logo_preview_img" src="" alt="Preview" class="img-thumbnail" style="max-width: 150px; max-height: 150px; object-fit: contain;">
+                        <img id="logo_preview_img" src="" alt="<?= esc(lang('App.preview')) ?>" class="img-thumbnail" style="max-width: 150px; max-height: 150px; object-fit: contain;">
                     </div>
                 </div>
             </div>
@@ -58,7 +58,7 @@
                 <div class="col-md-12 text-center">
                     <?php if (!empty($parish['banner'])): ?>
                         <img src="<?= base_url('media/parish-banner/' . (int) $parish['id']) ?>"
-                            alt="Parish Banner"
+                            alt="<?= esc(lang('App.parishBanner')) ?>"
                             class="img-thumbnail mb-2 w-100"
                             style="max-height: 220px; object-fit: cover;">
                     <?php else: ?>
@@ -87,7 +87,7 @@
                     <?php endif; ?>
                     <div id="banner_preview_box" class="mt-3" style="display: none;">
                         <p class="small text-muted mb-2"><?= esc(lang('Parishes.bannerPreviewLabel')) ?></p>
-                        <img id="banner_preview_img" src="" alt="Banner Preview" class="img-thumbnail w-100" style="max-height: 220px; object-fit: cover;">
+                        <img id="banner_preview_img" src="" alt="<?= esc(lang('App.bannerPreview')) ?>" class="img-thumbnail w-100" style="max-height: 220px; object-fit: cover;">
                     </div>
                 </div>
             </div>

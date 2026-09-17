@@ -92,13 +92,13 @@
         </p>
 
         <p>
-            Check the URL for typing mistakes, then return to your dashboard or home page. If the problem persists, contact your administrator.
+            <?= lang('Errors.notFoundHint') ?>
         </p>
 
         <p>
-            <a href="<?= base_url('dashboard') ?>">Go to Dashboard</a>
+            <a href="<?= base_url('dashboard') ?>"><?= lang('Errors.goToDashboard') ?></a>
             &nbsp;|&nbsp;
-            <a href="<?= base_url('/') ?>">Go Home</a>
+            <a href="<?= base_url('/') ?>"><?= lang('Errors.goHome') ?></a>
         </p>
     </div>
 </body>

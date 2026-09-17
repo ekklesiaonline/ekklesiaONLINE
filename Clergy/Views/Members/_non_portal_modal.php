@@ -16,7 +16,7 @@
                 <?= csrf_field() ?>
                 <div class="modal-header">
                     <h5 class="modal-title"><?= lang('Members.createStandaloneNonPortal') ?></h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="<?= esc(lang('App.close')) ?>"></button>
                 </div>
                 <div class="modal-body">
                     <div class="mb-3">

@@ -4,7 +4,7 @@
 
 <div class="d-flex justify-content-start align-items-center flex-wrap gap-2 mb-3">
     <a href="<?= base_url('system/events/calendar') ?>" class="btn btn-outline-primary">
-        <i class="bi bi-calendar3" aria-hidden="true"></i> Calendar view
+        <i class="bi bi-calendar3" aria-hidden="true"></i> <?= lang('System.calendarView') ?>
     </a>
     <?php if (auth()->user()->can('system.admin')): ?>
         <a href="<?= base_url('system/events/create') ?>" class="btn btn-outline-primary">
@@ -13,7 +13,7 @@
     <?php endif; ?>
     <?php if (auth()->user()->can('system.admin')): ?>
         <a href="<?= base_url('system/event-calendars') ?>" class="btn btn-outline-secondary">
-            <i class="bi bi-palette" aria-hidden="true"></i> Manage Calendars
+            <i class="bi bi-palette" aria-hidden="true"></i> <?= lang('System.manageCalendars') ?>
         </a>
     <?php endif; ?>
 </div>

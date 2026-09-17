@@ -20,12 +20,12 @@
 
         <p class="lead"><?= lang('Errors.weHitASnag') ?></p>
 
-        <p>Please try again in a few minutes. If the issue persists, contact your administrator and share this timestamp:</p>
+        <p><?= lang('Errors.tryAgainHint') ?></p>
         <p><strong><?= esc(date('Y-m-d H:i:s')) ?> UTC</strong></p>
 
         <p>
-            <a href="<?= base_url('dashboard') ?>" style="margin-right: 10px;">Go to Dashboard</a>
-            <a href="<?= base_url('/') ?>">Go Home</a>
+            <a href="<?= base_url('dashboard') ?>" style="margin-right: 10px;"><?= lang('Errors.goToDashboard') ?></a>
+            <a href="<?= base_url('/') ?>"><?= lang('Errors.goHome') ?></a>
         </p>
 
     </div>

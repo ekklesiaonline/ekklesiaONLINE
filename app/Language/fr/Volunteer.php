@@ -37,6 +37,7 @@ return [
     'remove' => 'Retirer',
     'removeVolunteerConfirm' => 'Retirer ce benevole de l\'equipe?',
     'noMembersAssigned' => 'Aucun membre assigne a cette equipe pour le moment.',
+    'upcomingSchedules' => 'Prochains plannings',
     'recentSchedules'   => 'Plannings Recents',
     'viewAllSchedules'  => 'Voir Tous les Plannings',
     'noSchedulesYet' => 'Aucun planning pour le moment.',

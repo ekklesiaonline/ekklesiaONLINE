@@ -136,6 +136,7 @@ return [
     'autoGenerateIfEmpty'       => 'Dejar en blanco para generar automáticamente',
     'nicknameOptional'          => 'Apodo (opcional)',
     'nonPortalPersonModalHint'  => 'Esta persona se creará sin acceso al portal y no se contará como miembro formal.',
+    'revokePortalAccess'        => 'Revocar acceso al portal',
     'nonPortalMemberModalHint'  => 'Esta persona se creará como miembro sin acceso al portal.',
     'nonPortalCreateSuccess'    => 'Miembro independiente sin portal creado correctamente.',
     'nonPortalCreateFailed'     => 'No se pudo crear el miembro independiente sin portal.',
@@ -309,4 +310,11 @@ return [
     'noPortalEmail'                 => 'Sin cuenta de portal',
 
     'navDedup'                      => 'Deduplicar Miembros',
+
+    'statusHistory'                 => 'Historial de estados',
+    'statusHistoryDate'             => 'Fecha',
+    'statusHistoryBy'               => 'Por',
+    'statusHistoryReason'           => 'Motivo',
+    'statusHistorySystem'           => 'Sistema',
+    'editCanonicalHint'             => 'Los cambios en estos campos de identidad también actualizan el registro canónico de la persona.',
 ];

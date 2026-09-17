@@ -6,9 +6,9 @@
     <div class="brand-bar">
         <h4 class="mb-0 fw-bold">
             <i class="bi bi-person-lines-fill me-2" aria-hidden="true"></i>
-            <?= esc($parish['name'] ?? 'Connection Card') ?>
+            <?= esc($parish['name'] ?? lang('Guests.ccDefaultTitle')) ?>
         </h4>
-        <p class="mb-0 mt-1 opacity-75 small">We're glad you're here! Fill in your details below.</p>
+        <p class="mb-0 mt-1 opacity-75 small"><?= lang('Guests.ccIntro') ?></p>
     </div>
 
     <div class="card-body p-4">
@@ -29,13 +29,13 @@
             <!-- Name row -->
             <div class="row g-3 mb-3">
                 <div class="col-6">
-                    <label class="form-label" for="first_name">First Name <span class="text-danger">*</span></label>
+                    <label class="form-label" for="first_name"><?= lang('Guests.firstName') ?> <span class="text-danger">*</span></label>
                     <input type="text" id="first_name" name="first_name" class="form-control"
                         value="<?= esc(($old['first_name'] ?? ''), 'html') ?>"
                         autocomplete="given-name" required maxlength="100">
                 </div>
                 <div class="col-6">
-                    <label class="form-label" for="last_name">Last Name <span class="text-danger">*</span></label>
+                    <label class="form-label" for="last_name"><?= lang('Guests.lastName') ?> <span class="text-danger">*</span></label>
                     <input type="text" id="last_name" name="last_name" class="form-control"
                         value="<?= esc(($old['last_name'] ?? ''), 'html') ?>"
                         autocomplete="family-name" required maxlength="100">
@@ -44,28 +44,28 @@
 
             <!-- Contact info -->
             <div class="mb-3">
-                <label class="form-label" for="email">Email Address</label>
+                <label class="form-label" for="email"><?= lang('Guests.ccEmailAddress') ?></label>
                 <input type="email" id="email" name="email" class="form-control"
                     value="<?= esc(($old['email'] ?? ''), 'html') ?>"
                     autocomplete="email" maxlength="255">
             </div>
 
             <div class="mb-3">
-                <label class="form-label" for="phone">Phone Number</label>
+                <label class="form-label" for="phone"><?= lang('Guests.ccPhoneNumber') ?></label>
                 <input type="tel" id="phone" name="phone" class="form-control"
                     value="<?= esc(($old['phone'] ?? ''), 'html') ?>"
                     autocomplete="tel" maxlength="30">
             </div>
 
             <div class="mb-3">
-                <label class="form-label" for="address">Home Address</label>
+                <label class="form-label" for="address"><?= lang('Guests.ccHomeAddress') ?></label>
                 <textarea id="address" name="address" class="form-control" rows="2"
                     maxlength="500"><?= esc(($old['address'] ?? ''), 'html') ?></textarea>
             </div>
 
             <!-- Visit date -->
             <div class="mb-3">
-                <label class="form-label" for="visit_date">Date of Visit <span class="text-danger">*</span></label>
+                <label class="form-label" for="visit_date"><?= lang('Guests.ccDateOfVisit') ?> <span class="text-danger">*</span></label>
                 <input type="date" id="visit_date" name="visit_date" class="form-control"
                     value="<?= esc(($old['visit_date'] ?? date('Y-m-d')), 'html') ?>"
                     required max="<?= date('Y-m-d') ?>">
@@ -73,22 +73,22 @@
 
             <!-- Interests (checkboxes) -->
             <div class="mb-4">
-                <label class="form-label d-block">Areas of Interest</label>
+                <label class="form-label d-block"><?= lang('Guests.ccAreasOfInterest') ?></label>
                 <div class="row g-2">
                     <?php
                     $interestOptions = [
-                        'children'    => "Children's Ministry",
-                        'youth'       => 'Youth Ministry',
-                        'music'       => 'Music / Worship',
-                        'missions'    => 'Missions',
-                        'small_groups' => 'Small Groups',
-                        'prayer'      => 'Prayer Team',
-                        'serving'     => 'Serving',
-                        'mens'        => "Men's Ministry",
-                        'women'       => "Women's Ministry",
-                        'seniors'     => "Seniors' Ministry",
-                        'counseling'  => 'Counseling & Support',
-                        'evangelism'  => 'Evangelism',
+                        'children'    => lang('Guests.interestChildren'),
+                        'youth'       => lang('Guests.interestYouth'),
+                        'music'       => lang('Guests.interestMusic'),
+                        'missions'    => lang('Guests.interestMissions'),
+                        'small_groups' => lang('Guests.interestSmallGroups'),
+                        'prayer'      => lang('Guests.interestPrayer'),
+                        'serving'     => lang('Guests.interestServing'),
+                        'mens'        => lang('Guests.interestMens'),
+                        'women'       => lang('Guests.interestWomens'),
+                        'seniors'     => lang('Guests.interestSeniors'),
+                        'counseling'  => lang('Guests.interestCounseling'),
+                        'evangelism'  => lang('Guests.interestEvangelism'),
                     ];
                     $oldInterests = (array) ($old['interests'] ?? []);
                     foreach ($interestOptions as $slug => $label): ?>
@@ -110,10 +110,10 @@
 
             <div class="d-grid gap-2">
                 <button type="submit" class="btn btn-primary btn-lg">
-                    <i class="bi bi-send me-1" aria-hidden="true"></i> Submit Connection Card
+                    <i class="bi bi-send me-1" aria-hidden="true"></i> <?= lang('Guests.ccSubmit') ?>
                 </button>
                 <button type="button" class="btn btn-outline-secondary" id="btnNoThanks">
-                    No, thanks
+                    <?= lang('Guests.ccNoThanks') ?>
                 </button>
             </div>
 
@@ -124,7 +124,7 @@
                         this.closest('.card-body').innerHTML =
                             '<div class="text-center py-4 text-muted">' +
                             '<i class="bi bi-check2-circle fs-2 d-block mb-2" aria-hidden="true"></i>' +
-                            'You can close this window.' +
+                            '<?= esc(lang('Guests.ccCloseWindow'), 'js') ?>' +
                             '</div>';
                     }
                 });
@@ -133,7 +133,7 @@
     </div><!-- /card-body -->
 
     <div class="card-footer text-center text-muted small py-2">
-        <i class="bi bi-shield-lock me-1" aria-hidden="true"></i> Your information is kept private and secure.
+        <i class="bi bi-shield-lock me-1" aria-hidden="true"></i> <?= lang('Guests.ccPrivacy') ?>
     </div>
 </div>
 

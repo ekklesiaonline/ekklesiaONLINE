@@ -137,6 +137,43 @@ final class AccessibilityAndStaticAnalysisTest extends CIUnitTestCase
     }
 
     /**
+     * T2.7: completed language namespaces must have identical key sets in
+     * every supported locale (es/fr must not silently fall back to English).
+     * Namespaces with known pre-existing gaps are excluded until backfilled.
+     */
+    public function testCompletedLanguageNamespacesHaveLocaleParity(): void
+    {
+        $namespaces = ['Guests', 'Attendance', 'Events', 'System', 'Errors', 'Dashboard', 'Volunteer'];
+        $locales = ['es', 'fr'];
+        $problems = [];
+
+        foreach ($namespaces as $ns) {
+            $enFile = ROOTPATH . 'app/Language/en/' . $ns . '.php';
+            if (!is_file($enFile)) {
+                continue;
+            }
+            $enKeys = array_keys((array) require $enFile);
+            foreach ($locales as $loc) {
+                $locFile = ROOTPATH . 'app/Language/' . $loc . '/' . $ns . '.php';
+                if (!is_file($locFile)) {
+                    $problems[] = $loc . '/' . $ns . ' (missing file)';
+                    continue;
+                }
+                $locKeys = array_keys((array) require $locFile);
+                foreach (array_diff($enKeys, $locKeys) as $k) {
+                    $problems[] = $loc . '/' . $ns . '.' . $k;
+                }
+            }
+        }
+
+        $this->assertSame(
+            [],
+            $problems,
+            'Language keys missing from supported locales: ' . implode(', ', $problems)
+        );
+    }
+
+    /**
      * @return list<string>
      */
     private function viewFiles(): array

@@ -22,10 +22,10 @@ $typeKey = 'vestryMeetingType' . ucfirst($meeting['meeting_type'] ?? 'regular');
     </div>
     <div class="card-body">
         <?php if (!empty($meeting['minutes_text'])): ?>
-            <h6>Minutes</h6>
+            <h6><?= lang('Dashboard.vestryMinutes') ?></h6>
             <div class="border rounded p-3 bg-light" style="white-space: pre-wrap;"><?= esc($meeting['minutes_text']) ?></div>
         <?php else: ?>
-            <p class="text-muted small">No minutes recorded.</p>
+            <p class="text-muted small"><?= lang('Dashboard.vestryNoMinutes') ?></p>
         <?php endif; ?>
     </div>
 </div>
@@ -34,7 +34,7 @@ $typeKey = 'vestryMeetingType' . ucfirst($meeting['meeting_type'] ?? 'regular');
     <h5><?= lang('Dashboard.vestryMotions') ?></h5>
     <?php if (!empty($can_manage)): ?>
         <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#newMotionModal">
-            <i class="bi bi-plus-circle" aria-hidden="true"></i> New Motion
+            <i class="bi bi-plus-circle" aria-hidden="true"></i> <?= lang('Dashboard.vestryNewMotion') ?>
         </button>
     <?php endif; ?>
 </div>
@@ -72,7 +72,7 @@ $typeKey = 'vestryMeetingType' . ucfirst($meeting['meeting_type'] ?? 'regular');
                     <span class="badge bg-secondary"><?= lang('Dashboard.voteAbstain') ?>: <?= (int) ($tally['abstain'] ?? 0) ?></span>
                 </div>
                 <div class="col-3">
-                    <small class="text-muted">Total: <?= (int) ($tally['total'] ?? 0) ?></small>
+                    <small class="text-muted"><?= lang('Dashboard.vestryVoteTotal') ?>: <?= (int) ($tally['total'] ?? 0) ?></small>
                 </div>
             </div>
 
@@ -98,14 +98,14 @@ $typeKey = 'vestryMeetingType' . ucfirst($meeting['meeting_type'] ?? 'regular');
 
             <?php if ($status === 'open' && !empty($can_manage)): ?>
             <div class="mt-2">
-                <a href="<?= base_url('vestry/motion/' . (int) ($motion['id'] ?? 0) . '/close') ?>" class="btn btn-sm btn-outline-warning">Close Motion</a>
+                <a href="<?= base_url('vestry/motion/' . (int) ($motion['id'] ?? 0) . '/close') ?>" class="btn btn-sm btn-outline-warning"><?= lang('Dashboard.vestryCloseMotion') ?></a>
             </div>
             <?php endif; ?>
         </div>
     </div>
 <?php endforeach; ?>
 <?php else: ?>
-<p class="text-muted">No motions recorded for this meeting.</p>
+<p class="text-muted"><?= lang('Dashboard.vestryNoMotions') ?></p>
 <?php endif; ?>
 
 <!-- New Motion Modal -->
@@ -116,22 +116,22 @@ $typeKey = 'vestryMeetingType' . ucfirst($meeting['meeting_type'] ?? 'regular');
             <form action="<?= base_url('vestry/meeting/' . (int) ($meeting['id'] ?? 0) . '/motion') ?>" method="post">
                 <?= csrf_field() ?>
                 <div class="modal-header">
-                    <h5 class="modal-title">New Motion</h5>
+                    <h5 class="modal-title"><?= lang('Dashboard.vestryNewMotion') ?></h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
                     <div class="mb-3">
-                        <label class="form-label">Title *</label>
+                        <label class="form-label"><?= lang('Dashboard.vestryMotionTitle') ?> *</label>
                         <input name="title" class="form-control" required>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Body</label>
+                        <label class="form-label"><?= lang('Dashboard.vestryMotionBody') ?></label>
                         <textarea name="body_text" class="form-control" rows="4"></textarea>
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Create Motion</button>
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal"><?= lang('App.cancel') ?></button>
+                    <button type="submit" class="btn btn-primary"><?= lang('Dashboard.vestryCreateMotion') ?></button>
                 </div>
             </form>
         </div>
@@ -140,7 +140,7 @@ $typeKey = 'vestryMeetingType' . ucfirst($meeting['meeting_type'] ?? 'regular');
 <?php endif; ?>
 
 <a href="<?= base_url('/parish/governance') ?>" class="btn btn-outline-secondary mt-3">
-    <i class="bi bi-arrow-left" aria-hidden="true"></i> Back to Governance
+    <i class="bi bi-arrow-left" aria-hidden="true"></i> <?= lang('Dashboard.vestryBackToGovernance') ?>
 </a>
 
 <?= $this->endSection() ?>

@@ -156,7 +156,7 @@ $to = min($total, $page * $perPage);
         <?php endforeach; ?>
     </div>
 
-    <div class="btn-group btn-group-sm" role="group" aria-label="<?= esc(lang('Dashboard.recentActivityPaginationAria')) ?>">
+    <div class="btn-group btn-group-sm" role="group" aria-label="<?= esc(lang('App.pagination')) ?>">
         <a href="<?= $buildPageUrl(max(1, $page - 1), $perPage, $filters) ?>" class="btn btn-outline-secondary <?= $page <= 1 ? 'disabled' : '' ?>">&laquo; <?= lang('Dashboard.recentActivityPrev') ?></a>
         <span class="btn btn-light disabled"><?= lang('Dashboard.recentActivityPageLabel') ?> <?= number_format($page) ?> / <?= number_format($lastPage) ?></span>
         <a href="<?= $buildPageUrl(min($lastPage, $page + 1), $perPage, $filters) ?>" class="btn btn-outline-secondary <?= $page >= $lastPage ? 'disabled' : '' ?>"><?= lang('Dashboard.recentActivityNext') ?> &raquo;</a>

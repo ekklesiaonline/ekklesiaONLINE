@@ -106,7 +106,7 @@
         <span>
             <strong><?= lang('Members.bulkTransferLabel') ?>:</strong> <?= lang('Members.bulkTransferDesc') ?>
         </span>
-        <span class="badge border border-primary text-primary fw-normal" id="selectedCountBadge">0 selected</span>
+        <span class="badge border border-primary text-primary fw-normal" id="selectedCountBadge">0 <?= lang('App.selected') ?></span>
     </div>
 <?php endif; ?>
 
@@ -338,7 +338,7 @@ if (!in_array($selectedPerPage, [25, 50, 100], true)) {
             $pageQueryBase['per_page'] = $selectedPerPage;
             ?>
             <?php if ($totalPages > 1): ?>
-                <nav class="mt-3" aria-label="Members pagination">
+                <nav class="mt-3" aria-label="<?= esc(lang('App.pagination')) ?>">
                     <ul class="pagination pagination-sm mb-0">
                         <?php
                         $prevDisabled = $currentPage <= 1;
@@ -424,7 +424,7 @@ if (!in_array($selectedPerPage, [25, 50, 100], true)) {
                     <?= csrf_field() ?>
                     <div class="modal-header">
                         <h5 class="modal-title"><?= lang('Members.bulkTransferTitle') ?></h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="<?= esc(lang('App.close')) ?>"></button>
                     </div>
                     <div class="modal-body">
                         <div class="alert alert-warning py-2">
@@ -469,11 +469,11 @@ if (!in_array($selectedPerPage, [25, 50, 100], true)) {
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title"><i class="bi bi-exclamation-triangle-fill text-warning me-2" aria-hidden="true"></i><?= lang('App.delete') ?></h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="<?= esc(lang('App.close')) ?>"></button>
                 </div>
                 <div class="modal-body">
                     <p class="fw-semibold mb-2" id="singleDeleteMemberInfo"></p>
-                    <div class="alert alert-warning py-2 mb-3">This action cannot be undone.</div>
+                    <div class="alert alert-warning py-2 mb-3"><?= lang('App.actionCannotBeUndone') ?></div>
                     <label class="form-label" for="singleDeleteMemberReasonInput"><?= lang('App.bulkDeleteReasonLabel') ?></label>
                     <textarea id="singleDeleteMemberReasonInput" class="form-control" rows="3" maxlength="500" placeholder="<?= esc(lang('App.bulkDeleteReasonPlaceholder')) ?>" aria-describedby="singleDeleteMemberReasonFeedback"></textarea>
                     <div id="singleDeleteMemberReasonFeedback" class="invalid-feedback"></div>
@@ -492,11 +492,11 @@ if (!in_array($selectedPerPage, [25, 50, 100], true)) {
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title"><i class="bi bi-exclamation-triangle-fill text-warning me-2" aria-hidden="true"></i><?= lang('App.bulkDeleteWarningTitle') ?></h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="<?= esc(lang('App.close')) ?>"></button>
                 </div>
                 <div class="modal-body">
                     <p class="fw-semibold mb-2" id="bulkDeleteMembersSummary"></p>
-                    <div class="alert alert-warning py-2 mb-3">These deletions cannot be undone.</div>
+                    <div class="alert alert-warning py-2 mb-3"><?= lang('App.deletionsCannotBeUndone') ?></div>
                     <div class="small text-info mb-2"><?= lang('Members.bulkDeleteRecommendedHint') ?></div>
                     <label class="form-label" for="bulkDeleteMembersReasonInput"><?= lang('App.bulkDeleteReasonLabel') ?></label>
                     <textarea id="bulkDeleteMembersReasonInput" class="form-control" rows="3" maxlength="500" placeholder="<?= esc(lang('App.bulkDeleteReasonPlaceholder')) ?>" aria-describedby="bulkDeleteMembersReasonFeedback"></textarea>
@@ -947,7 +947,7 @@ if (!in_array($selectedPerPage, [25, 50, 100], true)) {
 
         function refreshSelectionSummary() {
             const selected = getSelectedMemberIds();
-            $('#selectedCountBadge').text(selected.length + ' selected');
+            $('#selectedCountBadge').text(selected.length + ' <?= esc(lang('App.selected'), 'js') ?>');
             $('#transferSelectionCount').text(selected.length);
         }
 

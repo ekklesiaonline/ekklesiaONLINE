@@ -5,7 +5,7 @@
 <div class="card card-public text-center">
     <div class="brand-bar">
         <h4 class="mb-0 fw-bold">
-            <?= esc($parish['name'] ?? 'Thank You') ?>
+            <?= esc($parish['name'] ?? lang('Guests.ccThanksFallback')) ?>
         </h4>
     </div>
 
@@ -13,18 +13,18 @@
         <div class="mb-4" style="font-size: 3.5rem; line-height: 1;">
             🙏
         </div>
-        <h3 class="fw-bold mb-2">Thank You!</h3>
+        <h3 class="fw-bold mb-2"><?= lang('Guests.ccThanksTitle') ?></h3>
         <p class="text-muted mb-4">
-            We've received your connection card. Our team will be in touch soon.<br>
-            We look forward to seeing you again!
+            <?= lang('Guests.ccThanksReceived') ?><br>
+            <?= lang('Guests.ccThanksAgain') ?>
         </p>
         <div class="d-flex flex-column flex-sm-row gap-2 justify-content-center">
             <button type="button" class="btn btn-primary" id="btnDone">
-                <i class="bi bi-check2 me-1" aria-hidden="true"></i> Done
+                <i class="bi bi-check2 me-1" aria-hidden="true"></i> <?= lang('Guests.ccDone') ?>
             </button>
             <a href="<?= base_url('connect/' . esc($parish['public_token'] ?? '')) ?>"
                 class="btn btn-outline-secondary">
-                <i class="bi bi-arrow-counterclockwise me-1" aria-hidden="true"></i> Fill in another card
+                <i class="bi bi-arrow-counterclockwise me-1" aria-hidden="true"></i> <?= lang('Guests.ccFillAnother') ?>
             </a>
         </div>
 
@@ -32,7 +32,7 @@
             document.getElementById('btnDone').addEventListener('click', function() {
                 var closed = window.close();
                 if (!closed) {
-                    this.textContent = 'You can close this window.';
+                    this.textContent = '<?= esc(lang('Guests.ccCloseWindow'), 'js') ?>';
                     this.disabled = true;
                 }
             });
@@ -40,7 +40,7 @@
     </div>
 
     <div class="card-footer text-center text-muted small py-2">
-        <i class="bi bi-shield-lock me-1" aria-hidden="true"></i> Your information is kept private and secure.
+        <i class="bi bi-shield-lock me-1" aria-hidden="true"></i> <?= lang('Guests.ccPrivacy') ?>
     </div>
 </div>
 

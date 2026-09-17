@@ -326,7 +326,7 @@ if ($filterMailingDiffers)   $paginationBase .= '&mailing_differs=1';
 ?>
 
 <?php if (($total_pages ?? 1) > 1): ?>
-    <nav aria-label="<?= esc(lang('Parishes.pageTitle')) ?> pagination" class="mt-3">
+    <nav aria-label="<?= esc(lang('App.pagination')) ?>" class="mt-3">
         <ul class="pagination justify-content-center">
             <?php if ($current_page > 1): ?>
                 <li class="page-item">
@@ -353,7 +353,7 @@ if ($filterMailingDiffers)   $paginationBase .= '&mailing_differs=1';
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title" id="deleteParishImpactTitle"><?= lang('Parishes.textDeleteImpactTitle') ?></h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="<?= esc(lang('App.close')) ?>"></button>
                 </div>
                 <div class="modal-body">
                     <p class="mb-2" id="deleteParishImpactIntro"></p>

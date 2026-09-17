@@ -37,6 +37,7 @@ return [
     'remove' => 'Remove',
     'removeVolunteerConfirm' => 'Remove this volunteer from the team?',
     'noMembersAssigned' => 'No members assigned to this team yet.',
+    'upcomingSchedules' => 'Upcoming Schedules',
     'recentSchedules'   => 'Recent Schedules',
     'viewAllSchedules'  => 'View All Schedules',
     'noSchedulesYet' => 'No schedules yet.',

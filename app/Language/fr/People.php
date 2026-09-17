@@ -30,4 +30,15 @@ return [
     'quickActions' => 'Actions rapides',
     'membershipDetailsSaved' => 'Details d adhesion enregistres.',
     'membershipDetailsSaveFailed' => 'Impossible d enregistrer les details d adhesion.',
+
+    'filterBaptized'    => 'Baptisé',
+    'filterConfirmed'   => 'Confirmé',
+    'filterCommunicant' => 'Communiant',
+    'filterDependent'   => 'Personne à charge',
+    'filterUnder16'     => 'Moins de 16 ans',
+    'filterHasPledge'   => 'Avec promesse de don',
+    'filterLeader'      => 'Responsable',
+    'badgeCommunicant'  => 'Com',
+    'badgeDependent'    => 'Chg',
+    'badgePledge'       => 'Promesse',
 ];

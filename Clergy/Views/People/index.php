@@ -149,13 +149,13 @@ if (!$canPortalAccessManage) {
                     <div class="row g-2">
                         <?php
                         $filterBadges = [
-                            'is_baptized'    => 'Baptized',
-                            'is_confirmed'   => 'Confirmed',
-                            'is_communicant' => 'Communicant',
-                            'is_dependent'   => 'Dependent',
-                            'is_under_16'    => 'Under 16',
-                            'has_pledge'     => 'Has Pledge',
-                            'is_leader'      => 'Leader',
+                            'is_baptized'    => lang('People.filterBaptized'),
+                            'is_confirmed'   => lang('People.filterConfirmed'),
+                            'is_communicant' => lang('People.filterCommunicant'),
+                            'is_dependent'   => lang('People.filterDependent'),
+                            'is_under_16'    => lang('People.filterUnder16'),
+                            'has_pledge'     => lang('People.filterHasPledge'),
+                            'is_leader'      => lang('People.filterLeader'),
                         ];
                         ?>
                         <?php foreach ($filterBadges as $filterKey => $filterLabel): ?>
@@ -181,7 +181,7 @@ if (!$canPortalAccessManage) {
                     <thead>
                         <tr>
                             <th scope="col" style="width:2.5rem">
-                                <input class="form-check-input" type="checkbox" id="people-select-all" title="Select all">
+                                <input class="form-check-input" type="checkbox" id="people-select-all" title="<?= esc(lang('App.selectAll')) ?>">
                             </th>
                             <th scope="col"><?= lang('People.colName') ?></th>
                             <th scope="col"><?= lang('People.colEmail') ?></th>
@@ -258,10 +258,10 @@ if (!$canPortalAccessManage) {
                                     <?php endif; ?>
                                     <?php if (!empty($person['is_baptized'])): ?><span class="badge border border-success text-success fw-normal me-1">B</span><?php endif; ?>
                                     <?php if (!empty($person['is_confirmed'])): ?><span class="badge border border-success text-success fw-normal me-1">C</span><?php endif; ?>
-                                    <?php if (!empty($person['is_communicant'])): ?><span class="badge border border-info text-info fw-normal me-1">Comm</span><?php endif; ?>
-                                    <?php if (!empty($person['is_dependent'])): ?><span class="badge border border-secondary text-secondary fw-normal me-1">Dep</span><?php endif; ?>
+                                    <?php if (!empty($person['is_communicant'])): ?><span class="badge border border-info text-info fw-normal me-1"><?= lang('People.badgeCommunicant') ?></span><?php endif; ?>
+                                    <?php if (!empty($person['is_dependent'])): ?><span class="badge border border-secondary text-secondary fw-normal me-1"><?= lang('People.badgeDependent') ?></span><?php endif; ?>
                                     <?php if (!empty($person['is_under_16'])): ?><span class="badge border border-warning text-warning fw-normal me-1">&lt;16</span><?php endif; ?>
-                                    <?php if (!empty($person['has_pledge'])): ?><span class="badge border border-success text-success fw-normal me-1">Pledge</span><?php endif; ?>
+                                    <?php if (!empty($person['has_pledge'])): ?><span class="badge border border-success text-success fw-normal me-1"><?= lang('People.badgePledge') ?></span><?php endif; ?>
                                 </td>
                                 <?php if ($canPortalAccessManage): ?>
                                     <td>
@@ -320,7 +320,7 @@ if (!$canPortalAccessManage) {
             );
             ?>
             <?php if ($totalPages > 1): ?>
-                <nav class="mt-3" aria-label="People pagination">
+                <nav class="mt-3" aria-label="<?= esc(lang('App.pagination')) ?>">
                     <ul class="pagination pagination-sm mb-0">
                         <li class="page-item <?= $currentPage <= 1 ? 'disabled' : '' ?>">
                             <a class="page-link" href="<?= $currentPage <= 1 ? '#' : base_url('people?' . http_build_query(array_merge($queryBase, ['page' => $currentPage - 1]))) ?>">&laquo;</a>
@@ -351,11 +351,11 @@ if (!$canPortalAccessManage) {
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title"><i class="bi bi-exclamation-triangle-fill text-warning me-2" aria-hidden="true"></i><?= lang('App.delete') ?></h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="<?= esc(lang('App.close')) ?>"></button>
                 </div>
                 <div class="modal-body">
                     <p class="fw-semibold mb-2" id="singleDeletePersonInfo"></p>
-                    <div class="alert alert-warning py-2 mb-3">This action cannot be undone.</div>
+                    <div class="alert alert-warning py-2 mb-3"><?= lang('App.actionCannotBeUndone') ?></div>
                     <label class="form-label" for="singleDeletePersonReasonInput"><?= lang('App.bulkDeleteReasonLabel') ?></label>
                     <textarea id="singleDeletePersonReasonInput" class="form-control" rows="3" maxlength="500" placeholder="<?= esc(lang('App.bulkDeleteReasonPlaceholder')) ?>" aria-describedby="singleDeletePersonReasonFeedback"></textarea>
                     <div id="singleDeletePersonReasonFeedback" class="invalid-feedback"></div>
@@ -374,11 +374,11 @@ if (!$canPortalAccessManage) {
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title"><i class="bi bi-exclamation-triangle-fill text-warning me-2" aria-hidden="true"></i><?= lang('App.bulkDeleteWarningTitle') ?></h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="<?= esc(lang('App.close')) ?>"></button>
                 </div>
                 <div class="modal-body">
                     <p class="fw-semibold mb-2" id="bulkDeletePeopleSummary"></p>
-                    <div class="alert alert-warning py-2 mb-3">These deletions cannot be undone.</div>
+                    <div class="alert alert-warning py-2 mb-3"><?= lang('App.deletionsCannotBeUndone') ?></div>
                     <label class="form-label" for="bulkDeletePeopleReasonInput"><?= lang('App.bulkDeleteReasonLabel') ?></label>
                     <textarea id="bulkDeletePeopleReasonInput" class="form-control" rows="3" maxlength="500" placeholder="<?= esc(lang('App.bulkDeleteReasonPlaceholder')) ?>" aria-describedby="bulkDeletePeopleReasonFeedback"></textarea>
                     <div id="bulkDeletePeopleReasonFeedback" class="invalid-feedback"></div>
@@ -399,7 +399,7 @@ if (!$canPortalAccessManage) {
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title"><?= lang('People.enablePortalAccess') ?></h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="<?= esc(lang('App.close')) ?>"></button>
                 </div>
                 <form id="enablePersonPortalForm">
                     <div class="modal-body">

@@ -50,7 +50,7 @@
             <?php if (!empty($event['cover_path'])): ?>
                 <div class="col-12">
                     <strong><?= lang('Events.coverImage') ?></strong>
-                    <img src="<?= base_url('media/event-cover/' . (int) ($event['id'] ?? 0)) ?>" alt="Event cover" class="img-fluid rounded mt-2" style="max-height: 320px; object-fit: cover;">
+                    <img src="<?= base_url('media/event-cover/' . (int) ($event['id'] ?? 0)) ?>" alt="<?= esc(lang('App.eventCover')) ?>" class="img-fluid rounded mt-2" style="max-height: 320px; object-fit: cover;">
                 </div>
             <?php endif; ?>
         </div>

@@ -83,12 +83,12 @@
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label">Communication Opt-Outs</label>
+                        <label class="form-label"><?= lang('Guests.optOutsLabel') ?></label>
                         <div class="d-flex flex-wrap gap-3">
                             <?php
                             $optedOutRaw = $guest['opted_out_channels'] ?? '[]';
                             $optedOut    = is_array($optedOutRaw) ? $optedOutRaw : (json_decode((string) $optedOutRaw, true) ?: []);
-                            $channels    = ['email' => 'Email', 'text' => 'Text / SMS', 'call' => 'Phone Call', 'mail' => 'Postal Mail'];
+                            $channels    = ['email' => lang('Guests.channelEmail'), 'text' => lang('Guests.channelText'), 'call' => lang('Guests.channelCall'), 'mail' => lang('Guests.channelMail')];
                             foreach ($channels as $key => $label): ?>
                                 <div class="form-check">
                                     <input class="form-check-input opted-out-channel"
@@ -101,13 +101,13 @@
                             <?php endforeach; ?>
                         </div>
                         <input type="hidden" name="opted_out_channels" id="opted_out_channels_input" value="<?= esc(json_encode($optedOut)) ?>">
-                        <small class="text-muted">Check channels this guest has asked <strong>not</strong> to be contacted through.</small>
+                        <small class="text-muted"><?= lang('Guests.optOutsHintPre') ?> <strong><?= lang('Guests.optOutsHintNot') ?></strong> <?= lang('Guests.optOutsHintPost') ?></small>
                     </div>
 
                     <div class="mb-3">
-                        <label for="preferred_timezone" class="form-label">Preferred Timezone</label>
+                        <label for="preferred_timezone" class="form-label"><?= lang('Guests.preferredTimezone') ?></label>
                         <select class="form-select" id="preferred_timezone" name="preferred_timezone">
-                            <option value="">— Use server default —</option>
+                            <option value=""><?= lang('Guests.useServerDefault') ?></option>
                             <?php
                             $guestTz = $guest['preferred_timezone'] ?? '';
                             $tzGroups = [

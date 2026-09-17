@@ -28,7 +28,7 @@
                         <small class="text-muted d-block mt-1"><?= lang('Members.picAcceptedFormats') ?></small>
                         <div id="member_picture_preview" class="mt-3" style="display: none;">
                             <p class="small text-muted mb-2"><?= lang('App.preview') ?>:</p>
-                            <img id="member_picture_preview_img" src="" alt="Preview" class="img-thumbnail" style="max-width: 150px; max-height: 150px; object-fit: cover;">
+                            <img id="member_picture_preview_img" src="" alt="<?= esc(lang('App.preview')) ?>" class="img-thumbnail" style="max-width: 150px; max-height: 150px; object-fit: cover;">
                         </div>
                     </div>
                 </div>

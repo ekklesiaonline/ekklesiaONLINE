@@ -113,7 +113,7 @@ $badge = $channelBadge[$template['channel']] ?? 'border border-secondary text-bo
                         sandbox="allow-same-origin"
                         class="w-100 border-0 rounded-bottom"
                         style="min-height: 260px;"
-                        title="HTML template preview"></iframe>
+                        title="<?= esc(lang('Guests.tplHtmlPreviewLabel')) ?>"></iframe>
                     <!-- Raw source -->
                     <pre id="htmlPreviewSource"
                         class="d-none mb-0 p-3 small"

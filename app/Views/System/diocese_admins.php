@@ -77,7 +77,7 @@ $admins = $admins ?? [];
                                     <?php if (! $isPrimary && !empty($admin['diocese_id'])): ?>
                                         <form action="<?= base_url('system/admins/grant-diocese-primary/' . (int) $admin['user_id']) ?>" method="post" class="d-inline">
                                             <?= csrf_field() ?>
-                                            <button type="submit" class="btn btn-sm btn-outline-success ms-1" onclick="return confirm('Make this user the primary diocesan admin?')">Make primary</button>
+                                            <button type="submit" class="btn btn-sm btn-outline-success ms-1" onclick="return confirm('<?= esc(lang('System.confirmMakePrimaryDiocese'), 'js') ?>')"><?= lang('System.makePrimary') ?></button>
                                         </form>
                                     <?php endif; ?>
                                 </td>
@@ -149,7 +149,7 @@ $admins = $admins ?? [];
                         <div class="col-12">
                             <div class="form-check">
                                 <input class="form-check-input" type="checkbox" value="1" id="createDAMakePrimary" name="make_primary">
-                                <label class="form-check-label" for="createDAMakePrimary">Set as primary diocesan admin (only if none exists)</label>
+                                <label class="form-check-label" for="createDAMakePrimary"><?= lang('System.diocesePrimaryHint') ?></label>
                             </div>
                         </div>
                         <div class="col-12">

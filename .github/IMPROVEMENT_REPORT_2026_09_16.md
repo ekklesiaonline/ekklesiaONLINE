@@ -175,7 +175,23 @@ second-order hardening (MySQL verification, CI enforcement, PHPStan depth, a11y 
   `aria-hidden="true"` across 123 views. Two detector-based regression guards
   added to `AccessibilityAndStaticAnalysisTest` (icon-only controls must expose
   a name; `<thead>` `<th>` must declare scope).
-- ⬜ i18n sweep still open.
+- ✅ i18n sweep — detector-driven pass over hardcoded English in views (~430
+  candidates triaged). Replaced user-facing strings with `lang()` across Parish,
+  Clergy (Vestry, Import, Reports, People, Members, Guests, Events), System,
+  public connection-card, attendance, and error views; localized Chart.js
+  labels/tooltips and controller-generated CSV headers/labels in
+  `Clergy\Controllers\Reports`; injected localized JS string objects for
+  fetch/toast messages. New keys added in en/es/fr across `App`, `Guests`,
+  `Attendance`, `People`, `Members`, `Events`, `System`, `Dashboard`, `Volunteer`,
+  plus new `Errors.php` locale files. Backfilled pre-existing es/fr gaps in
+  `Guests`, `Dashboard`, `Events`, `System`, and `Members.statusHistory*`.
+  A `testCompletedLanguageNamespacesHaveLocaleParity` guard locks parity for the
+  completed namespaces. Intentionally untranslated: machine-readable
+  `<option value>` submissions, CSV column-name literals, audit action
+  prefixes, brand names, the canonical US parochial-report form, and the
+  dev-only exception backtrace view. Remaining pre-existing es/fr gaps
+  (documented follow-up): `App` nav/audit-scope block, `People` merge-tool
+  block, `Members` dedup/merge/hard-delete block — CI4 falls back to English.
 
 ### Tier 3 — Product backlog (from the original report, still valid)
 

@@ -15,7 +15,7 @@ $permissionsHierarchy = $permissionsHierarchy ?? [];
         <div>
             <button type="button" class="btn btn-sm btn-outline-info me-2" data-bs-toggle="modal"
                 data-bs-target="#permissionsModal">
-                <i class="bi bi-shield-check me-1" aria-hidden="true"></i>View Permissions
+                <i class="bi bi-shield-check me-1" aria-hidden="true"></i><?= lang('System.viewPermissions') ?>
             </button>
             <?php if ($can_create_system_admin ?? false): ?>
             <button type="button" class="btn btn-sm btn-primary me-2" data-bs-toggle="modal"
@@ -275,12 +275,12 @@ $permissionsHierarchy = $permissionsHierarchy ?? [];
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="permissionsModalLabel">
-                    <i class="bi bi-shield-check me-2" aria-hidden="true"></i>System Admin Permissions
+                    <i class="bi bi-shield-check me-2" aria-hidden="true"></i><?= lang('System.systemAdminPermissions') ?>
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
-                <p class="mb-3">All system administrators have full access to all system permissions.</p>
+                <p class="mb-3"><?= lang('System.systemAdminsFullAccess') ?></p>
                 <div id="permissionsModalContent">
                     <?php if (!empty($permissionsHierarchy)): ?>
                         <?php foreach ($permissionsHierarchy as $category => $data): ?>
@@ -304,7 +304,7 @@ $permissionsHierarchy = $permissionsHierarchy ?? [];
                             <?php endif; ?>
                         <?php endforeach; ?>
                     <?php else: ?>
-                        <p class="text-muted">No permissions data available</p>
+                        <p class="text-muted"><?= lang('System.noPermissionsData') ?></p>
                     <?php endif; ?>
                 </div>
             </div>

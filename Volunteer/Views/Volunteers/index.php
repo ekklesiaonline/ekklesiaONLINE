@@ -72,7 +72,7 @@ $currentPage = max(1, (int) ($current_page ?? 1));
 $totalPages = max(1, (int) ($total_pages ?? 1));
 ?>
 <?php if ($totalPages > 1): ?>
-    <nav class="mt-3" aria-label="Volunteer teams pagination">
+    <nav class="mt-3" aria-label="<?= esc(lang('App.pagination')) ?>">
         <ul class="pagination pagination-sm mb-0">
             <?php
             $prevDisabled = $currentPage <= 1;

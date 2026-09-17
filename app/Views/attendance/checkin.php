@@ -5,15 +5,15 @@
     <div class="col-lg-8 mx-auto">
         <div class="card shadow-sm">
             <div class="card-header d-flex justify-content-between align-items-center">
-                <h5 class="mb-0"><i class="bi bi-person-check" aria-hidden="true"></i> Check-in</h5>
-                <span class="badge text-bg-primary">Kiosk Mode</span>
+                <h5 class="mb-0"><i class="bi bi-person-check" aria-hidden="true"></i> <?= lang('Attendance.checkinTitle') ?></h5>
+                <span class="badge text-bg-primary"><?= lang('Attendance.kioskMode') ?></span>
             </div>
             <div class="card-body">
                 <form id="checkinForm" method="post" action="<?= base_url('attendance/checkin') ?>" data-allow-repeat-submit="true">
                     <?= csrf_field() ?>
 
                     <div class="mb-3">
-                        <label for="service_id" class="form-label">Service</label>
+                        <label for="service_id" class="form-label"><?= lang('Attendance.colService') ?></label>
                         <select id="service_id" name="service_id" class="form-select" required>
                             <?php foreach ($services as $service): ?>
                                 <?php
@@ -30,8 +30,8 @@
                     </div>
 
                     <div class="mb-3 position-relative">
-                        <label for="member_search" class="form-label">Member Search</label>
-                        <input type="text" id="member_search" class="form-control" autocomplete="off" placeholder="Search by name, email, username, or ID" required>
+                        <label for="member_search" class="form-label"><?= lang('Attendance.memberSearchLabel') ?></label>
+                        <input type="text" id="member_search" class="form-control" autocomplete="off" placeholder="<?= esc(lang('Attendance.memberSearchPlaceholder')) ?>" required>
                         <input type="hidden" id="user_id" name="user_id" required>
                         <div id="member_results" class="list-group position-absolute w-100 mt-1 shadow-sm d-none" style="z-index: 10; max-height: 260px; overflow-y: auto;"></div>
                     </div>
@@ -40,19 +40,19 @@
                         <div class="col-md-6">
                             <div class="form-check form-switch">
                                 <input class="form-check-input" type="checkbox" role="switch" id="attended" name="attended" value="1" checked>
-                                <label class="form-check-label" for="attended">Attended</label>
+                                <label class="form-check-label" for="attended"><?= lang('Attendance.attendedLabel') ?></label>
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="form-check form-switch">
                                 <input class="form-check-input" type="checkbox" role="switch" id="communicant" name="communicant" value="1">
-                                <label class="form-check-label" for="communicant">Communicant</label>
+                                <label class="form-check-label" for="communicant"><?= lang('Dashboard.sacramentCommunicant') ?></label>
                             </div>
                         </div>
                     </div>
 
                     <div class="d-grid">
-                        <button type="submit" class="btn btn-primary btn-lg">Check In</button>
+                        <button type="submit" class="btn btn-primary btn-lg"><?= lang('Attendance.checkInBtn') ?></button>
                     </div>
                 </form>
             </div>
@@ -64,7 +64,7 @@
     <div id="attendanceToast" class="toast align-items-center text-bg-dark border-0" role="status" aria-live="polite" aria-atomic="true">
         <div class="d-flex">
             <div class="toast-body" id="attendanceToastBody"></div>
-            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="<?= esc(lang('App.close')) ?>"></button>
         </div>
     </div>
 </div>
@@ -179,7 +179,7 @@
             event.preventDefault();
 
             if (!userIdInput.value) {
-                showToast('Select a member from search results.', false);
+                showToast('<?= esc(lang('Attendance.selectMemberFromResults'), 'js') ?>', false);
                 return;
             }
 
@@ -199,11 +199,11 @@
                 updateCsrf(payload);
 
                 if (!response.ok || !payload.success) {
-                    showToast(payload.message || 'Check-in failed.', false);
+                    showToast(payload.message || '<?= esc(lang('Attendance.checkInFailed'), 'js') ?>', false);
                     return;
                 }
 
-                showToast(payload.message || 'Check-in recorded.');
+                showToast(payload.message || '<?= esc(lang('Attendance.checkInRecorded'), 'js') ?>');
 
                 memberSearch.value = '';
                 userIdInput.value = '';
@@ -212,7 +212,7 @@
                 communicantCheckbox.disabled = false;
                 memberSearch.focus();
             } catch (error) {
-                showToast('Network error while saving check-in.', false);
+                showToast('<?= esc(lang('Attendance.networkErrorCheckin'), 'js') ?>', false);
             }
         });
     })();

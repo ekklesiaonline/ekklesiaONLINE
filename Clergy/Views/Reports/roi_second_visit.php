@@ -22,19 +22,19 @@
 <!-- Top action row -->
 <div class="d-flex justify-content-start align-items-center mb-3 gap-2">
     <a href="<?= base_url('guests') ?>" class="btn btn-outline-secondary btn-sm">
-        <i class="bi bi-arrow-left" aria-hidden="true"></i> Guests
+        <i class="bi bi-arrow-left" aria-hidden="true"></i> <?= lang('Guests.pageTitle') ?>
     </a>
     <a href="<?= base_url('guests/reports/followup-completion?start_date=' . esc($report_start_date, 'url') . '&end_date=' . esc($report_end_date, 'url')) ?>"
         class="btn btn-outline-primary btn-sm">
-        <i class="bi bi-check2-square" aria-hidden="true"></i> Completion Report
+        <i class="bi bi-check2-square" aria-hidden="true"></i> <?= lang('Guests.rptCompletionReport') ?>
     </a>
     <a href="<?= base_url('guests/reports/export-csv/roi-second-visit?start_date=' . esc($report_start_date, 'url') . '&end_date=' . esc($report_end_date, 'url')) ?>"
         class="btn btn-outline-success btn-sm">
-        <i class="bi bi-download" aria-hidden="true"></i> Export Summary CSV
+        <i class="bi bi-download" aria-hidden="true"></i> <?= lang('Guests.rptExportSummaryCsv') ?>
     </a>
     <a href="<?= base_url('guests/reports/export-csv/guests-all?start_date=' . esc($report_start_date, 'url') . '&end_date=' . esc($report_end_date, 'url')) ?>"
         class="btn btn-outline-secondary btn-sm ms-auto">
-        <i class="bi bi-file-earmark-spreadsheet" aria-hidden="true"></i> Mail-merge CSV
+        <i class="bi bi-file-earmark-spreadsheet" aria-hidden="true"></i> <?= lang('Guests.rptMailMergeCsv') ?>
     </a>
 </div>
 
@@ -102,7 +102,7 @@
             <div class="card-body">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
-                        <p class="text-muted small mb-1">Total Guests</p>
+                        <p class="text-muted small mb-1"><?= lang('Guests.rptTotalGuests') ?></p>
                         <h3 class="mb-0"><?= $totalGuests ?></h3>
                     </div>
                     <i class="bi bi-people fs-1 text-secondary opacity-50" aria-hidden="true"></i>
@@ -116,9 +116,9 @@
             <div class="card-body">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
-                        <p class="text-muted small mb-1">With Followup – Conversion</p>
+                        <p class="text-muted small mb-1"><?= lang('Guests.rptWithFollowupConversion') ?></p>
                         <h3 class="mb-0 text-success"><?= $wfPct ?>%</h3>
-                        <small class="text-muted"><?= $wfConv ?> of <?= $wfTotal ?></small>
+                        <small class="text-muted"><?= $wfConv ?> <?= lang('Guests.rptOfLabel') ?> <?= $wfTotal ?></small>
                     </div>
                     <i class="bi bi-envelope-check fs-1 text-success opacity-50" aria-hidden="true"></i>
                 </div>
@@ -131,9 +131,9 @@
             <div class="card-body">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
-                        <p class="text-muted small mb-1">No Followup – Conversion</p>
+                        <p class="text-muted small mb-1"><?= lang('Guests.rptNoFollowupConversion') ?></p>
                         <h3 class="mb-0 text-danger"><?= $nfPct ?>%</h3>
-                        <small class="text-muted"><?= $nfConv ?> of <?= $nfTotal ?></small>
+                        <small class="text-muted"><?= $nfConv ?> <?= lang('Guests.rptOfLabel') ?> <?= $nfTotal ?></small>
                     </div>
                     <i class="bi bi-envelope-slash fs-1 text-danger opacity-50" aria-hidden="true"></i>
                 </div>
@@ -146,12 +146,12 @@
             <div class="card-body">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
-                        <p class="text-muted small mb-1">Followup Uplift</p>
+                        <p class="text-muted small mb-1"><?= lang('Guests.rptFollowupUplift') ?></p>
                         <h3 class="mb-0 <?= $upliftClass ?>">
                             <i class="bi <?= $upliftIcon ?>"></i>
                             <?= abs($uplift) ?>pp
                         </h3>
-                        <small class="text-muted">percentage-point difference</small>
+                        <small class="text-muted"><?= lang('Guests.rptPpDifference') ?></small>
                     </div>
                     <i class="bi bi-graph-up-arrow fs-1 text-primary opacity-50" aria-hidden="true"></i>
                 </div>
@@ -165,12 +165,12 @@
 <div class="card mb-4">
     <div class="card-header d-flex align-items-center gap-2">
         <i class="bi bi-bar-chart-fill text-primary" aria-hidden="true"></i>
-        <span class="fw-semibold">Followup Impact – Guest Count vs Conversions</span>
-        <small class="text-muted ms-auto">"Conversion" = joined as member within period</small>
+        <span class="fw-semibold"><?= lang('Guests.rptImpactChartTitle') ?></span>
+        <small class="text-muted ms-auto"><?= lang('Guests.rptConversionNote') ?></small>
     </div>
     <div class="card-body">
         <div style="height: 300px;">
-            <canvas id="roiChart" aria-label="ROI followup impact chart" role="img"></canvas>
+            <canvas id="roiChart" aria-label="<?= esc(lang('Guests.rptChartAria')) ?>" role="img"></canvas>
         </div>
     </div>
 </div>
@@ -179,24 +179,24 @@
 <div class="card mb-4">
     <div class="card-header d-flex align-items-center gap-2">
         <i class="bi bi-table text-secondary" aria-hidden="true"></i>
-        <span class="fw-semibold">Cohort Summary</span>
+        <span class="fw-semibold"><?= lang('Guests.rptCohortSummary') ?></span>
     </div>
     <div class="table-responsive">
         <table class="table table-hover mb-0 align-middle">
             <thead>
                 <tr>
-                    <th scope="col">Cohort</th>
-                    <th scope="col" class="text-end">Total Guests</th>
-                    <th scope="col" class="text-end">Converted to Member</th>
-                    <th scope="col" class="text-end">Conversion Rate</th>
-                    <th scope="col" style="min-width:150px;">Rate Visual</th>
+                    <th scope="col"><?= lang('Guests.rptColCohort') ?></th>
+                    <th scope="col" class="text-end"><?= lang('Guests.rptTotalGuests') ?></th>
+                    <th scope="col" class="text-end"><?= lang('Guests.rptColConverted') ?></th>
+                    <th scope="col" class="text-end"><?= lang('Guests.rptColConversionRate') ?></th>
+                    <th scope="col" style="min-width:150px;"><?= lang('Guests.rptColRateVisual') ?></th>
                 </tr>
             </thead>
             <tbody>
                 <tr>
                     <td>
                         <span class="badge border border-success text-success fw-normal me-1">✓</span>
-                        Received Followup
+                        <?= lang('Guests.rptReceivedFollowup') ?>
                     </td>
                     <td class="text-end"><?= $wfTotal ?></td>
                     <td class="text-end"><?= $wfConv ?></td>
@@ -215,7 +215,7 @@
                 <tr>
                     <td>
                         <span class="badge border border-danger text-danger fw-normal me-1">✗</span>
-                        No Followup
+                        <?= lang('Guests.rptNoFollowup') ?>
                     </td>
                     <td class="text-end"><?= $nfTotal ?></td>
                     <td class="text-end"><?= $nfConv ?></td>
@@ -241,17 +241,17 @@
     <div class="card">
         <div class="card-header d-flex align-items-center gap-2">
             <i class="bi bi-calendar-week text-secondary" aria-hidden="true"></i>
-            <span class="fw-semibold">Weekly Breakdown</span>
+            <span class="fw-semibold"><?= lang('Guests.rptWeeklyBreakdown') ?></span>
         </div>
         <div class="table-responsive">
             <table class="table table-sm table-hover mb-0 align-middle">
                 <thead>
                     <tr>
-                        <th scope="col">Week of</th>
-                        <th scope="col" class="text-end">New Guests</th>
-                        <th scope="col" class="text-end">Received Followup</th>
-                        <th scope="col" class="text-end">Converted</th>
-                        <th scope="col" class="text-end">Conversion %</th>
+                        <th scope="col"><?= lang('Guests.rptColWeekOf') ?></th>
+                        <th scope="col" class="text-end"><?= lang('Guests.rptColNewGuests') ?></th>
+                        <th scope="col" class="text-end"><?= lang('Guests.rptReceivedFollowup') ?></th>
+                        <th scope="col" class="text-end"><?= lang('Guests.rptColConvertedShort') ?></th>
+                        <th scope="col" class="text-end"><?= lang('Guests.rptColConversionPct') ?></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -292,7 +292,7 @@
             data: {
                 labels,
                 datasets: [{
-                        label: 'Total Guests',
+                        label: '<?= esc(lang('Guests.rptTotalGuests'), 'js') ?>',
                         data: totals,
                         backgroundColor: ['rgba(13,110,253,0.65)', 'rgba(108,117,125,0.5)'],
                         borderColor: ['rgba(13,110,253,1)', 'rgba(108,117,125,1)'],
@@ -300,7 +300,7 @@
                         borderRadius: 4,
                     },
                     {
-                        label: 'Converted to Member',
+                        label: '<?= esc(lang('Guests.rptColConverted'), 'js') ?>',
                         data: converted,
                         backgroundColor: ['rgba(25,135,84,0.75)', 'rgba(220,53,69,0.6)'],
                         borderColor: ['rgba(25,135,84,1)', 'rgba(220,53,69,1)'],
@@ -321,7 +321,7 @@
                             footer(items) {
                                 const idx = items[0].dataIndex;
                                 const pcts = <?= $chart_pcts ?>;
-                                return 'Conversion rate: ' + pcts[idx] + '%';
+                                return '<?= esc(lang('Guests.rptConversionRateLabel'), 'js') ?>: ' + pcts[idx] + '%';
                             },
                         },
                     },
@@ -334,7 +334,7 @@
                         },
                         title: {
                             display: true,
-                            text: 'Guests'
+                            text: '<?= esc(lang('Guests.pageTitle'), 'js') ?>'
                         },
                     },
                 },

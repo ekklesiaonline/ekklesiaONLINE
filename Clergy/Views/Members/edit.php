@@ -32,7 +32,7 @@
                             <div class="col-md-4 text-center">
                                 <?php if (!empty($profile['profile_picture'])): ?>
                                     <img src="<?= base_url('media/profile-picture/' . (int) ($profile['user_id'] ?? 0)) ?>"
-                                        alt="Profile Picture"
+                                        alt="<?= esc(lang('Members.profilePicture')) ?>"
                                         class="img-thumbnail mb-2"
                                         id="currentMemberPicture"
                                         onerror="this.classList.add('d-none');document.getElementById('currentMemberPictureFallback')?.classList.remove('d-none');"
@@ -60,7 +60,7 @@
                                 <small class="text-muted d-block mt-1"><?= lang('Members.picAcceptedFormats') ?></small>
                                 <div id="edit_member_picture_preview" class="mt-3" style="display: none;">
                                     <p class="small text-muted mb-2"><?= lang('App.preview') ?>:</p>
-                                    <img id="edit_member_picture_preview_img" src="" alt="Preview" class="img-thumbnail" style="max-width: 120px; max-height: 120px; object-fit: cover;">
+                                    <img id="edit_member_picture_preview_img" src="" alt="<?= esc(lang('App.preview')) ?>" class="img-thumbnail" style="max-width: 120px; max-height: 120px; object-fit: cover;">
                                 </div>
                             </div>
                         </div>

@@ -198,7 +198,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="lyricsPreviewModalLabel"><?= lang('Worship.lyricsPreview') ?></h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="<?= esc(lang('App.close')) ?>"></button>
             </div>
             <div class="modal-body">
                 <pre id="lyricsPreviewContent" class="mb-0" style="white-space: pre-wrap; word-break: break-word; font-family: inherit;"></pre>

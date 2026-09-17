@@ -1,13 +1,9 @@
 <?php
 
-/**
- * Error page strings — English
- */
 return [
-    'whoops'          => 'Whoops!',
-    'weHitASnag'      => 'We seem to have hit a snag. Please try again later...',
-    'pageNotFound'    => '404 - Page Not Found',
-    'sorryCannotFind' => 'Sorry! Cannot seem to find the page you were looking for.',
-    'badRequest'      => '400 - Bad Request',
-    'sorryBadRequest' => 'Sorry! The request could not be understood or was missing required parameters.',
+    'goToDashboard'   => 'Go to Dashboard',
+    'goHome'          => 'Go Home',
+    'notFoundHint'    => 'Check the URL for typing mistakes, then return to your dashboard or home page. If the problem persists, contact your administrator.',
+    'forbiddenHint'   => 'You do not have permission to access this resource. If you think this is a mistake, contact your administrator and include what action you were trying to perform.',
+    'tryAgainHint'    => 'Please try again in a few minutes. If the issue persists, contact your administrator and share this timestamp:',
 ];

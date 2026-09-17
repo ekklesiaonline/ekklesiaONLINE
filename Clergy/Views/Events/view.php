@@ -59,7 +59,7 @@ $formatLocalizedDateTime = static function (?string $value, string $locale): str
             <div class="card-body">
                 <?php if (!empty($event['cover_path'])): ?>
                     <div class="mb-3">
-                        <img src="<?= base_url('media/event-cover/' . (int) ($event['id'] ?? 0)) ?>" alt="Event cover" class="img-thumbnail w-100" style="max-height: 280px; object-fit: cover;">
+                        <img src="<?= base_url('media/event-cover/' . (int) ($event['id'] ?? 0)) ?>" alt="<?= esc(lang('App.eventCover')) ?>" class="img-thumbnail w-100" style="max-height: 280px; object-fit: cover;">
                     </div>
                 <?php endif; ?>
 

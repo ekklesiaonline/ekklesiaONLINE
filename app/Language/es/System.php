@@ -230,4 +230,21 @@ return [
     'emailCannotChange' => 'Email cannot be changed.',
 
     'resetPassword' => 'Reset Password',
+
+    'makePrimary' => 'Designar como principal',
+    'confirmMakePrimaryProvince' => '¿Designar a este usuario como administrador principal de la provincia?',
+    'confirmMakePrimaryDiocese' => '¿Designar a este usuario como administrador principal de la diócesis?',
+    'diocesePrimaryHint' => 'Designar como administrador diocesano principal (solo si no existe ninguno)',
+    'viewPermissions' => 'Ver permisos',
+    'systemAdminPermissions' => 'Permisos de administrador del sistema',
+    'systemAdminsFullAccess' => 'Todos los administradores del sistema tienen acceso completo a todos los permisos del sistema.',
+    'noPermissionsData' => 'No hay datos de permisos disponibles',
+    'calendarView' => 'Vista de calendario',
+    'manageCalendars' => 'Gestionar calendarios',
+    'adminDeleteReasonLabel' => 'Motivo de la eliminación',
+    'adminDeleteReasonPlaceholder' => 'Ingrese el motivo de la eliminación de este administrador (obligatorio, mínimo 10 caracteres)',
+    'adminDeleteReasonRequired' => 'Se requiere un motivo de al menos 10 caracteres.',
+    'permissionDeniedCreateProvinceAdmin' => 'No tiene permiso para crear cuentas de administrador de provincia.',
+    'permissionDeniedCreateDioceseAdmin' => 'No tiene permiso para crear cuentas de administrador de diócesis.',
+    'selectDiocese' => 'Seleccionar diócesis',
 ];

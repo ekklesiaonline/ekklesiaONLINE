@@ -72,4 +72,15 @@ return [
     'sacramentDiscrepancyHeading' => 'Sacrament data mismatch',
     'sacramentDiscrepancyIntro' => 'The sacramental register disagrees with the membership flags or profile dates:',
     'sacramentDiscrepancyFixHint' => 'Run "php spark sacraments:reconcile" or add/remove the matching sacrament record to re-sync.',
+
+    'filterBaptized'    => 'Baptized',
+    'filterConfirmed'   => 'Confirmed',
+    'filterCommunicant' => 'Communicant',
+    'filterDependent'   => 'Dependent',
+    'filterUnder16'     => 'Under 16',
+    'filterHasPledge'   => 'Has Pledge',
+    'filterLeader'      => 'Leader',
+    'badgeCommunicant'  => 'Comm',
+    'badgeDependent'    => 'Dep',
+    'badgePledge'       => 'Pledge',
 ];

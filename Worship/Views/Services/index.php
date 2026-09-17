@@ -103,7 +103,7 @@ if (!in_array($selectedPerPage, [25, 50, 100], true)) {
         $totalPages = max(1, (int) ($total_pages ?? 1));
         ?>
         <?php if ($totalPages > 1): ?>
-            <nav class="mt-3" aria-label="Services pagination">
+            <nav class="mt-3" aria-label="<?= esc(lang('App.pagination')) ?>">
                 <ul class="pagination pagination-sm mb-0">
                     <?php
                     $prevDisabled = $currentPage <= 1;

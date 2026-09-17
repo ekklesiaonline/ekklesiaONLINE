@@ -160,7 +160,7 @@ $fieldError = static function (string $key) use ($sessionErrors): ?string {
         <div class="col-12">
             <div class="border rounded p-3 bg-light-subtle">
                 <strong class="d-block mb-2"><?= lang('Events.currentCoverImage') ?></strong>
-                <img src="<?= base_url('media/event-cover/' . (int) ($eventData['id'] ?? 0)) ?>" alt="Event cover" class="img-thumbnail w-100" style="max-height: 260px; object-fit: cover;">
+                <img src="<?= base_url('media/event-cover/' . (int) ($eventData['id'] ?? 0)) ?>" alt="<?= esc(lang('App.eventCover')) ?>" class="img-thumbnail w-100" style="max-height: 260px; object-fit: cover;">
                 <div class="form-check mt-2">
                     <input class="form-check-input" type="checkbox" name="remove_cover" id="remove_cover" value="1" <?= old('remove_cover') ? 'checked' : '' ?>>
                     <label class="form-check-label" for="remove_cover"><?= lang('Events.removeCoverImage') ?></label>

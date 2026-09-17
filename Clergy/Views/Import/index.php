@@ -18,11 +18,11 @@ $importErrors = session('import_errors');
 ══════════════════════════════════════════ -->
 <?php if ($importResult !== null): ?>
     <div class="alert alert-success alert-dismissible fade show" role="alert">
-        <strong>Import complete:</strong>
-        <?= (int) $importResult['inserted'] ?> new guest(s) added,
-        <?= (int) $importResult['updated'] ?> existing guest(s) updated.
+        <strong><?= lang('Guests.importComplete') ?></strong>
+        <?= lang('Guests.importNewGuests', [(int) $importResult['inserted']]) ?>,
+        <?= lang('Guests.importUpdatedGuests', [(int) $importResult['updated']]) ?>.
         <?php if (! empty($importResult['row_errors'])): ?>
-            <strong><?= count($importResult['row_errors']) ?> row(s) had errors — see below.</strong>
+            <strong><?= lang('Guests.importRowErrorsNote', [count($importResult['row_errors'])]) ?></strong>
         <?php endif; ?>
         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
     </div>
@@ -30,12 +30,12 @@ $importErrors = session('import_errors');
     <?php if (! empty($importResult['row_errors'])): ?>
         <div class="card mb-4 border-warning">
             <div class="card-header bg-warning text-dark fw-semibold">
-                <i class="bi bi-exclamation-triangle me-1" aria-hidden="true"></i> Row Errors
+                <i class="bi bi-exclamation-triangle me-1" aria-hidden="true"></i> <?= lang('Guests.importRowErrors') ?>
             </div>
             <ul class="list-group list-group-flush">
                 <?php foreach ($importResult['row_errors'] as $re): ?>
                     <li class="list-group-item py-2 small">
-                        <strong>Row <?= (int) $re['row'] ?>:</strong>
+                        <strong><?= lang('Guests.importRow') ?> <?= (int) $re['row'] ?>:</strong>
                         <?= esc(implode('; ', (array) $re['errors'])) ?>
                     </li>
                 <?php endforeach; ?>
@@ -59,68 +59,64 @@ $importErrors = session('import_errors');
     <div class="col-lg-7">
         <div class="card">
             <div class="card-header fw-semibold">
-                <i class="bi bi-filetype-csv me-1" aria-hidden="true"></i> Import from CSV
+                <i class="bi bi-filetype-csv me-1" aria-hidden="true"></i> <?= lang('Guests.importFromCsv') ?>
             </div>
             <div class="card-body">
                 <p class="text-muted small mb-3">
-                    Upload a CSV file with guest connection cards.
-                    The first row must be a header row with the exact column names listed below.
-                    Existing guests (matched by e-mail or phone) will have their last-visit date updated;
-                    new guests will be inserted and automatically enrolled into all active follow-up
-                    sequences.
+                    <?= lang('Guests.importIntro') ?>
                 </p>
 
                 <div class="table-responsive mb-4">
                     <table class="table table-bordered table-sm align-middle mb-0">
                         <thead>
                             <tr>
-                                <th scope="col">Column</th>
-                                <th scope="col">Required?</th>
-                                <th scope="col">Notes</th>
+                                <th scope="col"><?= lang('Guests.importColColumn') ?></th>
+                                <th scope="col"><?= lang('Guests.importColRequired') ?></th>
+                                <th scope="col"><?= lang('Guests.importColNotes') ?></th>
                             </tr>
                         </thead>
                         <tbody class="small">
                             <tr>
                                 <td><code>first_name</code></td>
-                                <td><span class="badge border border-danger text-danger fw-normal">Yes</span></td>
-                                <td>Given name</td>
+                                <td><span class="badge border border-danger text-danger fw-normal"><?= lang('App.yes') ?></span></td>
+                                <td><?= lang('Guests.importFirstNameNote') ?></td>
                             </tr>
                             <tr>
                                 <td><code>last_name</code></td>
-                                <td><span class="badge border border-danger text-danger fw-normal">Yes</span></td>
-                                <td>Family name</td>
+                                <td><span class="badge border border-danger text-danger fw-normal"><?= lang('App.yes') ?></span></td>
+                                <td><?= lang('Guests.importLastNameNote') ?></td>
                             </tr>
                             <tr>
                                 <td><code>email</code></td>
-                                <td><span class="badge border border-secondary text-secondary fw-normal">No</span></td>
-                                <td>Used for deduplication. Must be a valid e-mail if present.</td>
+                                <td><span class="badge border border-secondary text-secondary fw-normal"><?= lang('App.no') ?></span></td>
+                                <td><?= lang('Guests.importEmailNote') ?></td>
                             </tr>
                             <tr>
                                 <td><code>phone</code></td>
-                                <td><span class="badge border border-secondary text-secondary fw-normal">No</span></td>
-                                <td>Used for deduplication when e-mail absent.</td>
+                                <td><span class="badge border border-secondary text-secondary fw-normal"><?= lang('App.no') ?></span></td>
+                                <td><?= lang('Guests.importPhoneNote') ?></td>
                             </tr>
                             <tr>
                                 <td><code>address</code></td>
-                                <td><span class="badge border border-secondary text-secondary fw-normal">No</span></td>
-                                <td>Mailing address (free text).</td>
+                                <td><span class="badge border border-secondary text-secondary fw-normal"><?= lang('App.no') ?></span></td>
+                                <td><?= lang('Guests.importAddressNote') ?></td>
                             </tr>
                             <tr>
                                 <td><code>interests</code></td>
-                                <td><span class="badge border border-secondary text-secondary fw-normal">No</span></td>
-                                <td>Comma-separated interest slugs, e.g. <code>children,music</code>.</td>
+                                <td><span class="badge border border-secondary text-secondary fw-normal"><?= lang('App.no') ?></span></td>
+                                <td><?= lang('Guests.importInterestsNote') ?> <code>children,music</code>.</td>
                             </tr>
                             <tr>
                                 <td><code>visit_date</code></td>
-                                <td><span class="badge border border-secondary text-secondary fw-normal">No</span></td>
-                                <td>YYYY-MM-DD. Defaults to today if blank.</td>
+                                <td><span class="badge border border-secondary text-secondary fw-normal"><?= lang('App.no') ?></span></td>
+                                <td><?= lang('Guests.importVisitDateNote') ?></td>
                             </tr>
                         </tbody>
                     </table>
                 </div>
 
                 <a href="<?= base_url('guests/import/sample-csv') ?>" class="btn btn-sm btn-outline-secondary mb-3">
-                    <i class="bi bi-download me-1" aria-hidden="true"></i> Download sample CSV
+                    <i class="bi bi-download me-1" aria-hidden="true"></i> <?= lang('Guests.importSampleCsv') ?>
                 </a>
 
                 <!-- Upload form -->
@@ -130,11 +126,11 @@ $importErrors = session('import_errors');
 
                     <div class="mb-3">
                         <label class="form-label fw-semibold" for="csv_file">
-                            CSV File <span class="text-danger">*</span>
+                            <?= lang('Guests.importCsvFile') ?> <span class="text-danger">*</span>
                         </label>
                         <input type="file" id="csv_file" name="csv_file"
                             class="form-control" accept=".csv,.txt" required>
-                        <div class="form-text">Max 2 MB. UTF-8 encoding recommended.</div>
+                        <div class="form-text"><?= lang('Guests.importCsvHint') ?></div>
                     </div>
 
                     <div id="csvImportErrors" class="alert alert-danger d-none mb-3"></div>
@@ -142,12 +138,12 @@ $importErrors = session('import_errors');
                         <div class="progress" style="height: 6px;">
                             <div class="progress-bar progress-bar-striped progress-bar-animated w-100"></div>
                         </div>
-                        <p class="text-muted small mt-2 mb-0">Uploading and processing…</p>
+                        <p class="text-muted small mt-2 mb-0"><?= lang('Guests.importUploading') ?></p>
                     </div>
 
                     <button type="submit" class="btn btn-primary" id="btnImportCsv">
                         <span class="spinner-border spinner-border-sm d-none me-1" id="importSpinner"></span>
-                        <i class="bi bi-upload me-1" aria-hidden="true"></i> Import CSV
+                        <i class="bi bi-upload me-1" aria-hidden="true"></i> <?= lang('Guests.importCsvBtn') ?>
                     </button>
                 </form>
             </div>
@@ -158,18 +154,16 @@ $importErrors = session('import_errors');
     <div class="col-lg-5">
         <div class="card">
             <div class="card-header fw-semibold">
-                <i class="bi bi-qr-code me-1" aria-hidden="true"></i> Digital Connection Card
+                <i class="bi bi-qr-code me-1" aria-hidden="true"></i> <?= lang('Guests.digitalCardTitle') ?>
             </div>
             <div class="card-body text-center">
                 <p class="text-muted small mb-3">
-                    Share this QR code or link with guests so they can fill in their own
-                    connection card on their phone. New submissions are automatically enrolled
-                    in active follow-up sequences.
+                    <?= lang('Guests.digitalCardIntro') ?>
                 </p>
 
                 <!-- QR code image – served from the server-side proxy route -->
                 <img src="<?= base_url('guests/import/qr') ?>"
-                    alt="QR Code for <?= esc($parish['name']) ?> connection card"
+                    alt="<?= esc(lang('Guests.importQrAlt', [$parish['name']])) ?>"
                     class="img-fluid mb-3 border rounded p-2"
                     style="max-width: 220px;"
                     id="qrCodeImg">
@@ -182,7 +176,7 @@ $importErrors = session('import_errors');
                             value="<?= esc($cardUrl) ?>"
                             readonly>
                         <button class="btn btn-outline-secondary btn-sm" type="button" id="btnCopyLink"
-                            title="Copy link">
+                            title="<?= esc(lang('App.copyLink')) ?>">
                             <i class="bi bi-clipboard" aria-hidden="true"></i>
                         </button>
                     </div>
@@ -191,13 +185,13 @@ $importErrors = session('import_errors');
                     <a href="<?= base_url('guests/import/qr') ?>"
                         download="connection-card-qr.png"
                         class="btn btn-outline-secondary btn-sm">
-                        <i class="bi bi-download me-1" aria-hidden="true"></i> Download QR Image
+                        <i class="bi bi-download me-1" aria-hidden="true"></i> <?= lang('Guests.downloadQr') ?>
                     </a>
 
                     <!-- Open in new tab -->
                     <a href="<?= esc($cardUrl) ?>" target="_blank" rel="noopener noreferrer"
                         class="btn btn-outline-primary btn-sm">
-                        <i class="bi bi-box-arrow-up-right me-1" aria-hidden="true"></i> Preview Card Form
+                        <i class="bi bi-box-arrow-up-right me-1" aria-hidden="true"></i> <?= lang('Guests.previewCardForm') ?>
                     </a>
                 </div>
             </div>
@@ -206,7 +200,7 @@ $importErrors = session('import_errors');
         <!-- Interests hint card -->
         <div class="card mt-3">
             <div class="card-header fw-semibold small">
-                <i class="bi bi-tags me-1" aria-hidden="true"></i> Recognised Interest Slugs
+                <i class="bi bi-tags me-1" aria-hidden="true"></i> <?= lang('Guests.interestSlugsTitle') ?>
             </div>
             <div class="card-body p-2">
                 <div class="d-flex flex-wrap gap-1">
@@ -224,16 +218,28 @@ $importErrors = session('import_errors');
 
 <script>
     (function() {
+        const i18n = {
+            linkCopied: '<?= esc(lang('Guests.importLinkCopied'), 'js') ?>',
+            linkCopiedShort: '<?= esc(lang('Guests.importLinkCopiedShort'), 'js') ?>',
+            selectFile: '<?= esc(lang('Guests.importSelectFile'), 'js') ?>',
+            resultSummary: '<?= esc(lang('Guests.importResultSummary'), 'js') ?>',
+            rowErrorsSuffix: '<?= esc(lang('Guests.importRowErrorsSuffix'), 'js') ?>',
+            importFailed: '<?= esc(lang('Guests.importFailed'), 'js') ?>',
+            networkError: '<?= esc(lang('Guests.importNetworkError'), 'js') ?>',
+            rowErrors: '<?= esc(lang('Guests.importRowErrors'), 'js') ?>',
+            row: '<?= esc(lang('Guests.importRow'), 'js') ?>',
+        };
+
         // ── Copy link
         document.getElementById('btnCopyLink')?.addEventListener('click', function() {
             const input = document.getElementById('cardUrlInput');
             if (!input) return;
             navigator.clipboard?.writeText(input.value)
-                .then(() => showAppToast('Link copied to clipboard.', 'primary'))
+                .then(() => showAppToast(i18n.linkCopied, 'primary'))
                 .catch(() => {
                     input.select();
                     document.execCommand('copy');
-                    showAppToast('Link copied.', 'primary');
+                    showAppToast(i18n.linkCopiedShort, 'primary');
                 });
         });
 
@@ -249,7 +255,7 @@ $importErrors = session('import_errors');
 
             const fileInput = document.getElementById('csv_file');
             if (!fileInput?.files?.length) {
-                errBox.textContent = 'Please select a CSV file.';
+                errBox.textContent = i18n.selectFile;
                 errBox.classList.remove('d-none');
                 return;
             }
@@ -274,9 +280,11 @@ $importErrors = session('import_errors');
 
                     if (data.success) {
                         const r = data.result;
-                        let msg = `Import complete: ${r.inserted} new, ${r.updated} updated.`;
+                        let msg = i18n.resultSummary
+                            .replace('{0}', r.inserted)
+                            .replace('{1}', r.updated);
                         if (r.row_errors && r.row_errors.length) {
-                            msg += ` ${r.row_errors.length} row error(s) — see below.`;
+                            msg += ` ${r.row_errors.length} ${i18n.rowErrorsSuffix}`;
                             renderRowErrors(r.row_errors);
                         }
                         showAppToast(msg, 'primary');
@@ -284,14 +292,14 @@ $importErrors = session('import_errors');
                     } else {
                         const msgs = data.errors ?
                             Object.values(data.errors).join('\n') :
-                            (data.message ?? 'Import failed.');
+                            (data.message ?? i18n.importFailed);
                         errBox.textContent = msgs;
                         errBox.classList.remove('d-none');
                     }
                 })
                 .catch(() => {
                     progress.classList.add('d-none');
-                    errBox.textContent = 'Network error. Please try again.';
+                    errBox.textContent = i18n.networkError;
                     errBox.classList.remove('d-none');
                 })
                 .finally(() => {
@@ -301,9 +309,9 @@ $importErrors = session('import_errors');
         });
 
         function renderRowErrors(errors) {
-            let html = '<strong>Row Errors:</strong><ul class="mb-0 mt-1">';
+            let html = `<strong>${i18n.rowErrors}:</strong><ul class="mb-0 mt-1">`;
             errors.forEach(function(re) {
-                html += `<li>Row ${re.row}: ${re.errors.join('; ')}</li>`;
+                html += `<li>${i18n.row} ${re.row}: ${re.errors.join('; ')}</li>`;
             });
             html += '</ul>';
             errBox.innerHTML = html;

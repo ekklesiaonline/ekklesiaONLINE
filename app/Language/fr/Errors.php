@@ -1,13 +1,9 @@
 <?php
 
-/**
- * Error page strings — French (Francais)
- */
 return [
-    'whoops'          => 'Oups!',
-    'weHitASnag'      => 'Nous avons rencontre un probleme. Veuillez reessayer plus tard...',
-    'pageNotFound'    => '404 - Page introuvable',
-    'sorryCannotFind' => 'Desole. Impossible de trouver la page que vous recherchez.',
-    'badRequest'      => '400 - Requete incorrecte',
-    'sorryBadRequest' => 'Desole. La requete est invalide ou des parametres requis sont manquants.',
+    'goToDashboard'   => 'Aller au tableau de bord',
+    'goHome'          => 'Aller à l\'accueil',
+    'notFoundHint'    => 'Vérifiez l\'URL pour d\'éventuelles erreurs de saisie, puis retournez à votre tableau de bord ou à la page d\'accueil. Si le problème persiste, contactez votre administrateur.',
+    'forbiddenHint'   => 'Vous n\'avez pas la permission d\'accéder à cette ressource. Si vous pensez qu\'il s\'agit d\'une erreur, contactez votre administrateur en précisant l\'action que vous tentiez d\'effectuer.',
+    'tryAgainHint'    => 'Veuillez réessayer dans quelques minutes. Si le problème persiste, contactez votre administrateur en lui communiquant cet horodatage :',
 ];

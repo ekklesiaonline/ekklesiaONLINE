@@ -43,7 +43,7 @@ $admins = $admins ?? [];
                                 <td>
                                     <?= esc(trim((string) ($admin['first_name'] ?? '') . ' ' . (string) ($admin['last_name'] ?? ''))) ?>
                                     <?php if ($isPrimary): ?>
-                                        <span class="badge bg-success ms-1">Primary</span>
+                                        <span class="badge bg-success ms-1"><?= lang('System.primaryLabel') ?></span>
                                     <?php endif; ?>
                                 </td>
                                 <td class="d-none d-md-table-cell"><?= esc((string) ($admin['email'] ?? '')) ?></td>
@@ -67,7 +67,7 @@ $admins = $admins ?? [];
                                     <?php if (! $isPrimary && !empty($admin['province_id'])): ?>
                                         <form action="<?= base_url('system/admins/grant-province-primary/' . (int) $admin['user_id']) ?>" method="post" class="d-inline">
                                             <?= csrf_field() ?>
-                                            <button type="submit" class="btn btn-sm btn-outline-success ms-1" onclick="return confirm('Make this user the primary province admin?')">Make primary</button>
+                                            <button type="submit" class="btn btn-sm btn-outline-success ms-1" onclick="return confirm('<?= esc(lang('System.confirmMakePrimaryProvince'), 'js') ?>')"><?= lang('System.makePrimary') ?></button>
                                         </form>
                                     <?php endif; ?>
                                 </td>

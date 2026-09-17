@@ -67,7 +67,7 @@ class Reports extends BaseController
             $done      = (int) $row['completed_actions'];
             $pct       = $total > 0 ? round($done / $total * 100, 1) : 0.0;
 
-            $labels[]    = 'Week ' . $week;
+            $labels[]    = lang('Guests.rptWeek') . ' ' . $week;
             $completed[] = $done;
             $missed[]    = $total - $done;
             $pctsRaw[]   = $pct;
@@ -138,7 +138,7 @@ class Reports extends BaseController
             'without_followup'   => array_merge($withoutFollowup, ['pct' => $nfPct]),
             'week_breakdown'     => $weekBreakdown,
             // Chart data
-            'chart_labels'       => json_encode(['Received Followup', 'No Followup']),
+            'chart_labels'       => json_encode([lang('Guests.rptReceivedFollowup'), lang('Guests.rptNoFollowup')]),
             'chart_total'        => json_encode([$wfTotal, $nfTotal]),
             'chart_converted'    => json_encode([$wfConverted, $nfConverted]),
             'chart_pcts'         => json_encode([$wfPct, $nfPct]),
@@ -311,7 +311,7 @@ class Reports extends BaseController
     /** @return array{0: string[], 1: array[]} */
     private function csvFollowupCompletion(int $parishId, string $startDate, string $endDate): array
     {
-        $headers = ['Sequence Week', 'Total Scheduled', 'Completed (Sent)', 'Completion %'];
+        $headers = [lang('Guests.rptColSequenceWeek'), lang('Guests.rptColTotalScheduled'), lang('Guests.rptCompletedSent'), lang('Guests.rptColCompletionPct')];
         $source  = $this->queryCompletionByWeek($parishId, $startDate, $endDate);
         $rows    = [];
         foreach ($source as $r) {
@@ -326,7 +326,7 @@ class Reports extends BaseController
     /** @return array{0: string[], 1: array[]} */
     private function csvRoiSecondVisit(int $parishId, string $startDate, string $endDate): array
     {
-        $headers = ['Cohort', 'Total Guests', 'Converted to Member', 'Conversion %'];
+        $headers = [lang('Guests.rptColCohort'), lang('Guests.rptTotalGuests'), lang('Guests.rptColConverted'), lang('Guests.rptColConversionPct')];
         [$with, $without] = $this->queryRoiCohorts($parishId, $startDate, $endDate);
 
         $wfTotal = (int) ($with['total_guests'] ?? 0);
@@ -335,8 +335,8 @@ class Reports extends BaseController
         $nfConv  = (int) ($without['converted'] ?? 0);
 
         return [$headers, [
-            ['Received Followup',  $wfTotal, $wfConv, $wfTotal > 0 ? round($wfConv / $wfTotal * 100, 1) : 0.0],
-            ['No Followup',        $nfTotal, $nfConv, $nfTotal > 0 ? round($nfConv / $nfTotal * 100, 1) : 0.0],
+            [lang('Guests.rptReceivedFollowup'), $wfTotal, $wfConv, $wfTotal > 0 ? round($wfConv / $wfTotal * 100, 1) : 0.0],
+            [lang('Guests.rptNoFollowup'),       $nfTotal, $nfConv, $nfTotal > 0 ? round($nfConv / $nfTotal * 100, 1) : 0.0],
         ]];
     }
 
@@ -344,18 +344,18 @@ class Reports extends BaseController
     private function csvGuestsAll(int $parishId, string $startDate, string $endDate): array
     {
         $headers = [
-            'First Name',
-            'Last Name',
-            'Email',
-            'Phone',
-            'Visit Date',
-            'Source',
-            'Interests',
-            'Followed Up',
-            'Log Entries Total',
-            'Log Entries Sent',
-            'Converted to Member',
-            'Converted Date',
+            lang('Guests.firstName'),
+            lang('Guests.lastName'),
+            lang('Guests.colEmail'),
+            lang('Guests.colPhone'),
+            lang('Guests.visitDate'),
+            lang('Guests.source'),
+            lang('Guests.interestsMinistries'),
+            lang('Guests.followedUpLabel'),
+            lang('Guests.rptLogTotal'),
+            lang('Guests.rptLogSent'),
+            lang('Guests.rptColConverted'),
+            lang('Guests.rptConvertedDate'),
         ];
 
         $guestRows = $this->db
@@ -394,10 +394,10 @@ class Reports extends BaseController
                 $g['visit_date'],
                 $g['source'] ?? '',
                 $g['interests'] ? implode(', ', (array) json_decode((string) $g['interests'], true)) : '',
-                $g['followed_up'] ? 'Yes' : 'No',
+                $g['followed_up'] ? lang('App.yes') : lang('App.no'),
                 $g['log_total'],
                 $g['log_sent'],
-                $g['converted_to_member_at'] ? 'Yes' : 'No',
+                $g['converted_to_member_at'] ? lang('App.yes') : lang('App.no'),
                 $g['converted_to_member_at'] ?? '',
             ];
         }

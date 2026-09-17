@@ -232,4 +232,15 @@ return [
     'maintenanceMessageDefault' => 'The system is under maintenance. Please check back later.',
 
     'resetPassword' => 'Reset Password',
+
+    'makePrimary' => 'Make primary',
+    'confirmMakePrimaryProvince' => 'Make this user the primary province admin?',
+    'confirmMakePrimaryDiocese' => 'Make this user the primary diocesan admin?',
+    'diocesePrimaryHint' => 'Set as primary diocesan admin (only if none exists)',
+    'viewPermissions' => 'View Permissions',
+    'systemAdminPermissions' => 'System Admin Permissions',
+    'systemAdminsFullAccess' => 'All system administrators have full access to all system permissions.',
+    'noPermissionsData' => 'No permissions data available',
+    'calendarView' => 'Calendar view',
+    'manageCalendars' => 'Manage Calendars',
 ];

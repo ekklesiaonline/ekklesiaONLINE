@@ -338,7 +338,7 @@
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title" id="appConfirmModalLabel"></h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="<?= esc(lang('App.close')) ?>"></button>
                 </div>
                 <div class="modal-body" id="appConfirmModalBody"></div>
                 <div class="modal-footer">
@@ -454,14 +454,14 @@
                     <div class="btn-toolbar mb-2 mb-md-0">
                         <div class="top-header-meta ms-auto">
                             <button type="button" class="btn btn-outline-secondary btn-sm theme-toggle-btn"
-                                id="themeToggleBtn" aria-label="Toggle color theme">
+                                id="themeToggleBtn" aria-label="<?= esc(lang('App.themeToggle')) ?>">
                                 <i class="bi bi-moon-stars" id="themeToggleIcon" aria-hidden="true"></i>
                                 <span id="themeToggleLabel"><?= lang('App.themeDark') ?></span>
                             </button>
                             <div class="dropdown">
                                 <button class="btn btn-outline-secondary btn-sm dropdown-toggle language-toggle-btn"
                                     type="button" data-bs-toggle="dropdown" aria-expanded="false"
-                                    aria-label="Change language">
+                                    aria-label="<?= esc(lang('App.changeLanguage')) ?>">
                                     <i class="bi bi-person-circle" aria-hidden="true"></i>
                                     <span
                                         class="language-flag"><?= esc((string) $localeMap[$activeLocale]['flag']) ?></span>
@@ -560,7 +560,7 @@
             wrapper.innerHTML = '' +
                 '<div class="d-flex">' +
                 '<div class="toast-body">' + message + '</div>' +
-                '<button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>' +
+                '<button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="<?= esc(lang('App.close')) ?>"></button>' +
                 '</div>';
 
             container.appendChild(wrapper);

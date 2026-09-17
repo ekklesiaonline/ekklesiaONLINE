@@ -164,6 +164,7 @@ return [
     'nonPortalMemberModalHint'  => 'This person will be created as a member without portal access.',
     'nonPortalCreateSuccess'    => 'Standalone non-portal member created successfully.',
     'nonPortalCreateFailed'     => 'Failed to create standalone non-portal member.',
+    'revokePortalAccess'        => 'Revoke Portal Access',
     'pendingRegistrationsTitle' => 'Pending Parish Registrations',
     'registrationApplicant'     => 'Applicant',
     'registrationEmail'         => 'Email',

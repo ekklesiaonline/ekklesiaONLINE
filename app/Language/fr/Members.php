@@ -138,6 +138,7 @@ return [
     'nonPortalMemberModalHint'  => 'Cette personne sera créée comme membre sans accès au portail.',
     'nonPortalCreateSuccess'    => 'Membre autonome sans portail créé avec succès.',
     'nonPortalCreateFailed'     => 'Impossible de créer le membre autonome sans portail.',
+    'revokePortalAccess'        => 'Révoquer l\'accès au portail',
     'pendingRegistrationsTitle' => 'Inscriptions paroissiales en attente',
     'registrationApplicant'     => 'Candidat',
     'registrationEmail'         => 'Courriel',
@@ -252,4 +253,13 @@ return [
     'editProvinceAdministrator' => 'Modifier un Administrateur Provincial',
     'createAdmin' => 'Créer un Administrateur',
     'provinceAdminDeleteWarning' => 'Cela supprime le compte administrateur provincial et cette action est irréversible.',
+
+    'statusHistory'           => 'Historique des statuts',
+    'statusHistoryDate'       => 'Date',
+    'statusHistoryBy'         => 'Par',
+    'statusHistoryReason'     => 'Motif',
+    'statusHistorySystem'     => 'Système',
+    'createPortalMember'      => 'Ajouter un membre avec portail',
+    'createFirstPortalMember' => 'Ajouter le premier membre avec portail',
+    'editCanonicalHint'       => 'Les modifications de ces champs d\'identité mettent également à jour la fiche canonique de la personne.',
 ];

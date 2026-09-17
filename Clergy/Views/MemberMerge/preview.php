@@ -178,7 +178,7 @@ $mergeableFields = [
                     <i class="bi bi-exclamation-triangle-fill text-warning me-1" aria-hidden="true"></i>
                     <?= lang('Members.mergeConfirmSection') ?>
                 </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="<?= esc(lang('App.close')) ?>"></button>
             </div>
             <div class="modal-body">
                 <p class="mb-2 small text-muted"><?= lang('Members.mergeConfirmBody') ?></p>

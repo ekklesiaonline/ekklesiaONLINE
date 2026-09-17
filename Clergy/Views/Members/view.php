@@ -70,7 +70,7 @@ $profilePictureUrl = ($profilePicturePath !== '' && $profileUserId > 0)
             <button type="button" class="btn btn-outline-danger" id="revokePortalBtn"
                 data-profile-id="<?= (int) $profile['id'] ?>"
                 data-member-name="<?= esc($profile['first_name'] . ' ' . $profile['last_name'], 'attr') ?>">
-                <i class="bi bi-shield-x" aria-hidden="true"></i> Revoke Portal Access
+                <i class="bi bi-shield-x" aria-hidden="true"></i> <?= lang('Members.revokePortalAccess') ?>
             </button>
         <?php endif; ?>
         <?php if ($can_hard_delete ?? false): ?>

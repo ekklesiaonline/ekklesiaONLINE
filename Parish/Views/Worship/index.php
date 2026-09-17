@@ -18,7 +18,7 @@ $formatLocalizedDate = static function (?string $value): string {
         <a href="<?= base_url('followup?status=pending') ?>" class="text-decoration-none d-block h-100">
             <div class="card stat-card warning h-100">
                 <div class="card-body">
-                    <h6 class="text-muted mb-1">Pending Follow-ups</h6>
+                    <h6 class="text-muted mb-1"><?= lang('Dashboard.pendingFollowUps') ?></h6>
                     <h3 class="mb-0"><?= number_format((int) ($pending_followups ?? 0)) ?></h3>
                 </div>
             </div>
@@ -27,7 +27,7 @@ $formatLocalizedDate = static function (?string $value): string {
     <div class="col-md-4">
         <div class="card stat-card danger h-100">
             <div class="card-body">
-                <h6 class="text-muted mb-1">Call Tasks Today</h6>
+                <h6 class="text-muted mb-1"><?= lang('Dashboard.callTasksToday') ?></h6>
                 <h3 class="mb-0"><?= number_format((int) ($call_tasks_today ?? 0)) ?></h3>
             </div>
         </div>
@@ -36,7 +36,7 @@ $formatLocalizedDate = static function (?string $value): string {
         <a href="<?= base_url('guests') ?>" class="text-decoration-none d-block h-100">
             <div class="card stat-card info h-100">
                 <div class="card-body">
-                    <h6 class="text-muted mb-1">Recent Guests</h6>
+                    <h6 class="text-muted mb-1"><?= lang('Dashboard.recentGuests') ?></h6>
                     <h3 class="mb-0"><?= count($recent_guests ?? []) ?></h3>
                 </div>
             </div>
@@ -113,8 +113,8 @@ $formatLocalizedDate = static function (?string $value): string {
             data: {
                 labels: worshipLabels,
                 datasets: [
-                    { label: 'Present', data: worshipAsa, borderColor: '#0d6efd', backgroundColor: 'rgba(13,110,253,0.1)', tension: 0.25, pointRadius: 3 },
-                    { label: 'Communion', data: worshipAsc, borderColor: '#198754', backgroundColor: 'rgba(25,135,84,0.1)', tension: 0.25, pointRadius: 3 },
+                    { label: '<?= lang('Attendance.colPresent') ?>', data: worshipAsa, borderColor: '#0d6efd', backgroundColor: 'rgba(13,110,253,0.1)', tension: 0.25, pointRadius: 3 },
+                    { label: '<?= lang('Dashboard.parishCommunionCountLegend') ?>', data: worshipAsc, borderColor: '#198754', backgroundColor: 'rgba(25,135,84,0.1)', tension: 0.25, pointRadius: 3 },
                 ],
             },
             options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } } },
