@@ -15,6 +15,7 @@ use App\Services\PeopleDirectoryService;
 use App\Services\PeopleViewDataService;
 use App\Services\PersonMembershipDetailsService;
 use App\Services\PersonProfileSyncService;
+use App\Services\SacramentalRecordService;
 
 class People extends BaseController
 {
@@ -28,6 +29,7 @@ class People extends BaseController
     private LeadershipPositionService $leadershipPositionService;
     private DonationService $donationService;
     private AnnualPledgeService $annualPledgeService;
+    private SacramentalRecordService $sacramentalRecordService;
 
     public function __construct()
     {
@@ -39,6 +41,7 @@ class People extends BaseController
         $this->leadershipPositionService = new LeadershipPositionService();
         $this->donationService = new DonationService();
         $this->annualPledgeService = new AnnualPledgeService();
+        $this->sacramentalRecordService = new SacramentalRecordService();
     }
 
     /**
@@ -1368,17 +1371,7 @@ class People extends BaseController
             return $this->jsonResponse($this->apiErrorPayload(lang('App.errorNotFound'), 404, 'PERSON_NOT_FOUND'), 404);
         }
 
-        $rules = [
-            'sacrament_type'      => 'required|max_length[50]',
-            'sacrament_date'      => 'permit_empty|valid_date',
-            'register_ref'        => 'permit_empty|max_length[100]',
-            'certificate_number'  => 'permit_empty|max_length[100]',
-            'officiant_person_id' => 'permit_empty|is_not_unique[person.id]',
-            'location_notes'      => 'permit_empty|max_length[255]',
-            'notes'               => 'permit_empty|max_length[1000]',
-        ];
-
-        if (!$this->validate($rules)) {
+        if (!$this->validate($this->sacramentalRecordService->recordValidationRules())) {
             return $this->jsonResponse([
                 'success' => false,
                 'code' => 'VALIDATION_FAILED',
@@ -1390,7 +1383,6 @@ class People extends BaseController
         $officiantPersonId = $this->request->getPost('officiant_person_id');
         $officiantPersonId = ($officiantPersonId !== '' && $officiantPersonId !== null) ? (int) $officiantPersonId : null;
 
-        $model = new \App\Models\SacramentalRecordModel();
         $payload = [
             'parish_id'           => $parishId,
             'person_id'           => $personId,
@@ -1403,19 +1395,18 @@ class People extends BaseController
             'notes'               => trim((string) ($this->request->getPost('notes') ?? '')),
         ];
 
-        if ($model->insert($payload) === false) {
+        $recordId = $this->sacramentalRecordService->createRecord($payload);
+        if ($recordId === null) {
             return $this->jsonResponse([
                 'success' => false,
-                'message' => implode(' ', array_values($model->errors() ?: [lang('Sacraments.saveFailed')])),
+                'message' => implode(' ', array_values($this->sacramentalRecordService->recordErrors() ?: [lang('Sacraments.saveFailed')])),
             ], 500);
         }
-
-        $recordId = (int) $model->getInsertID();
 
         // Keep person_membership_details flags + profile dates in sync with
         // the canonical sacramental_record. sacramental_record is the source
         // of truth for baptism/confirmation status.
-        (new \App\Services\SacramentFlagSyncService())->applyForPerson(
+        $this->sacramentalRecordService->syncFlags(
             $personId,
             $parishId,
             auth()->loggedIn() ? (int) auth()->id() : null,
@@ -1461,23 +1452,12 @@ class People extends BaseController
             return $this->jsonResponse($this->apiErrorPayload(lang('App.errorNoParishScope'), 403, 'NO_PARISH'), 403);
         }
 
-        $model = new \App\Models\SacramentalRecordModel();
-        $record = $model->getRecordForParish($recordId, $parishId);
-        if (!$record) {
+        $record = $this->sacramentalRecordService->findRecordInParish($recordId, $parishId);
+        if ($record === null) {
             return $this->jsonResponse($this->apiErrorPayload(lang('App.errorNotFound'), 404, 'SACRAMENT_NOT_FOUND'), 404);
         }
 
-        $rules = [
-            'sacrament_type'      => 'required|max_length[50]',
-            'sacrament_date'      => 'permit_empty|valid_date',
-            'register_ref'        => 'permit_empty|max_length[100]',
-            'certificate_number'  => 'permit_empty|max_length[100]',
-            'officiant_person_id' => 'permit_empty|is_not_unique[person.id]',
-            'location_notes'      => 'permit_empty|max_length[255]',
-            'notes'               => 'permit_empty|max_length[1000]',
-        ];
-
-        if (!$this->validate($rules)) {
+        if (!$this->validate($this->sacramentalRecordService->recordValidationRules())) {
             return $this->jsonResponse([
                 'success' => false,
                 'code' => 'VALIDATION_FAILED',
@@ -1499,16 +1479,16 @@ class People extends BaseController
             'notes'               => trim((string) ($this->request->getPost('notes') ?? '')),
         ];
 
-        if (!$model->update($recordId, $payload)) {
+        if (!$this->sacramentalRecordService->updateRecord($recordId, $payload)) {
             return $this->jsonResponse([
                 'success' => false,
-                'message' => implode(' ', array_values($model->errors() ?: [lang('Sacraments.updateFailed')])),
+                'message' => implode(' ', array_values($this->sacramentalRecordService->recordErrors() ?: [lang('Sacraments.updateFailed')])),
             ], 500);
         }
 
         // The sacrament_type or date may have changed (e.g. "other" -> "baptism"),
         // so recompute the derived flags + profile dates from all records.
-        (new \App\Services\SacramentFlagSyncService())->applyForPerson(
+        $this->sacramentalRecordService->syncFlags(
             (int) ($record['person_id'] ?? 0),
             $parishId,
             auth()->loggedIn() ? (int) auth()->id() : null,
@@ -1552,13 +1532,12 @@ class People extends BaseController
             return $this->jsonResponse($this->apiErrorPayload(lang('App.errorNoParishScope'), 403, 'NO_PARISH'), 403);
         }
 
-        $model = new \App\Models\SacramentalRecordModel();
-        $record = $model->getRecordForParish($recordId, $parishId);
-        if (!$record) {
+        $record = $this->sacramentalRecordService->findRecordInParish($recordId, $parishId);
+        if ($record === null) {
             return $this->jsonResponse($this->apiErrorPayload(lang('App.errorNotFound'), 404, 'SACRAMENT_NOT_FOUND'), 404);
         }
 
-        if (!$model->delete($recordId)) {
+        if (!$this->sacramentalRecordService->deleteRecord($recordId)) {
             return $this->jsonResponse([
                 'success' => false,
                 'message' => lang('Sacraments.deleteFailed') ?? 'Failed to delete sacramental record.',
@@ -1567,7 +1546,7 @@ class People extends BaseController
 
         // Deleting the only baptism/confirmation record must clear the derived
         // flags + profile dates. Recompute from the remaining records.
-        (new \App\Services\SacramentFlagSyncService())->applyForPerson(
+        $this->sacramentalRecordService->syncFlags(
             (int) ($record['person_id'] ?? 0),
             $parishId,
             auth()->loggedIn() ? (int) auth()->id() : null,
@@ -1610,18 +1589,12 @@ class People extends BaseController
             return $this->jsonResponse($this->apiErrorPayload(lang('App.errorNoParishScope'), 403, 'NO_PARISH'), 403);
         }
 
-        $recordModel = new \App\Models\SacramentalRecordModel();
-        $record = $recordModel->getRecordForParish($recordId, $parishId);
-        if (!$record) {
+        $record = $this->sacramentalRecordService->findRecordInParish($recordId, $parishId);
+        if ($record === null) {
             return $this->jsonResponse($this->apiErrorPayload(lang('App.errorNotFound'), 404, 'SACRAMENT_NOT_FOUND'), 404);
         }
 
-        $rules = [
-            'person_id' => 'required|is_not_unique[person.id]',
-            'participant_role' => 'required|max_length[50]',
-        ];
-
-        if (!$this->validate($rules)) {
+        if (!$this->validate($this->sacramentalRecordService->participantCreateRules())) {
             return $this->jsonResponse([
                 'success' => false,
                 'code' => 'VALIDATION_FAILED',
@@ -1633,13 +1606,7 @@ class People extends BaseController
         $personId = (int) ($this->request->getPost('person_id') ?? 0);
         $role = trim((string) $this->request->getPost('participant_role'));
 
-        $participantModel = new \App\Models\SacramentalParticipantModel();
-        $existing = $participantModel->where('sacramental_record_id', $recordId)
-            ->where('person_id', $personId)
-            ->where('participant_role', $role)
-            ->first();
-
-        if ($existing) {
+        if ($this->sacramentalRecordService->participantExists($recordId, $personId, $role)) {
             return $this->jsonResponse([
                 'success' => false,
                 'message' => lang('Sacraments.participantAlreadyExists'),
@@ -1652,14 +1619,13 @@ class People extends BaseController
             'participant_role' => $role,
         ];
 
-        if ($participantModel->insert($payload) === false) {
+        $participantId = $this->sacramentalRecordService->createParticipant($payload);
+        if ($participantId === null) {
             return $this->jsonResponse([
                 'success' => false,
-                'message' => implode(' ', array_values($participantModel->errors() ?: [lang('Sacraments.participantAddFailed')])),
+                'message' => implode(' ', array_values($this->sacramentalRecordService->participantErrors() ?: [lang('Sacraments.participantAddFailed')])),
             ], 500);
         }
-
-        $participantId = (int) $participantModel->getInsertID();
 
         $this->audit()->log('sacramental_participant.create', [
             'parish_id' => $parishId,
@@ -1698,17 +1664,12 @@ class People extends BaseController
             return $this->jsonResponse($this->apiErrorPayload(lang('App.errorNoParishScope'), 403, 'NO_PARISH'), 403);
         }
 
-        $participantModel = new \App\Models\SacramentalParticipantModel();
-        $participant = $participantModel->getParticipantWithRecord($participantId);
-        if (!$participant || (int) ($participant['parish_id'] ?? 0) !== $parishId) {
+        $participant = $this->sacramentalRecordService->findParticipantInParish($participantId, $parishId);
+        if ($participant === null) {
             return $this->jsonResponse($this->apiErrorPayload(lang('App.errorNotFound'), 404, 'PARTICIPANT_NOT_FOUND'), 404);
         }
 
-        $rules = [
-            'participant_role' => 'required|max_length[50]',
-        ];
-
-        if (!$this->validate($rules)) {
+        if (!$this->validate($this->sacramentalRecordService->participantUpdateRules())) {
             return $this->jsonResponse([
                 'success' => false,
                 'code' => 'VALIDATION_FAILED',
@@ -1721,23 +1682,17 @@ class People extends BaseController
         $recordId = (int) ($participant['sacramental_record_id'] ?? 0);
         $personId = (int) ($participant['person_id'] ?? 0);
 
-        $existing = $participantModel->where('sacramental_record_id', $recordId)
-            ->where('person_id', $personId)
-            ->where('participant_role', $role)
-            ->where('id !=', $participantId)
-            ->first();
-
-        if ($existing) {
+        if ($this->sacramentalRecordService->participantExists($recordId, $personId, $role, $participantId)) {
             return $this->jsonResponse([
                 'success' => false,
                 'message' => lang('Sacraments.participantAlreadyExists'),
             ], 409);
         }
 
-        if (!$participantModel->update($participantId, ['participant_role' => $role])) {
+        if (!$this->sacramentalRecordService->updateParticipantRole($participantId, $role)) {
             return $this->jsonResponse([
                 'success' => false,
-                'message' => implode(' ', array_values($participantModel->errors() ?: [lang('Sacraments.participantUpdateFailed')])),
+                'message' => implode(' ', array_values($this->sacramentalRecordService->participantErrors() ?: [lang('Sacraments.participantUpdateFailed')])),
             ], 500);
         }
 
@@ -1778,13 +1733,12 @@ class People extends BaseController
             return $this->jsonResponse($this->apiErrorPayload(lang('App.errorNoParishScope'), 403, 'NO_PARISH'), 403);
         }
 
-        $participantModel = new \App\Models\SacramentalParticipantModel();
-        $participant = $participantModel->getParticipantWithRecord($participantId);
-        if (!$participant || (int) ($participant['parish_id'] ?? 0) !== $parishId) {
+        $participant = $this->sacramentalRecordService->findParticipantInParish($participantId, $parishId);
+        if ($participant === null) {
             return $this->jsonResponse($this->apiErrorPayload(lang('App.errorNotFound'), 404, 'PARTICIPANT_NOT_FOUND'), 404);
         }
 
-        if (!$participantModel->delete($participantId)) {
+        if (!$this->sacramentalRecordService->deleteParticipant($participantId)) {
             return $this->jsonResponse([
                 'success' => false,
                 'message' => lang('Sacraments.participantDeleteFailed') ?? 'Failed to delete participant.',
