@@ -139,6 +139,7 @@ return [
     'nonPortalCreateSuccess'    => 'Membre autonome sans portail créé avec succès.',
     'nonPortalCreateFailed'     => 'Impossible de créer le membre autonome sans portail.',
     'revokePortalAccess'        => 'Révoquer l\'accès au portail',
+    'prefilledFromGuest'        => 'Ce formulaire a été pré-rempli depuis une fiche d\'invité. L\'enregistrement crée le compte membre et marque l\'invité comme converti.',
     'pendingRegistrationsTitle' => 'Inscriptions paroissiales en attente',
     'registrationApplicant'     => 'Candidat',
     'registrationEmail'         => 'Courriel',

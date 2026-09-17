@@ -625,6 +625,48 @@ class Guests extends BaseController
             ->with('success', lang('Guests.guestStatusUpdated'));
     }
 
+    /**
+     * Redirect to the member create form with the guest's details pre-filled
+     * (flashdata 'guest_data' consumed by Members::create). The guest_id is
+     * carried through so store() can complete the conversion bookkeeping.
+     */
+    public function createAccountFromGuest($id)
+    {
+        if ($redirect = $this->requirePermission('guest.edit')) {
+            return $redirect;
+        }
+
+        if ($redirect = $this->requirePermission('member.create')) {
+            return $redirect;
+        }
+
+        if ($redirect = $this->requireParish()) {
+            return $redirect;
+        }
+
+        $guest = $this->guestModel->find($id);
+
+        if (!$guest || $guest['parish_id'] != $this->getOperationalParishId()) {
+            return redirect()->to('/guests')->with('error', lang('Guests.guestNotFound'));
+        }
+
+        if (!empty($guest['converted_to_member_at'])) {
+            return redirect()->to('/guests/view/' . $id)->with('error', lang('Guests.guestAlreadyConverted'));
+        }
+
+        session()->setFlashdata('guest_data', [
+            'guest_id'   => (int) $guest['id'],
+            'role'       => 'member',
+            'first_name' => (string) ($guest['first_name'] ?? ''),
+            'last_name'  => (string) ($guest['last_name'] ?? ''),
+            'email'      => (string) ($guest['email'] ?? ''),
+            'phone'      => (string) ($guest['phone'] ?? ''),
+            'address'    => (string) ($guest['address'] ?? ''),
+        ]);
+
+        return redirect()->to('/members/create');
+    }
+
     // ------------------------------------------------------------------
     // Follow-up Manual Timeline
     // ------------------------------------------------------------------

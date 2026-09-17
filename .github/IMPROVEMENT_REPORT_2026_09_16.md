@@ -206,7 +206,17 @@ second-order hardening (MySQL verification, CI enforcement, PHPStan depth, a11y 
    standing loss does not prevent editing or closing a position.
    `LeadershipPositionGateTest` covers the category matrix, current-year
    semantics, and override scoping.
-2. **Guest-to-member conversion pre-fill** — wire flash data into the create form.
+2. **Guest-to-member conversion pre-fill** — ✅ implemented. New
+   `guests/create-account/{id}` endpoint (`Guests::createAccountFromGuest`)
+   flashes the guest's details into `guest_data` — the consumption path in
+   `Members::create()` already existed but was dead code. The member create
+   form now carries a hidden `guest_id` plus a prefill notice
+   (`Members.prefilledFromGuest`); `store()` resolves the guest parish-scoped,
+   reuses `guest.person_id` via `PersonConversionService::convertToMember`
+   (no duplicate person; affiliation→member, follow-ups skipped, guest marked
+   converted) or falls back to `recordManualConversion` for guests without a
+   linked person. New keys in en/es/fr; `GuestConversionPrefillTest` covers
+   the bookkeeping + wiring contract. Instant `convertToMember` unchanged.
 3. **Membership pathway tracking** — stage model + transitions.
 4. **Bank reconciliation** — largest item; schema exists, needs full module.
 5. **Small groups** and **bulk messaging** — new modules; design before building.

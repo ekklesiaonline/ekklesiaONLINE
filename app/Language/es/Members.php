@@ -137,6 +137,7 @@ return [
     'nicknameOptional'          => 'Apodo (opcional)',
     'nonPortalPersonModalHint'  => 'Esta persona se creará sin acceso al portal y no se contará como miembro formal.',
     'revokePortalAccess'        => 'Revocar acceso al portal',
+    'prefilledFromGuest'        => 'Este formulario se completó desde un registro de invitado. Al guardar se crea la cuenta de miembro y el invitado queda marcado como convertido.',
     'nonPortalMemberModalHint'  => 'Esta persona se creará como miembro sin acceso al portal.',
     'nonPortalCreateSuccess'    => 'Miembro independiente sin portal creado correctamente.',
     'nonPortalCreateFailed'     => 'No se pudo crear el miembro independiente sin portal.',

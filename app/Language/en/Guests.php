@@ -581,4 +581,6 @@ return [
     'interestSeniors'              => "Seniors' Ministry",
     'interestCounseling'           => 'Counseling & Support',
     'interestEvangelism'           => 'Evangelism',
+    'createAccountBtn'             => 'Create Member Account',
+    'guestAlreadyConverted'        => 'This guest has already been converted to a member.',
 ];

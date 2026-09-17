@@ -165,6 +165,7 @@ return [
     'nonPortalCreateSuccess'    => 'Standalone non-portal member created successfully.',
     'nonPortalCreateFailed'     => 'Failed to create standalone non-portal member.',
     'revokePortalAccess'        => 'Revoke Portal Access',
+    'prefilledFromGuest'        => 'This form was pre-filled from a guest record. Saving creates the member account and marks the guest as converted.',
     'pendingRegistrationsTitle' => 'Pending Parish Registrations',
     'registrationApplicant'     => 'Applicant',
     'registrationEmail'         => 'Email',

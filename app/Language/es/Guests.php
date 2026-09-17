@@ -556,4 +556,6 @@ return [
     'interestEvangelism'           => 'Evangelismo',
     'guestIntakeFailed'            => 'No se pudo crear el registro de persona para el invitado.',
     'guestConversionFailed'        => 'No se pudo convertir al invitado en miembro.',
+    'createAccountBtn'             => 'Crear cuenta de miembro',
+    'guestAlreadyConverted'        => 'Este invitado ya fue convertido en miembro.',
 ];

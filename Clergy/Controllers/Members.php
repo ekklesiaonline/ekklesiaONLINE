@@ -271,6 +271,7 @@ class Members extends BaseController
             'phone' => 'permit_empty|valid_phone_e164',
             'country' => 'permit_empty|valid_country',
             'profile_picture' => 'permit_empty|uploaded[profile_picture]|max_size[profile_picture,2048]|is_image[profile_picture]|mime_in[profile_picture,image/jpg,image/jpeg,image/png,image/gif]',
+            'guest_id' => 'permit_empty|is_natural_no_zero',
         ];
 
         if (!$this->validate($rules)) {
@@ -312,10 +313,28 @@ class Members extends BaseController
             $localPhone = $this->request->getPost('phone');
             $e164Phone = PhoneHelper::toE164($callingCode, $localPhone);
 
+            // Guest conversion pre-fill: when a valid in-scope, not-yet-converted
+            // guest is carried through the form, reuse its canonical person record
+            // instead of provisioning a duplicate.
+            $guestRow = null;
+            $guestPersonId = 0;
+            $postedGuestId = (int) $this->request->getPost('guest_id');
+            if ($postedGuestId > 0) {
+                $candidate = model('GuestModel')->find($postedGuestId);
+                if (is_array($candidate)
+                    && (int) ($candidate['parish_id'] ?? 0) === $assignedParishId
+                    && empty($candidate['converted_to_member_at'])) {
+                    $guestRow = $candidate;
+                    $guestPersonId = (int) ($candidate['person_id'] ?? 0);
+                }
+            }
+
             // Ensure the canonical person row exists and link the profile to it.
-            $personId = $assignedParishId > 0
-                ? $this->getMemberParishAffiliationModel()->getOrCreatePersonIdForUser((int) $user->id)
-                : null;
+            $personId = $guestPersonId > 0
+                ? $guestPersonId
+                : ($assignedParishId > 0
+                    ? $this->getMemberParishAffiliationModel()->getOrCreatePersonIdForUser((int) $user->id)
+                    : null);
 
             $profileData = [
                 'user_id' => $user->id,
@@ -360,9 +379,31 @@ class Members extends BaseController
                 (new \App\Services\PersonProfileSyncService())->syncFromProfile($profileId);
             }
 
-            if ($assignedParishId > 0 && !$this->getMemberParishAffiliationModel()->attachToParish($user->id, $assignedParishId, true, 'member', true, $personId > 0 ? $personId : null)) {
+            if ($guestPersonId > 0 && $assignedParishId > 0) {
+                // Reuse the guest's person: link the new account, mark the
+                // affiliation as member, skip pending follow-ups, and mark the
+                // guest record converted — all inside convertToMember().
+                $linked = \App\Services\PersonConversionService::convertToMember(
+                    $guestPersonId,
+                    $assignedParishId,
+                    (int) $user->id,
+                    null,
+                    null,
+                    (int) (auth()->id() ?? 0)
+                );
+                if (! $linked) {
+                    $db->transRollback();
+                    return redirect()->back()->withInput()->with('error', lang('Members.affiliationFailed'));
+                }
+            } elseif ($assignedParishId > 0 && !$this->getMemberParishAffiliationModel()->attachToParish($user->id, $assignedParishId, true, 'member', true, $personId > 0 ? $personId : null)) {
                 $db->transRollback();
                 return redirect()->back()->withInput()->with('error', lang('Members.affiliationFailed'));
+            } elseif ($guestRow !== null) {
+                \App\Services\PersonConversionService::recordManualConversion(
+                    $guestRow,
+                    (int) $user->id,
+                    (int) (auth()->id() ?? 0)
+                );
             }
 
             $db->transComplete();

@@ -184,6 +184,33 @@ class PersonConversionService
         return $base . '_' . bin2hex(random_bytes(3));
     }
 
+    /**
+     * Mark a guest record as converted when the member account was created
+     * through a different path (e.g. the pre-filled member create form).
+     * Updates the guest row and skips pending follow-ups for the linked
+     * person. Does not touch affiliations — callers handle those.
+     */
+    public static function recordManualConversion(array $guest, ?int $userId, ?int $convertedByUserId = null): void
+    {
+        $db = db_connect();
+        $now = date('Y-m-d H:i:s');
+
+        $db->table('guest')
+            ->where('id', (int) $guest['id'])
+            ->update([
+                'followed_up'            => 1,
+                'converted_to_member_at' => $now,
+                'converted_user_id'      => $userId,
+                'converted_by_user_id'   => $convertedByUserId,
+                'updated_at'             => $now,
+            ]);
+
+        $personId = (int) ($guest['person_id'] ?? 0);
+        if ($personId > 0) {
+            self::markPendingFollowupsSkipped($personId, $now);
+        }
+    }
+
     private static function markPendingFollowupsSkipped(int $personId, string $now): void
     {
         $db = db_connect();

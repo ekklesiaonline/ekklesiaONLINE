@@ -95,6 +95,7 @@ $routes->group('', ['filter' => 'session'], function ($routes) {
         $routes->post('update/(:num)', '\\Clergy\\Controllers\\Guest::update/$1', ['filter' => 'permission:guest.edit']);
         $routes->post('delete/(:num)', '\\Clergy\\Controllers\\Guest::delete/$1', ['filter' => 'permission:guest.delete']);
         $routes->get('convertToMember/(:num)', '\\Clergy\\Controllers\\Guest::convertToMember/$1', ['filter' => 'permission:guest.edit']);
+        $routes->get('create-account/(:num)', '\\Clergy\\Controllers\\Guest::createAccountFromGuest/$1', ['filter' => 'permission:guest.edit']);
         // AJAX endpoints
         $routes->get('followup-status/(:num)', '\\Clergy\\Controllers\\Guest::getFollowupStatus/$1', ['filter' => 'permission:followup.view']);
         $routes->post('followup-trigger/(:num)', '\\Clergy\\Controllers\\Guest::triggerFollowupAction/$1', ['filter' => 'permission:followup.manage']);

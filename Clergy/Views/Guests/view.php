@@ -39,6 +39,11 @@ $formatLocalizedDate = static function (?string $value, string $pattern, string 
                 <i class="bi bi-arrow-right-circle" aria-hidden="true"></i> <?= lang('Guests.convertToMember') ?>
             </a>
         <?php endif; ?>
+        <?php if (empty($guest['converted_to_member_at']) && auth()->user()->can('member.create')): ?>
+            <a href="<?= base_url('guests/create-account/' . $guest['id']) ?>" class="btn btn-outline-success">
+                <i class="bi bi-person-plus" aria-hidden="true"></i> <?= lang('Guests.createAccountBtn') ?>
+            </a>
+        <?php endif; ?>
         <?php if (auth()->user()->can('guest.edit')): ?>
             <a href="<?= base_url('guests/edit/' . $guest['id']) ?>" class="btn btn-warning">
                 <i class="bi bi-pencil" aria-hidden="true"></i> <?= lang('App.edit') ?>
