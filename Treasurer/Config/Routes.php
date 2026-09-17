@@ -39,6 +39,18 @@ $routes->group('', ['filter' => 'session'], function ($routes) {
         $routes->post('delete/(:num)', '\\Treasurer\\Controllers\\Expense::delete/$1', ['filter' => 'permission:expense.delete']);
     });
 
+    $routes->group('banking', ['filter' => 'permission:finance.view'], function ($routes) {
+        $routes->get('/', '\\Treasurer\\Controllers\\Banking::index');
+        $routes->get('create', '\\Treasurer\\Controllers\\Banking::create', ['filter' => 'permission:finance.manage']);
+        $routes->post('store', '\\Treasurer\\Controllers\\Banking::store', ['filter' => 'permission:finance.manage']);
+        $routes->get('reconciliations/(:num)', '\\Treasurer\\Controllers\\Banking::reconciliation/$1');
+        $routes->post('reconciliations/(:num)/items', '\\Treasurer\\Controllers\\Banking::saveReconciliationItems/$1', ['filter' => 'permission:finance.manage']);
+        $routes->post('reconciliations/(:num)/close', '\\Treasurer\\Controllers\\Banking::closeReconciliation/$1', ['filter' => 'permission:finance.manage']);
+        $routes->get('(:num)', '\\Treasurer\\Controllers\\Banking::view/$1');
+        $routes->post('(:num)/transactions', '\\Treasurer\\Controllers\\Banking::storeTransaction/$1', ['filter' => 'permission:finance.manage']);
+        $routes->post('(:num)/reconciliations', '\\Treasurer\\Controllers\\Banking::startReconciliation/$1', ['filter' => 'permission:finance.manage']);
+    });
+
     $routes->group('reports', ['filter' => 'permission:report.view'], function ($routes) {
         $routes->get('/', '\\Treasurer\\Controllers\\Reports::index');
         $routes->get('export', '\\Treasurer\\Controllers\\Reports::export');

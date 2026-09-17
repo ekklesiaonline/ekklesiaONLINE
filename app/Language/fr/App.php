@@ -20,6 +20,7 @@ return [
     'navGuestHub'         => 'Visiteurs',
     'navDonations'        => 'Dons',
     'navExpenses'         => 'Dépenses',
+    'navBanking'          => 'Banque',
     'navBudgets'          => 'Budgets',
     'navReports'          => 'Rapports',
     'navVolunteers'       => 'Bénévoles',

@@ -22,6 +22,7 @@ return [
     'navGuestHub'         => 'Guest Hub',
     'navDonations'        => 'Donations',
     'navExpenses'         => 'Expenses',
+    'navBanking'          => 'Banking',
     'navBudgets'          => 'Budgets',
     'navReports'          => 'Reports',
     'navVolunteers'       => 'Volunteers',

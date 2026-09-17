@@ -236,7 +236,20 @@ second-order hardening (MySQL verification, CI enforcement, PHPStan depth, a11y 
    `MembershipPathwayTest` covers the classification/reason matrix, history
    attribution, end_date semantics, no-op/invalid/not-found results, and
    tenant scoping.
-4. **Bank reconciliation** — largest item; schema exists, needs full module.
+4. **Bank reconciliation** — ✅ implemented as the **Banking** module
+   (`/banking/*`, Treasurer namespace). Four tenant-scoped models
+   (`BankAccountModel`, `BankTransactionModel`, `BankReconciliationModel`,
+   `BankReconciliationItemModel`), `BankReconciliationService` owning the
+   open → cleared → reconciled lifecycle, `Treasurer\Controllers\Banking`
+   (view = `finance.view`, mutations = `finance.manage`), 4 views, sidebar
+   entry under Finance, `parishScope` + `adminFinanceBoundary` filters, and
+   migration `2026-09-17-151740_CreateBankTables` (verified against dev
+   MySQL — all 5 tables created including the reserved
+   `bank_transaction_journal_link`). One open reconciliation per account;
+   closing requires cleared total = statement balance.
+   `BankReconciliationServiceTest` covers scoping, lifecycle, balance
+   gating, and cross-tenant rejection. Journal-entry linking is reserved
+   for the future journal module.
 5. **Small groups** and **bulk messaging** — new modules; design before building.
 
 ### Tier 4 — Legacy retirement (evidence-gated)

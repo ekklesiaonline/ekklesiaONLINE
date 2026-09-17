@@ -276,7 +276,7 @@
             <?php endif; ?>
 
             <?php if (!$isSystemAdminSidebar && !$isProvinceAdminSidebar && !$isDioceseAdminSidebar && (auth()->user()->can('donation.view') || auth()->user()->can('expense.view') || auth()->user()->can('finance.view') || auth()->user()->can('finance.manage'))): ?>
-                <?php $isFinanceSectionActive = (str_starts_with(uri_string(), 'donations') || str_starts_with(uri_string(), 'expenses') || str_starts_with(uri_string(), 'budgets') || str_starts_with(uri_string(), 'pledges')); ?>
+                <?php $isFinanceSectionActive = (str_starts_with(uri_string(), 'donations') || str_starts_with(uri_string(), 'expenses') || str_starts_with(uri_string(), 'budgets') || str_starts_with(uri_string(), 'pledges') || str_starts_with(uri_string(), 'banking')); ?>
                 <li class="nav-item">
                     <a class="nav-link <?= $isFinanceSectionActive ? 'active' : '' ?>" href="#" data-bs-toggle="collapse" data-bs-target="#financeMenu">
                         <i class="bi bi-cash-coin" aria-hidden="true"></i> <?= lang('App.navFinance') ?>
@@ -285,6 +285,7 @@
                         <li><a class="nav-link <?= str_starts_with(uri_string(), 'donations') ? 'active' : '' ?>" href="<?= base_url('donations') ?>"><?= lang('App.navDonations') ?></a></li>
                         <li><a class="nav-link <?= str_starts_with(uri_string(), 'expenses') ? 'active' : '' ?>" href="<?= base_url('expenses') ?>"><?= lang('App.navExpenses') ?></a></li>
                         <li><a class="nav-link <?= str_starts_with(uri_string(), 'budgets') ? 'active' : '' ?>" href="<?= base_url('budgets') ?>"><?= lang('App.navBudgets') ?></a></li>
+                        <li><a class="nav-link <?= str_starts_with(uri_string(), 'banking') ? 'active' : '' ?>" href="<?= base_url('banking') ?>"><?= lang('App.navBanking') ?></a></li>
                         <?php if (auth()->user()->can('finance.manage')): ?>
                             <li><a class="nav-link <?= (str_starts_with(uri_string(), 'pledges')) ? 'active' : '' ?>" href="<?= base_url('pledges') ?>"><?= lang('App.navPledges') ?></a></li>
                         <?php endif; ?>
