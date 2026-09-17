@@ -6,6 +6,7 @@ use App\Controllers\AdminHierarchyGuard;
 use App\Controllers\BaseController;
 use App\Models\MemberParishAffiliationModel;
 use App\Models\ParishPeopleModel;
+use App\Services\LeadershipPositionService;
 use App\Services\ParishPeopleRegistryService;
 use App\Services\MemberAccessService;
 use App\Services\PeopleDirectoryService;
@@ -22,6 +23,7 @@ class People extends BaseController
     private ParishPeopleRegistryService $registryService;
     private MemberAccessService $memberAccessService;
     private PeopleViewDataService $peopleViewDataService;
+    private LeadershipPositionService $leadershipPositionService;
 
     public function __construct()
     {
@@ -30,6 +32,7 @@ class People extends BaseController
         $this->registryService = new ParishPeopleRegistryService($this->parishPeopleModel);
         $this->memberAccessService = service('memberAccess');
         $this->peopleViewDataService = service('peopleViewData');
+        $this->leadershipPositionService = new LeadershipPositionService();
     }
 
     /**
@@ -669,18 +672,7 @@ class People extends BaseController
             return $this->jsonResponse($this->apiErrorPayload($this->hierarchyGuardMessage($code), 403, 'TARGET_OUTRANKS_ACTOR'), 403);
         }
 
-        $rules = [
-            'title' => 'required|min_length[2]|max_length[150]',
-            'scope_type' => 'required|in_list[parish,diocese,province]',
-            'role_category' => 'permit_empty|in_list[clergy,lay_staff]',
-            'clergy_order' => 'permit_empty|in_list[bishop,priest,deacon]',
-            'employment_type' => 'permit_empty|in_list[full_time,part_time,non_stipendiary,unpaid]',
-            'started_at' => 'permit_empty|valid_date',
-            'ended_at' => 'permit_empty|valid_date',
-            'role_code' => 'permit_empty|max_length[100]',
-        ];
-
-        if (!$this->validate($rules)) {
+        if (!$this->validate($this->leadershipPositionService->validationRules(true))) {
             return $this->jsonResponse([
                 'success' => false,
                 'code' => 'VALIDATION_FAILED',
@@ -692,12 +684,16 @@ class People extends BaseController
         $scopeType = (string) $this->request->getPost('scope_type');
         $parishId = (int) ($this->getOperationalParishId() ?? 0);
 
-        $scopeIds = $this->resolveLeadershipScopeIds($scopeType, $parishId);
+        $scopeIds = $this->leadershipPositionService->resolveScopeIds(
+            $scopeType,
+            $parishId,
+            $this->resolveDiocesanScopeId(),
+            $this->resolveAdminProvinceId()
+        );
         if ($scopeIds === null) {
             return $this->jsonResponse($this->apiErrorPayload(lang('App.errorNoParishScope'), 400, 'SCOPE_NOT_FOUND'), 400);
         }
 
-        $model = model('LeadershipPositionModel');
         $payload = [
             'user_id' => $userId,
             'person_id' => $personId,
@@ -717,14 +713,13 @@ class People extends BaseController
             'appointed_by_user_id' => (int) (auth()->id() ?? 0),
         ];
 
-        if ($model->insert($payload) === false) {
+        $positionId = $this->leadershipPositionService->create($payload);
+        if ($positionId === null) {
             return $this->jsonResponse([
                 'success' => false,
-                'message' => implode(' ', array_values($model->errors() ?: [lang('Leadership.saveFailed')])),
+                'message' => implode(' ', array_values($this->leadershipPositionService->errors() ?: [lang('Leadership.saveFailed')])),
             ], 500);
         }
-
-        $positionId = (int) $model->getInsertID();
 
         $this->registryService->syncParish($parishId);
 
@@ -764,8 +759,7 @@ class People extends BaseController
             return $this->jsonResponse($this->apiErrorPayload(lang('App.errorNoParishScope'), 403, 'NO_PARISH'), 403);
         }
 
-        $model = model('LeadershipPositionModel');
-        $position = $model->find($positionId);
+        $position = $this->leadershipPositionService->find($positionId);
         if (!$position) {
             return $this->jsonResponse($this->apiErrorPayload(lang('App.errorNotFound'), 404, 'POSITION_NOT_FOUND'), 404);
         }
@@ -778,17 +772,7 @@ class People extends BaseController
             return $this->jsonResponse($this->apiErrorPayload($this->hierarchyGuardMessage($code), 403, 'TARGET_OUTRANKS_ACTOR'), 403);
         }
 
-        $rules = [
-            'title' => 'required|min_length[2]|max_length[150]',
-            'role_category' => 'permit_empty|in_list[clergy,lay_staff]',
-            'clergy_order' => 'permit_empty|in_list[bishop,priest,deacon]',
-            'employment_type' => 'permit_empty|in_list[full_time,part_time,non_stipendiary,unpaid]',
-            'started_at' => 'permit_empty|valid_date',
-            'ended_at' => 'permit_empty|valid_date',
-            'role_code' => 'permit_empty|max_length[100]',
-        ];
-
-        if (!$this->validate($rules)) {
+        if (!$this->validate($this->leadershipPositionService->validationRules(false))) {
             return $this->jsonResponse([
                 'success' => false,
                 'code' => 'VALIDATION_FAILED',
@@ -809,10 +793,10 @@ class People extends BaseController
             'notes' => trim((string) ($this->request->getPost('notes') ?? '')),
         ];
 
-        if (!$model->update($positionId, $payload)) {
+        if (!$this->leadershipPositionService->update($positionId, $payload)) {
             return $this->jsonResponse([
                 'success' => false,
-                'message' => implode(' ', array_values($model->errors() ?: [lang('Leadership.updateFailed')])),
+                'message' => implode(' ', array_values($this->leadershipPositionService->errors() ?: [lang('Leadership.updateFailed')])),
             ], 500);
         }
 
@@ -854,8 +838,7 @@ class People extends BaseController
             return $this->jsonResponse($this->apiErrorPayload(lang('App.errorNoParishScope'), 403, 'NO_PARISH'), 403);
         }
 
-        $model = model('LeadershipPositionModel');
-        $position = $model->find($positionId);
+        $position = $this->leadershipPositionService->find($positionId);
         if (!$position) {
             return $this->jsonResponse($this->apiErrorPayload(lang('App.errorNotFound'), 404, 'POSITION_NOT_FOUND'), 404);
         }
@@ -868,7 +851,7 @@ class People extends BaseController
             return $this->jsonResponse($this->apiErrorPayload($this->hierarchyGuardMessage($code), 403, 'TARGET_OUTRANKS_ACTOR'), 403);
         }
 
-        if (!$model->delete($positionId)) {
+        if (!$this->leadershipPositionService->delete($positionId)) {
             return $this->jsonResponse([
                 'success' => false,
                 'message' => lang('Leadership.deleteFailed'),
@@ -891,60 +874,17 @@ class People extends BaseController
     }
 
     /**
-     * Resolve scope IDs for a leadership position based on scope_type.
-     *
-     * @return array<string, int|null>|null
-     */
-    private function resolveLeadershipScopeIds(string $scopeType, int $parishId): ?array
-    {
-        $result = ['parish_id' => null, 'diocese_id' => null, 'province_id' => null];
-
-        if ($scopeType === 'parish') {
-            $result['parish_id'] = $parishId;
-            return $result;
-        }
-
-        if ($scopeType === 'diocese') {
-            $dioceseId = $this->resolveDiocesanScopeId();
-            if ($dioceseId <= 0) {
-                return null;
-            }
-            $result['diocese_id'] = $dioceseId;
-            return $result;
-        }
-
-        if ($scopeType === 'province') {
-            $provinceId = $this->resolveAdminProvinceId();
-            if ($provinceId <= 0) {
-                return null;
-            }
-            $result['province_id'] = $provinceId;
-            return $result;
-        }
-
-        return null;
-    }
-
-    /**
      * Determine whether the current admin can manage a leadership position.
+     * Delegates to LeadershipPositionService with the actor's scope IDs.
      */
     private function canManageLeadershipPosition(array $position, int $parishId): bool
     {
-        if ($position['scope_type'] === 'parish') {
-            return (int) ($position['parish_id'] ?? 0) === $parishId;
-        }
-
-        if ($position['scope_type'] === 'diocese') {
-            $dioceseId = $this->resolveDiocesanScopeId();
-            return $dioceseId > 0 && (int) ($position['diocese_id'] ?? 0) === $dioceseId;
-        }
-
-        if ($position['scope_type'] === 'province') {
-            $provinceId = $this->resolveAdminProvinceId();
-            return $provinceId > 0 && (int) ($position['province_id'] ?? 0) === $provinceId;
-        }
-
-        return false;
+        return $this->leadershipPositionService->canManage(
+            $position,
+            $parishId,
+            $this->resolveDiocesanScopeId(),
+            $this->resolveAdminProvinceId()
+        );
     }
 
     /**
