@@ -8,6 +8,7 @@ use App\Models\MemberParishAffiliationModel;
 use App\Models\ParishPeopleModel;
 use App\Services\AnnualPledgeService;
 use App\Services\DonationService;
+use App\Services\FamilyService;
 use App\Services\LeadershipPositionService;
 use App\Services\ParishPeopleRegistryService;
 use App\Services\MemberAccessService;
@@ -30,6 +31,7 @@ class People extends BaseController
     private DonationService $donationService;
     private AnnualPledgeService $annualPledgeService;
     private SacramentalRecordService $sacramentalRecordService;
+    private FamilyService $familyService;
 
     public function __construct()
     {
@@ -42,6 +44,7 @@ class People extends BaseController
         $this->donationService = new DonationService();
         $this->annualPledgeService = new AnnualPledgeService();
         $this->sacramentalRecordService = new SacramentalRecordService();
+        $this->familyService = new FamilyService();
     }
 
     /**
@@ -1791,11 +1794,7 @@ class People extends BaseController
             return $this->jsonResponse($this->apiErrorPayload(lang('App.errorNotFound'), 404, 'PERSON_NOT_FOUND'), 404);
         }
 
-        $rules = [
-            'family_name' => 'required|min_length[3]|max_length[255]',
-        ];
-
-        if (!$this->validate($rules)) {
+        if (!$this->validate($this->familyService->familyNameRules())) {
             return $this->jsonResponse([
                 'success' => false,
                 'code' => 'VALIDATION_FAILED',
@@ -1804,44 +1803,18 @@ class People extends BaseController
             ], 422);
         }
 
-        $familyMemberModel = model('FamilyMemberModel');
-        if ($familyMemberModel->userHasAnotherFamily($userId)) {
+        if ($this->familyService->userHasAnotherFamily($userId)) {
             return $this->jsonResponse($this->apiErrorPayload(lang('Families.memberAlreadyInAnotherFamily'), 409, 'PERSON_ALREADY_IN_FAMILY'), 409);
         }
 
-        $familyModel = model('FamilyModel');
-        $db = db_connect();
-        $db->transBegin();
+        $familyId = $this->familyService->createFamilyWithHead(
+            $parishId,
+            trim((string) $this->request->getPost('family_name')),
+            $userId,
+            trim((string) ($this->request->getPost('address') ?? ''))
+        );
 
-        try {
-            $familyId = (int) $familyModel->insert([
-                'parish_id' => $parishId,
-                'family_name' => trim((string) $this->request->getPost('family_name')),
-                'head_of_household_id' => $userId,
-                'address' => trim((string) ($this->request->getPost('address') ?? '')),
-            ], true);
-
-            if ($familyId <= 0) {
-                throw new \RuntimeException('Failed to create family');
-            }
-
-            $relationId = (int) $familyMemberModel->insert([
-                'family_id' => $familyId,
-                'user_id' => $userId,
-                'relationship' => 'Head',
-            ], true);
-
-            if ($relationId <= 0) {
-                throw new \RuntimeException('Failed to add head to family');
-            }
-
-            if ($db->transStatus() === false) {
-                throw new \RuntimeException('Transaction failed');
-            }
-
-            $db->transCommit();
-        } catch (\Throwable $e) {
-            $db->transRollback();
+        if ($familyId === null) {
             return $this->jsonResponse([
                 'success' => false,
                 'message' => lang('Families.createFailed'),
@@ -1905,33 +1878,27 @@ class People extends BaseController
             return $this->jsonResponse($this->apiErrorPayload(lang('Families.invalidFamily'), 422, 'FAMILY_REQUIRED'), 422);
         }
 
-        $familyModel = model('FamilyModel');
-        $family = $familyModel->find($familyId);
-        if (!$family || (int) ($family['parish_id'] ?? 0) !== $parishId) {
+        $family = $this->familyService->findFamilyInParish($familyId, $parishId);
+        if ($family === null) {
             return $this->jsonResponse($this->apiErrorPayload(lang('Families.invalidFamily'), 404, 'FAMILY_NOT_FOUND'), 404);
         }
 
-        $familyMemberModel = model('FamilyMemberModel');
-        $relationship = $familyMemberModel->normalizeRelationship((string) ($this->request->getPost('relationship') ?? ''));
+        $relationship = $this->familyService->normalizeRelationship((string) ($this->request->getPost('relationship') ?? ''));
         if ($relationship === null && trim((string) ($this->request->getPost('relationship') ?? '')) !== '') {
             return $this->jsonResponse($this->apiErrorPayload(lang('Families.relationshipInvalid'), 422, 'INVALID_RELATIONSHIP'), 422);
         }
 
-        if ($familyMemberModel->relationExists($familyId, $userId)) {
+        if ($this->familyService->relationExists($familyId, $userId)) {
             return $this->jsonResponse($this->apiErrorPayload(lang('Families.memberAlreadyExists'), 409, 'ALREADY_IN_FAMILY'), 409);
         }
 
-        if ($this->shouldEnforceSingleFamilyMembership() && $familyMemberModel->userHasAnotherFamily($userId, $familyId)) {
+        if ($this->familyService->enforceSingleFamilyMembership() && $this->familyService->userHasAnotherFamily($userId, $familyId)) {
             return $this->jsonResponse($this->apiErrorPayload(lang('Families.memberAlreadyInAnotherFamily'), 409, 'ALREADY_IN_ANOTHER_FAMILY'), 409);
         }
 
-        $relationId = (int) $familyMemberModel->insert([
-            'family_id' => $familyId,
-            'user_id' => $userId,
-            'relationship' => $relationship,
-        ], true);
+        $relationId = $this->familyService->addMember($familyId, $userId, $relationship);
 
-        if ($relationId <= 0) {
+        if ($relationId === null) {
             return $this->jsonResponse([
                 'success' => false,
                 'message' => lang('Families.failedAddMember'),
@@ -1991,20 +1958,18 @@ class People extends BaseController
             return $this->jsonResponse($this->apiErrorPayload(lang('App.errorNotFound'), 404, 'PERSON_NOT_FOUND'), 404);
         }
 
-        $familyMemberModel = model('FamilyMemberModel');
-        $relation = $familyMemberModel->where('user_id', $userId)->first();
-        if (!$relation) {
+        $relation = $this->familyService->findRelationForUser($userId);
+        if ($relation === null) {
             return $this->jsonResponse($this->apiErrorPayload(lang('Families.relationNotFound'), 404, 'NOT_IN_FAMILY'), 404);
         }
 
-        $familyModel = model('FamilyModel');
-        $family = $familyModel->find((int) ($relation['family_id'] ?? 0));
-        if (!$family || (int) ($family['parish_id'] ?? 0) !== $parishId) {
+        $family = $this->familyService->findFamilyInParish((int) ($relation['family_id'] ?? 0), $parishId);
+        if ($family === null) {
             return $this->jsonResponse($this->apiErrorPayload(lang('App.errorUnauthorized'), 403, 'FAMILY_SCOPE_FORBIDDEN'), 403);
         }
 
         $relationId = (int) ($relation['id'] ?? 0);
-        if (!$familyMemberModel->delete($relationId)) {
+        if (!$this->familyService->removeMember($relationId)) {
             return $this->jsonResponse([
                 'success' => false,
                 'message' => lang('Families.failedRemoveMember'),
@@ -2059,25 +2024,23 @@ class People extends BaseController
             return $this->jsonResponse($this->apiErrorPayload(lang('App.errorNotFound'), 404, 'PERSON_NOT_FOUND'), 404);
         }
 
-        $familyMemberModel = model('FamilyMemberModel');
-        $relation = $familyMemberModel->where('user_id', $userId)->first();
-        if (!$relation) {
+        $relation = $this->familyService->findRelationForUser($userId);
+        if ($relation === null) {
             return $this->jsonResponse($this->apiErrorPayload(lang('Families.relationNotFound'), 404, 'NOT_IN_FAMILY'), 404);
         }
 
-        $familyModel = model('FamilyModel');
-        $family = $familyModel->find((int) ($relation['family_id'] ?? 0));
-        if (!$family || (int) ($family['parish_id'] ?? 0) !== $parishId) {
+        $family = $this->familyService->findFamilyInParish((int) ($relation['family_id'] ?? 0), $parishId);
+        if ($family === null) {
             return $this->jsonResponse($this->apiErrorPayload(lang('App.errorUnauthorized'), 403, 'FAMILY_SCOPE_FORBIDDEN'), 403);
         }
 
-        $relationship = $familyMemberModel->normalizeRelationship((string) ($this->request->getPost('relationship') ?? ''));
+        $relationship = $this->familyService->normalizeRelationship((string) ($this->request->getPost('relationship') ?? ''));
         if ($relationship === null) {
             return $this->jsonResponse($this->apiErrorPayload(lang('Families.relationshipInvalid'), 422, 'INVALID_RELATIONSHIP'), 422);
         }
 
         $relationId = (int) ($relation['id'] ?? 0);
-        if (!$familyMemberModel->update($relationId, ['relationship' => $relationship])) {
+        if (!$this->familyService->updateRelationship($relationId, $relationship)) {
             return $this->jsonResponse([
                 'success' => false,
                 'message' => lang('Families.updateFailed'),
@@ -2099,15 +2062,6 @@ class People extends BaseController
             'success' => true,
             'message' => lang('Families.updateSuccess'),
         ]);
-    }
-
-    /**
-     * Determine whether a user may belong to only one family at a time.
-     */
-    private function shouldEnforceSingleFamilyMembership(): bool
-    {
-        $value = strtolower(trim((string) (env('family.enforceSingleFamilyMembership') ?? '0')));
-        return in_array($value, ['1', 'true', 'yes', 'on'], true);
     }
 
     /**
