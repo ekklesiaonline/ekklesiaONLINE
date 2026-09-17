@@ -4,6 +4,7 @@ namespace Clergy\Controllers;
 
 use App\Controllers\BaseController;
 use App\Libraries\DataEncryption;
+use App\Services\GuestFollowupService;
 
 class Guests extends BaseController
 {
@@ -11,6 +12,7 @@ class Guests extends BaseController
     protected $personVisitModel;
     protected $followupLogModel;
     protected $followupSequenceModel;
+    private GuestFollowupService $followupQueries;
 
     public function __construct()
     {
@@ -18,6 +20,7 @@ class Guests extends BaseController
         $this->personVisitModel      = model('PersonVisitModel');
         $this->followupLogModel      = model('FollowupLogModel');
         $this->followupSequenceModel = model('FollowupSequenceModel');
+        $this->followupQueries       = new GuestFollowupService();
     }
 
     /**
@@ -101,20 +104,7 @@ class Guests extends BaseController
 
         // Per-guest followup progress for 4-state badge (by person_id)
         $personIds = array_filter(array_column($guests, 'person_id'));
-        $progressMap = [];
-        if (!empty($personIds)) {
-            $rows = db_connect()->table('followup_log')
-                ->select('person_id, SUM(status IN ("sent","skipped")) AS done_count, SUM(status = "pending") AS pending_count')
-                ->whereIn('person_id', $personIds)
-                ->groupBy('person_id')
-                ->get()->getResultArray();
-            foreach ($rows as $r) {
-                $progressMap[(int) $r['person_id']] = [
-                    'done'    => (int) $r['done_count'],
-                    'pending' => (int) $r['pending_count'],
-                ];
-            }
-        }
+        $progressMap = $this->followupQueries->progressMapForPersons($personIds);
 
         $data = [
             'guests'        => $guests,
@@ -167,16 +157,7 @@ class Guests extends BaseController
 
         // Next pending action (for the quick-trigger button)
         $nextPending = $personId > 0
-            ? db_connect()->table('followup_log gfl')
-                ->select('gfl.id, gfl.scheduled_date, gfl.status, fa.channel, fa.week_number, fa.template_id, ft.name AS template_name')
-                ->join('followup_action fa',   'fa.id = gfl.action_id',  'left')
-                ->join('followup_template ft', 'ft.id = fa.template_id', 'left')
-                ->where('gfl.person_id', $personId)
-                ->where('gfl.status', 'pending')
-                ->orderBy('gfl.scheduled_date', 'ASC')
-                ->limit(1)
-                ->get()
-                ->getRowArray()
+            ? $this->followupQueries->nextPendingForPerson($personId)
             : null;
 
         // Sequences available to assign
@@ -492,28 +473,8 @@ class Guests extends BaseController
 
         $personId = (int) ($guest['person_id'] ?? 0);
 
-        $next = db_connect()->table('followup_log gfl')
-            ->select('gfl.id, gfl.scheduled_date, gfl.status, fa.channel, fa.week_number, fa.day_offset, ft.name AS template_name')
-            ->join('followup_action fa',   'fa.id = gfl.action_id',  'left')
-            ->join('followup_template ft', 'ft.id = fa.template_id', 'left')
-            ->where('gfl.person_id', $personId)
-            ->where('gfl.status', 'pending')
-            ->orderBy('gfl.scheduled_date', 'ASC')
-            ->limit(1)
-            ->get()
-            ->getRowArray();
-
-        $counts = db_connect()->table('followup_log')
-            ->select('status, COUNT(*) AS total')
-            ->where('person_id', $personId)
-            ->groupBy('status')
-            ->get()
-            ->getResultArray();
-
-        $summary = ['pending' => 0, 'sent' => 0, 'failed' => 0, 'skipped' => 0];
-        foreach ($counts as $row) {
-            $summary[$row['status']] = (int) $row['total'];
-        }
+        $next = $this->followupQueries->nextPendingForPerson($personId);
+        $summary = $this->followupQueries->statusCountsForPerson($personId);
 
         return $this->jsonResponse([
             'success'     => true,
@@ -532,10 +493,7 @@ class Guests extends BaseController
             return $redirect;
         }
 
-        $log = db_connect()->table('followup_log')
-            ->where('id', $logId)
-            ->get()
-            ->getRowArray();
+        $log = $this->followupQueries->logRow($logId);
 
         if (!$log) {
             return $this->jsonResponse(['success' => false, 'message' => lang('Guests.followupLogNotFound')], 404);
@@ -693,55 +651,7 @@ class Guests extends BaseController
 
         $personId = (int) ($guest['person_id'] ?? 0);
 
-        $timeline = db_connect()->table('followup_log gfl')
-            ->select('gfl.*, fa.channel, fa.week_number, fa.day_offset, fa.is_automated,
-                      ft.name AS template_name, fs.name AS sequence_name')
-            ->join('followup_action fa',   'fa.id = gfl.action_id',   'left')
-            ->join('followup_template ft',  'ft.id = fa.template_id',  'left')
-            ->join('followup_sequence fs',  'fs.id = fa.sequence_id',  'left')
-            ->where('gfl.person_id', $personId)
-            ->orderBy('gfl.scheduled_date', 'ASC')
-            ->orderBy('gfl.id', 'ASC')
-            ->get()
-            ->getResultArray();
-
-        // Merge orphaned call_tasks (log_id IS NULL means they pre-date the workflow
-        // system and were never tied to a guest_followup_log entry).
-        $orphanedCallTasks = db_connect()->table('call_task')
-            ->where('person_id', $personId)
-            ->where('log_id IS NULL', null, false)
-            ->where('status !=', 'cancelled')
-            ->orderBy('scheduled_date', 'ASC')
-            ->get()
-            ->getResultArray();
-
-        if (!empty($orphanedCallTasks)) {
-            $callTaskRows = array_map(static function (array $task): array {
-                return [
-                    'id'                => (int) $task['id'],
-                    'guest_id'          => (int) $task['guest_id'],
-                    'action_id'         => null,
-                    'scheduled_date'    => $task['scheduled_date'] ?? null,
-                    'status'            => $task['status'] === 'completed' ? 'sent' : $task['status'],
-                    'executed_at'       => $task['completed_at'] ?? null,
-                    'notes'             => $task['notes'] ?? null,
-                    'response_metadata' => null,
-                    'channel'           => 'call',
-                    'week_number'       => null,
-                    'day_offset'        => null,
-                    'is_automated'      => 0,
-                    'template_name'     => null,
-                    'sequence_name'     => null,
-                    '_source'           => 'call_task',
-                ];
-            }, $orphanedCallTasks);
-
-            $timeline = array_merge($timeline, $callTaskRows);
-            usort($timeline, static function (array $a, array $b): int {
-                $cmp = strcmp($a['scheduled_date'] ?? '', $b['scheduled_date'] ?? '');
-                return $cmp !== 0 ? $cmp : ((int) ($a['id'] ?? 0)) - ((int) ($b['id'] ?? 0));
-            });
-        }
+        $timeline = $this->followupQueries->timelineForPerson($personId);
 
         $data = [
             'guest'    => $guest,
@@ -764,7 +674,7 @@ class Guests extends BaseController
             return $redirect;
         }
 
-        $log = db_connect()->table('followup_log')->where('id', $logId)->get()->getRowArray();
+        $log = $this->followupQueries->logRow($logId);
         if (!$log) {
             return $this->jsonResponse(['success' => false, 'message' => lang('Guests.followupLogNotFound')], 404);
         }
@@ -818,7 +728,7 @@ class Guests extends BaseController
             return $redirect;
         }
 
-        $log = db_connect()->table('followup_log')->where('id', $logId)->get()->getRowArray();
+        $log = $this->followupQueries->logRow($logId);
         if (!$log) {
             return $this->jsonResponse(['success' => false, 'message' => lang('Guests.followupLogNotFound')], 404);
         }
@@ -873,7 +783,7 @@ class Guests extends BaseController
             return $redirect;
         }
 
-        $log = db_connect()->table('followup_log')->where('id', $logId)->get()->getRowArray();
+        $log = $this->followupQueries->logRow($logId);
         if (!$log) {
             return $this->jsonResponse(['success' => false, 'message' => lang('Guests.followupLogNotFound')], 404);
         }
@@ -914,7 +824,7 @@ class Guests extends BaseController
             return $redirect;
         }
 
-        $log = db_connect()->table('followup_log')->where('id', $logId)->get()->getRowArray();
+        $log = $this->followupQueries->logRow($logId);
         if (!$log) {
             return $this->jsonResponse(['success' => false, 'message' => lang('Guests.followupLogNotFound')], 404);
         }
@@ -999,27 +909,9 @@ class Guests extends BaseController
             ->where('converted_to_member_at IS NOT NULL', null, false)
             ->countAllResults();
 
-        $notFollowedUp = (int) (db_connect()
-            ->table('followup_log gfl')
-            ->select('COUNT(DISTINCT gfl.person_id) AS cnt')
-            ->where('gfl.status', 'pending')
-            ->where('gfl.parish_id', $parishId)
-            ->get()->getRowArray()['cnt'] ?? 0);
+        $notFollowedUp = $this->followupQueries->pendingDistinctPersonsCount($parishId);
 
-        $inProgressCount = (int) db_connect()
-            ->table('guest g')
-            ->where('g.parish_id', $parishId)
-            ->where('g.followed_up', 0)
-            ->where('g.converted_to_member_at IS NULL', null, false)
-            ->whereIn('g.person_id', function ($subQ) {
-                $subQ->select('person_id')->from('followup_log')
-                    ->whereIn('status', ['sent', 'skipped']);
-            })
-            ->whereIn('g.person_id', function ($subQ) {
-                $subQ->select('person_id')->from('followup_log')
-                    ->where('status', 'pending');
-            })
-            ->countAllResults();
+        $inProgressCount = $this->followupQueries->inProgressGuestsCount($parishId);
 
         // KPI: pending call tasks
         $callTaskModel   = model('CallTaskModel');
@@ -1046,20 +938,7 @@ class Guests extends BaseController
 
         // Per-guest progress map for recent guests 4-state badge
         $recentPersonIds = array_filter(array_column($recentGuests, 'person_id'));
-        $recentProgressMap = [];
-        if (!empty($recentPersonIds)) {
-            $pRows = db_connect()->table('followup_log')
-                ->select('person_id, SUM(status IN ("sent","skipped")) AS done_count, SUM(status = "pending") AS pending_count')
-                ->whereIn('person_id', $recentPersonIds)
-                ->groupBy('person_id')
-                ->get()->getResultArray();
-            foreach ($pRows as $r) {
-                $recentProgressMap[(int) $r['person_id']] = [
-                    'done'    => (int) $r['done_count'],
-                    'pending' => (int) $r['pending_count'],
-                ];
-            }
-        }
+        $recentProgressMap = $this->followupQueries->progressMapForPersons($recentPersonIds);
 
         $data = [
             'totalGuests'       => $totalGuests,
