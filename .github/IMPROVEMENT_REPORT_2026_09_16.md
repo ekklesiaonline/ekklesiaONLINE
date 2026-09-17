@@ -145,10 +145,28 @@ second-order hardening (MySQL verification, CI enforcement, PHPStan depth, a11y 
     duplicate checks, `SacramentFlagSyncService` invocation
   - `FamilyService` — family rules, membership checks, transactional
     create-family-with-head
-  - Remaining: `SystemAdminUsers` (47 raw `db_connect`/`->table()` calls,
-    entangled with MFA/rate-limit/lockout helpers), `Diocesan\Parishes` (30),
-    `MemberPortal\Profile` (22), `MemberPortal\AuditLogs` (18),
-    `Clergy\Members`/`Guests` (16 each).
+- ✅ `SystemAdminUsers` — `SystemAdminUserService` owns hierarchy reads,
+  primary-admin ops, cascade deletes, permission sync, and directory queries
+  (47 → 6 raw calls; the rest are transaction handles and trait-helper args).
+- ✅ `Diocesan\Parishes` — `ParishStaffService` (staff add/promote/demote/
+  role removal honoring `allowedAssignableRoles`) and `ParishDeletionService`
+  (impact counts + FK-safe delete order); 30 → 7 raw calls; province-admin
+  write blocks preserved.
+- ✅ `MemberPortal\Profile` — `HierarchyService` (province/diocese/parish
+  option lists, parent-child checks, `parish_people` affiliations),
+  `RegistrationNotificationService` (scoped admin recipients, pending-review
+  email, registration audit), `SchemaResolver::filterPayloadByTableColumns`;
+  22 → 2 raw calls; elevated-admin auto-approval untouched.
+- ✅ `MemberPortal\AuditLogs` — `AuditLogQueryService` (scoped parish
+  resolution, role-dependent action filtering, statistics, option lists,
+  actor autocomplete); 18 → 0 raw calls; dead helpers removed.
+- ✅ `Clergy\Members` — `MemberAffiliationService` (attach/detach/home-parish
+  transactions + profile mirror + person deactivation) and
+  `ProvinceStaffDirectoryService` (province/diocesan staff lists);
+  16 → 0 raw calls.
+- ✅ `Clergy\Guests` — `GuestFollowupService` (progress badges, next pending
+  action, status counts, timeline with orphaned `call_task` merge, dashboard
+  aggregates); 16 → 0 raw calls.
 - ⬜ a11y sweep and i18n sweep still open.
 
 ### Tier 3 — Product backlog (from the original report, still valid)
