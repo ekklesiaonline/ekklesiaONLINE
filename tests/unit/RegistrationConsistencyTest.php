@@ -181,7 +181,8 @@ final class RegistrationConsistencyTest extends CIUnitTestCase
      */
     public function testAdminDeletionCleansUpDirectGrants(): void
     {
-        $systemAdminUsersSource = file_get_contents(APPPATH . 'Controllers/SystemAdminUsers.php');
+        $systemAdminUsersSource = file_get_contents(APPPATH . 'Controllers/SystemAdminUsers.php')
+            . file_get_contents(APPPATH . 'Services/SystemAdminUserService.php');
         $dioceseParishAdminsSource = file_get_contents(APPPATH . 'Controllers/DioceseParishAdmins.php');
         $dioceseAdminUsersSource = file_get_contents(APPPATH . 'Controllers/DioceseAdminUsers.php');
 

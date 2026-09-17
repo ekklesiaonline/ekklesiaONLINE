@@ -3,10 +3,18 @@
 namespace App\Controllers;
 
 use App\Libraries\DataEncryption;
+use App\Services\SystemAdminUserService;
 
 class SystemAdminUsers extends BaseController
 {
     use SystemAdminService;
+
+    private ?SystemAdminUserService $adminUserService = null;
+
+    private function adminUserService(): SystemAdminUserService
+    {
+        return $this->adminUserService ??= new SystemAdminUserService();
+    }
 
     public function storeSystemAdmin()
     {
@@ -83,7 +91,7 @@ class SystemAdminUsers extends BaseController
 
         if ($group === 'provinceadmin') {
             $provinceId = (int) ($this->request->getPost('province_id') ?? 0);
-            if ($provinceId <= 0 || $db->table('province')->where('id', $provinceId)->limit(1)->get()->getRow() === null) {
+            if ($provinceId <= 0 || !$this->adminUserService()->provinceExists($provinceId)) {
                 return redirect()->back()->withInput()->with('error', lang('System.invalidProvinceForAdmin'));
             }
 
@@ -102,7 +110,7 @@ class SystemAdminUsers extends BaseController
             if ($dioceseId <= 0) {
                 return redirect()->back()->withInput()->with('error', lang('System.invalidDioceseForAdmin'));
             }
-            $diocese = $db->table('diocese')->select('id, province_id')->where('id', $dioceseId)->get()->getRowArray();
+            $diocese = $this->adminUserService()->dioceseRow($dioceseId);
             if (!$diocese) {
                 return redirect()->back()->withInput()->with('error', lang('System.invalidDioceseForAdmin'));
             }
@@ -118,13 +126,7 @@ class SystemAdminUsers extends BaseController
             $provinceId = (int) ($diocese['province_id'] ?? 0);
         }
 
-        $existing = $db->table('auth_identities')
-            ->where('type', 'email_password')
-            ->where('secret', $email)
-            ->limit(1)
-            ->get()
-            ->getRow() !== null;
-        if ($existing) {
+        if ($this->adminUserService()->emailIdentityExists($email)) {
             // Generic error message to prevent email enumeration
             return redirect()->back()->withInput()->with('error', lang('System.adminUserCreateFailed'));
         }
@@ -143,18 +145,17 @@ class SystemAdminUsers extends BaseController
             );
 
             if ($group === 'provinceadmin') {
-                $primaryModel = model('ProvinceAdminPrimaryModel');
-                if ($primaryModel->getByProvince($provinceId) === null && ! $primaryModel->setPrimary($provinceId, $createdId, (int) auth()->id())) {
+                if ($this->adminUserService()->scopePrimaryUserId('province', $provinceId) === null
+                    && ! $this->adminUserService()->setScopePrimary('province', $provinceId, $createdId, (int) auth()->id())) {
                     throw new \RuntimeException('Failed to set province primary admin');
                 }
             }
 
             if ($group === 'dioceseadmin') {
-                $primaryModel = model('DioceseAdminPrimaryModel');
-                $diocesePrimary = $primaryModel->getByDiocese($dioceseId);
+                $diocesePrimary = $this->adminUserService()->scopePrimaryUserId('diocese', $dioceseId);
                 $makePrimary    = (int) ($this->request->getPost('make_primary') ?? 0) === 1;
 
-                if (($diocesePrimary === null || $makePrimary) && ! $primaryModel->setPrimary($dioceseId, $createdId, (int) auth()->id())) {
+                if (($diocesePrimary === null || $makePrimary) && ! $this->adminUserService()->setScopePrimary('diocese', $dioceseId, $createdId, (int) auth()->id())) {
                     throw new \RuntimeException('Failed to set diocese primary admin');
                 }
             }
@@ -213,28 +214,17 @@ class SystemAdminUsers extends BaseController
             return redirect()->to(base_url('system/diocese-admins'))->with('error', lang('App.errorForbidden'));
         }
 
-        $db = db_connect();
-        $admin = $db->table('auth_groups_users agu')
-            ->select('p.diocese_id')
-            ->join('profile p', 'p.user_id = agu.user_id', 'inner')
-            ->where('agu.user_id', $userId)
-            ->where('agu.group', 'dioceseadmin')
-            ->get()
-            ->getRowArray();
+        $dioceseId = $this->adminUserService()->adminScopeForUser($userId, ['dioceseadmin'], 'diocese_id');
 
-        if (! $admin || (int) ($admin['diocese_id'] ?? 0) <= 0) {
+        if ($dioceseId === null) {
             return redirect()->to(base_url('system/diocese-admins'))->with('error', lang('System.adminUserNotFound'));
         }
 
-        $dioceseId = (int) $admin['diocese_id'];
-        $primaryModel = model('DioceseAdminPrimaryModel');
-
-        $existing = $primaryModel->getByDiocese($dioceseId);
-        if ($existing && (int) $existing['user_id'] === $userId) {
+        if ($this->adminUserService()->scopePrimaryUserId('diocese', $dioceseId) === $userId) {
             return redirect()->to(base_url('system/diocese-admins'))->with('error', lang('Diocesan.userAlreadyPrimary'));
         }
 
-        if (! $primaryModel->setPrimary($dioceseId, $userId, (int) auth()->id())) {
+        if (! $this->adminUserService()->setScopePrimary('diocese', $dioceseId, $userId, (int) auth()->id())) {
             return redirect()->to(base_url('system/diocese-admins'))->with('error', lang('App.errorGeneric'));
         }
 
@@ -258,28 +248,17 @@ class SystemAdminUsers extends BaseController
             return redirect()->to(base_url('system/province-admins'))->with('error', lang('App.errorForbidden'));
         }
 
-        $db = db_connect();
-        $admin = $db->table('auth_groups_users agu')
-            ->select('p.province_id')
-            ->join('profile p', 'p.user_id = agu.user_id', 'inner')
-            ->where('agu.user_id', $userId)
-            ->where('agu.group', 'provinceadmin')
-            ->get()
-            ->getRowArray();
+        $provinceId = $this->adminUserService()->adminScopeForUser($userId, ['provinceadmin'], 'province_id');
 
-        if (! $admin || (int) ($admin['province_id'] ?? 0) <= 0) {
+        if ($provinceId === null) {
             return redirect()->to(base_url('system/province-admins'))->with('error', lang('System.adminUserNotFound'));
         }
 
-        $provinceId = (int) $admin['province_id'];
-        $primaryModel = model('ProvinceAdminPrimaryModel');
-
-        $existing = $primaryModel->getByProvince($provinceId);
-        if ($existing && (int) $existing['user_id'] === $userId) {
+        if ($this->adminUserService()->scopePrimaryUserId('province', $provinceId) === $userId) {
             return redirect()->to(base_url('system/province-admins'))->with('error', lang('Diocesan.userAlreadyPrimary'));
         }
 
-        if (! $primaryModel->setPrimary($provinceId, $userId, (int) auth()->id())) {
+        if (! $this->adminUserService()->setScopePrimary('province', $provinceId, $userId, (int) auth()->id())) {
             return redirect()->to(base_url('system/province-admins'))->with('error', lang('App.errorGeneric'));
         }
 
@@ -299,28 +278,17 @@ class SystemAdminUsers extends BaseController
             return $response;
         }
 
-        $db = db_connect();
-        $admin = $db->table('auth_groups_users agu')
-            ->select('p.parish_id')
-            ->join('profile p', 'p.user_id = agu.user_id', 'inner')
-            ->where('agu.user_id', $userId)
-            ->whereIn('agu.group', ['parishadmin', 'clergy'])
-            ->get()
-            ->getRowArray();
+        $parishId = $this->adminUserService()->adminScopeForUser($userId, ['parishadmin', 'clergy'], 'parish_id');
 
-        if (! $admin || (int) ($admin['parish_id'] ?? 0) <= 0) {
+        if ($parishId === null) {
             return redirect()->to(base_url('system/dashboard'))->with('error', lang('System.adminUserNotFound'));
         }
 
-        $parishId = (int) $admin['parish_id'];
-        $primaryModel = model('ParishAdminPrimaryModel');
-
-        $existing = $primaryModel->getByParish($parishId);
-        if ($existing && (int) $existing['user_id'] === $userId) {
+        if ($this->adminUserService()->scopePrimaryUserId('parish', $parishId) === $userId) {
             return redirect()->to(base_url('system/dashboard'))->with('error', lang('Diocesan.userAlreadyPrimary'));
         }
 
-        if (! $primaryModel->setPrimary($parishId, $userId, (int) auth()->id())) {
+        if (! $this->adminUserService()->setScopePrimary('parish', $parishId, $userId, (int) auth()->id())) {
             return redirect()->to(base_url('system/dashboard'))->with('error', lang('App.errorGeneric'));
         }
 
@@ -370,17 +338,11 @@ class SystemAdminUsers extends BaseController
         if ($profileTable === null) {
             return redirect()->back()->with('error', lang('App.errorGeneric'));
         }
-        $target = $db->table('users')->where('id', $userId)->get()->getRowArray();
-        if (!$target) {
+        if (!$this->adminUserService()->userExists($userId)) {
             return redirect()->back()->with('error', lang('System.adminUserNotFound'));
         }
 
-        $currentIsSystemAdmin = $db->table('auth_groups_users')
-            ->where('user_id', $userId)
-            ->where('group', 'systemadmin')
-            ->limit(1)
-            ->get()
-            ->getRow() !== null;
+        $currentIsSystemAdmin = $this->isSystemAdminUser($userId);
 
         if ($group === 'systemadmin') {
             $provinceId = 0;
@@ -393,7 +355,7 @@ class SystemAdminUsers extends BaseController
         }
 
         if ($group === 'provinceadmin') {
-            if ($provinceId <= 0 || $db->table('province')->where('id', $provinceId)->limit(1)->get()->getRow() === null) {
+            if ($provinceId <= 0 || !$this->adminUserService()->provinceExists($provinceId)) {
                 return redirect()->back()->withInput()->with('error', lang('System.invalidProvinceForAdmin'));
             }
 
@@ -413,7 +375,7 @@ class SystemAdminUsers extends BaseController
                 return redirect()->back()->withInput()->with('error', lang('System.invalidDioceseForAdmin'));
             }
 
-            $diocese = $db->table('diocese')->select('id, province_id')->where('id', $dioceseId)->get()->getRowArray();
+            $diocese = $this->adminUserService()->dioceseRow($dioceseId);
             if (!$diocese) {
                 return redirect()->back()->withInput()->with('error', lang('System.invalidDioceseForAdmin'));
             }
@@ -437,8 +399,7 @@ class SystemAdminUsers extends BaseController
         }
 
         if ($currentIsSystemAdmin && $group !== 'systemadmin') {
-            $totalSystemAdmins = (int) $db->table('auth_groups_users')->where('group', 'systemadmin')->countAllResults();
-            if ($totalSystemAdmins <= 1) {
+            if ($this->adminUserService()->countGroupMembers('systemadmin') <= 1) {
                 return redirect()->to(base_url('system/system-admins'))->with('error', lang('System.cannotRemoveLastSystemAdmin'));
             }
         }
@@ -458,16 +419,14 @@ class SystemAdminUsers extends BaseController
                 throw new \RuntimeException('Unsupported admin group');
             }
 
-            $db->table($profileTable)
-                ->where('user_id', $userId)
-                ->update([
-                    'province_id' => $provinceId > 0 ? $provinceId : null,
-                    'diocese_id' => $dioceseId > 0 ? $dioceseId : null,
-                    'first_name' => trim((string) $this->request->getPost('first_name')),
-                    'last_name' => trim((string) $this->request->getPost('last_name')),
-                    'phone' => preg_replace('/[^0-9+\s-]/', '', (string) ($this->request->getPost('phone') ?? '')),
-                    'updated_at' => date('Y-m-d H:i:s'),
-                ]);
+            $this->adminUserService()->updateAdminProfile($profileTable, $userId, [
+                'province_id' => $provinceId > 0 ? $provinceId : null,
+                'diocese_id' => $dioceseId > 0 ? $dioceseId : null,
+                'first_name' => trim((string) $this->request->getPost('first_name')),
+                'last_name' => trim((string) $this->request->getPost('last_name')),
+                'phone' => preg_replace('/[^0-9+\s-]/', '', (string) ($this->request->getPost('phone') ?? '')),
+                'updated_at' => date('Y-m-d H:i:s'),
+            ]);
 
             $db->transComplete();
             if ($db->transStatus() === false) {
@@ -519,18 +478,12 @@ class SystemAdminUsers extends BaseController
         }
 
         $db = db_connect();
-        $adminGroup = $db->table('auth_groups_users')
-            ->select('group')
-            ->where('user_id', $userId)
-            ->whereIn('group', ['systemadmin', 'provinceadmin', 'dioceseadmin'])
-            ->get()
-            ->getRowArray();
+        $group = $this->adminUserService()->adminGroupOf($userId);
 
-        if (!$adminGroup) {
+        if ($group === null) {
             return redirect()->to(base_url('system/dashboard'))->with('error', lang('System.adminUserNotFound'));
         }
 
-        $group = (string) $adminGroup['group'];
         $targetIsSystemAdmin = ($group === 'systemadmin');
 
         if ($targetIsSystemAdmin) {
@@ -538,41 +491,23 @@ class SystemAdminUsers extends BaseController
                 return $response;
             }
 
-            $totalSystemAdmins = (int) $db->table('auth_groups_users')->where('group', 'systemadmin')->countAllResults();
-            if ($totalSystemAdmins <= 1) {
+            if ($this->adminUserService()->countGroupMembers('systemadmin') <= 1) {
                 return redirect()->to(base_url('system/system-admins'))->with('error', lang('System.cannotDeleteLastSystemAdmin'));
             }
         }
 
-        if ($group === 'provinceadmin' && $db->table('province_admin_primary')->where('user_id', $userId)->limit(1)->get()->getRowArray()) {
+        if ($group === 'provinceadmin' && $this->adminUserService()->isScopePrimaryUser('province', $userId)) {
             return redirect()->to(base_url('system/province-admins'))->with('error', lang('System.cannotDeletePrimaryAdmin'));
         }
 
-        if ($group === 'dioceseadmin' && $db->table('diocese_admin_primary')->where('user_id', $userId)->limit(1)->get()->getRowArray()) {
+        if ($group === 'dioceseadmin' && $this->adminUserService()->isScopePrimaryUser('diocese', $userId)) {
             return redirect()->to(base_url('system/diocese-admins'))->with('error', lang('System.cannotDeletePrimaryAdmin'));
         }
 
         $profileTable = $this->resolveExistingProfileTable($db);
 
-        try {
-            $db->transStart();
-
-            if ($profileTable !== null) {
-                $db->table($profileTable)->where('user_id', $userId)->delete();
-            }
-            $db->table('auth_identities')->where('user_id', $userId)->delete();
-            $db->table('auth_groups_users')->where('user_id', $userId)->delete();
-            $db->table('auth_permissions_users')->where('user_id', $userId)->delete();
-            $db->table('users')->where('id', $userId)->delete();
-
-            $db->transComplete();
-
-            if ($db->transStatus() === false) {
-                throw new \RuntimeException('Transaction failed');
-            }
-        } catch (\Throwable $e) {
-            $db->transRollback();
-            return $this->safeRedirectError(lang('System.adminUserDeleteFailed'), $e);
+        if (!$this->adminUserService()->deleteUserCascade($profileTable, $userId)) {
+            return $this->safeRedirectError(lang('System.adminUserDeleteFailed'), new \RuntimeException('Transaction failed'));
         }
 
         $this->audit()->log('system.admin_user.deleted', [
@@ -642,28 +577,14 @@ class SystemAdminUsers extends BaseController
             return redirect()->back()->withInput()->with('errors', ['new_password' => implode(' ', $passwordValidation['errors'])]);
         }
 
-        $db = db_connect();
+        $adminGroup = $this->adminUserService()->adminGroupOf($userId);
 
-        $adminGroup = $db->table('auth_groups_users')
-            ->select('group')
-            ->where('user_id', $userId)
-            ->whereIn('group', ['systemadmin', 'provinceadmin', 'dioceseadmin'])
-            ->get()
-            ->getRowArray();
-
-        if (!$adminGroup) {
+        if ($adminGroup === null) {
             return redirect()->back()->with('error', lang('System.adminUserNotFound'));
         }
 
         // Update password in auth_identities table
-        $db->table('auth_identities')
-            ->where('user_id', $userId)
-            ->where('type', 'email_password')
-            ->update([
-                'secret2' => service('passwords')->hash($newPassword),
-                'force_reset' => 0,
-                'updated_at' => date('Y-m-d H:i:s'),
-            ]);
+        $this->adminUserService()->updatePasswordIdentity($userId, service('passwords')->hash($newPassword));
 
         $this->audit()->log('system.admin.password_reset', [
             'entity_type' => 'user',
@@ -673,7 +594,7 @@ class SystemAdminUsers extends BaseController
             ],
         ]);
 
-        $redirectUrl = match ($adminGroup['group']) {
+        $redirectUrl = match ($adminGroup) {
             'systemadmin' => 'system/system-admins',
             'provinceadmin' => 'system/province-admins',
             'dioceseadmin' => 'system/diocese-admins',
@@ -718,31 +639,12 @@ class SystemAdminUsers extends BaseController
             ));
         }
 
-        $query = $db->table('auth_groups_users agu')
-            ->join('users u', 'u.id = agu.user_id')
-            ->join($profileTable . ' p', 'p.user_id = agu.user_id', 'left')
-            ->join('auth_identities ai', 'ai.user_id = agu.user_id AND ai.type = "email_password"', 'left')
-            ->where('agu.group', 'systemadmin')
-            ->orderBy('p.last_name', 'ASC')
-            ->orderBy('p.first_name', 'ASC');
-
         $search = trim((string) $this->request->getGet('q'));
-        if ($search !== '') {
-            $query->groupStart()
-                ->like('p.first_name', $search)
-                ->orLike('p.last_name', $search)
-                ->orLike('ai.secret', $search)
-                ->groupEnd();
-        }
-
-        if ($this->tableExistsSafe($db, 'system_admin_primary')) {
-            $query->select('agu.user_id, u.active, ai.secret AS email, ai.force_reset, ai.last_used_at, p.first_name, p.last_name, p.phone, CASE WHEN sap.user_id IS NULL THEN 0 ELSE 1 END AS is_primary', false)
-                ->join('system_admin_primary sap', 'sap.id = 1 AND sap.user_id = agu.user_id', 'left');
-        } else {
-            $query->select('agu.user_id, u.active, ai.secret AS email, ai.force_reset, ai.last_used_at, p.first_name, p.last_name, p.phone, 0 AS is_primary', false);
-        }
-
-        $admins = $query->get()->getResultArray();
+        $admins = $this->adminUserService()->systemAdminRows(
+            $profileTable,
+            $search,
+            $this->tableExistsSafe($db, 'system_admin_primary')
+        );
 
         // Decrypt phone values and load delegable permissions per admin.
         foreach ($admins as $key => $admin) {
@@ -814,29 +716,13 @@ class SystemAdminUsers extends BaseController
         $db = db_connect();
         $profileTable = $this->resolveExistingProfileTable($db);
 
-        $provinces = $db->table('province')
-            ->select('id, province_number, name')
-            ->orderBy('sort_order', 'ASC')
-            ->orderBy('province_number', 'ASC')
-            ->get()
-            ->getResultArray();
+        $provinces = $this->adminUserService()->provincesList();
 
         $admins = [];
 
         if ($profileTable !== null) {
             try {
-                $admins = $db->table('auth_groups_users agu')
-                    ->select('agu.user_id, ai.secret AS email, p.first_name, p.last_name, p.phone, p.province_id, pr.name AS province_name, pr.province_number')
-                    ->join($profileTable . ' p', 'p.user_id = agu.user_id', 'left')
-                    ->join('province pr', 'pr.id = p.province_id', 'left')
-                    ->join('auth_identities ai', 'ai.user_id = agu.user_id AND ai.type = "email_password"', 'left')
-                    ->where('agu.group', 'provinceadmin')
-                    ->orderBy('pr.sort_order', 'ASC')
-                    ->orderBy('pr.province_number', 'ASC')
-                    ->orderBy('p.last_name', 'ASC')
-                    ->orderBy('p.first_name', 'ASC')
-                    ->get()
-                    ->getResultArray();
+                $admins = $this->adminUserService()->provinceAdminRows($profileTable);
 
                 $admins = array_map(function (array $row): array {
                     if (!empty($row['phone'])) {
@@ -849,13 +735,7 @@ class SystemAdminUsers extends BaseController
             }
         }
 
-        $primaryByProvince = [];
-        if ($db->tableExists('province_admin_primary')) {
-            $primaryRows = $db->table('province_admin_primary')->get()->getResultArray();
-            foreach ($primaryRows as $row) {
-                $primaryByProvince[(int) $row['province_id']] = (int) $row['user_id'];
-            }
-        }
+        $primaryByProvince = $this->adminUserService()->primaryUserMap('province');
 
         return view('System/province_admins', array_merge(
             $this->getCommonViewData(lang('System.sectionProvinceAdmins')),
@@ -880,40 +760,15 @@ class SystemAdminUsers extends BaseController
         $db = db_connect();
         $profileTable = $this->resolveExistingProfileTable($db);
 
-        $provinces = $db->table('province')
-            ->select('id, province_number, name')
-            ->orderBy('sort_order', 'ASC')
-            ->orderBy('province_number', 'ASC')
-            ->get()
-            ->getResultArray();
+        $provinces = $this->adminUserService()->provincesList();
 
-        $dioceses = $db->table('diocese d')
-            ->select('d.id, d.name, d.province_id, p.province_number')
-            ->join('province p', 'p.id = d.province_id', 'inner')
-            ->orderBy('p.sort_order', 'ASC')
-            ->orderBy('p.province_number', 'ASC')
-            ->orderBy('d.name', 'ASC')
-            ->get()
-            ->getResultArray();
+        $dioceses = $this->adminUserService()->diocesesList();
 
         $admins = [];
 
         if ($profileTable !== null) {
             try {
-                $admins = $db->table('auth_groups_users agu')
-                    ->select('agu.user_id, ai.secret AS email, p.first_name, p.last_name, p.phone, p.diocese_id, p.province_id, d.name AS diocese_name, pr.name AS province_name, pr.province_number')
-                    ->join($profileTable . ' p', 'p.user_id = agu.user_id', 'left')
-                    ->join('diocese d', 'd.id = p.diocese_id', 'left')
-                    ->join('province pr', 'pr.id = d.province_id', 'left')
-                    ->join('auth_identities ai', 'ai.user_id = agu.user_id AND ai.type = "email_password"', 'left')
-                    ->where('agu.group', 'dioceseadmin')
-                    ->orderBy('pr.sort_order', 'ASC')
-                    ->orderBy('pr.province_number', 'ASC')
-                    ->orderBy('d.name', 'ASC')
-                    ->orderBy('p.last_name', 'ASC')
-                    ->orderBy('p.first_name', 'ASC')
-                    ->get()
-                    ->getResultArray();
+                $admins = $this->adminUserService()->dioceseAdminRows($profileTable);
 
                 $admins = array_map(function (array $row): array {
                     if (!empty($row['phone'])) {
@@ -926,13 +781,7 @@ class SystemAdminUsers extends BaseController
             }
         }
 
-        $primaryByDiocese = [];
-        if ($db->tableExists('diocese_admin_primary')) {
-            $primaryRows = $db->table('diocese_admin_primary')->get()->getResultArray();
-            foreach ($primaryRows as $row) {
-                $primaryByDiocese[(int) $row['diocese_id']] = (int) $row['user_id'];
-            }
-        }
+        $primaryByDiocese = $this->adminUserService()->primaryUserMap('diocese');
 
         return view('System/diocese_admins', array_merge(
             $this->getCommonViewData(lang('System.sectionDioceseAdmins')),
@@ -950,24 +799,7 @@ class SystemAdminUsers extends BaseController
      */
     public function getPermissionsForGroups(array $groupNames): array
     {
-        if (empty($groupNames)) {
-            return [];
-        }
-
-        $db = db_connect();
-        $permissions = $db->table('auth_groups_permissions agp')
-            ->select('agp.permission, ap.description')
-            ->join('auth_permissions ap', 'ap.name = agp.permission', 'inner')
-            ->whereIn('agp.group', $groupNames)
-            ->get()
-            ->getResultArray();
-
-        $result = [];
-        foreach ($permissions as $perm) {
-            $result[$perm['permission']] = $perm['description'];
-        }
-
-        return $result;
+        return $this->adminUserService()->permissionsForGroups($groupNames);
     }
 
     /**
@@ -1010,12 +842,7 @@ class SystemAdminUsers extends BaseController
             return redirect()->to(base_url('system/system-admins'))->with('error', lang('App.errorForbidden'));
         }
 
-        $identity = db_connect()->table('auth_identities')
-            ->select('secret, force_reset')
-            ->where('user_id', $userId)
-            ->where('type', 'email_password')
-            ->get()
-            ->getRowArray();
+        $identity = $this->adminUserService()->identityForUser($userId, 'email_password');
 
         if (!$identity || (int) ($identity['force_reset'] ?? 0) !== 1) {
             return redirect()->to(base_url('system/system-admins'))->with('error', lang('System.adminInvitationNotPending'));
@@ -1075,28 +902,11 @@ class SystemAdminUsers extends BaseController
             }
         }
 
-        $db = db_connect();
         $now = date('Y-m-d H:i:s');
         $previousPermissions = $this->getGrantedSystemAdminDelegationPermissions($userId);
 
-        $db->transStart();
         try {
-            $db->table('auth_permissions_users')
-                ->where('user_id', $userId)
-                ->whereIn('permission', self::DELEGATION_PERMISSIONS)
-                ->delete();
-
-            foreach (array_keys($granted) as $permission) {
-                $db->table('auth_permissions_users')->insert([
-                    'user_id' => $userId,
-                    'permission' => $permission,
-                    'created_at' => $now,
-                ]);
-            }
-
-            $db->transComplete();
-
-            if ($db->transStatus() === false) {
+            if (!$this->adminUserService()->replaceUserPermissions($userId, self::DELEGATION_PERMISSIONS, array_keys($granted))) {
                 throw new \RuntimeException('Transaction failed');
             }
 
@@ -1118,7 +928,6 @@ class SystemAdminUsers extends BaseController
             return redirect()->to(base_url('system/system-admins'))
                 ->with('success', lang('System.adminPermissionsUpdated'));
         } catch (\Throwable $e) {
-            $db->transRollback();
             return $this->safeRedirectError(lang('System.adminPermissionsUpdateFailed'), $e);
         }
     }
