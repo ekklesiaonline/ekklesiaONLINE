@@ -217,7 +217,25 @@ second-order hardening (MySQL verification, CI enforcement, PHPStan depth, a11y 
    converted) or falls back to `recordManualConversion` for guests without a
    linked person. New keys in en/es/fr; `GuestConversionPrefillTest` covers
    the bookkeeping + wiring contract. Instant `convertToMember` unchanged.
-3. **Membership pathway tracking** — stage model + transitions.
+3. **Membership pathway tracking** — ✅ implemented. New
+   `MembershipPathwayService` centralizes `parish_affiliation.membership_status`
+   transitions: `classify()` (forward / backward / reactivation / deactivation /
+   terminal / correction), `requiresReason()` (mandatory reason when entering
+   or leaving `transferred`/`deceased`), and `transition()` /
+   `transitionForUser()` / `transitionForPerson()`, which update
+   `membership_status` + `is_member` + `affiliation_type` + `end_date`
+   atomically, write `person_status_history` under the canonical `person_id`,
+   and refresh the `parish_people` snapshot (best-effort). `Members::update`
+   now delegates to the service — fixing a bug where history rows were written
+   under the **profile id** instead of `person_id` — and the member edit form
+   submits canonical affiliation statuses via `statusOptions` (replacing the
+   profile-enum options `pending`/`non_active`, which could never pass
+   validation) plus a `status_reason` field the controller already read but
+   the view never rendered. Status history on the person view shows a
+   transition-classification badge (`Members.transition*`, en/es/fr).
+   `MembershipPathwayTest` covers the classification/reason matrix, history
+   attribution, end_date semantics, no-op/invalid/not-found results, and
+   tenant scoping.
 4. **Bank reconciliation** — largest item; schema exists, needs full module.
 5. **Small groups** and **bulk messaging** — new modules; design before building.
 

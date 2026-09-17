@@ -726,6 +726,21 @@ $portalAccess = strtolower(trim((string) ($profile['portal_access'] ?? 'none')))
                                                 <i class="bi bi-arrow-right small text-muted" aria-hidden="true"></i>
                                             <?php endif; ?>
                                             <strong><?= esc($entry['to_status'] ?? '') ?></strong>
+                                            <?php
+                                            $classification = (string) ($entry['classification'] ?? '');
+                                            $classificationColors = [
+                                                'forward'      => 'success',
+                                                'backward'     => 'secondary',
+                                                'reactivation' => 'info',
+                                                'deactivation' => 'warning',
+                                                'terminal'     => 'dark',
+                                                'correction'   => 'danger',
+                                            ];
+                                            $classificationColor = $classificationColors[$classification] ?? '';
+                                            if ($classification !== '' && $classification !== 'none' && $classificationColor !== ''):
+                                            ?>
+                                                <span class="badge border border-<?= $classificationColor ?> text-<?= $classificationColor ?> fw-normal ms-1"><?= esc(lang('Members.transition' . ucfirst($classification))) ?></span>
+                                            <?php endif; ?>
                                         </div>
                                         <?php if (!empty($entry['created_at'])): ?>
                                             <small class="text-muted"><?= esc($entry['created_at']) ?></small>

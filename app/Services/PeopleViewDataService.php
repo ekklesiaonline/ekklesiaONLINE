@@ -112,9 +112,18 @@ class PeopleViewDataService
             }
         }
 
+        $pathway = new \App\Services\MembershipPathwayService();
+
         foreach ($history as &$entry) {
             $actorId         = (int) ($entry['changed_by'] ?? 0);
             $entry['actor']  = $actorNames[$actorId] ?? '';
+
+            if (($entry['status_type'] ?? '') === 'affiliation') {
+                $entry['classification'] = $pathway->classify(
+                    (string) ($entry['from_status'] ?? ''),
+                    (string) ($entry['to_status'] ?? '')
+                );
+            }
         }
         unset($entry);
 

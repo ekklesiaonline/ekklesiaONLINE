@@ -87,16 +87,33 @@
 
                     <div class="mb-3">
                         <label for="membership_status" class="form-label"><?= lang('Members.membershipStatus') ?> <span class="text-danger">*</span></label>
-                        <select class="form-select<?= session('errors.membership_status') ? ' is-invalid' : '' ?>" id="membership_status" name="membership_status" required aria-describedby="membershipStatusError">
-                            <option value="pending" <?= ($profile['membership_status'] ?? 'regular_attender') === 'pending' ? 'selected' : '' ?>><?= lang('Membership.statusPending') ?></option>
-                            <option value="visitor" <?= ($profile['membership_status'] ?? 'regular_attender') === 'visitor' ? 'selected' : '' ?>><?= lang('Membership.statusVisitor') ?></option>
-                            <option value="regular_attender" <?= ($profile['membership_status'] ?? 'regular_attender') === 'regular_attender' ? 'selected' : '' ?>><?= lang('Membership.statusRegularAttender') ?></option>
-                            <option value="member" <?= ($profile['membership_status'] ?? 'regular_attender') === 'member' ? 'selected' : '' ?>><?= lang('Membership.statusMember') ?></option>
-                            <option value="non_active" <?= ($profile['membership_status'] ?? 'regular_attender') === 'non_active' ? 'selected' : '' ?>><?= lang('Membership.statusNonActive') ?></option>
+                        <select class="form-select<?= session('errors.membership_status') ? ' is-invalid' : '' ?>" id="membership_status" name="membership_status" required aria-describedby="membershipStatusError membershipStatusHelp">
+                            <?php
+                            $currentStatus = (string) ($profile['membership_status'] ?? 'regular_attender');
+                            $statusOptions = $statusOptions ?? ['visitor', 'regular_attender', 'member', 'inactive', 'transferred', 'deceased'];
+                            if (!in_array($currentStatus, $statusOptions, true)) {
+                                $statusOptions[] = $currentStatus;
+                            }
+                            foreach ($statusOptions as $statusOption):
+                            ?>
+                                <option value="<?= esc($statusOption) ?>" <?= $currentStatus === $statusOption ? 'selected' : '' ?>><?= esc(\App\Services\MembershipStatusService::label($statusOption)) ?></option>
+                            <?php endforeach; ?>
                         </select>
+                        <div id="membershipStatusHelp" class="form-text"><?= lang('Members.statusTerminalHint') ?></div>
                         <?php if (session('errors.membership_status')): ?>
                             <div id="membershipStatusError" class="invalid-feedback">
                                 <?= esc(session('errors.membership_status')) ?>
+                            </div>
+                        <?php endif; ?>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="status_reason" class="form-label"><?= lang('Members.statusReason') ?></label>
+                        <textarea class="form-control<?= session('errors.status_reason') ? ' is-invalid' : '' ?>" id="status_reason" name="status_reason" rows="2" maxlength="500" placeholder="<?= esc(lang('Members.statusReasonPlaceholder'), 'attr') ?>" aria-describedby="statusReasonHelp statusReasonError"><?= esc(old('status_reason', '')) ?></textarea>
+                        <div id="statusReasonHelp" class="form-text"><?= lang('Members.statusReasonHelp') ?></div>
+                        <?php if (session('errors.status_reason')): ?>
+                            <div id="statusReasonError" class="invalid-feedback">
+                                <?= esc(session('errors.status_reason')) ?>
                             </div>
                         <?php endif; ?>
                     </div>

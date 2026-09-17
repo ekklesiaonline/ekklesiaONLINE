@@ -13,7 +13,6 @@ use App\Services\MemberAffiliationService;
 use App\Services\ParishPeopleRegistryService;
 use App\Services\NonPortalMemberProvisioningService;
 use App\Services\MembershipStatusService;
-use App\Services\PersonStatusHistoryService;
 use App\Services\ProvinceStaffDirectoryService;
 use App\Services\UploadPathService;
 
@@ -561,17 +560,23 @@ class Members extends BaseController
             return $this->redirectMembersError('Member not found');
         }
 
-        // Keep edit form status aligned to the active affiliation in operational parish.
+        // Keep edit form status aligned to the current affiliation in operational parish.
         $parishId = (int) ($this->getOperationalParishId() ?? 0);
         if ($parishId > 0) {
             $affiliation = $this->getMemberParishAffiliationModel()
-                ->getActiveAffiliationForParish((int) ($profile['user_id'] ?? 0), $parishId);
+                ->where('linked_user_id', (int) ($profile['user_id'] ?? 0))
+                ->where('parish_id', $parishId)
+                ->orderBy('id', 'DESC')
+                ->first();
             if (is_array($affiliation) && isset($affiliation['membership_status'])) {
                 $profile['membership_status'] = (string) $affiliation['membership_status'];
             }
         }
 
-        return view('Clergy\Views\Members/edit', array_merge($this->getCommonViewData('Edit Member'), ['profile' => $profile]));
+        return view('Clergy\Views\Members/edit', array_merge($this->getCommonViewData('Edit Member'), [
+            'profile' => $profile,
+            'statusOptions' => \App\Services\MembershipStatusService::affiliationStatuses(),
+        ]));
     }
 
     /**
@@ -601,6 +606,7 @@ class Members extends BaseController
             'phone' => 'permit_empty|valid_phone_e164',
             'country' => 'permit_empty|valid_country',
             'membership_status' => 'required|in_list[' . implode(',', \App\Services\MembershipStatusService::affiliationStatuses()) . ']',
+            'status_reason' => 'permit_empty|max_length[500]',
             'profile_picture' => 'permit_empty|uploaded[profile_picture]|max_size[profile_picture,2048]|is_image[profile_picture]|mime_in[profile_picture,image/jpg,image/jpeg,image/png,image/gif]',
         ];
 
@@ -659,44 +665,44 @@ class Members extends BaseController
         // The operational per-parish status lives in parish_affiliation.
         $parishId = (int) ($this->getOperationalParishId() ?? 0);
         $homeParishId = (int) ($profile['parish_id'] ?? 0);
-        if ($parishId > 0 && $parishId === $homeParishId) {
-            $this->getProfileModel()->update($id, ['membership_status' => $submittedStatus]);
-        }
+        $statusReason = trim((string) ($this->request->getPost('status_reason') ?? ''));
 
         // Sync affiliation status for current parish so /members, /people, and detail
         // views stay consistent with the status chosen in this edit form.
         if ($parishId > 0) {
-            $affiliationStatus = \App\Services\MembershipStatusService::profileToAffiliation($submittedStatus);
+            $transition = (new \App\Services\MembershipPathwayService())->transitionForUser(
+                (int) ($profile['user_id'] ?? 0),
+                $parishId,
+                $submittedStatus,
+                auth()->loggedIn() ? (int) auth()->id() : null,
+                $statusReason
+            );
 
-            $affiliation = $this->getMemberParishAffiliationModel()
-                ->getActiveAffiliationForParish((int) ($profile['user_id'] ?? 0), $parishId);
+            if (! $transition['ok']) {
+                $code = (string) ($transition['code'] ?? '');
 
-            if (is_array($affiliation)) {
-                $fromStatus = (string) ($affiliation['membership_status'] ?? '');
-                $affiliationUpdate = ['membership_status' => $affiliationStatus];
-
-                if (array_key_exists('is_member', $affiliation)) {
-                    $affiliationUpdate['is_member'] = \App\Services\MembershipStatusService::isMember($affiliationStatus) ? 1 : 0;
+                if ($code === 'reason_required') {
+                    return redirect()->back()->withInput()->with('errors', [
+                        'status_reason' => lang('Members.statusReasonRequired'),
+                    ]);
                 }
 
-                $this->getMemberParishAffiliationModel()->update((int) ($affiliation['id'] ?? 0), $affiliationUpdate);
-
-                if ($fromStatus !== $affiliationStatus) {
-                    $history = new PersonStatusHistoryService();
-                    $history->record(
-                        (int) $id,
-                        'affiliation',
-                        $fromStatus,
-                        $affiliationStatus,
-                        $parishId,
-                        auth()->loggedIn() ? (int) auth()->id() : null,
-                        (string) ($this->request->getPost('status_reason') ?? 'Manual status update')
-                    );
+                if ($code === 'invalid_status') {
+                    return redirect()->back()->withInput()->with('errors', [
+                        'membership_status' => lang('App.errorInvalidInput'),
+                    ]);
                 }
+                // affiliation_not_found / update_failed: continue with the
+                // profile-only update below (member may not be affiliated).
             }
 
-            // Refresh parish_people snapshot immediately instead of waiting for cron.
-            (new ParishPeopleRegistryService())->syncParish($parishId);
+            if ($parishId === $homeParishId) {
+                // The profile enum lacks transferred/deceased; map through the
+                // canonical affiliation status.
+                $this->getProfileModel()->update($id, [
+                    'membership_status' => \App\Services\MembershipStatusService::affiliationToProfile($submittedStatus),
+                ]);
+            }
         }
 
         $this->audit()->log('member.update', [
