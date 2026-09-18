@@ -122,10 +122,11 @@ thin: contact fields, `visit_date`, `service_attended`, `followed_up`,
 + Dev MySQL verified: tables dropped, columns added, zero dangling FKs,
   migrations recorded (batches 76–77).
 
-**Note:** dev `event_registration` has an unreproducible divergent shape
+**Note:** dev `event_registration` had an unreproducible divergent shape
 (`registration_status`/`person_id`, no `guest_name`/`user_id`) that no
-migration or code produces — pre-existing dev artifact, flagged for
-realignment outside T4.5.
+migration or code produced — a pre-existing dev artifact. It was rebuilt to
+the canonical dump shape (empty table; `event_registration_response` child
+FK preserved).
 
 ### Kept compatibility layers (not retired)
 
