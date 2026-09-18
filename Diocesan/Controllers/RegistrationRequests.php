@@ -33,9 +33,7 @@ class RegistrationRequests extends BaseController
             ?? $request['parish_id']
             ?? 0
         );
-        if ($approvedParishId > 0) {
-            (new \App\Services\ParishPeopleRegistryService())->syncParish($approvedParishId);
-        }
+
 
         return redirect()->to('/dashboard')->with('success', lang('Diocesan.registrationApproved'));
     }
@@ -68,7 +66,6 @@ class RegistrationRequests extends BaseController
 
         $successCount = 0;
         $firstError = null;
-        $syncParishIds = [];
         foreach ($requestIds as $requestId) {
             $error = match ($action) {
                 'approve' => $service->approve($actorUserId, $requestId, null, $scope),
@@ -80,28 +77,8 @@ class RegistrationRequests extends BaseController
 
             if ($error === null) {
                 $successCount++;
-                if ($action === 'approve') {
-                    $request = model('UserRegistrationRequestModel')->find($requestId);
-                    $parishId = (int) (
-                        $request['requested_parish_id']
-                        ?? $request['parish_id']
-                        ?? $request['requested_parish_id']
-                        ?? $request['parish_id']
-                        ?? 0
-                    );
-                    if ($parishId > 0) {
-                        $syncParishIds[$parishId] = true;
-                    }
-                }
             } elseif ($firstError === null) {
                 $firstError = $error;
-            }
-        }
-
-        if ($syncParishIds !== []) {
-            $registry = new \App\Services\ParishPeopleRegistryService();
-            foreach (array_keys($syncParishIds) as $parishId) {
-                $registry->syncParish($parishId);
             }
         }
 

@@ -5,11 +5,11 @@ use CodeIgniter\Test\CIUnitTestCase;
 use CodeIgniter\Test\DatabaseTestTrait;
 
 /**
- * T3.2: guest-to-member conversion pre-fill.
+ * T3.2/T4.5: guest-to-member conversion pre-fill.
  *
- * Covers the bookkeeping side: recordManualConversion() marks the guest row
- * converted and skips pending follow-ups for the linked person, and the
- * wiring that carries guest_data into the member create form exists.
+ * Covers the bookkeeping side: recordManualConversion() marks the canonical
+ * guest affiliation converted and skips pending follow-ups for the person,
+ * and the wiring that carries guest_data into the member create form exists.
  *
  * @internal
  */
@@ -22,34 +22,30 @@ final class GuestConversionPrefillTest extends CIUnitTestCase
 
     public function testRecordManualConversionMarksGuestConverted(): void
     {
-        $guestId = $this->insertGuest(301, null);
+        $personId = $this->insertGuestPerson(301);
 
-        PersonConversionService::recordManualConversion(
-            ['id' => $guestId, 'person_id' => null],
-            55,
-            7
-        );
+        PersonConversionService::recordManualConversion($personId, 301, 55, 7);
 
-        $row = $this->db->table('guest')->where('id', $guestId)->get()->getRowArray();
+        $row = $this->db->table('parish_affiliation')
+            ->where('person_id', $personId)
+            ->where('parish_id', 301)
+            ->get()
+            ->getRowArray();
 
         $this->assertSame(1, (int) $row['followed_up']);
         $this->assertNotNull($row['converted_to_member_at']);
-        $this->assertSame(55, (int) $row['converted_user_id']);
+        $this->assertSame(55, (int) $row['linked_user_id']);
         $this->assertSame(7, (int) $row['converted_by_user_id']);
     }
 
     public function testRecordManualConversionSkipsPendingFollowups(): void
     {
-        $guestId = $this->insertGuest(301, 42);
-        $pendingId = $this->insertFollowup(42, 'pending');
-        $doneId = $this->insertFollowup(42, 'sent');
+        $personId = $this->insertGuestPerson(301);
+        $pendingId = $this->insertFollowup($personId, 'pending');
+        $doneId = $this->insertFollowup($personId, 'sent');
         $otherId = $this->insertFollowup(43, 'pending');
 
-        PersonConversionService::recordManualConversion(
-            ['id' => $guestId, 'person_id' => 42],
-            55,
-            7
-        );
+        PersonConversionService::recordManualConversion($personId, 301, 55, 7);
 
         $pending = $this->db->table('followup_log')->where('id', $pendingId)->get()->getRowArray();
         $done = $this->db->table('followup_log')->where('id', $doneId)->get()->getRowArray();
@@ -63,7 +59,7 @@ final class GuestConversionPrefillTest extends CIUnitTestCase
     /**
      * Wiring contract: the create-account endpoint sets guest_data flashdata,
      * Members::create consumes it into old input, and the form carries
-     * guest_id back to store().
+     * guest_id (the canonical person_id) back to store().
      */
     public function testPrefillWiringExists(): void
     {
@@ -79,19 +75,30 @@ final class GuestConversionPrefillTest extends CIUnitTestCase
         $this->assertStringContainsString("getPost('guest_id')", $members);
     }
 
-    private function insertGuest(int $parishId, ?int $personId): int
+    private function insertGuestPerson(int $parishId): int
     {
-        $this->db->table('guest')->insert([
-            'parish_id'  => $parishId,
-            'person_id'  => $personId,
+        $this->db->table('person')->insert([
             'first_name' => 'Ana',
             'last_name'  => 'Perez',
-            'visit_date' => date('Y-m-d'),
+            'is_active'  => 1,
             'created_at' => date('Y-m-d H:i:s'),
             'updated_at' => date('Y-m-d H:i:s'),
         ]);
+        $personId = (int) $this->db->insertID();
 
-        return (int) $this->db->insertID();
+        $this->db->table('parish_affiliation')->insert([
+            'person_id'        => $personId,
+            'parish_id'        => $parishId,
+            'affiliation_type' => 'guest',
+            'membership_status'=> 'visitor',
+            'canonical_status' => 'visitor',
+            'is_member'        => 0,
+            'followed_up'      => 0,
+            'created_at'       => date('Y-m-d H:i:s'),
+            'updated_at'       => date('Y-m-d H:i:s'),
+        ]);
+
+        return $personId;
     }
 
     private function insertFollowup(int $personId, string $status): int

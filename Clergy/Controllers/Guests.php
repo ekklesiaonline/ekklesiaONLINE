@@ -3,20 +3,21 @@
 namespace Clergy\Controllers;
 
 use App\Controllers\BaseController;
-use App\Libraries\DataEncryption;
+use App\Services\GuestDirectoryService;
 use App\Services\GuestFollowupService;
+use App\Services\PersonConversionService;
 
 class Guests extends BaseController
 {
-    protected $guestModel;
     protected $personVisitModel;
     protected $followupLogModel;
     protected $followupSequenceModel;
     private GuestFollowupService $followupQueries;
+    private GuestDirectoryService $guestDirectory;
 
     public function __construct()
     {
-        $this->guestModel            = model('GuestModel');
+        $this->guestDirectory        = new GuestDirectoryService();
         $this->personVisitModel      = model('PersonVisitModel');
         $this->followupLogModel      = model('FollowupLogModel');
         $this->followupSequenceModel = model('FollowupSequenceModel');
@@ -47,60 +48,17 @@ class Guests extends BaseController
         $followupStage = $this->request->getGet('followup_stage'); // pending|sent|failed|skipped|none
         $source        = $this->request->getGet('source');
 
-        $builder = $this->guestModel->where('parish_id', $parishId);
+        $page   = max(1, (int) ($this->request->getGet('page') ?? 1));
+        $result = $this->guestDirectory->paginateForParish((int) $parishId, [
+            'followed_up'    => $followedUp,
+            'search'         => $search,
+            'date_from'      => $dateFrom,
+            'date_to'        => $dateTo,
+            'followup_stage' => $followupStage,
+            'source'         => $source,
+        ], $perPage, $page);
 
-        if ($followedUp !== null && $followedUp !== '') {
-            $builder->where('followed_up', (int) $followedUp);
-        }
-
-        if ($dateFrom !== null && $dateFrom !== '') {
-            $builder->where('visit_date >=', $dateFrom);
-        }
-        if ($dateTo !== null && $dateTo !== '') {
-            $builder->where('visit_date <=', $dateTo);
-        }
-
-        if ($source !== null && $source !== '') {
-            $builder->where('source', $source);
-        }
-
-        // followup_stage: filter by presence / status of followup_log rows
-        $validStages = ['pending', 'sent', 'failed', 'skipped'];
-        if ($followupStage !== null && $followupStage !== '') {
-            if ($followupStage === 'none') {
-                $builder->where('person_id NOT IN (SELECT DISTINCT person_id FROM followup_log WHERE status IN ("sent","skipped"))', null, false);
-            } elseif ($followupStage === 'inprogress') {
-                $builder->where('person_id IN (SELECT DISTINCT person_id FROM followup_log WHERE status IN ("sent","skipped"))', null, false)
-                    ->where('person_id IN (SELECT DISTINCT person_id FROM followup_log WHERE status = "pending")', null, false);
-            } elseif (in_array($followupStage, $validStages, true)) {
-                $builder->where(
-                    "person_id IN (SELECT DISTINCT person_id FROM followup_log WHERE status = '{$followupStage}')",
-                    null,
-                    false
-                );
-            }
-        }
-
-        if ($search) {
-            $emailHash = DataEncryption::emailIndex($search);
-            $phoneHash = DataEncryption::phoneIndex($search);
-
-            $builder->groupStart()
-                ->like('first_name', $search)
-                ->orLike('last_name', $search);
-
-            if ($emailHash !== null) {
-                $builder->orWhere('email_hash', $emailHash);
-            }
-            if ($phoneHash !== null) {
-                $builder->orWhere('phone_hash', $phoneHash);
-            }
-
-            $builder->groupEnd();
-        }
-
-        $guests = $builder->orderBy('visit_date', 'DESC')->paginate($perPage);
-        $guests = array_map(fn(array $row): array => $this->guestModel->decryptGuestRow($row), $guests);
+        $guests = $result['rows'];
 
         // Per-guest followup progress for 4-state badge (by person_id)
         $personIds = array_filter(array_column($guests, 'person_id'));
@@ -108,7 +66,7 @@ class Guests extends BaseController
 
         $data = [
             'guests'        => $guests,
-            'pager'         => $this->guestModel->pager,
+            'pager'         => $result['pager'],
             'followed_up'   => $followedUp,
             'search'        => $search,
             'date_from'     => $dateFrom,
@@ -134,9 +92,9 @@ class Guests extends BaseController
             return $redirect;
         }
 
-        $guest = $this->guestModel->find($id);
+        $guest = $this->guestDirectory->findByPerson((int) $id, (int) $this->getOperationalParishId());
 
-        if (!$guest || $guest['parish_id'] != $this->getOperationalParishId()) {
+        if (!$guest) {
             return redirect()->to('/guests')->with('error', lang('Guests.guestNotFound'));
         }
 
@@ -244,22 +202,25 @@ class Guests extends BaseController
             'notes'                    => $this->request->getPost('notes'),
         ];
 
-        $guestId = $this->guestModel->insert($data);
+        $parishId = (int) $this->getOperationalParishId();
+        try {
+            $intake   = $this->guestDirectory->intake($data, $parishId);
+            $personId = (int) $intake['person_id'];
 
-        if ($guestId) {
-            try {
-                $intake = GuestIntakeService::record($data, (int) $this->getOperationalParishId());
-                $this->guestModel->update($guestId, ['person_id' => $intake['person_id']]);
-                $data['person_id'] = $intake['person_id'];
-            } catch (\Throwable $e) {
-                log_message('error', 'GuestIntakeService failed: ' . $e->getMessage());
+            if (! $intake['is_new'] && $personId > 0) {
+                // Dedup matched an existing person — apply the submitted edits.
+                $this->guestDirectory->update($personId, $parishId, $data);
             }
+        } catch (\Throwable $e) {
+            log_message('error', 'Guest intake failed: ' . $e->getMessage());
+            $personId = 0;
+        }
 
-            // Create initial follow-up task
+        if ($personId > 0) {
             $this->audit()->log('guest.create', [
                 'parish_id' => (int) ($this->getOperationalParishId() ?? 0),
                 'entity_type' => 'guest',
-                'entity_id' => (int) $guestId,
+                'entity_id' => $personId,
                 'new_values' => [
                     'visit_date' => (string) ($data['visit_date'] ?? ''),
                     'service_attended' => (string) ($data['service_attended'] ?? ''),
@@ -267,7 +228,7 @@ class Guests extends BaseController
                 ],
             ]);
 
-            return redirect()->to('/guests/view/' . $guestId)->with('success', lang('Guests.guestCreateSuccess'));
+            return redirect()->to('/guests/view/' . $personId)->with('success', lang('Guests.guestCreateSuccess'));
         }
 
         return redirect()->back()->withInput()->with('error', lang('Guests.guestCreateFailed'));
@@ -286,9 +247,9 @@ class Guests extends BaseController
             return $redirect;
         }
 
-        $guest = $this->guestModel->find($id);
+        $guest = $this->guestDirectory->findByPerson((int) $id, (int) $this->getOperationalParishId());
 
-        if (!$guest || $guest['parish_id'] != $this->getOperationalParishId()) {
+        if (!$guest) {
             return redirect()->to('/guests')->with('error', lang('Guests.guestNotFound'));
         }
 
@@ -308,9 +269,9 @@ class Guests extends BaseController
             return $redirect;
         }
 
-        $guest = $this->guestModel->find($id);
+        $guest = $this->guestDirectory->findByPerson((int) $id, (int) $this->getOperationalParishId());
 
-        if (!$guest || $guest['parish_id'] != $this->getOperationalParishId()) {
+        if (!$guest) {
             return redirect()->to('/guests')->with('error', lang('Guests.guestNotFound'));
         }
 
@@ -367,7 +328,7 @@ class Guests extends BaseController
             'notes'                    => $this->request->getPost('notes'),
         ];
 
-        if ($this->guestModel->update($id, $data)) {
+        if ($this->guestDirectory->update((int) $id, (int) $this->getOperationalParishId(), $data)) {
             $this->audit()->log('guest.update', [
                 'parish_id' => (int) ($this->getOperationalParishId() ?? 0),
                 'entity_type' => 'guest',
@@ -405,9 +366,9 @@ class Guests extends BaseController
             return $redirect;
         }
 
-        $guest = $this->guestModel->find($id);
+        $guest = $this->guestDirectory->findByPerson((int) $id, (int) $this->getOperationalParishId());
 
-        if (!$guest || $guest['parish_id'] != $this->getOperationalParishId()) {
+        if (!$guest) {
             return $this->jsonResponse(['success' => false, 'message' => lang('Guests.guestNotFound')]);
         }
 
@@ -425,10 +386,10 @@ class Guests extends BaseController
             ]);
         }
 
-        // Count pending followup log entries before the CASCADE delete wipes them.
-        $pendingSequences = $this->followupLogModel->countPendingForGuest((int) $id);
+        // Count pending followup log entries before the delete detaches them.
+        $pendingSequences = $this->followupLogModel->countPendingForPerson((int) $id);
 
-        if ($this->guestModel->delete($id)) {
+        if ($this->guestDirectory->delete((int) $id, (int) $this->getOperationalParishId())) {
             $this->audit()->log('guest.delete', [
                 'parish_id'  => (int) ($this->getOperationalParishId() ?? 0),
                 'entity_type' => 'guest',
@@ -466,8 +427,8 @@ class Guests extends BaseController
             return $redirect;
         }
 
-        $guest = $this->guestModel->find($guestId);
-        if (!$guest || $guest['parish_id'] != $this->getOperationalParishId()) {
+        $guest = $this->guestDirectory->findByPerson((int) $guestId, (int) $this->getOperationalParishId());
+        if (!$guest) {
             return $this->jsonResponse(['success' => false, 'message' => lang('Guests.guestNotFound')], 404);
         }
 
@@ -499,8 +460,8 @@ class Guests extends BaseController
             return $this->jsonResponse(['success' => false, 'message' => lang('Guests.followupLogNotFound')], 404);
         }
 
-        $guest = $this->guestModel->where('person_id', (int) $log['person_id'])->where('parish_id', (int) $log['parish_id'])->first();
-        if (!$guest || $guest['parish_id'] != $this->getOperationalParishId()) {
+        if (! $this->guestDirectory->affiliationExists((int) $log['person_id'], (int) $log['parish_id'])
+            || (int) $log['parish_id'] !== (int) $this->getOperationalParishId()) {
             return $this->jsonResponse(['success' => false, 'message' => lang('Guests.guestNotFound')], 403);
         }
 
@@ -544,8 +505,8 @@ class Guests extends BaseController
             return $redirect;
         }
 
-        $guest = $this->guestModel->find($guestId);
-        if (!$guest || $guest['parish_id'] != $this->getOperationalParishId()) {
+        $guest = $this->guestDirectory->findByPerson((int) $guestId, (int) $this->getOperationalParishId());
+        if (!$guest) {
             return $this->jsonResponse(['success' => false, 'message' => lang('Guests.guestNotFound')], 404);
         }
 
@@ -555,7 +516,12 @@ class Guests extends BaseController
         }
 
         $visitDate = $guest['visit_date'] ?: date('Y-m-d');
-        $count     = $this->followupLogModel->scheduleSequenceForGuest($guestId, $sequenceId, $visitDate);
+        $count     = $this->followupLogModel->scheduleSequenceForPerson(
+            (int) $guestId,
+            (int) $this->getOperationalParishId(),
+            $sequenceId,
+            $visitDate
+        );
 
         if ($count > 0) {
             $this->audit()->log('guest.sequence.assign', [
@@ -588,25 +554,17 @@ class Guests extends BaseController
             return $redirect;
         }
 
-        $guest = $this->guestModel->find($id);
+        $guest = $this->guestDirectory->findByPerson((int) $id, (int) $this->getOperationalParishId());
 
-        if (!$guest || $guest['parish_id'] != $this->getOperationalParishId()) {
+        if (!$guest) {
             return redirect()->to('/guests')->with('error', lang('Guests.guestNotFound'));
         }
 
         $currentUserId = (int) (auth()->id());
         $parishId = (int) ($this->getOperationalParishId() ?? 0);
 
-        $personId = (int) ($guest['person_id'] ?? 0);
-        if ($personId <= 0) {
-            try {
-                $intake = GuestIntakeService::record($guest, $parishId);
-                $personId = $intake['person_id'];
-                $this->guestModel->update($id, ['person_id' => $personId]);
-            } catch (\Throwable $e) {
-                return redirect()->to('/guests')->with('error', lang('Guests.guestIntakeFailed'));
-            }
-        }
+        // The guest row id is the canonical person_id after the T4.5 migration.
+        $personId = (int) $id;
 
         $converted = PersonConversionService::convertToMember(
             $personId,
@@ -644,9 +602,9 @@ class Guests extends BaseController
             return $redirect;
         }
 
-        $guest = $this->guestModel->find($id);
+        $guest = $this->guestDirectory->findByPerson((int) $id, (int) $this->getOperationalParishId());
 
-        if (!$guest || $guest['parish_id'] != $this->getOperationalParishId()) {
+        if (!$guest) {
             return redirect()->to('/guests')->with('error', lang('Guests.guestNotFound'));
         }
 
@@ -686,8 +644,8 @@ class Guests extends BaseController
             return $redirect;
         }
 
-        $guest = $this->guestModel->find($guestId);
-        if (!$guest || $guest['parish_id'] != $this->getOperationalParishId()) {
+        $guest = $this->guestDirectory->findByPerson((int) $guestId, (int) $this->getOperationalParishId());
+        if (!$guest) {
             return redirect()->to('/guests')->with('error', lang('Guests.guestNotFound'));
         }
 
@@ -721,8 +679,8 @@ class Guests extends BaseController
             return $this->jsonResponse(['success' => false, 'message' => lang('Guests.followupLogNotFound')], 404);
         }
 
-        $guest = $this->guestModel->where('person_id', (int) $log['person_id'])->where('parish_id', (int) $log['parish_id'])->first();
-        if (!$guest || $guest['parish_id'] != $this->getOperationalParishId()) {
+        if (! $this->guestDirectory->affiliationExists((int) $log['person_id'], (int) $log['parish_id'])
+            || (int) $log['parish_id'] !== (int) $this->getOperationalParishId()) {
             return $this->jsonResponse(['success' => false, 'message' => lang('Guests.guestNotFound')], 403);
         }
 
@@ -775,8 +733,8 @@ class Guests extends BaseController
             return $this->jsonResponse(['success' => false, 'message' => lang('Guests.followupLogNotFound')], 404);
         }
 
-        $guest = $this->guestModel->where('person_id', (int) $log['person_id'])->where('parish_id', (int) $log['parish_id'])->first();
-        if (!$guest || $guest['parish_id'] != $this->getOperationalParishId()) {
+        if (! $this->guestDirectory->affiliationExists((int) $log['person_id'], (int) $log['parish_id'])
+            || (int) $log['parish_id'] !== (int) $this->getOperationalParishId()) {
             return $this->jsonResponse(['success' => false, 'message' => lang('Guests.guestNotFound')], 403);
         }
 
@@ -830,8 +788,8 @@ class Guests extends BaseController
             return $this->jsonResponse(['success' => false, 'message' => lang('Guests.followupLogNotFound')], 404);
         }
 
-        $guest = $this->guestModel->where('person_id', (int) $log['person_id'])->where('parish_id', (int) $log['parish_id'])->first();
-        if (!$guest || $guest['parish_id'] != $this->getOperationalParishId()) {
+        if (! $this->guestDirectory->affiliationExists((int) $log['person_id'], (int) $log['parish_id'])
+            || (int) $log['parish_id'] !== (int) $this->getOperationalParishId()) {
             return $this->jsonResponse(['success' => false, 'message' => lang('Guests.guestNotFound')], 403);
         }
 
@@ -871,8 +829,8 @@ class Guests extends BaseController
             return $this->jsonResponse(['success' => false, 'message' => lang('Guests.followupLogNotFound')], 404);
         }
 
-        $guest = $this->guestModel->where('person_id', (int) $log['person_id'])->where('parish_id', (int) $log['parish_id'])->first();
-        if (!$guest || $guest['parish_id'] != $this->getOperationalParishId()) {
+        if (! $this->guestDirectory->affiliationExists((int) $log['person_id'], (int) $log['parish_id'])
+            || (int) $log['parish_id'] !== (int) $this->getOperationalParishId()) {
             return $this->jsonResponse(['success' => false, 'message' => lang('Guests.guestNotFound')], 403);
         }
 
@@ -945,11 +903,8 @@ class Guests extends BaseController
         $parishId = (int) $this->getOperationalParishId();
 
         // KPI: total guests (all time) vs converted
-        $totalGuests    = $this->guestModel->getParishGuestCount($parishId, false);
-        $convertedCount = (int) $this->guestModel
-            ->where('parish_id', $parishId)
-            ->where('converted_to_member_at IS NOT NULL', null, false)
-            ->countAllResults();
+        $totalGuests    = $this->guestDirectory->countForParish($parishId, false);
+        $convertedCount = $this->guestDirectory->convertedCountForParish($parishId);
 
         $notFollowedUp = $this->followupQueries->pendingDistinctPersonsCount($parishId);
 
@@ -969,11 +924,7 @@ class Guests extends BaseController
         $templateCount   = count($templates);
 
         // Recent guests (last 10)
-        $recentGuests = $this->guestModel->getRecentGuests($parishId, 10);
-        foreach ($recentGuests as &$row) {
-            $row = $this->guestModel->decryptGuestRow($row);
-        }
-        unset($row);
+        $recentGuests = $this->guestDirectory->recentForParish($parishId, 10);
 
         // Pending call tasks preview (top 5)
         $pendingCallTasks = array_slice($callTaskModel->getPendingForParish($parishId), 0, 5);
@@ -1021,7 +972,7 @@ class Guests extends BaseController
         $items = array_map(static function (array $t): array {
             return [
                 'id'             => (int) $t['id'],
-                'guest_id'       => (int) $t['guest_id'],
+                'guest_id'       => (int) $t['person_id'],
                 'guest_name'     => trim(($t['first_name'] ?? '') . ' ' . ($t['last_name'] ?? '')),
                 'scheduled_date' => $t['scheduled_date'] ?? '',
             ];

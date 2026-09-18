@@ -7,9 +7,10 @@ use CodeIgniter\Test\CIUnitTestCase;
  *
  * Verifies that the shared SchemaResolver utility exists and that
  * the previously-duplicated helpers in MemberAccessService,
- * NonPortalMemberProvisioningService, MemberMergeService,
- * ParishPeopleRegistryService, and PeopleDirectoryService now
+ * NonPortalMemberProvisioningService, and MemberMergeService now
  * delegate to it instead of containing copy-pasted logic.
+ * (ParishPeopleRegistryService was retired in T4; PeopleDirectoryService
+ * now queries canonical tables directly.)
  *
  * @internal
  */
@@ -32,8 +33,6 @@ final class SchemaResolverTest extends CIUnitTestCase
             'getColumnsForTable',
             'resolveExistingTable',
             'resolveExistingProfileTable',
-            'resolveSnapshotTable',
-            'resolveSnapshotScopeColumn',
         ];
 
         foreach ($methods as $method) {
@@ -95,56 +94,18 @@ final class SchemaResolverTest extends CIUnitTestCase
     }
 
     /**
-     * M4: ParishPeopleRegistryService delegates to SchemaResolver.
+     * T4: The parish_people snapshot service is retired — it must not
+     * exist alongside canonical directory reads.
      */
-    public function testParishPeopleRegistryServiceDelegates(): void
+    public function testParishPeopleRegistryServiceIsRetired(): void
     {
-        $source = file_get_contents(APPPATH . 'Services/ParishPeopleRegistryService.php');
-
-        $this->assertStringContainsString('SchemaResolver', $source);
-        $this->assertStringContainsString('schemaResolver->getColumnsForTable', $source);
-        $this->assertStringContainsString('schemaResolver->resolveExistingTable', $source);
-        $this->assertStringContainsString('schemaResolver->resolveSnapshotTable', $source);
-        $this->assertStringContainsString('schemaResolver->resolveSnapshotScopeColumn', $source);
-    }
-
-    /**
-     * M4: PeopleDirectoryService delegates to SchemaResolver.
-     */
-    public function testPeopleDirectoryServiceDelegates(): void
-    {
-        $source = file_get_contents(APPPATH . 'Services/PeopleDirectoryService.php');
-
-        $this->assertStringContainsString('SchemaResolver', $source);
-        $this->assertStringContainsString('schemaResolver->resolveSnapshotTable', $source);
-        $this->assertStringContainsString('schemaResolver->resolveSnapshotScopeColumn', $source);
-    }
-
-    /**
-     * M4: The dead duplicate branch in ParishPeopleRegistryService
-     * (['parish_people', 'parish_people'] and the triple parish_id check)
-     * has been removed.
-     */
-    public function testNoDeadDuplicateSnapshotCandidates(): void
-    {
-        $source = file_get_contents(APPPATH . 'Services/ParishPeopleRegistryService.php');
-
-        // The old code had ['parish_people', 'parish_people'] — same value twice.
-        $this->assertStringNotContainsString(
-            "'parish_people', 'parish_people'",
-            $source,
-            'ParishPeopleRegistryService must not have the dead duplicate parish_people candidates.'
+        $this->assertFalse(
+            file_exists(APPPATH . 'Services/ParishPeopleRegistryService.php'),
+            'ParishPeopleRegistryService must be removed (T4).'
         );
-    }
-
-    /**
-     * M4: SchemaResolver::resolveSnapshotScopeColumn always returns 'parish_id'.
-     */
-    public function testSnapshotScopeColumnAlwaysReturnsParishId(): void
-    {
-        $resolver = new \App\Libraries\SchemaResolver();
-
-        $this->assertSame('parish_id', $resolver->resolveSnapshotScopeColumn('parish_people'));
-        $this->assertSame('parish_id', $resolver->resolveSnapshotScopeColumn('any_table'));
+        $this->assertFalse(
+            file_exists(APPPATH . 'Models/ParishPeopleModel.php'),
+            'ParishPeopleModel must be removed (T4).'
+        );
     }
 }

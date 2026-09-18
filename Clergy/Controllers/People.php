@@ -5,12 +5,10 @@ namespace Clergy\Controllers;
 use App\Controllers\AdminHierarchyGuard;
 use App\Controllers\BaseController;
 use App\Models\MemberParishAffiliationModel;
-use App\Models\ParishPeopleModel;
 use App\Services\AnnualPledgeService;
 use App\Services\DonationService;
 use App\Services\FamilyService;
 use App\Services\LeadershipPositionService;
-use App\Services\ParishPeopleRegistryService;
 use App\Services\MemberAccessService;
 use App\Services\PeopleDirectoryService;
 use App\Services\PeopleViewDataService;
@@ -22,9 +20,7 @@ class People extends BaseController
 {
     use AdminHierarchyGuard;
 
-    private ParishPeopleModel $parishPeopleModel;
     private MemberParishAffiliationModel $affiliationModel;
-    private ParishPeopleRegistryService $registryService;
     private MemberAccessService $memberAccessService;
     private PeopleViewDataService $peopleViewDataService;
     private LeadershipPositionService $leadershipPositionService;
@@ -35,9 +31,7 @@ class People extends BaseController
 
     public function __construct()
     {
-        $this->parishPeopleModel = model(ParishPeopleModel::class);
         $this->affiliationModel = model(MemberParishAffiliationModel::class);
-        $this->registryService = new ParishPeopleRegistryService($this->parishPeopleModel);
         $this->memberAccessService = service('memberAccess');
         $this->peopleViewDataService = service('peopleViewData');
         $this->leadershipPositionService = new LeadershipPositionService();
@@ -161,7 +155,7 @@ class People extends BaseController
             $this->getCommonViewData(lang('People.pageTitle')),
             [
                 'people' => $peopleRows,
-                'status_counts' => $this->parishPeopleModel->getStatusCounts($parishId, $scope),
+                'status_counts' => (new PeopleDirectoryService())->statusCountsForParish($parishId, $scope),
                 'selected_scope' => $scope,
                 'selected_status' => $status,
                 'extra_filters' => $extraFilters,
@@ -208,8 +202,6 @@ class People extends BaseController
                 'message' => lang('People.updateTagFailed'),
             ], 422);
         }
-
-        $this->registryService->syncParish($parishId);
 
         $this->audit()->log('people.member_tag.update', [
             'parish_id' => $parishId,
@@ -268,7 +260,6 @@ class People extends BaseController
         }
 
         if ($updated > 0) {
-            $this->registryService->syncParish($parishId);
 
             $this->audit()->log('people.member_tag.bulk_update', [
                 'parish_id' => $parishId,
@@ -363,8 +354,6 @@ class People extends BaseController
             ], (int) ($result['http_status'] ?? 500));
         }
 
-        $this->registryService->syncParish($parishId);
-
         $this->audit()->log('portal_access.enable', [
             'parish_id' => $parishId,
             'entity_type' => 'person',
@@ -406,7 +395,7 @@ class People extends BaseController
 
         $userIds = array_map('intval', $userIds);
 
-        $rows = $this->parishPeopleModel->getPeopleForExport($parishId, $userIds);
+        $rows = (new PeopleDirectoryService())->peopleForExport($parishId, $userIds);
 
         $csvLines = [];
         $csvLines[] = implode(',', ['First Name', 'Last Name', 'Email', 'Phone', 'Membership Status', 'Is Member', 'Good Standing', 'Portal Access']);
@@ -446,7 +435,6 @@ class People extends BaseController
 
         // Handle redirect result from shared method
         if (is_array($result)) {
-            (new ParishPeopleRegistryService())->syncParish($result['parishId']);
             return redirect()->to($result['redirectPath'])->with('success', lang('Members.nonPortalCreateSuccess'));
         }
 
@@ -471,19 +459,32 @@ class People extends BaseController
             return redirect()->to('/people')->with('error', lang('Members.noParishSelected'));
         }
 
-        $person = $this->parishPeopleModel
-            ->where('parish_id', $parishId)
-            ->where('profile_id', (int) $id)
-            ->first();
+        $profile = model('ProfileModel')->find((int) $id);
+        if (!$profile) {
+            return redirect()->to('/people')->with('error', lang('People.personNotFound'));
+        }
+
+        // Canonical parish-membership check for this profile's person/user.
+        $person = db_connect()->table('parish_affiliation pa')
+            ->select('pa.*, pe.email AS person_email, ai.secret AS email_identity')
+            ->join('person pe', 'pe.id = pa.person_id', 'left')
+            ->join('auth_identities ai', 'ai.user_id = pa.linked_user_id AND ai.type = "email_password"', 'left')
+            ->where('pa.parish_id', $parishId)
+            ->where('pa.deleted_at', null)
+            ->groupStart()
+                ->where('pa.person_id', (int) ($profile['person_id'] ?? 0))
+                ->orWhere('pa.linked_user_id', (int) ($profile['user_id'] ?? 0))
+            ->groupEnd()
+            ->get()
+            ->getRowArray();
 
         if (!$person) {
             return redirect()->to('/people')->with('error', lang('People.personNotFound'));
         }
 
-        $profile = model('ProfileModel')->find((int) $id);
-        if (!$profile) {
-            return redirect()->to('/people')->with('error', lang('People.personNotFound'));
-        }
+        $person['email'] = (string) ($person['email_identity'] ?? '') !== ''
+            ? (string) $person['email_identity']
+            : \App\Services\PersonContactService::decrypt((string) ($person['person_email'] ?? ''));
 
         $userId = (int) ($profile['user_id'] ?? 0);
         $personId = (int) ($profile['person_id'] ?? 0);
@@ -578,14 +579,15 @@ class People extends BaseController
             'sacrament_discrepancies' => $personId > 0
                 ? (new \App\Services\SacramentFlagSyncService())->discrepanciesForPerson($personId, $parishId)
                 : [],
-            'parish_people_for_dropdown' => auth()->user()->can('member.edit')
-                ? db_connect()->table('parish_people pp')
-                    ->select('pp.user_id, pp.profile_id, pp.first_name, pp.last_name, p.person_id')
-                    ->join('profile p', 'p.user_id = pp.user_id', 'inner')
-                    ->where('pp.parish_id', $parishId)
-                    ->where('pp.deleted_at', null)
-                    ->orderBy('pp.last_name', 'ASC')
-                    ->orderBy('pp.first_name', 'ASC')
+            'parish_affiliated_people' => auth()->user()->can('member.edit')
+                ? db_connect()->table('parish_affiliation pa')
+                    ->select('pa.linked_user_id AS user_id, pe.id AS person_id, pe.first_name, pe.last_name')
+                    ->join('person pe', 'pe.id = pa.person_id', 'inner')
+                    ->where('pa.parish_id', $parishId)
+                    ->where('pa.deleted_at IS NULL', null, false)
+                    ->distinct()
+                    ->orderBy('pe.last_name', 'ASC')
+                    ->orderBy('pe.first_name', 'ASC')
                     ->get()
                     ->getResultArray()
                 : [],
@@ -621,15 +623,12 @@ class People extends BaseController
         }
 
         // Ensure the target person belongs to the current parish.
-        $profile = db_connect()->table('profile p')
-            ->select('p.id')
-            ->join('parish_people pp', 'pp.user_id = p.user_id', 'inner')
-            ->where('p.person_id', $personId)
-            ->where('pp.parish_id', $parishId)
-            ->where('pp.deleted_at', null)
-            ->get()
-            ->getRowArray();
-        if (!$profile) {
+        $affiliated = db_connect()->table('parish_affiliation')
+            ->where('person_id', $personId)
+            ->where('parish_id', $parishId)
+            ->where('deleted_at', null)
+            ->countAllResults() > 0;
+        if (!$affiliated) {
             return $this->jsonResponse($this->apiErrorPayload(lang('App.errorNotFound'), 404, 'PERSON_NOT_FOUND'), 404);
         }
 
@@ -655,8 +654,6 @@ class People extends BaseController
                 'message' => lang('People.membershipDetailsSaveFailed'),
             ], 500);
         }
-
-        $this->registryService->syncParish($parishId);
 
         $this->audit()->log('people.membership_details.update', [
             'parish_id' => $parishId,
@@ -757,8 +754,6 @@ class People extends BaseController
             ], 500);
         }
 
-        $this->registryService->syncParish($parishId);
-
         $this->audit()->log('leadership_position.create', [
             'parish_id' => $parishId,
             'entity_type' => 'leadership_position',
@@ -836,8 +831,6 @@ class People extends BaseController
             ], 500);
         }
 
-        $this->registryService->syncParish($parishId);
-
         $this->audit()->log('leadership_position.update', [
             'parish_id' => $parishId,
             'entity_type' => 'leadership_position',
@@ -893,8 +886,6 @@ class People extends BaseController
                 'message' => lang('Leadership.deleteFailed'),
             ], 500);
         }
-
-        $this->registryService->syncParish($parishId);
 
         $this->audit()->log('leadership_position.delete', [
             'parish_id' => $parishId,
@@ -1440,8 +1431,6 @@ class People extends BaseController
             'Sacrament record added'
         );
 
-        $this->registryService->syncParish($parishId);
-
         $this->audit()->log('sacramental_record.create', [
             'parish_id' => $parishId,
             'entity_type' => 'sacramental_record',
@@ -1856,8 +1845,6 @@ class People extends BaseController
             'meta' => $this->buildParishContextMeta($parishId, self::ATTRIBUTION_POLICY_OPERATIONAL_DEFAULT),
         ]);
 
-        $this->registryService->syncParish($parishId);
-
         return $this->jsonResponse([
             'success' => true,
             'message' => lang('Families.createSuccess'),
@@ -1941,8 +1928,6 @@ class People extends BaseController
             'meta' => $this->buildParishContextMeta($parishId, self::ATTRIBUTION_POLICY_OPERATIONAL_DEFAULT),
         ]);
 
-        $this->registryService->syncParish($parishId);
-
         return $this->jsonResponse([
             'success' => true,
             'message' => lang('Families.memberAddSuccess'),
@@ -2007,8 +1992,6 @@ class People extends BaseController
             'old_values' => $relation,
             'meta' => $this->buildParishContextMeta($parishId, self::ATTRIBUTION_POLICY_OPERATIONAL_DEFAULT),
         ]);
-
-        $this->registryService->syncParish($parishId);
 
         return $this->jsonResponse([
             'success' => true,
@@ -2080,8 +2063,6 @@ class People extends BaseController
             'meta' => $this->buildParishContextMeta($parishId, self::ATTRIBUTION_POLICY_OPERATIONAL_DEFAULT),
         ]);
 
-        $this->registryService->syncParish($parishId);
-
         return $this->jsonResponse([
             'success' => true,
             'message' => lang('Families.updateSuccess'),
@@ -2095,10 +2076,9 @@ class People extends BaseController
     {
         return db_connect()->table('profile p')
             ->select('p.*')
-            ->join('parish_people pp', 'pp.user_id = p.user_id', 'inner')
+            ->join('parish_affiliation pa', '(pa.person_id = p.person_id OR pa.linked_user_id = p.user_id) AND pa.deleted_at IS NULL', 'inner')
             ->where('p.id', $profileId)
-            ->where('pp.parish_id', $parishId)
-            ->where('pp.deleted_at', null)
+            ->where('pa.parish_id', $parishId)
             ->get()
             ->getRowArray();
     }
@@ -2147,32 +2127,38 @@ class People extends BaseController
         $db = db_connect();
 
         foreach ($profileIds as $profileId) {
-            $person = $db->table('parish_people')
+            $profile = model('ProfileModel')->find($profileId);
+            if (!$profile) {
+                $skipped++;
+                continue;
+            }
+
+            // Canonical parish membership check: affiliation row keyed by
+            // person_id, with linked_user_id as a bridge for profiles whose
+            // person_id is unset/dangling.
+            $affiliation = $db->table('parish_affiliation')
                 ->where('parish_id', $parishId)
-                ->where('profile_id', $profileId)
                 ->where('deleted_at', null)
+                ->groupStart()
+                    ->where('person_id', (int) ($profile['person_id'] ?? 0))
+                    ->orWhere('linked_user_id', (int) ($profile['user_id'] ?? 0))
+                ->groupEnd()
                 ->get()
                 ->getRowArray();
 
-            if (!$person) {
+            if (!$affiliation) {
                 $skipped++;
                 continue;
             }
 
             // Only allow deleting non-members from the /people list.
-            if ((int) ($person['is_member'] ?? 1) === 1) {
+            if ((int) ($affiliation['is_member'] ?? 1) === 1) {
                 $skipped++;
                 continue;
             }
 
-            $userId = (int) ($person['user_id'] ?? 0);
+            $userId = (int) ($profile['user_id'] ?? 0);
             if ($userId > 0 && $this->guardTargetUserMutation($userId) !== null) {
-                $skipped++;
-                continue;
-            }
-
-            $profile = model('ProfileModel')->find($profileId);
-            if (!$profile) {
                 $skipped++;
                 continue;
             }
@@ -2184,18 +2170,9 @@ class People extends BaseController
             }
 
             // Soft-delete the matching parish affiliation.
-            $affiliation = $db->table('parish_affiliation')
-                ->where('parish_id', $parishId)
-                ->where('linked_user_id', $userId)
-                ->where('deleted_at', null)
-                ->get()
-                ->getRowArray();
-
-            if ($affiliation) {
-                $db->table('parish_affiliation')
-                    ->where('id', (int) $affiliation['id'])
-                    ->update(['deleted_at' => $now, 'updated_at' => $now]);
-            }
+            $db->table('parish_affiliation')
+                ->where('id', (int) $affiliation['id'])
+                ->update(['deleted_at' => $now, 'updated_at' => $now]);
 
             $this->audit()->log('people.bulk_delete', [
                 'parish_id' => $parishId,
@@ -2209,8 +2186,6 @@ class People extends BaseController
 
             $deleted++;
         }
-
-        $this->registryService->syncParish($parishId);
 
         return $this->jsonResponse([
             'success' => $deleted > 0,

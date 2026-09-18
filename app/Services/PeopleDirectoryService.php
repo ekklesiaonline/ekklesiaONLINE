@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use App\Libraries\SchemaResolver;
 use CodeIgniter\Database\BaseBuilder;
 use CodeIgniter\Database\BaseConnection;
 
@@ -19,12 +18,10 @@ class PeopleDirectoryService
     ];
 
     private BaseConnection $db;
-    private SchemaResolver $schemaResolver;
 
     public function __construct(?BaseConnection $db = null)
     {
         $this->db = $db ?? db_connect();
-        $this->schemaResolver = new SchemaResolver($this->db);
     }
 
     /**
@@ -48,13 +45,18 @@ class PeopleDirectoryService
         $countBuilder = clone $builder;
         $total = (int) $countBuilder->countAllResults(false);
 
-        $sort  = (string) ($filters['sort'] ?? 'p.last_name ASC, p.first_name ASC');
-        $sortParts = explode(' ', $sort, 2);
-        $sortField = $sortParts[0] ?? 'p.last_name';
-        $sortDir   = ($sortParts[1] ?? 'ASC') === 'DESC' ? 'DESC' : 'ASC';
+        $sort = (string) ($filters['sort'] ?? 'p.last_name ASC, p.first_name ASC');
+        foreach (explode(',', $sort) as $part) {
+            $sortParts = preg_split('/\s+/', trim($part));
+            $sortField = $sortParts[0] ?? 'p.last_name';
+            $sortDir   = strtoupper($sortParts[1] ?? 'ASC') === 'DESC' ? 'DESC' : 'ASC';
+            if (! preg_match('/^[a-z_]+\.[a-z_0-9]+$/i', $sortField)) {
+                continue;
+            }
+            $builder->orderBy($sortField, $sortDir);
+        }
 
         $rows = $builder
-            ->orderBy($sortField, $sortDir)
             ->limit($limit, $offset)
             ->get()
             ->getResultArray();
@@ -77,6 +79,58 @@ class PeopleDirectoryService
         $builder = $this->buildBaseQuery($parishId, $filters);
 
         return (int) $builder->countAllResults();
+    }
+
+    /**
+     * Membership-status tallies for a parish directory scope — canonical
+     * replacement for ParishPeopleModel::getStatusCounts. Counts distinct
+     * person_ids from parish_affiliation.
+     *
+     * @return array<int, array{membership_status: string, count: int}>
+     */
+    public function statusCountsForParish(int $parishId, string $scope = 'all'): array
+    {
+        $builder = $this->db->table('parish_affiliation')
+            ->select('membership_status, COUNT(DISTINCT person_id) AS count', false)
+            ->where('parish_id', $parishId)
+            ->where('deleted_at IS NULL', null, false);
+
+        switch ($scope) {
+            case 'members':
+                $builder->where('is_member', 1);
+                break;
+            case 'non_members':
+                $builder->where('is_member', 0);
+                break;
+            case 'visitors':
+                $builder->where('membership_status', 'visitor');
+                break;
+            case 'all':
+            default:
+                break;
+        }
+
+        $bucket = [];
+        $validStatuses = MembershipStatusService::affiliationStatuses();
+
+        foreach ($builder->groupBy('membership_status', false)->get()->getResultArray() as $row) {
+            $status = MembershipStatusService::normalizeAffiliationStatus((string) ($row['membership_status'] ?? ''));
+            if (! in_array($status, $validStatuses, true)) {
+                $status = MembershipStatusService::profileToAffiliation($status);
+            }
+            if (! in_array($status, $validStatuses, true)) {
+                $status = 'visitor';
+            }
+
+            $bucket[$status] = (int) ($bucket[$status] ?? 0) + (int) ($row['count'] ?? 0);
+        }
+
+        $normalized = [];
+        foreach ($bucket as $status => $count) {
+            $normalized[] = ['membership_status' => $status, 'count' => $count];
+        }
+
+        return $normalized;
     }
 
     private function buildBaseQuery(int $parishId, array $filters): BaseBuilder
@@ -132,20 +186,44 @@ class PeopleDirectoryService
         }
 
         if ($extraFilters !== []) {
-            $snapshotTable = $this->resolveSnapshotTable();
+            // Canonical sources for the legacy parish_people flag columns:
+            // person_membership_details (baptized/confirmed/communicant/
+            // dependent/has_pledge), person.birthdate (under-16), and
+            // leadership_position (is_leader).
+            $needsPmd = array_intersect(
+                array_keys($extraFilters),
+                ['is_baptized', 'is_confirmed', 'is_communicant', 'is_dependent', 'has_pledge']
+            );
 
-            if ($snapshotTable !== null) {
-                $scopeColumn = $this->resolveSnapshotScopeColumn($snapshotTable);
-
+            if ($needsPmd !== [] && $this->db->tableExists('person_membership_details')) {
                 $builder->join(
-                    $snapshotTable . ' pp',
-                    'pp.' . $scopeColumn . ' = pa.parish_id AND pp.user_id = pr.user_id',
-                    'INNER'
+                    'person_membership_details pmd',
+                    'pmd.person_id = p.id AND pmd.parish_id = pa.parish_id',
+                    'LEFT'
                 );
 
-                foreach ($extraFilters as $column => $value) {
-                    $builder->where('pp.' . $column, (int) $value);
+                foreach ($needsPmd as $column) {
+                    $builder->where('pmd.' . $column, (int) $extraFilters[$column]);
                 }
+            }
+
+            if (array_key_exists('is_under_16', $extraFilters)) {
+                $cutoff = date('Y-m-d', strtotime('-16 years'));
+                if ((int) $extraFilters['is_under_16'] === 1) {
+                    $builder->where('p.birthdate >', $cutoff);
+                } else {
+                    $builder->groupStart()
+                        ->where('p.birthdate <=', $cutoff)
+                        ->orWhere('p.birthdate IS NULL', null, false)
+                        ->groupEnd();
+                }
+            }
+
+            if (array_key_exists('is_leader', $extraFilters)) {
+                $existsSql = 'EXISTS (SELECT 1 FROM ' . $this->db->prefixTable('leadership_position')
+                    . ' lp WHERE (lp.person_id = p.id OR lp.user_id = pa.linked_user_id)'
+                    . ' AND lp.parish_id = pa.parish_id AND lp.scope_type = "parish" AND lp.active = 1)';
+                $builder->where(((int) $extraFilters['is_leader'] === 1 ? '' : 'NOT ') . $existsSql, null, false);
             }
         }
 
@@ -204,14 +282,54 @@ class PeopleDirectoryService
             ->groupEnd();
     }
 
-    private function resolveSnapshotTable(): ?string
+    /**
+     * Canonical replacement for ParishPeopleModel::getPeopleForExport —
+     * parish-scoped export rows for the given portal user IDs.
+     *
+     * @param array<int, int> $userIds
+     * @return array<int, array<string, mixed>>
+     */
+    public function peopleForExport(int $parishId, array $userIds): array
     {
-        return $this->schemaResolver->resolveSnapshotTable();
-    }
+        if ($userIds === []) {
+            return [];
+        }
 
-    private function resolveSnapshotScopeColumn(string $table): string
-    {
-        return $this->schemaResolver->resolveSnapshotScopeColumn($table);
+        $rows = $this->db->table('parish_affiliation pa')
+            ->select([
+                'p.first_name',
+                'p.last_name',
+                'p.email AS person_email',
+                'p.phone AS person_phone',
+                'pa.membership_status',
+                'pa.is_member',
+                'pa.is_good_standing',
+                'pa.linked_user_id AS user_id',
+                'pr.portal_access',
+                'ai.secret AS email_identity',
+            ])
+            ->join('person p', 'p.id = pa.person_id', 'inner')
+            ->join('profile pr', 'pr.user_id = pa.linked_user_id', 'left')
+            ->join('auth_identities ai', 'ai.user_id = pa.linked_user_id AND ai.type = "email_password"', 'left')
+            ->where('pa.parish_id', $parishId)
+            ->where('pa.deleted_at IS NULL', null, false)
+            ->whereIn('pa.linked_user_id', $userIds)
+            ->orderBy('p.last_name', 'ASC')
+            ->orderBy('p.first_name', 'ASC')
+            ->get()
+            ->getResultArray();
+
+        foreach ($rows as &$row) {
+            $row['email'] = (string) ($row['email_identity'] ?? '') !== ''
+                ? (string) $row['email_identity']
+                : PersonContactService::decrypt((string) ($row['person_email'] ?? ''));
+            $row['phone'] = PersonContactService::decrypt((string) ($row['person_phone'] ?? ''));
+            $row['portal_access'] = (string) ($row['portal_access'] ?? 'none');
+            unset($row['person_email'], $row['person_phone'], $row['email_identity']);
+        }
+        unset($row);
+
+        return $rows;
     }
 
     private function formatRow(array $row): array

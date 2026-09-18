@@ -21,15 +21,15 @@ class FollowupWorkflow extends BaseController
     protected $actionModel;
     protected $templateModel;
     protected $logModel;
-    protected $guestModel;
+    protected $guestDirectory;
 
     public function __construct()
     {
-        $this->sequenceModel = model('FollowupSequenceModel');
-        $this->actionModel   = model('FollowupActionModel');
-        $this->templateModel = model('FollowupTemplateModel');
-        $this->logModel      = model('FollowupLogModel');
-        $this->guestModel    = model('GuestModel');
+        $this->sequenceModel  = model('FollowupSequenceModel');
+        $this->actionModel    = model('FollowupActionModel');
+        $this->templateModel  = model('FollowupTemplateModel');
+        $this->logModel       = model('FollowupLogModel');
+        $this->guestDirectory = new \App\Services\GuestDirectoryService();
     }
 
     // ------------------------------------------------------------------
@@ -519,14 +519,7 @@ class FollowupWorkflow extends BaseController
         });
 
         // Recent guests for the live-preview guest selector (50 most recent)
-        $guestsForPreview = db_connect()
-            ->table('guest')
-            ->select('id, first_name, last_name')
-            ->where('parish_id', $parishId)
-            ->orderBy('created_at', 'DESC')
-            ->limit(50)
-            ->get()
-            ->getResultArray();
+        $guestsForPreview = $this->guestDirectory->pickerRowsForParish($parishId, 50);
 
         return view('Clergy\Views\FollowupWorkflow/templates', array_merge(
             $this->getCommonViewData(lang('Guests.pageTitleTemplates')),
@@ -784,10 +777,7 @@ class FollowupWorkflow extends BaseController
         // Load and decrypt guest, or fall back to sample data
         $guest = null;
         if ($guestId > 0) {
-            $raw = $this->guestModel->find($guestId);
-            if ($raw && (int) $raw['parish_id'] === $parishId) {
-                $guest = $this->guestModel->decryptGuestRow($raw);
-            }
+            $guest = $this->guestDirectory->findByPerson($guestId, $parishId);
         }
 
         if ($guest === null) {
@@ -845,9 +835,9 @@ class FollowupWorkflow extends BaseController
         }
 
         $parishId = (int) $this->getOperationalParishId();
-        $guest    = $this->guestModel->find($guestId);
+        $guest    = $this->guestDirectory->findByPerson($guestId, $parishId);
 
-        if (!$guest || (int) $guest['parish_id'] !== $parishId) {
+        if (!$guest) {
             return $this->jsonResponse(['success' => false, 'message' => 'Guest not found or forbidden.'], 404);
         }
 
@@ -860,7 +850,7 @@ class FollowupWorkflow extends BaseController
 
         // Prefer marking an existing pending row over creating a duplicate
         $logEntry = $this->logModel
-            ->where('guest_id', $guestId)
+            ->where('person_id', $guestId)
             ->where('action_id', $actionId)
             ->where('status', 'pending')
             ->first();
@@ -873,7 +863,8 @@ class FollowupWorkflow extends BaseController
             $logId = (int) $logEntry['id'];
         } else {
             $logId = (int) $this->logModel->insert([
-                'guest_id'          => $guestId,
+                'person_id'         => $guestId,
+                'parish_id'         => $parishId,
                 'action_id'         => $actionId,
                 'assigned_to'       => $currentUserId,
                 'scheduled_date'    => date('Y-m-d'),

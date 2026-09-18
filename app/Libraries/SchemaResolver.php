@@ -9,7 +9,7 @@ use CodeIgniter\Database\BaseConnection;
  *
  * Centralizes the duplicated table-name resolution logic that was
  * copy-pasted across MemberAccessService, NonPortalMemberProvisioningService,
- * MemberMergeService, ParishPeopleRegistryService, PeopleDirectoryService,
+ * MemberMergeService and PeopleDirectoryService,
  * and UserRegistrationRequestModel.
  *
  * Handles:
@@ -145,21 +145,4 @@ class SchemaResolver
         return $payload;
     }
 
-    /**
-     * Resolve the existing parish_people snapshot table.
-     * Returns the table name or null if it doesn't exist.
-     */
-    public function resolveSnapshotTable(): ?string
-    {
-        return $this->resolveExistingTable(['parish_people']);
-    }
-
-    /**
-     * Resolve the scope column for the parish_people snapshot table.
-     * Always returns 'parish_id' since that's the only valid scope column.
-     */
-    public function resolveSnapshotScopeColumn(string $table): string
-    {
-        return 'parish_id';
-    }
 }

@@ -31,7 +31,7 @@ final class BulkMessageServiceTest extends CIUnitTestCase
         // Canonical-schema tables live outside the migration set, so
         // DatabaseTestTrait::refresh does not truncate them — rows seeded by
         // other test classes would leak into audience resolution.
-        foreach (['person', 'parish_affiliation', 'user_person', 'users', 'guest',
+        foreach (['person', 'parish_affiliation', 'user_person', 'users',
             'small_group', 'group_membership', 'team', 'team_member',
             'message_campaign', 'message_recipient', 'notification',
             'notification_recipient', 'sms_queue', 'parish'] as $table) {
@@ -94,26 +94,13 @@ final class BulkMessageServiceTest extends CIUnitTestCase
 
     public function testGuestAudienceIncludesUnconvertedGuests(): void
     {
-        $this->db->table('guest')->insert([
-            'parish_id'  => 301,
-            'first_name' => 'Guest',
-            'last_name'  => 'One',
-            'email'      => 'guest@example.test',
-            'visit_date' => date('Y-m-d'),
-        ]);
-        $guestId = (int) $this->db->insertID();
-        $this->db->table('guest')->insert([
-            'parish_id' => 301,
-            'first_name' => 'Converted',
-            'last_name'  => 'Guest',
-            'visit_date' => date('Y-m-d'),
-            'converted_to_member_at' => date('Y-m-d H:i:s'),
-        ]);
+        $guestPersonId = $this->seedGuestPerson(301, 'guest@example.test');
+        $this->seedGuestPerson(301, 'converted@example.test', date('Y-m-d H:i:s'));
 
         $recipients = $this->service->resolveAudience(301, ['include_guests' => true]);
 
         $this->assertCount(1, $recipients);
-        $this->assertSame($guestId, $recipients[0]['guest_id']);
+        $this->assertSame($guestPersonId, $recipients[0]['person_id']);
         $this->assertSame('guest@example.test', $recipients[0]['email']);
     }
 
@@ -357,6 +344,31 @@ final class BulkMessageServiceTest extends CIUnitTestCase
             'source'            => 'system',
             'created_at'        => date('Y-m-d H:i:s'),
             'updated_at'        => date('Y-m-d H:i:s'),
+        ]);
+
+        return $personId;
+    }
+
+    private function seedGuestPerson(int $parishId, string $email, ?string $convertedAt = null): int
+    {
+        $this->db->table('person')->insert([
+            'first_name' => 'Guest',
+            'last_name'  => 'Person',
+            'email'      => $email,
+            'created_at' => date('Y-m-d H:i:s'),
+            'updated_at' => date('Y-m-d H:i:s'),
+        ]);
+        $personId = (int) $this->db->insertID();
+
+        $this->db->table('parish_affiliation')->insert([
+            'parish_id'              => $parishId,
+            'person_id'              => $personId,
+            'affiliation_type'       => 'guest',
+            'membership_status'      => 'visitor',
+            'is_member'              => 0,
+            'converted_to_member_at' => $convertedAt,
+            'created_at'             => date('Y-m-d H:i:s'),
+            'updated_at'             => date('Y-m-d H:i:s'),
         ]);
 
         return $personId;

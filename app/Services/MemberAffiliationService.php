@@ -226,13 +226,97 @@ class MemberAffiliationService
     }
 
     /**
+     * Canonical replacement for ParishPeopleModel::replaceForUser —
+     * reconcile a user's non-primary affiliations against a posted list.
+     * Secondary rows not in the desired set are soft-deleted; each desired
+     * parish is upserted via attachToParish (status + history handled there).
+     *
+     * @param array<int, array{parish_id: int, membership_status?: string}> $affiliations
+     */
+    public function replaceSecondaryAffiliationsForUser(int $userId, int $primaryParishId, array $affiliations, ?int $personId = null): void
+    {
+        $desiredParishIds = [$primaryParishId];
+        $desired = [];
+        foreach ($affiliations as $affiliation) {
+            $parishId = (int) ($affiliation['parish_id'] ?? 0);
+            if ($parishId <= 0 || $parishId === $primaryParishId) {
+                continue;
+            }
+            $desiredParishIds[] = $parishId;
+            $desired[$parishId] = (string) ($affiliation['membership_status'] ?? '');
+        }
+
+        // Soft-delete non-primary affiliations that are no longer desired.
+        $this->db->table('parish_affiliation')
+            ->where('linked_user_id', $userId)
+            ->where('is_primary', 0)
+            ->whereNotIn('parish_id', $desiredParishIds)
+            ->where('deleted_at', null)
+            ->update([
+                'deleted_at' => date('Y-m-d H:i:s'),
+                'updated_at' => date('Y-m-d H:i:s'),
+            ]);
+
+        foreach ($desired as $parishId => $rawStatus) {
+            $status = MembershipStatusService::normalizeAffiliationStatus($rawStatus);
+            if (! in_array($status, MembershipStatusService::affiliationStatuses(), true)) {
+                $status = MembershipStatusService::profileToAffiliation($rawStatus);
+            }
+            if (! in_array($status, MembershipStatusService::affiliationStatuses(), true)) {
+                $status = 'visitor';
+            }
+
+            $this->affiliations->attachToParish(
+                $userId,
+                $parishId,
+                false,
+                $status,
+                MembershipStatusService::isMember($status),
+                $personId
+            );
+        }
+    }
+
+    /**
+     * Canonical replacement for ParishPeopleModel::syncPrimaryParish —
+     * ensure the user's primary parish affiliation exists. The affiliation
+     * row (not the profile) owns membership_status, so an existing primary
+     * affiliation is left untouched.
+     */
+    public function ensurePrimaryAffiliationForUser(int $userId, int $primaryParishId, ?int $personId = null): void
+    {
+        if ($userId <= 0 || $primaryParishId <= 0) {
+            return;
+        }
+
+        $existing = $this->db->table('parish_affiliation')
+            ->where('linked_user_id', $userId)
+            ->where('parish_id', $primaryParishId)
+            ->where('deleted_at', null)
+            ->get()
+            ->getRowArray();
+
+        if ($existing) {
+            if ((int) ($existing['is_primary'] ?? 0) !== 1) {
+                $this->db->table('parish_affiliation')
+                    ->where('id', (int) $existing['id'])
+                    ->update(['is_primary' => 1, 'updated_at' => date('Y-m-d H:i:s')]);
+            }
+
+            return;
+        }
+
+        $this->affiliations->attachToParish($userId, $primaryParishId, true, 'regular_attender', false, $personId);
+    }
+
+    /**
      * Mirror the user's primary active affiliation onto the legacy
      * profile row (parish_id / diocese_id / province_id).
      */
     public function syncProfileParishMirror(int $profileId, int $userId, ?int $fallbackProvinceId = null, ?int $fallbackDioceseId = null): bool
     {
         $affiliation = $this->db->table('parish_affiliation')
-            ->select('parish_id as parish_id, diocese_id')
+            ->select('parish_id')
             ->where('linked_user_id', $userId)
             ->where('is_member', 1)
             ->orderBy('is_primary', 'DESC')

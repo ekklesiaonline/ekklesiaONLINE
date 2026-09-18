@@ -451,48 +451,25 @@ class ProfileModel extends BaseTenantModel
      */
     public function getMemberCountsByParish()
     {
-        $snapshotTable = $this->resolveSnapshotTable();
-
-        if ($snapshotTable === null) {
+        if (! $this->db->tableExists('parish_affiliation')) {
             return [];
         }
 
-        return $this->db->table($snapshotTable . ' pp')
+        return $this->db->table('parish_affiliation pa')
             ->select('c.id as parish_id, c.name as parish_name,
-                      COUNT(DISTINCT pp.user_id) as total_members,
-                      COUNT(DISTINCT CASE WHEN pp.is_member = 1 AND pp.membership_status = "member" THEN pp.user_id END) as active_members,
-                      COUNT(DISTINCT CASE WHEN pp.membership_status IN ("inactive", "transferred", "deceased") THEN pp.user_id END) as inactive_members,
-                      COUNT(DISTINCT CASE WHEN pp.membership_status IN ("visitor", "regular_attender") THEN pp.user_id END) as visitors,
+                      COUNT(DISTINCT pa.person_id) as total_members,
+                      COUNT(DISTINCT CASE WHEN pa.is_member = 1 AND pa.membership_status = "member" THEN pa.person_id END) as active_members,
+                      COUNT(DISTINCT CASE WHEN pa.membership_status IN ("inactive", "transferred", "deceased") THEN pa.person_id END) as inactive_members,
+                      COUNT(DISTINCT CASE WHEN pa.membership_status IN ("visitor", "regular_attender") THEN pa.person_id END) as visitors,
                       0 as pending_members,
-                      COUNT(DISTINCT CASE WHEN pp.membership_status = "regular_attender" THEN pp.user_id END) as regular_attenders', false)
-            ->join('parish c', 'c.id = pp.parish_id')
-            ->where('pp.deleted_at', null)
+                      COUNT(DISTINCT CASE WHEN pa.membership_status = "regular_attender" THEN pa.person_id END) as regular_attenders', false)
+            ->join('parish c', 'c.id = pa.parish_id')
+            ->where('pa.person_id IS NOT NULL')
+            ->where('pa.deleted_at', null)
             ->groupBy('c.id')
             ->orderBy('total_members', 'DESC')
             ->get()
             ->getResultArray();
     }
 
-    private function resolveSnapshotTable(): ?string
-    {
-        $prefix     = (string) $this->db->DBPrefix;
-        $candidates = [];
-        if ($prefix !== '') {
-            $candidates[] = $prefix . 'parish_people';
-            $candidates[] = $prefix . 'parish_people';
-        }
-        $candidates[] = 'parish_people';
-        $candidates[] = 'parish_people';
-
-        foreach ($candidates as $table) {
-            try {
-                $this->db->getFieldNames($table);
-                return $table;
-            } catch (\Throwable $e) {
-                // Try next.
-            }
-        }
-
-        return null;
-    }
 }

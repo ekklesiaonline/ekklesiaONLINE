@@ -2,7 +2,7 @@
 
 namespace App\Services;
 
-use App\Models\GuestModel;
+
 use App\Models\MessageCampaignModel;
 use App\Models\MessageRecipientModel;
 use App\Models\PersonModel;
@@ -100,20 +100,16 @@ class BulkMessageService
         }
 
         if (! empty($audience['include_guests'])) {
-            foreach ($this->guestRows($parishId) as $guest) {
-                // A guest whose person row is already selected is covered.
-                $linkedPerson = (int) ($guest['person_id'] ?? 0);
-                if ($linkedPerson > 0 && isset($recipients['p' . $linkedPerson])) {
+            foreach ($this->guestPersonRows($parishId) as $guest) {
+                $pid = (int) $guest['id'];
+                if (isset($recipients['p' . $pid])) {
                     continue;
                 }
 
-                $gid = (int) $guest['id'];
-                $recipients['g' . $gid] = [
-                    'person_id'  => $linkedPerson > 0 ? $linkedPerson : null,
-                    'guest_id'   => $gid,
-                    'user_id'    => $linkedPerson > 0
-                        ? ($userMap[$linkedPerson] ?? ($this->userIdsForPersons([$linkedPerson])[$linkedPerson] ?? null))
-                        : null,
+                $recipients['p' . $pid] = [
+                    'person_id'  => $pid,
+                    'guest_id'   => null,
+                    'user_id'    => $userMap[$pid] ?? ($this->userIdsForPersons([$pid])[$pid] ?? null),
                     'first_name' => (string) ($guest['first_name'] ?? ''),
                     'last_name'  => (string) ($guest['last_name'] ?? ''),
                     'name'       => trim((string) ($guest['first_name'] ?? '') . ' ' . (string) ($guest['last_name'] ?? '')),
@@ -486,12 +482,22 @@ class BulkMessageService
      *
      * @return array<int, array<string, mixed>>
      */
-    private function guestRows(int $parishId): array
+    /**
+     * Unconverted guests as canonical person rows (contact fields still
+     * encrypted — decrypted downstream before dispatch).
+     */
+    private function guestPersonRows(int $parishId): array
     {
-        return (new GuestModel())
-            ->where('parish_id', $parishId)
-            ->where('converted_to_member_at IS NULL', null, false)
-            ->findAll();
+        $rows = (new GuestDirectoryService())
+            ->scopeBuilder($parishId)
+            ->select('pe.id, pe.first_name, pe.last_name, pe.email, pe.phone, pe.opted_out_channels')
+            ->where('pa.converted_to_member_at IS NULL', null, false)
+            ->where('pa.affiliation_type', 'guest')
+            ->get()
+            ->getResultArray();
+
+        $directory = new GuestDirectoryService();
+        return array_map(static fn(array $row): array => $directory->decryptRow($row), $rows);
     }
 
     /**

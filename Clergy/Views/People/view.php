@@ -1085,7 +1085,7 @@ $portalAccess = strtolower(trim((string) ($profile['portal_access'] ?? 'none')))
                             <label for="s_officiant_person_id" class="form-label"><?= lang('Sacraments.officiant') ?></label>
                             <select class="form-select" id="s_officiant_person_id" name="officiant_person_id">
                                 <option value=""><?= lang('Sacraments.selectOfficiant') ?></option>
-                                <?php foreach (($parish_people_for_dropdown ?? []) as $pp): ?>
+                                <?php foreach (($parish_affiliated_people ?? []) as $pp): ?>
                                     <?php
                                     $ppPersonId = (int) ($pp['person_id'] ?? 0);
                                     if ($ppPersonId <= 0) {
@@ -1134,7 +1134,7 @@ $portalAccess = strtolower(trim((string) ($profile['portal_access'] ?? 'none')))
                         <label for="sp_person_id" class="form-label"><?= lang('Sacraments.participant') ?> <span class="text-danger">*</span></label>
                         <select class="form-select" id="sp_person_id" name="person_id" required>
                             <option value=""><?= lang('Sacraments.selectParticipant') ?></option>
-                            <?php foreach (($parish_people_for_dropdown ?? []) as $pp):
+                            <?php foreach (($parish_affiliated_people ?? []) as $pp):
                                 $ppPersonId = (int) ($pp['person_id'] ?? 0);
                                 if ($ppPersonId <= 0) {
                                     continue;
@@ -1248,7 +1248,7 @@ $portalAccess = strtolower(trim((string) ($profile['portal_access'] ?? 'none')))
                             <?php
                             $currentFamilyUserIds = array_map(static fn(array $m): int => (int) ($m['user_id'] ?? 0), $family_members ?? []);
                             ?>
-                            <?php foreach (($parish_people_for_dropdown ?? []) as $pp):
+                            <?php foreach (($parish_affiliated_people ?? []) as $pp):
                                 $ppUserId = (int) ($pp['user_id'] ?? 0);
                                 if ($ppUserId <= 0 || in_array($ppUserId, $currentFamilyUserIds, true)) {
                                     continue;

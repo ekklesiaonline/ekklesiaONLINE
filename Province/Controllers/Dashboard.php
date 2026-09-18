@@ -473,11 +473,13 @@ class Dashboard extends BaseController
 
         $row = $builder->get()->getRowArray();
 
-        $guestBuilder = db_connect()->table('guest g')
-            ->select('COUNT(*) as guest_count')
+        $guestBuilder = db_connect()->table('parish_affiliation g')
+            ->select('COUNT(DISTINCT g.person_id) as guest_count')
             ->join('parish c', 'c.id = g.parish_id')
             ->join('diocese d', 'd.id = c.diocese_id')
             ->where('d.province_id', $provinceId)
+            ->where('g.affiliation_type', 'guest')
+            ->where('g.deleted_at IS NULL', null, false)
             ->where('g.converted_to_member_at IS NULL', null, false);
 
         if ($dioceseId !== null) {
@@ -620,11 +622,13 @@ class Dashboard extends BaseController
 
         $baseRows = $baseBuilder->get()->getResultArray();
 
-        $guestBuilder = $db->table('guest g')
-            ->select('c.diocese_id as diocese_id, COUNT(*) as guest_count')
+        $guestBuilder = $db->table('parish_affiliation g')
+            ->select('c.diocese_id as diocese_id, COUNT(DISTINCT g.person_id) as guest_count')
             ->join('parish c', 'c.id = g.parish_id', 'inner')
             ->join('diocese d', 'd.id = c.diocese_id', 'inner')
             ->where('d.province_id', $provinceId)
+            ->where('g.affiliation_type', 'guest')
+            ->where('g.deleted_at IS NULL', null, false)
             ->where('g.converted_to_member_at IS NULL', null, false);
 
         if ($dioceseId !== null) {

@@ -97,14 +97,17 @@ class SendFollowups extends BaseCommand
             // Build a full person array with decrypted fields so the dispatcher
             // doesn't have to worry about encryption (it still handles it safely)
             $guest = [
-                'id'         => (int)    ($row['person_id'] ?? 0),
-                'person_id'  => (int)    ($row['person_id'] ?? 0),
-                'parish_id'  => (int)    ($row['parish_id'] ?? 0),
-                'first_name' => (string) ($row['first_name'] ?? ''),
-                'last_name'  => (string) ($row['last_name'] ?? ''),
-                'email'      => (string) ($row['email'] ?? ''),
-                'phone'      => (string) ($row['phone'] ?? ''),
-                'visit_date' => (string) ($row['scheduled_date'] ?? ''),
+                'id'                   => (int)    ($row['person_id'] ?? 0),
+                'person_id'            => (int)    ($row['person_id'] ?? 0),
+                'parish_id'            => (int)    ($row['parish_id'] ?? 0),
+                'first_name'           => (string) ($row['first_name'] ?? ''),
+                'last_name'            => (string) ($row['last_name'] ?? ''),
+                'email'                => (string) ($row['email'] ?? ''),
+                'phone'                => (string) ($row['phone'] ?? ''),
+                'opted_out_channels'   => (string) ($row['opted_out_channels'] ?? ''),
+                'preferred_timezone'   => (string) ($row['preferred_timezone'] ?? ''),
+                'interests'            => (string) ($row['interests'] ?? ''),
+                'visit_date'           => (string) ($row['scheduled_date'] ?? ''),
             ];
 
             if ($isDryRun) {
@@ -123,8 +126,8 @@ class SendFollowups extends BaseCommand
 
                 $audit->log('followup.cron_dispatched', [
                     'parish_id'   => (int) ($row['parish_id'] ?? 0),
-                    'entity_type' => 'guest',
-                    'entity_id'   => (int) ($row['guest_id'] ?? 0),
+                    'entity_type' => 'person',
+                    'entity_id'   => (int) ($row['person_id'] ?? 0),
                     'meta'        => [
                         'log_id'         => $logId,
                         'channel'        => $channel,
@@ -146,8 +149,8 @@ class SendFollowups extends BaseCommand
 
                 $audit->log('followup.cron_dispatch_failed', [
                     'parish_id'   => (int) ($row['parish_id'] ?? 0),
-                    'entity_type' => 'guest',
-                    'entity_id'   => (int) ($row['guest_id'] ?? 0),
+                    'entity_type' => 'person',
+                    'entity_id'   => (int) ($row['person_id'] ?? 0),
                     'meta'        => [
                         'log_id'         => $logId,
                         'channel'        => $channel,

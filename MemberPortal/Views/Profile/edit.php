@@ -260,7 +260,7 @@
                 ]);
                 // Elevated admins administer a diocese/province/system scope but
                 // may also be personally affiliated with one or more parishes
-                // (parish_people rows) — show both instead of implying the
+                // (parish_affiliation rows) — show both instead of implying the
                 // diocese/province itself is their "primary parish".
                 $adminParishNames = ($isElevatedAdmin && $adminScope)
                     ? array_values(array_filter(array_unique(array_column($otherAffiliations ?? [], 'parish_name'))))

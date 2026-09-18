@@ -41,7 +41,7 @@ class WorshipDashboard extends BaseController
             ->countAllResults());
 
         // Recent guests
-        $recentGuests = model('GuestModel')->getRecentGuests($parishId, 5);
+        $recentGuests = (new \App\Services\GuestDirectoryService())->recentForParish($parishId, 5);
 
         // Call tasks today
         $callTasksToday = (int) $db->table('call_task')

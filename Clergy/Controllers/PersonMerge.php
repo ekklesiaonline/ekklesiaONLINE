@@ -4,7 +4,6 @@ namespace Clergy\Controllers;
 
 use App\Controllers\BaseController;
 use App\Services\PersonMergeService;
-use App\Services\ParishPeopleRegistryService;
 
 class PersonMerge extends BaseController
 {

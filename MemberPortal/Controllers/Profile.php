@@ -234,8 +234,7 @@ class Profile extends BaseController
         service('request')->setLocale($effectiveLocale);
 
         // Sync primary parish and save any additional parish affiliations
-        $this->syncPrimaryParishPeople($profile);
-        $parishPeopleModel = model('ParishPeopleModel');
+        // against the canonical parish_affiliation table.
         $primaryParishId = (int) ($profile['parish_id'] ?? 0);
         $pendingParishId = (int) ($state['registration_request']['parish_id'] ?? 0);
         $affiliations = $this->request->getPost('affiliations') ?? [];
@@ -249,7 +248,11 @@ class Profile extends BaseController
                 $filteredAffiliations[] = $affiliation;
             }
         }
-        $parishPeopleModel->replaceForUser((int) $user->id, $primaryParishId, $filteredAffiliations, (int) ($profile['id'] ?? 0));
+
+        $personId = (int) ($profile['person_id'] ?? 0) ?: null;
+        $affiliationService = new \App\Services\MemberAffiliationService();
+        $affiliationService->ensurePrimaryAffiliationForUser((int) $user->id, $primaryParishId, $personId);
+        $affiliationService->replaceSecondaryAffiliationsForUser((int) $user->id, $primaryParishId, $filteredAffiliations, $personId);
 
         return redirect()->to('profile')->with('success', lang('App.successUpdated'));
     }
@@ -484,19 +487,6 @@ class Profile extends BaseController
     }
 
     /**
-     * Sync the primary parish from profile into parish_people.
-     */
-    private function syncPrimaryParishPeople(array $profile): void
-    {
-        $userId = (int) ($profile['user_id'] ?? 0);
-        if ($userId <= 0) {
-            return;
-        }
-
-        model('ParishPeopleModel')->syncPrimaryParish($userId, $profile);
-    }
-
-    /**
      * Calculate profile completion percentage based on filled fields.
      */
     private function calculateCompletionPct(?array $profile): int
@@ -691,7 +681,11 @@ class Profile extends BaseController
             // Sync the canonical person record with the completed profile data.
             (new \App\Services\PersonProfileSyncService())->syncFromProfile((int) $completedProfile['id']);
 
-            $this->syncPrimaryParishPeople($completedProfile);
+            (new \App\Services\MemberAffiliationService())->ensurePrimaryAffiliationForUser(
+                (int) $user->id,
+                (int) ($completedProfile['parish_id'] ?? 0),
+                (int) ($completedProfile['person_id'] ?? 0) ?: null
+            );
 
             if (!$legacyCompletionMode && $parishId > 0) {
                 (new PersonOnboardingService())->start(
@@ -747,7 +741,11 @@ class Profile extends BaseController
 
             $completedProfile = $this->getProfileModel()->where('user_id', $user->id)->first();
             if ($completedProfile) {
-                $this->syncPrimaryParishPeople($completedProfile);
+                (new \App\Services\MemberAffiliationService())->ensurePrimaryAffiliationForUser(
+                    (int) $user->id,
+                    (int) ($completedProfile['parish_id'] ?? 0),
+                    (int) ($completedProfile['person_id'] ?? 0) ?: null
+                );
             }
 
             return redirect()->to($this->resolveAuthenticatedLandingPath($user, $this->getCurrentRegistrationRequest()))
@@ -954,7 +952,11 @@ class Profile extends BaseController
 
             $profile = $this->getProfileModel()->where('user_id', $user->id)->first();
             if ($profile) {
-                $this->syncPrimaryParishPeople($profile);
+                (new \App\Services\MemberAffiliationService())->ensurePrimaryAffiliationForUser(
+                    (int) $user->id,
+                    (int) ($profile['parish_id'] ?? 0),
+                    (int) ($profile['person_id'] ?? 0) ?: null
+                );
             }
 
             return redirect()->to('/profile')->with('success', lang('Profile.joinParishSuccess'));

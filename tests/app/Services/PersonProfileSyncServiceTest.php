@@ -90,6 +90,38 @@ final class PersonProfileSyncServiceTest extends CIUnitTestCase
         $this->assertSame('1985-01-01', $person['birthdate']);
     }
 
+    public function testSyncFromProfileRepairsDanglingPersonId(): void
+    {
+        $parishId = $this->insertParish();
+        $userId   = $this->insertUser('sync.dangling');
+
+        // person_id points at a person row that does not exist (e.g. a person
+        // hard-deleted by an earlier merge before reassignment covered profile).
+        $this->db->table('profile')->insert([
+            'user_id'     => $userId,
+            'parish_id'   => $parishId,
+            'person_id'   => 99999,
+            'first_name'  => 'Orphan',
+            'last_name'   => 'Profile',
+            'membership_status' => 'member',
+            'created_at'  => date('Y-m-d H:i:s'),
+            'updated_at'  => date('Y-m-d H:i:s'),
+        ]);
+        $profileId = (int) $this->db->insertID();
+
+        $personId = $this->service->syncFromProfile($profileId);
+
+        $this->assertGreaterThan(0, $personId);
+        $this->assertNotSame(99999, $personId);
+
+        $profile = $this->db->table('profile')->where('id', $profileId)->get()->getRowArray();
+        $this->assertSame($personId, (int) ($profile['person_id'] ?? 0));
+
+        $person = model(PersonModel::class)->find($personId);
+        $this->assertSame('Orphan', $person['first_name']);
+        $this->assertSame('Profile', $person['last_name']);
+    }
+
     private function buildSchema(): void
     {
         $forge = \Config\Database::forge();

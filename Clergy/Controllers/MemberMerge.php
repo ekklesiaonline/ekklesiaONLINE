@@ -4,7 +4,6 @@ namespace Clergy\Controllers;
 
 use App\Controllers\AdminHierarchyGuard;
 use App\Controllers\BaseController;
-use App\Services\ParishPeopleRegistryService;
 use App\Services\MemberMergeService;
 
 /**
@@ -140,9 +139,6 @@ class MemberMerge extends BaseController
             ])->setStatusCode($result['http_status']);
         }
 
-        // Sync snapshot for the parish
-        (new ParishPeopleRegistryService())->syncParish($parishId);
-
         $this->audit()->log('member.merge', array_merge(
             [
                 'canonical_profile_id' => $canonicalId,
@@ -261,8 +257,6 @@ class MemberMerge extends BaseController
                 'error'   => ['code' => $result['code'], 'message' => $result['message']],
             ])->setStatusCode($result['http_status']);
         }
-
-        (new ParishPeopleRegistryService())->syncParish($parishId);
 
         return $this->response->setJSON([
             'success'  => true,

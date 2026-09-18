@@ -47,6 +47,8 @@ class PersonConversionService
                 throw new \RuntimeException('Parish affiliation not found.');
             }
 
+            $affiliationId = (int) $affiliation['id'];
+
             $now = date('Y-m-d H:i:s');
 
             if ($userId !== null && $userId > 0) {
@@ -77,7 +79,7 @@ class PersonConversionService
             );
 
             self::markPendingFollowupsSkipped($personId, $now);
-            self::markGuestConverted($personId, $parishId, $userId, $convertedByUserId, $now);
+            self::markGuestConverted($affiliationId, $userId, $convertedByUserId, $now);
 
             $db->transCommit();
 
@@ -185,30 +187,31 @@ class PersonConversionService
     }
 
     /**
-     * Mark a guest record as converted when the member account was created
-     * through a different path (e.g. the pre-filled member create form).
-     * Updates the guest row and skips pending follow-ups for the linked
-     * person. Does not touch affiliations — callers handle those.
+     * Mark a person's guest affiliation as converted when the member
+     * account was created through a different path (e.g. the pre-filled
+     * member create form). Skips pending follow-ups for the person.
      */
-    public static function recordManualConversion(array $guest, ?int $userId, ?int $convertedByUserId = null): void
+    public static function recordManualConversion(int $personId, int $parishId, ?int $userId, ?int $convertedByUserId = null): void
     {
-        $db = db_connect();
         $now = date('Y-m-d H:i:s');
 
-        $db->table('guest')
-            ->where('id', (int) $guest['id'])
-            ->update([
-                'followed_up'            => 1,
-                'converted_to_member_at' => $now,
-                'converted_user_id'      => $userId,
-                'converted_by_user_id'   => $convertedByUserId,
-                'updated_at'             => $now,
-            ]);
-
-        $personId = (int) ($guest['person_id'] ?? 0);
-        if ($personId > 0) {
-            self::markPendingFollowupsSkipped($personId, $now);
+        $update = [
+            'followed_up'            => 1,
+            'converted_to_member_at' => $now,
+            'converted_by_user_id'   => $convertedByUserId,
+            'updated_at'             => $now,
+        ];
+        if ($userId !== null && $userId > 0) {
+            $update['linked_user_id'] = $userId;
         }
+
+        $db = db_connect();
+        $db->table('parish_affiliation')
+            ->where('person_id', $personId)
+            ->where('parish_id', $parishId)
+            ->update($update);
+
+        self::markPendingFollowupsSkipped($personId, $now);
     }
 
     private static function markPendingFollowupsSkipped(int $personId, string $now): void
@@ -224,27 +227,14 @@ class PersonConversionService
             ]);
     }
 
-    private static function markGuestConverted(int $personId, int $parishId, ?int $userId, ?int $convertedByUserId, string $now): void
+    private static function markGuestConverted(int $affiliationId, ?int $userId, ?int $convertedByUserId, string $now): void
     {
-        $db = db_connect();
-        $guest = $db->table('guest')
-            ->where('person_id', $personId)
-            ->where('parish_id', $parishId)
-            ->get()
-            ->getRowArray();
-
-        if (! is_array($guest)) {
-            return;
-        }
-
-        $db->table('guest')
-            ->where('id', (int) $guest['id'])
+        db_connect()->table('parish_affiliation')
+            ->where('id', $affiliationId)
             ->update([
                 'followed_up'            => 1,
                 'converted_to_member_at' => $now,
-                'converted_user_id'      => $userId,
                 'converted_by_user_id'   => $convertedByUserId,
-                'updated_at'             => $now,
             ]);
     }
 }

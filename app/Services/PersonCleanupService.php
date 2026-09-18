@@ -167,7 +167,7 @@ class PersonCleanupService
             }
         }
 
-        foreach (['profile', 'parish_affiliation', 'parish_people'] as $table) {
+        foreach (['profile', 'parish_affiliation'] as $table) {
             if (! $this->db->tableExists($table) || ! $this->db->fieldExists('person_id', $table)) {
                 continue;
             }

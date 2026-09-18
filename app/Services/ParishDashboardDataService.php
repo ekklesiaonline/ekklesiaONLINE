@@ -90,7 +90,7 @@ class ParishDashboardDataService
         $recentServices = model('ServiceModel')->getParishServices($parishId, 5);
 
         // Recent guests
-        $recentGuests = model('GuestModel')->getRecentGuests($parishId, 5);
+        $recentGuests = (new \App\Services\GuestDirectoryService())->recentForParish($parishId, 5);
 
         // Pending registrations count
         $pendingRegistrationsCount = 0;

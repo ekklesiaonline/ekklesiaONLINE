@@ -153,8 +153,7 @@ class PersonMergeService
         int $targetPersonId,
         int $parishId,
         int $actorUserId,
-        array $overrides = [],
-        bool $syncSnapshot = true
+        array $overrides = []
     ): array {
         if ($sourcePersonId === $targetPersonId) {
             return $this->result(false, 'Cannot merge a person into itself.');
@@ -197,10 +196,6 @@ class PersonMergeService
 
             if (! $this->db->transComplete()) {
                 throw new \RuntimeException('Transaction failed to complete during person merge.');
-            }
-
-            if ($syncSnapshot) {
-                (new ParishPeopleRegistryService())->syncParish($parishId);
             }
 
             $this->logAudit($sourcePersonId, $targetPersonId, $parishId, $actorUserId);
@@ -293,8 +288,6 @@ class PersonMergeService
             ['person_membership_details', 'person_id'],
             ['person_onboarding', 'person_id'],
             ['person_status_history', 'person_id'],
-            ['guest', 'person_id'],
-            ['parish_people', 'person_id'],
         ];
 
         foreach ($tables as [$table, $column]) {

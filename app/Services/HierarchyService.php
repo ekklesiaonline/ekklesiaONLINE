@@ -153,26 +153,26 @@ class HierarchyService
     }
 
     /**
-     * All parish_people snapshot rows for a user, enriched with the
+     * All canonical parish affiliations for a user, enriched with the
      * parish/diocese/province hierarchy. Flags the row matching the
-     * primary parish. Returns [] when the snapshot table or its
-     * parish_id column is unavailable.
+     * primary parish. Returns [] when the affiliation table is unavailable.
      *
      * @return list<array<string, mixed>>
      */
     public function parishAffiliationsForUser(int $userId, int $primaryParishId): array
     {
         try {
-            $columns = array_map('strtolower', $this->db->getFieldNames('parish_people'));
+            $columns = array_map('strtolower', $this->db->getFieldNames('parish_affiliation'));
             if (! in_array('parish_id', $columns, true)) {
                 return [];
             }
 
-            $rows = $this->db->table('parish_people pp')
-                ->select('pp.id, pp.parish_id, p.diocese_id, d.province_id, pp.membership_status, p.name as parish_name')
-                ->join('parish p', 'p.id = pp.parish_id', 'left')
+            $rows = $this->db->table('parish_affiliation pa')
+                ->select('pa.id, pa.parish_id, p.diocese_id, d.province_id, pa.membership_status, p.name as parish_name')
+                ->join('parish p', 'p.id = pa.parish_id', 'left')
                 ->join('diocese d', 'd.id = p.diocese_id', 'left')
-                ->where('pp.user_id', $userId)
+                ->where('pa.linked_user_id', $userId)
+                ->where('pa.deleted_at IS NULL', null, false)
                 ->orderBy('p.name', 'ASC')
                 ->get()
                 ->getResultArray();

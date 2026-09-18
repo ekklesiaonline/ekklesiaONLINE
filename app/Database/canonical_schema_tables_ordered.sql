@@ -86,6 +86,7 @@ CREATE TABLE `person` (
   `birthdate` date DEFAULT NULL,
   `gender` enum('M','F','other') COLLATE utf8mb4_general_ci DEFAULT NULL,
   `deleted_at` datetime DEFAULT NULL,
+  `interests` text COLLATE utf8mb4_general_ci,
   `created_at` datetime DEFAULT NULL,
   `updated_at` datetime DEFAULT NULL,
   PRIMARY KEY (`id`),
@@ -463,7 +464,7 @@ CREATE TABLE `bank_transaction_journal_link` (
 CREATE TABLE `call_task` (
   `id` int unsigned NOT NULL AUTO_INCREMENT,
   `parish_id` int unsigned DEFAULT NULL,
-  `guest_id` int unsigned NOT NULL,
+  `person_id` int unsigned DEFAULT NULL,
   `log_id` int unsigned DEFAULT NULL,
   `assigned_to` int unsigned DEFAULT NULL,
   `phone` varchar(500) COLLATE utf8mb4_general_ci DEFAULT NULL,
@@ -475,11 +476,10 @@ CREATE TABLE `call_task` (
   `updated_at` datetime DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `parish_id_status` (`parish_id`,`status`),
-  KEY `guest_id` (`guest_id`),
+  KEY `person_id` (`person_id`),
   KEY `assigned_to` (`assigned_to`),
   KEY `log_id` (`log_id`),
   CONSTRAINT `call_tasks_parish_id_foreign` FOREIGN KEY (`parish_id`) REFERENCES `parish` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
-  CONSTRAINT `call_tasks_guest_id_foreign` FOREIGN KEY (`guest_id`) REFERENCES `guest` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `call_tasks_log_id_foreign` FOREIGN KEY (`log_id`) REFERENCES `followup_log` (`id`) ON DELETE CASCADE ON UPDATE SET NULL
 ) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
@@ -824,7 +824,6 @@ CREATE TABLE `event_registration` (
   `parish_id` int unsigned DEFAULT NULL,
   `user_id` int unsigned DEFAULT NULL,
   `person_id` int unsigned DEFAULT NULL,
-  `guest_id` int unsigned DEFAULT NULL,
   `guest_name` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
   `guest_email` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
   `guest_phone` varchar(50) COLLATE utf8mb4_general_ci DEFAULT NULL,
@@ -974,9 +973,31 @@ CREATE TABLE `followup_action` (
 
 CREATE TABLE `followup_log` (
   `id` int unsigned NOT NULL AUTO_INCREMENT,
-  `guest_id` int unsigned NOT NULL,
+  `parish_id` int unsigned NOT NULL,
+  `person_id` int unsigned DEFAULT NULL,
   `action_id` int unsigned DEFAULT NULL COMMENT 'Nullable: manual/ad-hoc log entries may not map to a sequence action',
-  `assigned_to` int unsigned DEFAULT NULL COMMENT 'User responsible for execution',
+  `assigned_to` int unsigned DEFAULT NULL COMMENT 'User responsible for execution; null for automated actions',
+  `scheduled_date` date DEFAULT NULL COMMENT 'Target date for this action (visit_date + day_offset)',
+  `executed_at` datetime DEFAULT NULL,
+  `notes` text COLLATE utf8mb4_general_ci,
+  `response_metadata` text COLLATE utf8mb4_general_ci,
+  `status` varchar(20) COLLATE utf8mb4_general_ci NOT NULL DEFAULT 'pending',
+  `followup_date` date DEFAULT NULL,
+  `completed_at` datetime DEFAULT NULL,
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `person_id` (`person_id`),
+  KEY `action_id` (`action_id`),
+  KEY `assigned_to` (`assigned_to`),
+  KEY `scheduled_date` (`scheduled_date`),
+  KEY `status` (`status`),
+  KEY `status_scheduled_date` (`status`,`scheduled_date`),
+  KEY `person_id_scheduled_date` (`person_id`,`scheduled_date`),
+  CONSTRAINT `guest_followup_log_action_id_foreign` FOREIGN KEY (`action_id`) REFERENCES `followup_action` (`id`) ON DELETE CASCADE ON UPDATE SET NULL,
+  CONSTRAINT `guest_followup_log_assigned_to_foreign` FOREIGN KEY (`assigned_to`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE SET NULL,
+  CONSTRAINT `fk_followup_person` FOREIGN KEY (`person_id`) REFERENCES `person` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 CREATE TABLE `followup_sequence` (
   `id` int unsigned NOT NULL AUTO_INCREMENT,
@@ -1014,66 +1035,7 @@ CREATE TABLE `governance_term` (
   KEY `parish_id_person_id` (`parish_id`,`person_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
-CREATE TABLE `guest` (
-  `id` int unsigned NOT NULL AUTO_INCREMENT,
-  `parish_id` int unsigned DEFAULT NULL,
-  `person_id` int unsigned DEFAULT NULL,
-  `first_name` varchar(100) COLLATE utf8mb4_general_ci NOT NULL,
-  `last_name` varchar(100) COLLATE utf8mb4_general_ci NOT NULL,
-  `email` text COLLATE utf8mb4_general_ci,
-  `email_hash` char(64) COLLATE utf8mb4_general_ci DEFAULT NULL,
-  `phone` text COLLATE utf8mb4_general_ci,
-  `phone_hash` char(64) COLLATE utf8mb4_general_ci DEFAULT NULL,
-  `address` varchar(500) COLLATE utf8mb4_general_ci DEFAULT NULL,
-  `preferred_contact_method` enum('email','text','call','mail') COLLATE utf8mb4_general_ci DEFAULT NULL,
-  `source` varchar(100) COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT 'e.g. connection card, online form, referral',
-  `interests` json DEFAULT NULL,
-  `opted_out_channels` json DEFAULT NULL,
-  `preferred_timezone` varchar(50) COLLATE utf8mb4_general_ci DEFAULT NULL,
-  `visit_date` date NOT NULL,
-  `service_attended` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT 'e.g., Sunday 10am',
-  `followed_up` tinyint(1) NOT NULL DEFAULT '0',
-  `converted_to_member_at` datetime DEFAULT NULL,
-  `converted_user_id` int unsigned DEFAULT NULL,
-  `converted_by_user_id` int unsigned DEFAULT NULL,
-  `notes` text COLLATE utf8mb4_general_ci,
-  `created_at` datetime DEFAULT NULL,
-  `updated_at` datetime DEFAULT NULL,
-  PRIMARY KEY (`id`),
-  KEY `parish_id` (`parish_id`),
-  KEY `idx_visit_date` (`visit_date`),
-  KEY `idx_parish_followup` (`parish_id`,`followed_up`),
-  KEY `idx_guests_converted_user_id` (`converted_user_id`),
-  KEY `idx_guests_parish_converted` (`parish_id`,`converted_to_member_at`),
-  KEY `guests_converted_by_user_id_foreign` (`converted_by_user_id`),
-  KEY `idx_guests_email_hash` (`email_hash`),
-  KEY `idx_guests_phone_hash` (`phone_hash`),
-  KEY `idx_guests_source` (`source`),
-  CONSTRAINT `guests_parish_id_foreign` FOREIGN KEY (`parish_id`) REFERENCES `parish` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
-  CONSTRAINT `guests_converted_by_user_id_foreign` FOREIGN KEY (`converted_by_user_id`) REFERENCES `users` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
-  CONSTRAINT `guests_converted_user_id_foreign` FOREIGN KEY (`converted_user_id`) REFERENCES `users` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=1425 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
-CREATE TABLE `guest_visit` (
-  `id` int unsigned NOT NULL AUTO_INCREMENT,
-  `guest_id` int unsigned NOT NULL,
-  `parish_id` int unsigned DEFAULT NULL,
-  `visit_date` date NOT NULL,
-  `visit_type` enum('first','second','return') COLLATE utf8mb4_general_ci NOT NULL DEFAULT 'first',
-  `service_id` int unsigned DEFAULT NULL COMMENT 'FK to services if visit maps to a tracked service',
-  `attended_event` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT 'Free-form label when service_id is unavailable',
-  `gift_given` tinyint(1) NOT NULL DEFAULT '0' COMMENT '1 = welcome gift was given to the guest on this visit',
-  `notes` text COLLATE utf8mb4_general_ci,
-  `created_at` datetime DEFAULT NULL,
-  `updated_at` datetime DEFAULT NULL,
-  PRIMARY KEY (`id`),
-  KEY `guest_id` (`guest_id`),
-  KEY `parish_id_visit_date` (`parish_id`,`visit_date`),
-  KEY `service_id` (`service_id`),
-  CONSTRAINT `guest_visits_parish_id_foreign` FOREIGN KEY (`parish_id`) REFERENCES `parish` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
-  CONSTRAINT `guest_visits_guest_id_foreign` FOREIGN KEY (`guest_id`) REFERENCES `guest` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
-  CONSTRAINT `guest_visits_service_id_foreign` FOREIGN KEY (`service_id`) REFERENCES `service` (`id`) ON DELETE CASCADE ON UPDATE SET NULL
-) ENGINE=InnoDB AUTO_INCREMENT=1486 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 CREATE TABLE `journal_entry` (
   `id` int unsigned NOT NULL AUTO_INCREMENT,
@@ -1312,13 +1274,16 @@ CREATE TABLE `parish_affiliation` (
   `person_id` int unsigned NOT NULL,
   `linked_user_id` int unsigned DEFAULT NULL,
   `affiliation_type` enum('guest','attendee','member','clergy','staff') COLLATE utf8mb4_general_ci NOT NULL DEFAULT 'guest',
-  `membership_status` enum('guest','attendee','member','inactive','transferred','deceased') COLLATE utf8mb4_general_ci NOT NULL DEFAULT 'guest',
+  `membership_status` enum('visitor','regular_attender','member','inactive','transferred','deceased') COLLATE utf8mb4_general_ci NOT NULL DEFAULT 'visitor',
   `canonical_status` varchar(50) COLLATE utf8mb4_general_ci DEFAULT NULL,
   `is_member` tinyint(1) NOT NULL DEFAULT '0',
   `is_good_standing` tinyint(1) NOT NULL DEFAULT '0',
   `source` varchar(30) COLLATE utf8mb4_general_ci NOT NULL DEFAULT 'system',
   `start_date` date DEFAULT NULL,
   `end_date` date DEFAULT NULL,
+  `followed_up` tinyint(1) NOT NULL DEFAULT '0',
+  `converted_to_member_at` datetime DEFAULT NULL,
+  `converted_by_user_id` int unsigned DEFAULT NULL,
   `created_at` datetime DEFAULT NULL,
   `updated_at` datetime DEFAULT NULL,
   `is_primary` tinyint(1) NOT NULL DEFAULT '0',
@@ -1367,31 +1332,6 @@ CREATE TABLE `parish_integration` (
   KEY `idx_active` (`is_active`),
   CONSTRAINT `parish_integration_parish_id_foreign` FOREIGN KEY (`parish_id`) REFERENCES `parish` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
-CREATE TABLE `parish_people` (
-  `id` int unsigned NOT NULL AUTO_INCREMENT,
-  `parish_id` int unsigned DEFAULT NULL,
-  `user_id` int unsigned NOT NULL,
-  `profile_id` int unsigned DEFAULT NULL,
-  `first_name` varchar(100) COLLATE utf8mb4_general_ci DEFAULT NULL,
-  `last_name` varchar(100) COLLATE utf8mb4_general_ci DEFAULT NULL,
-  `nickname` varchar(100) COLLATE utf8mb4_general_ci DEFAULT NULL,
-  `profile_picture` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
-  `email` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
-  `phone` varchar(50) COLLATE utf8mb4_general_ci DEFAULT NULL,
-  `portal_access` varchar(20) COLLATE utf8mb4_general_ci NOT NULL DEFAULT 'none',
-  `membership_status` varchar(20) COLLATE utf8mb4_general_ci NOT NULL DEFAULT 'pending',
-  `is_member` tinyint(1) NOT NULL DEFAULT '0',
-  `is_good_standing` tinyint(1) NOT NULL DEFAULT '0',
-  `source` varchar(30) COLLATE utf8mb4_general_ci NOT NULL DEFAULT 'user_profile',
-  `synced_at` datetime DEFAULT NULL,
-  `created_at` datetime DEFAULT NULL,
-  `updated_at` datetime DEFAULT NULL,
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `uniq_parish_people_parish_user` (`parish_id`,`user_id`),
-  KEY `idx_parish_people_member_status` (`parish_id`,`is_member`,`membership_status`),
-  KEY `idx_parish_people_portal` (`parish_id`,`portal_access`)
-) ENGINE=InnoDB AUTO_INCREMENT=67 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 CREATE TABLE `parish_provider_credential` (
   `id` int unsigned NOT NULL AUTO_INCREMENT,

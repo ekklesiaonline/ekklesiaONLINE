@@ -361,14 +361,35 @@ abstract class BaseController extends Controller
     }
 
     /**
-     * Home parish is the stable parish identity stored in profile.
+     * Home parish is the user's primary active parish affiliation, falling
+     * back to the profile parish for accounts without an affiliation yet
+     * (e.g. registration pending review).
      */
     protected function getHomeparishId(): ?int
     {
         if ($this->parishId === null) {
-            $profile = $this->getProfile();
-            if ($profile) {
-                $this->parishId = (int) ($profile['parish_id'] ?? $profile['parish_id'] ?? 0);
+            $userId = (int) (auth()->id() ?? 0);
+            if ($userId > 0) {
+                try {
+                    $affiliation = db_connect()->table('parish_affiliation')
+                        ->select('parish_id')
+                        ->where('linked_user_id', $userId)
+                        ->where('deleted_at IS NULL', null, false)
+                        ->orderBy('is_primary', 'DESC')
+                        ->orderBy('updated_at', 'DESC')
+                        ->get()
+                        ->getRowArray();
+                    $this->parishId = (int) ($affiliation['parish_id'] ?? 0);
+                } catch (\Throwable $e) {
+                    $this->parishId = 0;
+                }
+            }
+
+            if (! $this->parishId) {
+                $profile = $this->getProfile();
+                if ($profile) {
+                    $this->parishId = (int) ($profile['parish_id'] ?? 0);
+                }
             }
         }
 
@@ -398,8 +419,18 @@ abstract class BaseController extends Controller
             // pick a default parish from their scoped diocese to keep parish-level
             // forms functional without a manual switch first.
             if ($this->isDioceseAdmin()) {
-                $profile = $this->getProfile();
-                $dioceseId = (int) ($profile['diocese_id'] ?? 0);
+                $dioceseId = 0;
+                try {
+                    $primaryRow = model('DioceseAdminPrimaryModel')->getByUser((int) auth()->id());
+                    $dioceseId  = (int) ($primaryRow['diocese_id'] ?? 0);
+                } catch (\Throwable $e) {
+                    $dioceseId = 0;
+                }
+
+                if ($dioceseId <= 0) {
+                    $profile   = $this->getProfile();
+                    $dioceseId = (int) ($profile['diocese_id'] ?? 0);
+                }
 
                 if ($dioceseId <= 0 && $homeparishId !== null) {
                     $row = db_connect()->table('parish')
@@ -501,14 +532,40 @@ abstract class BaseController extends Controller
      * Resolve the province ID that the current admin is scoped to.
      *
      * Resolution order:
-     *   1. profile.province_id  (set at registration / approval)
-     *   2. profile.diocese_id → dioceses.province_id
-     *   3. selected/assigned parish → dioceses.province_id
+     *   1. province_admin_primary.province_id (authoritative assignment)
+     *   2. diocese_admin_primary.diocese_id → dioceses.province_id
+     *   3. profile.province_id  (declared scope for non-primary admins)
+     *   4. profile.diocese_id → dioceses.province_id
+     *   5. selected/assigned parish → dioceses.province_id
      *
      * Returns 0 when no province can be determined.
      */
     protected function resolveAdminProvinceId(): int
     {
+        $userId = (int) (auth()->id() ?? 0);
+        if ($userId > 0) {
+            try {
+                $row = model('ProvinceAdminPrimaryModel')->getByUser($userId);
+                if (! empty($row['province_id'])) {
+                    return (int) $row['province_id'];
+                }
+
+                $row = model('DioceseAdminPrimaryModel')->getByUser($userId);
+                if (! empty($row['diocese_id'])) {
+                    $diocese = db_connect()->table('diocese')
+                        ->select('province_id')
+                        ->where('id', (int) $row['diocese_id'])
+                        ->get()
+                        ->getRowArray();
+                    if (! empty($diocese['province_id'])) {
+                        return (int) $diocese['province_id'];
+                    }
+                }
+            } catch (\Throwable $e) {
+                // Fall through to profile/parish fallbacks.
+            }
+        }
+
         $profile = $this->getProfile();
 
         if (!empty($profile['province_id'])) {
@@ -542,13 +599,27 @@ abstract class BaseController extends Controller
      * Resolve the diocese ID that the current diocesan admin is scoped to.
      *
      * Resolution order:
-     *   1. profile.diocese_id (set at registration / approval)
-     *   2. selected/assigned parish → parishes.diocese_id
+     *   1. diocese_admin_primary.diocese_id (authoritative assignment)
+     *   2. profile.diocese_id (declared scope for non-primary admins)
+     *   3. selected/assigned parish → parishes.diocese_id
+     *   4. primary parish affiliation → parishes.diocese_id
      *
      * Returns 0 when no diocese can be determined.
      */
     protected function resolveDiocesanScopeId(): int
     {
+        $userId = (int) (auth()->id() ?? 0);
+        if ($userId > 0) {
+            try {
+                $row = model('DioceseAdminPrimaryModel')->getByUser($userId);
+                if (! empty($row['diocese_id'])) {
+                    return (int) $row['diocese_id'];
+                }
+            } catch (\Throwable $e) {
+                // Fall through to profile/parish fallbacks.
+            }
+        }
+
         $profile = $this->getProfile();
 
         if (!empty($profile['diocese_id'])) {
@@ -1371,40 +1442,6 @@ abstract class BaseController extends Controller
             ->limit(1)
             ->get()
             ->getRow() !== null;
-    }
-
-    /**
-     * Sync parish_people snapshots for every parish a user is affiliated with.
-     */
-    protected function syncParishPeopleForUser(int $userId): void
-    {
-        if ($userId <= 0) {
-            return;
-        }
-
-        $db = db_connect();
-        if (! $db->tableExists('parish_affiliation')) {
-            return;
-        }
-
-        $parishIds = $db->table('parish_affiliation')
-            ->distinct()
-            ->select('parish_id')
-            ->where('linked_user_id', $userId)
-            ->get()
-            ->getResultArray();
-
-        if ($parishIds === []) {
-            return;
-        }
-
-        $service = new \App\Services\ParishPeopleRegistryService();
-        foreach ($parishIds as $row) {
-            $parishId = (int) ($row['parish_id'] ?? 0);
-            if ($parishId > 0) {
-                $service->syncParish($parishId);
-            }
-        }
     }
 
     /**

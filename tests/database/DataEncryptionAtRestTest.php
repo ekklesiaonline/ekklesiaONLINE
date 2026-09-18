@@ -1,7 +1,7 @@
 <?php
 
 use App\Libraries\DataEncryption;
-use App\Models\GuestModel;
+use App\Models\PersonModel;
 use App\Models\MemberParishAffiliationModel;
 use App\Models\ProfileModel;
 use CodeIgniter\Test\CIUnitTestCase;
@@ -52,31 +52,27 @@ final class DataEncryptionAtRestTest extends CIUnitTestCase
         $this->assertSame('(809) 555-7777', $readProfile['phone']);
         $this->assertSame('123 Prayer Street', $readProfile['address']);
 
-        $guestModel = model(GuestModel::class);
-        $guestId = (int) $guestModel->insert([
-            'parish_id' => $parishId,
+        $personModel = model(PersonModel::class);
+        $personId = (int) $personModel->insert([
             'first_name' => 'Guest',
             'last_name' => 'Cipher',
             'email' => 'guest.cipher@example.org',
             'phone' => '+1 (809) 555-1212',
-            'visit_date' => '2026-03-31',
-            'service_attended' => 'Sunday 10am',
-            'followed_up' => 0,
         ], true);
 
-        $this->assertGreaterThan(0, $guestId);
+        $this->assertGreaterThan(0, $personId);
 
-        $storedGuest = $this->db->table('guest')->where('id', $guestId)->get()->getRowArray();
-        $this->assertNotNull($storedGuest);
-        $this->assertStringStartsWith('enc:v1:', (string) ($storedGuest['email'] ?? ''));
-        $this->assertStringStartsWith('enc:v1:', (string) ($storedGuest['phone'] ?? ''));
-        $this->assertSame(DataEncryption::emailIndex('guest.cipher@example.org'), $storedGuest['email_hash']);
-        $this->assertSame(DataEncryption::phoneIndex('+1 (809) 555-1212'), $storedGuest['phone_hash']);
+        $storedPerson = $this->db->table('person')->where('id', $personId)->get()->getRowArray();
+        $this->assertNotNull($storedPerson);
+        $this->assertStringStartsWith('enc:v1:', (string) ($storedPerson['email'] ?? ''));
+        $this->assertStringStartsWith('enc:v1:', (string) ($storedPerson['phone'] ?? ''));
+        $this->assertSame(DataEncryption::emailIndex('guest.cipher@example.org'), $storedPerson['email_hash']);
+        $this->assertSame(DataEncryption::phoneIndex('+1 (809) 555-1212'), $storedPerson['phone_hash']);
 
-        $readGuest = $guestModel->find($guestId);
-        $this->assertIsArray($readGuest);
-        $this->assertSame('guest.cipher@example.org', $readGuest['email']);
-        $this->assertSame('+1 (809) 555-1212', $readGuest['phone']);
+        $readPerson = $personModel->find($personId);
+        $this->assertIsArray($readPerson);
+        $this->assertSame('guest.cipher@example.org', $readPerson['email']);
+        $this->assertSame('+1 (809) 555-1212', $readPerson['phone']);
     }
 
     public function testExactPhoneAndEmailSearchStillResolveThroughBlindIndexes(): void
@@ -102,35 +98,31 @@ final class DataEncryptionAtRestTest extends CIUnitTestCase
         $this->assertNotEmpty($memberResults);
         $this->assertContains($memberUserId, array_column($memberResults, 'user_id'));
 
-        $guestModel = model(GuestModel::class);
-        $guestModel->insert([
-            'parish_id' => $parishId,
+        $personModel = model(PersonModel::class);
+        $personModel->insert([
             'first_name' => 'Email',
             'last_name' => 'Lookup',
             'email' => 'Exact.Lookup@Example.org',
             'phone' => '809-555-3333',
-            'visit_date' => '2026-03-30',
-            'service_attended' => 'Sunday 10am',
-            'followed_up' => 0,
         ]);
 
         $search = 'exact.lookup@example.org';
-        $emailHash = $guestModel->emailSearchHash($search);
+        $emailHash = DataEncryption::emailIndex($search);
 
-        $guestRows = $this->db->table('guest g')
-            ->where('g.parish_id', $parishId)
+        $personRows = $this->db->table('person p')
             ->groupStart()
-            ->like('g.first_name', $search)
-            ->orLike('g.last_name', $search)
-            ->orWhere('g.email_hash', $emailHash)
+            ->like('p.first_name', $search)
+            ->orLike('p.last_name', $search)
+            ->orWhere('p.email_hash', $emailHash)
             ->groupEnd()
             ->get()
             ->getResultArray();
 
-        $guestRows = array_map(fn(array $row): array => $guestModel->decryptGuestRow($row), $guestRows);
+        $this->assertNotEmpty($personRows);
 
-        $this->assertNotEmpty($guestRows);
-        $this->assertSame('Exact.Lookup@Example.org', $guestRows[0]['email']);
+        $found = $personModel->findByEmailHash($emailHash);
+        $this->assertIsArray($found);
+        $this->assertSame('Exact.Lookup@Example.org', $found['email']);
     }
 
     private function configureEncryptionKeys(): void
@@ -224,7 +216,7 @@ final class DataEncryptionAtRestTest extends CIUnitTestCase
 
         $forge->dropTable('parish_affiliation', true);
         $forge->dropTable('profile', true);
-        $forge->dropTable('guest', true);
+        $forge->dropTable('person', true);
         $forge->dropTable('auth_groups_users', true);
         $forge->dropTable('auth_identities', true);
         $forge->dropTable('users', true);
@@ -307,27 +299,19 @@ final class DataEncryptionAtRestTest extends CIUnitTestCase
 
         $forge->addField([
             'id' => ['type' => 'INTEGER', 'auto_increment' => true],
-            'parish_id' => ['type' => 'INTEGER', 'null' => false],
-            'parish_id' => ['type' => 'INTEGER', 'null' => true],
             'first_name' => ['type' => 'VARCHAR', 'constraint' => 100],
             'last_name' => ['type' => 'VARCHAR', 'constraint' => 100],
             'email' => ['type' => 'TEXT', 'null' => true],
             'email_hash' => ['type' => 'CHAR', 'constraint' => 64, 'null' => true],
             'phone' => ['type' => 'TEXT', 'null' => true],
             'phone_hash' => ['type' => 'CHAR', 'constraint' => 64, 'null' => true],
-            'visit_date' => ['type' => 'DATE', 'null' => false],
-            'service_attended' => ['type' => 'VARCHAR', 'constraint' => 255, 'null' => true],
-            'followed_up' => ['type' => 'INTEGER', 'constraint' => 1, 'default' => 0],
-            'converted_to_member_at' => ['type' => 'DATETIME', 'null' => true],
-            'converted_user_id' => ['type' => 'INTEGER', 'null' => true],
-            'converted_by_user_id' => ['type' => 'INTEGER', 'null' => true],
-            'notes' => ['type' => 'TEXT', 'null' => true],
+            'is_active' => ['type' => 'INTEGER', 'constraint' => 1, 'default' => 1],
             'created_at' => ['type' => 'DATETIME', 'null' => true],
             'updated_at' => ['type' => 'DATETIME', 'null' => true],
             'deleted_at' => ['type' => 'DATETIME', 'null' => true],
         ]);
         $forge->addKey('id', true);
-        $forge->createTable('guest', true);
+        $forge->createTable('person', true);
 
         $forge->addField([
             'id' => ['type' => 'INTEGER', 'auto_increment' => true],

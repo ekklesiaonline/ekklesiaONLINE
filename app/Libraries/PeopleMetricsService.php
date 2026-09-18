@@ -2,7 +2,6 @@
 
 namespace App\Libraries;
 
-use App\Models\GuestModel;
 use App\Models\LeadershipPositionModel;
 use App\Models\MemberParishAffiliationModel;
 
@@ -12,7 +11,7 @@ class PeopleMetricsService
     {
         $year ??= (int) date('Y');
 
-        $guestModel = model(GuestModel::class);
+        $guestDirectory = new \App\Services\GuestDirectoryService();
         $affiliationModel = model(MemberParishAffiliationModel::class);
         $leadershipModel = model(LeadershipPositionModel::class);
         $hasIsMember = $this->hasAffiliationMemberTag();
@@ -37,10 +36,7 @@ class PeopleMetricsService
         $goodStandingRow = $goodStandingBuilder->get()->getRowArray();
 
         $totalUsers = $affiliationModel->countDistinctAffiliatedPeople($parishId);
-        $legacyGuestCount = $guestModel->getParishGuestCount($parishId, true);
-        $personVisitorCount = $this->countPersonVisitors($parishId);
-
-        $totalGuests = $legacyGuestCount + $personVisitorCount;
+        $totalGuests = $guestDirectory->countForParish($parishId, true);
         $totalPeople = $affiliationModel->countDistinctPeople($parishId);
 
         return [
@@ -69,20 +65,5 @@ class PeopleMetricsService
         }
 
         return in_array('is_member', array_map('strtolower', $columns), true);
-    }
-    private function countPersonVisitors(int $parishId): int
-    {
-        try {
-            return (int) db_connect()->table('parish_affiliation mca')
-                ->select('COUNT(DISTINCT mca.person_id) AS count', false)
-                ->join('person p', 'p.id = mca.person_id', 'inner')
-                ->where('mca.parish_id', $parishId)
-                ->where('mca.affiliation_type', 'guest')
-                ->where('mca.deleted_at', null)
-                ->get()
-                ->getRowArray()['count'] ?? 0;
-        } catch (\Throwable $e) {
-            return 0;
-        }
     }
 }

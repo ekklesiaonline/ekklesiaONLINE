@@ -69,20 +69,6 @@ final class TransactionWrappingTest extends CIUnitTestCase
     }
 
     /**
-     * ParishPeopleRegistryService::syncParish must wrap its snapshot
-     * delete + re-insert in a transaction.
-     */
-    public function testParishPeopleRegistryServiceWrapsSyncParishInTransaction(): void
-    {
-        $reflection = new ReflectionMethod(\App\Services\ParishPeopleRegistryService::class, 'syncParish');
-        $source = $this->getMethodSource($reflection);
-
-        $this->assertStringContainsString('transBegin', $source, 'ParishPeopleRegistryService::syncParish must call transBegin().');
-        $this->assertStringContainsString('transCommit', $source, 'ParishPeopleRegistryService::syncParish must call transCommit().');
-        $this->assertStringContainsString('transRollback', $source, 'ParishPeopleRegistryService::syncParish must call transRollback().');
-    }
-
-    /**
      * PersonCleanupService::cleanupForUser must wrap its multi-table deletes
      * (user_person + orphaned person rows) in a transaction.
      */

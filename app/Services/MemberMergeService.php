@@ -22,9 +22,9 @@ use CodeIgniter\Database\BaseConnection;
  *    attendance, annual_pledge, donations, event_registration,
  *    family_members, team_member, volunteer_schedule, leadership_position,
  *    parish_affiliation, member_discipline, member_standing_summary,
- *    call_tasks (via guest_id), parish_role_audit_logs (target_user_id),
+ *    call_tasks (via person_id), parish_role_audit_logs (target_user_id),
  *    families.head_of_household_id, volunteer_teams.leader_id,
- *    expenses.approved_by, guests.converted_user_id / converted_by_user_id,
+ *    expenses.approved_by, parish_affiliation.converted_by_user_id,
  *    parish_budget.created_by / updated_by, audit_logs.user_id,
  *    user_registration_request.reviewed_by,
  *    leadership_position.appointed_by_user_id,
@@ -34,7 +34,7 @@ use CodeIgniter\Database\BaseConnection;
  *    auth_identities, auth_groups_users, auth_permissions_users,
  *    auth_remember_tokens, user_sessions, system_admin_primary,
  *    user_registration_request (where user_id = target),
- *    parish_people, profile, users
+ *    profile, users
  *
  * NOTE: users.active is never set to 0 as part of portal revocation or deletion
  *       because syncParish() filters on u.active = 1.
@@ -482,8 +482,7 @@ class MemberMergeService
         // Use table/column tuples (not associative array) to prevent duplicate-key overwrites.
         $nullableRefUpdates = [
             ['expense', 'approved_by'],
-            ['guest', 'converted_user_id'],
-            ['guest', 'converted_by_user_id'],
+            ['parish_affiliation', 'converted_by_user_id'],
             ['parish_budget', 'created_by'],
             ['parish_budget', 'updated_by'],
             ['audit_log', 'user_id'],
@@ -513,8 +512,7 @@ class MemberMergeService
             ['team', 'leader_id'],
             ['expense', 'approved_by'],
             ['event_registration', 'user_id'],
-            ['guest', 'converted_user_id'],
-            ['guest', 'converted_by_user_id'],
+            ['parish_affiliation', 'converted_by_user_id'],
             ['parish_budget', 'created_by'],
             ['parish_budget', 'updated_by'],
             ['audit_log', 'user_id'],
@@ -552,7 +550,6 @@ class MemberMergeService
             'member_standing_summary',
             'system_admin_primary',
             'user_registration_requests',
-            'parish_people',
         ];
         foreach ($deleteTables as $table) {
             if ($this->tableExists($table) && $this->columnExists($table, 'user_id')) {

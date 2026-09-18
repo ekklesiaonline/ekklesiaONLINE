@@ -235,8 +235,7 @@ class Reports extends BaseController
                 'SUM(CASE WHEN gfl.status = \'sent\' THEN 1 ELSE 0 END) AS completed_actions',
             ])
             ->join('followup_action fa', 'fa.id = gfl.action_id')
-            ->join('guest g',            'g.person_id = gfl.person_id')
-            ->where('g.parish_id', $parishId)
+            ->where('gfl.parish_id', $parishId)
             ->where('gfl.scheduled_date >=', $startDate)
             ->where('gfl.scheduled_date <=', $endDate)
             ->where('fa.week_number IS NOT NULL', null, false)
@@ -253,28 +252,27 @@ class Reports extends BaseController
     private function queryRoiCohorts(int $parishId, string $startDate, string $endDate): array
     {
         $db = $this->db;
+        $directory = new \App\Services\GuestDirectoryService();
+        $visitDate = $directory->firstVisitDateSql();
 
-        $withFollowup = $db->table('guest g')
-            ->select([
-                'COUNT(DISTINCT g.id) AS total_guests',
-                'SUM(CASE WHEN g.converted_to_member_at IS NOT NULL THEN 1 ELSE 0 END) AS converted',
-            ])
-            ->where('g.parish_id', $parishId)
-            ->where('g.visit_date >=', $startDate)
-            ->where('g.visit_date <=', $endDate)
-            ->where("EXISTS (SELECT 1 FROM followup_log gfl WHERE gfl.person_id = g.person_id AND gfl.status = 'sent')", null, false)
+        $selects = [
+            'COUNT(DISTINCT pa.person_id) AS total_guests',
+            'SUM(CASE WHEN pa.converted_to_member_at IS NOT NULL THEN 1 ELSE 0 END) AS converted',
+        ];
+
+        $withFollowup = $directory->scopeBuilder($parishId)
+            ->select($selects)
+            ->where($visitDate . ' >= ' . $db->escape($startDate), null, false)
+            ->where($visitDate . ' <= ' . $db->escape($endDate), null, false)
+            ->where("EXISTS (SELECT 1 FROM followup_log gfl WHERE gfl.person_id = pa.person_id AND gfl.status = 'sent')", null, false)
             ->get()
             ->getRowArray() ?? ['total_guests' => 0, 'converted' => 0];
 
-        $withoutFollowup = $db->table('guest g')
-            ->select([
-                'COUNT(DISTINCT g.id) AS total_guests',
-                'SUM(CASE WHEN g.converted_to_member_at IS NOT NULL THEN 1 ELSE 0 END) AS converted',
-            ])
-            ->where('g.parish_id', $parishId)
-            ->where('g.visit_date >=', $startDate)
-            ->where('g.visit_date <=', $endDate)
-            ->where("NOT EXISTS (SELECT 1 FROM followup_log gfl WHERE gfl.person_id = g.person_id AND gfl.status = 'sent')", null, false)
+        $withoutFollowup = $directory->scopeBuilder($parishId)
+            ->select($selects)
+            ->where($visitDate . ' >= ' . $db->escape($startDate), null, false)
+            ->where($visitDate . ' <= ' . $db->escape($endDate), null, false)
+            ->where("NOT EXISTS (SELECT 1 FROM followup_log gfl WHERE gfl.person_id = pa.person_id AND gfl.status = 'sent')", null, false)
             ->get()
             ->getRowArray() ?? ['total_guests' => 0, 'converted' => 0];
 
@@ -286,19 +284,20 @@ class Reports extends BaseController
      */
     private function queryWeeklyGuestVolume(int $parishId, string $startDate, string $endDate): array
     {
-        return $this->db
-            ->table('guest g')
+        $directory = new \App\Services\GuestDirectoryService();
+        $visitDate = $directory->firstVisitDateSql();
+
+        return $directory->scopeBuilder($parishId)
             ->select([
-                'YEARWEEK(g.visit_date, 1) AS iso_week',
-                'MIN(g.visit_date) AS week_start',
-                'COUNT(g.id) AS new_guests',
-                'SUM(CASE WHEN g.converted_to_member_at IS NOT NULL THEN 1 ELSE 0 END) AS converted',
-                "SUM(CASE WHEN EXISTS (SELECT 1 FROM followup_log gfl WHERE gfl.person_id = g.person_id AND gfl.status = 'sent') THEN 1 ELSE 0 END) AS received_followup",
+                "YEARWEEK({$visitDate}, 1) AS iso_week",
+                "MIN({$visitDate}) AS week_start",
+                'COUNT(pa.person_id) AS new_guests',
+                'SUM(CASE WHEN pa.converted_to_member_at IS NOT NULL THEN 1 ELSE 0 END) AS converted',
+                "SUM(CASE WHEN EXISTS (SELECT 1 FROM followup_log gfl WHERE gfl.person_id = pa.person_id AND gfl.status = 'sent') THEN 1 ELSE 0 END) AS received_followup",
             ])
-            ->where('g.parish_id', $parishId)
-            ->where('g.visit_date >=', $startDate)
-            ->where('g.visit_date <=', $endDate)
-            ->groupBy('YEARWEEK(g.visit_date, 1)')
+            ->where($visitDate . ' >= ' . $this->db->escape($startDate), null, false)
+            ->where($visitDate . ' <= ' . $this->db->escape($endDate), null, false)
+            ->groupBy("YEARWEEK({$visitDate}, 1)", false)
             ->orderBy('iso_week', 'ASC')
             ->get()
             ->getResultArray();
@@ -358,28 +357,20 @@ class Reports extends BaseController
             lang('Guests.rptConvertedDate'),
         ];
 
-        $guestRows = $this->db
-            ->table('guest g')
-            ->select([
-                'g.id',
-                'g.first_name',
-                'g.last_name',
-                'g.email',
-                'g.phone',
-                'g.visit_date',
-                'g.source',
-                'g.interests',
-                'g.followed_up',
-                'g.converted_to_member_at',
-                'COUNT(gfl.id) AS log_total',
-                "SUM(CASE WHEN gfl.status = 'sent' THEN 1 ELSE 0 END) AS log_sent",
-            ])
-            ->join('followup_log gfl', 'gfl.person_id = g.person_id', 'left')
-            ->where('g.parish_id', $parishId)
-            ->where('g.visit_date >=', $startDate)
-            ->where('g.visit_date <=', $endDate)
-            ->groupBy('g.id')
-            ->orderBy('g.visit_date', 'DESC')
+        $directory = new \App\Services\GuestDirectoryService();
+        $visitDate = $directory->firstVisitDateSql();
+
+        $guestRows = $directory->scopeBuilder($parishId)
+            ->select('pe.id AS id, pe.first_name, pe.last_name, pe.email, pe.phone, pe.source, pe.interests,'
+                . ' pa.followed_up, pa.converted_to_member_at,'
+                . ' COUNT(gfl.id) AS log_total,'
+                . " SUM(CASE WHEN gfl.status = 'sent' THEN 1 ELSE 0 END) AS log_sent")
+            ->select($visitDate . ' AS visit_date', false)
+            ->join('followup_log gfl', 'gfl.person_id = pa.person_id', 'left')
+            ->where($visitDate . ' >= ' . $this->db->escape($startDate), null, false)
+            ->where($visitDate . ' <= ' . $this->db->escape($endDate), null, false)
+            ->groupBy('pe.id', false)
+            ->orderBy($visitDate, 'DESC', false)
             ->get()
             ->getResultArray();
 

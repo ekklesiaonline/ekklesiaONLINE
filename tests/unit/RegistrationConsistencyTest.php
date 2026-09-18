@@ -5,9 +5,9 @@ use CodeIgniter\Test\CIUnitTestCase;
 /**
  * Regression guards for H6 (registration consistency) and H7 (direct-grant review).
  *
- * H6: RegistrationApprovalService must refresh the parish_people snapshot
- * after approve, ban, and delete actions so the directory stays consistent
- * immediately, not just after the next cron run.
+ * H6 (superseded by T4): RegistrationApprovalService used to refresh the
+ * parish_people snapshot after approve/ban/delete. The snapshot is retired —
+ * directory reads are canonical — so the service must no longer depend on it.
  *
  * H7: Direct permission grants (auth_permissions_users) are used only for
  * primary-admin markers and delegation permissions — not for granting
@@ -18,61 +18,22 @@ use CodeIgniter\Test\CIUnitTestCase;
 final class RegistrationConsistencyTest extends CIUnitTestCase
 {
     /**
-     * H6: performApprove must call syncParish after approving a registration.
+     * T4: RegistrationApprovalService must not depend on the retired
+     * parish_people snapshot — directory reads are canonical.
      */
-    public function testApproveTriggersSnapshotSync(): void
+    public function testApprovalServiceDoesNotUseRetiredSnapshot(): void
     {
-        $reflection = new ReflectionMethod(
-            \App\Services\RegistrationApprovalService::class,
-            'performApprove'
-        );
-        $source = $this->getMethodSource($reflection);
+        $source = file_get_contents(APPPATH . 'Services/RegistrationApprovalService.php');
 
-        $this->assertStringContainsString(
+        $this->assertStringNotContainsString(
             'ParishPeopleRegistryService',
             $source,
-            'performApprove must call ParishPeopleRegistryService::syncParish after approving.'
+            'RegistrationApprovalService must not reference the retired parish_people registry.'
         );
-        $this->assertStringContainsString(
+        $this->assertStringNotContainsString(
             'syncParish',
             $source,
-            'performApprove must call syncParish to refresh the parish_people snapshot.'
-        );
-    }
-
-    /**
-     * H6: delete must call syncParish after deleting a registration.
-     */
-    public function testDeleteTriggersSnapshotSync(): void
-    {
-        $reflection = new ReflectionMethod(
-            \App\Services\RegistrationApprovalService::class,
-            'delete'
-        );
-        $source = $this->getMethodSource($reflection);
-
-        $this->assertStringContainsString(
-            'syncParish',
-            $source,
-            'delete must call syncParish to remove the deleted user from the snapshot.'
-        );
-    }
-
-    /**
-     * H6: markReviewed (ban) must call syncParish when deactivating a user.
-     */
-    public function testBanTriggersSnapshotSync(): void
-    {
-        $reflection = new ReflectionMethod(
-            \App\Services\RegistrationApprovalService::class,
-            'markReviewed'
-        );
-        $source = $this->getMethodSource($reflection);
-
-        $this->assertStringContainsString(
-            'syncParish',
-            $source,
-            'markReviewed must call syncParish when banning (deactivating) a user.'
+            'RegistrationApprovalService must not call the retired syncParish.'
         );
     }
 

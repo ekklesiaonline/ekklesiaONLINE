@@ -368,19 +368,6 @@ class Dashboard extends BaseController
     protected function getMembershipOverview(int $dioceseId, ?int $parishId = null): array
     {
         $db = db_connect();
-        $peopleTable = $this->resolveExistingSnapshotTable($db);
-
-        if ($peopleTable === null) {
-            return [
-                'total_parishes'        => 0,
-                'total_people'          => 0,
-                'total_members'         => 0,
-                'active_members'        => 0,
-                'good_standing_members' => 0,
-                'leadership_members'    => 0,
-                'guest_count'           => 0,
-            ];
-        }
 
         // Parish count
         $parishQuery = $db->table('parish')->where('diocese_id', $dioceseId);
@@ -389,34 +376,36 @@ class Dashboard extends BaseController
         }
         $totalParishes = (int) $parishQuery->countAllResults();
 
-        // Snapshot metrics
-        $peopleQuery = $db->table($peopleTable . ' pp')
+        // Canonical affiliation metrics (parish_people snapshot retired).
+        $peopleQuery = $db->table('parish_affiliation pa')
             ->select("
-                COUNT(DISTINCT pp.user_id) AS total_people,
-                COUNT(DISTINCT CASE WHEN pp.is_member = 1 THEN pp.user_id END) AS total_members,
-                COUNT(DISTINCT CASE WHEN pp.is_member = 1 AND pp.membership_status = 'member' THEN pp.user_id END) AS active_members,
-                COUNT(DISTINCT CASE WHEN pp.is_member = 1 AND pp.is_good_standing = 1 THEN pp.user_id END) AS good_standing_members,
-                COUNT(DISTINCT CASE WHEN pp.is_leader = 1 THEN pp.user_id END) AS leadership_members
+                COUNT(DISTINCT pa.person_id) AS total_people,
+                COUNT(DISTINCT CASE WHEN pa.is_member = 1 THEN pa.person_id END) AS total_members,
+                COUNT(DISTINCT CASE WHEN pa.is_member = 1 AND pa.membership_status = 'member' THEN pa.person_id END) AS active_members,
+                COUNT(DISTINCT CASE WHEN pa.is_member = 1 AND pa.is_good_standing = 1 THEN pa.person_id END) AS good_standing_members,
+                COUNT(DISTINCT CASE WHEN pa.affiliation_type = 'guest' THEN pa.person_id END) AS guest_count
             ", false)
-            ->join('parish c', 'c.id = pp.parish_id')
-            ->where('pp.deleted_at', null)
+            ->join('parish c', 'c.id = pa.parish_id')
+            ->where('pa.deleted_at IS NULL', null, false)
             ->where('c.diocese_id', $dioceseId);
 
         if ($parishId !== null) {
-            $peopleQuery->where('pp.parish_id', $parishId);
+            $peopleQuery->where('pa.parish_id', $parishId);
         }
 
         $row = $peopleQuery->get()->getRowArray() ?? [];
 
-        // Guest count
-        $guestQuery = $db->table('guest g')
-            ->select('COUNT(DISTINCT g.id) AS guest_count', false)
-            ->join('parish c', 'c.id = g.parish_id')
+        // Active parish-scoped leadership positions.
+        $leaderQuery = $db->table('leadership_position lp')
+            ->select('COUNT(DISTINCT COALESCE(lp.person_id, lp.user_id)) AS leadership_members', false)
+            ->join('parish c', 'c.id = lp.parish_id')
+            ->where('lp.active', 1)
+            ->where('lp.scope_type', 'parish')
             ->where('c.diocese_id', $dioceseId);
         if ($parishId !== null) {
-            $guestQuery->where('g.parish_id', $parishId);
+            $leaderQuery->where('lp.parish_id', $parishId);
         }
-        $guestRow = $guestQuery->get()->getRowArray() ?? [];
+        $leaderRow = $leaderQuery->get()->getRowArray() ?? [];
 
         return [
             'total_parishes'        => $totalParishes,
@@ -424,8 +413,8 @@ class Dashboard extends BaseController
             'total_members'         => (int) ($row['total_members'] ?? 0),
             'active_members'        => (int) ($row['active_members'] ?? 0),
             'good_standing_members' => (int) ($row['good_standing_members'] ?? 0),
-            'leadership_members'    => (int) ($row['leadership_members'] ?? 0),
-            'guest_count'           => (int) ($guestRow['guest_count'] ?? 0),
+            'leadership_members'    => (int) ($leaderRow['leadership_members'] ?? 0),
+            'guest_count'           => (int) ($row['guest_count'] ?? 0),
         ];
     }
 
@@ -433,18 +422,28 @@ class Dashboard extends BaseController
     {
         $db = db_connect();
         [$start, $end] = $this->normalizeDateRange($period, $startDate, $endDate);
-        $peopleTable = $this->resolveExistingSnapshotTable($db);
+
+        // Member counts per parish from the canonical affiliation table;
+        // merged in PHP so the affiliation join cannot multiply the
+        // service/metric aggregates.
+        $memberCounts = [];
+        foreach ($db->table('parish_affiliation')
+            ->select("
+                parish_id,
+                COUNT(DISTINCT CASE WHEN is_member = 1 THEN person_id END) AS total_members,
+                COUNT(DISTINCT CASE WHEN is_member = 1 AND membership_status = 'member' THEN person_id END) AS active_members
+            ", false)
+            ->where('deleted_at IS NULL', null, false)
+            ->groupBy('parish_id')
+            ->get()
+            ->getResultArray() as $mc) {
+            $memberCounts[(int) $mc['parish_id']] = $mc;
+        }
 
         $query = $db->table('parish c')
             ->select("
                 c.id AS parish_id,
                 c.name AS parish_name,
-                " . ($peopleTable !== null
-                    ? "COUNT(DISTINCT CASE WHEN pp.is_member = 1 THEN pp.user_id END)"
-                    : "0") . " AS total_members,
-                " . ($peopleTable !== null
-                    ? "COUNT(DISTINCT CASE WHEN pp.is_member = 1 AND pp.membership_status = 'member' THEN pp.user_id END)"
-                    : "0") . " AS active_members,
                 COUNT(DISTINCT s.id) AS total_services,
                 COALESCE(SUM(sm.reported_present_count), 0) AS total_attendance,
                 COALESCE(SUM(CASE WHEN DAYOFWEEK(s.service_date) = 1 THEN sm.reported_present_count ELSE 0 END), 0) AS sunday_attendance,
@@ -458,10 +457,6 @@ class Dashboard extends BaseController
             ->groupBy('c.id, c.name')
             ->orderBy('c.name', 'ASC');
 
-        if ($peopleTable !== null) {
-            $query->join($peopleTable . ' pp', 'pp.parish_id = c.id AND pp.deleted_at IS NULL', 'left');
-        }
-
         if ($parishId !== null) {
             $query->where('c.id', $parishId);
         }
@@ -469,6 +464,9 @@ class Dashboard extends BaseController
         $rows = $query->get()->getResultArray();
 
         foreach ($rows as &$row) {
+            $mc = $memberCounts[(int) ($row['parish_id'] ?? 0)] ?? [];
+            $row['total_members']  = (int) ($mc['total_members'] ?? 0);
+            $row['active_members'] = (int) ($mc['active_members'] ?? 0);
             $sundayServices = (int) ($row['sunday_services'] ?? 0);
             $weekdayServices = (int) ($row['weekday_services'] ?? 0);
             $row['asa'] = $sundayServices > 0 ? round((float) $row['sunday_attendance'] / $sundayServices, 2) : 0.0;
@@ -951,29 +949,6 @@ class Dashboard extends BaseController
             $candidates[] = $prefix . 'profile';
         }
         $candidates[] = 'profile';
-
-        foreach ($candidates as $table) {
-            try {
-                $db->getFieldNames($table);
-                return $table;
-            } catch (\Throwable $e) {
-                // Try next candidate.
-            }
-        }
-
-        return null;
-    }
-
-    private function resolveExistingSnapshotTable($db): ?string
-    {
-        $prefix     = (string) $db->getPrefix();
-        $candidates = [];
-        if ($prefix !== '') {
-            $candidates[] = $prefix . 'parish_people';
-            $candidates[] = $prefix . 'parish_people';
-        }
-        $candidates[] = 'parish_people';
-        $candidates[] = 'parish_people';
 
         foreach ($candidates as $table) {
             try {

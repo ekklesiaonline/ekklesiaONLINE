@@ -77,7 +77,7 @@ final class PersonMergeServiceTest extends CIUnitTestCase
             'updated_at'        => date('Y-m-d H:i:s'),
         ]);
 
-        $result = $this->service->merge($sourcePersonId, $targetPersonId, $parishId, 1, [], false);
+        $result = $this->service->merge($sourcePersonId, $targetPersonId, $parishId, 1, []);
 
         $this->assertTrue($result['ok'], $result['message'] ?? 'merge failed');
 
@@ -142,7 +142,6 @@ final class PersonMergeServiceTest extends CIUnitTestCase
     {
         $forge = \Config\Database::forge();
 
-        $forge->dropTable('parish_people', true);
         $forge->dropTable('profile', true);
         $forge->dropTable('auth_groups_users', true);
         $forge->dropTable('auth_identities', true);
@@ -283,36 +282,6 @@ final class PersonMergeServiceTest extends CIUnitTestCase
         $forge->addKey('id', true);
         $forge->createTable('auth_groups_users', true);
 
-        $forge->addField([
-            'id'                  => ['type' => 'INTEGER', 'auto_increment' => true],
-            'parish_id'           => ['type' => 'INTEGER'],
-            'user_id'             => ['type' => 'INTEGER'],
-            'profile_id'          => ['type' => 'INTEGER', 'null' => true],
-            'person_id'           => ['type' => 'INTEGER', 'null' => true],
-            'first_name'          => ['type' => 'VARCHAR', 'constraint' => 255, 'null' => true],
-            'last_name'           => ['type' => 'VARCHAR', 'constraint' => 255, 'null' => true],
-            'email'               => ['type' => 'VARCHAR', 'constraint' => 255, 'null' => true],
-            'phone'               => ['type' => 'VARCHAR', 'constraint' => 255, 'null' => true],
-            'membership_status'   => ['type' => 'VARCHAR', 'constraint' => 32, 'default' => 'visitor'],
-            'is_member'           => ['type' => 'INTEGER', 'default' => 0],
-            'portal_access'       => ['type' => 'VARCHAR', 'constraint' => 32, 'default' => 'none'],
-            'is_baptized'         => ['type' => 'INTEGER', 'default' => 0],
-            'is_confirmed'        => ['type' => 'INTEGER', 'default' => 0],
-            'is_communicant'      => ['type' => 'INTEGER', 'default' => 0],
-            'is_dependent'        => ['type' => 'INTEGER', 'default' => 0],
-            'is_under_16'         => ['type' => 'INTEGER', 'default' => 0],
-            'has_pledge'          => ['type' => 'INTEGER', 'default' => 0],
-            'is_good_standing'    => ['type' => 'INTEGER', 'default' => 0],
-            'is_leader'           => ['type' => 'INTEGER', 'default' => 0],
-            'leader_titles'       => ['type' => 'TEXT', 'null' => true],
-            'synced_at'           => ['type' => 'DATETIME', 'null' => true],
-            'source'              => ['type' => 'VARCHAR', 'constraint' => 64, 'default' => 'user_profile'],
-            'created_at'          => ['type' => 'DATETIME', 'null' => true],
-            'updated_at'          => ['type' => 'DATETIME', 'null' => true],
-            'deleted_at'          => ['type' => 'DATETIME', 'null' => true],
-        ]);
-        $forge->addKey('id', true);
-        $forge->createTable('parish_people', true);
     }
 
     private function insertParish(): int

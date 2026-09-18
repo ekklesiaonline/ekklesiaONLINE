@@ -32,6 +32,7 @@ class PersonModel extends Model
         'preferred_timezone',
         'opted_out_channels',
         'source',
+        'interests',
         'is_active',
     ];
 

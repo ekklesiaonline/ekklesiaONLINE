@@ -10,7 +10,6 @@ use App\Libraries\PhoneHelper;
 use App\Libraries\SchemaResolver;
 use App\Services\HierarchyService;
 use App\Services\MemberAffiliationService;
-use App\Services\ParishPeopleRegistryService;
 use App\Services\NonPortalMemberProvisioningService;
 use App\Services\MembershipStatusService;
 use App\Services\ProvinceStaffDirectoryService;
@@ -315,16 +314,15 @@ class Members extends BaseController
             // Guest conversion pre-fill: when a valid in-scope, not-yet-converted
             // guest is carried through the form, reuse its canonical person record
             // instead of provisioning a duplicate.
-            $guestRow = null;
             $guestPersonId = 0;
+            // The posted guest_id is the canonical person_id (T4.5).
             $postedGuestId = (int) $this->request->getPost('guest_id');
             if ($postedGuestId > 0) {
-                $candidate = model('GuestModel')->find($postedGuestId);
+                $candidate = (new \App\Services\GuestDirectoryService())
+                    ->findByPerson($postedGuestId, $assignedParishId);
                 if (is_array($candidate)
-                    && (int) ($candidate['parish_id'] ?? 0) === $assignedParishId
                     && empty($candidate['converted_to_member_at'])) {
-                    $guestRow = $candidate;
-                    $guestPersonId = (int) ($candidate['person_id'] ?? 0);
+                    $guestPersonId = $postedGuestId;
                 }
             }
 
@@ -397,12 +395,6 @@ class Members extends BaseController
             } elseif ($assignedParishId > 0 && !$this->getMemberParishAffiliationModel()->attachToParish($user->id, $assignedParishId, true, 'member', true, $personId > 0 ? $personId : null)) {
                 $db->transRollback();
                 return redirect()->back()->withInput()->with('error', lang('Members.affiliationFailed'));
-            } elseif ($guestRow !== null) {
-                \App\Services\PersonConversionService::recordManualConversion(
-                    $guestRow,
-                    (int) $user->id,
-                    (int) (auth()->id() ?? 0)
-                );
             }
 
             $db->transComplete();
@@ -422,10 +414,6 @@ class Members extends BaseController
                     'parish_id' => $assignedParishId > 0 ? $assignedParishId : null,
                 ],
             ]);
-
-            if ($assignedParishId > 0) {
-                (new ParishPeopleRegistryService())->syncParish($assignedParishId);
-            }
 
             return redirect()->to('/members')->with('success', lang('App.successCreated'));
         } catch (\Exception $e) {
@@ -449,7 +437,6 @@ class Members extends BaseController
 
         // Handle redirect result from shared method
         if (is_array($result)) {
-            (new ParishPeopleRegistryService())->syncParish($result['parishId']);
             return redirect()->to($result['redirectPath'])->with('success', lang('Members.nonPortalCreateSuccess'));
         }
 
@@ -533,8 +520,6 @@ class Members extends BaseController
                 'error' => ['code' => $result['code'], 'message' => $result['message']],
             ])->setStatusCode($httpStatus);
         }
-
-        (new ParishPeopleRegistryService())->syncParish($this->parishId);
 
         $this->audit()->log('member.revoke_portal_access', array_merge(
             ['profile_id' => $id, 'user_id' => $userId],
@@ -761,7 +746,7 @@ class Members extends BaseController
             ],
         ]);
 
-        $affectedParishIds = $this->deactivateActiveAffiliationsForUser((int) ($profile['user_id'] ?? 0));
+        $this->deactivateActiveAffiliationsForUser((int) ($profile['user_id'] ?? 0));
 
         if (!$this->getProfileModel()->delete($id)) {
             return $this->jsonResponse(['success' => false, 'message' => lang('Members.deleteError')], 500);
@@ -770,13 +755,6 @@ class Members extends BaseController
         // If the person no longer has any active profiles, mark the canonical
         // person record as inactive.
         $this->deactivatePersonsForUser((int) ($profile['user_id'] ?? 0));
-
-        if ($affectedParishIds !== []) {
-            $registryService = new ParishPeopleRegistryService();
-            foreach ($affectedParishIds as $affectedParishId) {
-                $registryService->syncParish($affectedParishId);
-            }
-        }
 
         // Note: User will be cascade deleted or you can handle separately
 
@@ -817,7 +795,7 @@ class Members extends BaseController
                 continue;
             }
 
-            $affectedParishIds = $this->deactivateActiveAffiliationsForUser((int) ($profile['user_id'] ?? 0));
+            $this->deactivateActiveAffiliationsForUser((int) ($profile['user_id'] ?? 0));
 
             $this->audit()->log('member.delete', [
                 'parish_id' => (int) ($this->getOperationalParishId() ?? 0),
@@ -840,12 +818,6 @@ class Members extends BaseController
             if ($this->getProfileModel()->delete($memberId)) {
                 $this->deactivatePersonsForUser((int) ($profile['user_id'] ?? 0));
 
-                if ($affectedParishIds !== []) {
-                    $registryService = new ParishPeopleRegistryService();
-                    foreach ($affectedParishIds as $affectedParishId) {
-                        $registryService->syncParish($affectedParishId);
-                    }
-                }
                 $deleted++;
             } else {
                 $skipped++;
@@ -965,8 +937,6 @@ class Members extends BaseController
             ],
         ]);
 
-        (new ParishPeopleRegistryService())->syncParish($parishId);
-
         return $this->jsonResponse(['success' => true, 'message' => lang('Clergy.parishAttachedSuccess')]);
     }
 
@@ -1029,8 +999,6 @@ class Members extends BaseController
             ],
         ]);
 
-        (new ParishPeopleRegistryService())->syncParish($parishId);
-
         return $this->jsonResponse(['success' => true, 'message' => lang('Clergy.parishDetachedSuccess')]);
     }
 
@@ -1092,8 +1060,6 @@ class Members extends BaseController
                 'parish_id' => $parishId,
             ],
         ]);
-
-        (new ParishPeopleRegistryService())->syncParish($parishId);
 
         return $this->jsonResponse(['success' => true, 'message' => lang('Clergy.homeParishUpdatedSuccess')]);
     }

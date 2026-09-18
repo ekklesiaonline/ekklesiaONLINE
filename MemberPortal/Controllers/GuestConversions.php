@@ -4,7 +4,7 @@ namespace MemberPortal\Controllers;
 
 use App\Controllers\BaseController;
 use App\Libraries\DataEncryption;
-use App\Services\GuestIntakeService;
+use App\Services\GuestDirectoryService;
 use App\Services\PersonConversionService;
 
 class GuestConversions extends BaseController
@@ -28,41 +28,43 @@ class GuestConversions extends BaseController
         }
 
         $db = db_connect();
-        $profileTable = $this->resolveExistingProfileTable($db);
-        if ($profileTable === null) {
-            return view('MemberPortal\\Views\\GuestConversions/index', array_merge($this->getCommonViewData(lang('Guests.conversionsTitle')), [
-                'guests' => [],
-                'members' => model('MemberParishAffiliationModel')->getParishMembers($parishId),
-                'search' => $search,
-                'page' => 1,
-                'per_page' => $perPage,
-                'total_rows' => 0,
-                'total_pages' => 1,
-            ]));
-        }
 
-        $builder = $db->table('guest g')
-            ->select('g.*, p.first_name as converted_first_name, p.last_name as converted_last_name, ai.secret as converted_email')
-            ->join($profileTable . ' p', 'p.user_id = g.converted_user_id', 'left')
-            ->join('users u', 'u.id = g.converted_user_id', 'left')
+        $visitDate = '(SELECT MIN(pvx.visit_date) FROM person_visit pvx'
+            . ' WHERE pvx.person_id = pa.person_id AND pvx.parish_id = pa.parish_id)';
+
+        $builder = $db->table('parish_affiliation pa')
+            ->select('pe.id AS id, pe.id AS person_id, pa.parish_id,'
+                . ' pe.first_name, pe.last_name, pe.email, pe.phone, pe.email_hash, pe.phone_hash,'
+                . ' pa.followed_up, pa.converted_to_member_at, pa.linked_user_id AS converted_user_id,'
+                . ' pa.converted_by_user_id, pa.membership_status, pa.created_at, pa.updated_at')
+            ->select($visitDate . ' AS visit_date', false)
+            ->join('person pe', 'pe.id = pa.person_id AND pe.deleted_at IS NULL', 'inner')
+            ->join('profile p', 'p.user_id = pa.linked_user_id', 'left')
+            ->join('users u', 'u.id = pa.linked_user_id', 'left')
             ->join('auth_identities ai', 'ai.user_id = u.id AND ai.type = "email_password"', 'left')
-            ->where('g.parish_id', $parishId)
-            ->orderBy('g.visit_date', 'DESC')
-            ->orderBy('g.id', 'DESC');
+            ->select('p.first_name as converted_first_name, p.last_name as converted_last_name, ai.secret as converted_email')
+            ->where('pa.parish_id', $parishId)
+            ->where('pa.deleted_at IS NULL', null, false)
+            ->groupStart()
+                ->where('pa.affiliation_type', 'guest')
+                ->orWhere('pa.converted_to_member_at IS NOT NULL', null, false)
+            ->groupEnd()
+            ->orderBy($visitDate, 'DESC', false)
+            ->orderBy('pe.id', 'DESC');
 
         if ($search !== '') {
             $emailHash = DataEncryption::emailIndex($search);
             $phoneHash = DataEncryption::phoneIndex($search);
 
             $builder->groupStart()
-                ->like('g.first_name', $search)
-                ->orLike('g.last_name', $search);
+                ->like('pe.first_name', $search)
+                ->orLike('pe.last_name', $search);
 
             if ($emailHash !== null) {
-                $builder->orWhere('g.email_hash', $emailHash);
+                $builder->orWhere('pe.email_hash', $emailHash);
             }
             if ($phoneHash !== null) {
-                $builder->orWhere('g.phone_hash', $phoneHash);
+                $builder->orWhere('pe.phone_hash', $phoneHash);
             }
 
             $builder->groupEnd();
@@ -80,8 +82,9 @@ class GuestConversions extends BaseController
             ->limit($perPage, $offset)
             ->get()
             ->getResultArray();
-        $guestModel = model('GuestModel');
-        $guests = array_map(fn(array $row): array => $guestModel->decryptGuestRow($row), $guests);
+
+        $guestDirectory = new GuestDirectoryService();
+        $guests = array_map(fn(array $row): array => $guestDirectory->decryptRow($row), $guests);
         $members = model('MemberParishAffiliationModel')->getParishMembers($parishId);
 
         return view('MemberPortal\Views\GuestConversions/index', array_merge($this->getCommonViewData(lang('Guests.conversionsTitle')), [
@@ -110,27 +113,15 @@ class GuestConversions extends BaseController
             return redirect()->back()->with('error', lang('App.noSelection'));
         }
 
-        $guestModel = model('GuestModel');
-        $affiliationModel = model('MemberParishAffiliationModel');
-
-        $guest = $guestModel->find((int) $guestId);
+        $guestDirectory = new GuestDirectoryService();
         $parishId = (int) ($this->getOperationalParishId() ?? 0);
 
-        if (!$guest || (int) ($guest['parish_id'] ?? 0) !== $parishId) {
+        // The guest id carried by this endpoint is the canonical person_id.
+        $personId = (int) $guestId;
+        $guest    = $guestDirectory->findByPerson($personId, $parishId);
+
+        if (! $guest) {
             return redirect()->to('/guest-conversions')->with('error', lang('App.errorNotFound'));
-        }
-
-        $guest = $guestModel->find((int) $guestId);
-        $personId = (int) ($guest['person_id'] ?? 0);
-
-        if ($personId <= 0) {
-            try {
-                $intake = GuestIntakeService::record($guest, $parishId);
-                $personId = $intake['person_id'];
-                $guestModel->update((int) $guestId, ['person_id' => $personId]);
-            } catch (\Throwable $e) {
-                return redirect()->back()->with('error', lang('App.errorFailed'));
-            }
         }
 
         $converted = PersonConversionService::convertToMember(
@@ -146,9 +137,6 @@ class GuestConversions extends BaseController
             return redirect()->back()->with('error', lang('App.errorFailed'));
         }
 
-        // Rebuild the parish snapshot so the converted guest appears in /people.
-        (new \App\Services\ParishPeopleRegistryService())->syncParish($parishId);
-
         return redirect()->to('/guest-conversions')->with('success', lang('Guests.conversionLinkSuccess'));
     }
 
@@ -162,41 +150,17 @@ class GuestConversions extends BaseController
             return $redirect;
         }
 
-        $guestModel = model('GuestModel');
-        $guest = $guestModel->find((int) $guestId);
+        $guestDirectory = new GuestDirectoryService();
         $parishId = (int) ($this->getOperationalParishId() ?? 0);
+        $personId = (int) $guestId;
 
-        if (!$guest || (int) ($guest['parish_id'] ?? 0) !== $parishId) {
+        $guest = $guestDirectory->findByPerson($personId, $parishId);
+        if (! $guest) {
             return redirect()->to('/guest-conversions')->with('error', lang('App.errorNotFound'));
         }
 
-        $guestModel->update((int) $guestId, [
-            'converted_to_member_at' => null,
-            'converted_user_id' => null,
-            'converted_by_user_id' => null,
-        ]);
+        $guestDirectory->revertConversion($personId, $parishId, (int) auth()->id());
 
         return redirect()->to('/guest-conversions')->with('success', lang('Guests.conversionRevertSuccess'));
-    }
-
-    private function resolveExistingProfileTable($db): ?string
-    {
-        $prefix = (string) $db->getPrefix();
-        $candidates = [];
-        if ($prefix !== '') {
-            $candidates[] = $prefix . 'profile';
-        }
-        $candidates[] = 'profile';
-
-        foreach ($candidates as $table) {
-            try {
-                $db->getFieldNames($table);
-                return $table;
-            } catch (\Throwable $e) {
-                // Try next candidate.
-            }
-        }
-
-        return null;
     }
 }

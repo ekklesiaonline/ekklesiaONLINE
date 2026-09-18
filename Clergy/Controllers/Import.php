@@ -3,7 +3,6 @@
 namespace Clergy\Controllers;
 
 use App\Controllers\BaseController;
-use App\Libraries\DataEncryption;
 
 /**
  * Import
@@ -25,12 +24,12 @@ use App\Libraries\DataEncryption;
  */
 class Import extends BaseController
 {
-    private \App\Models\GuestModel           $guestModel;
+    private \App\Services\GuestDirectoryService $guestDirectory;
     private \App\Models\FollowupLogModel $followupLogModel;
 
     public function __construct()
     {
-        $this->guestModel      = model('GuestModel');
+        $this->guestDirectory   = new \App\Services\GuestDirectoryService();
         $this->followupLogModel = model('FollowupLogModel');
     }
 
@@ -240,8 +239,8 @@ class Import extends BaseController
         $upsert = $this->upsertGuest($parishId, $data);
 
         if ($upsert['is_new']) {
-            $this->followupLogModel->scheduleActiveSequencesForGuest(
-                $upsert['guest_id'],
+            $this->followupLogModel->scheduleActiveSequencesForPerson(
+                $upsert['person_id'],
                 $parishId,
                 $data['visit_date']
             );
@@ -373,8 +372,8 @@ class Import extends BaseController
 
             if ($upsert['is_new']) {
                 $result['inserted']++;
-                $this->followupLogModel->scheduleActiveSequencesForGuest(
-                    $upsert['guest_id'],
+                $this->followupLogModel->scheduleActiveSequencesForPerson(
+                    $upsert['person_id'],
                     $parishId,
                     $visitDate
                 );
@@ -388,74 +387,30 @@ class Import extends BaseController
     }
 
     /**
-     * Insert a new guest or update existing one's visit_date.
+     * Insert a new guest or record a return visit for an existing one.
      *
-     * Dedup order:
-     *  1. email_hash match (most specific)
-     *  2. phone_hash match (fallback)
-     *  3. No match → insert new row
+     * Dedup happens inside GuestIntakeService: an existing person with a
+     * matching email/phone hash in the parish gets a new person_visit row;
+     * otherwise a full person + parish_affiliation + visit chain is
+     * provisioned.
      *
      * @param  int    $parishId
      * @param  array  $data  Plain-text fields (email/phone not yet encrypted)
-     * @return array{ guest_id: int, is_new: bool }
+     * @return array{ person_id: int, is_new: bool }
      */
     private function upsertGuest(int $parishId, array $data): array
     {
-        $email = $data['email'] !== '' ? $data['email'] : null;
-        $phone = $data['phone'] !== '' ? $data['phone'] : null;
-
-        $existing = null;
-
-        // 1. Try email dedup.
-        if ($email !== null) {
-            $hash = DataEncryption::emailIndex($email);
-            if ($hash !== null) {
-                $existing = $this->guestModel
-                    ->where('parish_id', $parishId)
-                    ->where('email_hash', $hash)
-                    ->first();
-            }
+        try {
+            $intake = $this->guestDirectory->intake($data, $parishId);
+        } catch (\Throwable $e) {
+            log_message('error', 'Guest intake failed during import: ' . $e->getMessage());
+            return ['person_id' => 0, 'is_new' => false];
         }
 
-        // 2. Try phone dedup.
-        if ($existing === null && $phone !== null) {
-            $hash = DataEncryption::phoneIndex($phone);
-            if ($hash !== null) {
-                $existing = $this->guestModel
-                    ->where('parish_id', $parishId)
-                    ->where('phone_hash', $hash)
-                    ->first();
-            }
-        }
-
-        if ($existing !== null) {
-            // Update visit_date only if the new date is more recent.
-            $existingDate = $existing['visit_date'] ?? '1970-01-01';
-            if ($data['visit_date'] > $existingDate) {
-                $this->guestModel->update((int) $existing['id'], [
-                    'visit_date' => $data['visit_date'],
-                ]);
-            }
-            return ['guest_id' => (int) $existing['id'], 'is_new' => false];
-        }
-
-        // New guest.
-        $payload = [
-            'parish_id'  => $parishId,
-            'first_name' => $data['first_name'],
-            'last_name'  => $data['last_name'],
-            'email'      => $email,
-            'phone'      => $phone,
-            'address'    => $data['address'] !== '' ? $data['address'] : null,
-            'interests'  => $data['interests'],
-            'visit_date' => $data['visit_date'],
-            'source'     => $data['source'] ?? 'import',
-            'followed_up' => 0,
+        return [
+            'person_id' => (int) $intake['person_id'],
+            'is_new'    => (bool) $intake['is_new'],
         ];
-
-        $guestId = $this->guestModel->insert($payload);
-
-        return ['guest_id' => (int) $guestId, 'is_new' => true];
     }
 
     /**

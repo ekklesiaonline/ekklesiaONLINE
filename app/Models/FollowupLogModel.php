@@ -14,9 +14,11 @@ class FollowupLogModel extends Model
     protected $protectFields    = true;
     protected $allowedFields    = [
         'person_id',
+        'parish_id',
         'action_id',
         'assigned_to',
         'scheduled_date',
+        'followup_date',
         'executed_at',
         'status',
         'notes',
@@ -31,7 +33,7 @@ class FollowupLogModel extends Model
 
     // Validation
     protected $validationRules = [
-        'guest_id'       => 'required|is_not_unique[guest.id]',
+        'person_id'      => 'required|is_not_unique[person.id]',
         'scheduled_date' => 'required|valid_date',
         'status'         => 'required|in_list[pending,sent,failed,skipped]',
         'action_id'      => 'permit_empty|is_not_unique[followup_action.id]',
@@ -177,7 +179,7 @@ class FollowupLogModel extends Model
         $dateColumn = $this->getLogDateColumn();
 
         return $this->db->table('followup_log gfl')
-            ->select('gfl.*, fa.channel, fa.is_automated, fa.template_id, p.first_name, p.last_name, p.email, p.phone, gfl.parish_id')
+            ->select('gfl.*, fa.channel, fa.is_automated, fa.template_id, p.first_name, p.last_name, p.email, p.phone, p.opted_out_channels, p.preferred_timezone, p.interests, gfl.parish_id')
             ->join('person p',          'p.id = gfl.person_id', 'left')
             ->join('followup_action fa', 'fa.id = gfl.action_id', 'left')
             ->where('gfl.status', 'pending')
@@ -203,7 +205,7 @@ class FollowupLogModel extends Model
         $dateColumn = $this->getLogDateColumn();
 
         return $this->db->table('followup_log gfl')
-            ->select('gfl.*, fa.channel, fa.is_automated, fa.template_id, p.first_name, p.last_name, p.email, p.phone')
+            ->select('gfl.*, fa.channel, fa.is_automated, fa.template_id, p.first_name, p.last_name, p.email, p.phone, p.opted_out_channels, p.preferred_timezone, p.interests')
             ->join('person p',           'p.id = gfl.person_id', 'left')
             ->join('followup_action fa', 'fa.id = gfl.action_id', 'left')
             ->where('gfl.parish_id', $parishId)
@@ -240,17 +242,6 @@ class FollowupLogModel extends Model
     // -----------------------------------------------------------------------
     // Status transitions
     // -----------------------------------------------------------------------
-
-    /**
-     * Count pending (not yet executed/skipped) followup log entries for a guest.
-     * Used by Guests::delete() to warn when in-progress sequences would be cancelled.
-     */
-    public function countPendingForGuest(int $guestId): int
-    {
-        return (int) $this->where('guest_id', $guestId)
-            ->where('status', 'pending')
-            ->countAllResults();
-    }
 
     /**
      * Count pending followup log entries for a person.
@@ -318,14 +309,6 @@ class FollowupLogModel extends Model
     // -----------------------------------------------------------------------
 
     /**
-     * Return the full follow-up history for a guest, newest scheduled first.
-     */
-    public function getTimelineForGuest(int $guestId): array
-    {
-        return $this->getTimelineForPerson($guestId);
-    }
-
-    /**
      * Return the full follow-up history for a person, newest scheduled first.
      */
     public function getTimelineForPerson(int $personId): array
@@ -347,9 +330,10 @@ class FollowupLogModel extends Model
     // -----------------------------------------------------------------------
 
     /**
-     * Create log entries for every action in a sequence for a given guest.
+     * Create log entries for every action in a sequence for a given person.
      *
-     * @param  int    $guestId
+     * @param  int    $personId
+     * @param  int    $parishId          Parish scope stored on each log row
      * @param  int    $sequenceId
      * @param  string $visitDate        Y-m-d  — base date for computing scheduled_date
      * @param  string $guestTimezone    IANA timezone string (e.g. "America/New_York").
@@ -357,12 +341,13 @@ class FollowupLogModel extends Model
      *                                  action fires at midnight in the guest's local zone.
      * @return int    Number of rows inserted
      */
-    public function scheduleSequenceForGuest(int $guestId, int $sequenceId, string $visitDate, string $guestTimezone = ''): int
+    public function scheduleSequenceForPerson(int $personId, int $parishId, int $sequenceId, string $visitDate, string $guestTimezone = ''): int
     {
         $actionTable = $this->resolveFollowupActionTable();
         $dateColumn = $this->getLogDateColumn();
         $hasActionIdColumn = $this->tableHasColumn('followup_log', 'action_id');
         $hasLegacyDateColumn = $this->tableHasColumn('followup_log', 'followup_date');
+        $hasParishColumn = $this->tableHasColumn('followup_log', 'parish_id');
 
         $query = $this->db->table($actionTable)
             ->where('sequence_id', $sequenceId)
@@ -405,12 +390,16 @@ class FollowupLogModel extends Model
             }
 
             $rows[] = [
-                'guest_id'       => $guestId,
+                'person_id'      => $personId,
                 $dateColumn      => $scheduled,
                 'status'         => 'pending',
                 'created_at'     => date('Y-m-d H:i:s'),
                 'updated_at'     => date('Y-m-d H:i:s'),
             ];
+
+            if ($hasParishColumn) {
+                $rows[count($rows) - 1]['parish_id'] = $parishId;
+            }
 
             if ($hasLegacyDateColumn && $dateColumn !== 'followup_date') {
                 $rows[count($rows) - 1]['followup_date'] = $scheduled;
@@ -432,153 +421,6 @@ class FollowupLogModel extends Model
     // -----------------------------------------------------------------------
     // First-visit auto-scheduling
     // -----------------------------------------------------------------------
-
-    /**
-     * Schedule every action from every active sequence available to a parish
-     * for a given guest, using the visit date as the base date.
-     *
-     * - Only runs for visit_type = 'first' (caller's responsibility to gate).
-     * - Skips any action already present in guest_followup_log for this guest
-     *   (dedup by guest_id + action_id), preventing double-scheduling if the
-     *   method is called more than once.
-     * - Also de-dupes within the current batch when the same action appears in
-     *   multiple sequences.
-     *
-     * @param  int    $guestId        Guest whose log to populate
-     * @param  int    $parishId       Parish used to scope active sequences
-     * @param  string $visitDate      Y-m-d  — base date for computing scheduled_date
-     * @param  string $guestTimezone  IANA timezone string (optional). When provided,
-     *                                scheduled_date is adjusted to midnight in the
-     *                                guest's local zone and stored as UTC.
-     * @return int                    Number of new log rows inserted (0 when all deduped)
-     */
-    public function scheduleActiveSequencesForGuest(int $guestId, int $parishId, string $visitDate, string $guestTimezone = ''): int
-    {
-        $scopeColumn = $this->getSequenceScopeColumn();
-        $sequenceTable = $this->resolveFollowupSequenceTable();
-        $actionTable = $this->resolveFollowupActionTable();
-        $activeColumn = $this->resolveSequenceActiveColumn($sequenceTable);
-        $dateColumn = $this->getLogDateColumn();
-        $hasActionIdColumn = $this->tableHasColumn('followup_log', 'action_id');
-        $hasLegacyDateColumn = $this->tableHasColumn('followup_log', 'followup_date');
-        $hasParishColumn = $this->tableHasColumn('followup_log', 'parish_id');
-
-        // 1. Fetch all active sequences scoped to this parish (+ global ones)
-        $sequencesQuery = $this->db->table($sequenceTable)
-            ->groupStart()
-            ->where($scopeColumn, $parishId)
-            ->orWhere($scopeColumn . ' IS NULL', null, false)
-            ->groupEnd()
-            ->where($activeColumn, 1)
-            ->get();
-
-        if ($sequencesQuery === false) {
-            return 0;
-        }
-
-        $sequences = $sequencesQuery->getResultArray();
-
-        if (empty($sequences)) {
-            return 0;
-        }
-
-        // 2. Load already-scheduled action IDs for this guest (dedup guard)
-        $existingRows = [];
-        if ($hasActionIdColumn) {
-            $existingQuery = $this->db->table('followup_log')
-                ->select('action_id')
-                ->where('guest_id', $guestId)
-                ->where('action_id !=', null)
-                ->get();
-
-            if ($existingQuery !== false) {
-                $existingRows = $existingQuery->getResultArray();
-            }
-        }
-
-        // Build a set of already-scheduled action IDs (int keys for fast lookup)
-        $scheduledActionIds = array_flip(array_map('intval', array_column($existingRows, 'action_id')));
-
-        // Resolve timezone object once for reuse across all actions.
-        $tz = null;
-        if ($guestTimezone !== '') {
-            try {
-                $tz = new \DateTimeZone($guestTimezone);
-            } catch (\Exception $e) {
-                $tz = null;
-            }
-        }
-
-        $baseDate = strtotime($visitDate);
-        $now      = date('Y-m-d H:i:s');
-        $toInsert = [];
-
-        // 3. Collect rows to insert, skipping any already scheduled
-        foreach ($sequences as $sequence) {
-            $actionQuery = $this->db->table($actionTable)
-                ->where('sequence_id', (int) $sequence['id'])
-                ->orderBy('day_offset', 'ASC')
-                ->get();
-
-            if ($actionQuery === false) {
-                continue;
-            }
-
-            $actions = $actionQuery->getResultArray();
-
-            foreach ($actions as $action) {
-                $actionId = (int) $action['id'];
-
-                // Skip if already in DB or already added to the current batch
-                if (isset($scheduledActionIds[$actionId])) {
-                    continue;
-                }
-
-                if ($tz !== null) {
-                    $localDate = new \DateTime($visitDate . ' 00:00:00', $tz);
-                    $localDate->modify('+' . (int) $action['day_offset'] . ' days');
-                    $localDate->setTimezone(new \DateTimeZone('UTC'));
-                    $scheduled = $localDate->format('Y-m-d');
-                } else {
-                    $scheduled = date('Y-m-d', strtotime('+' . (int) $action['day_offset'] . ' days', $baseDate));
-                }
-
-                $toInsert[] = [
-                    'guest_id'       => $guestId,
-                    $dateColumn      => $scheduled,
-                    'status'         => 'pending',
-                    'created_at'     => $now,
-                    'updated_at'     => $now,
-                ];
-
-                if ($hasParishColumn) {
-                    $toInsert[count($toInsert) - 1]['parish_id'] = $parishId;
-                }
-
-                if ($hasLegacyDateColumn && $dateColumn !== 'followup_date') {
-                    $toInsert[count($toInsert) - 1]['followup_date'] = $scheduled;
-                }
-
-                if ($hasActionIdColumn) {
-                    $toInsert[count($toInsert) - 1]['action_id'] = $actionId;
-                }
-
-                // Track within batch to prevent same action from two sequences
-                $scheduledActionIds[$actionId] = true;
-            }
-        }
-
-        if (empty($toInsert)) {
-            return 0;
-        }
-
-        $inserted = $this->db->table('followup_log')->insertBatch($toInsert);
-        if ($inserted === false) {
-            return 0;
-        }
-
-        return count($toInsert);
-    }
 
     /**
      * Schedule active follow-up sequences for a person visit.

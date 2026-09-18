@@ -19,35 +19,30 @@ use CodeIgniter\Test\CIUnitTestCase;
 final class LegacyFallbackInventoryTest extends CIUnitTestCase
 {
     /**
-     * M7: Inventory all services that still reference the legacy `guest` table.
+     * T4.5: The legacy `guest`/`guest_visit` module store is retired.
      *
-     * Classification: active compatibility
-     * The guest table is still used by GuestIntakeService, PersonConversionService,
-     * MembershipStatusService, and MemberMergeService for legacy guest records
-     * that haven't been converted to the canonical person model yet.
+     * Classification: retired
+     * Guest rows were migrated to person + parish_affiliation
+     * (affiliation_type = 'guest') + person_visit; GuestModel is removed and
+     * reads go through GuestDirectoryService over canonical tables.
      */
-    public function testGuestTableUsageInventory(): void
+    public function testGuestTableUsageRetired(): void
     {
-        $servicesUsingGuestTable = [
-            'app/Services/PersonConversionService.php',
-            'app/Services/MembershipStatusService.php',
-            'app/Services/MemberMergeService.php',
-        ];
+        $this->assertFalse(
+            file_exists(APPPATH . 'Models/GuestModel.php'),
+            'GuestModel must be removed (T4.5).'
+        );
+        $this->assertTrue(
+            file_exists(APPPATH . 'Services/GuestDirectoryService.php'),
+            'GuestDirectoryService must provide canonical guest-shaped reads (T4.5).'
+        );
 
-        foreach ($servicesUsingGuestTable as $file) {
-            $path = APPPATH . str_replace('app/', '', $file);
-            if (! file_exists($path)) {
-                continue;
-            }
-
-            $source = file_get_contents($path);
-            $this->assertTrue(
-                str_contains($source, 'guest') || str_contains($source, 'Guest'),
-                "{$file} should reference the guest table."
-            );
-        }
-
-        $this->addToAssertionCount(1);
+        $service = file_get_contents(APPPATH . 'Services/GuestDirectoryService.php');
+        $this->assertStringNotContainsString(
+            "table('guest'",
+            $service,
+            'GuestDirectoryService must not query the dropped guest table.'
+        );
     }
 
     /**
@@ -62,8 +57,6 @@ final class LegacyFallbackInventoryTest extends CIUnitTestCase
         $servicesUsingProfileFallback = [
             'app/Services/MemberAccessService.php',
             'app/Services/MemberMergeService.php',
-            'app/Services/ParishPeopleRegistryService.php',
-            'app/Services/PeopleDirectoryService.php',
         ];
 
         foreach ($servicesUsingProfileFallback as $file) {
@@ -83,32 +76,22 @@ final class LegacyFallbackInventoryTest extends CIUnitTestCase
     }
 
     /**
-     * M7: Inventory the parish_people snapshot table resolution.
+     * T4: The parish_people snapshot table resolution is retired.
      *
-     * Classification: active compatibility
-     * The parish_people table is the denormalized snapshot used by
-     * ParishPeopleRegistryService and PeopleDirectoryService.
+     * Classification: retired
+     * The snapshot model, registry service, and sync commands were removed;
+     * directory reads now come from parish_affiliation + person.
      */
-    public function testParishPeopleSnapshotInventory(): void
+    public function testParishPeopleSnapshotRetired(): void
     {
-        $servicesUsingSnapshot = [
-            'app/Services/ParishPeopleRegistryService.php',
-            'app/Services/PeopleDirectoryService.php',
-        ];
-
-        foreach ($servicesUsingSnapshot as $file) {
-            $path = APPPATH . str_replace('app/', '', $file);
-            if (! file_exists($path)) {
-                continue;
-            }
-
-            $source = file_get_contents($path);
-            $this->assertStringContainsString(
-                'Snapshot',
-                $source,
-                "{$file} should reference the snapshot table."
-            );
-        }
+        $this->assertFalse(
+            file_exists(APPPATH . 'Services/ParishPeopleRegistryService.php'),
+            'ParishPeopleRegistryService must be removed (T4).'
+        );
+        $this->assertFalse(
+            file_exists(APPPATH . 'Models/ParishPeopleModel.php'),
+            'ParishPeopleModel must be removed (T4).'
+        );
     }
 
     /**
@@ -131,24 +114,6 @@ final class LegacyFallbackInventoryTest extends CIUnitTestCase
     }
 
     /**
-     * M7: The dead duplicate branch in ParishPeopleRegistryService
-     * (['parish_people', 'parish_people'] and triple parish_id check)
-     * has been removed as part of M4.
-     *
-     * Classification: dead code (removed)
-     */
-    public function testDeadDuplicateBranchRemoved(): void
-    {
-        $source = file_get_contents(APPPATH . 'Services/ParishPeopleRegistryService.php');
-
-        $this->assertStringNotContainsString(
-            "'parish_people', 'parish_people'",
-            $source,
-            'Dead duplicate parish_people candidates should be removed.'
-        );
-    }
-
-    /**
      * M7: SchemaResolver is the single source of truth for table resolution.
      *
      * Classification: consolidation (M4)
@@ -159,7 +124,6 @@ final class LegacyFallbackInventoryTest extends CIUnitTestCase
 
         $resolver = new \App\Libraries\SchemaResolver();
         $this->assertTrue(method_exists($resolver, 'resolveExistingProfileTable'));
-        $this->assertTrue(method_exists($resolver, 'resolveSnapshotTable'));
         $this->assertTrue(method_exists($resolver, 'getColumnsForTable'));
     }
 }

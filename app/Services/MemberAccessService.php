@@ -375,29 +375,6 @@ class MemberAccessService
                     ->update($updates);
             }
 
-            $affiliationColumns = array_map('strtolower', $this->getColumnsForTable('parish_affiliation'));
-            $userColumn = in_array('linked_user_id', $affiliationColumns, true) ? 'linked_user_id' : 'user_id';
-            $parishColumn = in_array('parish_id', $affiliationColumns, true) ? 'parish_id' : 'parish_id';
-
-            $parishIdsBuilder = $this->db->table('parish_affiliation')
-                ->select($parishColumn . ' AS parish_id')
-                ->where($userColumn, $userId);
-            if (in_array('is_member', $affiliationColumns, true)) {
-                $parishIdsBuilder->where('is_member', 1);
-            } elseif (in_array('active', $affiliationColumns, true)) {
-                $parishIdsBuilder->where('active', 1);
-            }
-
-            $parishIds = $parishIdsBuilder->get()->getResultArray();
-
-            $registry = new ParishPeopleRegistryService();
-            foreach ($parishIds as $row) {
-                $parishId = (int) ($row['parish_id'] ?? 0);
-                if ($parishId > 0) {
-                    $registry->syncParish($parishId);
-                }
-            }
-
             return true;
         } catch (\Throwable $e) {
             log_message('warning', '[MemberAccessService] Failed portal invited->enabled transition for user ' . $userId . ': ' . $e->getMessage());

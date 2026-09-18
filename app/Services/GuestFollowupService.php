@@ -146,7 +146,7 @@ class GuestFollowupService
         $callTaskRows = array_map(static function (array $task): array {
             return [
                 'id'                => (int) $task['id'],
-                'guest_id'          => (int) $task['guest_id'],
+                'guest_id'          => (int) $task['person_id'],
                 'action_id'         => null,
                 'scheduled_date'    => $task['scheduled_date'] ?? null,
                 'status'            => $task['status'] === 'completed' ? 'sent' : $task['status'],
@@ -190,15 +190,17 @@ class GuestFollowupService
      */
     public function inProgressGuestsCount(int $parishId): int
     {
-        return (int) $this->db->table('guest g')
-            ->where('g.parish_id', $parishId)
-            ->where('g.followed_up', 0)
-            ->where('g.converted_to_member_at IS NULL', null, false)
-            ->whereIn('g.person_id', function ($subQ) {
+        return (int) $this->db->table('parish_affiliation pa')
+            ->where('pa.parish_id', $parishId)
+            ->where('pa.affiliation_type', 'guest')
+            ->where('pa.followed_up', 0)
+            ->where('pa.converted_to_member_at IS NULL', null, false)
+            ->where('pa.deleted_at IS NULL', null, false)
+            ->whereIn('pa.person_id', function ($subQ) {
                 $subQ->select('person_id')->from('followup_log')
                     ->whereIn('status', ['sent', 'skipped']);
             })
-            ->whereIn('g.person_id', function ($subQ) {
+            ->whereIn('pa.person_id', function ($subQ) {
                 $subQ->select('person_id')->from('followup_log')
                     ->where('status', 'pending');
             })

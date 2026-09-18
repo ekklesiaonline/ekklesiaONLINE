@@ -69,7 +69,7 @@ if ($displayName === '') {
 $hasAffiliation = !empty($parishAffiliation['province']) || !empty($parishAffiliation['diocese']) || !empty($parishAffiliation['parish']);
 $hasAdminScope = $isElevatedAdmin && !empty($adminScope['name']);
 // Elevated admins administer a diocese/province/system scope, but may also
-// be personally affiliated with one or more parishes (parish_people rows) —
+// be personally affiliated with one or more parishes (parish_affiliation rows) —
 // show both instead of only the admin scope.
 $adminParishNames = $hasAdminScope
     ? array_values(array_filter(array_unique(array_column($otherAffiliations ?? [], 'parish_name'))))

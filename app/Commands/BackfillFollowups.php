@@ -5,13 +5,15 @@ namespace App\Commands;
 use App\Models\FollowupLogModel;
 use CodeIgniter\CLI\BaseCommand;
 use CodeIgniter\CLI\CLI;
+use CodeIgniter\Database\ConnectionInterface;
 
 /**
  * BackfillFollowups — spark followup:backfill command
  *
- * Finds all guests that have zero guest_followup_log entries and schedules
- * the currently active follow-up sequences for them, using the guest's
- * earliest recorded visit date (or created_at as a fallback).
+ * Finds all canonical guest affiliations that have zero followup_log
+ * entries and schedules the currently active follow-up sequences for
+ * them, using the person's earliest recorded visit date (or the
+ * affiliation created_at as a fallback).
  *
  * Usage:
  *   php spark followup:backfill
@@ -51,15 +53,18 @@ class BackfillFollowups extends BaseCommand
         $db = db_connect();
 
         // ---------------------------------------------------------------
-        // 1. Find guests with zero guest_followup_log rows
+        // 1. Find canonical guest affiliations with zero followup_log rows
         // ---------------------------------------------------------------
-        $query = $db->table('guest g')
-            ->select('g.id, g.parish_id, g.first_name, g.last_name, g.visit_date, g.created_at, g.preferred_timezone')
-            ->join('followup_log gfl', 'gfl.person_id = g.person_id', 'left')
+        $query = $db->table('parish_affiliation pa')
+            ->select('pa.person_id AS id, pa.person_id, pa.parish_id, pa.created_at, pe.first_name, pe.last_name, pe.preferred_timezone')
+            ->join('person pe', 'pe.id = pa.person_id AND pe.deleted_at IS NULL', 'inner')
+            ->join('followup_log gfl', 'gfl.person_id = pa.person_id', 'left')
+            ->where('pa.affiliation_type', 'guest')
+            ->where('pa.deleted_at IS NULL', null, false)
             ->where('gfl.id IS NULL', null, false);
 
         if ($parishId !== null) {
-            $query->where('g.parish_id', $parishId);
+            $query->where('pa.parish_id', $parishId);
         }
 
         $guests = $query->get()->getResultArray();
@@ -85,12 +90,12 @@ class BackfillFollowups extends BaseCommand
         // 3. Schedule each guest
         // ---------------------------------------------------------------
         foreach ($guests as $guest) {
-            $guestId   = (int) $guest['id'];
-            $cId       = (int) $guest['parish_id'];
-            $name      = trim(($guest['first_name'] ?? '') . ' ' . ($guest['last_name'] ?? ''));
+            $personId = (int) $guest['person_id'];
+            $cId      = (int) $guest['parish_id'];
+            $name     = trim(($guest['first_name'] ?? '') . ' ' . ($guest['last_name'] ?? ''));
 
-            // Use earliest recorded visit, then guests.visit_date, then created_at
-            $visitDate = $this->resolveVisitDate($db, $guestId, $guest);
+            // Use earliest recorded visit, then affiliation created_at
+            $visitDate = $this->resolveVisitDate($db, $personId, $guest);
 
             $tz = (string) ($guest['preferred_timezone'] ?? '');
 
@@ -107,7 +112,7 @@ class BackfillFollowups extends BaseCommand
 
             if ($seqCountByParish[$cId] === 0) {
                 CLI::write(
-                    "  SKIP  #{$guestId} {$name} — no active sequences for parish {$cId}",
+                    "  SKIP  #{$personId} {$name} — no active sequences for parish {$cId}",
                     'yellow'
                 );
                 $skippedNoSeq++;
@@ -115,10 +120,10 @@ class BackfillFollowups extends BaseCommand
             }
 
             $tzNote = $tz !== '' ? " (tz: {$tz})" : '';
-            CLI::write("  Queue #{$guestId} {$name} — visit: {$visitDate}{$tzNote}, parish: {$cId}", 'white');
+            CLI::write("  Queue #{$personId} {$name} — visit: {$visitDate}{$tzNote}, parish: {$cId}", 'white');
 
             if (!$isDryRun) {
-                $count = $logModel->scheduleActiveSequencesForGuest($guestId, $cId, $visitDate, $tz);
+                $count = $logModel->scheduleActiveSequencesForPerson($personId, $cId, $visitDate, $tz);
                 $totalScheduled += $count;
                 CLI::write("        → Scheduled {$count} action(s)", 'green');
             }
@@ -143,13 +148,13 @@ class BackfillFollowups extends BaseCommand
 
     /**
      * Determine the best visit date to use as the base for scheduling.
-     * Priority: earliest guest_visit row → guests.visit_date → guests.created_at.
+     * Priority: earliest person_visit row → affiliation created_at.
      */
-    private function resolveVisitDate(\CodeIgniter\Database\ConnectionInterface $db, int $guestId, array $guest): string
+    private function resolveVisitDate(ConnectionInterface $db, int $personId, array $guest): string
     {
-        $earliest = $db->table('guest_visit')
+        $earliest = $db->table('person_visit')
             ->select('visit_date')
-            ->where('guest_id', $guestId)
+            ->where('person_id', $personId)
             ->orderBy('visit_date', 'ASC')
             ->limit(1)
             ->get()
@@ -157,10 +162,6 @@ class BackfillFollowups extends BaseCommand
 
         if ($earliest !== null && !empty($earliest['visit_date'])) {
             return (string) $earliest['visit_date'];
-        }
-
-        if (!empty($guest['visit_date'])) {
-            return (string) $guest['visit_date'];
         }
 
         // Fall back to the date portion of created_at

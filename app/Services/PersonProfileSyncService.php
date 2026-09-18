@@ -97,7 +97,7 @@ class PersonProfileSyncService
         $profileId = (int) ($profile['id'] ?? 0);
         $existingPersonId = isset($profile['person_id']) ? (int) $profile['person_id'] : 0;
 
-        if ($existingPersonId > 0) {
+        if ($existingPersonId > 0 && $this->personExists($existingPersonId)) {
             return $existingPersonId;
         }
 
@@ -204,11 +204,27 @@ class PersonProfileSyncService
      * @param int $userId
      * @return int|null
      */
+    /**
+     * Whether the canonical person row exists (dangling person_id links are
+     * treated as missing so a fresh person is created and linked).
+     */
+    private function personExists(int $personId): bool
+    {
+        $db = db_connect();
+        if (! $db->tableExists('person')) {
+            return false;
+        }
+
+        return (int) $db->table('person')
+            ->where('id', $personId)
+            ->countAllResults() > 0;
+    }
+
     private function resolvePersonId(array $profile, int $userId): ?int
     {
         $existingPersonId = isset($profile['person_id']) ? (int) $profile['person_id'] : 0;
 
-        if ($existingPersonId > 0) {
+        if ($existingPersonId > 0 && $this->personExists($existingPersonId)) {
             return $existingPersonId;
         }
 

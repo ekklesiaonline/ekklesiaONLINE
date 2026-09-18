@@ -34,11 +34,14 @@ class LinkPersonProfiles extends BaseCommand
         $dryRun   = $this->hasOption($params, 'dry-run');
         $parishId = $this->optionValue('parish', $params);
 
+        $personTable = $db->prefixTable('person');
         $builder = $db->table('profile')
             ->select('profile.id, profile.user_id, profile.first_name, profile.last_name, profile.parish_id')
             ->groupStart()
                 ->where('profile.person_id', null)
                 ->orWhere('profile.person_id', 0)
+                // Dangling link: person_id points at a person row that no longer exists.
+                ->orWhere("profile.person_id NOT IN (SELECT id FROM {$personTable})", null, false)
             ->groupEnd()
             ->where('profile.deleted_at', null);
 

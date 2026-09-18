@@ -10,8 +10,8 @@ use CodeIgniter\Test\CIUnitTestCase;
  * person_id (the canonical person.id), not by profile.id via find().
  *
  * H2: Writes to canonical identity tables (person, profile, user_person,
- * parish_affiliation) must trigger PersonProfileSyncService and/or
- * ParishPeopleRegistryService where applicable.
+ * parish_affiliation) must trigger PersonProfileSyncService where applicable.
+ * (ParishPeopleRegistryService retired in T4 — no snapshot to sync.)
  *
  * @internal
  */
@@ -116,65 +116,6 @@ final class IdentityLookupTest extends CIUnitTestCase
     }
 
     /**
-     * H3: ParishPeopleRegistryService must join person-owned tables
-     * (sacramental_record, person_membership_details) on profile.person_id —
-     * the canonical person.id — never on p.id (the profile primary key).
-     */
-    public function testRegistryJoinsPersonTablesByPersonId(): void
-    {
-        $reflection = new ReflectionMethod(
-            \App\Services\ParishPeopleRegistryService::class,
-            'querySnapshotRows'
-        );
-        $source = $this->getMethodSource($reflection);
-
-        $this->assertStringContainsString(
-            'sr.person_id = p.person_id',
-            $source,
-            'sacramental_record must join on profile.person_id, not profile.id.'
-        );
-        $this->assertStringContainsString(
-            'pmd.person_id = p.person_id',
-            $source,
-            'person_membership_details must join on profile.person_id, not profile.id.'
-        );
-        $this->assertStringNotContainsString(
-            'sr.person_id = p.id ',
-            $source,
-            'sacramental_record join must not use profile.id.'
-        );
-        $this->assertStringNotContainsString(
-            'pmd.person_id = p.id ',
-            $source,
-            'person_membership_details join must not use profile.id.'
-        );
-    }
-
-    /**
-     * H3: syncParish must record person_status_history rows against the
-     * canonical person.id, not the snapshot's profile_id.
-     */
-    public function testSyncParishRecordsStatusHistoryByPersonId(): void
-    {
-        $reflection = new ReflectionMethod(
-            \App\Services\ParishPeopleRegistryService::class,
-            'syncParish'
-        );
-        $source = $this->getMethodSource($reflection);
-
-        $this->assertStringContainsString(
-            "'person_id' => (int) (\$row['person_id']",
-            $source,
-            'syncParish status changes must carry person_id from the query row.'
-        );
-        $this->assertStringContainsString(
-            "\$change['person_id']",
-            $source,
-            'recordStatusChange must be called with the canonical person_id.'
-        );
-    }
-
-    /**
      * Parish metrics: active_members must filter by the canonical
      * affiliation status 'member'. 'active' is not a valid
      * parish_affiliation.membership_status value and always counts 0.
@@ -196,20 +137,22 @@ final class IdentityLookupTest extends CIUnitTestCase
     }
 
     /**
-     * H2: ParishPeopleRegistryService::syncParish must be called after
-     * parish_affiliation changes. The Clergy Members controller's attach,
-     * detach, and setHomeParish actions must all trigger syncParish.
+     * T4: The Clergy Members controller must not depend on the retired
+     * parish_people snapshot registry.
      */
-    public function testClergyMembersControllerTriggersSnapshotSync(): void
+    public function testClergyMembersControllerDoesNotUseRetiredSnapshot(): void
     {
         $source = file_get_contents(APPPATH . '../Clergy/Controllers/Members.php');
 
-        // All three parish-affiliation-mutating actions must call syncParish.
-        $syncCount = substr_count($source, 'ParishPeopleRegistryService');
-        $this->assertGreaterThanOrEqual(
-            4,
-            $syncCount,
-            'Clergy Members controller must call ParishPeopleRegistryService::syncParish after attach, detach, setHomeParish, and member update.'
+        $this->assertStringNotContainsString(
+            'ParishPeopleRegistryService',
+            $source,
+            'Members controller must not reference the retired parish_people registry.'
+        );
+        $this->assertStringNotContainsString(
+            'syncParish',
+            $source,
+            'Members controller must not call the retired syncParish.'
         );
     }
 

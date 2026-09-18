@@ -3,7 +3,6 @@
 namespace MemberPortal\Controllers;
 
 use App\Controllers\BaseController;
-use App\Services\ParishPeopleRegistryService;
 use App\Services\MemberAccessService;
 
 class Families extends BaseController
@@ -599,8 +598,6 @@ class Families extends BaseController
             'parish_id' => $parishId,
             'family_id' => (int) ($payload['family_id'] ?? 0),
         ]);
-
-        (new ParishPeopleRegistryService())->syncParish($parishId);
 
         return $this->contractResponse(true, (string) $result['code'], (string) $result['message'], $data, [], (int) $result['http_status'], $requestId, $parishId);
     }

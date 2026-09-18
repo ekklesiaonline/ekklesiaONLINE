@@ -4,7 +4,6 @@ namespace App\Services;
 
 use App\Libraries\DataEncryption;
 use App\Models\CallTaskModel;
-use App\Models\GuestModel;
 use App\Models\SmsQueueModel;
 
 /**
@@ -40,14 +39,14 @@ class FollowupDispatchService
     private SmsService   $sms;
     private CallTaskModel $callTaskModel;
     private SmsQueueModel $smsQueueModel;
-    private GuestModel    $guestModel;
+    private GuestDirectoryService $guestDirectory;
 
     public function __construct()
     {
-        $this->sms           = new SmsService();
-        $this->callTaskModel = model('CallTaskModel');
-        $this->smsQueueModel = model('SmsQueueModel');
-        $this->guestModel    = model('GuestModel');
+        $this->sms            = new SmsService();
+        $this->callTaskModel  = model('CallTaskModel');
+        $this->smsQueueModel  = model('SmsQueueModel');
+        $this->guestDirectory = new GuestDirectoryService();
     }
 
     // ------------------------------------------------------------------
@@ -72,7 +71,7 @@ class FollowupDispatchService
         $vars   = $this->buildVarMap($guest, $parish);
 
         // Opt-out guard: skip silently if guest has opted out of this channel.
-        if ($this->guestModel->isOptedOut($guest, $channel)) {
+        if ($this->guestDirectory->isOptedOut($guest, $channel)) {
             return [
                 'success'  => false,
                 'metadata' => ['channel' => $channel, 'skipped' => true, 'reason' => 'opted_out'],
@@ -186,11 +185,9 @@ class FollowupDispatchService
         $phone = $this->decryptField($guest['phone'] ?? '');
 
         $personId = (int) ($guest['person_id'] ?? $logRow['person_id'] ?? 0) ?: null;
-        $guestId  = $personId > 0 ? null : (int) $guest['id'];
 
         $taskData = [
             'parish_id'      => $parishId,
-            'guest_id'       => $guestId,
             'person_id'      => $personId,
             'log_id'         => (int) ($logRow['id'] ?? 0) ?: null,
             'assigned_to'    => (int) ($logRow['assigned_to'] ?? 0) ?: null,

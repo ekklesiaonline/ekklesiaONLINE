@@ -452,11 +452,12 @@ class Dashboard extends BaseController
             ->where('created_at >=', date('Y-m-d H:i:s', strtotime('-7 days')))
             ->countAllResults();
 
-        // 4. New guests per ISO week — last 12 weeks.
+        // 4. New guests per ISO week — last 12 weeks (canonical first visits).
         $cutoff = date('Y-m-d', strtotime('-12 weeks'));
-        $rows = $db->table('guest')
+        $rows = $db->table('person_visit')
             ->select('YEARWEEK(visit_date, 3) AS yw, MIN(visit_date) AS week_start, COUNT(*) AS count')
             ->where('parish_id', $parishId)
+            ->where('visit_type', 'first')
             ->where('visit_date >=', $cutoff)
             ->groupBy('yw')
             ->orderBy('yw', 'ASC')

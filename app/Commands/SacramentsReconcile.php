@@ -2,7 +2,6 @@
 
 namespace App\Commands;
 
-use App\Services\ParishPeopleRegistryService;
 use App\Services\SacramentFlagSyncService;
 use CodeIgniter\CLI\BaseCommand;
 use CodeIgniter\CLI\CLI;
@@ -65,7 +64,6 @@ class SacramentsReconcile extends BaseCommand
         }
 
         $service   = new SacramentFlagSyncService();
-        $registry  = new ParishPeopleRegistryService();
 
         $totalPairs         = count($pairs);
         $totalDiscrepancies = 0;
@@ -96,16 +94,6 @@ class SacramentsReconcile extends BaseCommand
             if (!$dryRun) {
                 $service->applyForPerson($pid, $cid, null, 'sacraments:reconcile');
                 $totalFixed++;
-            }
-        }
-
-        if (!$dryRun) {
-            // Refresh the parish_people snapshot for the affected parishes.
-            $parishesToSync = $parishId !== null && $parishId > 0
-                ? [$parishId]
-                : array_values(array_unique(array_map(static fn ($p) => (int) $p['parish_id'], $pairs)));
-            foreach ($parishesToSync as $cid) {
-                $registry->syncParish((int) $cid);
             }
         }
 

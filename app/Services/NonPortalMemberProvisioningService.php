@@ -179,14 +179,14 @@ class NonPortalMemberProvisioningService
      *
      * Steps (atomic transaction):
      *  1. Delete auth_identities row(s) of type email_password — removes login capability.
-     *     NOTE: users.active is intentionally left at 1. Setting it to 0 would exclude
-     *     the person from the parish_people snapshot (syncParish filters on u.active = 1)
-     *     and make them invisible on /people. The auth_identities deletion alone prevents
-     *     login; Shield requires that row to authenticate.
+     *     NOTE: users.active is intentionally left at 1. Setting it to 0 could exclude
+     *     the person from parish directory listings that filter on active portal users.
+     *     The auth_identities deletion alone prevents login; Shield requires that row
+     *     to authenticate.
      *  2. Set profile.portal_access = 'none' — keeps the column consistent with the
      *     auth_identities state so the non-portal badge logic evaluates correctly.
      *
-     * The caller is responsible for syncing parish_people and writing the audit log.
+     * The caller is responsible for writing the audit log.
      *
      * @return array<string,mixed>
      */
@@ -227,10 +227,9 @@ class NonPortalMemberProvisioningService
                 ->where('type', 'email_password')
                 ->delete();
 
-            // Do NOT set users.active = 0 — that would remove the person from the
-            // parish_people snapshot (syncParish filters on u.active = 1) and make
-            // them invisible on /people. The auth_identities deletion alone prevents
-            // login; the user record stays active so they remain a visible member.
+            // Do NOT set users.active = 0 — the auth_identities deletion alone
+            // prevents login; the user record stays active so they remain a
+            // visible member on /people.
 
             $profileUpdate = ['portal_access' => 'none', 'updated_at' => date('Y-m-d H:i:s')];
             $profileColumns = array_map('strtolower', $this->getColumnsForTable('profile'));

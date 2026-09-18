@@ -14,8 +14,7 @@ use App\Models\MemberParishAffiliationModel;
  *    member / inactive / transferred / deceased),
  *  - is_member, affiliation_type and end_date stay consistent with the status,
  *  - an immutable person_status_history row is written under the canonical
- *    person_id (never the profile id),
- *  - the parish_people snapshot is refreshed.
+ *    person_id (never the profile id).
  *
  * All canonical transitions are legal — pastoral reality includes corrections
  * and non-linear movement — but entering or leaving a terminal status
@@ -35,16 +34,13 @@ class MembershipPathwayService
 
     private MemberParishAffiliationModel $affiliations;
     private PersonStatusHistoryService $history;
-    private ParishPeopleRegistryService $registry;
 
     public function __construct(
         ?MemberParishAffiliationModel $affiliations = null,
-        ?PersonStatusHistoryService $history = null,
-        ?ParishPeopleRegistryService $registry = null
+        ?PersonStatusHistoryService $history = null
     ) {
         $this->affiliations = $affiliations ?? new MemberParishAffiliationModel();
         $this->history      = $history ?? new PersonStatusHistoryService();
-        $this->registry     = $registry ?? new ParishPeopleRegistryService();
     }
 
     /**
@@ -246,15 +242,6 @@ class MembershipPathwayService
         }
 
         if ($parishId > 0) {
-            // Refresh the parish_people snapshot immediately instead of waiting
-            // for cron. The transition already committed, so a sync failure
-            // must not fail the transition itself.
-            try {
-                $this->registry->syncParish($parishId);
-            } catch (\Throwable $e) {
-                log_message('error', 'MembershipPathwayService: parish_people sync failed for parish ' . $parishId . ': ' . $e->getMessage());
-            }
-
             if ($personId > 0) {
                 // Keep the denormalized pathway stage in step with the new
                 // status (member gains stage 1; terminal statuses clear it).
