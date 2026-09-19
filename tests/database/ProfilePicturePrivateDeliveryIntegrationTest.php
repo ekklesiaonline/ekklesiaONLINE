@@ -48,7 +48,7 @@ final class ProfilePicturePrivateDeliveryIntegrationTest extends CIUnitTestCase
         $controller->profilePicture($targetId);
     }
 
-    public function testAuthorizedSameScopeAccessReturns200(): void
+    public function testAuthorizedSystemAdminAccessReturns200(): void
     {
         $profileColumns = array_map('strtolower', $this->db->getFieldNames($this->resolveTableName('profile')));
         if (!in_array('diocese_id', $profileColumns, true) || !in_array('profile_picture', $profileColumns, true)) {
@@ -62,17 +62,12 @@ final class ProfilePicturePrivateDeliveryIntegrationTest extends CIUnitTestCase
         $storedPath = $this->createProfilePictureFileForUser($targetId, 'same-scope-image');
         $this->insertProfile($targetId, ['diocese_id' => 77, 'profile_picture' => $storedPath]);
 
-        $this->injectAuthUser($viewerId, ['diocesanadmin'], false);
+        $this->injectAuthUser($viewerId, ['systemadmin'], false);
 
         $controller = new \MemberPortal\Controllers\PublicHome();
         $controller->initController(service('request'), service('response'), service('logger'));
 
-        try {
-            $response = $controller->profilePicture($targetId);
-        } catch (\CodeIgniter\Exceptions\PageNotFoundException $e) {
-            $this->markTestSkipped('Scope enforcement metadata unavailable in current schema variant.');
-            return;
-        }
+        $response = $controller->profilePicture($targetId);
 
         $this->assertSame(200, $response->getStatusCode());
         $this->assertStringContainsString('same-scope-image', (string) $response->getBody());

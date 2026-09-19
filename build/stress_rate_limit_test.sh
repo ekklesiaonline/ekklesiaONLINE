@@ -1,24 +1,24 @@
 #!/usr/bin/env sh
 set -eu
 
-BASE_URL="${BASE_URL:-http://127.0.0.1:8080}"
+: "${BASE_URL:?Set BASE_URL to the staging application URL}"
+: "${LOGIN_EMAIL:?Set LOGIN_EMAIL}"
+: "${LOGIN_PASSWORD:?Set LOGIN_PASSWORD}"
 REQUESTS="${REQUESTS:-30}"
-LOGIN_EMAIL="${LOGIN_EMAIL:-admin@ekklesiaRD.org}"
-LOGIN_PASSWORD="${LOGIN_PASSWORD:-password@123}"
 TARGET_PATH="${TARGET_PATH:-province/create-admin}"
 CURL_CONNECT_TIMEOUT="${CURL_CONNECT_TIMEOUT:-5}"
 CURL_MAX_TIME="${CURL_MAX_TIME:-20}"
 DASHBOARD_PATH="${DASHBOARD_PATH:-province/dashboard?period=month}"
 
-COOKIE_FILE="/tmp/ekk_rate_cookie.txt"
-LOGIN_HTML="/tmp/ekk_rate_login.html"
-LOGIN_RESP="/tmp/ekk_rate_login_resp.txt"
-DASH_HTML="/tmp/ekk_rate_dash.html"
-RESP_BODY="/tmp/ekk_rate_resp.json"
-RESP_HDR="/tmp/ekk_rate_resp_headers.txt"
-REPORT="/tmp/ekk_rate_limit_report.txt"
-
-rm -f "$COOKIE_FILE" "$LOGIN_HTML" "$LOGIN_RESP" "$DASH_HTML" "$RESP_BODY" "$RESP_HDR" "$REPORT"
+TMP_DIR="$(mktemp -d "${TMPDIR:-/tmp}/ekk-rate-limit.XXXXXX")"
+trap 'rm -rf "$TMP_DIR"' EXIT HUP INT TERM
+COOKIE_FILE="$TMP_DIR/cookie.txt"
+LOGIN_HTML="$TMP_DIR/login.html"
+LOGIN_RESP="$TMP_DIR/login-response.txt"
+DASH_HTML="$TMP_DIR/dashboard.html"
+RESP_BODY="$TMP_DIR/response.json"
+RESP_HDR="$TMP_DIR/response-headers.txt"
+REPORT="$TMP_DIR/report.txt"
 
 extract_csrf_name() {
   file="$1"

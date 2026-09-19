@@ -81,7 +81,7 @@ class FamilyService
      */
     public function enforceSingleFamilyMembership(): bool
     {
-        $value = strtolower(trim((string) (env('family.enforceSingleFamilyMembership') ?? '0')));
+        $value = strtolower(trim((string) (env('families.enforceSingleFamilyMembership') ?? '0')));
 
         return in_array($value, ['1', 'true', 'yes', 'on'], true);
     }

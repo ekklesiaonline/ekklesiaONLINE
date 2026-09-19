@@ -15,6 +15,7 @@ class MaintenanceMode implements FilterInterface
         'auth/',
         'assets/',
         'system/settings',
+        'health',
     ];
 
     public function before(RequestInterface $request, $arguments = null)

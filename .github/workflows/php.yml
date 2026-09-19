@@ -2,45 +2,129 @@ name: PHP Composer
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
   pull_request:
-    branches: [ "main" ]
+    branches: ["main"]
 
 permissions:
   contents: read
 
 jobs:
-  build:
-
+  quality:
     runs-on: ubuntu-latest
-
     steps:
-    - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.2"
+          extensions: intl, mbstring, sqlite3, mysqli, gd, curl, dom, xml, zip
+          coverage: none
+          tools: composer:2.10.3
+      - name: Runtime versions
+        run: php --version && composer --version
+      - name: Cache Composer packages
+        uses: actions/cache@v4
+        with:
+          path: vendor
+          key: ${{ runner.os }}-php-8.2-quality-${{ hashFiles('composer.lock') }}
+      - name: Validate dependencies
+        run: |
+          composer validate --strict
+          composer install --prefer-dist --no-progress --no-interaction
+          composer audit --locked --no-interaction
+          composer install --no-dev --optimize-autoloader --dry-run --no-interaction
+      - name: Run static analysis
+        run: vendor/bin/phpstan analyse --no-progress
 
-    - name: Setup PHP
-      uses: shivammathur/setup-php@v2
-      with:
-        php-version: '8.2'
-        extensions: intl, mbstring, sqlite3, mysqli, gd, curl, dom, xml, zip
-        coverage: none
+  test-sqlite:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        php: ["8.2", "8.3", "8.4", "8.5"]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: intl, mbstring, sqlite3, mysqli, gd, curl, dom, xml, zip
+          coverage: none
+          tools: composer:2.10.3
+      - name: Runtime versions
+        run: php --version && composer --version
+      - name: Cache Composer packages
+        uses: actions/cache@v4
+        with:
+          path: vendor
+          key: ${{ runner.os }}-php-${{ matrix.php }}-test-${{ hashFiles('composer.lock') }}
+      - name: Install dependencies
+        run: composer install --prefer-dist --no-progress --no-interaction
+      - name: Run test suite
+        run: vendor/bin/phpunit --no-coverage --testdox
+      - name: Upload test evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: php-${{ matrix.php }}-test-evidence
+          path: |
+            build/logs/logfile.xml
+            build/logs/testdox.txt
+          if-no-files-found: error
 
-    - name: Validate composer.json and composer.lock
-      run: composer validate --strict
-
-    - name: Cache Composer packages
-      id: composer-cache
-      uses: actions/cache@v3
-      with:
-        path: vendor
-        key: ${{ runner.os }}-php-${{ hashFiles('**/composer.lock') }}
-        restore-keys: |
-          ${{ runner.os }}-php-
-
-    - name: Install dependencies
-      run: composer install --prefer-dist --no-progress
-
-    - name: Run static analysis
-      run: vendor/bin/phpstan analyse --no-progress
-
-    - name: Run test suite
-      run: composer run-script test
+  test-mysql:
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_DATABASE: ekklesia_ci
+          MYSQL_USER: ekklesia_ci
+          MYSQL_PASSWORD: ci_only_password
+          MYSQL_ROOT_PASSWORD: root_ci_only_password
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -u root -proot_ci_only_password"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+    env:
+      CI_ENVIRONMENT: production
+      app.baseURL: https://example.invalid/
+      database.default.hostname: 127.0.0.1
+      database.default.database: ekklesia_ci
+      database.default.username: ekklesia_ci
+      database.default.password: ci_only_password
+      database.default.DBDriver: MySQLi
+      database.default.port: 3306
+      encryption.key: hex2bin:e70ce2896f74df84eac0bca281bc7975cb7f2209531f24b6fa5dcde1f23fd1c8
+      encryption.blindIndexKey: e70ce2896f74df84eac0bca281bc7975cb7f2209531f24b6fa5dcde1f23fd1c8
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.2"
+          extensions: intl, mbstring, mysqli, gd, curl, dom, xml, zip
+          coverage: none
+          tools: composer:2.10.3
+      - name: Runtime versions
+        run: php --version && composer --version && mysql --version
+      - name: Install dependencies
+        run: composer install --prefer-dist --no-progress --no-interaction
+      - name: Validate production schema
+        run: |
+          php spark migrate --all
+          php spark migrate:status --all | tee build/mysql-migration-status.txt
+          php spark routes > build/mysql-routes.txt
+      - name: Upload MySQL evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mysql-8-evidence
+          path: |
+            build/mysql-migration-status.txt
+            build/mysql-routes.txt
+          if-no-files-found: error

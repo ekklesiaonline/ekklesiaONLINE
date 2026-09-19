@@ -47,7 +47,7 @@ php spark migrate --all
 php spark shield:setup
 
 # Seed baseline data
-php spark db:seed UnifiedAppSeeder
+php spark db:seed DatabaseSeeder
 ```
 
 ### 4. Run Application
@@ -58,10 +58,9 @@ php spark serve
 
 Open: <http://localhost:8080>
 
-## Default Login Credentials
+## Bootstrap Accounts
 
-- Super Admin: <admin@ekklesiaRD.org> / Admin@123456
-- Parish Admin: <parishadmin@firstparish.org> / Parish@123456
+Create deployment accounts through the approved seeding or administrative bootstrap process. The repository does not publish reusable login credentials.
 
 ## Project Layout
 
@@ -73,16 +72,18 @@ Open: <http://localhost:8080>
 
 ## Notes for Deployment and Runtime
 
+- Supported PHP versions are 8.2–8.5 with MySQL 8.0+.
 - The web root is the `public/` directory.
-- Ensure PHP extensions include at least `intl`, `mbstring`, `json`, and `mysqlnd` for MySQL usage.
-- For production, set environment and security settings appropriately in `.env`.
+- Required extensions include `intl`, `mbstring`, `mysqli`/`mysqlnd`, `gd`, `curl`, `dom`, `xml`, and `zip`.
+- Copy `.env.example` to `.env`, replace every placeholder, and follow the deployment runbook.
+- `GET /health` is the public liveness probe; `GET /health/ready` is restricted to system administrators.
 
 ## Operations
 
 - Deployment runbook: `docs/DEPLOYMENT_RUNBOOK.md`
 - Database backup script: `build/backup_database.sh`
 - Database restore script: `build/restore_database.sh`
-- Optional nightly security CI workflow: `.github/workflows/nightly-security-rate-limit.yml`
+- Nightly staging security workflow: `.github/workflows/nightly-security-rate-limit.yml`
 
 ## Parish Staff Role Actions
 

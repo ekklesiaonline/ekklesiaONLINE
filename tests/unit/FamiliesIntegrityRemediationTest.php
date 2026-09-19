@@ -1,5 +1,6 @@
 <?php
 
+use App\Services\FamilyService;
 use CodeIgniter\Test\CIUnitTestCase;
 
 /**
@@ -78,5 +79,36 @@ final class FamiliesIntegrityRemediationTest extends CIUnitTestCase
         $this->assertStringContainsString('families/available-members/', $content);
         $this->assertStringNotContainsString("model('ProfileModel')", $content);
         $this->assertStringNotContainsString('getParishProfiles(', $content);
+    }
+
+    /**
+     * @dataProvider singleFamilyPolicyProvider
+     */
+    public function testSingleFamilyPolicyParsesDocumentedValues(string $value, bool $expected): void
+    {
+        $previous = $_ENV['families.enforceSingleFamilyMembership'] ?? null;
+        $_ENV['families.enforceSingleFamilyMembership'] = $value;
+
+        $service = (new \ReflectionClass(FamilyService::class))->newInstanceWithoutConstructor();
+        $this->assertSame($expected, $service->enforceSingleFamilyMembership());
+
+        if ($previous === null) {
+            unset($_ENV['families.enforceSingleFamilyMembership']);
+        } else {
+            $_ENV['families.enforceSingleFamilyMembership'] = $previous;
+        }
+    }
+
+    public static function singleFamilyPolicyProvider(): array
+    {
+        return [
+            ['1', true],
+            ['true', true],
+            ['yes', true],
+            ['on', true],
+            ['0', false],
+            ['false', false],
+            ['', false],
+        ];
     }
 }

@@ -22,6 +22,8 @@ $routes->addRedirect('parish', 'parish_list');
 $routes->addRedirect('parish/(:any)', 'parish_list/$1');
 
 // Public media endpoints
+$routes->get('health', '\\App\\Controllers\\Health::index');
+$routes->get('health/ready', '\\App\\Controllers\\Health::ready', ['filter' => ['session', 'permission:system.admin']]);
 $routes->get('media/event-cover/(:num)', '\\App\\Controllers\\Media::eventCover/$1');
 
 // Force-reset set-password page (session required; excluded from ForcePasswordResetFilter).

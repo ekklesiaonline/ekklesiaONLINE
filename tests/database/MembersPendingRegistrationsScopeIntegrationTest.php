@@ -72,18 +72,17 @@ final class MembersPendingRegistrationsScopeIntegrationTest extends CIUnitTestCa
         };
         $controller->initController($request, service('response'), service('logger'));
 
-        try {
-            $result = $controller->index();
-            $html = (string) $result;
-        } catch (\Throwable $e) {
-            // If the controller throws in broad-suite due to environment issues, skip rather
-            // than failing with a confusing empty-html assertion.
-            $this->markTestSkipped('Controller rendering failed in broad-suite: ' . $e->getMessage());
-        }
+        $result = $controller->index();
+        $this->assertInstanceOf(\CodeIgniter\HTTP\RedirectResponse::class, $result);
+        $this->assertStringContainsString('/people?', $result->getHeaderLine('Location'));
 
-        $this->assertStringContainsString((string) lang('Members.pendingRegistrationsTitle'), $html);
-        $this->assertStringContainsString('border-warning text-warning fw-normal ms-1">1</span>', $html);
-        $this->assertStringNotContainsString('Other Applicant', $html);
+        $requests = $this->db->table($this->resolveTableName('user_registration_request'))
+            ->where('requested_parish_id', $parishA)
+            ->where('status', 'pending_review')
+            ->get()
+            ->getResultArray();
+        $this->assertCount(1, $requests);
+        $this->assertSame($ownApplicantId, (int) $requests[0]['user_id']);
     }
 
     private function ensureCoreTablesExist(): void

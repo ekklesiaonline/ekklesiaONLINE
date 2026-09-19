@@ -2,140 +2,229 @@
 
 ## Purpose
 
-This runbook provides a repeatable deployment and rollback process for ekklesiaRD.
+This is the canonical go/no-go, deployment, validation, and rollback procedure for ekklesiaRD.
 
-## Prerequisites
+## 1. Supported Production Platform
 
-- PHP 8.2+
-- MySQL 8.0+
-- Composer 2+
-- Web server (Nginx/Apache) pointing to public/
-- `.env` configured from `.env.example`
+- PHP 8.2–8.5.
+- MySQL 8.0+.
+- Composer 2.10.3+ with verification keys configured on the deployment host.
+- PHP extensions: `intl`, `mbstring`, `mysqli`/`mysqlnd`, `gd`, `curl`, `dom`, `xml`, and `zip`.
+- Nginx or Apache document root set to `public/`.
+- The web-service account must own or have group write access to required `writable/` subdirectories. Do not use world-writable permissions.
+- `.env` must be created from `.env.example`; never deploy the example placeholders.
 
-## 1. Pre-Deployment Checklist
+CI uses SQLite for the broad PHP 8.2–8.5 regression matrix. The dedicated MySQL 8 job is authoritative for production migration compatibility.
 
-- Pull latest code
-- Verify dependencies:
-  - `composer install --no-dev --optimize-autoloader`
-- Validate configuration:
-  - `php spark config:check`
-- Run migrations dry check (if supported by target process)
-- Run tests:
-  - `./vendor/bin/phpunit --testdox`
-  - `sh build/e2e_admin_levels_smoke.sh`
-- Confirm backups are healthy:
-  - `sh build/backup_database.sh`
+## 2. Required Environment Contract
 
-## 2. Deployment Steps
+Validate required values without printing secret values. The deployment must configure:
 
-1. Put app in maintenance mode at edge (load balancer or web server page)
-2. Create fresh DB backup:
-   - `sh build/backup_database.sh`
-3. Pull release tag or commit
-4. Install dependencies:
-   - `composer install --no-dev --optimize-autoloader`
-5. Run DB migrations:
-   - `php spark migrate --all`
-6. Clear caches:
-   - `php spark cache:clear`
-7. Verify routes compile:
-   - `php spark routes > /tmp/routes_after_deploy.txt`
-8. Run smoke tests:
-   - `sh build/e2e_admin_levels_smoke.sh`
-9. Remove maintenance mode
+- `CI_ENVIRONMENT = production`.
+- HTTPS `app.baseURL`, global secure requests, and trusted reverse-proxy IPs when TLS terminates upstream.
+- MySQL connection values.
+- Independent `encryption.key` and `encryption.blindIndexKey` values; retain prior keys only during an intentional rotation.
+- Production logger threshold.
+- API and login rate-limit windows and caps.
+- Request/query monitoring and audit logging toggles.
+- `families.enforceSingleFamilyMembership`; enable it only after legacy duplicate memberships have been remediated.
+- Session concurrency and administrative MFA controls.
+- SMTP sender and credentials.
+- Backup connection, retention, and output directory.
 
-## 3. Rollback Steps
+`security.disableDeviceVerificationForTesting` must remain `0` in production.
 
-1. Put app in maintenance mode
-2. Roll back app code to previous known-good tag
-3. Restore DB backup if needed:
-   - `sh build/restore_database.sh /path/to/backup.sql.gz`
-4. Clear caches:
-   - `php spark cache:clear`
-5. Validate health endpoint and login
-6. Remove maintenance mode
+Run explicit configuration checks:
 
-## 4. Monitoring and Logging Baseline
+```bash
+php spark config:check App
+php spark config:check Logger
+php spark config:check Session
+php spark config:check 'CodeIgniter\Shield\Config\Auth'
+```
 
-- Request monitoring filter logs slow requests and 5xx responses.
-- Slow database query monitoring logs queries above the configured threshold.
-- Application logs:
-  - `writable/logs/log-YYYY-MM-DD.log`
-- Structured request monitor logs:
-  - `writable/logs/monitoring-YYYY-MM-DD.log`
-- Audit trail (database table):
-  - `audit_logs`
-  - Events include `permission.denied`, `scope.denied`, `member.create`, `member.update`, `member.delete`, `guest.create`, `guest.update`, `guest.delete`, `annual_pledge.create`, `annual_pledge.update`, `annual_pledge.delete`, `donation.create`, `donation.delete`, `donation.export_csv`, `donation.export_pdf`, `donation.statement_pdf`, `expense.create`, `expense.update`, `expense.delete`, `expense.export_csv`, `expense.export_pdf`, `report.export_csv`, `report.export_pdf`, `attendance.mark`, `attendance.bulk_mark`, `team_member.add`, `team_member.remove`
-- Recommended alerts:
-  - 5xx rate spike
-  - request latency > 800ms sustained
-  - slow query rate spike above configured threshold
-  - repeated 429 responses on critical endpoints
-  - spike in `permission.denied` or `scope.denied`
+Do not run `config:check` for `Database`, `Encryption`, or `Email` in deployment logs because the command prints resolved secret values. Validate those settings with the non-printing database preflight scripts and secret-manager presence checks.
 
-## 4.1 Optional Nightly Security Check (CI)
+## 3. Go/No-Go Release Gate
 
-- Workflow file:
-  - `.github/workflows/nightly-security-rate-limit.yml`
-- Trigger modes:
-  - Scheduled nightly run (`cron`)
-  - Manual run (`workflow_dispatch`)
-- Purpose:
-  - Verifies throttling behavior on a protected write endpoint.
-  - Asserts at least one `429` and presence of `Retry-After` under burst load.
-- Script executed by workflow:
-  - `build/stress_rate_limit_test.sh`
+A release is **no-go** if any item fails:
 
-## 5. Backup Operations
+1. The release is an immutable reviewed tag or commit.
+2. All PHP 8.2–8.5 SQLite jobs pass.
+3. The MySQL 8 migration job passes from an empty database.
+4. Composer validation, production install dry-run, audit, and PHPStan pass.
+5. PHPUnit has no failures, warnings, or risky tests.
+6. Review the JUnit/TestDox artifacts. Any unclassified skip blocks release.
+7. Migration status, backup preflight, route compilation, liveness, readiness, and role smoke checks pass.
+8. The rollback owner and maintenance window are confirmed.
 
-- Manual backup:
-  - `sh build/backup_database.sh`
-- Manual restore:
-  - `sh build/restore_database.sh /path/to/backup.sql.gz`
-- Suggested cron (daily 02:00):
-  - `0 2 * * * cd /path/to/ekklesiaRD && sh build/backup_database.sh >> writable/logs/backup-cron.log 2>&1`
+### Approved skip classifications
 
-## 6. Environment Variables (Minimum)
+The current SQLite suite has six classified skips:
 
-Use `.env.example` as source of truth. Required sections:
+- Four `ModuleCrudControllerPathsTest` cases target legacy plural-table fixtures (`parishes`) that are not part of the canonical singular-table SQLite schema. Production behavior is covered by canonical model/integration tests and the MySQL migration job.
+- `ModuleDemoDataSeederTest` targets an optional development fixture that is not shipped.
+- `ServicesLiturgicalDaysLocalizationTest` requires `liturgical_calendar_entry`, which is validated by the MySQL migration job rather than the reduced SQLite fixture.
 
-- App URL and HTTPS
-- Database connection
-- Encryption key
-- Logger threshold
-- API rate limit window and cap
-- API rate limit keys (`security.apiRateLimitPerWindow`, `security.apiRateLimitWindowSeconds`, `security.apiRateLimitAnonPerWindow`)
-- Login rate limit keys (`security.loginRateLimitPerWindow`, `security.loginRateLimitWindowSeconds`)
-- Monitoring slow request threshold
-- Monitoring slow query threshold
-- Structured monitoring toggles (`monitoring.enabled`, `monitoring.fileLogEnabled`)
-- Audit logging toggles (`monitoring.auditLogEnabled`, `monitoring.auditDbEnabled`)
-- Families membership policy toggle (`families.enforceSingleFamilyMembership`)
-- Backup settings
-- SMTP credentials
+Any additional skip is unclassified and blocks release. Schema/order failures and caught controller exceptions must not be converted into skips.
 
-### `families.enforceSingleFamilyMembership`
+## 4. Pre-Deployment
 
-- Purpose: when enabled, prevents adding a user to a second family.
-- Default: `0` (disabled).
-- Truthy values: `1`, `true`, `yes`, `on` (case-insensitive).
-- Recommended production setting: `1` once legacy data has been cleaned and verified.
+```bash
+php --version
+composer --version
+composer validate --strict
+composer audit --locked --no-interaction
+composer install --no-dev --optimize-autoloader --dry-run --no-interaction
+vendor/bin/phpstan analyse --no-progress
+vendor/bin/phpunit --testdox
+php spark migrate:status --all
+php spark routes > /tmp/routes_before_deploy.txt
+sh build/backup_database.sh --check
+sh build/restore_database.sh --check
+```
 
-## 6.1 Edge Protection References
+Verify all `.env.example` placeholders have been replaced without logging their resulting values.
 
-- Reverse-proxy rate limits and request-body controls:
-  - `build/nginx/ekklesiard-rate-limit.conf`
-- CDN/WAF and staging stress-test procedure:
-  - `docs/EDGE_RATE_LIMIT_AND_WAF_PLAYBOOK.md`
+Export staging/production smoke inputs through the secret manager or deployment shell. Do not put credentials in command history or repository files:
+
+```bash
+export BASE_URL='https://application.example'
+export PROVINCE_ADMIN_EMAIL='...'
+export PROVINCE_ADMIN_PASSWORD='...'
+export DIOCESAN_ADMIN_EMAIL='...'
+export DIOCESAN_ADMIN_PASSWORD='...'
+```
+
+## 5. Deployment
+
+1. Enable maintenance mode at the load balancer or web server edge.
+2. Confirm unauthenticated liveness remains available:
+
+   ```bash
+   curl --fail --silent --show-error "$BASE_URL/health"
+   ```
+
+3. Create and validate a fresh backup:
+
+   ```bash
+   BACKUP_OUTPUT=$(sh build/backup_database.sh)
+   printf '%s\n' "$BACKUP_OUTPUT"
+   # Locate the reported file, then verify it is non-empty and valid gzip.
+   test -s /path/to/reported-backup.sql.gz
+   gzip -t /path/to/reported-backup.sql.gz
+   ```
+
+4. Check out the approved immutable release.
+5. Install production dependencies:
+
+   ```bash
+   composer install --no-dev --optimize-autoloader --no-interaction
+   ```
+
+6. Record migration state, apply migrations exactly once, and record it again:
+
+   ```bash
+   php spark migrate:status --all > /tmp/migrations_before.txt
+   php spark migrate --all
+   php spark migrate:status --all > /tmp/migrations_after.txt
+   ```
+
+7. Clear caches and compile routes:
+
+   ```bash
+   php spark cache:clear
+   php spark routes > /tmp/routes_after_deploy.txt
+   ```
+
+8. Run admin-level smoke assertions:
+
+   ```bash
+   sh build/e2e_admin_levels_smoke.sh
+   ```
+
+9. Sign in as a system administrator and request `GET /health/ready`. It must return HTTP 200 with `database` and `writable` marked `ready`.
+10. Disable edge maintenance mode.
+
+## 6. Health Endpoints
+
+### `GET /health`
+
+- Public liveness probe for load balancers.
+- Returns HTTP 200 and minimal JSON.
+- Does not query the database or disclose versions, paths, hostnames, configuration, or exceptions.
+- Remains available during maintenance mode.
+
+### `GET /health/ready`
+
+- Requires a Shield session and `system.admin` permission.
+- Checks database connectivity and required writable runtime directories.
+- Returns HTTP 200 when ready or HTTP 503 with stable error code `HEALTH_READINESS_FAILED`.
+- Never returns raw exception or SQL text.
 
 ## 7. Post-Deployment Validation
 
-- Login works for:
-  - province admin
-  - diocesan admin
-- Protected route scoping behaves correctly
-- Create/update/delete flows return expected responses
-- Logs are generated in both app and monitoring files
-- Slow query log entries appear when threshold is intentionally exceeded in staging validation
-- `audit_logs` records are being created for critical write actions
-- Backup script runs successfully
+- Public liveness returns 200 through the external load balancer.
+- Protected readiness returns 200 for a system administrator.
+- Province and diocesan administrator login and scope assertions pass.
+- Critical create/update/delete AJAX flows return their documented contracts.
+- Application and structured monitoring logs are written.
+- `audit_logs` receives critical write events.
+- SMTP delivery is verified with a non-sensitive staging message.
+- Slow-request/query alerts and 5xx/429 alerts are active.
+- The fresh backup exists, is non-empty, and passes `gzip -t`.
+
+Retain the release SHA/tag, CI run URL, PHP/Composer/MySQL versions, migration reports, route report, sanitized health/smoke reports, backup filename/checksum, skip review, and operator sign-off.
+
+## 8. Backups and Restore Drills
+
+Manual backup and non-destructive checks:
+
+```bash
+sh build/backup_database.sh --check
+sh build/backup_database.sh
+sh build/restore_database.sh --check
+```
+
+Schedule backups only after the command succeeds under the service account. Example:
+
+```cron
+0 2 * * * cd /path/to/ekklesiaRD && sh build/backup_database.sh >> writable/logs/backup-cron.log 2>&1
+```
+
+At a scheduled interval, restore the latest backup into an isolated database, verify expected tables and `php spark migrate:status --all`, then destroy the isolated environment through the approved infrastructure process. Never use a production database as a restore-drill target.
+
+A real restore is destructive and requires explicit approval for the selected target:
+
+```bash
+sh build/restore_database.sh /path/to/backup.sql.gz
+```
+
+## 9. Rollback
+
+1. Enable edge maintenance mode.
+2. Determine whether rollback is code-only or requires data/schema restoration.
+3. For code-only rollback, check out the previous known-good immutable release, reinstall production dependencies, clear caches, and compile routes.
+4. Do not run down-migrations or restore a database automatically. A restore can discard writes accepted after deployment and requires explicit operator approval.
+5. If approved, restore the selected verified backup into the confirmed target.
+6. Re-run liveness, protected readiness, migration status, login, and admin-level smoke checks.
+7. Disable maintenance mode only after all checks pass.
+8. Record the incident, selected backup, data-loss window assessment, and operator approvals.
+
+## 10. Nightly Rate-Limit Check
+
+`.github/workflows/nightly-security-rate-limit.yml` runs on schedule and manually against a protected non-production `staging` environment. Configure these secrets:
+
+- `STAGING_BASE_URL`
+- `STAGING_RATE_LIMIT_EMAIL`
+- `STAGING_RATE_LIMIT_PASSWORD`
+
+The workflow runs `build/stress_rate_limit_test.sh`, requires at least one HTTP 429 and a `Retry-After` header, and uploads only the sanitized report. It must never target production.
+
+## 11. Edge Protection and Monitoring
+
+- Reverse-proxy rate limits and body controls: `build/nginx/ekklesiard-rate-limit.conf`.
+- CDN/WAF procedure: `docs/EDGE_RATE_LIMIT_AND_WAF_PLAYBOOK.md`.
+- Application logs: `writable/logs/log-YYYY-MM-DD.log`.
+- Structured monitoring logs: `writable/logs/monitoring-YYYY-MM-DD.log`.
+- Recommended alerts: 5xx spikes, sustained latency above 800 ms, slow-query spikes, repeated 429s, and spikes in `permission.denied` or `scope.denied` audit events.

@@ -16,11 +16,12 @@ final class ModuleDemoDataSeederTest extends CIUnitTestCase
 
     public function testSeederCreatesCrossModuleBaselineRecords(): void
     {
-        $parishesTable = $this->resolveTableName('parishes');
-        if ($parishesTable === null) {
-            $this->markTestSkipped('No parishes table found in current test database schema.');
+        if (!class_exists(ModuleDemoDataSeeder::class)) {
+            $this->markTestSkipped('ModuleDemoDataSeeder is an optional development fixture and is not shipped.');
         }
 
+        $parishesTable = $this->resolveTableName('parish');
+        $this->assertNotNull($parishesTable);
         $this->seed(ModuleDemoDataSeeder::class);
 
         $parish = $this->db->table($parishesTable)

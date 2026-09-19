@@ -1,0 +1,42 @@
+name: Nightly Security Rate Limit
+
+on:
+  schedule:
+    - cron: "17 4 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: staging-rate-limit
+  cancel-in-progress: false
+
+jobs:
+  verify-rate-limit:
+    runs-on: ubuntu-latest
+    environment: staging
+    env:
+      BASE_URL: ${{ secrets.STAGING_BASE_URL }}
+      LOGIN_EMAIL: ${{ secrets.STAGING_RATE_LIMIT_EMAIL }}
+      LOGIN_PASSWORD: ${{ secrets.STAGING_RATE_LIMIT_PASSWORD }}
+      REQUESTS: "30"
+      CURL_CONNECT_TIMEOUT: "5"
+      CURL_MAX_TIME: "20"
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate staging configuration
+        run: |
+          test -n "$BASE_URL"
+          test -n "$LOGIN_EMAIL"
+          test -n "$LOGIN_PASSWORD"
+      - name: Verify application rate limiting
+        run: sh build/stress_rate_limit_test.sh | tee rate-limit-report.txt
+      - name: Upload sanitized report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: rate-limit-report
+          path: rate-limit-report.txt
+          if-no-files-found: error
+          retention-days: 14

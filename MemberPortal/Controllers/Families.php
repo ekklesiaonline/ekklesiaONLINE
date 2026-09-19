@@ -727,7 +727,7 @@ class Families extends BaseController
 
     private function shouldEnforceSingleFamilyMembership(): bool
     {
-        $value = strtolower(trim((string) (env('family.enforceSingleFamilyMembership') ?? '0')));
+        $value = strtolower(trim((string) (env('families.enforceSingleFamilyMembership') ?? '0')));
         return in_array($value, ['1', 'true', 'yes', 'on'], true);
     }
 

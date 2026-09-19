@@ -1,55 +1,70 @@
-#!/bin/sh
+#!/usr/bin/env sh
 set -eu
 
-BASE_URL="${BASE_URL:-http://127.0.0.1:8080}"
-COOKIE_FILE="/tmp/ekk_cookie.txt"
-LOGIN_HTML="/tmp/ekk_login.html"
-LOGIN_RESP="/tmp/ekk_login_resp.txt"
-REPORT="/tmp/ekk_e2e_admin_levels_report.txt"
+: "${BASE_URL:?Set BASE_URL to the staging application URL}"
+: "${PROVINCE_ADMIN_EMAIL:?Set PROVINCE_ADMIN_EMAIL}"
+: "${PROVINCE_ADMIN_PASSWORD:?Set PROVINCE_ADMIN_PASSWORD}"
+: "${DIOCESAN_ADMIN_EMAIL:?Set DIOCESAN_ADMIN_EMAIL}"
+: "${DIOCESAN_ADMIN_PASSWORD:?Set DIOCESAN_ADMIN_PASSWORD}"
 
-rm -f "$COOKIE_FILE" "$LOGIN_HTML" "$LOGIN_RESP" "$REPORT"
+CURL_CONNECT_TIMEOUT="${CURL_CONNECT_TIMEOUT:-5}"
+CURL_MAX_TIME="${CURL_MAX_TIME:-20}"
+TMP_DIR="$(mktemp -d "${TMPDIR:-/tmp}/ekk-admin-smoke.XXXXXX")"
+trap 'rm -rf "$TMP_DIR"' EXIT HUP INT TERM
+COOKIE_FILE="$TMP_DIR/cookie.txt"
+LOGIN_HTML="$TMP_DIR/login.html"
+LOGIN_RESP="$TMP_DIR/login-response.txt"
+REPORT="$TMP_DIR/report.txt"
 
 login_as() {
   email="$1"
   password="$2"
 
-  curl -s -c "$COOKIE_FILE" "$BASE_URL/login" -o "$LOGIN_HTML"
+  curl --fail --silent --show-error --connect-timeout "$CURL_CONNECT_TIMEOUT" --max-time "$CURL_MAX_TIME" \
+    -c "$COOKIE_FILE" "$BASE_URL/login" -o "$LOGIN_HTML"
   csrf_line=$(grep -m1 -o 'name="[A-Za-z0-9_]*" value="[A-Za-z0-9]*"' "$LOGIN_HTML" || true)
-  csrf_name=$(echo "$csrf_line" | sed -E 's/name="([A-Za-z0-9_]*)" value="([A-Za-z0-9]*)"/\1/')
-  csrf_val=$(echo "$csrf_line" | sed -E 's/name="([A-Za-z0-9_]*)" value="([A-Za-z0-9]*)"/\2/')
+  csrf_name=$(printf '%s' "$csrf_line" | sed -E 's/name="([A-Za-z0-9_]*)" value="([A-Za-z0-9]*)"/\1/')
+  csrf_val=$(printf '%s' "$csrf_line" | sed -E 's/name="([A-Za-z0-9_]*)" value="([A-Za-z0-9]*)"/\2/')
 
   if [ -z "$csrf_name" ] || [ -z "$csrf_val" ]; then
-    echo "ERROR: csrf token parse failed for $email" >> "$REPORT"
+    echo "ERROR: unable to parse login CSRF token" >&2
     return 1
   fi
 
-  curl -s -i -b "$COOKIE_FILE" -c "$COOKIE_FILE" -X POST "$BASE_URL/login" \
+  curl --silent --show-error --connect-timeout "$CURL_CONNECT_TIMEOUT" --max-time "$CURL_MAX_TIME" \
+    -i -b "$COOKIE_FILE" -c "$COOKIE_FILE" -X POST "$BASE_URL/login" \
     --data-urlencode "email=$email" \
     --data-urlencode "password=$password" \
     --data-urlencode "$csrf_name=$csrf_val" > "$LOGIN_RESP"
 
-  login_http=$(grep -Eo 'HTTP/1.1 (302|303|200|401|403)' "$LOGIN_RESP" | head -n1 || true)
-  echo "LOGIN_${email}_HTTP=${login_http:-missing}" >> "$REPORT"
+  if ! grep -Eq 'HTTP/[0-9.]+ (200|302|303)' "$LOGIN_RESP"; then
+    echo "ERROR: login failed" >&2
+    return 1
+  fi
 }
 
 check_get() {
   label="$1"
   path="$2"
-  code=$(curl -s -o /dev/null -w '%{http_code}' -b "$COOKIE_FILE" -c "$COOKIE_FILE" "$BASE_URL$path")
-  echo "${label}_HTTP=$code" >> "$REPORT"
+  expected="$3"
+  code=$(curl --silent --show-error --connect-timeout "$CURL_CONNECT_TIMEOUT" --max-time "$CURL_MAX_TIME" \
+    -o /dev/null -w '%{http_code}' -b "$COOKIE_FILE" -c "$COOKIE_FILE" "$BASE_URL$path")
+  echo "${label}_HTTP=$code EXPECTED=$expected" >> "$REPORT"
+  if [ "$code" != "$expected" ]; then
+    echo "ERROR: $label returned $code; expected $expected" >&2
+    return 1
+  fi
 }
 
-# Province admin assertions
-login_as "admin@ekklesiaRD.org" "password@123"
-check_get "PROVINCE_ADMIN_PROVINCE_DASH" "/province/dashboard"
-check_get "PROVINCE_ADMIN_DIOCESAN_CHART" "/chart-accounts"
-check_get "PROVINCE_ADMIN_LITURGICAL_SOURCE" "/liturgical-source"
+login_as "$PROVINCE_ADMIN_EMAIL" "$PROVINCE_ADMIN_PASSWORD"
+check_get "PROVINCE_ADMIN_PROVINCE_DASH" "/province/dashboard" "${PROVINCE_DASH_EXPECTED:-200}"
+check_get "PROVINCE_ADMIN_DIOCESAN_CHART" "/chart-accounts" "${PROVINCE_CHART_EXPECTED:-403}"
+check_get "PROVINCE_ADMIN_LITURGICAL_SOURCE" "/liturgical-source" "${PROVINCE_LITURGY_EXPECTED:-403}"
 
-# Diocesan admin assertions
-login_as "diocesanadmin@firstchurch.org" "password@123"
-check_get "DIOCESAN_ADMIN_PROVINCE_DASH" "/province/dashboard"
-check_get "DIOCESAN_ADMIN_DIOCESAN_CHART" "/chart-accounts"
-check_get "DIOCESAN_ADMIN_LITURGICAL_SOURCE" "/liturgical-source"
+login_as "$DIOCESAN_ADMIN_EMAIL" "$DIOCESAN_ADMIN_PASSWORD"
+check_get "DIOCESAN_ADMIN_PROVINCE_DASH" "/province/dashboard" "${DIOCESAN_PROVINCE_DASH_EXPECTED:-403}"
+check_get "DIOCESAN_ADMIN_DIOCESAN_CHART" "/chart-accounts" "${DIOCESAN_CHART_EXPECTED:-200}"
+check_get "DIOCESAN_ADMIN_LITURGICAL_SOURCE" "/liturgical-source" "${DIOCESAN_LITURGY_EXPECTED:-200}"
 
-echo "EXPECTED: province dashboard should be non-404 and diocesan chart/liturgical routes should be non-404 for diocesan admin." >> "$REPORT"
 cat "$REPORT"
+echo "ASSERTION_OK: admin-level route expectations passed."

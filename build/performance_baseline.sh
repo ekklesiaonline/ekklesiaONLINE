@@ -1,12 +1,12 @@
 #!/usr/bin/env sh
 set -eu
 
-BASE_URL="${BASE_URL:-http://127.0.0.1:8080}"
-LOGIN_EMAIL="${LOGIN_EMAIL:-admin@ekklesiaRD.org}"
-LOGIN_PASSWORD="${LOGIN_PASSWORD:-password@123}"
+: "${BASE_URL:?Set BASE_URL to the staging application URL}"
+: "${LOGIN_EMAIL:?Set LOGIN_EMAIL}"
+: "${LOGIN_PASSWORD:?Set LOGIN_PASSWORD}"
 REPEAT="${REPEAT:-3}"
 
-TMP_DIR="${TMPDIR:-/tmp}/ekk_performance_baseline.$$"
+TMP_DIR="$(mktemp -d "${TMPDIR:-/tmp}/ekk-performance.XXXXXX")"
 COOKIE_FILE="$TMP_DIR/cookies.txt"
 LOGIN_HTML="$TMP_DIR/login.html"
 LOGIN_RESP="$TMP_DIR/login_response.txt"
