@@ -21,6 +21,8 @@ return [
     'loginRemember'       => 'Remember me',
     'loginButton'         => 'Sign in',
     'loginForgot'         => 'Forgot your password?',
+    'showPassword'        => 'Show password',
+    'hidePassword'        => 'Hide password',
     'haveAccount'         => 'Already have an account?',
     'noAccount'           => "Don't have an account?",
 
@@ -92,6 +94,7 @@ return [
     'backToLogin'         => 'Back to Login',
     'registerSuccess'     => 'Welcome aboard!',
     'registerDisabled'    => 'Registration is not currently allowed.',
+    'registrationEmailUnavailable' => 'Registration could not be completed. If this email is already registered, please use the login page.',
 
     // -------------------------------------------------------------------------
     // Register page — additional keys

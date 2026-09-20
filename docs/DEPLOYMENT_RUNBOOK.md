@@ -228,3 +228,131 @@ The workflow runs `build/stress_rate_limit_test.sh`, requires at least one HTTP 
 - Application logs: `writable/logs/log-YYYY-MM-DD.log`.
 - Structured monitoring logs: `writable/logs/monitoring-YYYY-MM-DD.log`.
 - Recommended alerts: 5xx spikes, sustained latency above 800 ms, slow-query spikes, repeated 429s, and spikes in `permission.denied` or `scope.denied` audit events.
+
+## 12. Deployment Readiness Completion Checklist
+
+Complete these sessions in order. Mark an item complete only when its evidence has been reviewed. The current release status is **conditional no-go** until every session completion criterion is checked.
+
+### Session 1 — Rotate the exposed SMTP credential
+
+- [ ] Revoke the exposed SMTP/app password at the configured email provider.
+- [ ] Generate a replacement SMTP credential.
+- [ ] Update the untracked local `.env` values for `email.SMTPUser`, `email.SMTPPass`, `email.SMTPHost`, `email.SMTPPort`, and `email.SMTPCrypto`.
+- [ ] Update the staging and production secret managers where applicable.
+- [ ] Confirm the revoked credential no longer authenticates.
+- [ ] Send a non-sensitive test email with the replacement credential.
+- [ ] Verify application logs contain no SMTP password.
+- [ ] Confirm no credential was committed.
+
+Do not run `php spark config:check Email`; it prints resolved secrets.
+
+**Completion:** [ ] Old password revoked; [ ] replacement stored only in untracked environment files or secret managers; [ ] test email succeeds; [ ] no credential committed.
+
+### Session 2 — Review deployment-readiness changes
+
+- [x] Review `app/Controllers/Health.php` and confirm public liveness is minimal and does not query the database.
+- [x] Confirm protected readiness requires `system.admin`, returns HTTP 503 on component failure, and does not expose SQL, paths, versions, or exceptions.
+- [x] Review health routes and filters: `/health` bypasses maintenance/authentication while secure headers and request monitoring remain; `/health/ready` retains session and permission filters.
+- [x] Review the PHP 8.2–8.5 matrix, Composer pin, audit, production-install dry-run, MySQL migration job, and test artifacts.
+- [x] Review backup, restore, role smoke, and rate-limit scripts; database passwords are not command arguments and smoke credentials come from the environment.
+- [x] Review the six classified skips and confirm broad exceptions are not converted into skips.
+- [x] Review `.env.example`, this runbook, and README credential removal.
+- [x] Confirm no secrets or reusable passwords are present in tracked files.
+- [ ] Record reviewer approval that no unintended business-flow changes were found and the health, operations, and CI designs are accepted.
+
+**Completion:** [ ] Review approval is recorded.
+
+### Session 3 — Reconcile environment configuration
+
+- [ ] Compare local `.env` with `.env.example` without printing secret values.
+- [ ] Replace `family.enforceSingleFamilyMembership` with `families.enforceSingleFamilyMembership` and record the local policy decision.
+- [ ] Confirm local development environment, base URL, database, independent encryption keys, monitoring, and rate limits.
+- [ ] Configure staging with `CI_ENVIRONMENT = production`, HTTPS URL, trusted proxies, MySQL, independent encryption keys, SMTP, monitoring, audit, and backup values.
+- [ ] Confirm staging keeps `security.disableDeviceVerificationForTesting = 0`.
+- [ ] Repeat the environment review with production-specific secrets and confirm no `CHANGE_ME` values remain.
+- [ ] Confirm production `.env` is untracked and writable directories have service-account ownership/group access without world-writable permissions.
+- [ ] Audit and remediate multiple family memberships where necessary.
+- [ ] Decide and document whether `families.enforceSingleFamilyMembership = 1`.
+
+**Known blockers:** local `.env` remains development-oriented; deployment environment evidence and the family-policy decision have not been recorded.
+
+**Completion:** [ ] Local works; [ ] staging complete; [ ] production complete or securely staged; [ ] no deployment placeholders; [ ] family policy documented.
+
+### Session 4 — Configure protected GitHub staging
+
+- [ ] Create a protected GitHub environment named `staging`.
+- [ ] Restrict staging-secret modification and add required reviewers where appropriate.
+- [ ] Add `STAGING_BASE_URL`, `STAGING_RATE_LIMIT_EMAIL`, and `STAGING_RATE_LIMIT_PASSWORD`.
+- [ ] Confirm the test account is non-production and has only required permissions.
+- [ ] Manually run the nightly rate-limit workflow against staging.
+- [ ] Confirm validation and login succeed, at least one HTTP 429 and a `Retry-After` header are observed, and concurrent runs are prevented.
+- [ ] Confirm the artifact is sanitized and excludes cookies, credentials, and temporary response bodies.
+
+**Completion:** [ ] Protected environment exists; [ ] all secrets configured; [ ] manual run succeeds; [ ] sanitized artifact reviewed; [ ] production not targeted.
+
+### Session 5 — Run the complete CI release gate
+
+- [x] Local `composer validate --strict` passes.
+- [x] Local dependency install and production `--no-dev` dry-run pass.
+- [x] Local `composer audit --locked --no-interaction` reports no advisories.
+- [x] Local PHPStan reports no errors.
+- [x] Local PHPUnit passes with 588 tests, 2,626 assertions, and exactly six classified skips.
+- [ ] Upgrade/confirm Composer 2.10.3 or newer; the assessed local version was 2.10.1.
+- [ ] Confirm CI PHP 8.2, 8.3, 8.4, and 8.5 jobs pass without failures, warnings, or risky tests.
+- [ ] Download and review TestDox and JUnit artifacts; block on any skip beyond the four legacy plural-table, optional development-seeder, and liturgical-calendar fixture skips.
+- [ ] Confirm the MySQL 8 service is healthy, migrations apply to an empty database, route compilation succeeds, and uploaded evidence is reviewed.
+
+**Completion:** [ ] Quality job passes; [ ] all four PHP jobs pass; [ ] MySQL job passes; [ ] exactly six skips; [ ] all artifacts reviewed.
+
+### Session 6 — Validate staging application flows
+
+- [ ] Confirm unauthenticated `GET /health` returns minimal HTTP 200 JSON without versions, paths, or configuration values.
+- [ ] Enable maintenance mode, confirm `/health` still returns HTTP 200, and disable maintenance mode afterward.
+- [ ] Confirm `/health/ready` rejects anonymous, normal-member, and non-`system.admin` parish-admin requests.
+- [ ] Confirm system-admin readiness returns HTTP 200 with `database` and `writable` marked `ready`.
+- [ ] Export staging smoke credentials securely and run `sh build/e2e_admin_levels_smoke.sh`.
+- [ ] Confirm province- and diocesan-admin assertions pass and investigate unexpected 200, 302, 403, 404, or 500 responses.
+- [ ] Confirm application and structured monitoring logs are written and critical writes create redacted audit records.
+- [ ] Confirm credentials do not appear in logs and 5xx, latency, and 429 monitoring is active.
+
+**Completion:** [ ] Liveness passes; [ ] readiness authorization passes; [ ] components ready; [ ] role smoke passes; [ ] logging and monitoring operational.
+
+### Session 7 — Validate backups and isolated restoration
+
+- [ ] Run `sh build/backup_database.sh --check` and confirm connectivity and writable output.
+- [ ] Run `sh build/restore_database.sh --check` and confirm prerequisites.
+- [ ] Create a staging backup and record its reported filename.
+- [ ] Confirm the backup is non-empty, passes `gzip -t`, has a recorded checksum, and uses the intended retention settings.
+- [ ] Create a separate empty MySQL database and confirm it is neither staging nor production.
+- [ ] Configure isolated restore credentials.
+- [ ] Obtain explicit confirmation for the selected isolated target before running the restore.
+- [ ] Restore and verify core tables, migration status, representative row counts, authentication, and encrypted-data expectations where practical.
+- [ ] Record results and remove the isolated environment through the approved infrastructure process.
+
+**Known blocker:** backup and restore preflights currently lack `backup.db.pass` or `database.default.password`.
+
+**Completion:** [ ] Both preflights pass; [ ] backup integrity passes; [ ] isolated restore succeeds; [ ] schema/migrations verified; [ ] production untouched.
+
+### Session 8 — Final review and commit
+
+- [ ] Confirm Sessions 1–7 are complete.
+- [ ] Run `git status`, review every modified/new file, run `git diff --check`, and search tracked changes for credentials.
+- [ ] Confirm `.env`, runtime files, backup artifacts, vendor-generated cache files, and unrelated changes are not tracked.
+- [ ] Resolve the dirty dompdf generated font-cache files by using a clean lockfile-based Composer install for release evidence.
+- [ ] Re-run Composer validation/audit, PHPStan, PHPUnit without coverage, route compilation, shell syntax checks, and workflow YAML validation.
+- [ ] Confirm CI and staging checks remain green.
+- [ ] Create a verified backup, then apply the pending `CodeIgniter\\Settings\\ConvertSqlsrvValueColumn` migration with `php spark migrate --all` in the approved release window.
+- [ ] Confirm rollback owner and maintenance window.
+- [ ] Review the proposed subject: `Harden deployment readiness and release validation`.
+- [ ] Stage only intended files, create the commit, verify it contains no secrets, and record its SHA.
+- [ ] Do not push or deploy without explicit approval.
+
+**Completion:** [ ] Preceding sessions complete; [ ] repository contains only intended changes; [ ] verification passes; [ ] commit created; [ ] no unapproved push/deployment.
+
+### Current decision
+
+- [x] Application-level local automated checks passed during the readiness assessment.
+- [x] No deployment, migration, destructive restore, push, or production change was performed during the assessment.
+- [ ] Production release approved.
+
+The release remains **no-go** until the SMTP credential is rotated, deployment environments are reconciled, Composer 2.10.3+ and clean vendor installation are confirmed, CI/MySQL/staging evidence is reviewed, backup and isolated restore validation succeed, the pending vendor migration is applied after a verified backup, and the rollback owner and maintenance window are recorded.

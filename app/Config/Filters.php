@@ -353,6 +353,8 @@ class Filters extends BaseFilters
             'before' => [
                 'login',
                 'register',
+                'session/device-verify',
+                'session/device-verify/resend',
             ],
         ],
         // API abuse protection for high-risk write endpoints.

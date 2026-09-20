@@ -29,7 +29,6 @@ class RegistrationGateFilter implements FilterInterface
 {
     public function before(RequestInterface $request, $arguments = null)
     {
-        
         // Unauthenticated requests are handled by the session filter; nothing to gate here.
         if (!auth()->loggedIn()) {
             return null;
@@ -52,15 +51,6 @@ class RegistrationGateFilter implements FilterInterface
             return redirect()->to('/login')->with('error', lang('Auth.accountInactive'));
         }
 
-        // If the onboarding table doesn't exist yet, seeded/admin users should still pass through.
-        try {
-            if (! db_connect()->tableExists('user_registration_request')) {
-                return null;
-            }
-        } catch (\Throwable $e) {
-            return null;
-        }
-
         try {
             $registrationRequest = model('UserRegistrationRequestModel')
                 ->where('user_id', (int) auth()->id())
@@ -68,8 +58,6 @@ class RegistrationGateFilter implements FilterInterface
         } catch (\Throwable $e) {
             // If the onboarding table does not exist yet, seeded/admin users
             // should still be allowed through rather than showing a blank page.
-            log_message('error', 'RegistrationGateFilter could not query user_registration_request: ' . $e->getMessage());
-
             return null;
         }
 

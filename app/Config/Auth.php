@@ -22,10 +22,10 @@ use CodeIgniter\Shield\Authentication\Authenticators\AccessTokens;
 use CodeIgniter\Shield\Authentication\Authenticators\HmacSha256;
 use CodeIgniter\Shield\Authentication\Authenticators\JWT;
 use CodeIgniter\Shield\Authentication\Authenticators\Session;
+use App\Authentication\Passwords\SafePwnedValidator;
 use CodeIgniter\Shield\Authentication\Passwords\CompositionValidator;
 use CodeIgniter\Shield\Authentication\Passwords\DictionaryValidator;
 use CodeIgniter\Shield\Authentication\Passwords\NothingPersonalValidator;
-use CodeIgniter\Shield\Authentication\Passwords\PwnedValidator;
 use CodeIgniter\Shield\Authentication\Passwords\ValidatorInterface;
 
 class Auth extends ShieldAuth
@@ -47,7 +47,7 @@ class Auth extends ShieldAuth
      * --------------------------------------------------------------------
      */
     public array $views = [
-        'login'                       => '\CodeIgniter\Shield\Views\login',
+        'login'                       => '\App\Views\auth\login',
         'register'                    => '\App\Views\auth\register',
         'layout'                      => '\App\Views\auth\layout',
         'action_email_2fa'            => '\CodeIgniter\Shield\Views\email_2fa_show',
@@ -275,7 +275,7 @@ class Auth extends ShieldAuth
         CompositionValidator::class,
         NothingPersonalValidator::class,
         DictionaryValidator::class,
-        // PwnedValidator::class,
+        SafePwnedValidator::class,
     ];
 
     /**

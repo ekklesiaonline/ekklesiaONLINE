@@ -177,6 +177,8 @@ final class RegistrationConsistencyTest extends CIUnitTestCase
         $this->assertStringContainsString("pending_profile", $source);
         $this->assertStringContainsString("pending_review", $source);
         $this->assertStringContainsString("isStaffAdmin", $source);
+        $this->assertStringContainsString("UserRegistrationRequestModel", $source);
+        $this->assertStringNotContainsString("user_registration_request')", $source, 'Do not hardcode the singular table name; the model resolves the real table.');
     }
 
     private function getMethodSource(ReflectionMethod $method): string

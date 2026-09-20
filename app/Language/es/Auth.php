@@ -14,6 +14,8 @@ return [
     'loginRemember'       => 'Recordarme',
     'loginButton'         => 'Entrar',
     'loginForgot'         => '¿Olvidaste tu contraseña?',
+    'showPassword'        => 'Mostrar contraseña',
+    'hidePassword'        => 'Ocultar contraseña',
     'haveAccount'         => '¿Ya tienes cuenta?',
     'noAccount'           => '¿No tienes cuenta?',
 
@@ -70,6 +72,7 @@ return [
     'backToLogin'         => 'Volver al inicio de sesión',
     'registerSuccess'     => '¡Bienvenido!',
     'registerDisabled'    => 'El registro no está disponible en este momento.',
+    'registrationEmailUnavailable' => 'No se pudo completar el registro. Si este correo ya está registrado, utiliza la página de inicio de sesión.',
 
     // -------------------------------------------------------------------------
     // Register page — additional keys

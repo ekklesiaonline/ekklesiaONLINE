@@ -18,6 +18,7 @@
 - Model casts must use nullable prefix form: `?int`, `?string` (never `int?`, `string?`).
 - Use `php spark` for code generation, not manual scaffolding.
 - Write tests with CIUnitTestCase.
+- Run tests with `vendor/bin/phpunit --no-coverage`; this project does not provide a `php spark test` command.
 
 ## Documentation & Bootstrapping
 
@@ -39,3 +40,21 @@
 - For permission/scope issues, use `/parish-permissions` or `/permission-denied`.
 - For audit, observability, and localization questions, use `/audit-logging` or `/localization`.
 - For Sunday attendance chart rules, use `/sunday-attendance-charts`.
+
+## Security & Onboarding Conventions
+
+- `RegistrationGateFilter` must query registration status through `UserRegistrationRequestModel`; do not hardcode the singular table name `user_registration_request` because the deployed table is `user_registration_requests`.
+- Device-verification endpoints (`/session/device-verify`, `/session/device-verify/resend`) must be rate-limited via the `loginRateLimit` filter; they are already included in `Config/Filters.php`.
+- In development, device verification can be disabled with `security.disableDeviceVerificationForTesting = true` in `.env`.
+- CI4's `Email` class does not support a `log` protocol; verification-code flows require SMTP or a mail catcher in test environments.
+
+## Session 7: Final Verification Summary
+
+- Full automated suite: `vendor/bin/phpunit --no-coverage` — 605 tests, 2,700 assertions, 6 skipped.
+- Manual curl-based walkthroughs completed:
+  - Registration → email activation → profile completion → pending review → admin approval (via `RegistrationApprovalService`).
+  - Login → device-verification challenge (when enabled) → `/me` dashboard.
+  - Magic-link login and force-password-reset flow.
+  - Banned, dismissed, and deactivated accounts are blocked from authenticated routes.
+  - Concurrent-session limit enforces a maximum of three tracked sessions per user.
+- Fixed a regression in `RegistrationGateFilter` where a hardcoded singular onboarding table name caused banned/dismissed/pending_profile gating to be silently skipped. The filter now delegates table resolution to `UserRegistrationRequestModel`.

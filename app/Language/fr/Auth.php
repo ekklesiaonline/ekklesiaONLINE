@@ -14,6 +14,8 @@ return [
     'loginRemember'       => 'Se souvenir de moi',
     'loginButton'         => 'Se connecter',
     'loginForgot'         => 'Mot de passe oublié ?',
+    'showPassword'        => 'Afficher le mot de passe',
+    'hidePassword'        => 'Masquer le mot de passe',
     'haveAccount'         => 'Vous avez déjà un compte ?',
     'noAccount'           => "Vous n'avez pas de compte ?",
 
@@ -70,6 +72,7 @@ return [
     'backToLogin'         => 'Retour à la connexion',
     'registerSuccess'     => 'Bienvenue !',
     'registerDisabled'    => "L'inscription n'est pas disponible pour l'instant.",
+    'registrationEmailUnavailable' => "L'inscription n'a pas pu être effectuée. Si cette adresse est déjà enregistrée, utilisez la page de connexion.",
 
     // -------------------------------------------------------------------------
     // Register page — additional keys

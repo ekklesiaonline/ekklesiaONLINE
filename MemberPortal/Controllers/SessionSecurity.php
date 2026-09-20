@@ -12,6 +12,7 @@ class SessionSecurity extends BaseController
 {
     private const VERIFY_CODE_TTL_SECONDS = 600;
     private const VERIFY_CODE_RESEND_COOLDOWN_SECONDS = 60;
+    private const MAX_VERIFY_ATTEMPTS = 5;
 
     /**
      * Keepalive endpoint — resets the server-side idle timer.
@@ -82,8 +83,18 @@ class SessionSecurity extends BaseController
         $storedHash = (string) session()->get('device_verification_code_hash');
         $attempts   = (int) session()->get('device_verification_attempts');
 
+        if ($attempts >= self::MAX_VERIFY_ATTEMPTS || $storedHash === '') {
+            $this->invalidateVerificationCode(true);
+            return redirect()->back()->with('error', 'Too many failed attempts. The verification code was invalidated — please request a new one.');
+        }
+
         if (!hash_equals($storedHash, hash('sha256', $code))) {
-            session()->set('device_verification_attempts', $attempts + 1);
+            $attempts++;
+            session()->set('device_verification_attempts', $attempts);
+            if ($attempts >= self::MAX_VERIFY_ATTEMPTS) {
+                $this->invalidateVerificationCode(true);
+                return redirect()->back()->with('error', 'Too many failed attempts. The verification code was invalidated — please request a new one.');
+            }
             return redirect()->back()->withInput()->with('error', 'Invalid verification code. Please try again.');
         }
 
@@ -102,6 +113,26 @@ class SessionSecurity extends BaseController
         }
 
         return redirect()->to(base_url('dashboard'))->with('success', 'Device verified successfully.');
+    }
+
+    /**
+     * Invalidate the pending verification code so it can no longer be guessed.
+     * Keeps `device_verification_required` set so the user must request a new code.
+     */
+    private function invalidateVerificationCode(bool $audit): void
+    {
+        session()->remove([
+            'device_verification_code_hash',
+            'device_verification_attempts',
+        ]);
+        session()->set('device_verification_expires_at', 0);
+
+        if ($audit) {
+            $this->audit()->log('security.device_verification.lockout', [
+                'entity_type' => 'user',
+                'entity_id'   => auth()->id(),
+            ]);
+        }
     }
 
     /**

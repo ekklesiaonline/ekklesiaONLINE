@@ -4,48 +4,14 @@
 
 <?= $this->section('main') ?>
 <?php
-$parishes = db_connect()->table('parish p')
-    ->select('p.id, p.name, p.parish_ueid, d.name as diocese_name, pr.name as province_name')
-    ->join('diocese d', 'd.id = p.diocese_id', 'left')
-    ->join('province pr', 'pr.id = d.province_id', 'left')
-    ->orderBy('pr.name', 'ASC')
-    ->orderBy('d.name', 'ASC')
-    ->orderBy('p.name', 'ASC')
-    ->get()
-    ->getResultArray();
-
 $selectedParishId = (string) old('parish_id');
 $selectedParishLabel = '';
-$parishLookupItems = [];
 
-foreach ($parishes as $parish) {
-    $parishUeid = trim((string) ($parish['parish_ueid'] ?? ''));
-    $dioceseName = trim((string) ($parish['diocese_name'] ?? ''));
-    $provinceName = trim((string) ($parish['province_name'] ?? ''));
-    $label = (string) $parish['name'];
-
-    if ($parishUeid !== '') {
-        $label .= ' [' . $parishUeid . ']';
+foreach ($parishLookupItems as $parishLookupItem) {
+    if ($selectedParishId !== '' && $selectedParishId === (string) $parishLookupItem['id']) {
+        $selectedParishLabel = (string) $parishLookupItem['label'];
+        break;
     }
-
-    if ($dioceseName !== '') {
-        $label .= ' - ' . $dioceseName;
-    }
-
-    if ($provinceName !== '') {
-        $label .= ' (' . $provinceName . ')';
-    }
-
-    if ($selectedParishId !== '' && $selectedParishId === (string) ((int) $parish['id'])) {
-        $selectedParishLabel = $label;
-    }
-
-    $parishLookupItems[] = [
-        'id' => (int) $parish['id'],
-        'name' => (string) $parish['name'],
-        'parish_ueid' => $parishUeid,
-        'label' => $label,
-    ];
 }
 
 $uiLocale = strtolower((string) (session('user_locale') ?? service('request')->getLocale() ?? config('App')->defaultLocale));

@@ -31,7 +31,7 @@ $routes->get('auth/set-password', '\\App\\Controllers\\Auth\\SetPasswordControll
 $routes->post('auth/set-password', '\\App\\Controllers\\Auth\\SetPasswordController::save');
 
 // Explicit register routes: keep named GET route and custom POST validation flow.
-$routes->get('register', '\\CodeIgniter\\Shield\\Controllers\\RegisterController::registerView', ['as' => 'register']);
+$routes->get('register', '\\App\\Controllers\\Auth\\RegisterController::registerView', ['as' => 'register']);
 $routes->post('register', '\\App\\Controllers\\Auth\\RegisterController::registerAction');
 
 // Load role-based module routes
