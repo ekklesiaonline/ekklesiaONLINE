@@ -44,6 +44,8 @@ final class EmailSettingsSecurityTest extends CIUnitTestCase
         $this->assertStringContainsString('data-allow-repeat-submit="true"', $source);
         $this->assertStringContainsString('.finally(function ()', $source);
         $this->assertStringContainsString('submit.disabled = false;', $source);
+        $this->assertStringNotContainsString("session()->has('success')", $source);
+        $this->assertStringNotContainsString("session()->has('error')", $source);
     }
 
     private function methodSource(ReflectionMethod $method): string

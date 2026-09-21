@@ -37,20 +37,6 @@ $errorFor    = static fn(string $key): string => $hasError($key) ? '<div class="
     </a>
 </div>
 
-<?php if (session()->has('success')): ?>
-    <div class="alert alert-success alert-dismissible fade show" role="alert">
-        <?= esc(session('success')) ?>
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    </div>
-<?php endif; ?>
-
-<?php if (session()->has('error')): ?>
-    <div class="alert alert-danger alert-dismissible fade show" role="alert">
-        <?= esc(session('error')) ?>
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    </div>
-<?php endif; ?>
-
 <?php if ($errors !== []): ?>
     <div class="alert alert-danger alert-dismissible fade show" role="alert">
         <ul class="mb-0">
