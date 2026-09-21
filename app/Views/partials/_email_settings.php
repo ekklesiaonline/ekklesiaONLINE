@@ -26,11 +26,11 @@ $hasError    = static fn(string $key): bool => isset($errors[$key]);
 $errorFor    = static fn(string $key): string => $hasError($key) ? '<div class="text-danger small mt-1">' . esc((string) $errors[$key]) . '</div>' : '';
 ?>
 
-<div class="d-flex justify-content-start align-items-center mb-3">
-    <a href="<?= esc($back_url) ?>" class="btn btn-sm btn-outline-secondary me-3">
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h5 class="mb-0"><?= esc($title) ?></h5>
+    <a href="<?= esc($back_url) ?>" class="btn btn-sm btn-outline-secondary">
         <i class="bi bi-arrow-left me-1" aria-hidden="true"></i><?= lang('App.back') ?>
     </a>
-    <h5 class="mb-0"><?= esc($title) ?></h5>
 </div>
 
 <?php if (session()->has('success')): ?>
@@ -161,7 +161,8 @@ $errorFor    = static fn(string $key): string => $hasError($key) ? '<div class="
         <div class="card">
             <div class="card-header"><strong><?= lang('Email.testSend') ?></strong></div>
             <div class="card-body">
-                <form action="<?= esc($test_url) ?>" method="post">
+                <div id="email-test-result" class="alert d-none" role="alert"></div>
+                <form id="email-test-form" action="<?= esc($test_url) ?>" method="post">
                     <?= csrf_field() ?>
                     <input type="hidden" name="scope_type" value="<?= esc($scope_type) ?>">
                     <?php if ($scope_id !== null): ?>
@@ -179,3 +180,55 @@ $errorFor    = static fn(string $key): string => $hasError($key) ? '<div class="
         </div>
     </div>
 </div>
+
+<script>
+(function () {
+    const form = document.getElementById('email-test-form');
+    const result = document.getElementById('email-test-result');
+    if (!form || !result) {
+        return;
+    }
+
+    form.addEventListener('submit', function (e) {
+        e.preventDefault();
+
+        const csrfMeta = document.querySelector('meta[name="csrf-token"]');
+        const csrfHeader = document.querySelector('meta[name="csrf-header"]')?.content ?? 'X-CSRF-TOKEN';
+        const headers = {
+            'X-Requested-With': 'XMLHttpRequest',
+            'Content-Type': 'application/x-www-form-urlencoded',
+        };
+        if (csrfMeta) {
+            headers[csrfHeader] = csrfMeta.content;
+        }
+
+        result.className = 'alert alert-info';
+        result.textContent = '<?= lang('Email.sendingTest') ?>';
+        result.classList.remove('d-none');
+
+        fetch(form.action, {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: headers,
+            body: new URLSearchParams(new FormData(form)).toString(),
+        })
+        .then(function (r) {
+            const newToken = r.headers.get(csrfHeader);
+            if (newToken && csrfMeta) {
+                csrfMeta.content = newToken;
+            }
+            return r.json();
+        })
+        .then(function (data) {
+            result.className = data.success ? 'alert alert-success' : 'alert alert-danger';
+            result.textContent = data.message || (data.success ? '<?= lang('Email.testSent') ?>' : '<?= lang('Email.testSendFailed') ?>');
+            result.classList.remove('d-none');
+        })
+        .catch(function () {
+            result.className = 'alert alert-danger';
+            result.textContent = '<?= lang('Email.testSendFailed') ?>';
+            result.classList.remove('d-none');
+        });
+    });
+})();
+</script>
