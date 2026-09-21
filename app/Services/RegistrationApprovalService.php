@@ -279,6 +279,16 @@ class RegistrationApprovalService
             $this->db->table('users')
                 ->where('id', (int) $request['user_id'])
                 ->update(['active' => 0]);
+
+            // Security: banned/dismissed accounts lose all trusted devices
+            // and tracked sessions immediately. Best-effort: never let a
+            // missing table break moderation actions.
+            try {
+                (new \App\Services\TrustedDeviceService())->revokeAll((int) $request['user_id'], null, $actorUserId);
+                model('UserSessionModel')->removeAllForUser((int) $request['user_id']);
+            } catch (\Throwable $e) {
+                log_message('warning', 'Post-ban session/trust cleanup failed: {error}', ['error' => $e->getMessage()]);
+            }
         }
 
         $this->db->transComplete();

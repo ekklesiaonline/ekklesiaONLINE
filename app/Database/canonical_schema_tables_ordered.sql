@@ -2068,6 +2068,26 @@ CREATE TABLE `user_session` (
   KEY `user_id_last_active` (`user_id`,`last_active`)
 ) ENGINE=InnoDB AUTO_INCREMENT=537 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+CREATE TABLE `user_trusted_device` (
+  `id` int unsigned NOT NULL AUTO_INCREMENT,
+  `user_id` int unsigned NOT NULL,
+  `selector` varchar(24) COLLATE utf8mb4_general_ci NOT NULL,
+  `token_hash` char(64) COLLATE utf8mb4_general_ci NOT NULL,
+  `display_name` varchar(120) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `last_ip_address` varchar(45) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `first_seen_at` datetime DEFAULT NULL,
+  `last_seen_at` datetime DEFAULT NULL,
+  `expires_at` datetime NOT NULL,
+  `revoked_at` datetime DEFAULT NULL,
+  `revoked_by` int unsigned DEFAULT NULL,
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `selector` (`selector`),
+  KEY `user_id` (`user_id`),
+  KEY `expires_at` (`expires_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
 CREATE TABLE `user_setting` (
   `id` int unsigned NOT NULL AUTO_INCREMENT,
   `user_id` int unsigned NOT NULL,

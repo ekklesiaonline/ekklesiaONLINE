@@ -398,6 +398,11 @@
                 </a>
             </li>
             <li class="nav-item">
+                <a class="nav-link <?= str_starts_with(uri_string(), 'session/devices') ? 'active' : '' ?>" href="<?= base_url('session/devices') ?>">
+                    <i class="bi bi-shield-lock" aria-hidden="true"></i> <?= lang('App.navSecurity') ?>
+                </a>
+            </li>
+            <li class="nav-item">
                 <a class="nav-link" href="<?= base_url('logout') ?>">
                     <i class="bi bi-box-arrow-right" aria-hidden="true"></i> <?= lang('App.navLogout') ?>
                 </a>

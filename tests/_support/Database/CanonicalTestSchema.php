@@ -646,10 +646,28 @@ final class CanonicalTestSchema
         'user_session' => [
             'user_id'    => 'INTEGER',
             'session_id' => 'TEXT',
+            'session_token' => 'TEXT',
             'ip_address' => 'TEXT',
             'user_agent' => 'TEXT',
+            'device_fingerprint' => 'TEXT',
+            'is_new_device' => 'INTEGER',
+            'last_active' => 'TEXT',
             'created_at' => 'TEXT',
             'updated_at' => 'TEXT',
+        ],
+        'user_trusted_device' => [
+            'user_id'         => 'INTEGER',
+            'selector'        => 'TEXT',
+            'token_hash'      => 'TEXT',
+            'display_name'    => 'TEXT',
+            'last_ip_address' => 'TEXT',
+            'first_seen_at'   => 'TEXT',
+            'last_seen_at'    => 'TEXT',
+            'expires_at'      => 'TEXT',
+            'revoked_at'      => 'TEXT',
+            'revoked_by'      => 'INTEGER',
+            'created_at'      => 'TEXT',
+            'updated_at'      => 'TEXT',
         ],
     ];
 

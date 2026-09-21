@@ -28,6 +28,7 @@ return [
     'navReports'          => 'Rapports',
     'navVolunteers'       => 'Bénévoles',
     'navProfile'          => 'Mon profil',
+    'navSecurity'         => 'Sécurité',
     'navLogout'           => 'Se déconnecter',
     'navParishes' => 'Paroisses',
     'navParishProfile' => 'Profil de la paroisse',

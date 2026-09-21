@@ -30,6 +30,7 @@ return [
     'navReports'          => 'Reports',
     'navVolunteers'       => 'Volunteers',
     'navProfile'          => 'My Profile',
+    'navSecurity'         => 'Security',
     'navLogout'           => 'Logout',
     'navParishes'         => 'Parishes',
     'navParishProfile'    => 'Parish Profile',

@@ -134,12 +134,10 @@ class Filters extends BaseFilters
                     'health',
                 ],
             ],
-            'csrf' => [
-                'except' => [
-                    'session/device-verify',
-                    'session/device-verify/',
-                ],
-            ],
+            // session/device-verify POST is CSRF-protected: the challenge form
+            // is rendered after the session exists, so csrf_field() emits a
+            // valid token.
+            'csrf',
             'localeSet',
             // 'honeypot',
             // 'invalidchars',

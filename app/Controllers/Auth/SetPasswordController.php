@@ -70,6 +70,14 @@ class SetPasswordController extends BaseController
         // Transition portal_access invited → enabled now that reset is cleared.
         (new MemberAccessService())->activatePortalAccessAfterSuccessfulLogin((int) $user->id);
 
+        // Security: a password change invalidates every trusted device so a
+        // stolen device cookie cannot survive credential rotation.
+        try {
+            (new \App\Services\TrustedDeviceService())->revokeAll((int) $user->id);
+        } catch (\Throwable $e) {
+            log_message('warning', 'Trusted-device revocation after password reset failed: {error}', ['error' => $e->getMessage()]);
+        }
+
         try {
             service('audit')->log('auth.password_reset.completed', [
                 'entity_type' => 'user',

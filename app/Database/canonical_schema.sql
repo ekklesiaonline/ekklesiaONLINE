@@ -3394,6 +3394,34 @@ CREATE TABLE `user_session` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
+-- Table structure for table `user_trusted_device`
+--
+
+DROP TABLE IF EXISTS `user_trusted_device`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `user_trusted_device` (
+  `id` int unsigned NOT NULL AUTO_INCREMENT,
+  `user_id` int unsigned NOT NULL,
+  `selector` varchar(24) COLLATE utf8mb4_general_ci NOT NULL,
+  `token_hash` char(64) COLLATE utf8mb4_general_ci NOT NULL,
+  `display_name` varchar(120) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `last_ip_address` varchar(45) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `first_seen_at` datetime DEFAULT NULL,
+  `last_seen_at` datetime DEFAULT NULL,
+  `expires_at` datetime NOT NULL,
+  `revoked_at` datetime DEFAULT NULL,
+  `revoked_by` int unsigned DEFAULT NULL,
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `selector` (`selector`),
+  KEY `user_id` (`user_id`),
+  KEY `expires_at` (`expires_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
 -- Table structure for table `user_setting`
 --
 

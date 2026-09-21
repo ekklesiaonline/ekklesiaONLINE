@@ -277,6 +277,17 @@ Events::on('register', static function (User $user): void {
 // Clear the cached locale from session when a user logs out so the next
 // user on this browser always reloads their own profile preference.
 Events::on('logout', static function (User $user): void {
+    // Drop the tracked session row for this login. The trusted-device cookie
+    // is intentionally left alone — "forget this device" is a separate action.
+    $sessionToken = (string) (session()->get('ekklesia_session_token') ?? '');
+    if ($sessionToken !== '') {
+        try {
+            model('UserSessionModel')->removeByToken($sessionToken);
+        } catch (\Throwable $e) {
+            log_message('warning', 'Failed to remove tracked session on logout: {error}', ['error' => $e->getMessage()]);
+        }
+    }
+
     session()->remove('user_locale');
 
     try {

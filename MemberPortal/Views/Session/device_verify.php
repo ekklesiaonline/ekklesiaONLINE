@@ -21,6 +21,12 @@
                     <div class="alert alert-success"><?= esc(session('success')) ?></div>
                 <?php endif; ?>
 
+                <?php if (!empty($mailFailed)): ?>
+                    <div class="alert alert-warning">
+                        <?= lang('Auth.verifyEmailFailed') ?>
+                    </div>
+                <?php endif; ?>
+
                 <p class="mb-3">
                     <?= lang('Auth.verifyCodeIntro') ?>
                 </p>

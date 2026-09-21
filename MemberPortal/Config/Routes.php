@@ -27,6 +27,12 @@ $routes->group('', ['filter' => 'session'], function ($routes) {
     $routes->post('session/device-verify', '\\MemberPortal\\Controllers\\SessionSecurity::deviceVerifySubmit');
     $routes->post('session/device-verify/resend', '\\MemberPortal\\Controllers\\SessionSecurity::deviceVerifyResend');
 
+    // Trusted-device management (Security page)
+    $routes->get('session/devices', '\\MemberPortal\\Controllers\\SessionSecurity::devices');
+    $routes->post('session/devices/revoke/(:num)', '\\MemberPortal\\Controllers\\SessionSecurity::revokeDevice/$1');
+    $routes->post('session/devices/revoke-others', '\\MemberPortal\\Controllers\\SessionSecurity::revokeOtherDevices');
+    $routes->post('session/devices/forget', '\\MemberPortal\\Controllers\\SessionSecurity::forgetDevice');
+
     $routes->get('dashboard', '\\MemberPortal\\Controllers\\Dashboard::index');
     $routes->get('dashboard/followup-stats', '\\MemberPortal\\Controllers\\Dashboard::followupStats');
     $routes->get('dashboard/switch/(:num)', '\\MemberPortal\\Controllers\\Dashboard::switchParish/$1');

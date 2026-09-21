@@ -2,6 +2,7 @@
 
 namespace App\Filters;
 
+use App\Services\DeviceVerificationPolicy;
 use CodeIgniter\Filters\FilterInterface;
 use CodeIgniter\HTTP\RequestInterface;
 use CodeIgniter\HTTP\ResponseInterface;
@@ -12,19 +13,13 @@ use CodeIgniter\HTTP\ResponseInterface;
 class DeviceVerificationFilter implements FilterInterface
 {
     /**
-     * Local-only safety valve for smoke tests.
+     * Local-only safety valve for smoke tests. Delegates to the shared
+     * DeviceVerificationPolicy so the bypass decision is identical to the
+     * one SessionTrackingFilter makes before challenge/email creation.
      */
     private function shouldBypassForTesting(RequestInterface $request): bool
     {
-        // Never bypass device verification in production. Only controlled non-production
-        // environments may explicitly disable it for integration/smoke testing.
-        if (!in_array(ENVIRONMENT, ['testing', 'development'], true)) {
-            return false;
-        }
-
-        $rawFlag = strtolower((string) env('security.disableDeviceVerificationForTesting', '0'));
-
-        return in_array($rawFlag, ['1', 'true', 'yes', 'on'], true);
+        return (new DeviceVerificationPolicy())->shouldBypass();
     }
 
     public function before(RequestInterface $request, $arguments = null)
@@ -67,6 +62,13 @@ class DeviceVerificationFilter implements FilterInterface
                         'ts' => date('c'),
                     ],
                 ]);
+        }
+
+        // Remember the requested page so verification can return the user to it.
+        if (strtolower($request->getMethod()) === 'get') {
+            $path = '/' . ltrim((string) $request->getUri()->getPath(), '/');
+            $query = (string) $request->getUri()->getQuery();
+            session()->set('device_verify_return_url', $query !== '' ? $path . '?' . $query : $path);
         }
 
         return redirect()->to(base_url('session/device-verify'));

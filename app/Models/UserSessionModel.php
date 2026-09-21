@@ -47,13 +47,18 @@ class UserSessionModel extends Model
      * removing the oldest sessions if necessary. Returns true when the
      * current device fingerprint has not been seen before for this user
      * (signals a "new device" login).
+     *
+     * When $knownDevice is true (valid trusted-device cookie or an explicit
+     * development bypass), the fingerprint check is skipped and the session
+     * is registered as a known device.
      */
     public function registerSession(
         int    $userId,
         string $token,
         string $ip,
         string $userAgent,
-        string $fingerprint
+        string $fingerprint,
+        bool   $knownDevice = false
     ): bool {
         $now = date('Y-m-d H:i:s');
 
@@ -63,9 +68,10 @@ class UserSessionModel extends Model
         $this->pruneStaleForUser($userId, $ttl);
 
         // Is this fingerprint new for this user?
-        $isNewDevice = $this->where('user_id', $userId)
-            ->where('device_fingerprint', $fingerprint)
-            ->countAllResults() === 0;
+        $isNewDevice = ! $knownDevice
+            && $this->where('user_id', $userId)
+                ->where('device_fingerprint', $fingerprint)
+                ->countAllResults() === 0;
 
         // Enforce concurrent session cap: delete oldest sessions over limit.
         $max    = $this->maxConcurrentSessions();
