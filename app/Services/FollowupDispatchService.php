@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Libraries\DataEncryption;
 use App\Models\CallTaskModel;
 use App\Models\SmsQueueModel;
+use App\Services\EmailScopeService;
 
 /**
  * FollowupDispatchService
@@ -81,7 +82,7 @@ class FollowupDispatchService
 
         return match ($channel) {
             'text'  => $this->dispatchText($logRow, $template, $guest, $vars),
-            'email' => $this->dispatchEmail($logRow, $template, $guest, $vars),
+            'email' => $this->dispatchEmail($logRow, $template, $guest, $vars, $parishId),
             'call'  => $this->dispatchCall($logRow, $guest, $parishId),
             'mail'  => $this->dispatchMail($logRow, $template, $guest, $vars, $logId),
             'gift'  => $this->dispatchGift($logRow, $guest),
@@ -137,7 +138,7 @@ class FollowupDispatchService
         ];
     }
 
-    private function dispatchEmail(array $logRow, ?array $template, array $guest, array $vars): array
+    private function dispatchEmail(array $logRow, ?array $template, array $guest, array $vars, int $parishId): array
     {
         if ($template === null) {
             return ['success' => false, 'metadata' => [], 'error' => 'No template assigned for email action.'];
@@ -155,7 +156,7 @@ class FollowupDispatchService
             : nl2br(esc($bodyText));
 
         try {
-            $mailer = service('email');
+            $mailer = (new EmailScopeService())->mailer(['parish_id' => $parishId], ['overrides' => ['mailType' => 'html']]);
             $mailer->setTo($email);
             $mailer->setSubject($subject);
             $mailer->setMessage($bodyHtml);

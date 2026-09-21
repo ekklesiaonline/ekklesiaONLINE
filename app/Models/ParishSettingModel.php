@@ -33,7 +33,7 @@ class ParishSettingModel extends Model
     ];
 
     /**
-     * Get setting value by parish and key
+     * Get a raw setting row by parish and key.
      */
     public function getSetting(int $parishId, string $key, mixed $default = null): mixed
     {
@@ -49,7 +49,23 @@ class ParishSettingModel extends Model
     }
 
     /**
-     * Get all settings for a parish
+     * Get a decrypted setting value by parish and key.
+     */
+    public function getSettingDecrypted(int $parishId, string $key, mixed $default = null): mixed
+    {
+        $result = $this->where('parish_id', $parishId)
+            ->where('key', $key)
+            ->first();
+
+        if (!$result) {
+            return $default;
+        }
+
+        return $this->castStoredValue($result) ?? $default;
+    }
+
+    /**
+     * Get all raw setting rows for a parish.
      */
     public function getParishSettings(int $parishId): array
     {
@@ -57,7 +73,21 @@ class ParishSettingModel extends Model
     }
 
     /**
-     * Set or update a setting
+     * Get all settings for a parish as a decrypted key => value map.
+     */
+    public function getParishSettingsMap(int $parishId): array
+    {
+        $rows = $this->where('parish_id', $parishId)->findAll();
+        $settings = [];
+        foreach ($rows as $row) {
+            $settings[$row['key']] = $this->castStoredValue($row);
+        }
+
+        return $settings;
+    }
+
+    /**
+     * Set or update a setting.
      */
     public function setSetting(int $parishId, string $key, mixed $value, bool $isEncrypted = false): bool
     {
@@ -80,12 +110,33 @@ class ParishSettingModel extends Model
     }
 
     /**
-     * Delete setting by parish and key
+     * Delete setting by parish and key.
      */
     public function deleteSetting(int $parishId, string $key): bool
     {
         return $this->where('parish_id', $parishId)
             ->where('key', $key)
             ->delete();
+    }
+
+    /**
+     * Cast/decrypt a stored row's value.
+     */
+    private function castStoredValue(array $row): mixed
+    {
+        $value = $row['value'];
+
+        if (! empty($row['is_encrypted']) && $value !== null && $value !== '') {
+            try {
+                $value = service('encrypter')->decrypt($value);
+            } catch (\Exception $e) {
+                log_message('error', '[ParishSettingModel] Failed to decrypt key {key}: {message}', [
+                    'key'     => $row['key'],
+                    'message' => $e->getMessage(),
+                ]);
+            }
+        }
+
+        return $value;
     }
 }

@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use App\Services\EmailScopeService;
+
 class AdminInvitationService
 {
     public function send(string $recipientEmail, ?int $userId = null): void
@@ -11,10 +13,15 @@ class AdminInvitationService
             return;
         }
 
-        helper('email');
+        try {
+            $emailService = (new EmailScopeService())->systemMailer(['overrides' => ['mailType' => 'html']]);
+        } catch (\Throwable $e) {
+            log_message('error', '[AdminInvitationService] Failed to build system mailer: {message}', [
+                'message' => $e->getMessage(),
+            ]);
+            throw new \RuntimeException('ADMIN_INVITATION_EMAIL_FAILED');
+        }
 
-        $emailService = emailer(['mailType' => 'html'])
-            ->setFrom(setting('Email.fromEmail'), setting('Email.fromName') ?? '');
         $emailService->setTo($recipientEmail);
         $emailService->setSubject(lang('System.adminInvitationSubject'));
 

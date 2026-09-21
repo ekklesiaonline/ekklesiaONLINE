@@ -16,5 +16,8 @@ $routes->group('', ['filter' => 'session'], function ($routes) {
         $routes->get('secretary', '\\Parish\\Controllers\\SecretaryDashboard::index', ['filter' => 'permission:report.view']);
         $routes->get('worship', '\\Parish\\Controllers\\WorshipDashboard::index', ['filter' => 'permission:service.view']);
         $routes->get('volunteers', '\\Parish\\Controllers\\VolunteerDashboard::index', ['filter' => 'permission:volunteer.view']);
+        $routes->get('email-settings', '\\App\\Controllers\\Parish\\EmailSettingsController::index', ['filter' => 'permission:parish.edit']);
+        $routes->post('email-settings', '\\App\\Controllers\\Parish\\EmailSettingsController::save', ['filter' => 'permission:parish.edit']);
+        $routes->post('email-settings/test', '\\App\\Controllers\\Parish\\EmailSettingsController::test', ['filter' => 'permission:parish.edit']);
     });
 });

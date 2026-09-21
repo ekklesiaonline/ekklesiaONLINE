@@ -4,41 +4,60 @@ namespace App\Services;
 
 use App\Models\DioceseSettingModel;
 use App\Models\OrganisationSettingModel;
+use App\Models\ParishSettingModel;
 use App\Models\ProvinceSettingModel;
+use App\Models\SystemSettingModel;
 
 /**
  * Hierarchical Configuration Service
- * 
+ *
  * Manages settings across organisational scopes with fallback:
- * Parish/Diocese → Diocese → Province (if applicable) → Organisation (global)
+ * Parish → Diocese → Province → Organisation → System → caller-supplied default
  */
 class ConfigurationService
 {
+    private ParishSettingModel      $parishModel;
+    private DioceseSettingModel     $dioceseModel;
+    private ProvinceSettingModel    $provinceModel;
     private OrganisationSettingModel $organisationModel;
-    private ProvinceSettingModel $provinceModel;
-    private DioceseSettingModel $dioceseModel;
+    private SystemSettingModel      $systemModel;
 
     public function __construct(
-        ?OrganisationSettingModel $organisationModel = null,
+        ?ParishSettingModel $parishModel = null,
+        ?DioceseSettingModel $dioceseModel = null,
         ?ProvinceSettingModel $provinceModel = null,
-        ?DioceseSettingModel $dioceseModel = null
+        ?OrganisationSettingModel $organisationModel = null,
+        ?SystemSettingModel $systemModel = null
     ) {
+        $this->parishModel      = $parishModel      ?? model(ParishSettingModel::class);
+        $this->dioceseModel     = $dioceseModel     ?? model(DioceseSettingModel::class);
+        $this->provinceModel    = $provinceModel    ?? model(ProvinceSettingModel::class);
         $this->organisationModel = $organisationModel ?? model(OrganisationSettingModel::class);
-        $this->provinceModel = $provinceModel ?? model(ProvinceSettingModel::class);
-        $this->dioceseModel = $dioceseModel ?? model(DioceseSettingModel::class);
+        $this->systemModel      = $systemModel      ?? model(SystemSettingModel::class);
     }
 
     /**
-     * Get a setting with hierarchical fallback
-     * 
-     * Lookup order:
-     * 1. Diocese-specific setting
-     * 2. Province-specific setting (if applicable)
-     * 3. Organisation global setting
+     * Get a setting with hierarchical fallback.
+     *
+     * Lookup order: parish → diocese → province → organisation → system → default
+     *
+     * @param string            $key      Setting key
+     * @param array<string,int> $scope    May contain parish_id, diocese_id, province_id
+     * @param mixed             $default  Value to return if not found at any tier
      */
-    public function getSetting(string $key, ?int $dioceseId = null, ?int $provinceId = null, $default = null)
+    public function getSettingForScope(string $key, array $scope = [], $default = null)
     {
-        // Try diocese first
+        $parishId  = (int) ($scope['parish_id'] ?? 0) ?: null;
+        $dioceseId = (int) ($scope['diocese_id'] ?? 0) ?: null;
+        $provinceId = (int) ($scope['province_id'] ?? 0) ?: null;
+
+        if ($parishId !== null) {
+            $value = $this->parishModel->getSettingDecrypted($parishId, $key);
+            if ($value !== null) {
+                return $value;
+            }
+        }
+
         if ($dioceseId !== null) {
             $value = $this->dioceseModel->getValue($dioceseId, $key);
             if ($value !== null) {
@@ -46,7 +65,6 @@ class ConfigurationService
             }
         }
 
-        // Try province next
         if ($provinceId !== null) {
             $value = $this->provinceModel->getValue($provinceId, $key);
             if ($value !== null) {
@@ -54,8 +72,12 @@ class ConfigurationService
             }
         }
 
-        // Fall back to organisation global
         $value = $this->organisationModel->getValue($key);
+        if ($value !== null) {
+            return $value;
+        }
+
+        $value = $this->systemModel->getValue($key);
         if ($value !== null) {
             return $value;
         }
@@ -64,106 +86,141 @@ class ConfigurationService
     }
 
     /**
-     * Get all settings with hierarchical merge
-     * Diocese settings override province, province override organisation
+     * Backward-compatible single-key lookup without parish scope.
      */
-    public function getAllSettings(?int $dioceseId = null, ?int $provinceId = null): array
+    public function getSetting(string $key, ?int $dioceseId = null, ?int $provinceId = null, $default = null)
     {
+        return $this->getSettingForScope($key, [
+            'diocese_id'  => $dioceseId,
+            'province_id' => $provinceId,
+        ], $default);
+    }
+
+    /**
+     * Get all settings as a merged key/value map for a scope.
+     *
+     * Merge order (later overrides earlier): system → organisation → province
+     * → diocese → parish
+     *
+     * @param array<string,int> $scope May contain parish_id, diocese_id, province_id
+     */
+    public function getAllSettingsForScope(array $scope = []): array
+    {
+        $parishId  = (int) ($scope['parish_id'] ?? 0) ?: null;
+        $dioceseId = (int) ($scope['diocese_id'] ?? 0) ?: null;
+        $provinceId = (int) ($scope['province_id'] ?? 0) ?: null;
+
         $merged = [];
 
-        // Start with organisation settings
+        $merged = array_merge($merged, $this->systemModel->getAll());
         $merged = array_merge($merged, $this->organisationModel->getAll());
 
-        // Merge province settings (override organisation)
         if ($provinceId !== null) {
             $merged = array_merge($merged, $this->provinceModel->getAll($provinceId));
         }
 
-        // Merge diocese settings (override all)
         if ($dioceseId !== null) {
             $merged = array_merge($merged, $this->dioceseModel->getAll($dioceseId));
+        }
+
+        if ($parishId !== null) {
+            $merged = array_merge($merged, $this->parishModel->getParishSettingsMap($parishId));
         }
 
         return $merged;
     }
 
     /**
-     * Set a diocese setting
+     * Backward-compatible merge without parish scope.
      */
-    public function setDioceseSetting(int $dioceseId, string $key, $value, string $dataType = 'string', string $description = null): bool
+    public function getAllSettings(?int $dioceseId = null, ?int $provinceId = null): array
     {
-        return $this->dioceseModel->setValue($dioceseId, $key, $value, $dataType, $description);
+        return $this->getAllSettingsForScope([
+            'diocese_id'  => $dioceseId,
+            'province_id' => $provinceId,
+        ]);
+    }
+
+    public function setParishSetting(int $parishId, string $key, $value, bool $isEncrypted = false): bool
+    {
+        return $this->parishModel->setSetting($parishId, $key, $value, $isEncrypted);
+    }
+
+    public function setDioceseSetting(int $dioceseId, string $key, $value, bool $isEncrypted = false): bool
+    {
+        return $this->dioceseModel->setValue($dioceseId, $key, $value, $isEncrypted);
+    }
+
+    public function setProvinceSetting(int $provinceId, string $key, $value, bool $isEncrypted = false): bool
+    {
+        return $this->provinceModel->setValue($provinceId, $key, $value, $isEncrypted);
+    }
+
+    public function setOrganisationSetting(string $key, $value, bool $isEncrypted = false): bool
+    {
+        return $this->organisationModel->setValue($key, $value, $isEncrypted);
+    }
+
+    public function setSystemSetting(string $key, $value, string $dataType = 'string', ?string $category = null, ?string $description = null): bool
+    {
+        return $this->systemModel->setValue($key, $value, $dataType, $category, $description);
     }
 
     /**
-     * Set a province setting
-     */
-    public function setProvinceSetting(int $provinceId, string $key, $value, string $dataType = 'string', string $description = null): bool
-    {
-        return $this->provinceModel->setValue($provinceId, $key, $value, $dataType, $description);
-    }
-
-    /**
-     * Set a global/organisation setting
-     */
-    public function setOrganisationSetting(string $key, $value, string $dataType = 'string', string $category = null, string $description = null): bool
-    {
-        return $this->organisationModel->setValue($key, $value, $dataType, $category, $description);
-    }
-
-    /**
-     * Check if a global setting is locked (prevents override at lower levels)
+     * Lock a system-level setting so lower tiers cannot override it.
      */
     public function isSettingLocked(string $key): bool
     {
-        return $this->organisationModel->isLocked($key);
+        return $this->systemModel->isLocked($key);
     }
 
-    /**
-     * Lock a global setting to prevent diocese/province overrides
-     */
     public function lockSetting(string $key): bool
     {
-        return $this->organisationModel->lockSetting($key);
+        return $this->setLockFlag($key, true);
     }
 
-    /**
-     * Unlock a global setting
-     */
     public function unlockSetting(string $key): bool
     {
-        return $this->organisationModel->unlockSetting($key);
+        return $this->setLockFlag($key, false);
+    }
+
+    private function setLockFlag(string $key, bool $locked): bool
+    {
+        $row = $this->systemModel->where('setting_key', $key)->first();
+
+        if (!$row) {
+            return false;
+        }
+
+        return $this->systemModel->update($row['id'], ['is_locked' => $locked ? 1 : 0]);
     }
 
     /**
-     * Get settings by category (global settings only)
+     * Settings by category are read from the System tier, which retains
+     * a category column for operational/platform settings.
      */
     public function getSettingsByCategory(string $category): array
     {
-        return $this->organisationModel->getByCategory($category);
+        return $this->systemModel->getByCategory($category);
     }
 
-    /**
-     * Get all organisation-level settings with their metadata
-     */
     public function getAllOrganisationSettings(): array
     {
-        return $this->organisationModel->findAll();
+        return $this->organisationModel->getAll();
     }
 
-    /**
-     * Get all diocese-level settings for a specific diocese
-     */
     public function getAllDioceseSettings(int $dioceseId): array
     {
         return $this->dioceseModel->getAll($dioceseId);
     }
 
-    /**
-     * Get all province-level settings for a specific province
-     */
     public function getAllProvinceSettings(int $provinceId): array
     {
         return $this->provinceModel->getAll($provinceId);
+    }
+
+    public function getAllSystemSettings(): array
+    {
+        return $this->systemModel->getAll();
     }
 }

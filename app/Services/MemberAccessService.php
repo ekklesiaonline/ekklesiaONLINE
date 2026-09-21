@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Libraries\SchemaResolver;
+use App\Services\EmailScopeService;
 use CodeIgniter\Database\BaseConnection;
 
 class MemberAccessService
@@ -153,7 +154,7 @@ class MemberAccessService
                 }
 
                 if ($targetEmail !== '') {
-                    $this->sendPortalInviteEmail($targetEmail);
+                    $this->sendPortalInviteEmail($targetEmail, $parishId);
                 }
 
                 return $this->result(true, 200, 'PORTAL_INVITE_RESENT', 'Portal invite email re-sent. Access activates after password setup.', [], [
@@ -262,7 +263,7 @@ class MemberAccessService
                 }
             }
 
-            $this->sendPortalInviteEmail($email);
+            $this->sendPortalInviteEmail($email, $parishId);
 
             if ($this->db->transStatus() === false) {
                 throw new \RuntimeException('Transaction status is false after portal enable flow.');
@@ -382,16 +383,23 @@ class MemberAccessService
         }
     }
 
-    private function sendPortalInviteEmail(string $recipientEmail): void
+    private function sendPortalInviteEmail(string $recipientEmail, int $parishId): void
     {
         if (defined('ENVIRONMENT') && ENVIRONMENT === 'testing') {
             return;
         }
 
-        helper('email');
+        $context = $parishId > 0 ? ['parish_id' => $parishId] : [];
 
-        $emailService = emailer(['mailType' => 'html'])
-            ->setFrom(setting('Email.fromEmail'), setting('Email.fromName') ?? '');
+        try {
+            $emailService = (new EmailScopeService())->mailer($context, ['overrides' => ['mailType' => 'html']]);
+        } catch (\Throwable $e) {
+            log_message('error', '[MemberAccessService] Failed to build scoped portal invite mailer: {message}', [
+                'message' => $e->getMessage(),
+            ]);
+            throw new \RuntimeException('PORTAL_INVITE_EMAIL_FAILED');
+        }
+
         $emailService->setTo($recipientEmail);
         $emailService->setSubject('Portal Access Invitation - EkklesiaRD');
         $passwordSetupUrl = base_url('login/magic-link');

@@ -11,85 +11,88 @@ class DioceseSettingModel extends Model
     protected $useAutoIncrement = true;
     protected $returnType = 'array';
     protected $useSoftDeletes = false;
-    protected $allowedFields = ['diocese_id', 'setting_key', 'setting_value', 'data_type', 'description'];
+    protected $allowedFields = ['diocese_id', 'key', 'value', 'is_encrypted'];
     protected $useTimestamps = true;
     protected $createdField = 'created_at';
     protected $updatedField = 'updated_at';
     protected $validationRules = [
         'diocese_id' => 'required|numeric',
-        'setting_key' => 'required|string|max_length[100]',
-        'data_type' => 'required|in_list[string,integer,boolean,json,text]',
+        'key'        => 'required|string|max_length[255]',
+        'value'      => 'permit_empty',
+        'is_encrypted' => 'permit_empty|in_list[0,1]',
     ];
 
     /**
-     * Get a setting value with type casting
+     * Get a setting value with optional decryption.
      */
     public function getValue(int $dioceseId, string $key, $default = null)
     {
         $row = $this->where('diocese_id', $dioceseId)
-            ->where('setting_key', $key)
+            ->where('key', $key)
             ->first();
 
         if (!$row) {
             return $default;
         }
 
-        return $this->castValue($row['setting_value'], $row['data_type']);
+        return $this->castStoredValue($row);
     }
 
     /**
-     * Set a setting value
+     * Set or update a setting value.
      */
-    public function setValue(int $dioceseId, string $key, $value, string $dataType = 'string', string $description = null): bool
+    public function setValue(int $dioceseId, string $key, $value, bool $isEncrypted = false): bool
     {
         $existing = $this->where('diocese_id', $dioceseId)
-            ->where('setting_key', $key)
+            ->where('key', $key)
             ->first();
 
         $data = [
-            'diocese_id' => $dioceseId,
-            'setting_key' => $key,
-            'setting_value' => $this->encodeValue($value, $dataType),
-            'data_type' => $dataType,
-            'description' => $description ?? $existing['description'] ?? null,
+            'diocese_id'   => $dioceseId,
+            'key'          => $key,
+            'value'        => $value,
+            'is_encrypted' => $isEncrypted ? 1 : 0,
         ];
 
         if ($existing) {
             return $this->update($existing['id'], $data);
         }
 
-        return $this->insert($data);
+        return $this->insert($data) !== false;
     }
 
     /**
-     * Get all settings for a diocese
+     * Get all settings for a diocese.
      */
     public function getAll(int $dioceseId): array
     {
         $rows = $this->where('diocese_id', $dioceseId)->findAll();
         $settings = [];
         foreach ($rows as $row) {
-            $settings[$row['setting_key']] = $this->castValue($row['setting_value'], $row['data_type']);
+            $settings[$row['key']] = $this->castStoredValue($row);
         }
+
         return $settings;
     }
 
-    private function castValue($value, string $type)
+    /**
+     * Cast/decrypt a stored row's value.
+     */
+    private function castStoredValue(array $row)
     {
-        return match ($type) {
-            'integer' => (int) $value,
-            'boolean' => (bool) $value,
-            'json' => json_decode($value, true),
-            'text', 'string' => (string) $value,
-            default => $value,
-        };
-    }
+        $value = $row['value'];
 
-    private function encodeValue($value, string $type): string
-    {
-        return match ($type) {
-            'json' => json_encode($value),
-            default => (string) $value,
-        };
+        if (! empty($row['is_encrypted']) && $value !== null && $value !== '') {
+            try {
+                $value = service('encrypter')->decrypt($value);
+            } catch (\Exception $e) {
+                log_message('error', '[DioceseSettingModel] Failed to decrypt key {key}: {message}', [
+                    'key'     => $row['key'],
+                    'message' => $e->getMessage(),
+                ]);
+            }
+        }
+
+        return $value;
     }
 }

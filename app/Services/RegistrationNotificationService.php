@@ -17,15 +17,18 @@ class RegistrationNotificationService
     private BaseConnection $db;
     private ParishRoleAuditModel $roleAudit;
     private HierarchyService $hierarchy;
+    private EmailScopeService $emailScope;
 
     public function __construct(
         ?BaseConnection $db = null,
         ?ParishRoleAuditModel $roleAudit = null,
-        ?HierarchyService $hierarchy = null
+        ?HierarchyService $hierarchy = null,
+        ?EmailScopeService $emailScope = null
     ) {
         $this->db = $db ?? db_connect();
         $this->roleAudit = $roleAudit ?? model(ParishRoleAuditModel::class);
         $this->hierarchy = $hierarchy ?? new HierarchyService($this->db);
+        $this->emailScope = $emailScope ?? new EmailScopeService(null, $this->hierarchy);
     }
 
     /**
@@ -71,7 +74,15 @@ class RegistrationNotificationService
             . 'Request ID: #' . $requestId . "\n"
             . 'Review: ' . $dashboardUrl;
 
-        $email = service('email');
+        try {
+            $email = $this->emailScope->mailer(['parish_id' => $parishId]);
+        } catch (\Throwable $e) {
+            log_message('error', 'Failed to build scoped mailer for pending review notification: {message}', [
+                'message' => $e->getMessage(),
+            ]);
+            return;
+        }
+
         $delivered = 0;
 
         foreach ($recipients as $recipient) {

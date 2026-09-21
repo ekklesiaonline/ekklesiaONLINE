@@ -46,5 +46,10 @@ $routes->group('', ['filter' => 'session'], function ($routes) {
         $routes->post('diocese-admins/deactivate/(:num)', '\\App\\Controllers\\ProvinceDioceseAdmins::deactivate/$1', ['filter' => 'permission:province.diocese_admin.manage']);
         $routes->post('quick-create-parish', '\\Province\\Controllers\\Dashboard::quickCreateParish');
         $routes->post('quick-create-parish', '\\Province\\Controllers\\Dashboard::quickCreateParish');
+
+        // Email settings
+        $routes->get('email-settings', '\\App\\Controllers\\Province\\EmailSettingsController::index');
+        $routes->post('email-settings', '\\App\\Controllers\\Province\\EmailSettingsController::save');
+        $routes->post('email-settings/test', '\\App\\Controllers\\Province\\EmailSettingsController::test');
     });
 });

@@ -443,7 +443,7 @@ class FakeMessagingService extends MessagingService
         return ['success' => true, 'message_id' => 'fake', 'error' => ''];
     }
 
-    public function sendEmail($to, string $subject, string $htmlBody, ?string $textBody = null): array
+    public function sendEmail($to, string $subject, string $htmlBody, ?string $textBody = null, array $context = []): array
     {
         $this->emails[] = ['to' => is_array($to) ? implode(',', $to) : $to, 'subject' => $subject, 'text' => (string) $textBody];
 

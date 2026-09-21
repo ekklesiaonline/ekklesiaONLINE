@@ -96,7 +96,7 @@ class SessionTrackingFilter implements FilterInterface
                 return;
             }
 
-            $emailService = service('email');
+            $emailService = (new \App\Services\EmailScopeService())->systemMailer();
             $emailService->setTo($email);
             $emailService->setSubject('Verify New Device Login - EkklesiaRD');
             $emailService->setMessage($this->buildEmailBody($ip, $userAgent, $verificationCode));

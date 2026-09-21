@@ -318,7 +318,8 @@ class BulkMessageService
                         (string) $recipient['address'],
                         $subject !== '' ? $subject : $parishName,
                         nl2br(htmlspecialchars($body, ENT_QUOTES, 'UTF-8'), false),
-                        $body
+                        $body,
+                        ['parish_id' => $parishId]
                     );
                     $update['status'] = $result['success'] ? MessageRecipientModel::STATUS_SENT : MessageRecipientModel::STATUS_FAILED;
                     $update['error']  = $result['success'] ? null : substr((string) ($result['error'] ?? 'send failed'), 0, 500);

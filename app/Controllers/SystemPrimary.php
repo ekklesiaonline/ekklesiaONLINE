@@ -92,7 +92,7 @@ class SystemPrimary extends BaseController
                 ]);
 
                 try {
-                    $emailService = service('email');
+                    $emailService = (new \App\Services\EmailScopeService())->systemMailer();
                     $emailService->setTo($email);
                     $emailService->setSubject(lang('System.transferOtpEmailSubject'));
                     $emailService->setMessage($this->buildPrimaryTransferOtpEmailBody($challengeCode, $userId));

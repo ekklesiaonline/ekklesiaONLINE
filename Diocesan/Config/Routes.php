@@ -46,5 +46,10 @@ $routes->group('', ['filter' => 'session'], function ($routes) {
             $routes->post('deactivate/(:num)', '\\App\\Controllers\\DioceseParishAdmins::deactivate/$1');
             $routes->post('reactivate/(:num)', '\\App\\Controllers\\DioceseParishAdmins::reactivate/$1');
         });
+
+        // Email settings
+        $routes->get('email-settings', '\\App\\Controllers\\Diocesan\\EmailSettingsController::index');
+        $routes->post('email-settings', '\\App\\Controllers\\Diocesan\\EmailSettingsController::save');
+        $routes->post('email-settings/test', '\\App\\Controllers\\Diocesan\\EmailSettingsController::test');
     });
 });

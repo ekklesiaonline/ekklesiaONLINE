@@ -184,7 +184,7 @@ class SessionSecurity extends BaseController
         $ip        = (string) $request->getIPAddress();
 
         try {
-            $emailService = service('email');
+            $emailService = (new \App\Services\EmailScopeService())->systemMailer();
             $emailService->setTo((string) $user->email);
             $emailService->setSubject('Verify New Device Login - EkklesiaRD');
             $emailService->setMessage($this->buildVerificationEmailBody($ip, $userAgent, $code));

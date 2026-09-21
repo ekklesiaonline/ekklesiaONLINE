@@ -136,24 +136,35 @@ class ParochialReport extends BaseController
                 ->with('error', lang('App.prEmailPdfSendFailed'));
         }
 
-        $email = service('email');
-        $email->clear(true);
-        $email->setTo($recipient);
-        $parishName = (string) ($pdf['parish_name'] ?? '');
-        $email->setSubject('Parochial Report ' . $year . ' - ' . $parishName);
-        $email->setMessage(
-            '<p>Please find the attached parochial report PDF for <strong>' . esc($parishName) . '</strong>.</p>'
-                . '<p>Report year: ' . esc((string) $year) . '<br>Paper size: ' . esc(strtoupper($paperSize)) . '</p>'
-        );
-        $email->attach($tempPath, 'attachment', $pdf['filename'], 'application/pdf');
+        try {
+            $email = (new \App\Services\EmailScopeService())->mailer(
+                ['parish_id' => $parishId],
+                ['overrides' => ['mailType' => 'html']]
+            );
+            $email->clear(true);
+            $email->setTo($recipient);
+            $parishName = (string) ($pdf['parish_name'] ?? '');
+            $email->setSubject('Parochial Report ' . $year . ' - ' . $parishName);
+            $email->setMessage(
+                '<p>Please find the attached parochial report PDF for <strong>' . esc($parishName) . '</strong>.</p>'
+                    . '<p>Report year: ' . esc((string) $year) . '<br>Paper size: ' . esc(strtoupper($paperSize)) . '</p>'
+            );
+            $email->attach($tempPath, 'attachment', $pdf['filename'], 'application/pdf');
 
-        $sent = $email->send(false);
+            $sent = $email->send(false);
 
-        if (!$sent) {
-            log_message('error', 'Parochial report PDF email failed for parish {parishId}: {debug}', [
+            if (!$sent) {
+                log_message('error', 'Parochial report PDF email failed for parish {parishId}: {debug}', [
+                    'parishId' => $parishId,
+                    'debug' => $email->printDebugger(['headers']),
+                ]);
+            }
+        } catch (\Throwable $e) {
+            log_message('error', 'Parochial report PDF email failed for parish {parishId}: {message}', [
                 'parishId' => $parishId,
-                'debug' => $email->printDebugger(['headers']),
+                'message' => $e->getMessage(),
             ]);
+            $sent = false;
         }
 
         @unlink($tempPath);

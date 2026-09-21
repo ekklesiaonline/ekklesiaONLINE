@@ -34,6 +34,14 @@ $routes->post('auth/set-password', '\\App\\Controllers\\Auth\\SetPasswordControl
 $routes->get('register', '\\App\\Controllers\\Auth\\RegisterController::registerView', ['as' => 'register']);
 $routes->post('register', '\\App\\Controllers\\Auth\\RegisterController::registerAction');
 
+// Scoped magic-link email sender: uses tenant From identity, system transport.
+$routes->post('login/magic-link', '\\App\\Controllers\\Auth\\ScopedMagicLinkController::loginAction');
+
+// System-level email settings.
+$routes->get('system/email', '\\App\\Controllers\\SystemEmailSettingsController::index', ['filter' => 'permission:system.admin']);
+$routes->post('system/email', '\\App\\Controllers\\SystemEmailSettingsController::save', ['filter' => 'permission:system.admin']);
+$routes->post('system/email/test', '\\App\\Controllers\\SystemEmailSettingsController::test', ['filter' => 'permission:system.admin']);
+
 // Load role-based module routes
 if (is_file(ROOTPATH . 'Province/Config/Routes.php')) {
     require ROOTPATH . 'Province/Config/Routes.php';

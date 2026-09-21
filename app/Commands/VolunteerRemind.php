@@ -3,6 +3,7 @@
 namespace App\Commands;
 
 use App\Models\VolunteerScheduleModel;
+use App\Services\EmailScopeService;
 use CodeIgniter\CLI\BaseCommand;
 use CodeIgniter\CLI\CLI;
 
@@ -89,6 +90,8 @@ class VolunteerRemind extends BaseCommand
                 continue;
             }
 
+            $rowParishId = (int) ($row['parish_id'] ?? $parishId ?? 0);
+
             [$ok, $error] = $this->sendReminder(
                 $toEmail,
                 $firstName,
@@ -97,7 +100,8 @@ class VolunteerRemind extends BaseCommand
                 $targetDate,
                 $slot,
                 $status,
-                $days
+                $days,
+                $rowParishId
             );
 
             if ($ok) {
@@ -140,7 +144,8 @@ class VolunteerRemind extends BaseCommand
         string $shiftDate,
         string $timeSlot,
         string $status,
-        int    $daysAhead
+        int    $daysAhead,
+        int    $parishId
     ): array {
         $formattedDate = date('l, F j, Y', strtotime($shiftDate));
         $timeLabel     = $timeSlot !== '' ? " ({$timeSlot})" : '';
@@ -165,7 +170,8 @@ TEXT;
         $bodyHtml = '<p>' . nl2br(esc($bodyText)) . '</p>';
 
         try {
-            $mailer = service('email');
+            $context = $parishId > 0 ? ['parish_id' => $parishId] : [];
+            $mailer = (new EmailScopeService())->mailer($context, ['overrides' => ['mailType' => 'html']]);
             $mailer->setTo($toEmail);
             $mailer->setSubject($subject);
             $mailer->setMessage($bodyHtml);

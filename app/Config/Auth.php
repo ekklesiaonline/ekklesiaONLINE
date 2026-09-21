@@ -16,6 +16,7 @@ namespace Config;
 use App\Models\UserModel;
 use CodeIgniter\Shield\Config\Auth as ShieldAuth;
 use CodeIgniter\Shield\Authentication\Actions\ActionInterface;
+use App\Authentication\ScopedEmailActivator;
 use CodeIgniter\Shield\Authentication\Actions\EmailActivator;
 use CodeIgniter\Shield\Authentication\AuthenticatorInterface;
 use CodeIgniter\Shield\Authentication\Authenticators\AccessTokens;
@@ -104,7 +105,7 @@ class Auth extends ShieldAuth
      * @var array<string, class-string<ActionInterface>|null>
      */
     public array $actions = [
-        'register' => EmailActivator::class,
+        'register' => ScopedEmailActivator::class,
         'login'    => null,
     ];
 

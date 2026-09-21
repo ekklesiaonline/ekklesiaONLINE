@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\SmsQueueModel;
+use App\Services\EmailScopeService;
 
 /**
  * MessagingService
@@ -87,7 +88,8 @@ class MessagingService
         string|array $to,
         string       $subject,
         string       $htmlBody,
-        ?string      $textBody = null
+        ?string      $textBody = null,
+        array        $context = []
     ): array {
         if (empty($to)) {
             return ['success' => false, 'status' => 'failed', 'error' => 'Recipient address is required.'];
@@ -102,8 +104,8 @@ class MessagingService
         }
 
         try {
-            $mailer = service('email');
-            $mailer->initialize([]);  // re-initialise to avoid state leak between calls
+            $scopeService = new EmailScopeService();
+            $mailer = $scopeService->mailer($context, ['overrides' => ['mailType' => 'html']]);
 
             // Support both single and multiple recipients
             if (is_array($to)) {
