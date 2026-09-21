@@ -186,6 +186,10 @@ $errorFor    = static fn(string $key): string => $hasError($key) ? '<div class="
 
         const csrfMeta = document.querySelector('meta[name="csrf-token"]');
         const csrfHeader = document.querySelector('meta[name="csrf-header"]')?.content ?? 'X-CSRF-TOKEN';
+        const csrfInput = form.querySelector('input[name="<?= csrf_token() ?>"]');
+        if (csrfMeta && csrfInput) {
+            csrfInput.value = csrfMeta.content;
+        }
         const headers = {
             'X-Requested-With': 'XMLHttpRequest',
             'Content-Type': 'application/x-www-form-urlencoded',
@@ -210,6 +214,9 @@ $errorFor    = static fn(string $key): string => $hasError($key) ? '<div class="
             const newToken = r.headers.get(csrfHeader);
             if (newToken && csrfMeta) {
                 csrfMeta.content = newToken;
+                if (csrfInput) {
+                    csrfInput.value = newToken;
+                }
             }
             return r.json();
         })

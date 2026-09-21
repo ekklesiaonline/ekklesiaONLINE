@@ -42,13 +42,16 @@ Diagnostic workflow:
    - `550 5.7.30` / DKIM did not pass → `EMAIL_AUTHENTICATION_FAILED`.
 6. If authorized, run an application-level test with `EmailSettingsService::sendTest()` and report only `success`, `code`, and localized message.
 7. Treat `EMAIL_TEST_SENT` as SMTP-provider acceptance, not guaranteed inbox placement. Ask the user to confirm receipt and inspect `Authentication-Results` for `spf=pass`, `dkim=pass`, and aligned `dmarc=pass` where applicable.
-8. Check for a later bounce before declaring final delivery successful.
+8. For missing Outlook/iCloud delivery, check the Gmail Sent folder, delayed Mail Delivery Subsystem notices, recipient Junk/Spam and rules, Outlook's Other tab, blocked senders, and Microsoft 365 message trace where available.
+9. Check for a later bounce before declaring final delivery successful.
 
 Important interpretation:
 - CodeIgniter does not sign these messages with DKIM. The selected SMTP provider does.
 - Do not configure a private DKIM key in EkklesiaRD for Gmail SMTP.
 - A tenant From address sent through unrelated System SMTP can fail DKIM/DMARC. Require an authorized tenant transport or use a System-aligned From address with tenant Reply-To.
 - For Gmail consumer addresses, the Google Workspace custom-domain DKIM setup instructions do not apply; Gmail signs messages accepted through the authorized Gmail account.
+- Outlook.com commonly uses `smtp-mail.outlook.com` with STARTTLS/587, but Microsoft 365 tenants may disable basic SMTP AUTH or require OAuth, which is not currently implemented.
+- iCloud commonly uses `smtp.mail.me.com` with STARTTLS/587 and an Apple app-specific password.
 
 When changing code:
 1. Keep SMTP resolution block-atomic; never mix host/user/password between hierarchy tiers.

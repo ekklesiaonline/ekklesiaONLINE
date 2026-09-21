@@ -131,7 +131,8 @@ trait EmailSettingsTrait
                 'message' => lang('App.errorForbidden'),
                 'error'   => ['code' => 403, 'message' => lang('App.errorForbidden')],
                 'meta'    => ['http_status' => 403, 'ts' => date('c')],
-            ])->setStatusCode(403);
+            ])->setStatusCode(403)
+                ->setHeader(config('Security')->headerName, csrf_hash());
         }
 
         $recipient = trim((string) ($data['test_recipient'] ?? ''));
@@ -163,7 +164,9 @@ trait EmailSettingsTrait
             $payload['errors'] = [];
         }
 
-        return $this->response->setJSON($payload)->setStatusCode($status);
+        return $this->response->setJSON($payload)
+            ->setStatusCode($status)
+            ->setHeader(config('Security')->headerName, csrf_hash());
     }
 
     private function renderEmailSettingsWithErrors(

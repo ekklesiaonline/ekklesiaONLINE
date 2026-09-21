@@ -79,6 +79,25 @@ For Google Workspace custom domains:
 4. Publish an SPF record authorizing Google.
 5. Publish DMARC after SPF/DKIM alignment has been confirmed.
 
+## Outlook and iCloud SMTP
+
+The settings form does not restrict SMTP to Gmail. It supports providers that
+accept CodeIgniter's username/password SMTP authentication.
+
+For Outlook.com consumer mailboxes, the usual submission endpoint is
+`smtp-mail.outlook.com`, port 587 with STARTTLS. The From address must be the
+authenticated mailbox or an alias permitted by Microsoft. Microsoft 365 tenants
+may disable SMTP AUTH or require OAuth; EkklesiaRD does not currently implement
+Microsoft OAuth SMTP, so those tenants need an approved SMTP relay or a future
+OAuth transport integration.
+
+For iCloud Mail, use `smtp.mail.me.com`, port 587 with STARTTLS, the full iCloud
+mail address, and an Apple app-specific password. The From address must be an
+address/alias enabled on that Apple account.
+
+A provider returning SMTP success has accepted responsibility for the message,
+but it can still generate a delayed bounce or filter the message later.
+
 ## Safe diagnostic procedure
 
 1. Inspect settings metadata only:
@@ -102,6 +121,28 @@ For Google Workspace custom domains:
    `dmarc=pass`.
 7. Check spam/quarantine and asynchronous bounce messages before declaring
    final delivery successful.
+
+## Gmail sender to Outlook or iCloud recipients
+
+When Gmail accepts a message but an Outlook or iCloud recipient does not see it,
+EkklesiaRD cannot treat SMTP acceptance as proof of final delivery. Check in
+this order:
+
+1. Confirm the message appears in the authenticated Gmail account's Sent
+   folder. If it does not, the expected Gmail transport was not used.
+2. Check the sender mailbox for a delayed Mail Delivery Subsystem notice. A
+   later bounce contains the recipient provider's final rejection reason.
+3. Ask the recipient to check Junk/Spam, Outlook's Other tab, iCloud rules, and
+   blocked-sender settings.
+4. For Microsoft 365 recipients, use the tenant message trace if available.
+5. Inspect `Authentication-Results` on a delivered copy. Gmail SMTP should add
+   a valid Gmail DKIM signature; the application itself does not DKIM-sign.
+6. Use a unique recipient-controlled address for each test so forwarding rules
+   do not obscure the result.
+
+The settings page therefore reports **SMTP provider accepted** rather than
+**email delivered**. Delivery confirmation requires a received message or a
+provider delivery/message-trace event.
 
 ## Logging and audit rules
 

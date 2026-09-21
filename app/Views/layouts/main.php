@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="<?= csrf_hash() ?>">
+    <meta name="csrf-header" content="<?= esc(config('Security')->headerName, 'attr') ?>">
     <script>
         (function () {
             var storageKey = 'ekklesiard-theme';

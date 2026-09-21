@@ -30,7 +30,7 @@ return [
     'noMailer'          => 'No se pudo crear el servicio de correo para este alcance.',
     'testSubject'       => 'Correo de prueba de EkklesiaRD',
     'testBody'          => 'Este es un correo de prueba. Si lo recibió, el remitente y transporte configurados funcionan.',
-    'testSent'          => 'Correo de prueba enviado.',
+    'testSent'          => 'El proveedor SMTP aceptó el mensaje de prueba. Revise la bandeja de entrada, correo no deseado y cualquier aviso posterior de fallo; la aceptación SMTP no garantiza la entrega final.',
     'testSendFailed'    => 'No se pudo enviar el correo de prueba. Revise la configuración SMTP e inténtelo de nuevo.',
     'smtpAuthenticationFailed' => 'Falló la autenticación SMTP. Verifique el usuario y la contraseña. Gmail requiere una contraseña de aplicación de 16 caracteres cuando la verificación en dos pasos está habilitada.',
     'emailAuthenticationFailed' => 'El servidor receptor rechazó el mensaje porque la autenticación SPF o DKIM no fue válida. Envíe mediante el proveedor SMTP autorizado para la dirección del remitente y verifique SPF, DKIM y DMARC para ese dominio.',

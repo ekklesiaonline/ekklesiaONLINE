@@ -30,7 +30,7 @@ return [
     'noMailer'          => 'Could not build a mailer for this scope.',
     'testSubject'       => 'Test email from EkklesiaRD',
     'testBody'          => 'This is a test email. If you received it, the configured sender and transport are working.',
-    'testSent'          => 'Test email sent.',
+    'testSent'          => 'The SMTP provider accepted the test message. Check the recipient inbox, junk folder, and any later delivery-failure notice; final delivery is not guaranteed by SMTP acceptance.',
     'testSendFailed'    => 'Test email could not be sent. Check the SMTP settings and try again.',
     'smtpAuthenticationFailed' => 'SMTP authentication failed. Verify the username and password. Gmail requires a 16-character App Password when two-step verification is enabled.',
     'emailAuthenticationFailed' => 'The receiving server rejected the message because SPF or DKIM authentication did not pass. Send through the SMTP provider authorized for the From address, then verify SPF, DKIM, and DMARC for that domain.',

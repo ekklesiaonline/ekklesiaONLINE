@@ -48,8 +48,15 @@ final class EmailSettingsSecurityTest extends CIUnitTestCase
         $this->assertStringContainsString('data-allow-repeat-submit="true"', $source);
         $this->assertStringContainsString('.finally(function ()', $source);
         $this->assertStringContainsString('submit.disabled = false;', $source);
+        $this->assertStringContainsString('csrfInput.value = csrfMeta.content;', $source);
+        $this->assertStringContainsString('csrfInput.value = newToken;', $source);
         $this->assertStringNotContainsString("session()->has('success')", $source);
         $this->assertStringNotContainsString("session()->has('error')", $source);
+
+        $traitSource = file_get_contents(APPPATH . 'Controllers/EmailSettingsTrait.php');
+        $this->assertNotFalse($traitSource);
+        $this->assertStringContainsString("setHeader(config('Security')->headerName, csrf_hash())", $traitSource);
+        $this->assertStringContainsString('SMTP provider accepted', lang('Email.testSent'));
     }
 
     private function methodSource(ReflectionMethod $method): string
