@@ -124,6 +124,7 @@ $errorFor    = static fn(string $key): string => $hasError($key) ? '<div class="
                     <div class="mb-3">
                         <label for="smtp_pass" class="form-label"><?= lang('Email.smtpPass') ?></label>
                         <input type="password" class="form-control<?= $hasError('smtp_pass') ? ' is-invalid' : '' ?>" id="smtp_pass" name="smtp_pass" placeholder="<?= $has_smtp_pass ? lang('Email.smtpPassPlaceholderKeep') : lang('Email.smtpPassPlaceholderNew') ?>"<?= $canEditSmtp ? '' : ' readonly' ?>>
+                        <div class="form-text"><?= lang('Email.smtpGmailHelp') ?></div>
                         <?= $errorFor('smtp_pass') ?>
                     </div>
                     <div class="mb-3">
@@ -166,7 +167,7 @@ $errorFor    = static fn(string $key): string => $hasError($key) ? '<div class="
             <div class="card-header"><strong><?= lang('Email.testSend') ?></strong></div>
             <div class="card-body">
                 <div id="email-test-result" class="alert d-none" role="alert"></div>
-                <form id="email-test-form" action="<?= esc($test_url) ?>" method="post">
+                <form id="email-test-form" action="<?= esc($test_url) ?>" method="post" data-allow-repeat-submit="true">
                     <?= csrf_field() ?>
                     <input type="hidden" name="scope_type" value="<?= esc($scope_type) ?>">
                     <?php if ($scope_id !== null): ?>
@@ -176,7 +177,7 @@ $errorFor    = static fn(string $key): string => $hasError($key) ? '<div class="
                         <label for="test_recipient" class="form-label"><?= lang('Email.testRecipient') ?></label>
                         <input type="email" class="form-control" id="test_recipient" name="test_recipient" required>
                     </div>
-                    <button type="submit" class="btn btn-outline-primary">
+                    <button type="submit" class="btn btn-outline-primary" id="email-test-submit">
                         <i class="bi bi-send me-1" aria-hidden="true"></i><?= lang('Email.sendTest') ?>
                     </button>
                 </form>
@@ -189,7 +190,8 @@ $errorFor    = static fn(string $key): string => $hasError($key) ? '<div class="
 (function () {
     const form = document.getElementById('email-test-form');
     const result = document.getElementById('email-test-result');
-    if (!form || !result) {
+    const submit = document.getElementById('email-test-submit');
+    if (!form || !result || !submit) {
         return;
     }
 
@@ -209,6 +211,8 @@ $errorFor    = static fn(string $key): string => $hasError($key) ? '<div class="
         result.className = 'alert alert-info';
         result.textContent = '<?= lang('Email.sendingTest') ?>';
         result.classList.remove('d-none');
+        submit.disabled = true;
+        submit.innerHTML = '<span class="spinner-border spinner-border-sm me-1" aria-hidden="true"></span><?= lang('Email.sendingTest') ?>';
 
         fetch(form.action, {
             method: 'POST',
@@ -232,6 +236,10 @@ $errorFor    = static fn(string $key): string => $hasError($key) ? '<div class="
             result.className = 'alert alert-danger';
             result.textContent = '<?= lang('Email.testSendFailed') ?>';
             result.classList.remove('d-none');
+        })
+        .finally(function () {
+            submit.disabled = false;
+            submit.innerHTML = '<i class="bi bi-send me-1" aria-hidden="true"></i><?= lang('Email.sendTest') ?>';
         });
     });
 })();

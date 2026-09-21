@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Libraries\DataEncryption;
 use App\Models\SystemSettingModel;
 use CodeIgniter\Email\Email;
 
@@ -135,17 +136,17 @@ class EmailSettingsService
      *
      * @param array{type: string, id: int|null} $scope
      * @param array<string,string>              $settings
-     * @return array{success: bool, message: string}
+     * @return array{success: bool, message: string, code: string}
      */
     public function sendTest(array $scope, array $settings, string $recipient): array
     {
         if ($recipient === '' || !filter_var($recipient, FILTER_VALIDATE_EMAIL)) {
-            return ['success' => false, 'message' => lang('Email.invalidTestRecipient')];
+            return ['success' => false, 'message' => lang('Email.invalidTestRecipient'), 'code' => 'INVALID_RECIPIENT'];
         }
 
         $mailer = $this->buildTestMailer($scope, $settings);
         if (!$mailer instanceof Email) {
-            return ['success' => false, 'message' => lang('Email.noMailer')];
+            return ['success' => false, 'message' => lang('Email.noMailer'), 'code' => 'MAILER_CONFIGURATION_FAILED'];
         }
 
         try {
@@ -155,13 +156,60 @@ class EmailSettingsService
             $mailer->setAltMessage(lang('Email.testBody'));
 
             if (!$mailer->send(false)) {
-                return ['success' => false, 'message' => strip_tags((string) $mailer->printDebugger(['headers']))];
+                $failureCode = $this->classifySendFailure((string) $mailer->printDebugger(['headers']));
+                $this->logTestFailure($scope, $failureCode);
+
+                return [
+                    'success' => false,
+                    'message' => $this->failureMessage($failureCode),
+                    'code'    => $failureCode,
+                ];
             }
 
-            return ['success' => true, 'message' => lang('Email.testSent')];
-        } catch (\Throwable $e) {
-            return ['success' => false, 'message' => $e->getMessage()];
+            return ['success' => true, 'message' => lang('Email.testSent'), 'code' => 'EMAIL_TEST_SENT'];
+        } catch (\Throwable) {
+            $this->logTestFailure($scope, 'SMTP_SEND_FAILED');
+
+            return ['success' => false, 'message' => lang('Email.testSendFailed'), 'code' => 'SMTP_SEND_FAILED'];
         }
+    }
+
+    private function classifySendFailure(string $debugger): string
+    {
+        $normalized = strtolower($debugger);
+
+        if (str_contains($normalized, '535') || str_contains($normalized, 'failed to authenticate') || str_contains($normalized, 'username and password not accepted')) {
+            return 'SMTP_AUTHENTICATION_FAILED';
+        }
+
+        if (str_contains($normalized, 'connection refused') || str_contains($normalized, 'unable to connect') || str_contains($normalized, 'timed out')) {
+            return 'SMTP_CONNECTION_FAILED';
+        }
+
+        if (str_contains($normalized, 'tls') && (str_contains($normalized, 'failed') || str_contains($normalized, 'error'))) {
+            return 'SMTP_TLS_FAILED';
+        }
+
+        return 'SMTP_SEND_FAILED';
+    }
+
+    private function failureMessage(string $code): string
+    {
+        return match ($code) {
+            'SMTP_AUTHENTICATION_FAILED' => lang('Email.smtpAuthenticationFailed'),
+            'SMTP_CONNECTION_FAILED'     => lang('Email.smtpConnectionFailed'),
+            'SMTP_TLS_FAILED'            => lang('Email.smtpTlsFailed'),
+            default                      => lang('Email.testSendFailed'),
+        };
+    }
+
+    private function logTestFailure(array $scope, string $reason): void
+    {
+        log_message('warning', '[EmailSettings] Test send failed; scope={scope}; scope_id={scope_id}; reason={reason}', [
+            'scope'    => $scope['type'],
+            'scope_id' => $scope['id'] ?? 0,
+            'reason'   => $reason,
+        ]);
     }
 
     /**
@@ -229,8 +277,6 @@ class EmailSettingsService
      */
     private function persistSettings(array $scope, array $values, array $existing): void
     {
-        $encrypter = service('encrypter');
-
         foreach ($values as $key => $value) {
             $short = str_replace('email.', '', $key);
 
@@ -242,7 +288,7 @@ class EmailSettingsService
                     }
                     // No existing password and no new value: store empty.
                 }
-                $this->persistValue($scope, $key, $value !== '' ? $encrypter->encrypt($value) : '', $value !== '');
+                $this->persistValue($scope, $key, $value !== '' ? DataEncryption::encrypt($value) : '', $value !== '');
                 continue;
             }
 
@@ -312,13 +358,6 @@ class EmailSettingsService
             if ($pass === '') {
                 $existing = $this->loadRawSettings($scope);
                 $pass     = (string) ($existing['email.smtp_pass'] ?? '');
-                if ($pass !== '') {
-                    try {
-                        $pass = service('encrypter')->decrypt($pass);
-                    } catch (\Throwable) {
-                        $pass = '';
-                    }
-                }
             }
 
             if ($pass !== '') {

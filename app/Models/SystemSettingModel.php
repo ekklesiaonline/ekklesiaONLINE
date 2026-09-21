@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Libraries\DataEncryption;
 use CodeIgniter\Model;
 
 class SystemSettingModel extends Model
@@ -119,6 +120,13 @@ class SystemSettingModel extends Model
     {
         if ($value === null) {
             return null;
+        }
+
+        if (is_string($value) && DataEncryption::isEncrypted($value)) {
+            $value = DataEncryption::decrypt($value);
+            if ($value === null) {
+                return null;
+            }
         }
 
         return match ($type) {

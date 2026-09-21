@@ -137,13 +137,33 @@ trait EmailSettingsTrait
         $recipient = trim((string) ($data['test_recipient'] ?? ''));
         $service   = new EmailSettingsService();
         $result    = $service->sendTest(['type' => $scopeType, 'id' => $scopeId], $data, $recipient);
+        $status    = $result['success'] ? 200 : 422;
 
-        return $this->response->setJSON([
+        $this->audit()->log('email_settings.test_send', [
+            'user_id'     => (int) (auth()->id() ?? 0),
+            'entity_type' => 'email_settings',
+            'entity_id'   => $scopeId ?? 0,
+            'scope_type'  => $scopeType,
+            'result'      => $result['code'],
+        ]);
+
+        $payload = [
             'success' => $result['success'],
             'status'  => $result['success'] ? 'success' : 'error',
             'message' => $result['message'],
-            'meta'    => ['http_status' => $result['success'] ? 200 : 422, 'ts' => date('c')],
-        ])->setStatusCode($result['success'] ? 200 : 422);
+            'meta'    => ['http_status' => $status, 'ts' => date('c')],
+        ];
+
+        if (!$result['success']) {
+            $payload['error'] = [
+                'code'    => $result['code'],
+                'message' => $result['message'],
+                'details' => [],
+            ];
+            $payload['errors'] = [];
+        }
+
+        return $this->response->setJSON($payload)->setStatusCode($status);
     }
 
     private function renderEmailSettingsWithErrors(

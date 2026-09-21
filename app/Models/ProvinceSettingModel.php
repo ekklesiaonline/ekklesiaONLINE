@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Libraries\DataEncryption;
 use CodeIgniter\Model;
 
 class ProvinceSettingModel extends Model
@@ -83,13 +84,19 @@ class ProvinceSettingModel extends Model
         $value = $row['value'];
 
         if (! empty($row['is_encrypted']) && $value !== null && $value !== '') {
+            if (DataEncryption::isEncrypted((string) $value)) {
+                return DataEncryption::decrypt((string) $value);
+            }
+
             try {
-                $value = service('encrypter')->decrypt($value);
+                return service('encrypter')->decrypt($value);
             } catch (\Exception $e) {
                 log_message('error', '[ProvinceSettingModel] Failed to decrypt key {key}: {message}', [
                     'key'     => $row['key'],
                     'message' => $e->getMessage(),
                 ]);
+
+                return null;
             }
         }
 
