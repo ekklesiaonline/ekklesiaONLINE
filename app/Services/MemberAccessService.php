@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Libraries\EmailFailureClassifier;
 use App\Libraries\SchemaResolver;
 use App\Services\EmailScopeService;
 use CodeIgniter\Database\BaseConnection;
@@ -410,7 +411,10 @@ class MemberAccessService
         );
 
         if ($emailService->send(false) === false) {
-            log_message('error', $emailService->printDebugger(['headers']));
+            log_message('error', '[MemberAccessService] portal invite send failed; code={code}; parish_id={parishId}', [
+                'code'     => EmailFailureClassifier::classify((string) $emailService->printDebugger(['headers'])),
+                'parishId' => $parishId,
+            ]);
             throw new \RuntimeException('PORTAL_INVITE_EMAIL_FAILED');
         }
 

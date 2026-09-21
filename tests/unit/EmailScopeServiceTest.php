@@ -114,6 +114,85 @@ final class EmailScopeServiceTest extends CIUnitTestCase
         $this->assertSame('secret', $smtp['pass']);
     }
 
+    public function testSmtpConfigNeverMixesTiers(): void
+    {
+        // Parish has only a host (incomplete); diocese has a complete block.
+        // The resolved block must come entirely from the diocese tier.
+        $this->config->scopedValues = [
+            ['email.smtp_host', ['parish_id' => 30], 'smtp.parish.test'],
+            ['email.smtp_host', ['diocese_id' => 20], 'smtp.diocese.test'],
+            ['email.smtp_user', ['diocese_id' => 20], 'dio-user'],
+            ['email.smtp_pass', ['diocese_id' => 20], 'dio-secret'],
+        ];
+
+        $smtp = $this->service->smtpConfig(['parish_id' => 30, 'diocese_id' => 20]);
+
+        $this->assertNotNull($smtp);
+        $this->assertSame('smtp.diocese.test', $smtp['host']);
+        $this->assertSame('dio-user', $smtp['user']);
+        $this->assertSame('dio-secret', $smtp['pass']);
+    }
+
+    public function testLockedSmtpKeyForcesSystemTierBlock(): void
+    {
+        $this->config->locked = ['email.smtp_host' => true];
+        $this->config->values = [
+            'email.smtp_host' => 'smtp.system.test',
+            'email.smtp_user' => 'sys-user',
+            'email.smtp_pass' => 'sys-secret',
+        ];
+        $this->config->scopedValues = [
+            ['email.smtp_host', ['parish_id' => 30], 'smtp.parish.test'],
+            ['email.smtp_user', ['parish_id' => 30], 'user'],
+            ['email.smtp_pass', ['parish_id' => 30], 'secret'],
+        ];
+
+        $smtp = $this->service->smtpConfig(['parish_id' => 30]);
+
+        $this->assertNotNull($smtp);
+        $this->assertSame('smtp.system.test', $smtp['host']);
+        $this->assertSame('sys-user', $smtp['user']);
+        $this->assertSame('sys-secret', $smtp['pass']);
+    }
+
+    public function testDisabledTierSkipsSmtpAndSender(): void
+    {
+        $this->config->scopedValues = [
+            ['email.enabled',    ['parish_id' => 30], '0'],
+            ['email.from_email', ['parish_id' => 30], 'parish@example.test'],
+            ['email.smtp_host',  ['parish_id' => 30], 'smtp.parish.test'],
+            ['email.smtp_user',  ['parish_id' => 30], 'user'],
+            ['email.smtp_pass',  ['parish_id' => 30], 'secret'],
+            ['email.from_email', ['diocese_id' => 20], 'diocese@example.test'],
+            ['email.smtp_host',  ['diocese_id' => 20], 'smtp.diocese.test'],
+            ['email.smtp_user',  ['diocese_id' => 20], 'dio-user'],
+            ['email.smtp_pass',  ['diocese_id' => 20], 'dio-secret'],
+        ];
+
+        $scope = ['parish_id' => 30, 'diocese_id' => 20];
+
+        $this->assertSame(
+            'diocese@example.test',
+            $this->service->senderConfig($scope)['from_email']
+        );
+
+        $smtp = $this->service->smtpConfig($scope);
+        $this->assertNotNull($smtp);
+        $this->assertSame('smtp.diocese.test', $smtp['host']);
+    }
+
+    public function testEnabledDefaultsToOnWhenUnset(): void
+    {
+        $this->config->scopedValues = [
+            ['email.from_email', ['parish_id' => 30], 'parish@example.test'],
+        ];
+
+        $this->assertSame(
+            'parish@example.test',
+            $this->service->senderConfig(['parish_id' => 30])['from_email']
+        );
+    }
+
     public function testSystemLockOverridesLowerTierFrom(): void
     {
         $this->config->locked = ['email.from_email' => true];
@@ -126,6 +205,20 @@ final class EmailScopeServiceTest extends CIUnitTestCase
             'locked@example.test',
             $this->service->senderConfig(['parish_id' => 30])['from_email']
         );
+    }
+
+    public function testSenderConfigStripsAddressListSpecialsFromFromName(): void
+    {
+        // A comma left literal inside a Q-encoded display name makes
+        // Exchange parse From: as multiple addresses (550 5.1.20).
+        $this->config->scopedValues = [
+            ['email.from_name', ['parish_id' => 30], 'Iglesia Episcopal La Transfiguración, Bani RD'],
+        ];
+
+        $fromName = $this->service->senderConfig(['parish_id' => 30])['from_name'];
+
+        $this->assertSame('Iglesia Episcopal La Transfiguración Bani RD', $fromName);
+        $this->assertStringNotContainsString(',', $fromName);
     }
 
     public function testMailerUsesSharedInstanceForSystemTransport(): void
@@ -175,6 +268,7 @@ final class EmailScopeServiceTest extends CIUnitTestCase
 class FakeConfigurationService extends ConfigurationService
 {
     public array $values = [];
+    public array $orgValues = [];
     public array $scopedValues = [];
     public array $locked = [];
 
@@ -186,6 +280,26 @@ class FakeConfigurationService extends ConfigurationService
     public function isSettingLocked(string $key): bool
     {
         return $this->locked[$key] ?? false;
+    }
+
+    public function getSettingForTier(string $tier, ?int $id, string $key, $default = null): mixed
+    {
+        if ($tier === 'system') {
+            return $this->values[$key] ?? $default;
+        }
+        if ($tier === 'organisation') {
+            return $this->orgValues[$key] ?? $default;
+        }
+
+        $tierKey = $tier . '_id';
+        foreach ($this->scopedValues as $row) {
+            [$rowKey, $rowScope, $rowValue] = $row;
+            if ($rowKey === $key && $id !== null && ($rowScope[$tierKey] ?? null) === $id) {
+                return $rowValue;
+            }
+        }
+
+        return $default;
     }
 
     public function getSettingForScope(string $key, array $scope = [], $default = null): mixed

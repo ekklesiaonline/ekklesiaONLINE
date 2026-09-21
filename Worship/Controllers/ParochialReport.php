@@ -154,9 +154,9 @@ class ParochialReport extends BaseController
             $sent = $email->send(false);
 
             if (!$sent) {
-                log_message('error', 'Parochial report PDF email failed for parish {parishId}: {debug}', [
+                log_message('error', 'Parochial report PDF email failed for parish {parishId}: {code}', [
                     'parishId' => $parishId,
-                    'debug' => $email->printDebugger(['headers']),
+                    'code'     => \App\Libraries\EmailFailureClassifier::classify((string) $email->printDebugger(['headers'])),
                 ]);
             }
         } catch (\Throwable $e) {

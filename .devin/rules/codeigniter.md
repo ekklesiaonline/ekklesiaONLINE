@@ -50,6 +50,13 @@ trigger: always_on
   - `ATTRIBUTION_POLICY_HOME_DEFAULT`: home parish first, operational parish fallback.
 - Use `db_connect()` for ad-hoc queries; prefer models for domain operations.
 
+## Email
+
+- Resolve sender identity and SMTP only through `EmailScopeService` (`senderConfig()`, `mailer()`, `systemMailer()`); never read `email.*` settings directly in senders.
+- Feed `Email::setFrom()` only from `senderConfig()` output. It sanitizes `from_name` of RFC 5322 address-list specials — a literal `,` inside a Q-encoded display name makes Exchange reject with `550 5.1.20`.
+- Credential-bearing mail (activation, magic link, OTP, device verification) must use `systemMailer()`.
+- For delivery failures and provider alignment, use the `/email-deliverability` skill and `docs/EMAIL_DELIVERABILITY.md`.
+
 ## API/AJAX Responses
 
 - Follow `docs/API_AJAX_ERROR_CONTRACT.md`.

@@ -2,6 +2,8 @@
 
 return [
     'identityCard'      => 'Sender Identity',
+    'enabledLabel'      => 'Use these email settings',
+    'enabledHelp'       => 'When off, this level\'s email settings are ignored and the next level up applies. Saved values are kept.',
     'fromEmail'         => 'From Email',
     'fromName'          => 'From Name',
     'replyTo'           => 'Reply-To Address',

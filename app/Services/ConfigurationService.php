@@ -86,6 +86,25 @@ class ConfigurationService
     }
 
     /**
+     * Read a setting from exactly one tier, with no hierarchy fallback.
+     * Used when a block of settings must come from a single tier (SMTP
+     * credentials must never mix host/user/password across tiers).
+     *
+     * @param string   $tier 'parish'|'diocese'|'province'|'organisation'|'system'
+     */
+    public function getSettingForTier(string $tier, ?int $id, string $key, $default = null)
+    {
+        return match ($tier) {
+            'parish'       => $id !== null ? $this->parishModel->getSettingDecrypted($id, $key, $default) : $default,
+            'diocese'      => $id !== null ? $this->dioceseModel->getValue($id, $key, $default) : $default,
+            'province'     => $id !== null ? $this->provinceModel->getValue($id, $key, $default) : $default,
+            'organisation' => $this->organisationModel->getValue($key, $default),
+            'system'       => $this->systemModel->getValue($key, $default),
+            default        => $default,
+        };
+    }
+
+    /**
      * Backward-compatible single-key lookup without parish scope.
      */
     public function getSetting(string $key, ?int $dioceseId = null, ?int $provinceId = null, $default = null)

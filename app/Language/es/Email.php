@@ -2,6 +2,8 @@
 
 return [
     'identityCard'      => 'Identidad del remitente',
+    'enabledLabel'      => 'Usar esta configuración de correo',
+    'enabledHelp'       => 'Si está desactivado, se ignora la configuración de correo de este nivel y se aplica la del nivel superior. Los valores guardados se conservan.',
     'fromEmail'         => 'Correo del remitente',
     'fromName'          => 'Nombre del remitente',
     'replyTo'           => 'Dirección de respuesta',

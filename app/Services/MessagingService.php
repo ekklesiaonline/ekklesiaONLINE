@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Libraries\EmailFailureClassifier;
 use App\Models\SmsQueueModel;
 use App\Services\EmailScopeService;
 
@@ -126,13 +127,16 @@ class MessagingService
             $sent = $mailer->send(false);
 
             if (!$sent) {
-                $debugInfo = (string) $mailer->printDebugger(['headers']);
-                log_message('warning', '[MessagingService] email send failed: {info}', ['info' => $debugInfo]);
+                $code = EmailFailureClassifier::classify((string) $mailer->printDebugger(['headers']));
+                log_message('warning', '[MessagingService] email send failed; code={code}; parish_id={parishId}', [
+                    'code'     => $code,
+                    'parishId' => (int) ($context['parish_id'] ?? 0),
+                ]);
 
                 return [
                     'success' => false,
                     'status'  => 'failed',
-                    'error'   => $debugInfo,
+                    'error'   => $code,
                 ];
             }
 

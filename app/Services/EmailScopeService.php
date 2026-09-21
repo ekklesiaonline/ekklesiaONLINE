@@ -28,6 +28,7 @@ class EmailScopeService
     private const KEY_PREFIX = 'email.';
 
     private const EMAIL_KEYS = [
+        'enabled',
         'from_email',
         'from_name',
         'reply_to',
@@ -46,6 +47,32 @@ class EmailScopeService
         'validate',
         'priority',
     ];
+
+    private const ENABLED_KEY = 'email.enabled';
+
+    /**
+     * SMTP transport keys resolved as a single atomic block per tier.
+     * Maps the outbound mailer config key to the stored setting suffix.
+     */
+    private const SMTP_BLOCK_KEYS = [
+        'host'        => 'smtp_host',
+        'user'        => 'smtp_user',
+        'pass'        => 'smtp_pass',
+        'port'        => 'smtp_port',
+        'crypto'      => 'smtp_crypto',
+        'timeout'     => 'smtp_timeout',
+        'keep_alive'  => 'smtp_keep_alive',
+        'auth_method' => 'smtp_auth_method',
+        'protocol'    => 'protocol',
+        'mail_path'   => 'mail_path',
+        'mail_type'   => 'mail_type',
+        'charset'     => 'charset',
+        'validate'    => 'validate',
+        'priority'    => 'priority',
+    ];
+
+    /** @var array<string,bool> */
+    private array $enabledCache = [];
 
     private ConfigurationService $config;
     private HierarchyService $hierarchy;
@@ -206,37 +233,121 @@ class EmailScopeService
     {
         return [
             'from_email' => (string) $this->getScopedSetting($scope, 'from_email', $this->emailConfig->fromEmail),
-            'from_name'  => (string) $this->getScopedSetting($scope, 'from_name', $this->emailConfig->fromName),
+            'from_name'  => $this->sanitizeFromName((string) $this->getScopedSetting($scope, 'from_name', $this->emailConfig->fromName)),
             'reply_to'   => (string) $this->getScopedSetting($scope, 'reply_to', ''),
         ];
     }
 
     /**
+     * Remove RFC 5322 address-list specials from a display name.
+     *
+     * Email::setFrom() Q-encodes names containing non-ASCII characters
+     * via iconv_mime_encode(), which leaves characters like ',' literal
+     * inside the encoded word. Exchange then parses From: as multiple
+     * addresses and rejects with "550 5.1.20 Multiple From addresses
+     * are not allowed without a Sender address".
+     */
+    private function sanitizeFromName(string $name): string
+    {
+        $name = (string) preg_replace('/[,;:@<>"()\[\]\\\\]+/', ' ', $name);
+
+        return trim((string) preg_replace('/\s+/', ' ', $name));
+    }
+
+    /**
      * Resolve a complete SMTP config block for a scope, if one exists.
      *
-     * A tenant SMTP block is only considered complete when host, user and
-     * password are all set. Partial blocks are ignored.
+     * The block is resolved atomically per tier: host, user and password
+     * must all come from the SAME tier. A partial block is skipped and the
+     * next tier up is tried — fields are never mixed across tiers.
      *
      * @param array<string,int|null> $scope
      * @return array<string,mixed>|null
      */
     public function smtpConfig(array $scope = []): ?array
     {
-        $keys = [
-            'host'     => 'smtp_host',
-            'user'     => 'smtp_user',
-            'pass'     => 'smtp_pass',
-            'port'     => 'smtp_port',
-            'crypto'   => 'smtp_crypto',
-            'timeout'  => 'smtp_timeout',
-            'keep_alive' => 'smtp_keep_alive',
-            'auth_method' => 'smtp_auth_method',
-        ];
+        // A locked core transport key mandates the System-tier block so a
+        // tenant cannot partially override a locked transport.
+        if ($this->smtpTransportLocked()) {
+            return $this->smtpBlockAtTier('system', null);
+        }
 
+        foreach ($this->scopeTiers($scope) as [$tier, $id]) {
+            if (!$this->isTierEnabled($tier, $id)) {
+                continue;
+            }
+
+            $block = $this->smtpBlockAtTier($tier, $id);
+            if ($block !== null) {
+                return $block;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Ordered tiers for a scope, most specific first.
+     *
+     * @param array<string,int|null> $scope
+     * @return list<array{0:string,1:int|null}>
+     */
+    private function scopeTiers(array $scope): array
+    {
+        $tiers = [];
+        foreach (['parish_id' => 'parish', 'diocese_id' => 'diocese', 'province_id' => 'province'] as $scopeKey => $tier) {
+            if (!empty($scope[$scopeKey])) {
+                $tiers[] = [$tier, (int) $scope[$scopeKey]];
+            }
+        }
+        $tiers[] = ['organisation', null];
+        $tiers[] = ['system', null];
+
+        return $tiers;
+    }
+
+    /**
+     * A tier may disable its own email.* settings without deleting them;
+     * a disabled tier is skipped and the next tier up applies.
+     */
+    private function isTierEnabled(string $tier, ?int $id): bool
+    {
+        $cacheKey = $tier . ':' . ($id ?? 0);
+        if (array_key_exists($cacheKey, $this->enabledCache)) {
+            return $this->enabledCache[$cacheKey];
+        }
+
+        $value = $this->config->getSettingForTier($tier, $id, self::ENABLED_KEY, null);
+
+        return $this->enabledCache[$cacheKey] = $value === null
+            ? true
+            : (filter_var($value, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE) ?? false);
+    }
+
+    /**
+     * Whether a core SMTP key is locked at the System tier.
+     */
+    private function smtpTransportLocked(): bool
+    {
+        foreach (['smtp_host', 'smtp_user', 'smtp_pass'] as $key) {
+            if ($this->config->isSettingLocked(self::KEY_PREFIX . $key)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Read the SMTP block from a single tier. Returns null unless host,
+     * user and password are all present at that tier.
+     */
+    private function smtpBlockAtTier(string $tier, ?int $id): ?array
+    {
         $smtp = [];
-        foreach ($keys as $outKey => $settingKey) {
-            $value = $this->getScopedSetting($scope, $settingKey, null);
-            if ($value !== null) {
+        foreach (self::SMTP_BLOCK_KEYS as $outKey => $settingKey) {
+            $value = $this->config->getSettingForTier($tier, $id, self::KEY_PREFIX . $settingKey, null);
+            if ($value !== null && $value !== '') {
                 $smtp[$outKey] = $value;
             }
         }
@@ -319,10 +430,23 @@ class EmailScopeService
 
         // System lock: a locked system_settings key wins over all lower tiers.
         if ($this->config->isSettingLocked($fullKey)) {
-            return $this->config->getSettingForScope($fullKey, [], $default);
+            return $this->config->getSettingForTier('system', null, $fullKey, $default);
         }
 
-        return $this->config->getSettingForScope($fullKey, $scope, $default);
+        foreach ($this->scopeTiers($scope) as [$tier, $id]) {
+            // The enabled flag itself stays readable at every tier; all
+            // other keys are skipped when the tier is disabled.
+            if ($key !== 'enabled' && !$this->isTierEnabled($tier, $id)) {
+                continue;
+            }
+
+            $value = $this->config->getSettingForTier($tier, $id, $fullKey, null);
+            if ($value !== null) {
+                return $value;
+            }
+        }
+
+        return $default;
     }
 
     /**

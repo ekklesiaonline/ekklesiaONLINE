@@ -17,6 +17,7 @@
 - Validate requests; scope queries by `parish_id` unless the user is elevated.
 - Model casts must use nullable prefix form: `?int`, `?string` (never `int?`, `string?`).
 - Use `php spark` for code generation, not manual scaffolding.
+- Resolve email sender identity and SMTP only through `EmailScopeService`; feed `Email::setFrom()` only from `senderConfig()` output (it sanitizes `from_name` of RFC 5322 specials that break Exchange header parsing).
 - Write tests with CIUnitTestCase.
 - Run tests with `vendor/bin/phpunit --no-coverage`; this project does not provide a `php spark test` command.
 
@@ -36,7 +37,7 @@
 - For view/HTML rules, see `.devin/rules/views.md`.
 - For CI4/Shield coding rules, see `.devin/rules/codeigniter.md`.
 - For parish-domain data integrity rules, see `.devin/rules/parish-domain.md`.
-- For diagnostic playbooks, invoke the relevant skill (`/debug-no-parish`, `/debug-person-not-found`, `/sacrament-sync`, `/parish-people-snapshot`, etc.).
+- For diagnostic playbooks, invoke the relevant skill (`/debug-no-parish`, `/debug-person-not-found`, `/sacrament-sync`, `/parish-people-snapshot`, `/email-deliverability`, etc.).
 - For permission/scope issues, use `/parish-permissions` or `/permission-denied`.
 - For audit, observability, and localization questions, use `/audit-logging` or `/localization`.
 - For Sunday attendance chart rules, use `/sunday-attendance-charts`.
@@ -58,3 +59,10 @@
   - Banned, dismissed, and deactivated accounts are blocked from authenticated routes.
   - Concurrent-session limit enforces a maximum of three tracked sessions per user.
 - Fixed a regression in `RegistrationGateFilter` where a hardcoded singular onboarding table name caused banned/dismissed/pending_profile gating to be silently skipped. The filter now delegates table resolution to `UserRegistrationRequestModel`.
+
+## Session 8: From-Header Sanitization
+
+- Root cause of Exchange `550 5.1.20` ("Multiple From addresses are not allowed without a Sender address") bounces: a scoped `email.from_name` containing both a comma and a non-ASCII character (e.g. `Iglesia Episcopal La Transfiguración, Bani RD`). `Email::setFrom()` Q-encodes non-ASCII names via `iconv_mime_encode()`, leaving the comma literal inside the encoded word, so Exchange parses `From:` as two mailboxes.
+- Fix: `EmailScopeService::senderConfig()` now sanitizes `from_name` through `sanitizeFromName()` (strips `,;:@<>"()[]\` runs to a single space). All send paths consume `senderConfig()`, so they are covered.
+- Verified live: test emails accepted by both iCloud and Outlook.com after the fix.
+- Full suite: 640 tests, 2,828 assertions, 6 skipped.

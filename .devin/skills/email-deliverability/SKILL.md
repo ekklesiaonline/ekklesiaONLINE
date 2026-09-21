@@ -41,6 +41,12 @@ Diagnostic workflow:
    - TLS negotiation error → `SMTP_TLS_FAILED`.
    - `550 5.7.30` / DKIM did not pass → `EMAIL_AUTHENTICATION_FAILED`.
    - Apple `554 5.7.1 [BS01]` / local policy → `RECIPIENT_POLICY_REJECTED`.
+   - `550 5.1.20` "Multiple From addresses" arrives as an asynchronous
+     Exchange bounce, not in the SMTP transcript, so the classifier never
+     sees it. Cause: a `from_name` with a comma plus a non-ASCII character
+     was Q-encoded with the comma left literal. `senderConfig()` now strips
+     RFC 5322 specials; if it recurs, look for a `setFrom()` call fed by a
+     raw settings value instead of `senderConfig()`.
 6. If authorized, run an application-level test with `EmailSettingsService::sendTest()` and report only `success`, `code`, and localized message/reference.
 7. Treat `EMAIL_TEST_SENT` as SMTP-provider acceptance, not guaranteed inbox placement. Ask the user to confirm receipt and inspect `Authentication-Results` for `spf=pass`, `dkim=pass`, and aligned `dmarc=pass` where applicable.
 8. For missing Outlook/iCloud delivery, check the Gmail Sent folder, delayed Mail Delivery Subsystem notices, recipient Junk/Spam and rules, Outlook's Other tab, blocked senders, and Microsoft 365 message trace where available.
@@ -57,8 +63,11 @@ Important interpretation:
 When changing code:
 1. Keep SMTP resolution block-atomic; never mix host/user/password between hierarchy tiers.
 2. Fail closed for tenant SMTP errors; do not silently relay tenant branding through System transport.
-3. Return the standard API/AJAX error contract with a stable `error.code`.
-4. Audit only the scope and classified result code.
-5. Add en/es/fr language keys for user-facing messages.
-6. Add regression tests for classification, redaction, encrypted storage, and button-state restoration.
-7. Run targeted tests, `tests/unit/AccessibilityAndStaticAnalysisTest.php`, and the full PHPUnit suite.
+3. Feed `Email::setFrom()` only from `EmailScopeService::senderConfig()` output —
+   it sanitizes `from_name` of RFC 5322 address-list specials (`,;:@<>"()[]\`)
+   that otherwise survive Q-encoding and break Exchange header parsing.
+4. Return the standard API/AJAX error contract with a stable `error.code`.
+5. Audit only the scope and classified result code.
+6. Add en/es/fr language keys for user-facing messages.
+7. Add regression tests for classification, redaction, encrypted storage, and button-state restoration.
+8. Run targeted tests, `tests/unit/AccessibilityAndStaticAnalysisTest.php`, and the full PHPUnit suite.

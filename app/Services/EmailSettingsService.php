@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Libraries\DataEncryption;
+use App\Libraries\EmailFailureClassifier;
 use App\Models\SystemSettingModel;
 use CodeIgniter\Email\Email;
 
@@ -17,6 +18,7 @@ class EmailSettingsService
 {
     /** @var list<string> */
     public const EMAIL_KEYS = [
+        'email.enabled',
         'email.from_email',
         'email.from_name',
         'email.reply_to',
@@ -47,7 +49,8 @@ class EmailSettingsService
     public function currentSettings(array $scope): array
     {
         $settings = $this->loadRawSettings($scope);
-        $hasPass  = !empty($settings['email.smtp_pass']);
+        $storedPass = $this->tierSetting($scope, 'email.smtp_pass');
+        $hasPass  = $storedPass !== null && $storedPass !== '';
 
         $values = [];
         foreach (self::EMAIL_KEYS as $key) {
@@ -71,62 +74,72 @@ class EmailSettingsService
      */
     public function save(array $scope, array $data, bool $canEditSmtp): array
     {
-        $existing = $this->loadRawSettings($scope);
-        $errors   = [];
+        $errors = [];
 
         $values = [];
         foreach (self::EMAIL_KEYS as $key) {
-            $short          = str_replace('email.', '', $key);
-            $values[$key]   = isset($data[$short]) ? trim((string) $data[$short]) : '';
-        }
-
-        if ($values['email.from_email'] !== '' && !filter_var($values['email.from_email'], FILTER_VALIDATE_EMAIL)) {
-            $errors['from_email'] = lang('Email.invalidFromEmail');
-        }
-
-        if ($values['email.reply_to'] !== '' && !filter_var($values['email.reply_to'], FILTER_VALIDATE_EMAIL)) {
-            $errors['reply_to'] = lang('Email.invalidReplyTo');
-        }
-
-        if ($values['email.smtp_port'] !== '' && !ctype_digit($values['email.smtp_port'])) {
-            $errors['smtp_port'] = lang('Email.smtpPortInteger');
-        }
-
-        // SMTP all-or-nothing validation.
-        $smtpFields = [
-            'email.smtp_host',
-            'email.smtp_user',
-            'email.smtp_pass',
-        ];
-        $anySmtp    = false;
-        $allSmtp    = true;
-        foreach ($smtpFields as $key) {
-            if ($values[$key] !== '') {
-                $anySmtp = true;
-            } else {
-                // Missing password is OK if a password already exists.
-                if ($key !== 'email.smtp_pass' || empty($existing['email.smtp_pass'])) {
-                    $allSmtp = false;
-                }
+            $short = str_replace('email.', '', $key);
+            if (array_key_exists($short, $data)) {
+                $values[$key] = trim((string) $data[$short]);
             }
         }
 
-        if ($anySmtp && !$allSmtp) {
-            $errors['smtp_host'] = lang('Email.smtpIncompleteBlock');
+        // The enabled flag only persists when the form submits it (hidden
+        // '0' + checkbox '1' pair); otherwise the stored value is kept.
+        if (array_key_exists('enabled', $data)) {
+            $values['email.enabled'] = ((string) $data['enabled'] === '1') ? '1' : '0';
+        }
+
+        // SMTP fields the user may not edit are dropped before validation
+        // and persistence, so stale or partial submissions can neither
+        // error nor clobber the stored block.
+        if (!$canEditSmtp) {
+            unset(
+                $values['email.smtp_host'],
+                $values['email.smtp_user'],
+                $values['email.smtp_pass'],
+                $values['email.smtp_port'],
+                $values['email.smtp_crypto']
+            );
+        }
+
+        if (($values['email.from_email'] ?? '') !== '' && !filter_var($values['email.from_email'], FILTER_VALIDATE_EMAIL)) {
+            $errors['from_email'] = lang('Email.invalidFromEmail');
+        }
+
+        if (($values['email.reply_to'] ?? '') !== '' && !filter_var($values['email.reply_to'], FILTER_VALIDATE_EMAIL)) {
+            $errors['reply_to'] = lang('Email.invalidReplyTo');
+        }
+
+        if (($values['email.smtp_port'] ?? '') !== '' && !ctype_digit($values['email.smtp_port'])) {
+            $errors['smtp_port'] = lang('Email.smtpPortInteger');
+        }
+
+        // SMTP all-or-nothing validation against this tier's stored block.
+        $storedPass = $this->tierSetting($scope, 'email.smtp_pass');
+        $hasStoredPass = $storedPass !== null && $storedPass !== '';
+
+        if ($canEditSmtp) {
+            $anySmtp = false;
+            $allSmtp = true;
+            foreach (['email.smtp_host', 'email.smtp_user', 'email.smtp_pass'] as $key) {
+                if (($values[$key] ?? '') !== '') {
+                    $anySmtp = true;
+                } elseif ($key !== 'email.smtp_pass' || !$hasStoredPass) {
+                    $allSmtp = false;
+                }
+            }
+
+            if ($anySmtp && !$allSmtp) {
+                $errors['smtp_host'] = lang('Email.smtpIncompleteBlock');
+            }
         }
 
         if ($errors !== []) {
             return $errors;
         }
 
-        // If the user cannot edit SMTP, drop any SMTP changes.
-        if (!$canEditSmtp) {
-            foreach ($smtpFields as $key) {
-                $values[$key] = '';
-            }
-        }
-
-        $this->persistSettings($scope, $values, $existing);
+        $this->persistSettings($scope, $values, $hasStoredPass);
 
         return [];
     }
@@ -180,29 +193,7 @@ class EmailSettingsService
 
     private function classifySendFailure(string $debugger): string
     {
-        $normalized = strtolower($debugger);
-
-        if (str_contains($normalized, '535') || str_contains($normalized, 'failed to authenticate') || str_contains($normalized, 'username and password not accepted')) {
-            return 'SMTP_AUTHENTICATION_FAILED';
-        }
-
-        if (str_contains($normalized, '550 5.7.30') || (str_contains($normalized, 'dkim') && str_contains($normalized, 'did not pass'))) {
-            return 'EMAIL_AUTHENTICATION_FAILED';
-        }
-
-        if (str_contains($normalized, '[bs01]') || (str_contains($normalized, '554 5.7.1') && str_contains($normalized, 'local policy'))) {
-            return 'RECIPIENT_POLICY_REJECTED';
-        }
-
-        if (str_contains($normalized, 'connection refused') || str_contains($normalized, 'unable to connect') || str_contains($normalized, 'timed out')) {
-            return 'SMTP_CONNECTION_FAILED';
-        }
-
-        if (str_contains($normalized, 'tls') && (str_contains($normalized, 'failed') || str_contains($normalized, 'error'))) {
-            return 'SMTP_TLS_FAILED';
-        }
-
-        return 'SMTP_SEND_FAILED';
+        return EmailFailureClassifier::classify($debugger);
     }
 
     private function failureMessage(string $code): string
@@ -239,46 +230,62 @@ class EmailSettingsService
     }
 
     /**
+     * Read a single key from exactly this scope's tier (no inheritance).
+     * Returns the decrypted value for encrypted rows.
+     *
+     * @param array{type: string, id: int|null} $scope
+     */
+    private function tierSetting(array $scope, string $key): mixed
+    {
+        return $this->config->getSettingForTier(
+            (string) $scope['type'],
+            isset($scope['id']) ? (int) $scope['id'] : null,
+            $key
+        );
+    }
+
+    /**
      * @param array{type: string, id: int|null} $scope
      * @return array<string,mixed>
      */
     private function loadRawSettings(array $scope): array
     {
-        $settings = [];
+        $raw = [];
 
         switch ($scope['type']) {
             case 'system':
                 foreach (self::EMAIL_KEYS as $key) {
-                    $settings[$key] = $this->systemModel->getValue($key);
+                    $raw[$key] = $this->systemModel->getValue($key);
                 }
                 break;
 
             case 'organisation':
                 foreach (self::EMAIL_KEYS as $key) {
-                    $settings[$key] = $this->config->getSettingForScope($key, []);
+                    $raw[$key] = $this->config->getSettingForScope($key, []);
                 }
                 break;
 
             case 'province':
-                $all = $this->config->getAllSettingsForScope(['province_id' => (int) $scope['id']]);
-                foreach (self::EMAIL_KEYS as $key) {
-                    $settings[$key] = $all[$key] ?? null;
-                }
+                $raw = $this->config->getAllSettingsForScope(['province_id' => (int) $scope['id']]);
                 break;
 
             case 'diocese':
-                $all = $this->config->getAllSettingsForScope(['diocese_id' => (int) $scope['id']]);
-                foreach (self::EMAIL_KEYS as $key) {
-                    $settings[$key] = $all[$key] ?? null;
-                }
+                $raw = $this->config->getAllSettingsForScope(['diocese_id' => (int) $scope['id']]);
                 break;
 
             case 'parish':
-                $all = $this->config->getAllSettingsForScope(['parish_id' => (int) $scope['id']]);
-                foreach (self::EMAIL_KEYS as $key) {
-                    $settings[$key] = $all[$key] ?? null;
-                }
+                $raw = $this->config->getAllSettingsForScope(['parish_id' => (int) $scope['id']]);
                 break;
+        }
+
+        $settings = [];
+        foreach (self::EMAIL_KEYS as $key) {
+            $value = $raw[$key] ?? null;
+            // SystemSettingModel::getAll() returns metadata envelopes; unwrap.
+            if (is_array($value) && array_key_exists('value', $value)) {
+                $value = $value['value'];
+            }
+            $settings[$key] = $value;
         }
 
         return $settings;
@@ -287,9 +294,8 @@ class EmailSettingsService
     /**
      * @param array{type: string, id: int|null}    $scope
      * @param array<string,string>                 $values
-     * @param array<string,mixed>                  $existing
      */
-    private function persistSettings(array $scope, array $values, array $existing): void
+    private function persistSettings(array $scope, array $values, bool $hasStoredPass): void
     {
         foreach ($values as $key => $value) {
             $short = str_replace('email.', '', $key);
@@ -297,7 +303,7 @@ class EmailSettingsService
             if ($short === 'smtp_pass') {
                 if ($value === '') {
                     // Keep existing password if any.
-                    if (!empty($existing[$key])) {
+                    if ($hasStoredPass) {
                         continue;
                     }
                     // No existing password and no new value: store empty.
@@ -370,8 +376,7 @@ class EmailSettingsService
         if (!empty($settings['smtp_host']) && !empty($settings['smtp_user'])) {
             $pass = $settings['smtp_pass'];
             if ($pass === '') {
-                $existing = $this->loadRawSettings($scope);
-                $pass     = (string) ($existing['email.smtp_pass'] ?? '');
+                $pass = (string) ($this->tierSetting($scope, 'email.smtp_pass') ?? '');
             }
 
             if ($pass !== '') {

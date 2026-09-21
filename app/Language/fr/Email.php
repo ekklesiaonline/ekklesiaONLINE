@@ -2,6 +2,8 @@
 
 return [
     'identityCard'      => 'Identité de l\'expéditeur',
+    'enabledLabel'      => 'Utiliser ces paramètres de messagerie',
+    'enabledHelp'       => 'Lorsqu\'elle est désactivée, la configuration de ce niveau est ignorée et celle du niveau supérieur s\'applique. Les valeurs enregistrées sont conservées.',
     'fromEmail'         => 'E-mail de l\'expéditeur',
     'fromName'          => 'Nom de l\'expéditeur',
     'replyTo'           => 'Adresse de réponse',

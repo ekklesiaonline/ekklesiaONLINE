@@ -55,6 +55,7 @@ trait EmailSettingsTrait
             'back_url'        => $backUrl,
             'title'           => $title,
             'errors'          => [],
+            'editing_section' => '',
         ];
 
         $viewData = method_exists($this, 'getCommonViewData')
@@ -195,6 +196,7 @@ trait EmailSettingsTrait
             'back_url'        => $backUrl,
             'title'           => $title,
             'errors'          => $errors,
+            'editing_section' => (string) ($submitted['section'] ?? ''),
         ];
 
         $viewData = method_exists($this, 'getCommonViewData')

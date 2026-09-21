@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Controllers\Auth;
 
+use App\Libraries\EmailFailureClassifier;
 use App\Services\EmailScopeService;
 use CodeIgniter\HTTP\IncomingRequest;
 use CodeIgniter\HTTP\RedirectResponse;
@@ -84,7 +85,9 @@ class ScopedMagicLinkController extends MagicLinkController
         ));
 
         if ($email->send(false) === false) {
-            log_message('error', $email->printDebugger(['headers']));
+            log_message('error', '[ScopedMagicLink] send failed; code={code}', [
+                'code' => EmailFailureClassifier::classify((string) $email->printDebugger(['headers'])),
+            ]);
 
             return redirect()->route('magic-link')->with('error', lang('Auth.unableSendEmailToUser', [$user->email]));
         }

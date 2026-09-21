@@ -2,6 +2,7 @@
 
 namespace App\Commands;
 
+use App\Libraries\EmailFailureClassifier;
 use App\Models\VolunteerScheduleModel;
 use App\Services\EmailScopeService;
 use CodeIgniter\CLI\BaseCommand;
@@ -179,7 +180,7 @@ TEXT;
             $sent = $mailer->send(false);
 
             if (!$sent) {
-                return [false, strip_tags((string) $mailer->printDebugger(['headers']))];
+                return [false, EmailFailureClassifier::classify((string) $mailer->printDebugger(['headers']))];
             }
 
             return [true, ''];

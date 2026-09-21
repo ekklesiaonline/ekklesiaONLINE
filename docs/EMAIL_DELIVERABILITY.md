@@ -41,11 +41,32 @@ the message to Gmail, and Gmail signs accepted outbound mail. For a consumer
 For Google Workspace custom domains, the Workspace administrator must enable
 DKIM and publish the Google-provided DNS TXT record.
 
+## What `550 5.1.20` means
+
+Exchange Online Protection returns
+`550 5.1.20 Multiple From addresses are not allowed without a Sender address`
+when the `From:` header parses as more than one mailbox. In EkklesiaRD the
+trigger was a scoped `email.from_name` containing both a comma and a non-ASCII
+character (e.g. `Iglesia Episcopal La Transfiguración, Bani RD`): CI4's
+`Email::setFrom()` Q-encodes non-ASCII display names via
+`iconv_mime_encode()`, which leaves the comma literal inside the encoded word,
+so Exchange reads two addresses and — with no `Sender:` header — rejects.
+
+`EmailScopeService::senderConfig()` now strips RFC 5322 address-list specials
+(`,;:@<>"()[]\`) from the resolved `from_name`, so this cannot recur for any
+send path. Do not reintroduce raw settings values into `setFrom()` calls.
+
 ## Sender/transport alignment policy
 
 - Credential-bearing mail always uses System transport.
 - Tenant pastoral/operational mail may use tenant SMTP only when host, username,
-  and password form a complete block at one hierarchy tier.
+  and password form a complete block at one hierarchy tier. Resolution is
+  block-atomic: a partial block is skipped (never mixed with another tier) and
+  the next tier up is tried.
+- `email.enabled` may be set to `0` at any tier to disable that tier's `email.*`
+  settings without deleting them; the next tier up applies. A System-tier lock
+  on `email.smtp_host`/`email.smtp_user`/`email.smtp_pass` forces the
+  System-tier block.
 - A Gmail From address must be submitted through the authorized Gmail account,
   using `smtp.gmail.com`, TLS, port 587, and a Google App Password.
 - A custom-domain From address must use an SMTP provider authorized by that
@@ -184,4 +205,6 @@ not the recipient or credentials.
   response contract.
 - `app/Views/partials/_email_settings.php`: settings and test-send UI.
 - `app/Libraries/DataEncryption.php`: text-safe encrypted credential envelope.
+- `app/Libraries/EmailFailureClassifier.php`: shared transcript-to-code
+  classifier; all send paths log/store only the classified code.
 - `docs/OBSERVABILITY_POLICY.md`: redaction and retention requirements.

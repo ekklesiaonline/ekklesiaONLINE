@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Libraries\DataEncryption;
+use App\Libraries\EmailFailureClassifier;
 use App\Models\CallTaskModel;
 use App\Models\SmsQueueModel;
 use App\Services\EmailScopeService;
@@ -167,7 +168,7 @@ class FollowupDispatchService
                 return [
                     'success'  => false,
                     'metadata' => ['channel' => 'email'],
-                    'error'    => (string) $mailer->printDebugger(['headers']),
+                    'error'    => EmailFailureClassifier::classify((string) $mailer->printDebugger(['headers'])),
                 ];
             }
 

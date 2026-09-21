@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Authentication;
 
+use App\Libraries\EmailFailureClassifier;
 use App\Services\EmailScopeService;
 use CodeIgniter\HTTP\IncomingRequest;
 use CodeIgniter\I18n\Time;
@@ -71,7 +72,10 @@ class ScopedEmailActivator extends EmailActivator
         ));
 
         if ($mailer->send(false) === false) {
-            throw new RuntimeException('Cannot send email for user: ' . $user->email . "\n" . $mailer->printDebugger(['headers']));
+            throw new RuntimeException(
+                'Cannot send email for user: ' . $user->email
+                    . ' [' . EmailFailureClassifier::classify((string) $mailer->printDebugger(['headers'])) . ']'
+            );
         }
 
         // Clear the email

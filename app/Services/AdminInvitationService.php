@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Libraries\EmailFailureClassifier;
 use App\Services\EmailScopeService;
 
 class AdminInvitationService
@@ -33,7 +34,9 @@ class AdminInvitationService
         );
 
         if ($emailService->send(false) === false) {
-            log_message('error', $emailService->printDebugger(['headers']));
+            log_message('error', '[AdminInvitationService] send failed; code={code}', [
+                'code' => EmailFailureClassifier::classify((string) $emailService->printDebugger(['headers'])),
+            ]);
             throw new \RuntimeException('ADMIN_INVITATION_EMAIL_FAILED');
         }
 
