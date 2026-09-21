@@ -66,15 +66,11 @@ class ScopedMagicLinkController extends MagicLinkController
         $userAgent = (string) $request->getUserAgent();
         $date      = Time::now()->toDateTimeString();
 
-        // Send the user an email with the code — scoped From, system transport.
+        // Send the user an email with the code — System transport with a
+        // System-aligned From mailbox, tenant display name and Reply-To.
         $scopeService = new EmailScopeService();
         $scope        = $scopeService->resolveScopeForUser((int) $user->id);
-        $email        = $scopeService->systemMailer(['overrides' => ['mailType' => 'html']]);
-
-        $sender = $scopeService->senderConfig($scope);
-        if ($sender['from_email'] !== '') {
-            $email->setFrom($sender['from_email'], $sender['from_name']);
-        }
+        $email        = $scopeService->credentialMailer($scope, ['overrides' => ['mailType' => 'html']]);
 
         $email->setTo($user->email);
         $email->setSubject(lang('Auth.magicLinkSubject'));

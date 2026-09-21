@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Libraries\EmailFailureClassifier;
 use App\Models\ParishRoleAuditModel;
 use CodeIgniter\Database\BaseConnection;
 
@@ -65,20 +66,20 @@ class RegistrationNotificationService
 
         $requesterName = trim($firstName . ' ' . $lastName);
         $dashboardUrl = base_url('members');
-        $subject = 'New registration awaiting parish review';
-        $message = "A new user registration is awaiting review.\n\n"
-            . 'Parish: ' . ($parishName !== '' ? $parishName : 'Unknown') . "\n"
-            . 'Applicant: ' . ($requesterName !== '' ? $requesterName : 'Name not provided') . "\n"
-            . 'Email: ' . $emailAddress . "\n\n"
-            . 'Action needed: authorize or ban this registration in the Members module.\n'
-            . 'Request ID: #' . $requestId . "\n"
-            . 'Review: ' . $dashboardUrl;
+        $subject = lang('Auth.registrationPendingSubject');
+        $message = lang('Auth.registrationPendingBody', [
+            $parishName !== '' ? $parishName : lang('Auth.registrationPendingUnknown'),
+            $requesterName !== '' ? $requesterName : lang('Auth.registrationPendingNoName'),
+            $emailAddress,
+            $requestId,
+            $dashboardUrl,
+        ]);
 
         try {
             $email = $this->emailScope->mailer(['parish_id' => $parishId]);
         } catch (\Throwable $e) {
-            log_message('error', 'Failed to build scoped mailer for pending review notification: {message}', [
-                'message' => $e->getMessage(),
+            log_message('error', 'Failed to build scoped mailer for pending review notification: {class}', [
+                'class' => $e::class,
             ]);
             return;
         }
@@ -91,12 +92,18 @@ class RegistrationNotificationService
                 $email->setTo($recipient);
                 $email->setSubject($subject);
                 $email->setMessage($message);
-                $email->send();
+                if ($email->send(false) === false) {
+                    log_message('warning', 'Pending review notification send failed; code={code}; parish_id={parishId}', [
+                        'code'     => EmailFailureClassifier::classify((string) $email->printDebugger(['headers'])),
+                        'parishId' => $parishId,
+                    ]);
+                    continue;
+                }
                 $delivered++;
             } catch (\Throwable $e) {
-                log_message('warning', 'Failed sending parish pending review email to {email}: {message}', [
-                    'email' => $recipient,
-                    'message' => $e->getMessage(),
+                log_message('warning', 'Pending review notification raised {class}; parish_id={parishId}', [
+                    'class'    => $e::class,
+                    'parishId' => $parishId,
                 ]);
             }
         }

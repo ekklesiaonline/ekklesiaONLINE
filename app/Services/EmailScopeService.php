@@ -417,6 +417,55 @@ class EmailScopeService
     }
 
     /**
+     * Resolve the sender identity for credential-bearing mail.
+     *
+     * The From mailbox always comes from the Organisation/System tier so the
+     * From domain stays aligned with the System transport (a tenant From
+     * domain on System SMTP fails DKIM/DMARC alignment). Tenant branding is
+     * preserved through the display name and Reply-To.
+     *
+     * @param array<string,int|null> $scope
+     * @return array{from_email: string, from_name: string, reply_to: string}
+     */
+    public function credentialSenderConfig(array $scope = []): array
+    {
+        $system = $this->senderConfig([]);
+        $scoped = $this->senderConfig($scope);
+
+        return [
+            'from_email' => $system['from_email'],
+            'from_name'  => $scoped['from_name'],
+            'reply_to'   => $scoped['reply_to'],
+        ];
+    }
+
+    /**
+     * Mailer for credential-bearing mail (activation codes, magic links,
+     * OTPs, device verification, password-change notices): always System
+     * transport with a System-aligned From mailbox, plus the tenant-scoped
+     * display name and Reply-To.
+     *
+     * @param array<string,int|null> $scope
+     * @param array<string,mixed>    $options
+     * @return \CodeIgniter\Email\Email
+     */
+    public function credentialMailer(array $scope = [], array $options = []): \CodeIgniter\Email\Email
+    {
+        $mailer = $this->systemMailer($options);
+        $sender = $this->credentialSenderConfig($scope);
+
+        if ($sender['from_email'] !== '') {
+            $mailer->setFrom($sender['from_email'], $sender['from_name']);
+        }
+
+        if ($sender['reply_to'] !== '') {
+            $mailer->setReplyTo($sender['reply_to']);
+        }
+
+        return $mailer;
+    }
+
+    /**
      * Look up one setting across the hierarchy, respecting system-level locks.
      *
      * @param array<string,int|null> $scope

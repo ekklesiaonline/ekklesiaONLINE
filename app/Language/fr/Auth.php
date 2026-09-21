@@ -140,4 +140,22 @@ return [
     'trustedDevicesRevokedCount' => '{0} appareil(s) de confiance révoqué(s).',
     'trustedDeviceNotFound'      => 'Appareil de confiance introuvable ou déjà révoqué.',
     'trustedDeviceForgotten'     => 'Une vérification sera demandée pour cet appareil à votre prochaine connexion.',
+
+    // Pending-registration admin notification email
+    'registrationPendingSubject' => 'Nouvelle inscription en attente de validation paroissiale',
+    'registrationPendingBody'    => "Une nouvelle inscription utilisateur est en attente de validation.\n\nParoisse : {0}\nDemandeur : {1}\nCourriel : {2}\n\nAction requise : autorisez ou rejetez cette inscription dans le module Membres.\nDemande n° {3}\nRéviser : {4}",
+    'registrationPendingUnknown' => 'Inconnue',
+    'registrationPendingNoName'  => 'Nom non fourni',
+
+    // Portal access invitation email
+    'portalInviteSubject'      => 'Invitation d’accès au portail - EkklesiaRD',
+    'portalInviteIntro'        => 'Votre invitation d’accès au portail a été créée.',
+    'portalInvitePasswordNote' => 'Pour des raisons de sécurité, vous devez définir votre mot de passe avant que l’accès complet ne soit activé.',
+    'portalInviteGoTo'         => 'Accédez à :',
+
+    // Password-changed notification email
+    'passwordChangedSubject' => 'Votre mot de passe a été modifié - EkklesiaRD',
+    'passwordChangedIntro'   => 'Le mot de passe de votre compte EkklesiaRD a été modifié.',
+    'passwordChangedAt'      => 'Heure :',
+    'passwordChangedNotYou'  => 'Si vous n’êtes pas à l’origine de ce changement, veuillez <strong>changer immédiatement votre mot de passe</strong> et contacter l’administrateur de votre paroisse.',
 ];

@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Libraries\EmailFailureClassifier;
 use CodeIgniter\Session\Session;
 
 /**
@@ -48,8 +49,10 @@ class DeviceVerificationService
     }
 
     /**
-     * Send the verification-code email through System transport.
-     * Returns the transport result; failures are logged and audited.
+     * Send the verification-code email through System transport with a
+     * System-aligned From mailbox and the user's tenant display
+     * name/Reply-To. Returns the transport result; failures are logged
+     * (classified code only) and audited.
      */
     public function sendCodeEmail(mixed $user, string $ip, string $userAgent, string $code): bool
     {
@@ -63,14 +66,23 @@ class DeviceVerificationService
         try {
             $friendlyDevice = (new TrustedDeviceService())->describeAgent($userAgent);
 
-            $emailService = (new EmailScopeService())->systemMailer();
+            $scopeService = new EmailScopeService();
+            $scope        = $userId > 0 ? $scopeService->resolveScopeForUser($userId) : [];
+            $emailService = $scopeService->credentialMailer($scope, ['overrides' => ['mailType' => 'html']]);
             $emailService->setTo((string) $email);
             $emailService->setSubject(lang('Auth.deviceVerifyEmailSubject'));
             $emailService->setMessage($this->buildEmailBody($ip, $userAgent, $friendlyDevice, $code));
 
             $sent = $emailService->send(false) === true;
+            if (! $sent) {
+                log_message('warning', '[DeviceVerification] send failed; code={code}', [
+                    'code' => EmailFailureClassifier::classify((string) $emailService->printDebugger(['headers'])),
+                ]);
+            }
         } catch (\Throwable $e) {
-            log_message('warning', '[DeviceVerification] Email failed: ' . $e->getMessage());
+            log_message('warning', '[DeviceVerification] Email failed: {class}', [
+                'class' => $e::class,
+            ]);
             $sent = false;
         }
 

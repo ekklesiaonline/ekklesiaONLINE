@@ -87,6 +87,9 @@ class SetPasswordController extends BaseController
             log_message('warning', 'Failed to write set-password audit log: {error}', ['error' => $e->getMessage()]);
         }
 
+        (new \App\Services\SecurityNotificationService())
+            ->sendPasswordChangedNotice((int) $user->id, (string) ($user->email ?? ''));
+
         return redirect()->to(config('Auth')->loginRedirect())
             ->with('message', lang('Auth.setPasswordSuccess', [], 'en'));
     }

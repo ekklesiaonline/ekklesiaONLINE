@@ -259,6 +259,58 @@ final class EmailScopeServiceTest extends CIUnitTestCase
         $mailer2 = $this->service->systemMailer();
         $this->assertSame($mailer, $mailer2);
     }
+
+    public function testCredentialSenderConfigKeepsSystemFromEmailWithTenantIdentity(): void
+    {
+        $this->config->values = [
+            'email.from_email' => 'noreply@system.test',
+            'email.from_name'  => 'EkklesiaRD',
+        ];
+        $this->config->scopedValues = [
+            ['email.from_email', ['parish_id' => 30], 'office@parish.test'],
+            ['email.from_name',  ['parish_id' => 30], 'Parish Office'],
+            ['email.reply_to',   ['parish_id' => 30], 'replies@parish.test'],
+        ];
+
+        $sender = $this->service->credentialSenderConfig(['parish_id' => 30]);
+
+        // A tenant From mailbox on System transport would fail DMARC
+        // alignment, so only the display name and Reply-To are scoped.
+        $this->assertSame('noreply@system.test', $sender['from_email']);
+        $this->assertSame('Parish Office', $sender['from_name']);
+        $this->assertSame('replies@parish.test', $sender['reply_to']);
+    }
+
+    public function testCredentialSenderConfigFallsBackToSystemIdentity(): void
+    {
+        $this->config->values = [
+            'email.from_email' => 'noreply@system.test',
+            'email.from_name'  => 'EkklesiaRD',
+            'email.reply_to'   => 'support@system.test',
+        ];
+
+        $sender = $this->service->credentialSenderConfig(['parish_id' => 30]);
+
+        $this->assertSame('noreply@system.test', $sender['from_email']);
+        $this->assertSame('EkklesiaRD', $sender['from_name']);
+        $this->assertSame('support@system.test', $sender['reply_to']);
+    }
+
+    public function testCredentialMailerUsesSystemTransport(): void
+    {
+        $this->config->scopedValues = [
+            ['email.smtp_host', ['parish_id' => 30], 'smtp.parish.test'],
+            ['email.smtp_user', ['parish_id' => 30], 'user'],
+            ['email.smtp_pass', ['parish_id' => 30], 'secret'],
+        ];
+
+        // Even with a complete tenant SMTP block, credential mail rides the
+        // shared system-transport instance.
+        $mailer = $this->service->credentialMailer(['parish_id' => 30]);
+
+        $this->assertInstanceOf(\CodeIgniter\Email\Email::class, $mailer);
+        $this->assertSame($this->service->systemMailer(), $mailer);
+    }
 }
 
 // ------------------------------------------------------------------

@@ -70,6 +70,13 @@ Events::on('DBQuery', static function (QueryInterface $query): void {
 Events::on('register', static function (User $user): void {
     $request = service('request');
     $parishId = (int) ($request->getPost('parish_id') ?? 0);
+
+    // Stash for the activation-email sender scope: the request row below is
+    // skipped when the selected parish lacks a diocese/province chain.
+    if ($parishId > 0) {
+        session()->set('pending_registration_parish_id', $parishId);
+    }
+
     $provinceId = 0;
     $dioceseId = 0;
     $preferredLocale = strtolower(trim((string) (

@@ -586,6 +586,17 @@ class SystemAdminUsers extends BaseController
         // Update password in auth_identities table
         $this->adminUserService()->updatePasswordIdentity($userId, service('passwords')->hash($newPassword));
 
+        $targetIdentity = db_connect()->table('auth_identities')
+            ->select('secret')
+            ->where('user_id', $userId)
+            ->where('type', 'email_password')
+            ->get()
+            ->getRowArray();
+        if ($targetIdentity !== null) {
+            (new \App\Services\SecurityNotificationService())
+                ->sendPasswordChangedNotice($userId, (string) $targetIdentity['secret']);
+        }
+
         $this->audit()->log('system.admin.password_reset', [
             'entity_type' => 'user',
             'entity_id' => $userId,

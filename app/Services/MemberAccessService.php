@@ -402,12 +402,12 @@ class MemberAccessService
         }
 
         $emailService->setTo($recipientEmail);
-        $emailService->setSubject('Portal Access Invitation - EkklesiaRD');
+        $emailService->setSubject(lang('Auth.portalInviteSubject'));
         $passwordSetupUrl = base_url('login/magic-link');
         $emailService->setMessage(
-            '<p>Your portal access invitation was created.</p>'
-                . '<p>For security, you must set your password before full access is enabled.</p>'
-                . '<p>Go to: <a href="' . esc($passwordSetupUrl, 'attr') . '">' . esc($passwordSetupUrl) . '</a></p>'
+            '<p>' . esc(lang('Auth.portalInviteIntro')) . '</p>'
+                . '<p>' . esc(lang('Auth.portalInvitePasswordNote')) . '</p>'
+                . '<p>' . esc(lang('Auth.portalInviteGoTo')) . ' <a href="' . esc($passwordSetupUrl, 'attr') . '">' . esc($passwordSetupUrl) . '</a></p>'
         );
 
         if ($emailService->send(false) === false) {

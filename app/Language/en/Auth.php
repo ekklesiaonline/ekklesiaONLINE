@@ -162,4 +162,22 @@ return [
     'trustedDevicesRevokedCount' => '{0} trusted device(s) revoked.',
     'trustedDeviceNotFound'      => 'Trusted device not found or already revoked.',
     'trustedDeviceForgotten'     => 'This device will be asked to verify on your next sign-in.',
+
+    // Pending-registration admin notification email
+    'registrationPendingSubject' => 'New registration awaiting parish review',
+    'registrationPendingBody'    => "A new user registration is awaiting review.\n\nParish: {0}\nApplicant: {1}\nEmail: {2}\n\nAction needed: authorize or ban this registration in the Members module.\nRequest ID: #{3}\nReview: {4}",
+    'registrationPendingUnknown' => 'Unknown',
+    'registrationPendingNoName'  => 'Name not provided',
+
+    // Portal access invitation email
+    'portalInviteSubject'      => 'Portal Access Invitation - EkklesiaRD',
+    'portalInviteIntro'        => 'Your portal access invitation was created.',
+    'portalInvitePasswordNote' => 'For security, you must set your password before full access is enabled.',
+    'portalInviteGoTo'         => 'Go to:',
+
+    // Password-changed notification email
+    'passwordChangedSubject' => 'Your password was changed - EkklesiaRD',
+    'passwordChangedIntro'   => 'The password for your EkklesiaRD account was changed.',
+    'passwordChangedAt'      => 'Time:',
+    'passwordChangedNotYou'  => 'If you did not make this change, please <strong>change your password immediately</strong> and contact your parish administrator.',
 ];

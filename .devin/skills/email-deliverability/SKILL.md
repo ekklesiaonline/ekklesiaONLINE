@@ -24,7 +24,7 @@ Key sources:
 Security boundaries:
 - Never print or log SMTP passwords, encrypted password values, App Passwords, tokens, full SMTP transcripts, recipient addresses, or complete message headers.
 - Safe metadata includes host, port, crypto mode, sender domain, SMTP username domain, whether a password is present, and decrypted password length.
-- Authentication, magic-link, 2FA, device-verification, and OTP mail must use System transport.
+- Authentication, magic-link, 2FA, device-verification, and OTP mail must use `EmailScopeService::credentialMailer($scope)` — System transport with a System-aligned From mailbox; tenant identity is carried only by the display name and Reply-To.
 - Do not send a real test email unless the user explicitly authorizes it and supplies or confirms the recipient.
 
 Diagnostic workflow:

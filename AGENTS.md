@@ -18,6 +18,7 @@
 - Model casts must use nullable prefix form: `?int`, `?string` (never `int?`, `string?`).
 - Use `php spark` for code generation, not manual scaffolding.
 - Resolve email sender identity and SMTP only through `EmailScopeService`; feed `Email::setFrom()` only from `senderConfig()` output (it sanitizes `from_name` of RFC 5322 specials that break Exchange header parsing).
+- Credential-bearing mail (activation, magic link, OTP, device verification, password-change notices) must go through `EmailScopeService::credentialMailer($scope)` — System transport, System-aligned From mailbox, tenant display name/Reply-To.
 - Write tests with CIUnitTestCase.
 - Run tests with `vendor/bin/phpunit --no-coverage`; this project does not provide a `php spark test` command.
 

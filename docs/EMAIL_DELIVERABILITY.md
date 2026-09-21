@@ -58,7 +58,13 @@ send path. Do not reintroduce raw settings values into `setFrom()` calls.
 
 ## Sender/transport alignment policy
 
-- Credential-bearing mail always uses System transport.
+- Credential-bearing mail (activation codes, magic links, OTPs, device
+  verification, password-change notices) always uses System transport via
+  `EmailScopeService::credentialMailer()`: the From mailbox stays aligned
+  with the System transport domain, while the tenant-scoped display name
+  and Reply-To carry the parish identity. Never override `setFrom()` on
+  these paths with a tenant `from_email` — an unauthorized tenant domain on
+  System SMTP fails DKIM/DMARC alignment (`550 5.7.30`).
 - Tenant pastoral/operational mail may use tenant SMTP only when host, username,
   and password form a complete block at one hierarchy tier. Resolution is
   block-atomic: a partial block is skipped (never mixed with another tier) and

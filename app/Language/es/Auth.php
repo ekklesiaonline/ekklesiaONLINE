@@ -140,4 +140,22 @@ return [
     'trustedDevicesRevokedCount' => '{0} dispositivo(s) de confianza revocado(s).',
     'trustedDeviceNotFound'      => 'Dispositivo de confianza no encontrado o ya revocado.',
     'trustedDeviceForgotten'     => 'Se pedirá verificar este dispositivo en tu próximo inicio de sesión.',
+
+    // Pending-registration admin notification email
+    'registrationPendingSubject' => 'Nuevo registro pendiente de revisión parroquial',
+    'registrationPendingBody'    => "Un nuevo registro de usuario está pendiente de revisión.\n\nParroquia: {0}\nSolicitante: {1}\nCorreo: {2}\n\nAcción requerida: autoriza o descarta este registro en el módulo de Miembros.\nSolicitud N.º {3}\nRevisar: {4}",
+    'registrationPendingUnknown' => 'Desconocida',
+    'registrationPendingNoName'  => 'Nombre no proporcionado',
+
+    // Portal access invitation email
+    'portalInviteSubject'      => 'Invitación de acceso al portal - EkklesiaRD',
+    'portalInviteIntro'        => 'Se creó tu invitación de acceso al portal.',
+    'portalInvitePasswordNote' => 'Por seguridad, debes establecer tu contraseña antes de que se habilite el acceso completo.',
+    'portalInviteGoTo'         => 'Ve a:',
+
+    // Password-changed notification email
+    'passwordChangedSubject' => 'Tu contraseña fue cambiada - EkklesiaRD',
+    'passwordChangedIntro'   => 'La contraseña de tu cuenta de EkklesiaRD fue cambiada.',
+    'passwordChangedAt'      => 'Hora:',
+    'passwordChangedNotYou'  => 'Si no realizaste este cambio, <strong>cambia tu contraseña de inmediato</strong> y contacta al administrador de tu parroquia.',
 ];

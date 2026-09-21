@@ -54,7 +54,7 @@ trigger: always_on
 
 - Resolve sender identity and SMTP only through `EmailScopeService` (`senderConfig()`, `mailer()`, `systemMailer()`); never read `email.*` settings directly in senders.
 - Feed `Email::setFrom()` only from `senderConfig()` output. It sanitizes `from_name` of RFC 5322 address-list specials — a literal `,` inside a Q-encoded display name makes Exchange reject with `550 5.1.20`.
-- Credential-bearing mail (activation, magic link, OTP, device verification) must use `systemMailer()`.
+- Credential-bearing mail (activation, magic link, OTP, device verification, password-change notices) must use `credentialMailer($scope)` — System transport with a System-aligned From mailbox plus the tenant display name and Reply-To. Never put a tenant `from_email` on System transport (DMARC misalignment).
 - For delivery failures and provider alignment, use the `/email-deliverability` skill and `docs/EMAIL_DELIVERABILITY.md`.
 
 ## API/AJAX Responses

@@ -24,6 +24,13 @@ use CodeIgniter\Shield\Exceptions\RuntimeException;
 class ScopedEmailActivator extends EmailActivator
 {
     /**
+     * Minimum seconds between activation email sends for one session.
+     * Shield re-invokes show() on every GET to auth/a/show, so without a
+     * cooldown each page reload would generate a fresh code and email.
+     */
+    private const RESEND_COOLDOWN_SECONDS = 60;
+
+    /**
      * Shows the initial screen to the user and sends the activation email
      * using the scoped sender identity.
      */
@@ -44,6 +51,13 @@ class ScopedEmailActivator extends EmailActivator
             );
         }
 
+        $sentAt = (int) (session()->get('activation_email_sent_at') ?? 0);
+        if ($sentAt > 0 && (time() - $sentAt) < self::RESEND_COOLDOWN_SECONDS) {
+            // Within the resend cooldown: keep the previously emailed code
+            // valid and just re-render the code-entry form.
+            return $this->view(setting('Auth.views')['action_email_activate_show'], ['user' => $user]);
+        }
+
         $code = $this->createIdentity($user);
 
         /** @var IncomingRequest $request */
@@ -53,15 +67,21 @@ class ScopedEmailActivator extends EmailActivator
         $userAgent = (string) $request->getUserAgent();
         $date      = Time::now()->toDateTimeString();
 
-        // Send the email with scoped From identity, system transport.
+        // Send via the credential mailer: System transport and a
+        // System-aligned From mailbox, tenant display name and Reply-To.
         $scopeService = new EmailScopeService();
         $scope        = $scopeService->resolveScopeForPendingUser((int) $user->id);
-        $mailer       = $scopeService->systemMailer(['overrides' => ['mailType' => 'html']]);
 
-        $sender = $scopeService->senderConfig($scope);
-        if ($sender['from_email'] !== '') {
-            $mailer->setFrom($sender['from_email'], $sender['from_name']);
+        // When the registration-request row could not be created (e.g. the
+        // selected parish is missing its diocese/province chain), fall back
+        // to the parish captured in the session during registration.
+        $sessionParishId = (int) (session()->get('pending_registration_parish_id') ?? 0);
+        if (empty($scope['parish_id']) && $sessionParishId > 0) {
+            $scope = $scopeService->resolveScope(['parish_id' => $sessionParishId]);
         }
+        session()->remove('pending_registration_parish_id');
+
+        $mailer = $scopeService->credentialMailer($scope, ['overrides' => ['mailType' => 'html']]);
 
         $mailer->setTo($userEmail);
         $mailer->setSubject(lang('Auth.emailActivateSubject'));
@@ -80,6 +100,7 @@ class ScopedEmailActivator extends EmailActivator
 
         // Clear the email
         $mailer->clear();
+        session()->set('activation_email_sent_at', time());
 
         // Display the info page
         return $this->view(setting('Auth.views')['action_email_activate_show'], ['user' => $user]);

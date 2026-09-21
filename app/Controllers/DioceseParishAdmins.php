@@ -230,11 +230,23 @@ class DioceseParishAdmins extends BaseController
             return redirect()->back()->withInput()->with('errors', ['new_password' => implode(' ', $validation['errors'])]);
         }
 
+        $identity = db_connect()->table('auth_identities')
+            ->select('secret')
+            ->where('user_id', $userId)
+            ->where('type', 'email_password')
+            ->get()
+            ->getRowArray();
+
         db_connect()->table('auth_identities')->where('user_id', $userId)->where('type', 'email_password')->update([
             'secret2'     => service('passwords')->hash($password),
             'force_reset' => 0,
             'updated_at'  => date('Y-m-d H:i:s'),
         ]);
+
+        if ($identity !== null) {
+            (new \App\Services\SecurityNotificationService())
+                ->sendPasswordChangedNotice($userId, (string) $identity['secret']);
+        }
 
         $this->audit()->log('diocese.parish_admin.password_reset', [
             'user_id'     => (int) auth()->id(),

@@ -96,6 +96,29 @@ final class DeviceVerifyBruteForceTest extends CIUnitTestCase
         );
     }
 
+    public function testLoginRateLimitCoversMagicLinkEndpoint(): void
+    {
+        $filtersFile = ROOTPATH . 'app/Config/Filters.php';
+        $content = file_get_contents($filtersFile);
+        $this->assertNotFalse($content);
+
+        preg_match(
+            "/'loginRateLimit'\s*=>\s*\[\s*'before'\s*=>\s*\[(.*?)\]\s*,?\s*\]/s",
+            $content,
+            $match
+        );
+
+        $this->assertNotEmpty($match, 'Could not locate the loginRateLimit before block in Filters.php.');
+
+        // Each POST to login/magic-link generates a token and sends an
+        // email — without per-IP throttling it is an email-bombing vector.
+        $this->assertStringContainsString(
+            "'login/magic-link'",
+            $match[1],
+            'loginRateLimit must cover login/magic-link.'
+        );
+    }
+
     private function extractInvalidateMethodBody(): string
     {
         if (preg_match(

@@ -350,6 +350,7 @@ class Filters extends BaseFilters
         'loginRateLimit' => [
             'before' => [
                 'login',
+                'login/magic-link',
                 'register',
                 'session/device-verify',
                 'session/device-verify/resend',
