@@ -40,7 +40,8 @@ Diagnostic workflow:
    - connection refused/timeout → `SMTP_CONNECTION_FAILED`.
    - TLS negotiation error → `SMTP_TLS_FAILED`.
    - `550 5.7.30` / DKIM did not pass → `EMAIL_AUTHENTICATION_FAILED`.
-6. If authorized, run an application-level test with `EmailSettingsService::sendTest()` and report only `success`, `code`, and localized message.
+   - Apple `554 5.7.1 [BS01]` / local policy → `RECIPIENT_POLICY_REJECTED`.
+6. If authorized, run an application-level test with `EmailSettingsService::sendTest()` and report only `success`, `code`, and localized message/reference.
 7. Treat `EMAIL_TEST_SENT` as SMTP-provider acceptance, not guaranteed inbox placement. Ask the user to confirm receipt and inspect `Authentication-Results` for `spf=pass`, `dkim=pass`, and aligned `dmarc=pass` where applicable.
 8. For missing Outlook/iCloud delivery, check the Gmail Sent folder, delayed Mail Delivery Subsystem notices, recipient Junk/Spam and rules, Outlook's Other tab, blocked senders, and Microsoft 365 message trace where available.
 9. Check for a later bounce before declaring final delivery successful.

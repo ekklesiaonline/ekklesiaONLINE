@@ -24,6 +24,10 @@ final class EmailSettingsSecurityTest extends CIUnitTestCase
             'EMAIL_AUTHENTICATION_FAILED',
             $method->invoke($service, '550 5.7.30 Message blocked because DKIM authentication did not pass.')
         );
+        $this->assertSame(
+            'RECIPIENT_POLICY_REJECTED',
+            $method->invoke($service, '554 5.7.1 [BS01] Message rejected due to local policy.')
+        );
 
         $sendTest = new ReflectionMethod($service, 'sendTest');
         $source = $this->methodSource($sendTest);

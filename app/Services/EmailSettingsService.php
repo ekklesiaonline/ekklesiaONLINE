@@ -150,10 +150,14 @@ class EmailSettingsService
         }
 
         try {
+            $reference = strtoupper(bin2hex(random_bytes(4)));
+            $sentAt = gmdate('Y-m-d H:i:s') . ' UTC';
+            $body = lang('Email.testBody', [$reference, $sentAt]);
+
             $mailer->setTo($recipient);
-            $mailer->setSubject(lang('Email.testSubject'));
-            $mailer->setMessage('<p>' . esc(lang('Email.testBody')) . '</p>');
-            $mailer->setAltMessage(lang('Email.testBody'));
+            $mailer->setSubject(lang('Email.testSubject') . ' [' . $reference . ']');
+            $mailer->setMessage('<p>' . esc($body) . '</p>');
+            $mailer->setAltMessage($body);
 
             if (!$mailer->send(false)) {
                 $failureCode = $this->classifySendFailure((string) $mailer->printDebugger(['headers']));
@@ -166,7 +170,7 @@ class EmailSettingsService
                 ];
             }
 
-            return ['success' => true, 'message' => lang('Email.testSent'), 'code' => 'EMAIL_TEST_SENT'];
+            return ['success' => true, 'message' => lang('Email.testSent', [$reference]), 'code' => 'EMAIL_TEST_SENT'];
         } catch (\Throwable) {
             $this->logTestFailure($scope, 'SMTP_SEND_FAILED');
 
@@ -186,6 +190,10 @@ class EmailSettingsService
             return 'EMAIL_AUTHENTICATION_FAILED';
         }
 
+        if (str_contains($normalized, '[bs01]') || (str_contains($normalized, '554 5.7.1') && str_contains($normalized, 'local policy'))) {
+            return 'RECIPIENT_POLICY_REJECTED';
+        }
+
         if (str_contains($normalized, 'connection refused') || str_contains($normalized, 'unable to connect') || str_contains($normalized, 'timed out')) {
             return 'SMTP_CONNECTION_FAILED';
         }
@@ -202,6 +210,7 @@ class EmailSettingsService
         return match ($code) {
             'SMTP_AUTHENTICATION_FAILED' => lang('Email.smtpAuthenticationFailed'),
             'EMAIL_AUTHENTICATION_FAILED'=> lang('Email.emailAuthenticationFailed'),
+            'RECIPIENT_POLICY_REJECTED'  => lang('Email.recipientPolicyRejected'),
             'SMTP_CONNECTION_FAILED'     => lang('Email.smtpConnectionFailed'),
             'SMTP_TLS_FAILED'            => lang('Email.smtpTlsFailed'),
             default                      => lang('Email.testSendFailed'),

@@ -125,8 +125,10 @@ but it can still generate a delayed bounce or filter the message later.
 ## Gmail sender to Outlook or iCloud recipients
 
 When Gmail accepts a message but an Outlook or iCloud recipient does not see it,
-EkklesiaRD cannot treat SMTP acceptance as proof of final delivery. Check in
-this order:
+EkklesiaRD cannot treat SMTP acceptance as proof of final delivery. Each test
+message includes a unique reference in its subject/body so the accepted request,
+bounce, provider trace, and received message can be correlated. Check in this
+order:
 
 1. Confirm the message appears in the authenticated Gmail account's Sent
    folder. If it does not, the expected Gmail transport was not used.
@@ -143,6 +145,22 @@ this order:
 The settings page therefore reports **SMTP provider accepted** rather than
 **email delivered**. Delivery confirmation requires a received message or a
 provider delivery/message-trace event.
+
+Apple `554 5.7.1 [BS01]` is a permanent recipient-policy rejection, not an SMTP
+login failure. Apple states that iCloud evaluates IP/domain reputation, message
+content, user feedback, SPF, DKIM, DMARC, RFC 5321/5322 compliance, consistency,
+and bounce handling; it does not offer a sender allow list. For mail submitted
+through consumer Gmail, Google controls the sending IP and DKIM signature. If
+BS01 persists after confirming the message is in Gmail Sent and the From account
+matches the authenticated Gmail account, retain the Apple transaction ID and
+contact Apple Support/Postmaster as described in the rejection URL.
+
+Outlook can silently place accepted messages in Junk, Other, quarantine, or a
+Microsoft 365 policy queue. If there is no bounce, use the unique test reference
+in Microsoft 365 message trace or ask the recipient administrator to search the
+trace. Absence from an Outlook recipient's mailbox is not evidence that the
+message was absent from the Gmail sender's Sent folder; those are separate
+mailboxes.
 
 ## Logging and audit rules
 
