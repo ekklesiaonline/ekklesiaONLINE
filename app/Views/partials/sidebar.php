@@ -112,6 +112,11 @@
                     </a>
                 </li>
                 <li class="nav-item">
+                    <a class="nav-link <?= str_starts_with(uri_string(), 'system/email') ? 'active' : '' ?>" href="<?= base_url('system/email') ?>">
+                        <i class="bi bi-envelope-gear" aria-hidden="true"></i> <?= lang('App.navEmailSettings') ?>
+                    </a>
+                </li>
+                <li class="nav-item">
                     <a class="nav-link <?= (uri_string() === 'system/system-admins') ? 'active' : '' ?>" href="<?= base_url('system/system-admins') ?>">
                         <i class="bi bi-person-lock" aria-hidden="true"></i> <?= lang('App.navSystemAdmins') ?>
                     </a>
@@ -169,6 +174,11 @@
                 <?php if (auth()->user()->can('report.export')): ?>
                     <li class="nav-item"><a class="nav-link <?= (uri_string() === 'province/report-export') ? 'active' : '' ?>" href="<?= base_url('province/report-export') ?>"><i class="bi bi-download" aria-hidden="true"></i> <?= lang('App.navProvinceReports') ?></a></li>
                 <?php endif; ?>
+                <li class="nav-item">
+                    <a class="nav-link <?= str_starts_with(uri_string(), 'province/email-settings') ? 'active' : '' ?>" href="<?= base_url('province/email-settings') ?>">
+                        <i class="bi bi-envelope-gear" aria-hidden="true"></i> <?= lang('App.navEmailSettings') ?>
+                    </a>
+                </li>
             <?php endif; ?>
 
             <?php if (!$isSystemAdminSidebar && !$isProvinceAdminSidebar && auth()->user()->can('parishes.edit')): ?>
@@ -183,6 +193,11 @@
                 <li class="nav-item">
                     <a class="nav-link <?= (str_starts_with(uri_string(), 'chart-accounts')) ? 'active' : '' ?>" href="<?= base_url('chart-accounts') ?>">
                         <i class="bi bi-diagram-3" aria-hidden="true"></i> <?= lang('App.navChartOfAccounts') ?>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link <?= str_starts_with(uri_string(), 'diocese/email-settings') ? 'active' : '' ?>" href="<?= base_url('diocese/email-settings') ?>">
+                        <i class="bi bi-envelope-gear" aria-hidden="true"></i> <?= lang('App.navEmailSettings') ?>
                     </a>
                 </li>
             <?php endif; ?>
@@ -354,6 +369,14 @@
                 <li class="nav-item">
                     <a class="nav-link <?= (str_starts_with(uri_string(), 'parochial-report')) ? 'active' : '' ?>" href="<?= base_url('parochial-report') ?>">
                         <i class="bi bi-file-earmark-text" aria-hidden="true"></i> <?= lang('App.navParochialReport') ?>
+                    </a>
+                </li>
+            <?php endif; ?>
+
+            <?php if (!$isSystemAdminSidebar && !$isProvinceAdminSidebar && !$isDioceseAdminSidebar && auth()->user()->can('parish.edit')): ?>
+                <li class="nav-item">
+                    <a class="nav-link <?= str_starts_with(uri_string(), 'parish/email-settings') ? 'active' : '' ?>" href="<?= base_url('parish/email-settings') ?>">
+                        <i class="bi bi-envelope-gear" aria-hidden="true"></i> <?= lang('App.navEmailSettings') ?>
                     </a>
                 </li>
             <?php endif; ?>

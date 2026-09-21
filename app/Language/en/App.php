@@ -17,6 +17,7 @@ return [
     'navFamilies'         => 'Families',
     'navGroups'           => 'Small Groups',
     'navMessages'         => 'Messages',
+    'navEmailSettings'    => 'Email Settings',
     'navServices'         => 'Services',
     'navAttendance'       => 'Attendance',
     'navGuests'           => 'Guests',

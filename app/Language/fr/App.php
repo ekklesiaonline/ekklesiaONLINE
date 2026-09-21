@@ -15,6 +15,7 @@ return [
     'navFamilies'         => 'Familles',
     'navGroups'           => 'Petits groupes',
     'navMessages'         => 'Messages',
+    'navEmailSettings'    => 'Paramètres de messagerie',
     'navServices'         => 'Cultes',
     'navAttendance'       => 'Présences',
     'navGuests'           => 'Visiteurs',

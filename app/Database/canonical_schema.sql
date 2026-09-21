@@ -817,14 +817,13 @@ DROP TABLE IF EXISTS `diocese_setting`;
 CREATE TABLE `diocese_setting` (
   `id` int unsigned NOT NULL AUTO_INCREMENT,
   `diocese_id` int unsigned NOT NULL,
-  `setting_key` varchar(100) COLLATE utf8mb4_general_ci NOT NULL,
-  `setting_value` longtext COLLATE utf8mb4_general_ci,
-  `data_type` enum('string','integer','boolean','json','text') COLLATE utf8mb4_general_ci NOT NULL DEFAULT 'string',
-  `description` text COLLATE utf8mb4_general_ci,
+  `key` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
+  `value` longtext COLLATE utf8mb4_general_ci,
+  `is_encrypted` tinyint(1) unsigned NOT NULL DEFAULT '0',
   `created_at` datetime DEFAULT NULL,
   `updated_at` datetime DEFAULT NULL,
   PRIMARY KEY (`id`),
-  KEY `UNIQUE` (`diocese_id`,`setting_key`),
+  UNIQUE KEY `uk_diocese_setting_diocese_id_key` (`diocese_id`,`key`),
   CONSTRAINT `diocese_setting_diocese_id_foreign` FOREIGN KEY (`diocese_id`) REFERENCES `diocese` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -1994,17 +1993,13 @@ DROP TABLE IF EXISTS `organisation_setting`;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `organisation_setting` (
   `id` int unsigned NOT NULL AUTO_INCREMENT,
-  `setting_key` varchar(100) COLLATE utf8mb4_general_ci NOT NULL,
-  `setting_value` longtext COLLATE utf8mb4_general_ci,
-  `data_type` enum('string','integer','boolean','json','text') COLLATE utf8mb4_general_ci NOT NULL DEFAULT 'string',
-  `category` varchar(50) COLLATE utf8mb4_general_ci DEFAULT NULL,
-  `description` text COLLATE utf8mb4_general_ci,
-  `is_locked` tinyint(1) NOT NULL DEFAULT '0',
+  `key` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
+  `value` longtext COLLATE utf8mb4_general_ci,
+  `is_encrypted` tinyint(1) unsigned NOT NULL DEFAULT '0',
   `created_at` datetime DEFAULT NULL,
   `updated_at` datetime DEFAULT NULL,
   PRIMARY KEY (`id`),
-  UNIQUE KEY `uq_organisation_setting_key` (`setting_key`),
-  KEY `category` (`category`)
+  UNIQUE KEY `uk_organisation_setting_key` (`key`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -2743,14 +2738,13 @@ DROP TABLE IF EXISTS `province_setting`;
 CREATE TABLE `province_setting` (
   `id` int unsigned NOT NULL AUTO_INCREMENT,
   `province_id` int unsigned NOT NULL,
-  `setting_key` varchar(100) COLLATE utf8mb4_general_ci NOT NULL,
-  `setting_value` longtext COLLATE utf8mb4_general_ci,
-  `data_type` enum('string','integer','boolean','json','text') COLLATE utf8mb4_general_ci NOT NULL DEFAULT 'string',
-  `description` text COLLATE utf8mb4_general_ci,
+  `key` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
+  `value` longtext COLLATE utf8mb4_general_ci,
+  `is_encrypted` tinyint(1) unsigned NOT NULL DEFAULT '0',
   `created_at` datetime DEFAULT NULL,
   `updated_at` datetime DEFAULT NULL,
   PRIMARY KEY (`id`),
-  KEY `UNIQUE` (`province_id`,`setting_key`),
+  UNIQUE KEY `uk_province_setting_province_id_key` (`province_id`,`key`),
   CONSTRAINT `province_setting_province_id_foreign` FOREIGN KEY (`province_id`) REFERENCES `province` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
