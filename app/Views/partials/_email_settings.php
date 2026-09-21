@@ -1,3 +1,7 @@
+<?= $this->extend('layouts/main') ?>
+
+<?= $this->section('content') ?>
+
 <?php
 
 /**
@@ -232,3 +236,5 @@ $errorFor    = static fn(string $key): string => $hasError($key) ? '<div class="
     });
 })();
 </script>
+
+<?= $this->endSection() ?>
