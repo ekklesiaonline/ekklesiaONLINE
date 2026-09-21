@@ -182,6 +182,10 @@ class EmailSettingsService
             return 'SMTP_AUTHENTICATION_FAILED';
         }
 
+        if (str_contains($normalized, '550 5.7.30') || (str_contains($normalized, 'dkim') && str_contains($normalized, 'did not pass'))) {
+            return 'EMAIL_AUTHENTICATION_FAILED';
+        }
+
         if (str_contains($normalized, 'connection refused') || str_contains($normalized, 'unable to connect') || str_contains($normalized, 'timed out')) {
             return 'SMTP_CONNECTION_FAILED';
         }
@@ -197,6 +201,7 @@ class EmailSettingsService
     {
         return match ($code) {
             'SMTP_AUTHENTICATION_FAILED' => lang('Email.smtpAuthenticationFailed'),
+            'EMAIL_AUTHENTICATION_FAILED'=> lang('Email.emailAuthenticationFailed'),
             'SMTP_CONNECTION_FAILED'     => lang('Email.smtpConnectionFailed'),
             'SMTP_TLS_FAILED'            => lang('Email.smtpTlsFailed'),
             default                      => lang('Email.testSendFailed'),

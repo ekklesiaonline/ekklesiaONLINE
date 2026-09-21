@@ -20,6 +20,10 @@ final class EmailSettingsSecurityTest extends CIUnitTestCase
         $code = $method->invoke($service, '535-5.7.8 Username and Password not accepted. Failed to authenticate password.');
 
         $this->assertSame('SMTP_AUTHENTICATION_FAILED', $code);
+        $this->assertSame(
+            'EMAIL_AUTHENTICATION_FAILED',
+            $method->invoke($service, '550 5.7.30 Message blocked because DKIM authentication did not pass.')
+        );
 
         $sendTest = new ReflectionMethod($service, 'sendTest');
         $source = $this->methodSource($sendTest);

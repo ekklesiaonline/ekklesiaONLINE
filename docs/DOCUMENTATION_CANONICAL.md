@@ -35,6 +35,8 @@ This file is the single source of truth for which documentation should be retain
   Canonical rules and implementation details for parish editing, Tax ID access, and staff management permission constraints across all administrative roles.
 - `docs/PROFILE_PICTURE_SECURITY_AND_DELIVERY.md`
   Canonical private profile picture model (per-user folders, random names, guarded delivery, path hardening, and cache behavior).
+- `docs/EMAIL_DELIVERABILITY.md`
+  Canonical scoped SMTP, SPF, DKIM, DMARC, provider alignment, and safe diagnostic guidance.
 
 ## Removed as Redundant or Historical
 

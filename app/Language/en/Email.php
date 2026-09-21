@@ -33,6 +33,7 @@ return [
     'testSent'          => 'Test email sent.',
     'testSendFailed'    => 'Test email could not be sent. Check the SMTP settings and try again.',
     'smtpAuthenticationFailed' => 'SMTP authentication failed. Verify the username and password. Gmail requires a 16-character App Password when two-step verification is enabled.',
+    'emailAuthenticationFailed' => 'The receiving server rejected the message because SPF or DKIM authentication did not pass. Send through the SMTP provider authorized for the From address, then verify SPF, DKIM, and DMARC for that domain.',
     'smtpConnectionFailed' => 'Could not connect to the SMTP server. Verify the host and port.',
     'smtpTlsFailed'     => 'Could not establish a secure SMTP connection. Verify the encryption setting and port.',
     'smtpGmailHelp'     => 'For Gmail, use a 16-character App Password—not your regular Google account password.',

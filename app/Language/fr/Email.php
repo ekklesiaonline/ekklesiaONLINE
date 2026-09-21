@@ -33,6 +33,7 @@ return [
     'testSent'          => 'E-mail de test envoyé.',
     'testSendFailed'    => 'L\'e-mail de test n\'a pas pu être envoyé. Vérifiez les paramètres SMTP et réessayez.',
     'smtpAuthenticationFailed' => 'L\'authentification SMTP a échoué. Vérifiez le nom d\'utilisateur et le mot de passe. Gmail exige un mot de passe d\'application de 16 caractères lorsque la validation en deux étapes est activée.',
+    'emailAuthenticationFailed' => 'Le serveur destinataire a rejeté le message car l\'authentification SPF ou DKIM n\'a pas réussi. Envoyez via le fournisseur SMTP autorisé pour l\'adresse d\'expédition, puis vérifiez SPF, DKIM et DMARC pour ce domaine.',
     'smtpConnectionFailed' => 'Impossible de se connecter au serveur SMTP. Vérifiez l\'hôte et le port.',
     'smtpTlsFailed'     => 'Impossible d\'établir une connexion SMTP sécurisée. Vérifiez le chiffrement et le port.',
     'smtpGmailHelp'     => 'Pour Gmail, utilisez un mot de passe d\'application de 16 caractères, et non le mot de passe habituel de votre compte Google.',
