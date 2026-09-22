@@ -146,6 +146,16 @@ class MemberDashboardDataService
             $profile = $this->profileModel->where('person_id', $personId)->first();
         }
 
+        // profile.membership_status was dropped — decorate the array with the
+        // canonical affiliation status for this parish so views keep working.
+        if (is_array($profile) && ! array_key_exists('membership_status', $profile)) {
+            $affiliationStatus = model(\App\Models\MemberParishAffiliationModel::class)
+                ->statusForUser($userId, $parishId);
+            if ($affiliationStatus !== null) {
+                $profile['membership_status'] = $affiliationStatus;
+            }
+        }
+
         $parish = $this->parishModel->find($parishId);
 
         return [

@@ -35,7 +35,6 @@ final class DataEncryptionAtRestTest extends CIUnitTestCase
             'last_name' => 'Encrypted',
             'phone' => '(809) 555-7777',
             'address' => '123 Prayer Street',
-            'membership_status' => 'active',
         ], true);
 
         $this->assertGreaterThan(0, $profileId);
@@ -89,7 +88,6 @@ final class DataEncryptionAtRestTest extends CIUnitTestCase
             'first_name' => 'Maria',
             'last_name' => 'Lookup',
             'phone' => '(809) 555-9001',
-            'membership_status' => 'active',
         ]);
 
         $searchModel = model(MemberParishAffiliationModel::class);
@@ -286,7 +284,6 @@ final class DataEncryptionAtRestTest extends CIUnitTestCase
             'phone' => ['type' => 'TEXT', 'null' => true],
             'phone_hash' => ['type' => 'CHAR', 'constraint' => 64, 'null' => true],
             'address' => ['type' => 'TEXT', 'null' => true],
-            'membership_status' => ['type' => 'VARCHAR', 'constraint' => 20, 'default' => 'pending'],
             'created_at' => ['type' => 'DATETIME', 'null' => true],
             'updated_at' => ['type' => 'DATETIME', 'null' => true],
             'deleted_at' => ['type' => 'DATETIME', 'null' => true],

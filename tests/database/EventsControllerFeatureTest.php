@@ -167,7 +167,6 @@ final class EventsControllerFeatureTest extends CIUnitTestCase
             'user_id' => $userId,
             'first_name' => $firstName,
             'last_name' => $lastName,
-            'membership_status' => 'active',
             'created_at' => date('Y-m-d H:i:s'),
             'updated_at' => date('Y-m-d H:i:s'),
         ];
@@ -465,7 +464,6 @@ final class EventsControllerFeatureTest extends CIUnitTestCase
                 profile_picture TEXT NULL,
                 phone TEXT NULL,
                 locale TEXT NULL,
-                membership_status TEXT NULL,
                 portal_access TEXT NULL,
                 created_at TEXT NULL,
                 updated_at TEXT NULL,

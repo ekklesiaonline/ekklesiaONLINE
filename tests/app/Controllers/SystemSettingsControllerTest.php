@@ -328,7 +328,6 @@ final class SystemSettingsControllerTest extends CIUnitTestCase
             'diocese_id' => $dioceseId,
             'first_name' => $firstName,
             'last_name' => $lastName,
-            'membership_status' => 'active',
             'created_at' => date('Y-m-d H:i:s'),
             'updated_at' => date('Y-m-d H:i:s'),
         ]);

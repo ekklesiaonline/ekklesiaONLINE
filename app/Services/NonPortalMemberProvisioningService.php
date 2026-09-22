@@ -48,7 +48,7 @@ class NonPortalMemberProvisioningService
         $defaultStatus = $isChild
             ? 'regular_attender'
             : ($isMember ? 'member' : 'regular_attender');
-        $paStatus = \App\Services\MembershipStatusService::profileToAffiliation($defaultStatus);
+        $paStatus = \App\Services\MembershipStatusService::normalizeAffiliationStatus($defaultStatus);
 
         $useTransaction = strtolower((string) ($this->db->DBDriver ?? '')) !== 'sqlite3';
         if ($useTransaction) {
@@ -68,7 +68,6 @@ class NonPortalMemberProvisioningService
                 'birthdate'              => $birthDate,
                 'is_child'               => $isChild,
                 'membership_status'      => $paStatus,
-                'profile_membership_status' => $defaultStatus,
                 'source'                 => 'system',
                 'preferred_contact_method' => 'email',
                 'create_user'              => true,

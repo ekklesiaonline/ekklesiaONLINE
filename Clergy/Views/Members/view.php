@@ -128,23 +128,13 @@ $profilePictureUrl = ($profilePicturePath !== '' && $profileUserId > 0)
                 <p class="text-muted"><?= esc($profile['email']) ?></p>
                 <?php
                 $profileStatus = strtolower(trim((string) ($profile['membership_status'] ?? 'regular_attender')));
-                if (!in_array($profileStatus, ['active', 'inactive', 'visitor', 'pending', 'regular_attender'], true)) {
+                if (!in_array($profileStatus, \App\Services\MembershipStatusService::affiliationStatuses(), true)) {
                     $profileStatus = 'regular_attender';
                 }
-                $profileStatusLabelKey = 'App.status' . ucfirst($profileStatus);
-                $profileStatusLabel = lang($profileStatusLabelKey);
-                if ($profileStatusLabel === $profileStatusLabelKey) {
-                    $profileStatusLabel = ucfirst($profileStatus);
-                }
+                $profileStatusLabel = \App\Services\MembershipStatusService::label($profileStatus);
                 // $isNonPortal already computed at top of content section.
                 ?>
-                <?php $statusBadgeColor = match ($profileStatus) {
-                    'active'           => 'success',
-                    'inactive'         => 'secondary',
-                    'visitor'          => 'info',
-                    'regular_attender' => 'primary',
-                    default            => 'warning',
-                }; ?>
+                <?php $statusBadgeColor = \App\Services\MembershipStatusService::badgeColor($profileStatus); ?>
                 <span class="badge border border-<?= $statusBadgeColor ?> text-<?= $statusBadgeColor ?> fw-normal mb-3">
                     <?= esc($profileStatusLabel) ?>
                 </span>

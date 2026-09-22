@@ -160,19 +160,53 @@ reader/test sweep:
 
 Full suite after Phase 2: 664 tests, 2957 assertions, 6 skipped.
 
-## Phase 3 — Retire `profile.membership_status`
+## Phase 3 — Retire `profile.membership_status` — DONE
 
-1. Repoint the three real readers to the primary affiliation:
-   `ProfileModel` status counts (~line 438), `ParochialReport` (~line 584 —
-   also fixes dead `'pending'`), `FamilyModel` (~line 76).
-2. Delete the ~8 writers: `RegistrationApprovalService`,
-   `ProvinceDioceseAdmins`, `DioceseParishAdmins`, `Events.php`,
-   `AdminCreationService`, `PersonProvisioningService`, `ParishStaffService`,
-   `GuestIntakeService`.
-3. If legacy SQL still needs it, keep it temporarily as a write-only mirror fed
-   by `PersonProfileSyncService` — then drop the column and the
-   `profileStatuses`/`profileToAffiliation`/`affiliationToProfile` maps in
-   `MembershipStatusService` (~halves the service).
+The column turned out to serve two incompatible purposes: a stale mirror of
+the primary affiliation status, and an (invalid) onboarding state — `pending`
+was removed from the enum in `2026-08-01-174951`, so the member-portal write
+of `'pending'` was silently coerced to `''`.
+
+What landed:
+
+1. `MemberParishAffiliationModel::statusForUser($userId, $parishId = null)` is
+   the canonical resolver — primary affiliation status, or the status at a
+   given parish; `null` when the user has no live affiliation.
+2. Profile arrays are decorated at read time where views still expect a
+   `membership_status` key: `BaseController::getProfile()`,
+   `MemberPortal\Profile::resolveCurrentUserProfileState()`,
+   `MemberDashboardDataService::resolveIdentity()`, and the Clergy members
+   edit/view paths. The key is derived, never stored.
+3. All query readers repointed to `parish_affiliation.membership_status`:
+   `ProfileModel` status counts, `FamilyModel` (member status at the family
+   parish), `MemberMergeService` duplicate detection, `ParochialReport`
+   active participants, `PeopleDirectoryService` (vestigial
+   `profile_membership_status` select removed).
+4. All ~15 profile writers deleted — inserts/updates in
+   `RegistrationApprovalService`, `AdminCreationService`,
+   `ParishStaffService`, `Events.php`, `PersonConversionService`,
+   `NonPortalMemberProvisioningService`, `PersonProvisioningService`,
+   `MemberPortal\Profile`, `Clergy\Members`, `ProvinceDioceseAdmins`,
+   `DioceseParishAdmins`. Registration pending/review stays in
+   `user_registration_requests.status` — that was always the gate.
+5. `MembershipStatusService` profile maps removed; the `active`,
+   `non_active`, `pending` aliases folded into
+   `normalizeAffiliationStatus` for import/back-compat only.
+6. `EventVisibilityService` stale `['active','inactive']` fallback fixed to
+   canonical register statuses; member-portal/clergy views switched from
+   `active`/`pending` vocabulary to canonical status names and outline
+   badges.
+7. Migration `2026-09-24-000000_DropProfileMembershipStatus` drops the
+   column plus `idx_membership_status` / `idx_parish_status` /
+   `idx_church_status` (both legacy composite names handled); `down()`
+   restores the enum and repopulates it from the primary affiliation.
+8. Schema dumps and `CanonicalTestSchema` updated; ~30 test files swept of
+   profile-status DDL/inserts.
+
+Verified live: `profile.membership_status` and its indexes are gone on the
+dev DB; drift audit clean (14 rows, 0 issues).
+
+Full suite after Phase 3: 664 tests, 2954 assertions, 6 skipped.
 
 ## Phase 4 — Enforce the choke points
 

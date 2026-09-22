@@ -184,7 +184,6 @@ final class PeopleDirectoryServiceExtraFiltersIntegrationTest extends CIUnitTest
             'nickname'           => ['type' => 'VARCHAR', 'constraint' => 100, 'null' => true],
             'profile_picture'    => ['type' => 'VARCHAR', 'constraint' => 255, 'null' => true],
             'phone'              => ['type' => 'VARCHAR', 'constraint' => 255, 'null' => true],
-            'membership_status'  => ['type' => 'VARCHAR', 'constraint' => 30, 'default' => 'pending'],
             'created_at'         => ['type' => 'DATETIME', 'null' => true],
             'updated_at'         => ['type' => 'DATETIME', 'null' => true],
             'deleted_at'         => ['type' => 'DATETIME', 'null' => true],
@@ -302,7 +301,6 @@ final class PeopleDirectoryServiceExtraFiltersIntegrationTest extends CIUnitTest
             'parish_id'         => $parishId,
             'first_name'        => $firstName,
             'last_name'         => $lastName,
-            'membership_status' => 'member',
             'created_at'        => date('Y-m-d H:i:s'),
             'updated_at'        => date('Y-m-d H:i:s'),
         ]);

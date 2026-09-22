@@ -211,7 +211,6 @@ final class MembersPendingRegistrationsScopeIntegrationTest extends CIUnitTestCa
                 phone TEXT NULL,
                 phone_hash TEXT NULL,
                 locale TEXT NULL,
-                membership_status TEXT NULL,
                 created_at TEXT NULL,
                 updated_at TEXT NULL,
                 deleted_at TEXT NULL
@@ -305,7 +304,6 @@ final class MembersPendingRegistrationsScopeIntegrationTest extends CIUnitTestCa
         $resolved = $this->resolveTableName('parish_affiliation');
         $this->ensureColumnExists($resolved, 'linked_user_id', 'INTEGER NULL');
         $this->ensureColumnExists($resolved, 'parish_id', 'INTEGER NULL');
-        $this->ensureColumnExists($resolved, 'membership_status', 'TEXT NULL');
         $this->ensureColumnExists($resolved, 'active', 'INTEGER DEFAULT 1');
     }
 
@@ -429,7 +427,6 @@ final class MembersPendingRegistrationsScopeIntegrationTest extends CIUnitTestCa
             'user_id' => $userId,
             'first_name' => $firstName,
             'last_name' => $lastName,
-            'membership_status' => 'active',
             'created_at' => date('Y-m-d H:i:s'),
             'updated_at' => date('Y-m-d H:i:s'),
         ];

@@ -50,18 +50,10 @@
                     </thead>
                     <tbody>
                         <?php foreach ($pairs as $pair):
-                            $badgeA = match (strtolower($pair['membership_status_a'] ?? 'pending')) {
-                                'active'   => 'success',
-                                'inactive' => 'secondary',
-                                'visitor'  => 'info',
-                                default    => 'warning',
-                            };
-                            $badgeB = match (strtolower($pair['membership_status_b'] ?? 'pending')) {
-                                'active'   => 'success',
-                                'inactive' => 'secondary',
-                                'visitor'  => 'info',
-                                default    => 'warning',
-                            };
+                            $badgeA = \App\Services\MembershipStatusService::badgeColor((string) ($pair['membership_status_a'] ?? ''));
+                            $badgeB = \App\Services\MembershipStatusService::badgeColor((string) ($pair['membership_status_b'] ?? ''));
+                            $statusLabelA = \App\Services\MembershipStatusService::label((string) ($pair['membership_status_a'] ?? ''));
+                            $statusLabelB = \App\Services\MembershipStatusService::label((string) ($pair['membership_status_b'] ?? ''));
                         ?>
                             <tr>
                                 <!-- Person A -->
@@ -76,7 +68,7 @@
                                     <?php if (!empty($pair['birth_date_a'])): ?>
                                         <small class="text-muted d-block"><?= date('M j, Y', strtotime($pair['birth_date_a'])) ?></small>
                                     <?php endif; ?>
-                                    <span class="badge border border-<?= $badgeA ?> text-<?= $badgeA ?> fw-normal mt-1"><?= esc(ucfirst($pair['membership_status_a'] ?? 'pending')) ?></span>
+                                    <span class="badge border border-<?= $badgeA ?> text-<?= $badgeA ?> fw-normal mt-1"><?= esc($statusLabelA) ?></span>
                                     <small class="text-muted d-block mt-1">ID #<?= (int) $pair['profile_id_a'] ?> &middot; joined <?= date('M Y', strtotime($pair['created_at_a'])) ?></small>
                                 </td>
 
@@ -92,7 +84,7 @@
                                     <?php if (!empty($pair['birth_date_b'])): ?>
                                         <small class="text-muted d-block"><?= date('M j, Y', strtotime($pair['birth_date_b'])) ?></small>
                                     <?php endif; ?>
-                                    <span class="badge border border-<?= $badgeB ?> text-<?= $badgeB ?> fw-normal mt-1"><?= esc(ucfirst($pair['membership_status_b'] ?? 'pending')) ?></span>
+                                    <span class="badge border border-<?= $badgeB ?> text-<?= $badgeB ?> fw-normal mt-1"><?= esc($statusLabelB) ?></span>
                                     <small class="text-muted d-block mt-1">ID #<?= (int) $pair['profile_id_b'] ?> &middot; joined <?= date('M Y', strtotime($pair['created_at_b'])) ?></small>
                                 </td>
 

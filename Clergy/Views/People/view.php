@@ -88,7 +88,7 @@ $portalAccess = strtolower(trim((string) ($profile['portal_access'] ?? 'none')))
                     <?php endif; ?>
 
                     <?php
-                    $statusValue = strtolower(trim((string) ($person['membership_status'] ?? $profile['membership_status'] ?? 'visitor')));
+                    $statusValue = strtolower(trim((string) ($person['membership_status'] ?? 'visitor')));
                     $statusLabel = \App\Services\MembershipStatusService::label($statusValue);
                     $statusColor = \App\Services\MembershipStatusService::badgeColor($statusValue);
                     ?>
@@ -273,7 +273,7 @@ $portalAccess = strtolower(trim((string) ($profile['portal_access'] ?? 'none')))
                             <?php foreach ($affiliations as $aff): ?>
                                 <li class="list-group-item d-flex justify-content-between align-items-center">
                                     <?= esc($aff['parish_name'] ?? $aff['parish_id'] ?? '') ?>
-                                    <span class="badge bg-info text-dark"><?= esc($aff['membership_status'] ?? '') ?></span>
+                                    <span class="badge border border-<?= \App\Services\MembershipStatusService::badgeColor((string) ($aff['membership_status'] ?? '')) ?> text-<?= \App\Services\MembershipStatusService::badgeColor((string) ($aff['membership_status'] ?? '')) ?> fw-normal"><?= esc(\App\Services\MembershipStatusService::label((string) ($aff['membership_status'] ?? ''))) ?></span>
                                 </li>
                             <?php endforeach; ?>
                         </ul>

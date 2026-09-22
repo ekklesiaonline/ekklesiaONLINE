@@ -37,17 +37,18 @@ if ($displayName === '') {
 
 $membershipStatus = (string) ($profile['membership_status'] ?? 'pending');
 $memberStatusColor = match ($membershipStatus) {
-    'active' => 'success',
-    'inactive' => 'danger',
+    'member' => 'success',
+    'regular_attender' => 'primary',
     'visitor' => 'info',
     'pending' => 'warning',
+    'deceased' => 'dark',
     default => 'secondary'
 };
 
 $isBaptized   = (bool) ($membership['is_baptized'] ?? 0);
 $isConfirmed  = (bool) ($membership['is_confirmed'] ?? 0);
 $isCommunicant = (bool) ($membership['is_communicant'] ?? 0);
-$isGoodStanding = (bool) ($membership['good_standing_override'] ?? 0) || $membershipStatus === 'active';
+$isGoodStanding = (bool) ($membership['good_standing_override'] ?? 0) || $membershipStatus === 'member';
 
 $attendancePct = 0;
 if (!empty($attendance_summary['total_services']) && $attendance_summary['total_services'] > 0) {

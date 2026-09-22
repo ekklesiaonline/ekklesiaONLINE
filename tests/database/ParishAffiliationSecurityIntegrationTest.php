@@ -156,7 +156,6 @@ final class ParishAffiliationSecurityIntegrationTest extends CIUnitTestCase
             'province_id' => ['type' => 'INTEGER', 'null' => true],
             'first_name' => ['type' => 'VARCHAR', 'constraint' => 100, 'null' => true],
             'last_name' => ['type' => 'VARCHAR', 'constraint' => 100, 'null' => true],
-            'membership_status' => ['type' => 'VARCHAR', 'constraint' => 30, 'default' => 'pending'],
             'created_at' => ['type' => 'DATETIME', 'null' => true],
             'updated_at' => ['type' => 'DATETIME', 'null' => true],
             'deleted_at' => ['type' => 'DATETIME', 'null' => true],
@@ -246,7 +245,6 @@ final class ParishAffiliationSecurityIntegrationTest extends CIUnitTestCase
             'parish_id' => $parishId,
             'first_name' => $firstName,
             'last_name' => $lastName,
-            'membership_status' => 'active',
             'created_at' => date('Y-m-d H:i:s'),
             'updated_at' => date('Y-m-d H:i:s'),
         ]);

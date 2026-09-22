@@ -326,7 +326,6 @@ final class PeopleFilterIntegrationTest extends CIUnitTestCase
             'profile_picture'   => ['type' => 'VARCHAR', 'constraint' => 255, 'null' => true],
             'phone'             => ['type' => 'VARCHAR', 'constraint' => 255, 'null' => true],
             'portal_access'     => ['type' => 'VARCHAR', 'constraint' => 20, 'default' => 'none'],
-            'membership_status' => ['type' => 'VARCHAR', 'constraint' => 30, 'default' => 'visitor'],
             'created_at'        => ['type' => 'DATETIME', 'null' => true],
             'updated_at'        => ['type' => 'DATETIME', 'null' => true],
             'deleted_at'        => ['type' => 'DATETIME', 'null' => true],

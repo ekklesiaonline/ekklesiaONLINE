@@ -121,7 +121,6 @@ class PersonConversionService
                 'last_name'         => (string) ($person['last_name'] ?? ''),
                 'email'             => (string) ($person['email'] ?? '') ?: null,
                 'phone'             => (string) ($person['phone'] ?? '') ?: null,
-                'membership_status' => 'member',
                 'portal_access'     => 'enabled',
                 'is_confirmed'      => 1,
                 'created_at'        => $now,

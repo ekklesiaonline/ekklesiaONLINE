@@ -35,7 +35,6 @@ final class PersonProfileSyncServiceTest extends CIUnitTestCase
             'phone'       => '+18005551234',
             'address'     => '123 Main St',
             'birth_date'  => '1990-05-15',
-            'membership_status' => 'member',
             'created_at'  => date('Y-m-d H:i:s'),
             'updated_at'  => date('Y-m-d H:i:s'),
         ]);
@@ -76,7 +75,6 @@ final class PersonProfileSyncServiceTest extends CIUnitTestCase
             'last_name'   => 'Name',
             'phone'       => '+18005559876',
             'birth_date'  => '1985-01-01',
-            'membership_status' => 'member',
             'created_at'  => date('Y-m-d H:i:s'),
             'updated_at'  => date('Y-m-d H:i:s'),
         ]);
@@ -103,7 +101,6 @@ final class PersonProfileSyncServiceTest extends CIUnitTestCase
             'person_id'   => 99999,
             'first_name'  => 'Orphan',
             'last_name'   => 'Profile',
-            'membership_status' => 'member',
             'created_at'  => date('Y-m-d H:i:s'),
             'updated_at'  => date('Y-m-d H:i:s'),
         ]);
@@ -193,7 +190,6 @@ final class PersonProfileSyncServiceTest extends CIUnitTestCase
             'birth_date'          => ['type' => 'DATE', 'null' => true],
             'baptism_date'        => ['type' => 'DATE', 'null' => true],
             'confirmation_date'   => ['type' => 'DATE', 'null' => true],
-            'membership_status'   => ['type' => 'VARCHAR', 'constraint' => 32, 'default' => 'visitor'],
             'portal_access'       => ['type' => 'VARCHAR', 'constraint' => 32, 'default' => 'none'],
             'profile_picture'     => ['type' => 'VARCHAR', 'constraint' => 255, 'null' => true],
             'is_confirmed'        => ['type' => 'INTEGER', 'default' => 0],

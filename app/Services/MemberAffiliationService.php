@@ -262,9 +262,6 @@ class MemberAffiliationService
         foreach ($desired as $parishId => $rawStatus) {
             $status = MembershipStatusService::normalizeAffiliationStatus($rawStatus);
             if (! in_array($status, MembershipStatusService::affiliationStatuses(), true)) {
-                $status = MembershipStatusService::profileToAffiliation($rawStatus);
-            }
-            if (! in_array($status, MembershipStatusService::affiliationStatuses(), true)) {
                 $status = 'visitor';
             }
 

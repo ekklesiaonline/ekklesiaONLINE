@@ -118,7 +118,7 @@ class Profile extends BaseController
         $data['diocesesByProvince'] = $this->hierarchyService->diocesesByProvince();
         $data['parishesByDiocese'] = $this->hierarchyService->parishesByDiocese();
         $statusOptions = [];
-        foreach (MembershipStatusService::profileStatuses() as $status) {
+        foreach (MembershipStatusService::affiliationStatuses() as $status) {
             $statusOptions[$status] = MembershipStatusService::label($status);
         }
         $data['membershipStatusOptions'] = $statusOptions;
@@ -264,6 +264,18 @@ class Profile extends BaseController
     {
         $profileModel = $this->getProfileModel();
         $profile = $profileModel->where('user_id', $user->id)->first();
+
+        // profile.membership_status no longer exists as a column — decorate the
+        // array with the canonical status from the user's parish affiliation so
+        // views keep reading $profile['membership_status'].
+        if (is_array($profile)) {
+            $affiliationStatus = model(\App\Models\MemberParishAffiliationModel::class)
+                ->statusForUser((int) $user->id);
+            if ($affiliationStatus !== null) {
+                $profile['membership_status'] = $affiliationStatus;
+            }
+        }
+
         $registrationRequest = $this->getCurrentRegistrationRequest();
         $status = $this->getRegistrationStatus($registrationRequest);
 
@@ -550,7 +562,6 @@ class Profile extends BaseController
                 'user_id' => (int) $user->id,
                 'province_id' => $registrationRequest['province_id'] ?? null,
                 'diocese_id' => $registrationRequest['diocese_id'] ?? null,
-                'membership_status' => 'visitor',
             ];
         }
 
@@ -643,7 +654,6 @@ class Profile extends BaseController
         if (!$profile) {
             $profileInsertData = [
                 'user_id' => $user->id,
-                'membership_status' => 'visitor',
             ];
 
             if (!$legacyCompletionMode) {
@@ -669,7 +679,6 @@ class Profile extends BaseController
         if (!$legacyCompletionMode) {
             $profileUpdateData['province_id'] = $provinceId;
             $profileUpdateData['diocese_id'] = $dioceseId;
-            $profileUpdateData['membership_status'] = 'pending';
         }
 
         $profileUpdate = $this->filterPayloadByTableColumns('profile', $profileUpdateData);
@@ -881,7 +890,6 @@ class Profile extends BaseController
                 'phone' => $phone,
                 'province_id' => $provinceId,
                 'diocese_id' => $dioceseId,
-                'membership_status' => 'visitor',
             ]);
             $this->getProfileModel()->insert($insert);
             $profile = $this->getProfileModel()->where('user_id', $user->id)->first();
@@ -892,7 +900,6 @@ class Profile extends BaseController
                 'phone' => $phone,
                 'province_id' => $provinceId,
                 'diocese_id' => $dioceseId,
-                'membership_status' => 'visitor',
             ]);
             $this->getProfileModel()->update($profile['id'], $update);
         }

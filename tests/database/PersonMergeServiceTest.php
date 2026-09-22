@@ -226,7 +226,6 @@ final class PersonMergeServiceTest extends CIUnitTestCase
             'baptism_date'        => ['type' => 'DATE', 'null' => true],
             'confirmation_date'   => ['type' => 'DATE', 'null' => true],
             'is_confirmed'        => ['type' => 'INTEGER', 'default' => 0],
-            'membership_status'   => ['type' => 'VARCHAR', 'constraint' => 32, 'default' => 'visitor'],
             'portal_access'       => ['type' => 'VARCHAR', 'constraint' => 32, 'default' => 'none'],
             'profile_picture'     => ['type' => 'VARCHAR', 'constraint' => 255, 'null' => true],
             'is_dependent'        => ['type' => 'INTEGER', 'default' => 0],

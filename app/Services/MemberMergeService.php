@@ -85,7 +85,7 @@ class MemberMergeService
                 COALESCE(p1.nickname, p1.first_name) AS display_first_a,
                 p1.last_name     AS last_name_a,
                 p1.birth_date    AS birth_date_a,
-                p1.membership_status AS membership_status_a,
+                pa1.membership_status AS membership_status_a,
                 p1.phone         AS phone_a,
                 p1.created_at    AS created_at_a,
                 COALESCE(ai1.secret, '') AS email_a,
@@ -96,7 +96,7 @@ class MemberMergeService
                 COALESCE(p2.nickname, p2.first_name) AS display_first_b,
                 p2.last_name     AS last_name_b,
                 p2.birth_date    AS birth_date_b,
-                p2.membership_status AS membership_status_b,
+                pa2.membership_status AS membership_status_b,
                 p2.phone         AS phone_b,
                 p2.created_at    AS created_at_b,
                 COALESCE(ai2.secret, '') AS email_b,
@@ -123,6 +123,10 @@ class MemberMergeService
                         AND p1.phone = p2.phone
                     )
                 )
+            LEFT JOIN parish_affiliation pa1
+                ON pa1.linked_user_id = p1.user_id AND pa1.parish_id = p1.{$scopeColumn} AND pa1.deleted_at IS NULL
+            LEFT JOIN parish_affiliation pa2
+                ON pa2.linked_user_id = p2.user_id AND pa2.parish_id = p2.{$scopeColumn} AND pa2.deleted_at IS NULL
             LEFT JOIN auth_identities ai1
                 ON ai1.user_id = p1.user_id AND ai1.type = 'email_password'
             LEFT JOIN auth_identities ai2

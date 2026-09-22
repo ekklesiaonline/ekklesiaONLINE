@@ -203,7 +203,6 @@ final class MembersViewUnificationIntegrationTest extends CIUnitTestCase
             'parish_id' => $parishId,
             'first_name' => 'Test',
             'last_name' => 'User',
-            'membership_status' => 'member',
             'created_at' => date('Y-m-d H:i:s'),
             'updated_at' => date('Y-m-d H:i:s'),
         ]);
@@ -260,7 +259,6 @@ final class MembersViewUnificationIntegrationTest extends CIUnitTestCase
                 province_id INTEGER NULL,
                 first_name TEXT NULL,
                 last_name TEXT NULL,
-                membership_status TEXT NULL,
                 created_at TEXT NULL,
                 updated_at TEXT NULL,
                 deleted_at TEXT NULL

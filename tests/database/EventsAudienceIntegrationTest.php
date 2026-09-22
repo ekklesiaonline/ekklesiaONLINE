@@ -258,7 +258,6 @@ final class EventsAudienceIntegrationTest extends CIUnitTestCase
             'user_id' => $userId,
             'first_name' => $firstName,
             'last_name' => $lastName,
-            'membership_status' => 'active',
             'created_at' => date('Y-m-d H:i:s'),
             'updated_at' => date('Y-m-d H:i:s'),
         ];
@@ -571,7 +570,6 @@ final class EventsAudienceIntegrationTest extends CIUnitTestCase
                 first_name TEXT NULL,
                 last_name TEXT NULL,
                 nickname TEXT NULL,
-                membership_status TEXT NULL,
                 locale TEXT NULL,
                 created_at TEXT NULL,
                 updated_at TEXT NULL,

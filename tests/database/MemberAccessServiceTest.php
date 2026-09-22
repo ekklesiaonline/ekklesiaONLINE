@@ -280,7 +280,6 @@ final class MemberAccessServiceTest extends CIUnitTestCase
                 nickname TEXT NULL,
                 last_name TEXT NULL,
                 birth_date TEXT NULL,
-                membership_status TEXT NULL,
                 portal_access TEXT NOT NULL DEFAULT 'none',
                 portal_enabled_at TEXT NULL,
                 is_dependent INTEGER DEFAULT 0,
@@ -310,7 +309,6 @@ final class MemberAccessServiceTest extends CIUnitTestCase
                         nickname TEXT NULL,
                         last_name TEXT NULL,
                         birth_date TEXT NULL,
-                        membership_status TEXT NULL,
                         portal_access TEXT NOT NULL DEFAULT 'none',
                         portal_enabled_at TEXT NULL,
                         is_dependent INTEGER DEFAULT 0,
@@ -329,7 +327,6 @@ final class MemberAccessServiceTest extends CIUnitTestCase
         $this->ensureColumnExists($profilesResolved, 'first_name', 'TEXT NULL');
         $this->ensureColumnExists($profilesResolved, 'last_name', 'TEXT NULL');
         $this->ensureColumnExists($profilesResolved, 'birth_date', 'TEXT NULL');
-        $this->ensureColumnExists($profilesResolved, 'membership_status', 'TEXT NULL');
         $this->ensureColumnExists($profilesResolved, 'portal_access', 'TEXT NOT NULL DEFAULT "none"');
         $this->ensureColumnExists($profilesResolved, 'portal_enabled_at', 'TEXT NULL');
         $prefixedProfiles = $this->db->getPrefix() . 'profile';
@@ -337,7 +334,6 @@ final class MemberAccessServiceTest extends CIUnitTestCase
         $this->ensureColumnExists($prefixedProfiles, 'first_name', 'TEXT NULL');
         $this->ensureColumnExists($prefixedProfiles, 'last_name', 'TEXT NULL');
         $this->ensureColumnExists($prefixedProfiles, 'birth_date', 'TEXT NULL');
-        $this->ensureColumnExists($prefixedProfiles, 'membership_status', 'TEXT NULL');
         $this->ensureColumnExists($prefixedProfiles, 'portal_access', 'TEXT NOT NULL DEFAULT "none"');
         $this->ensureColumnExists($prefixedProfiles, 'portal_enabled_at', 'TEXT NULL');
         $this->ensureColumnExists($profilesResolved, 'nickname', 'TEXT NULL');

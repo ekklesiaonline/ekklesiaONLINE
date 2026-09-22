@@ -137,7 +137,6 @@ class PersonProvisioningService
             'phone'            => (string) ($data['phone'] ?? '') ?: null,
             'address'          => (string) ($data['address'] ?? '') ?: null,
             'email'            => (string) ($data['email'] ?? '') ?: null,
-            'membership_status' => (string) ($data['profile_membership_status'] ?? $data['membership_status'] ?? 'regular_attender'),
             'portal_access'    => (string) ($data['portal_access'] ?? 'none'),
             'is_confirmed'     => 0,
             'birth_date'       => (string) ($data['birth_date'] ?? $data['birthdate'] ?? '') ?: null,

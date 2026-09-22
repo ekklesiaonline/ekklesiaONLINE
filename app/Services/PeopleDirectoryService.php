@@ -116,9 +116,6 @@ class PeopleDirectoryService
         foreach ($builder->groupBy('membership_status', false)->get()->getResultArray() as $row) {
             $status = MembershipStatusService::normalizeAffiliationStatus((string) ($row['membership_status'] ?? ''));
             if (! in_array($status, $validStatuses, true)) {
-                $status = MembershipStatusService::profileToAffiliation($status);
-            }
-            if (! in_array($status, $validStatuses, true)) {
                 $status = 'visitor';
             }
 
@@ -164,7 +161,6 @@ class PeopleDirectoryService
                 'pr.user_id',
                 'pr.nickname',
                 'pr.profile_picture',
-                'pr.membership_status AS profile_membership_status',
                 'u.username',
                 'u.active AS user_active',
                 'ai.secret AS email_identity',

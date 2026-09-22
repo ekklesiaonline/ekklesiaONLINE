@@ -355,7 +355,6 @@ class Members extends BaseController
                 'baptism_date' => $this->request->getPost('baptism_date') ?: null,
                 'is_confirmed' => $this->request->getPost('is_confirmed') ? 1 : 0,
                 'confirmation_date' => $this->request->getPost('confirmation_date') ?: null,
-                'membership_status' => 'member',
                 'spiritual_gifts' => $this->request->getPost('spiritual_gifts'),
             ];
 
@@ -646,15 +645,22 @@ class Members extends BaseController
         // Sync the canonical person record with the updated profile data.
         (new \App\Services\PersonProfileSyncService())->syncFromProfile($id);
 
-        // Update the canonical profile's membership_status only when editing the home parish.
-        // The operational per-parish status lives in parish_affiliation.
+        // The affiliation row owns membership_status. Capture the current
+        // status for the audit trail before the pathway transition.
         $parishId = (int) ($this->getOperationalParishId() ?? 0);
-        $homeParishId = (int) ($profile['parish_id'] ?? 0);
         $statusReason = trim((string) ($this->request->getPost('status_reason') ?? ''));
+        $previousAffiliationStatus = null;
 
         // Sync affiliation status for current parish so /members, /people, and detail
         // views stay consistent with the status chosen in this edit form.
         if ($parishId > 0) {
+            $previousAffiliation = $this->getMemberParishAffiliationModel()
+                ->where('linked_user_id', (int) ($profile['user_id'] ?? 0))
+                ->where('parish_id', $parishId)
+                ->orderBy('id', 'DESC')
+                ->first();
+            $previousAffiliationStatus = (string) ($previousAffiliation['membership_status'] ?? '');
+
             $transition = (new \App\Services\MembershipPathwayService())->transitionForUser(
                 (int) ($profile['user_id'] ?? 0),
                 $parishId,
@@ -677,16 +683,9 @@ class Members extends BaseController
                         'membership_status' => lang('App.errorInvalidInput'),
                     ]);
                 }
-                // affiliation_not_found / update_failed: continue with the
-                // profile-only update below (member may not be affiliated).
-            }
-
-            if ($parishId === $homeParishId) {
-                // The profile enum lacks transferred/deceased; map through the
-                // canonical affiliation status.
-                $this->getProfileModel()->update($id, [
-                    'membership_status' => \App\Services\MembershipStatusService::affiliationToProfile($submittedStatus),
-                ]);
+                // affiliation_not_found / update_failed: the member may simply
+                // not be affiliated with this parish; the profile update above
+                // still stands.
             }
         }
 
@@ -695,7 +694,7 @@ class Members extends BaseController
             'entity_type' => 'member',
             'entity_id' => (int) $id,
             'old_values' => [
-                'membership_status' => (string) ($profile['membership_status'] ?? ''),
+                'membership_status' => $previousAffiliationStatus ?? '',
                 'profile_picture' => !empty($profile['profile_picture']),
             ],
             'new_values' => [
@@ -742,7 +741,7 @@ class Members extends BaseController
             'entity_id' => (int) $id,
             'old_values' => [
                 'user_id' => (int) ($profile['user_id'] ?? 0),
-                'membership_status' => (string) ($profile['membership_status'] ?? ''),
+                'membership_status' => (string) ($this->getMemberParishAffiliationModel()->statusForUser((int) ($profile['user_id'] ?? 0)) ?? ''),
             ],
         ]);
 
@@ -803,7 +802,7 @@ class Members extends BaseController
                 'entity_id' => (int) $memberId,
                 'old_values' => [
                     'user_id' => (int) ($profile['user_id'] ?? 0),
-                    'membership_status' => (string) ($profile['membership_status'] ?? ''),
+                    'membership_status' => (string) ($this->getMemberParishAffiliationModel()->statusForUser((int) ($profile['user_id'] ?? 0)) ?? ''),
                 ],
                 'new_values' => [
                     'delete_reason' => $deleteReason,

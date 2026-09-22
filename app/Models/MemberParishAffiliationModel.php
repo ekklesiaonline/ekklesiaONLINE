@@ -225,9 +225,6 @@ class MemberParishAffiliationModel extends BaseTenantModel
         foreach ($rows as $row) {
             $status = MembershipStatusService::normalizeAffiliationStatus((string) ($row['membership_status'] ?? ''));
             if (!in_array($status, $validStatuses, true)) {
-                $status = MembershipStatusService::profileToAffiliation($status);
-            }
-            if (!in_array($status, $validStatuses, true)) {
                 $status = 'visitor';
             }
 
@@ -332,6 +329,38 @@ class MemberParishAffiliationModel extends BaseTenantModel
             ->orderBy('c.name', 'ASC')
             ->get()
             ->getResultArray();
+    }
+
+    /**
+     * The user's canonical membership status: their primary affiliation's
+     * membership_status, or the status at $parishId when given. Returns null
+     * when the user has no live affiliation row — callers decide the display
+     * fallback (e.g. 'pending' while a registration request is under review).
+     */
+    public function statusForUser(int $userId, ?int $parishId = null): ?string
+    {
+        if ($userId <= 0) {
+            return null;
+        }
+
+        $builder = $this->db->table('parish_affiliation')
+            ->select('membership_status')
+            ->where('linked_user_id', $userId)
+            ->where('deleted_at', null);
+
+        if ($parishId !== null && $parishId > 0) {
+            $builder->where('parish_id', $parishId);
+        } else {
+            $builder->orderBy('is_primary', 'DESC');
+        }
+
+        $row = $builder->orderBy('id', 'DESC')->get()->getRowArray();
+
+        if (!is_array($row) || !isset($row['membership_status'])) {
+            return null;
+        }
+
+        return MembershipStatusService::normalizeAffiliationStatus((string) $row['membership_status']);
     }
 
     public function getActiveAffiliationForParish(int $userId, int $parishId): ?array

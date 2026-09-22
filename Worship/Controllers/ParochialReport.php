@@ -581,7 +581,7 @@ class ParochialReport extends BaseController
              JOIN attendance a ON a.user_id = p.user_id AND a.attended = 1
              JOIN service s ON s.id = a.service_id AND s.parish_id = ? AND YEAR(s.service_date) = ?
              WHERE mca.is_member = 0
-               AND p.membership_status IN ('visitor', 'regular_attender', 'pending')",
+               AND mca.membership_status IN ('visitor', 'regular_attender')",
             [$parishId, $parishId, $year]
         )->getRowArray()['cnt'] ?? 0);
 

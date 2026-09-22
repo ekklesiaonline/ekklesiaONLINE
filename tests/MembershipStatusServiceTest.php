@@ -7,29 +7,27 @@ use CodeIgniter\Test\CIUnitTestCase;
 
 class MembershipStatusServiceTest extends CIUnitTestCase
 {
-    public function testProfileToAffiliationMapping(): void
+    public function testNormalizeAffiliationStatusCanonical(): void
     {
-        $this->assertSame('visitor', MembershipStatusService::profileToAffiliation('pending'));
-        $this->assertSame('visitor', MembershipStatusService::profileToAffiliation('visitor'));
-        $this->assertSame('regular_attender', MembershipStatusService::profileToAffiliation('regular_attender'));
-        $this->assertSame('member', MembershipStatusService::profileToAffiliation('active'));
-        $this->assertSame('member', MembershipStatusService::profileToAffiliation('member'));
-        $this->assertSame('inactive', MembershipStatusService::profileToAffiliation('inactive'));
-        $this->assertSame('inactive', MembershipStatusService::profileToAffiliation('non_active'));
-        $this->assertSame('visitor', MembershipStatusService::profileToAffiliation('guest'));
-        $this->assertSame('regular_attender', MembershipStatusService::profileToAffiliation('attendee'));
+        $this->assertSame('visitor', MembershipStatusService::normalizeAffiliationStatus('visitor'));
+        $this->assertSame('regular_attender', MembershipStatusService::normalizeAffiliationStatus('regular_attender'));
+        $this->assertSame('member', MembershipStatusService::normalizeAffiliationStatus('member'));
+        $this->assertSame('inactive', MembershipStatusService::normalizeAffiliationStatus('inactive'));
+        $this->assertSame('transferred', MembershipStatusService::normalizeAffiliationStatus('transferred'));
+        $this->assertSame('deceased', MembershipStatusService::normalizeAffiliationStatus('deceased'));
     }
 
-    public function testAffiliationToProfileMapping(): void
+    public function testNormalizeAffiliationStatusLegacyAliases(): void
     {
-        $this->assertSame('visitor', MembershipStatusService::affiliationToProfile('visitor'));
-        $this->assertSame('regular_attender', MembershipStatusService::affiliationToProfile('regular_attender'));
-        $this->assertSame('member', MembershipStatusService::affiliationToProfile('member'));
-        $this->assertSame('inactive', MembershipStatusService::affiliationToProfile('inactive'));
-        $this->assertSame('inactive', MembershipStatusService::affiliationToProfile('transferred'));
-        $this->assertSame('inactive', MembershipStatusService::affiliationToProfile('deceased'));
-        $this->assertSame('visitor', MembershipStatusService::affiliationToProfile('guest'));
-        $this->assertSame('regular_attender', MembershipStatusService::affiliationToProfile('attendee'));
+        $this->assertSame('visitor', MembershipStatusService::normalizeAffiliationStatus('guest'));
+        $this->assertSame('regular_attender', MembershipStatusService::normalizeAffiliationStatus('attendee'));
+        $this->assertSame('member', MembershipStatusService::normalizeAffiliationStatus('baptized_member'));
+        $this->assertSame('member', MembershipStatusService::normalizeAffiliationStatus('communicant'));
+        $this->assertSame('member', MembershipStatusService::normalizeAffiliationStatus('leader'));
+        // Legacy profile-era aliases retained for import/back-compat paths.
+        $this->assertSame('visitor', MembershipStatusService::normalizeAffiliationStatus('pending'));
+        $this->assertSame('member', MembershipStatusService::normalizeAffiliationStatus('active'));
+        $this->assertSame('inactive', MembershipStatusService::normalizeAffiliationStatus('non_active'));
     }
 
     public function testIsMember(): void

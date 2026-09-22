@@ -18,9 +18,9 @@ use CodeIgniter\CLI\CLI;
  *    flows),
  *  - canonical_status mirrors membership_status (skipped once the column
  *    is dropped),
- *  - end_date is only set on terminal statuses (transferred|deceased),
- *  - profile.membership_status is a valid profile enum value and agrees
- *    with the user's primary affiliation.
+ *  - end_date is only set on terminal statuses (transferred|deceased).
+ *    (profile.membership_status was dropped — parish_affiliation is the
+ *    only status owner.)
  *
  * Read-only. Exit code is non-zero when drift is found, so it can run in CI.
  */
@@ -126,52 +126,6 @@ class AuditAffiliationDrift extends BaseCommand
         CLI::write('Status distribution (normalized):', 'cyan');
         foreach ($distribution as $status => $count) {
             CLI::write('  ' . str_pad($status, 20) . $count, 'light_gray');
-        }
-
-        CLI::write('');
-        CLI::write('Auditing profile.membership_status mirror...', 'cyan');
-
-        if ($db->tableExists('profile') && $db->fieldExists('membership_status', 'profile')) {
-            $validProfileStatuses = MembershipStatusService::profileStatuses();
-
-            $invalid = $db->table('profile')
-                ->select('id, membership_status')
-                ->where('deleted_at', null)
-                ->whereNotIn('membership_status', $validProfileStatuses)
-                ->get()
-                ->getResultArray();
-
-            $issues += $this->report(
-                'profile.membership_status outside profile enum (e.g. empty string, active, pending)',
-                array_map(static fn(array $r): int => (int) $r['id'], $invalid)
-            );
-
-            // Compare each user's profile status to their primary affiliation.
-            $drifted = $db->query(<<<'SQL'
-                SELECT pr.id AS profile_id, pr.membership_status AS profile_status,
-                       pa.membership_status AS affiliation_status
-                FROM profile pr
-                JOIN parish_affiliation pa
-                  ON pa.linked_user_id = pr.user_id
-                 AND pa.is_primary = 1
-                 AND pa.deleted_at IS NULL
-                WHERE pr.deleted_at IS NULL
-                SQL)->getResultArray();
-
-            $mismatched = [];
-            foreach ($drifted as $row) {
-                $expected = MembershipStatusService::affiliationToProfile((string) $row['affiliation_status']);
-                if ((string) $row['profile_status'] !== $expected) {
-                    $mismatched[] = (int) $row['profile_id'];
-                }
-            }
-
-            $issues += $this->report(
-                'profile.membership_status disagrees with primary affiliation status',
-                $mismatched
-            );
-        } else {
-            CLI::write('  SKIP: profile.membership_status not present.', 'light_gray');
         }
 
         CLI::write('');

@@ -205,14 +205,11 @@ class RegistrationApprovalService
 
         $this->setUserGroups($user->id, [$role]);
 
+        // Approval affiliates the person but does not confer canonical
+        // membership: the parish promotes regular_attender -> member once
+        // sacramental/standing requirements are verified. The affiliation
+        // row (created below) owns membership_status.
         $profileModel->update($profile['id'], [
-            // profile.membership_status is an ENUM (visitor/regular_attender/
-            // member/non_active/inactive/transferred/deceased); 'active' is not
-            // a valid value and MySQL silently stores '' for it.
-            // Approval affiliates the person but does not confer canonical
-            // membership: the parish promotes regular_attender -> member once
-            // sacramental/standing requirements are verified.
-            'membership_status' => 'regular_attender',
             'province_id' => (int) $scope['province_id'],
             'diocese_id' => (int) $scope['diocese_id'],
             'parish_id' => $parishId > 0 ? $parishId : null,

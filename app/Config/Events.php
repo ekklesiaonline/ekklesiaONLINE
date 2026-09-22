@@ -211,7 +211,6 @@ Events::on('register', static function (User $user): void {
             'province_id' => $provinceId,
             'diocese_id' => $dioceseId > 0 ? $dioceseId : null,
             'locale' => $preferredLocale !== '' ? $preferredLocale : null,
-            'membership_status' => 'visitor',
         ]);
 
         $personId = (int) $db->insertID();

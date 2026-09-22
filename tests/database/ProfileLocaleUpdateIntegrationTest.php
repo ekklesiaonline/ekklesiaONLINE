@@ -224,7 +224,6 @@ final class ProfileLocaleUpdateIntegrationTest extends CIUnitTestCase
                 birth_date TEXT NULL,
                 baptism_date TEXT NULL,
                 spiritual_gifts TEXT NULL,
-                membership_status TEXT NULL,
                 locale TEXT NULL,
                 profile_picture TEXT NULL,
                 created_at TEXT NULL,
@@ -247,7 +246,6 @@ final class ProfileLocaleUpdateIntegrationTest extends CIUnitTestCase
         $this->ensureColumnExists($resolvedProfiles, 'birth_date', 'TEXT NULL');
         $this->ensureColumnExists($resolvedProfiles, 'baptism_date', 'TEXT NULL');
         $this->ensureColumnExists($resolvedProfiles, 'spiritual_gifts', 'TEXT NULL');
-        $this->ensureColumnExists($resolvedProfiles, 'membership_status', 'TEXT NULL');
         $this->ensureColumnExists($resolvedProfiles, 'locale', 'TEXT NULL');
         $this->ensureColumnExists($resolvedProfiles, 'profile_picture', 'TEXT NULL');
         $this->ensureColumnExists($resolvedProfiles, 'parish_id', 'INTEGER NULL');
@@ -267,7 +265,6 @@ final class ProfileLocaleUpdateIntegrationTest extends CIUnitTestCase
         $this->ensureColumnExists($prefixedProfiles, 'birth_date', 'TEXT NULL');
         $this->ensureColumnExists($prefixedProfiles, 'baptism_date', 'TEXT NULL');
         $this->ensureColumnExists($prefixedProfiles, 'spiritual_gifts', 'TEXT NULL');
-        $this->ensureColumnExists($prefixedProfiles, 'membership_status', 'TEXT NULL');
         $this->ensureColumnExists($prefixedProfiles, 'profile_picture', 'TEXT NULL');
         $this->ensureColumnExists($prefixedProfiles, 'province_id', 'INTEGER NULL');
         $this->ensureColumnExists($prefixedProfiles, 'diocese_id', 'INTEGER NULL');
@@ -339,7 +336,6 @@ final class ProfileLocaleUpdateIntegrationTest extends CIUnitTestCase
             'user_id' => $userId,
             'first_name' => 'Locale',
             'last_name' => 'Integration',
-            'membership_status' => 'active',
             'created_at' => date('Y-m-d H:i:s'),
             'updated_at' => date('Y-m-d H:i:s'),
         ];

@@ -169,7 +169,6 @@ final class CanonicalTestSchema
             'baptism_date'       => 'TEXT',
             'confirmation_date'  => 'TEXT',
             'is_confirmed'       => 'INTEGER DEFAULT 0',
-            'membership_status'  => "TEXT DEFAULT 'visitor'",
             'spiritual_gifts'    => 'TEXT',
             'portal_access'      => 'TEXT',
             'portal_enabled_at'  => 'TEXT',

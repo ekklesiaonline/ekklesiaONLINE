@@ -138,6 +138,15 @@ abstract class BaseController extends Controller
 
             if ($this->profile) {
                 $this->parishId = (int) ($this->profile['parish_id'] ?? $this->profile['parish_id'] ?? 0);
+
+                // profile.membership_status was dropped; the canonical status
+                // lives on parish_affiliation. Decorate the row so views keep
+                // reading $profile['membership_status'].
+                $affiliationStatus = model('MemberParishAffiliationModel')
+                    ->statusForUser((int) $this->user->id);
+                if ($affiliationStatus !== null) {
+                    $this->profile['membership_status'] = $affiliationStatus;
+                }
             }
         }
 

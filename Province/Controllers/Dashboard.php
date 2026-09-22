@@ -579,9 +579,6 @@ class Dashboard extends BaseController
         foreach ($rows as $row) {
             $status = MembershipStatusService::normalizeAffiliationStatus((string) ($row['membership_status'] ?? ''));
             if (!in_array($status, $validStatuses, true)) {
-                $status = MembershipStatusService::profileToAffiliation($status);
-            }
-            if (!in_array($status, $validStatuses, true)) {
                 $status = 'visitor';
             }
 

@@ -122,9 +122,6 @@ class ProvinceDioceseAdmins extends BaseController
                 'first_name' => trim((string) $this->request->getPost('first_name')),
                 'last_name' => trim((string) $this->request->getPost('last_name')),
                 'phone' => preg_replace('/[^0-9+\s-]/', '', (string) $this->request->getPost('phone')),
-                // profile.membership_status is an ENUM; 'active' is not a valid
-                // value (MySQL silently stores '' for it). 'member' is correct.
-                'membership_status' => 'member',
             ]);
 
             $primaryModel = model('DioceseAdminPrimaryModel');

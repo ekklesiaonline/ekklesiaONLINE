@@ -464,7 +464,6 @@ final class FamiliesEndpointContractIntegrationTest extends CIUnitTestCase
             'parish_id' => $parishId,
             'first_name' => 'Test',
             'last_name' => 'User',
-            'membership_status' => 'active',
             'updated_at' => date('Y-m-d H:i:s'),
         ];
 
@@ -584,7 +583,6 @@ final class FamiliesEndpointContractIntegrationTest extends CIUnitTestCase
                 parish_id INTEGER NOT NULL,
                 first_name TEXT NULL,
                 last_name TEXT NULL,
-                membership_status TEXT NULL,
                 created_at TEXT NULL,
                 updated_at TEXT NULL,
                 deleted_at TEXT NULL
@@ -595,7 +593,6 @@ final class FamiliesEndpointContractIntegrationTest extends CIUnitTestCase
         $this->ensureColumnExists($profileTable, 'parish_id', 'INTEGER NULL');
         $this->ensureColumnExists($profileTable, 'first_name', 'TEXT NULL');
         $this->ensureColumnExists($profileTable, 'last_name', 'TEXT NULL');
-        $this->ensureColumnExists($profileTable, 'membership_status', 'TEXT NULL');
         $this->ensureColumnExists($profileTable, 'portal_access', 'TEXT NULL');
         $this->ensureColumnExists($profileTable, 'portal_enabled_at', 'TEXT NULL');
 
@@ -603,7 +600,6 @@ final class FamiliesEndpointContractIntegrationTest extends CIUnitTestCase
         $this->ensureColumnExists($prefixedProfile, 'parish_id', 'INTEGER NULL');
         $this->ensureColumnExists($prefixedProfile, 'first_name', 'TEXT NULL');
         $this->ensureColumnExists($prefixedProfile, 'last_name', 'TEXT NULL');
-        $this->ensureColumnExists($prefixedProfile, 'membership_status', 'TEXT NULL');
         $this->ensureColumnExists($prefixedProfile, 'portal_access', 'TEXT NULL');
         $this->ensureColumnExists($prefixedProfile, 'portal_enabled_at', 'TEXT NULL');
 

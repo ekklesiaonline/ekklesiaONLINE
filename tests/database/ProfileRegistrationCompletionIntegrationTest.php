@@ -188,7 +188,6 @@ final class ProfileRegistrationCompletionIntegrationTest extends CIUnitTestCase
         $profileColumns = array_map('strtolower', $this->db->getFieldNames($profileTable));
         $profilePayload = [
             'user_id' => $userId,
-            'membership_status' => 'pending',
             'created_at' => date('Y-m-d H:i:s'),
             'updated_at' => date('Y-m-d H:i:s'),
         ];
@@ -250,7 +249,6 @@ final class ProfileRegistrationCompletionIntegrationTest extends CIUnitTestCase
         $profileColumns = array_map('strtolower', $this->db->getFieldNames($profileTable));
         $profilePayload = [
             'user_id' => $adminUserId,
-            'membership_status' => 'active',
             'created_at' => date('Y-m-d H:i:s'),
             'updated_at' => date('Y-m-d H:i:s'),
         ];
@@ -484,7 +482,6 @@ final class ProfileRegistrationCompletionIntegrationTest extends CIUnitTestCase
                 last_name TEXT NULL,
                 phone TEXT NULL,
                 phone_hash TEXT NULL,
-                membership_status TEXT NULL,
                 locale TEXT NULL,
                 created_at TEXT NULL,
                 updated_at TEXT NULL,
@@ -501,7 +498,6 @@ final class ProfileRegistrationCompletionIntegrationTest extends CIUnitTestCase
         $this->ensureColumnExists($profilesTable, 'diocese_id', 'INTEGER NULL');
         $this->ensureColumnExists($profilesTable, 'parish_id', 'INTEGER NULL');
         $this->ensureColumnExists($profilesTable, 'parish_id', 'INTEGER NULL');
-        $this->ensureColumnExists($profilesTable, 'membership_status', 'TEXT NULL');
         $this->ensureColumnExists($profilesTable, 'locale', 'TEXT NULL');
         $this->ensureColumnExists($this->createTableName('profile'), 'first_name', 'TEXT NULL');
         $this->ensureColumnExists($this->createTableName('profile'), 'last_name', 'TEXT NULL');
@@ -511,7 +507,6 @@ final class ProfileRegistrationCompletionIntegrationTest extends CIUnitTestCase
         $this->ensureColumnExists($this->createTableName('profile'), 'diocese_id', 'INTEGER NULL');
         $this->ensureColumnExists($this->createTableName('profile'), 'parish_id', 'INTEGER NULL');
         $this->ensureColumnExists($this->createTableName('profile'), 'parish_id', 'INTEGER NULL');
-        $this->ensureColumnExists($this->createTableName('profile'), 'membership_status', 'TEXT NULL');
         $this->ensureColumnExists($this->createTableName('profile'), 'locale', 'TEXT NULL');
     }
 

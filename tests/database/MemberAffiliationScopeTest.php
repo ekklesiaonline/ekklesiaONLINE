@@ -181,7 +181,6 @@ final class MemberAffiliationScopeTest extends CIUnitTestCase
             'phone' => ['type' => 'TEXT', 'null' => true],
             'phone_hash' => ['type' => 'VARCHAR', 'constraint' => 64, 'null' => true],
             'address' => ['type' => 'TEXT', 'null' => true],
-            'membership_status' => ['type' => 'VARCHAR', 'constraint' => 20, 'default' => 'pending'],
             'created_at' => ['type' => 'DATETIME', 'null' => true],
             'updated_at' => ['type' => 'DATETIME', 'null' => true],
             'deleted_at' => ['type' => 'DATETIME', 'null' => true],
@@ -283,7 +282,6 @@ final class MemberAffiliationScopeTest extends CIUnitTestCase
             'parish_id' => $parishId,
             'first_name' => $firstName,
             'last_name' => $lastName,
-            'membership_status' => 'member',
             'created_at' => date('Y-m-d H:i:s'),
             'updated_at' => date('Y-m-d H:i:s'),
         ]);
