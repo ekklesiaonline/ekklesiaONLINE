@@ -446,11 +446,17 @@ class MemberParishAffiliationModel extends BaseTenantModel
         return (int) ($row['count'] ?? 0);
     }
 
-    public function attachToParish(int $userId, int $parishId, bool $isHome = false, string $status = 'member', bool $isMember = true, ?int $personId = null): bool
+    /**
+     * Attach (or re-attach) a user to a parish under the given lifecycle
+     * status. affiliation_type, canonical_status and the is_member
+     * register flag are always derived from the status — callers cannot
+     * pass them, which keeps the row internally consistent.
+     */
+    public function attachToParish(int $userId, int $parishId, bool $isHome = false, string $status = 'member', ?int $personId = null): bool
     {
         $resolvedPersonId = $personId ?? $this->getOrCreatePersonIdForUser($userId) ?? 0;
-        $status           = MembershipStatusService::normalizeAffiliationStatus($status);
-        $affiliationType  = MembershipStatusService::affiliationTypeForStatus($status);
+        $statusFields     = MembershipStatusService::fieldsForStatus($status);
+        $status           = $statusFields['membership_status'];
 
         $existing = $this->db->table($this->table)
             ->where('linked_user_id', $userId)
@@ -465,12 +471,9 @@ class MemberParishAffiliationModel extends BaseTenantModel
             ? $resolvedPersonId
             : $existingPersonId;
 
-        $updateData = [
-            'is_member'         => $isMember ? 1 : 0,
-            'end_date'          => null,
-            'membership_status' => $status,
-            'affiliation_type'  => $affiliationType,
-            'person_id'         => $targetPersonId > 0 ? $targetPersonId : ($resolvedPersonId > 0 ? $resolvedPersonId : 0),
+        $updateData = $statusFields + [
+            'end_date'  => null,
+            'person_id' => $targetPersonId > 0 ? $targetPersonId : ($resolvedPersonId > 0 ? $resolvedPersonId : 0),
         ];
 
         $result = false;
@@ -542,6 +545,12 @@ class MemberParishAffiliationModel extends BaseTenantModel
             );
         }
 
+        // $isHome only applies to on-register affiliations — setHomeParish()
+        // requires is_member=1, so a visitor/attendee attach stays non-primary.
+        if ($result && $isHome && (int) $statusFields['is_member'] === 1) {
+            $this->setHomeParish($userId, $parishId);
+        }
+
         return $result;
     }
 
@@ -576,11 +585,7 @@ class MemberParishAffiliationModel extends BaseTenantModel
             $status = 'visitor';
         }
 
-        $result = $this->update((int) $existing['id'], [
-            'is_member'         => $isMember ? 1 : 0,
-            'membership_status' => $status,
-            'affiliation_type'  => MembershipStatusService::affiliationTypeForStatus($status),
-        ]);
+        $result = $this->update((int) $existing['id'], MembershipStatusService::fieldsForStatus($status));
 
         if ($result && $fromStatus !== $status) {
             $personId = (int) ($existing['person_id'] ?? 0);
@@ -628,9 +633,11 @@ class MemberParishAffiliationModel extends BaseTenantModel
             return false;
         }
 
-        return $this->update((int) $existing['id'], [
-            'is_member' => 0,
-            'end_date'  => date('Y-m-d'),
+        // Detaching removes the person from the parish register: the same
+        // off-register state setMemberTag() uses when the member tag is
+        // revoked (visitor + is_member=0 + end_date).
+        return $this->update((int) $existing['id'], MembershipStatusService::fieldsForStatus('visitor') + [
+            'end_date' => date('Y-m-d'),
         ]);
     }
 

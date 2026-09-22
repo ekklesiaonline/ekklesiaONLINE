@@ -491,11 +491,7 @@ class GuestDirectoryService
 
         $db->table('parish_affiliation')
             ->where('id', (int) $affiliation['id'])
-            ->update([
-                'affiliation_type'       => 'guest',
-                'membership_status'      => 'visitor',
-                'canonical_status'       => 'visitor',
-                'is_member'              => 0,
+            ->update(MembershipStatusService::fieldsForStatus('visitor') + [
                 'converted_to_member_at' => null,
                 'converted_by_user_id'   => null,
                 'updated_at'             => $now,

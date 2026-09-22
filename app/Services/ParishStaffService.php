@@ -94,7 +94,9 @@ class ParishStaffService
                 'diocese_id' => isset($parishScope['diocese_id']) ? (int) $parishScope['diocese_id'] : null,
                 'first_name' => $firstName,
                 'last_name' => $lastName,
-                'membership_status' => 'active',
+                // 'member' is the valid profile enum value — 'active' is not
+                // in the ENUM and MySQL would silently store ''.
+                'membership_status' => 'member',
             ]);
 
             return;
@@ -141,7 +143,7 @@ class ParishStaffService
             'first_name' => $firstName,
             'last_name' => $lastName,
             'phone' => $phone,
-            'membership_status' => 'active',
+            'membership_status' => 'member',
         ]);
     }
 

@@ -301,8 +301,7 @@ final class MemberAffiliationScopeTest extends CIUnitTestCase
             $userId,
             $parishId,
             false,
-            $status,
-            in_array($status, ['member', 'inactive'], true)
+            $status
         );
     }
 }

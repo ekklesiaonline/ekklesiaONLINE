@@ -65,11 +65,13 @@ class MemberAffiliationService
             return [];
         }
 
+        // Off the register: same state setMemberTag() produces when the
+        // member tag is revoked — keeps status/flag consistent instead of
+        // leaving membership_status='member' on a non-member row.
         $this->db->table('parish_affiliation')
             ->where('linked_user_id', $userId)
             ->where('is_member', 1)
-            ->update([
-                'is_member'  => 0,
+            ->update(MembershipStatusService::fieldsForStatus('visitor') + [
                 'end_date'   => date('Y-m-d'),
                 'updated_at' => date('Y-m-d H:i:s'),
             ]);
@@ -271,7 +273,6 @@ class MemberAffiliationService
                 $parishId,
                 false,
                 $status,
-                MembershipStatusService::isMember($status),
                 $personId
             );
         }
@@ -311,9 +312,8 @@ class MemberAffiliationService
             return;
         }
 
-        $this->affiliations->attachToParish($userId, $primaryParishId, true, 'regular_attender', false, $personId);
+        $this->affiliations->attachToParish($userId, $primaryParishId, true, 'regular_attender', $personId);
 
-        // The model's attachToParish ignores its $isHome flag and
         // setHomeParish() requires is_member=1, so a freshly inserted
         // regular_attender row would never become primary. Mark it here.
         $this->db->table('parish_affiliation')

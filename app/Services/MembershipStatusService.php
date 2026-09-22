@@ -129,6 +129,43 @@ class MembershipStatusService
         return (bool) (self::$affiliationStatuses[$normalized]['isMember'] ?? false);
     }
 
+    /**
+     * Whether the status keeps the person on the parish register.
+     *
+     * Canonically, inactive members remain on the register until they
+     * transfer or die — the parish_affiliation.is_member flag tracks
+     * register membership, distinct from the "active member" check in
+     * isMember().
+     */
+    public static function isOnRegister(string $status): bool
+    {
+        return in_array(self::normalizeAffiliationStatus($status), ['member', 'inactive'], true);
+    }
+
+    /**
+     * Derived parish_affiliation columns for a lifecycle status — the
+     * single place where membership_status, affiliation_type,
+     * canonical_status and the is_member register flag are kept
+     * consistent. Write paths should merge this array rather than
+     * setting the derived columns by hand.
+     *
+     * @return array{membership_status: string, affiliation_type: string, canonical_status: string, is_member: int}
+     */
+    public static function fieldsForStatus(string $status): array
+    {
+        $normalized = self::normalizeAffiliationStatus($status);
+        if (! in_array($normalized, self::affiliationStatuses(), true)) {
+            $normalized = 'visitor';
+        }
+
+        return [
+            'membership_status' => $normalized,
+            'affiliation_type'  => self::affiliationTypeForStatus($normalized),
+            'canonical_status'  => $normalized,
+            'is_member'         => self::isOnRegister($normalized) ? 1 : 0,
+        ];
+    }
+
     public static function canBeGoodStanding(string $status): bool
     {
         $normalized = self::normalizeAffiliationStatus($status);

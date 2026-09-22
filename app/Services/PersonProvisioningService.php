@@ -54,19 +54,14 @@ class PersonProvisioningService
                 throw new \RuntimeException('Failed to create person.');
             }
 
-            $membershipStatus  = (string) ($data['membership_status'] ?? 'visitor');
-            $isMember          = (int) ($data['is_member'] ?? (int) MembershipStatusService::isMember($membershipStatus));
-            $affiliationType   = (string) ($data['affiliation_type'] ?? MembershipStatusService::affiliationTypeForStatus($membershipStatus));
-            $canonicalStatus   = (string) ($data['canonical_status'] ?? $membershipStatus);
+            // Status-derived columns come from fieldsForStatus() so the row
+            // can never disagree with itself; callers only choose the status.
+            $statusFields = MembershipStatusService::fieldsForStatus((string) ($data['membership_status'] ?? 'visitor'));
 
-            $db->table('parish_affiliation')->insert([
+            $db->table('parish_affiliation')->insert($statusFields + [
                 'parish_id'        => $parishId,
                 'person_id'        => $personId,
                 'linked_user_id'   => $userId,
-                'affiliation_type' => $affiliationType,
-                'membership_status' => $membershipStatus,
-                'canonical_status'  => $canonicalStatus,
-                'is_member'        => $isMember,
                 'source'           => (string) ($data['source'] ?? 'system'),
                 'start_date'       => (string) ($data['start_date'] ?? date('Y-m-d')),
                 'created_at'       => $now,

@@ -215,11 +215,8 @@ class MembershipPathwayService
         $db->resetTransStatus();
         $db->transStart();
 
-        $this->affiliations->update($affiliationId, [
-            'membership_status' => $to,
-            'affiliation_type'  => MembershipStatusService::affiliationTypeForStatus($to),
-            'is_member'         => MembershipStatusService::isMember($to) ? 1 : 0,
-            'end_date'          => in_array($to, self::TERMINAL_STATUSES, true) ? date('Y-m-d') : null,
+        $this->affiliations->update($affiliationId, MembershipStatusService::fieldsForStatus($to) + [
+            'end_date' => in_array($to, self::TERMINAL_STATUSES, true) ? date('Y-m-d') : null,
         ]);
 
         if ($personId > 0) {

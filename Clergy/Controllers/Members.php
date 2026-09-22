@@ -392,7 +392,7 @@ class Members extends BaseController
                     $db->transRollback();
                     return redirect()->back()->withInput()->with('error', lang('Members.affiliationFailed'));
                 }
-            } elseif ($assignedParishId > 0 && !$this->getMemberParishAffiliationModel()->attachToParish($user->id, $assignedParishId, true, 'member', true, $personId > 0 ? $personId : null)) {
+            } elseif ($assignedParishId > 0 && !$this->getMemberParishAffiliationModel()->attachToParish($user->id, $assignedParishId, true, 'member', $personId > 0 ? $personId : null)) {
                 $db->transRollback();
                 return redirect()->back()->withInput()->with('error', lang('Members.affiliationFailed'));
             }

@@ -69,8 +69,6 @@ class NonPortalMemberProvisioningService
                 'is_child'               => $isChild,
                 'membership_status'      => $paStatus,
                 'profile_membership_status' => $defaultStatus,
-                'affiliation_type'       => (int) \App\Services\MembershipStatusService::isMember($paStatus) === 1 ? 'member' : 'attendee',
-                'is_member'              => (int) \App\Services\MembershipStatusService::isMember($paStatus),
                 'source'                 => 'system',
                 'preferred_contact_method' => 'email',
                 'create_user'              => true,

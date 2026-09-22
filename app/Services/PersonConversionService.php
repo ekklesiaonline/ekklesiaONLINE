@@ -59,11 +59,7 @@ class PersonConversionService
 
             $db->table('parish_affiliation')
                 ->where('id', (int) $affiliation['id'])
-                ->update([
-                    'is_member'         => 1,
-                    'affiliation_type'  => 'member',
-                    'membership_status' => 'member',
-                    'canonical_status'  => 'member',
+                ->update(MembershipStatusService::fieldsForStatus('member') + [
                     'linked_user_id'    => $userId ?? $affiliation['linked_user_id'] ?? null,
                     'updated_at'        => $now,
                 ]);

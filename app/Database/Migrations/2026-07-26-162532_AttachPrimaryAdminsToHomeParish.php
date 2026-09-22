@@ -51,7 +51,7 @@ class AttachPrimaryAdminsToHomeParish extends Migration
                 }
 
                 try {
-                    $affiliationModel->attachToParish($userId, $parishId, true, 'member', true);
+                    $affiliationModel->attachToParish($userId, $parishId, true, 'member');
                 } catch (\Throwable $e) {
                     log_message('warning', 'AttachPrimaryAdminsToHomeParish: failed to attach user {user} to parish {parish}: {error}', [
                         'user'   => $userId,
