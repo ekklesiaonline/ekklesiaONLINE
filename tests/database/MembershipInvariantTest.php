@@ -157,6 +157,66 @@ final class MembershipInvariantTest extends CIUnitTestCase
         $this->assertNotNull($row['end_date'], 'terminal transition must stamp end_date');
     }
 
+    /**
+     * Regression for the resolved is_member semantics: inactive members stay
+     * on the parish register, so they remain in register counts and in the
+     * member directory (with their inactive status visible), instead of
+     * silently dropping out.
+     */
+    public function testInactiveMemberStaysOnRegisterCountsAndDirectory(): void
+    {
+        $parishId = $this->insertParish();
+        $userId   = $this->insertUser('register.inactive');
+        $this->insertProfile($userId, $parishId);
+
+        $model = model(MemberParishAffiliationModel::class);
+        $model->attachToParish($userId, $parishId, false, 'member');
+
+        $result = (new MembershipPathwayService())->transitionForUser($userId, $parishId, 'inactive');
+        $this->assertTrue($result['ok']);
+
+        $this->assertSame(1, $model->countDistinctMembers($parishId));
+
+        $members = $model->getParishMembers($parishId);
+        $this->assertCount(1, $members);
+        $this->assertSame('inactive', (string) $members[0]['affiliation_status']);
+    }
+
+    public function testVisitorStaysOffRegisterCountsAndDirectory(): void
+    {
+        $parishId = $this->insertParish();
+        $userId   = $this->insertUser('register.visitor');
+        $this->insertProfile($userId, $parishId);
+
+        $model = model(MemberParishAffiliationModel::class);
+        $model->attachToParish($userId, $parishId, false, 'visitor');
+
+        $this->assertSame(0, $model->countDistinctMembers($parishId));
+        $this->assertCount(0, $model->getParishMembers($parishId));
+    }
+
+    /**
+     * An inactive (lapsed) member must be reactivatable through the pathway —
+     * transitionForUser() deliberately does not require is_member=1 so that
+     * legacy rows written before the register semantics can still move.
+     */
+    public function testInactiveMemberReactivatesThroughPathway(): void
+    {
+        $parishId = $this->insertParish();
+        $userId   = $this->insertUser('register.reactivate');
+
+        $model = model(MemberParishAffiliationModel::class);
+        $model->attachToParish($userId, $parishId, false, 'member');
+
+        $pathway = new MembershipPathwayService();
+        $this->assertTrue($pathway->transitionForUser($userId, $parishId, 'inactive')['ok']);
+        $this->assertTrue($pathway->transitionForUser($userId, $parishId, 'member')['ok']);
+
+        $row = $this->fetchAffiliation($userId, $parishId);
+        $this->assertRowConsistent($row, 'member');
+        $this->assertNull($row['end_date'], 'reactivation must clear any end_date');
+    }
+
     public function testDetachFromParishLeavesOffRegisterRow(): void
     {
         $parishId = $this->insertParish();
@@ -263,6 +323,18 @@ final class MembershipInvariantTest extends CIUnitTestCase
         ]);
 
         return (int) $this->db->insertID();
+    }
+
+    private function insertProfile(int $userId, int $parishId): void
+    {
+        $this->db->table('profile')->insert([
+            'user_id'     => $userId,
+            'parish_id'   => $parishId,
+            'first_name'  => 'Test',
+            'last_name'   => 'Person',
+            'created_at'  => date('Y-m-d H:i:s'),
+            'updated_at'  => date('Y-m-d H:i:s'),
+        ]);
     }
 
     /**

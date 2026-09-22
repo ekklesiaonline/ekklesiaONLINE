@@ -75,6 +75,27 @@ or (c) deleted. All mutations go through two choke points:
    `countDistinctMembers`, instead of silently dropping out. This fixes the
    dead `inactive` branch in `countDistinctMembers`.
 
+   **Reader audit (all ~30 `is_member=1` readers reviewed — confirmed safe):**
+   - Register/count readers (`countDistinctMembers`, `ParishModel` and
+     `DiocesesModel` `member_count`, `getParishStatusCounts`,
+     `ProfileModel` status counts, `ParishDeletionService`,
+     `SystemMissionOutcomes`): now correctly include inactive — this was the
+     intent all along; the `inactive` bucket in status counts was previously
+     unreachable.
+   - Directory/scope readers (`getParishMembers*`, `PeopleDirectoryService`
+     `members`/`non_members` scopes, `isUserAffiliatedWithParish`,
+     `MemberAccessService`, `DiocesanScopeFilter`/`ProvinceScopeFilter`,
+     `BaseController` scope resolution, `syncProfileParishMirror`,
+     `setHomeParish`): inactive members stay affiliated, retain portal access
+     and parish attribution — pastorally correct (a lapsed member is still a
+     member of record).
+   - Active-only readers (`isRecordableMember`, `AttendanceController`,
+     `PeopleMetricsService`, `ProfileModel` `active_members`): already
+     double-guard with `AND membership_status='member'` — unaffected.
+   - Visible change: member directories now show inactive members (with an
+     Inactive badge) instead of hiding them. If a strictly-active list is
+     needed, add an `active_members` scope filtering `membership_status='member'`.
+
 ## Phase 1 — Fix the write paths (bugfixes, no schema change) — DONE
 
 1. `attachToParish()` `$isMember` param **removed** — `is_member` is always
@@ -102,8 +123,10 @@ or (c) deleted. All mutations go through two choke points:
 
 ## Phase 2 — Make derived columns structural
 
-1. Migration: `is_member` → `GENERATED ALWAYS AS (membership_status='member')
-   STORED` (or the Phase-0 two-flag split). Same treatment for
+1. Migration: `is_member` → `GENERATED ALWAYS AS (membership_status IN
+   ('member','inactive')) STORED` — the resolved on-register semantics.
+   Optionally rename to `is_on_register` in the same migration so the column
+   name matches the meaning (repoint the ~30 readers). Same treatment for
    `affiliation_type`'s derivable buckets; `clergy`/`staff` can't be generated:
    - **Option A (recommended):** narrow the enum to `guest|attendee|member` and
      expose clergy/staff via the `leadership_position` EXISTS pattern already
@@ -116,6 +139,9 @@ or (c) deleted. All mutations go through two choke points:
    join `member_standing_summary`.
 4. `pathway_stage`: keep (real cache, single writer) but reconcile the schema
    dumps — tinyint vs ENUM.
+5. Legacy `member_parish_affiliations` view aliases `is_member` AS `active` —
+   under register semantics that alias reports inactive members as `active=1`.
+   Review view consumers when touching the column.
 
 ## Phase 3 — Retire `profile.membership_status`
 
