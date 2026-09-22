@@ -191,6 +191,30 @@ return [
     'confirmPromoteAttender'  => 'Promouvoir ce visiteur en participant régulier ?',
     'confirmDemoteVisitor'    => 'Rétrograder ce participant régulier en visiteur ?',
 
+    // -------------------------------------------------------------------------
+    // Promote-to-member modal
+    // -------------------------------------------------------------------------
+    'promoteModalTitle'          => 'Promouvoir en membre',
+    'promoteModalIntro'          => 'Choisissez comment promouvoir',
+    'promoteModeMark'            => 'Marquer comme membre (personne seulement)',
+    'promoteModeMarkHint'        => 'Sans compte portail — la fiche reste au niveau personne.',
+    'promoteModeLink'            => 'Lier un compte utilisateur existant',
+    'promoteModeLinkHint'        => 'Attacher cette personne à un compte membre déjà présent dans cette paroisse.',
+    'promoteModeCreate'          => 'Créer un nouveau compte portail',
+    'promoteModeCreateHint'      => 'Requiert la permission member.create.',
+    'promoteLinkUserLabel'       => 'Compte membre',
+    'promoteLinkUserSelect'      => '— sélectionnez un membre —',
+    'promoteAccountEmail'        => 'E-mail du compte',
+    'promoteAccountPassword'     => 'Mot de passe',
+    'promoteAccountPasswordHint' => '8 caractères minimum.',
+    'promoteConfirmBtn'          => 'Promouvoir en Membre',
+    'promoteMemberSuccess'       => 'Visiteur promu en membre.',
+    'promoteLinkOutOfScope'      => 'Ce compte n\'appartient pas à cette paroisse.',
+    'revertConversionBtn'        => 'Annuler la Conversion',
+    'confirmRevertConversion'    => 'Annuler cette conversion ? La personne redevient visiteur.',
+    'visitorNotConverted'        => 'Ce visiteur n\'a pas été converti.',
+    'deleteGuardConverted'       => 'Les membres convertis ou inscrits ne peuvent pas être supprimés ici — gérez-les depuis le répertoire des Personnes.',
+
     'visitorCreateSuccess'  => 'Visiteur ajouté avec succès.',
     'visitorCreateFailed'   => 'Impossible d\'ajouter le visiteur.',
     'visitorUpdateSuccess'  => 'Visiteur mis à jour avec succès.',

@@ -59,15 +59,19 @@ $suggestAttender  = ! $visitorConverted && $visitorStatus === 'visitor' && $visi
                 </button>
             </form>
         <?php endif; ?>
-        <?php if (empty($visitor['followed_up']) && auth()->user()->can('visitor.edit')): ?>
-            <a href="<?= base_url('visitors/convertToMember/' . $visitor['id']) ?>" class="btn btn-success">
+        <?php if (! $visitorConverted && auth()->user()->can('visitor.edit')): ?>
+            <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#promoteMemberModal">
                 <i class="bi bi-arrow-right-circle" aria-hidden="true"></i> <?= lang('Visitors.convertToMember') ?>
-            </a>
+            </button>
         <?php endif; ?>
-        <?php if (empty($visitor['converted_to_member_at']) && auth()->user()->can('member.create')): ?>
-            <a href="<?= base_url('visitors/create-account/' . $visitor['id']) ?>" class="btn btn-outline-success">
-                <i class="bi bi-person-plus" aria-hidden="true"></i> <?= lang('Visitors.createAccountBtn') ?>
-            </a>
+        <?php if ($visitorConverted && auth()->user()->can('visitor.edit')): ?>
+            <form method="post" action="<?= base_url('visitors/revert-conversion/' . $visitor['id']) ?>"
+                onsubmit="return confirm(<?= json_encode(lang('Visitors.confirmRevertConversion')) ?>);" class="d-inline">
+                <?= csrf_field() ?>
+                <button type="submit" class="btn btn-outline-danger">
+                    <i class="bi bi-arrow-counterclockwise" aria-hidden="true"></i> <?= lang('Visitors.revertConversionBtn') ?>
+                </button>
+            </form>
         <?php endif; ?>
         <?php if (auth()->user()->can('visitor.edit')): ?>
             <a href="<?= base_url('visitors/edit/' . $visitor['id']) ?>" class="btn btn-warning">
@@ -269,9 +273,110 @@ $suggestAttender  = ! $visitorConverted && $visitorStatus === 'visitor' && $visi
     </div>
 </div>
 
+<?php if (! $visitorConverted && auth()->user()->can('visitor.edit')): ?>
+<!-- ── Promote to Member modal ─────────────────────────────────────────── -->
+<div class="modal fade" id="promoteMemberModal" tabindex="-1"
+    aria-labelledby="promoteMemberModalLabel" aria-modal="true" role="dialog">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <form method="post" action="<?= base_url('visitors/promote/' . (int) $visitor['id']) ?>">
+                <?= csrf_field() ?>
+                <div class="modal-header">
+                    <h5 class="modal-title" id="promoteMemberModalLabel">
+                        <i class="bi bi-arrow-right-circle me-2" aria-hidden="true"></i><?= esc(lang('Visitors.promoteModalTitle')) ?>
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="mb-3">
+                        <?= esc(lang('Visitors.promoteModalIntro')) ?>
+                        <strong><?= esc($visitor['first_name'] . ' ' . $visitor['last_name']) ?></strong>
+                    </p>
+
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="radio" name="mode" id="modeMarkMember"
+                            value="mark_member" checked>
+                        <label class="form-check-label" for="modeMarkMember">
+                            <?= esc(lang('Visitors.promoteModeMark')) ?>
+                            <div class="form-text"><?= esc(lang('Visitors.promoteModeMarkHint')) ?></div>
+                        </label>
+                    </div>
+
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="radio" name="mode" id="modeLinkUser"
+                            value="link_user" <?= empty($linkableMembers) ? 'disabled' : '' ?>>
+                        <label class="form-check-label" for="modeLinkUser">
+                            <?= esc(lang('Visitors.promoteModeLink')) ?>
+                            <div class="form-text"><?= esc(lang('Visitors.promoteModeLinkHint')) ?></div>
+                        </label>
+                    </div>
+                    <div class="ms-4 mb-3 promote-pane d-none" id="paneLinkUser">
+                        <label for="link_user_id" class="form-label small"><?= esc(lang('Visitors.promoteLinkUserLabel')) ?></label>
+                        <select name="link_user_id" id="link_user_id" class="form-select form-select-sm">
+                            <option value=""><?= esc(lang('Visitors.promoteLinkUserSelect')) ?></option>
+                            <?php foreach (($linkableMembers ?? []) as $m): ?>
+                                <option value="<?= (int) ($m['user_id'] ?? 0) ?>">
+                                    <?= esc(trim(($m['first_name'] ?? '') . ' ' . ($m['last_name'] ?? '')) . ' — ' . ($m['email'] ?? $m['username'] ?? '')) ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="radio" name="mode" id="modeCreateAccount"
+                            value="create_account" <?= auth()->user()->can('member.create') ? '' : 'disabled' ?>>
+                        <label class="form-check-label" for="modeCreateAccount">
+                            <?= esc(lang('Visitors.promoteModeCreate')) ?>
+                            <div class="form-text"><?= esc(lang('Visitors.promoteModeCreateHint')) ?></div>
+                        </label>
+                    </div>
+                    <div class="ms-4 promote-pane d-none" id="paneCreateAccount">
+                        <div class="mb-2">
+                            <label for="account_email" class="form-label small"><?= esc(lang('Visitors.promoteAccountEmail')) ?></label>
+                            <input type="email" name="account_email" id="account_email"
+                                class="form-control form-control-sm"
+                                value="<?= esc((string) ($visitor['email'] ?? '')) ?>">
+                        </div>
+                        <div class="mb-1">
+                            <label for="account_password" class="form-label small"><?= esc(lang('Visitors.promoteAccountPassword')) ?></label>
+                            <input type="password" name="account_password" id="account_password"
+                                class="form-control form-control-sm" autocomplete="new-password">
+                            <div class="form-text"><?= esc(lang('Visitors.promoteAccountPasswordHint')) ?></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                        <?= esc(lang('App.cancel')) ?>
+                    </button>
+                    <button type="submit" class="btn btn-success">
+                        <i class="bi bi-check-circle me-1" aria-hidden="true"></i><?= esc(lang('Visitors.promoteConfirmBtn')) ?>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<?php endif; ?>
+
 <script>
     (function() {
         'use strict';
+
+        // ── Promote modal: toggle mode panes ──────────────────────────────
+        document.querySelectorAll('#promoteMemberModal input[name="mode"]').forEach(function(radio) {
+            radio.addEventListener('change', function() {
+                document.querySelectorAll('.promote-pane').forEach(function(pane) {
+                    pane.classList.add('d-none');
+                });
+                const target = radio.value === 'link_user' ? 'paneLinkUser'
+                    : (radio.value === 'create_account' ? 'paneCreateAccount' : null);
+                if (target) {
+                    document.getElementById(target)?.classList.remove('d-none');
+                }
+            });
+        });
+
         const form = document.getElementById('assignSeqForm');
         if (!form) {
             return;

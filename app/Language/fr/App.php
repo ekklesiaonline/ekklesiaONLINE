@@ -55,7 +55,6 @@ return [
     'navSystemOverview'   => 'Santé du Système',
     'navMissionOutcomes'  => 'Resultats Missionnels',
     'navLiturgicalSource' => 'Source liturgique',
-    'navVisitorConversions' => 'Conversions de visiteurs',
     'navGoodStanding'     => 'Bonne conduite',
     'navFinance'          => 'Finance',
     'navPledges'          => 'Promesses annuelles',

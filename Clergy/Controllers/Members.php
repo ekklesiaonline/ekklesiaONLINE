@@ -220,12 +220,6 @@ class Members extends BaseController
             return redirect()->to('/members')->with('error', lang('Members.notAllowed'));
         }
 
-        $visitorData = (array) session('visitor_data');
-        if ($visitorData !== []) {
-            $visitorData['role'] = $visitorData['role'] ?? 'member';
-            session()->setFlashdata('_ci_old_input', ['post' => $visitorData, 'get' => []]);
-        }
-
         return view('Clergy\Views\Members/create', array_merge(
             $this->getCommonViewData('Create Account'),
             ['allowedRoles' => $allowedRoles]
@@ -269,7 +263,6 @@ class Members extends BaseController
             'phone' => 'permit_empty|valid_phone_e164',
             'country' => 'permit_empty|valid_country',
             'profile_picture' => 'permit_empty|uploaded[profile_picture]|max_size[profile_picture,2048]|is_image[profile_picture]|mime_in[profile_picture,image/jpg,image/jpeg,image/png,image/gif]',
-            'visitor_id' => 'permit_empty|is_natural_no_zero',
         ];
 
         if (!$this->validate($rules)) {
@@ -311,27 +304,10 @@ class Members extends BaseController
             $localPhone = $this->request->getPost('phone');
             $e164Phone = PhoneHelper::toE164($callingCode, $localPhone);
 
-            // Visitor conversion pre-fill: when a valid in-scope, not-yet-converted
-            // visitor is carried through the form, reuse its canonical person record
-            // instead of provisioning a duplicate.
-            $visitorPersonId = 0;
-            // The posted visitor_id is the canonical person_id (T4.5).
-            $postedVisitorId = (int) $this->request->getPost('visitor_id');
-            if ($postedVisitorId > 0) {
-                $candidate = (new \App\Services\VisitorDirectoryService())
-                    ->findByPerson($postedVisitorId, $assignedParishId);
-                if (is_array($candidate)
-                    && empty($candidate['converted_to_member_at'])) {
-                    $visitorPersonId = $postedVisitorId;
-                }
-            }
-
             // Ensure the canonical person row exists and link the profile to it.
-            $personId = $visitorPersonId > 0
-                ? $visitorPersonId
-                : ($assignedParishId > 0
-                    ? $this->getMemberParishAffiliationModel()->getOrCreatePersonIdForUser((int) $user->id)
-                    : null);
+            $personId = $assignedParishId > 0
+                ? $this->getMemberParishAffiliationModel()->getOrCreatePersonIdForUser((int) $user->id)
+                : null;
 
             $profileData = [
                 'user_id' => $user->id,
@@ -375,23 +351,7 @@ class Members extends BaseController
                 (new \App\Services\PersonProfileSyncService())->syncFromProfile($profileId);
             }
 
-            if ($visitorPersonId > 0 && $assignedParishId > 0) {
-                // Reuse the visitor's person: link the new account, mark the
-                // affiliation as member, skip pending follow-ups, and mark the
-                // visitor record converted — all inside convertToMember().
-                $linked = \App\Services\PersonConversionService::convertToMember(
-                    $visitorPersonId,
-                    $assignedParishId,
-                    (int) $user->id,
-                    null,
-                    null,
-                    (int) (auth()->id() ?? 0)
-                );
-                if (! $linked) {
-                    $db->transRollback();
-                    return redirect()->back()->withInput()->with('error', lang('Members.affiliationFailed'));
-                }
-            } elseif ($assignedParishId > 0 && !$this->getMemberParishAffiliationModel()->attachToParish($user->id, $assignedParishId, true, 'member', $personId > 0 ? $personId : null)) {
+            if ($assignedParishId > 0 && !$this->getMemberParishAffiliationModel()->attachToParish($user->id, $assignedParishId, true, 'member', $personId > 0 ? $personId : null)) {
                 $db->transRollback();
                 return redirect()->back()->withInput()->with('error', lang('Members.affiliationFailed'));
             }

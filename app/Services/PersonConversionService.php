@@ -190,34 +190,6 @@ class PersonConversionService
         return $base . '_' . bin2hex(random_bytes(3));
     }
 
-    /**
-     * Mark a person's visitor affiliation as converted when the member
-     * account was created through a different path (e.g. the pre-filled
-     * member create form). Skips pending follow-ups for the person.
-     */
-    public static function recordManualConversion(int $personId, int $parishId, ?int $userId, ?int $convertedByUserId = null): void
-    {
-        $now = date('Y-m-d H:i:s');
-
-        $update = [
-            'followed_up'            => 1,
-            'converted_to_member_at' => $now,
-            'converted_by_user_id'   => $convertedByUserId,
-            'updated_at'             => $now,
-        ];
-        if ($userId !== null && $userId > 0) {
-            $update['linked_user_id'] = $userId;
-        }
-
-        $db = db_connect();
-        $db->table('parish_affiliation')
-            ->where('person_id', $personId)
-            ->where('parish_id', $parishId)
-            ->update($update);
-
-        self::markPendingFollowupsSkipped($personId, $now);
-    }
-
     private static function markPendingFollowupsSkipped(int $personId, string $now): void
     {
         $db = db_connect();

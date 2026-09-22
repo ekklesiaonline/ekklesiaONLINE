@@ -206,6 +206,30 @@ return [
     'confirmDemoteVisitor'    => 'Move this regular attender back to visitor?',
 
     // -------------------------------------------------------------------------
+    // Promote-to-member modal
+    // -------------------------------------------------------------------------
+    'promoteModalTitle'          => 'Promote to Member',
+    'promoteModalIntro'          => 'Choose how to promote',
+    'promoteModeMark'            => 'Mark as member (person only)',
+    'promoteModeMarkHint'        => 'No portal account — the record stays person-level.',
+    'promoteModeLink'            => 'Link an existing user account',
+    'promoteModeLinkHint'        => 'Attach this person to a member account already in this parish.',
+    'promoteModeCreate'          => 'Create a new portal account',
+    'promoteModeCreateHint'      => 'Requires the member.create permission.',
+    'promoteLinkUserLabel'       => 'Member account',
+    'promoteLinkUserSelect'      => '— select a member —',
+    'promoteAccountEmail'        => 'Account email',
+    'promoteAccountPassword'     => 'Password',
+    'promoteAccountPasswordHint' => 'Minimum 8 characters.',
+    'promoteConfirmBtn'          => 'Promote to Member',
+    'promoteMemberSuccess'       => 'Visitor promoted to member.',
+    'promoteLinkOutOfScope'      => 'That account does not belong to this parish.',
+    'revertConversionBtn'        => 'Revert Conversion',
+    'confirmRevertConversion'    => 'Revert this conversion? The person returns to visitor status.',
+    'visitorNotConverted'        => 'This visitor has not been converted.',
+    'deleteGuardConverted'       => 'Converted or register members cannot be deleted here — manage them from the People directory.',
+
+    // -------------------------------------------------------------------------
     // Flash / toast messages
     // -------------------------------------------------------------------------
     'visitorCreateSuccess'  => 'Visitor added successfully.',

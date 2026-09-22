@@ -190,6 +190,30 @@ return [
     'confirmPromoteAttender'  => '¿Promover este visitante a asistente regular?',
     'confirmDemoteVisitor'    => '¿Regresar este asistente regular a visitante?',
 
+    // -------------------------------------------------------------------------
+    // Promote-to-member modal
+    // -------------------------------------------------------------------------
+    'promoteModalTitle'          => 'Promover a Miembro',
+    'promoteModalIntro'          => 'Elige cómo promover a',
+    'promoteModeMark'            => 'Marcar como miembro (solo persona)',
+    'promoteModeMarkHint'        => 'Sin cuenta de portal — el registro queda a nivel de persona.',
+    'promoteModeLink'            => 'Vincular una cuenta de usuario existente',
+    'promoteModeLinkHint'        => 'Adjuntar esta persona a una cuenta de miembro ya existente en esta parroquia.',
+    'promoteModeCreate'          => 'Crear una nueva cuenta de portal',
+    'promoteModeCreateHint'      => 'Requiere el permiso member.create.',
+    'promoteLinkUserLabel'       => 'Cuenta de miembro',
+    'promoteLinkUserSelect'      => '— selecciona un miembro —',
+    'promoteAccountEmail'        => 'Correo de la cuenta',
+    'promoteAccountPassword'     => 'Contraseña',
+    'promoteAccountPasswordHint' => 'Mínimo 8 caracteres.',
+    'promoteConfirmBtn'          => 'Promover a Miembro',
+    'promoteMemberSuccess'       => 'Visitante promovido a miembro.',
+    'promoteLinkOutOfScope'      => 'Esa cuenta no pertenece a esta parroquia.',
+    'revertConversionBtn'        => 'Revertir Conversión',
+    'confirmRevertConversion'    => '¿Revertir esta conversión? La persona regresa a estado de visitante.',
+    'visitorNotConverted'        => 'Este visitante no ha sido convertido.',
+    'deleteGuardConverted'       => 'Los miembros convertidos o registrados no se pueden eliminar aquí — gestiónalos desde el directorio de Personas.',
+
     'visitorCreateSuccess'  => 'Visitante agregado exitosamente.',
     'visitorCreateFailed'   => 'No se pudo agregar el visitante.',
     'visitorUpdateSuccess'  => 'Visitante actualizado exitosamente.',

@@ -125,6 +125,26 @@ class Visitors extends BaseController
         // Sequences available to assign
         $sequences = $this->followupSequenceModel->getActiveForParish((int) $visitor['parish_id']);
 
+        // Linkable in-parish users for the promote-to-member modal
+        // (link_user mode picker). Any linked user in scope qualifies — the
+        // typical target is a portal user still at visitor status, which the
+        // member-only getParishMembers() list would exclude.
+        $linkableMembers = auth()->user()->can('visitor.edit')
+            ? db_connect()->table('parish_affiliation pa')
+                ->select('pa.linked_user_id AS user_id, u.username, ai.secret AS email, p.first_name, p.last_name')
+                ->join('users u', 'u.id = pa.linked_user_id')
+                ->join('profile p', 'p.user_id = u.id AND p.deleted_at IS NULL', 'left')
+                ->join('auth_identities ai', 'ai.user_id = u.id AND ai.type = "email_password"', 'left')
+                ->where('pa.parish_id', (int) $visitor['parish_id'])
+                ->where('pa.deleted_at', null)
+                ->where('pa.linked_user_id IS NOT NULL', null, false)
+                ->groupBy('pa.linked_user_id')
+                ->orderBy('p.first_name', 'ASC')
+                ->orderBy('p.last_name', 'ASC')
+                ->get()
+                ->getResultArray()
+            : [];
+
         $data = [
             'visitor'            => $visitor,
             'tasks'            => $tasks,
@@ -132,6 +152,7 @@ class Visitors extends BaseController
             'followupTimeline' => $followupTimeline,
             'nextPending'      => $nextPending,
             'sequences'        => $sequences,
+            'linkableMembers'  => $linkableMembers,
             'attenderThreshold' => $this->visitorDirectory->attenderSuggestionThreshold((int) $visitor['parish_id']),
         ];
 
@@ -391,6 +412,16 @@ class Visitors extends BaseController
             ]);
         }
 
+        // Register members and already-converted rows are managed from the
+        // People directory — the visitor delete must refuse them.
+        if (!empty($visitor['converted_to_member_at'])
+            || in_array((string) ($visitor['membership_status'] ?? ''), ['member', 'inactive'], true)) {
+            return $this->jsonResponse([
+                'success' => false,
+                'message' => lang('Visitors.deleteGuardConverted'),
+            ]);
+        }
+
         // Count pending followup log entries before the delete detaches them.
         $pendingSequences = $this->followupLogModel->countPendingForPerson((int) $id);
 
@@ -547,9 +578,19 @@ class Visitors extends BaseController
     }
 
     /**
-     * Convert visitor to member
+     * POST visitors/promote/:personId
+     *
+     * The single canonical visitor→member promotion endpoint. Three modes:
+     *   mark_member     — person only, no portal account.
+     *   link_user       — link an existing in-parish user account.
+     *   create_account  — create a new portal account (requires member.create).
+     *
+     * All modes run through PersonConversionService::convertToMember, which
+     * transitions the affiliation via MembershipPathwayService (history row
+     * written), links/creates the user, marks conversion markers, and skips
+     * pending follow-ups.
      */
-    public function convertToMember($id)
+    public function promote($id)
     {
         if ($redirect = $this->requirePermission('visitor.edit')) {
             return $redirect;
@@ -559,75 +600,142 @@ class Visitors extends BaseController
             return $redirect;
         }
 
-        $visitor = $this->visitorDirectory->findByPerson((int) $id, (int) $this->getOperationalParishId());
-
-        if (!$visitor) {
-            return redirect()->to('/visitors')->with('error', lang('Visitors.visitorNotFound'));
-        }
-
-        $currentUserId = (int) (auth()->id());
         $parishId = (int) ($this->getOperationalParishId() ?? 0);
-
-        // The visitor row id is the canonical person_id after the T4.5 migration.
-        $personId = (int) $id;
-
-        $converted = PersonConversionService::convertToMember(
-            $personId,
-            $parishId,
-            null,
-            null,
-            null,
-            $currentUserId
-        );
-
-        if (! $converted) {
-            return redirect()->to('/visitors')->with('error', lang('Visitors.visitorConversionFailed'));
-        }
-
-        return redirect()->to('/people/view/' . $personId)
-            ->with('success', lang('Visitors.visitorStatusUpdated'));
-    }
-
-    /**
-     * Redirect to the member create form with the visitor's details pre-filled
-     * (flashdata 'visitor_data' consumed by Members::create). The visitor_id is
-     * carried through so store() can complete the conversion bookkeeping.
-     */
-    public function createAccountFromVisitor($id)
-    {
-        if ($redirect = $this->requirePermission('visitor.edit')) {
-            return $redirect;
-        }
-
-        if ($redirect = $this->requirePermission('member.create')) {
-            return $redirect;
-        }
-
-        if ($redirect = $this->requireParish()) {
-            return $redirect;
-        }
-
-        $visitor = $this->visitorDirectory->findByPerson((int) $id, (int) $this->getOperationalParishId());
+        $visitor  = $this->visitorDirectory->findByPerson((int) $id, $parishId);
 
         if (!$visitor) {
             return redirect()->to('/visitors')->with('error', lang('Visitors.visitorNotFound'));
         }
 
         if (!empty($visitor['converted_to_member_at'])) {
-            return redirect()->to('/visitors/view/' . $id)->with('error', lang('Visitors.visitorAlreadyConverted'));
+            return redirect()->to('/visitors/view/' . $id)
+                ->with('error', lang('Visitors.visitorAlreadyConverted'));
         }
 
-        session()->setFlashdata('visitor_data', [
-            'visitor_id'   => (int) $visitor['id'],
-            'role'       => 'member',
-            'first_name' => (string) ($visitor['first_name'] ?? ''),
-            'last_name'  => (string) ($visitor['last_name'] ?? ''),
-            'email'      => (string) ($visitor['email'] ?? ''),
-            'phone'      => (string) ($visitor['phone'] ?? ''),
-            'address'    => (string) ($visitor['address'] ?? ''),
+        $rules = [
+            'mode' => 'required|in_list[mark_member,link_user,create_account]',
+        ];
+
+        $mode = (string) $this->request->getPost('mode');
+        if ($mode === 'link_user') {
+            $rules['link_user_id'] = 'required|is_natural_no_zero';
+        } elseif ($mode === 'create_account') {
+            $rules['account_email']    = 'required|valid_email';
+            $rules['account_password'] = 'required|min_length[8]';
+        }
+
+        if (! $this->validate($rules)) {
+            return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
+        }
+
+        $personId = (int) ($visitor['person_id'] ?? $visitor['id']);
+        $actor    = (int) auth()->id();
+
+        if ($mode === 'link_user') {
+            $linkUserId = (int) $this->request->getPost('link_user_id');
+
+            // The linked account must already belong to this parish.
+            $inScope = db_connect()->table('parish_affiliation')
+                ->where('linked_user_id', $linkUserId)
+                ->where('parish_id', $parishId)
+                ->where('deleted_at IS NULL', null, false)
+                ->countAllResults() > 0;
+
+            if (! $inScope) {
+                return redirect()->back()->with('error', lang('Visitors.promoteLinkOutOfScope'));
+            }
+
+            $converted = PersonConversionService::convertToMember(
+                $personId, $parishId, $linkUserId, null, null, $actor
+            );
+        } elseif ($mode === 'create_account') {
+            if ($redirect = $this->requirePermission('member.create')) {
+                return $redirect;
+            }
+
+            $converted = PersonConversionService::convertToMember(
+                $personId,
+                $parishId,
+                null,
+                (string) $this->request->getPost('account_email'),
+                (string) $this->request->getPost('account_password'),
+                $actor
+            );
+        } else {
+            $converted = PersonConversionService::convertToMember(
+                $personId, $parishId, null, null, null, $actor
+            );
+        }
+
+        if (! $converted) {
+            return redirect()->back()->with('error', lang('Visitors.visitorConversionFailed'));
+        }
+
+        $this->audit()->log('visitor.promote_member', [
+            'parish_id'   => $parishId,
+            'entity_type' => 'visitor',
+            'entity_id'   => $personId,
+            'new_values'  => ['membership_status' => 'member'],
+            'meta'        => ['mode' => $mode],
         ]);
 
-        return redirect()->to('/members/create');
+        // People::view() keys on profile.id, not person.id — resolve the
+        // profile so the post-conversion landing is the canonical person page.
+        // Visitors promoted without a portal user may have no profile yet;
+        // fall back to the (now-converted) visitor detail page in that case.
+        $profileId = (int) (db_connect()->table('profile')
+            ->where('person_id', $personId)
+            ->where('deleted_at IS NULL', null, false)
+            ->orderBy('id', 'ASC')
+            ->get(1)
+            ->getRowArray()['id'] ?? 0);
+
+        $target = $profileId > 0 ? '/people/view/' . $profileId : '/visitors/view/' . $personId;
+
+        return redirect()->to($target)
+            ->with('success', lang('Visitors.promoteMemberSuccess'));
+    }
+
+    /**
+     * POST visitors/revert-conversion/:personId
+     * Undo a visitor→member conversion: status back to visitor, markers cleared.
+     */
+    public function revertConversion($id)
+    {
+        if ($redirect = $this->requirePermission('visitor.edit')) {
+            return $redirect;
+        }
+
+        if ($redirect = $this->requireParish()) {
+            return $redirect;
+        }
+
+        $parishId = (int) ($this->getOperationalParishId() ?? 0);
+        $visitor  = $this->visitorDirectory->findByPerson((int) $id, $parishId);
+
+        if (!$visitor) {
+            return redirect()->to('/visitors')->with('error', lang('Visitors.visitorNotFound'));
+        }
+
+        if (empty($visitor['converted_to_member_at'])) {
+            return redirect()->to('/visitors/view/' . $id)
+                ->with('error', lang('Visitors.visitorNotConverted'));
+        }
+
+        $personId = (int) ($visitor['person_id'] ?? $visitor['id']);
+
+        $this->visitorDirectory->revertConversion($personId, $parishId, (int) auth()->id());
+
+        $this->audit()->log('visitor.revert_conversion', [
+            'parish_id'   => $parishId,
+            'entity_type' => 'visitor',
+            'entity_id'   => $personId,
+            'old_values'  => ['membership_status' => 'member'],
+            'new_values'  => ['membership_status' => 'visitor'],
+        ]);
+
+        return redirect()->to('/visitors/view/' . $personId)
+            ->with('success', lang('Visitors.conversionRevertSuccess'));
     }
 
     /**

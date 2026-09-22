@@ -123,8 +123,8 @@ $routes->group('', ['filter' => 'session'], function ($routes) {
         $routes->get('edit/(:num)', '\\Clergy\\Controllers\\Visitors::edit/$1', ['filter' => 'permission:visitor.edit']);
         $routes->post('update/(:num)', '\\Clergy\\Controllers\\Visitors::update/$1', ['filter' => 'permission:visitor.edit']);
         $routes->post('delete/(:num)', '\\Clergy\\Controllers\\Visitors::delete/$1', ['filter' => 'permission:visitor.delete']);
-        $routes->get('convertToMember/(:num)', '\\Clergy\\Controllers\\Visitors::convertToMember/$1', ['filter' => 'permission:visitor.edit']);
-        $routes->get('create-account/(:num)', '\\Clergy\\Controllers\\Visitors::createAccountFromVisitor/$1', ['filter' => 'permission:visitor.edit']);
+        $routes->post('promote/(:num)', '\\Clergy\\Controllers\\Visitors::promote/$1', ['filter' => 'permission:visitor.edit']);
+        $routes->post('revert-conversion/(:num)', '\\Clergy\\Controllers\\Visitors::revertConversion/$1', ['filter' => 'permission:visitor.edit']);
         $routes->post('promote-attender/(:num)', '\\Clergy\\Controllers\\Visitors::promoteAttender/$1', ['filter' => 'permission:visitor.edit']);
         $routes->post('demote/(:num)', '\\Clergy\\Controllers\\Visitors::demoteToVisitor/$1', ['filter' => 'permission:visitor.edit']);
         // AJAX endpoints
@@ -155,7 +155,10 @@ $routes->group('', ['filter' => 'session'], function ($routes) {
 
     // ── Legacy /guests/* shims (one release): GETs redirect to /visitors/*,
     // POSTs alias to the same controller actions (bodies can't redirect).
+    // The retired mutating GETs land on the visitor detail page instead.
     $routes->get('guests', static fn() => redirect()->to(base_url('visitors')));
+    $routes->get('guests/convertToMember/(:num)', static fn(int $id) => redirect()->to(base_url('visitors/view/' . $id)));
+    $routes->get('guests/create-account/(:num)', static fn(int $id) => redirect()->to(base_url('visitors/view/' . $id)));
     $routes->get('guests/(:any)', static function (string $rest) {
         return redirect()->to(base_url('visitors/' . $rest));
     });

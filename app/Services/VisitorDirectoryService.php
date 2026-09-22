@@ -465,11 +465,28 @@ class VisitorDirectoryService
      * Delete a visitor: soft-delete the parish affiliation and, when the
      * person has no remaining live affiliations, the person row itself.
      * followup_log / person_visit history is preserved for audit.
+     *
+     * Refuses rows that are on the parish register (member/inactive) or
+     * already converted — those are members managed from the People
+     * directory, not visitor-pipeline records.
      */
     public function delete(int $personId, int $parishId): bool
     {
         $db  = $this->db();
         $now = date('Y-m-d H:i:s');
+
+        $affiliation = $db->table('parish_affiliation')
+            ->where('person_id', $personId)
+            ->where('parish_id', $parishId)
+            ->where('deleted_at IS NULL', null, false)
+            ->get()
+            ->getRowArray();
+
+        if (is_array($affiliation)
+            && (! empty($affiliation['converted_to_member_at'])
+                || in_array((string) $affiliation['membership_status'], ['member', 'inactive'], true))) {
+            return false;
+        }
 
         $db->transBegin();
         try {

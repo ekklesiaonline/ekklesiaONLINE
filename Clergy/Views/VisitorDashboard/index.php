@@ -71,7 +71,7 @@ $kpiTile = static function (
             lang('Visitors.hubKpiConverted'),
             'bi-person-check-fill',
             'success',
-            base_url('visitor-conversions')
+            base_url('visitors?lifecycle=converted')
         ) ?>
     </div>
     <div class="col-6 col-md-4 col-xl-2">
@@ -126,7 +126,7 @@ $kpiTile = static function (
             'perm'  => 'visitor.create',
         ],
         [
-            'href'  => base_url('visitor-conversions'),
+            'href'  => base_url('visitors?lifecycle=converted'),
             'icon'  => 'bi-person-up',
             'color' => 'success',
             'label' => lang('Visitors.hubLinkConversions'),

@@ -1,15 +1,20 @@
 <?php
 
 use App\Services\PersonConversionService;
+use App\Services\VisitorDirectoryService;
 use CodeIgniter\Test\CIUnitTestCase;
 use CodeIgniter\Test\DatabaseTestTrait;
+use Tests\Support\Database\CanonicalTestSchema;
 
 /**
- * T3.2/T4.5: visitor-to-member conversion pre-fill.
+ * Phase 3: consolidated visitor→member promotion.
  *
- * Covers the bookkeeping side: recordManualConversion() marks the canonical
- * visitor affiliation converted and skips pending follow-ups for the person,
- * and the wiring that carries visitor_data into the member create form exists.
+ * PersonConversionService::convertToMember() is the single conversion path:
+ * it transitions the affiliation through the pathway, marks conversion
+ * bookkeeping, and skips pending follow-ups. The retired surface —
+ * the mutating GET convertToMember route, the visitor_data flashdata
+ * handoff into Members::create, and recordManualConversion() — is gone.
+ * VisitorDirectoryService::delete refuses converted/register rows.
  *
  * @internal
  */
@@ -17,14 +22,48 @@ final class VisitorConversionPrefillTest extends CIUnitTestCase
 {
     use DatabaseTestTrait;
 
-    protected $migrate = true;
-    protected $refresh = true;
+    protected function setUp(): void
+    {
+        parent::setUp();
 
-    public function testRecordManualConversionMarksVisitorConverted(): void
+        CanonicalTestSchema::ensure($this->db);
+        foreach ([
+            'parish_affiliation',
+            'person_status_history',
+            'person',
+            'person_visit',
+            'followup_log',
+            'user_person',
+            'profile',
+            'users',
+            'auth_identities',
+            'auth_groups_users',
+            'parish',
+        ] as $table) {
+            CanonicalTestSchema::reset($this->db, $table);
+        }
+
+        session()->set('selected_parish_id', 301);
+        $this->seedParish(301);
+    }
+
+    private function seedParish(int $parishId): void
+    {
+        $this->db->table('parish')->insert([
+            'id'         => $parishId,
+            'name'       => 'Test Parish ' . $parishId,
+            'created_at' => date('Y-m-d H:i:s'),
+            'updated_at' => date('Y-m-d H:i:s'),
+        ]);
+    }
+
+    public function testConvertToMemberMarksVisitorConverted(): void
     {
         $personId = $this->insertVisitorPerson(301);
 
-        PersonConversionService::recordManualConversion($personId, 301, 55, 7);
+        $ok = PersonConversionService::convertToMember($personId, 301, null, null, null, 7);
+
+        $this->assertTrue($ok);
 
         $row = $this->db->table('parish_affiliation')
             ->where('person_id', $personId)
@@ -32,50 +71,111 @@ final class VisitorConversionPrefillTest extends CIUnitTestCase
             ->get()
             ->getRowArray();
 
+        $this->assertSame('member', $row['membership_status']);
         $this->assertSame(1, (int) $row['followed_up']);
         $this->assertNotNull($row['converted_to_member_at']);
-        $this->assertSame(55, (int) $row['linked_user_id']);
         $this->assertSame(7, (int) $row['converted_by_user_id']);
     }
 
-    public function testRecordManualConversionSkipsPendingFollowups(): void
+    public function testConvertToMemberSkipsPendingFollowups(): void
     {
-        $personId = $this->insertVisitorPerson(301);
+        $personId  = $this->insertVisitorPerson(301);
         $pendingId = $this->insertFollowup($personId, 'pending');
-        $doneId = $this->insertFollowup($personId, 'sent');
-        $otherId = $this->insertFollowup(43, 'pending');
+        $doneId    = $this->insertFollowup($personId, 'sent');
+        $otherId   = $this->insertFollowup($this->insertVisitorPerson(301), 'pending');
 
-        PersonConversionService::recordManualConversion($personId, 301, 55, 7);
+        $this->assertTrue(PersonConversionService::convertToMember($personId, 301, null, null, null, 7));
 
         $pending = $this->db->table('followup_log')->where('id', $pendingId)->get()->getRowArray();
-        $done = $this->db->table('followup_log')->where('id', $doneId)->get()->getRowArray();
-        $other = $this->db->table('followup_log')->where('id', $otherId)->get()->getRowArray();
+        $done    = $this->db->table('followup_log')->where('id', $doneId)->get()->getRowArray();
+        $other   = $this->db->table('followup_log')->where('id', $otherId)->get()->getRowArray();
 
         $this->assertSame('skipped', $pending['status']);
         $this->assertSame('sent', $done['status']);
         $this->assertSame('pending', $other['status']);
     }
 
-    /**
-     * Wiring contract: the create-account endpoint sets visitor_data flashdata,
-     * Members::create consumes it into old input, and the form carries
-     * visitor_id (the canonical person_id) back to store().
-     */
-    public function testPrefillWiringExists(): void
+    public function testConvertToMemberRecordsPathwayHistory(): void
     {
-        $visitors = (string) file_get_contents(ROOTPATH . 'Clergy/Controllers/Visitors.php');
-        $members = (string) file_get_contents(ROOTPATH . 'Clergy/Controllers/Members.php');
-        $view = (string) file_get_contents(ROOTPATH . 'Clergy/Views/Members/create.php');
-        $routes = (string) file_get_contents(ROOTPATH . 'Clergy/Config/Routes.php');
+        $personId = $this->insertVisitorPerson(301);
 
-        $this->assertStringContainsString('create-account', $routes);
-        $this->assertStringContainsString("setFlashdata('visitor_data'", $visitors);
-        $this->assertStringContainsString("session('visitor_data')", $members);
-        $this->assertStringContainsString('name="visitor_id"', $view);
-        $this->assertStringContainsString("getPost('visitor_id')", $members);
+        $this->assertTrue(PersonConversionService::convertToMember($personId, 301, null, null, null, 7));
+
+        $history = $this->db->table('person_status_history')
+            ->where('person_id', $personId)
+            ->where('status_type', 'affiliation')
+            ->get()
+            ->getResultArray();
+
+        $this->assertCount(1, $history);
+        $this->assertSame('visitor', $history[0]['from_status']);
+        $this->assertSame('member', $history[0]['to_status']);
     }
 
-    private function insertVisitorPerson(int $parishId): int
+    public function testDeleteRefusesConvertedRow(): void
+    {
+        $personId = $this->insertVisitorPerson(301);
+        $this->assertTrue(PersonConversionService::convertToMember($personId, 301, null, null, null, 7));
+
+        $directory = new VisitorDirectoryService();
+        $this->assertFalse($directory->delete($personId, 301));
+
+        $row = $this->db->table('parish_affiliation')
+            ->where('person_id', $personId)
+            ->get()
+            ->getRowArray();
+        $this->assertNull($row['deleted_at']);
+    }
+
+    public function testDeleteRefusesRegisterMemberRow(): void
+    {
+        $personId = $this->insertVisitorPerson(301, 'member');
+
+        $directory = new VisitorDirectoryService();
+        $this->assertFalse($directory->delete($personId, 301));
+    }
+
+    public function testDeleteStillWorksForPlainVisitor(): void
+    {
+        $personId = $this->insertVisitorPerson(301);
+
+        $directory = new VisitorDirectoryService();
+        $this->assertTrue($directory->delete($personId, 301));
+
+        $row = $this->db->table('parish_affiliation')
+            ->where('person_id', $personId)
+            ->get()
+            ->getRowArray();
+        $this->assertNotNull($row['deleted_at']);
+    }
+
+    /**
+     * Wiring contract: the consolidated POST promote/revert endpoints exist,
+     * and the retired GET mutation + flashdata handoff are gone.
+     */
+    public function testPromoteEndpointContract(): void
+    {
+        $visitors = (string) file_get_contents(ROOTPATH . 'Clergy/Controllers/Visitors.php');
+        $members  = (string) file_get_contents(ROOTPATH . 'Clergy/Controllers/Members.php');
+        $view     = (string) file_get_contents(ROOTPATH . 'Clergy/Views/Members/create.php');
+        $routes   = (string) file_get_contents(ROOTPATH . 'Clergy/Config/Routes.php');
+
+        $this->assertStringContainsString('promote/(:num)', $routes);
+        $this->assertStringContainsString('revert-conversion/(:num)', $routes);
+        $this->assertStringNotContainsString('get(\'convertToMember', $routes);
+        $this->assertStringNotContainsString('get(\'create-account', $routes);
+
+        $this->assertStringContainsString('function promote(', $visitors);
+        $this->assertStringContainsString('function revertConversion(', $visitors);
+        $this->assertStringNotContainsString('function convertToMember(', $visitors);
+        $this->assertStringNotContainsString('function createAccountFromVisitor(', $visitors);
+
+        $this->assertStringNotContainsString("session('visitor_data')", $members);
+        $this->assertStringNotContainsString("getPost('visitor_id')", $members);
+        $this->assertStringNotContainsString('name="visitor_id"', $view);
+    }
+
+    private function insertVisitorPerson(int $parishId, string $status = 'visitor'): int
     {
         $this->db->table('person')->insert([
             'first_name' => 'Ana',
@@ -89,7 +189,7 @@ final class VisitorConversionPrefillTest extends CIUnitTestCase
         $this->db->table('parish_affiliation')->insert([
             'person_id'        => $personId,
             'parish_id'        => $parishId,
-            'membership_status'=> 'visitor',
+            'membership_status'=> $status,
             'followed_up'      => 0,
             'created_at'       => date('Y-m-d H:i:s'),
             'updated_at'       => date('Y-m-d H:i:s'),

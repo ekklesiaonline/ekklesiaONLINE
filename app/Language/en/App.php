@@ -65,7 +65,6 @@ return [
     'navSystemOverview'   => 'System Health',
     'navMissionOutcomes'  => 'Mission Outcomes',
     'navLiturgicalSource' => 'Liturgical Source',
-    'navVisitorConversions' => 'Visitor Conversions',
     'navGoodStanding'     => 'Good Standing',
     'navFinance'          => 'Finance',
     'navPledges'          => 'Annual Pledges',

@@ -905,7 +905,6 @@ abstract class BaseController extends Controller
             'Finance Dashboard' => 'App.navFinanceDashboard',
             'Follow-up Tasks' => 'App.headerFollowUpTasks',
             'Good Standing' => 'App.navGoodStanding',
-            'Visitor Conversions' => 'App.navVisitorConversions',
             'Visitor Details' => 'App.headerVisitorDetails',
             'Visitor Detail' => 'App.headerVisitorDetails',
             'Visitors' => 'App.navVisitors',
