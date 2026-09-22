@@ -138,7 +138,7 @@ class Visitors extends BaseController
                 ->where('pa.parish_id', (int) $visitor['parish_id'])
                 ->where('pa.deleted_at', null)
                 ->where('pa.linked_user_id IS NOT NULL', null, false)
-                ->groupBy('pa.linked_user_id')
+                ->groupBy(['pa.linked_user_id', 'u.username', 'ai.secret', 'p.first_name', 'p.last_name'])
                 ->orderBy('p.first_name', 'ASC')
                 ->orderBy('p.last_name', 'ASC')
                 ->get()
