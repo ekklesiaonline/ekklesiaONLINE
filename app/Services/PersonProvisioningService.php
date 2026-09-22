@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\MemberParishAffiliationModel;
 use App\Models\PersonModel;
 use App\Models\ProfileModel;
 use DateTime;
@@ -54,19 +55,25 @@ class PersonProvisioningService
                 throw new \RuntimeException('Failed to create person.');
             }
 
-            // Status-derived columns come from fieldsForStatus() so the row
-            // can never disagree with itself; callers only choose the status.
-            $statusFields = MembershipStatusService::fieldsForStatus((string) ($data['membership_status'] ?? 'visitor'));
+            // The affiliation row is created through the model so all
+            // status-column writes stay inside the choke point; callers
+            // only choose the status.
+            $affiliated = model(MemberParishAffiliationModel::class)->provisionForPerson(
+                $personId,
+                $parishId,
+                $userId,
+                (string) ($data['membership_status'] ?? 'visitor'),
+                [
+                    'source'     => (string) ($data['source'] ?? 'system'),
+                    'start_date' => (string) ($data['start_date'] ?? date('Y-m-d')),
+                    'created_at' => $now,
+                    'updated_at' => $now,
+                ]
+            );
 
-            $db->table('parish_affiliation')->insert($statusFields + [
-                'parish_id'        => $parishId,
-                'person_id'        => $personId,
-                'linked_user_id'   => $userId,
-                'source'           => (string) ($data['source'] ?? 'system'),
-                'start_date'       => (string) ($data['start_date'] ?? date('Y-m-d')),
-                'created_at'       => $now,
-                'updated_at'       => $now,
-            ]);
+            if (! $affiliated) {
+                throw new \RuntimeException('Failed to create parish affiliation.');
+            }
 
             $profileId = null;
             if ($userId !== null && $userId > 0) {

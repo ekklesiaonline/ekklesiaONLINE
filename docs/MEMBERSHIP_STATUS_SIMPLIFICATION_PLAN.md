@@ -208,13 +208,41 @@ dev DB; drift audit clean (14 rows, 0 issues).
 
 Full suite after Phase 3: 664 tests, 2954 assertions, 6 skipped.
 
-## Phase 4 — Enforce the choke points
+## Phase 4 — Enforce the choke points — DONE
 
-1. Architecture test failing if app code writes status columns on
-   `parish_affiliation` outside `MembershipPathwayService` /
-   `MemberAffiliationService` (same style as `ModuleCrudControllerPathsTest`).
-2. Document the invariant table in this file and
-   `.devin/rules/parish-domain.md`.
+1. Stray status writers routed through the choke points:
+   - `PersonProvisioningService` no longer inserts the affiliation row
+     directly — it calls the new
+     `MemberParishAffiliationModel::provisionForPerson()` (person-first
+     creation path that `attachToParish()` can't cover, since a portal user
+     may not exist yet) and aborts the transaction if it fails.
+   - `PersonConversionService::convertToMember` now calls
+     `MembershipPathwayService::transition()` for the guest→member change
+     instead of a raw `fieldsForStatus('member')` update. The pathway runs
+     first inside the outer transaction so its internal
+     `resetTransStatus()` cannot mask a failure elsewhere, and its own
+     `transStart`/`transComplete` nest under `transBegin` via transaction
+     depth. The manual `person_status_history` insert was removed — the
+     pathway records it. Remaining writes (`linked_user_id`,
+     `converted_to_member_at`, `converted_by_user_id`, `followed_up`) are
+     non-status metadata and stay direct.
+   - `GuestDirectoryService::revertConversion` likewise transitions
+     member→visitor through the pathway; the manual history insert was
+     removed for the same reason.
+2. `tests/unit/ParishAffiliationWriteScopeTest.php` scans all app + module
+   PHP (migrations, seeders, dumps, views, lang excluded) and fails if any
+   file outside the allowlist — `MemberParishAffiliationModel`,
+   `MembershipPathwayService`, `MemberAffiliationService`,
+   `MembershipStatusService` — calls `fieldsForStatus()`, `->set()`s a
+   status column, or pairs a `membership_status`/`affiliation_type`/`is_member`
+   array key with a `parish_affiliation` write in the same statement or the
+   same file. Audit `new_values` payloads and non-status metadata updates
+   (`linked_user_id`, `converted_*`, `followed_up`, `deleted_at`) do not
+   trigger it.
+3. The invariant is documented in `.devin/rules/parish-domain.md`
+   (status columns are never written directly).
+
+Full suite after Phase 4: 665 tests, 2955 assertions, 6 skipped.
 
 ## Phase 5 — Schema hygiene (independent)
 

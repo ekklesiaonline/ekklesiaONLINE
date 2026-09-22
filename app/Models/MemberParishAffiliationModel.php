@@ -551,6 +551,26 @@ class MemberParishAffiliationModel extends BaseTenantModel
         return $result;
     }
 
+    /**
+     * Create a person-first affiliation row during provisioning. Unlike
+     * attachToParish() this does not require a linked user — person-first
+     * rows may have linked_user_id = null until a portal user is created.
+     * Status-derived columns come from fieldsForStatus() so the row can
+     * never disagree with itself.
+     *
+     * @param array<string, mixed> $extra Non-status columns (source, start_date, timestamps).
+     */
+    public function provisionForPerson(int $personId, int $parishId, ?int $linkedUserId, string $status = 'visitor', array $extra = []): bool
+    {
+        return $this->db->table($this->table)->insert(
+            MembershipStatusService::fieldsForStatus($status) + [
+                'parish_id'      => $parishId,
+                'person_id'      => $personId,
+                'linked_user_id' => $linkedUserId,
+            ] + $extra
+        ) !== false;
+    }
+
     public function setMemberTag(int $userId, int $parishId, bool $isMember): bool
     {
         $existing = $this->db->table($this->table)

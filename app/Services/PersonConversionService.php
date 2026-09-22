@@ -4,7 +4,6 @@ namespace App\Services;
 
 use App\Models\PersonModel;
 use App\Models\ProfileModel;
-use App\Models\MemberParishAffiliationModel;
 
 class PersonConversionService
 {
@@ -51,28 +50,38 @@ class PersonConversionService
 
             $now = date('Y-m-d H:i:s');
 
+            // The lifecycle change goes through the pathway choke point: it
+            // derives the register columns, records person_status_history
+            // and keeps pathway_stage in step. It runs before the remaining
+            // writes so its internal transaction handling cannot mask a
+            // failure elsewhere in this transaction.
+            $transition = (new MembershipPathwayService())->transition(
+                $affiliationId,
+                'member',
+                $convertedByUserId,
+                'Converted to member'
+            );
+
+            if (! ($transition['ok'] ?? false)) {
+                throw new \RuntimeException(
+                    'Affiliation transition failed: ' . (string) ($transition['code'] ?? 'unknown')
+                );
+            }
+
             if ($userId !== null && $userId > 0) {
                 self::linkToUser($userId, $personId, $parishId, $person, $now);
             } elseif ($email !== null && $email !== '' && $password !== null && $password !== '') {
                 $userId = self::createPortalUser($email, $password, $person, $personId, $parishId, $now);
             }
 
+            // Non-status columns only — membership_status itself was already
+            // written by the pathway transition above.
             $db->table('parish_affiliation')
-                ->where('id', (int) $affiliation['id'])
-                ->update(MembershipStatusService::fieldsForStatus('member') + [
-                    'linked_user_id'    => $userId ?? $affiliation['linked_user_id'] ?? null,
-                    'updated_at'        => $now,
+                ->where('id', $affiliationId)
+                ->update([
+                    'linked_user_id' => $userId ?? $affiliation['linked_user_id'] ?? null,
+                    'updated_at'     => $now,
                 ]);
-
-            (new PersonStatusHistoryService())->record(
-                $personId,
-                'affiliation',
-                $affiliation['membership_status'] ?? 'visitor',
-                'member',
-                $parishId,
-                $convertedByUserId,
-                'Converted to member',
-            );
 
             self::markPendingFollowupsSkipped($personId, $now);
             self::markGuestConverted($affiliationId, $userId, $convertedByUserId, $now);

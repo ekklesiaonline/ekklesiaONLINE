@@ -489,23 +489,28 @@ class GuestDirectoryService
             return;
         }
 
+        // The lifecycle change goes through the pathway choke point: it
+        // derives the register columns and records person_status_history.
+        $transition = (new MembershipPathwayService())->transition(
+            (int) $affiliation['id'],
+            'visitor',
+            $revertedByUserId,
+            'Conversion reverted'
+        );
+
+        if (! ($transition['ok'] ?? false)) {
+            return;
+        }
+
+        // Non-status columns only — membership_status was already written
+        // by the pathway transition above.
         $db->table('parish_affiliation')
             ->where('id', (int) $affiliation['id'])
-            ->update(MembershipStatusService::fieldsForStatus('visitor') + [
+            ->update([
                 'converted_to_member_at' => null,
                 'converted_by_user_id'   => null,
                 'updated_at'             => $now,
             ]);
-
-        (new PersonStatusHistoryService())->record(
-            $personId,
-            'affiliation',
-            (string) ($affiliation['membership_status'] ?? 'member'),
-            'visitor',
-            $parishId,
-            $revertedByUserId,
-            'Conversion reverted'
-        );
     }
 
     /**
