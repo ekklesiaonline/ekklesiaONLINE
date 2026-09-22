@@ -116,7 +116,7 @@ return [
     'impactAttendance' => 'Présences via services (supprimées)',
     'impactEvents' => 'Événements (supprimés)',
     'impactEventRegistrations' => 'Inscriptions aux événements (supprimées)',
-    'impactGuests' => 'Invités (supprimés)',
+    'impactVisitors' => 'Invités (supprimés)',
     'impactExpenses' => 'Dépenses (supprimées)',
     'impactFamilies' => 'Familles (supprimées)',
     'impactVolunteerTeams' => 'Équipes de bénévoles (supprimées)',

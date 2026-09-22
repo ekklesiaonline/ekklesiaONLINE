@@ -16,7 +16,7 @@ use App\Services\EmailScopeService;
  * Usage (from the spark command or a controller):
  * -----------------------------------------------
  * $service = new FollowupDispatchService();
- * $result  = $service->dispatch($logRow, $template, $guest);
+ * $result  = $service->dispatch($logRow, $template, $visitor);
  * // $result: ['success' => bool, 'metadata' => array, 'error' => string]
  *
  * Channel routing:
@@ -41,14 +41,14 @@ class FollowupDispatchService
     private SmsService   $sms;
     private CallTaskModel $callTaskModel;
     private SmsQueueModel $smsQueueModel;
-    private GuestDirectoryService $guestDirectory;
+    private VisitorDirectoryService $visitorDirectory;
 
     public function __construct()
     {
         $this->sms            = new SmsService();
         $this->callTaskModel  = model('CallTaskModel');
         $this->smsQueueModel  = model('SmsQueueModel');
-        $this->guestDirectory = new GuestDirectoryService();
+        $this->visitorDirectory = new VisitorDirectoryService();
     }
 
     // ------------------------------------------------------------------
@@ -58,41 +58,41 @@ class FollowupDispatchService
     /**
      * Dispatch a single followup log entry.
      *
-     * @param  array      $logRow   Row from guest_followup_log joined with guests + followup_action
+     * @param  array      $logRow   Row from visitor_followup_log joined with visitors + followup_action
      * @param  array|null $template Row from followup_template (may be null for call/gift/mail)
-     * @param  array      $guest    Full decrypted guest row (email, phone already decrypted)
+     * @param  array      $visitor    Full decrypted visitor row (email, phone already decrypted)
      * @return array{success: bool, metadata: array, error: string}
      */
-    public function dispatch(array $logRow, ?array $template, array $guest): array
+    public function dispatch(array $logRow, ?array $template, array $visitor): array
     {
         $channel   = (string) ($logRow['channel'] ?? '');
-        $parishId  = (int)    ($guest['parish_id'] ?? 0);
+        $parishId  = (int)    ($visitor['parish_id'] ?? 0);
         $logId     = (int)    ($logRow['id'] ?? 0);
 
         $parish = $this->loadParish($parishId);
-        $vars   = $this->buildVarMap($guest, $parish);
+        $vars   = $this->buildVarMap($visitor, $parish);
 
-        // Opt-out guard: skip silently if guest has opted out of this channel.
-        if ($this->guestDirectory->isOptedOut($guest, $channel)) {
+        // Opt-out guard: skip silently if visitor has opted out of this channel.
+        if ($this->visitorDirectory->isOptedOut($visitor, $channel)) {
             return [
                 'success'  => false,
                 'metadata' => ['channel' => $channel, 'skipped' => true, 'reason' => 'opted_out'],
-                'error'    => "Guest has opted out of channel: {$channel}",
+                'error'    => "Visitor has opted out of channel: {$channel}",
             ];
         }
 
         return match ($channel) {
-            'text'  => $this->dispatchText($logRow, $template, $guest, $vars),
-            'email' => $this->dispatchEmail($logRow, $template, $guest, $vars, $parishId),
-            'call'  => $this->dispatchCall($logRow, $guest, $parishId),
-            'mail'  => $this->dispatchMail($logRow, $template, $guest, $vars, $logId),
-            'gift'  => $this->dispatchGift($logRow, $guest),
+            'text'  => $this->dispatchText($logRow, $template, $visitor, $vars),
+            'email' => $this->dispatchEmail($logRow, $template, $visitor, $vars, $parishId),
+            'call'  => $this->dispatchCall($logRow, $visitor, $parishId),
+            'mail'  => $this->dispatchMail($logRow, $template, $visitor, $vars, $logId),
+            'gift'  => $this->dispatchGift($logRow, $visitor),
             default => ['success' => false, 'metadata' => [], 'error' => "Unknown channel: {$channel}"],
         };
     }
 
     /**
-     * Replace {tokens} in a template string using guest + parish data.
+     * Replace {tokens} in a template string using visitor + parish data.
      */
     public function applyVars(string $text, array $vars): string
     {
@@ -103,15 +103,15 @@ class FollowupDispatchService
     // Channel handlers
     // ------------------------------------------------------------------
 
-    private function dispatchText(array $logRow, ?array $template, array $guest, array $vars): array
+    private function dispatchText(array $logRow, ?array $template, array $visitor, array $vars): array
     {
         if ($template === null) {
             return ['success' => false, 'metadata' => [], 'error' => 'No template assigned for text action.'];
         }
 
-        $phone = $this->decryptField($guest['phone'] ?? '');
+        $phone = $this->decryptField($visitor['phone'] ?? '');
         if ($phone === '' || $phone === null) {
-            return ['success' => false, 'metadata' => [], 'error' => 'Guest has no phone number.'];
+            return ['success' => false, 'metadata' => [], 'error' => 'Visitor has no phone number.'];
         }
 
         $body = $this->applyVars((string) $template['body_text'], $vars);
@@ -121,7 +121,7 @@ class FollowupDispatchService
         $queueId = $this->smsQueueModel->insert([
             'to_number'    => $phone,
             'body'         => $body,
-            'parish_id'    => (int) ($guest['parish_id'] ?? 0),
+            'parish_id'    => (int) ($visitor['parish_id'] ?? 0),
             'status'       => 'pending',
             'attempts'     => 0,
             'max_attempts' => 3,
@@ -139,15 +139,15 @@ class FollowupDispatchService
         ];
     }
 
-    private function dispatchEmail(array $logRow, ?array $template, array $guest, array $vars, int $parishId): array
+    private function dispatchEmail(array $logRow, ?array $template, array $visitor, array $vars, int $parishId): array
     {
         if ($template === null) {
             return ['success' => false, 'metadata' => [], 'error' => 'No template assigned for email action.'];
         }
 
-        $email = $this->decryptField($guest['email'] ?? '');
+        $email = $this->decryptField($visitor['email'] ?? '');
         if ($email === '' || $email === null) {
-            return ['success' => false, 'metadata' => [], 'error' => 'Guest has no email address.'];
+            return ['success' => false, 'metadata' => [], 'error' => 'Visitor has no email address.'];
         }
 
         $subject  = $this->applyVars((string) ($template['subject'] ?? 'A message for you'), $vars);
@@ -182,11 +182,11 @@ class FollowupDispatchService
         }
     }
 
-    private function dispatchCall(array $logRow, array $guest, int $parishId): array
+    private function dispatchCall(array $logRow, array $visitor, int $parishId): array
     {
-        $phone = $this->decryptField($guest['phone'] ?? '');
+        $phone = $this->decryptField($visitor['phone'] ?? '');
 
-        $personId = (int) ($guest['person_id'] ?? $logRow['person_id'] ?? 0) ?: null;
+        $personId = (int) ($visitor['person_id'] ?? $logRow['person_id'] ?? 0) ?: null;
 
         $taskData = [
             'parish_id'      => $parishId,
@@ -216,7 +216,7 @@ class FollowupDispatchService
     private function dispatchMail(
         array  $logRow,
         ?array $template,
-        array  $guest,
+        array  $visitor,
         array  $vars,
         int    $logId
     ): array {
@@ -265,7 +265,7 @@ class FollowupDispatchService
         }
     }
 
-    private function dispatchGift(array $logRow, array $guest): array
+    private function dispatchGift(array $logRow, array $visitor): array
     {
         // Gifts require manual dispatch; we mark the log with metadata and
         // let the admin see it as a pending task in the follow-up timeline.
@@ -274,7 +274,7 @@ class FollowupDispatchService
             'metadata' => [
                 'channel'           => 'gift',
                 'requires_manual'   => true,
-                'guest_name'        => trim(($guest['first_name'] ?? '') . ' ' . ($guest['last_name'] ?? '')),
+                'visitor_name'        => trim(($visitor['first_name'] ?? '') . ' ' . ($visitor['last_name'] ?? '')),
             ],
             'error' => '',
         ];
@@ -285,17 +285,17 @@ class FollowupDispatchService
     // ------------------------------------------------------------------
 
     /**
-     * Build the token-to-value replacement map for a guest + parish combo.
+     * Build the token-to-value replacement map for a visitor + parish combo.
      */
-    private function buildVarMap(array $guest, ?array $parish): array
+    private function buildVarMap(array $visitor, ?array $parish): array
     {
         return [
-            '{first_name}'  => esc((string) ($guest['first_name'] ?? '')),
-            '{last_name}'   => esc((string) ($guest['last_name'] ?? '')),
+            '{first_name}'  => esc((string) ($visitor['first_name'] ?? '')),
+            '{last_name}'   => esc((string) ($visitor['last_name'] ?? '')),
             '{parish_name}' => esc((string) ($parish['name'] ?? '')),
-            '{visit_date}'  => esc((string) ($guest['visit_date'] ?? '')),
+            '{visit_date}'  => esc((string) ($visitor['visit_date'] ?? '')),
             '{clergy_name}' => '',                // can be populated from parish config in future
-            '{phone}'       => esc((string) $this->decryptField($guest['phone'] ?? '')),
+            '{phone}'       => esc((string) $this->decryptField($visitor['phone'] ?? '')),
         ];
     }
 

@@ -33,11 +33,11 @@ $formatLocalizedDate = static function (?string $value): string {
         </div>
     </div>
     <div class="col-md-4">
-        <a href="<?= base_url('guests') ?>" class="text-decoration-none d-block h-100">
+        <a href="<?= base_url('visitors') ?>" class="text-decoration-none d-block h-100">
             <div class="card stat-card info h-100">
                 <div class="card-body">
-                    <h6 class="text-muted mb-1"><?= lang('Dashboard.recentGuests') ?></h6>
-                    <h3 class="mb-0"><?= count($recent_guests ?? []) ?></h3>
+                    <h6 class="text-muted mb-1"><?= lang('Dashboard.recentVisitors') ?></h6>
+                    <h3 class="mb-0"><?= count($recent_visitors ?? []) ?></h3>
                 </div>
             </div>
         </a>

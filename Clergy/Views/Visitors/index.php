@@ -3,12 +3,12 @@
 <?= $this->section('content') ?>
 
 <div class="d-flex justify-content-start align-items-center flex-wrap gap-2 mb-3">
-    <a href="<?= base_url('guests/dashboard') ?>" class="btn btn-outline-secondary">
-        <i class="bi bi-arrow-left" aria-hidden="true"></i> <?= lang('Guests.backToGuests') ?>
+    <a href="<?= base_url('visitors/dashboard') ?>" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left" aria-hidden="true"></i> <?= lang('Visitors.backToVisitors') ?>
     </a>
-    <?php if (auth()->user()->can('guest.create')): ?>
-        <a href="<?= base_url('guests/create') ?>" class="btn btn-outline-primary">
-            <i class="bi bi-plus-circle" aria-hidden="true"></i> <?= lang('Guests.pageTitleAdd') ?>
+    <?php if (auth()->user()->can('visitor.create')): ?>
+        <a href="<?= base_url('visitors/create') ?>" class="btn btn-outline-primary">
+            <i class="bi bi-plus-circle" aria-hidden="true"></i> <?= lang('Visitors.pageTitleAdd') ?>
         </a>
     <?php endif; ?>
 </div>
@@ -51,24 +51,24 @@ $formatLocalizedDate = static function (?string $value, string $pattern, string 
             class="btn btn-outline-secondary btn-sm filter-toggle-btn"
             type="button"
             data-bs-toggle="collapse"
-            data-bs-target="#guestsFilterPanel"
+            data-bs-target="#visitorsFilterPanel"
             aria-expanded="<?= ($request->getGet('search') !== null || $request->getGet('followed_up') !== null) ? 'true' : 'false' ?>"
-            aria-controls="guestsFilterPanel">
+            aria-controls="visitorsFilterPanel">
             <i class="bi bi-funnel" aria-hidden="true"></i> <?= lang('App.filter') ?>
         </button>
     </div>
-    <div id="guestsFilterPanel" class="collapse <?= ($request->getGet('search') !== null || $request->getGet('followed_up') !== null) ? 'show' : '' ?>">
+    <div id="visitorsFilterPanel" class="collapse <?= ($request->getGet('search') !== null || $request->getGet('followed_up') !== null) ? 'show' : '' ?>">
         <div class="card-body border-top filter-panel-body">
-            <form method="get" action="<?= base_url('guests') ?>">
+            <form method="get" action="<?= base_url('visitors') ?>">
                 <div class="row g-2">
                     <div class="col-md-4">
-                        <input type="text" class="form-control" name="search" placeholder="<?= lang('Guests.searchByNameEmailPhone') ?>" value="<?= esc($search ?? '') ?>">
+                        <input type="text" class="form-control" name="search" placeholder="<?= lang('Visitors.searchByNameEmailPhone') ?>" value="<?= esc($search ?? '') ?>">
                     </div>
                     <div class="col-md-3">
                         <select class="form-select" name="followed_up">
-                            <option value=""><?= lang('Guests.allGuests') ?></option>
-                            <option value="0" <?= ($followed_up ?? '') === '0' ? 'selected' : '' ?>><?= lang('Guests.pendingFollowUp') ?></option>
-                            <option value="1" <?= ($followed_up ?? '') === '1' ? 'selected' : '' ?>><?= lang('Guests.followedUpLabel') ?></option>
+                            <option value=""><?= lang('Visitors.allVisitors') ?></option>
+                            <option value="0" <?= ($followed_up ?? '') === '0' ? 'selected' : '' ?>><?= lang('Visitors.pendingFollowUp') ?></option>
+                            <option value="1" <?= ($followed_up ?? '') === '1' ? 'selected' : '' ?>><?= lang('Visitors.followedUpLabel') ?></option>
                         </select>
                     </div>
                     <div class="col-md-2">
@@ -88,48 +88,48 @@ $formatLocalizedDate = static function (?string $value, string $pattern, string 
             <table class="table table-hover">
                 <thead>
                     <tr>
-                        <th scope="col"><?= lang('Guests.colName') ?></th>
-                        <th scope="col"><?= lang('Guests.colContact') ?></th>
-                        <th scope="col"><?= lang('Guests.colVisitDate') ?></th>
-                        <th scope="col"><?= lang('Guests.colFollowUp') ?></th>
-                        <th scope="col"><?= lang('Guests.colService') ?></th>
+                        <th scope="col"><?= lang('Visitors.colName') ?></th>
+                        <th scope="col"><?= lang('Visitors.colContact') ?></th>
+                        <th scope="col"><?= lang('Visitors.colVisitDate') ?></th>
+                        <th scope="col"><?= lang('Visitors.colFollowUp') ?></th>
+                        <th scope="col"><?= lang('Visitors.colService') ?></th>
                         <th scope="col"><?= lang('App.colActions') ?></th>
                     </tr>
                 </thead>
                 <tbody>
-                    <?php if (!empty($guests)): ?>
-                        <?php foreach ($guests as $guest): ?>
+                    <?php if (!empty($visitors)): ?>
+                        <?php foreach ($visitors as $visitor): ?>
                             <tr>
                                 <td>
-                                    <strong><?= esc($guest['first_name'] . ' ' . $guest['last_name']) ?></strong>
+                                    <strong><?= esc($visitor['first_name'] . ' ' . $visitor['last_name']) ?></strong>
                                 </td>
                                 <td>
-                                    <?= esc($guest['email']) ?><br>
-                                    <small class="text-muted"><?= esc($guest['phone']) ?></small>
+                                    <?= esc($visitor['email']) ?><br>
+                                    <small class="text-muted"><?= esc($visitor['phone']) ?></small>
                                 </td>
-                                <td><?= esc($formatLocalizedDate((string) ($guest['visit_date'] ?? ''), 'MMM d, y', $locale)) ?></td>
+                                <td><?= esc($formatLocalizedDate((string) ($visitor['visit_date'] ?? ''), 'MMM d, y', $locale)) ?></td>
                                 <td>
                                     <?php
-                                    $prog = $progressMap[(int) ($guest['person_id'] ?? 0)] ?? null;
-                                    if (!empty($guest['converted_to_member_at'])) {
+                                    $prog = $progressMap[(int) ($visitor['person_id'] ?? 0)] ?? null;
+                                    if (!empty($visitor['converted_to_member_at'])) {
                                         $bc = 'success';
-                                        $bl = lang('Guests.statusConverted');
-                                    } elseif (!empty($guest['followed_up'])) {
+                                        $bl = lang('Visitors.statusConverted');
+                                    } elseif (!empty($visitor['followed_up'])) {
                                         $bc = 'success';
-                                        $bl = lang('Guests.statusFollowedUp');
+                                        $bl = lang('Visitors.statusFollowedUp');
                                     } elseif ($prog && $prog['done'] > 0 && $prog['pending'] > 0) {
                                         $bc = 'primary';
-                                        $bl = lang('Guests.followupInProgress');
+                                        $bl = lang('Visitors.followupInProgress');
                                     } else {
                                         $bc = 'warning';
-                                        $bl = lang('Guests.statusPending');
+                                        $bl = lang('Visitors.statusPending');
                                     }
                                     ?>
                                     <span class="badge border border-<?= $bc ?> text-<?= $bc ?> fw-normal">
                                         <?= esc($bl) ?>
                                     </span>
                                 </td>
-                                <td><?= esc($guest['service_attended'] ?? '-') ?></td>
+                                <td><?= esc($visitor['service_attended'] ?? '-') ?></td>
                                 <td>
                                     <div class="dropdown">
                                         <button class="btn btn-sm btn-outline-secondary"
@@ -141,18 +141,18 @@ $formatLocalizedDate = static function (?string $value, string $pattern, string 
                                         </button>
                                         <ul class="dropdown-menu dropdown-menu-end shadow-sm">
                                             <li>
-                                                <a class="dropdown-item" href="<?= base_url('guests/view/' . $guest['id']) ?>">
+                                                <a class="dropdown-item" href="<?= base_url('visitors/view/' . $visitor['id']) ?>">
                                                     <i class="bi bi-eye me-2" aria-hidden="true"></i><?= lang('App.view') ?>
                                                 </a>
                                             </li>
-                                            <?php if (auth()->user()->can('guest.edit')): ?>
+                                            <?php if (auth()->user()->can('visitor.edit')): ?>
                                                 <li>
-                                                    <a class="dropdown-item" href="<?= base_url('guests/edit/' . $guest['id']) ?>">
+                                                    <a class="dropdown-item" href="<?= base_url('visitors/edit/' . $visitor['id']) ?>">
                                                         <i class="bi bi-pencil me-2" aria-hidden="true"></i><?= lang('App.edit') ?>
                                                     </a>
                                                 </li>
                                             <?php endif; ?>
-                                            <?php if (auth()->user()->can('guest.delete')): ?>
+                                            <?php if (auth()->user()->can('visitor.delete')): ?>
                                                 <li>
                                                     <hr class="dropdown-divider">
                                                 </li>
@@ -160,10 +160,10 @@ $formatLocalizedDate = static function (?string $value, string $pattern, string 
                                                     <button class="dropdown-item text-danger"
                                                         type="button"
                                                         data-bs-toggle="modal"
-                                                        data-bs-target="#guestDeleteModal"
-                                                        data-guest-id="<?= $guest['id'] ?>"
-                                                        data-guest-name="<?= esc($guest['first_name'] . ' ' . $guest['last_name']) ?>"
-                                                        data-pending-sequences="<?= (int) ($progressMap[(int) ($guest['person_id'] ?? 0)]['pending'] ?? 0) ?>">
+                                                        data-bs-target="#visitorDeleteModal"
+                                                        data-visitor-id="<?= $visitor['id'] ?>"
+                                                        data-visitor-name="<?= esc($visitor['first_name'] . ' ' . $visitor['last_name']) ?>"
+                                                        data-pending-sequences="<?= (int) ($progressMap[(int) ($visitor['person_id'] ?? 0)]['pending'] ?? 0) ?>">
                                                         <i class="bi bi-trash me-2" aria-hidden="true"></i><?= lang('App.delete') ?>
                                                     </button>
                                                 </li>
@@ -175,7 +175,7 @@ $formatLocalizedDate = static function (?string $value, string $pattern, string 
                         <?php endforeach; ?>
                     <?php else: ?>
                         <tr>
-                            <td colspan="6" class="text-center text-muted py-4"><?= lang('Guests.noGuestsFound') ?></td>
+                            <td colspan="6" class="text-center text-muted py-4"><?= lang('Visitors.noVisitorsFound') ?></td>
                         </tr>
                     <?php endif; ?>
                 </tbody>
@@ -190,49 +190,49 @@ $formatLocalizedDate = static function (?string $value, string $pattern, string 
     </div>
 </div>
 
-<!-- ── Guest delete modal ───────────────────────────────────────────── -->
-<div class="modal fade" id="guestDeleteModal" tabindex="-1"
-    aria-labelledby="guestDeleteModalLabel" aria-modal="true" role="dialog">
+<!-- ── Visitor delete modal ───────────────────────────────────────────── -->
+<div class="modal fade" id="visitorDeleteModal" tabindex="-1"
+    aria-labelledby="visitorDeleteModalLabel" aria-modal="true" role="dialog">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="guestDeleteModalLabel">
-                    <i class="bi bi-trash3 me-2 text-danger" aria-hidden="true"></i><?= esc(lang('Guests.deleteModalTitle')) ?>
+                <h5 class="modal-title" id="visitorDeleteModalLabel">
+                    <i class="bi bi-trash3 me-2 text-danger" aria-hidden="true"></i><?= esc(lang('Visitors.deleteModalTitle')) ?>
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
                 <p class="mb-1">
-                    <strong><?= esc(lang('Guests.deleteModalGuestLabel')) ?>:</strong>
-                    <span id="guestDeleteName" class="ms-1"></span>
+                    <strong><?= esc(lang('Visitors.deleteModalVisitorLabel')) ?>:</strong>
+                    <span id="visitorDeleteName" class="ms-1"></span>
                 </p>
 
-                <div id="guestDeleteSequenceWarning" class="alert alert-warning d-none py-2 mt-2" role="alert">
+                <div id="visitorDeleteSequenceWarning" class="alert alert-warning d-none py-2 mt-2" role="alert">
                     <i class="bi bi-exclamation-triangle-fill me-2" aria-hidden="true"></i>
-                    <span id="guestDeleteSequenceMsg"></span>
+                    <span id="visitorDeleteSequenceMsg"></span>
                 </div>
 
                 <p class="text-danger small mt-3 mb-2">
                     <i class="bi bi-exclamation-circle me-1" aria-hidden="true"></i>
-                    <?= esc(lang('Guests.deleteModalWarningIrreversible')) ?>
+                    <?= esc(lang('Visitors.deleteModalWarningIrreversible')) ?>
                 </p>
 
-                <label for="guestDeleteReason" class="form-label fw-semibold">
-                    <?= esc(lang('Guests.deleteReasonLabel')) ?> <span class="text-danger">*</span>
+                <label for="visitorDeleteReason" class="form-label fw-semibold">
+                    <?= esc(lang('Visitors.deleteReasonLabel')) ?> <span class="text-danger">*</span>
                 </label>
-                <textarea id="guestDeleteReason" class="form-control form-control-sm" rows="3"
+                <textarea id="visitorDeleteReason" class="form-control form-control-sm" rows="3"
                     maxlength="500"
-                    placeholder="<?= esc(lang('Guests.deleteReasonPlaceholder')) ?>"></textarea>
+                    placeholder="<?= esc(lang('Visitors.deleteReasonPlaceholder')) ?>"></textarea>
                 <div class="form-text text-end">
-                    <span id="guestDeleteReasonCount">0</span>/500
+                    <span id="visitorDeleteReasonCount">0</span>/500
                 </div>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
                     <?= esc(lang('App.cancel')) ?>
                 </button>
-                <button type="button" class="btn btn-danger" id="guestDeleteConfirmBtn" disabled>
-                    <i class="bi bi-trash3 me-1" aria-hidden="true"></i><?= esc(lang('Guests.deleteConfirmBtn')) ?>
+                <button type="button" class="btn btn-danger" id="visitorDeleteConfirmBtn" disabled>
+                    <i class="bi bi-trash3 me-1" aria-hidden="true"></i><?= esc(lang('Visitors.deleteConfirmBtn')) ?>
                 </button>
             </div>
         </div>
@@ -252,28 +252,28 @@ $formatLocalizedDate = static function (?string $value, string $pattern, string 
     }
 
     (function() {
-        const modal = document.getElementById('guestDeleteModal');
-        const nameEl = document.getElementById('guestDeleteName');
-        const warningEl = document.getElementById('guestDeleteSequenceWarning');
-        const warningMsg = document.getElementById('guestDeleteSequenceMsg');
-        const reasonEl = document.getElementById('guestDeleteReason');
-        const reasonCount = document.getElementById('guestDeleteReasonCount');
-        const confirmBtn = document.getElementById('guestDeleteConfirmBtn');
+        const modal = document.getElementById('visitorDeleteModal');
+        const nameEl = document.getElementById('visitorDeleteName');
+        const warningEl = document.getElementById('visitorDeleteSequenceWarning');
+        const warningMsg = document.getElementById('visitorDeleteSequenceMsg');
+        const reasonEl = document.getElementById('visitorDeleteReason');
+        const reasonCount = document.getElementById('visitorDeleteReasonCount');
+        const confirmBtn = document.getElementById('visitorDeleteConfirmBtn');
 
-        const seqTemplate = <?= json_encode(lang('Guests.deleteModalWarningSequences')) ?>;
-        const deleteUrl = <?= json_encode(base_url('guests/delete/')) ?>;
-        const errFallback = <?= json_encode(lang('Guests.guestDeleteFailed')) ?>;
+        const seqTemplate = <?= json_encode(lang('Visitors.deleteModalWarningSequences')) ?>;
+        const deleteUrl = <?= json_encode(base_url('visitors/delete/')) ?>;
+        const errFallback = <?= json_encode(lang('Visitors.visitorDeleteFailed')) ?>;
         const csrfMeta = document.querySelector('meta[name="csrf-token"]');
         const csrfHeader = document.querySelector('meta[name="csrf-header"]')?.content ?? 'X-CSRF-TOKEN';
 
-        let pendingGuestId = null;
+        let pendingVisitorId = null;
 
         // ── Populate modal when triggered ──────────────────────────────────
         if (modal) {
             modal.addEventListener('show.bs.modal', function(e) {
                 const btn = e.relatedTarget;
-                pendingGuestId = btn ? btn.getAttribute('data-guest-id') : null;
-                const name = btn ? btn.getAttribute('data-guest-name') : '';
+                pendingVisitorId = btn ? btn.getAttribute('data-visitor-id') : null;
+                const name = btn ? btn.getAttribute('data-visitor-name') : '';
                 const pending = parseInt(btn ? btn.getAttribute('data-pending-sequences') : '0', 10);
 
                 nameEl.textContent = name;
@@ -291,7 +291,7 @@ $formatLocalizedDate = static function (?string $value, string $pattern, string 
             });
 
             modal.addEventListener('hidden.bs.modal', function() {
-                pendingGuestId = null;
+                pendingVisitorId = null;
             });
         }
 
@@ -307,16 +307,16 @@ $formatLocalizedDate = static function (?string $value, string $pattern, string 
         // ── Confirm delete ─────────────────────────────────────────────────
         if (confirmBtn) {
             confirmBtn.addEventListener('click', function() {
-                if (!pendingGuestId) return;
+                if (!pendingVisitorId) return;
 
                 const reason = reasonEl.value.trim();
                 if (reason.length < 10) {
-                    showAppToast(<?= json_encode(lang('Guests.deleteReasonRequired')) ?>, 'warning');
+                    showAppToast(<?= json_encode(lang('Visitors.deleteReasonRequired')) ?>, 'warning');
                     return;
                 }
 
                 confirmBtn.disabled = true;
-                confirmBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status"></span><?= esc(lang('Guests.deleteConfirmBtn'), 'js') ?>';
+                confirmBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status"></span><?= esc(lang('Visitors.deleteConfirmBtn'), 'js') ?>';
 
                 const headers = {
                     'X-Requested-With': 'XMLHttpRequest',
@@ -326,7 +326,7 @@ $formatLocalizedDate = static function (?string $value, string $pattern, string 
                     headers[csrfHeader] = csrfMeta.content;
                 }
 
-                fetch(deleteUrl + pendingGuestId, {
+                fetch(deleteUrl + pendingVisitorId, {
                         method: 'POST',
                         credentials: 'same-origin',
                         headers,
@@ -345,18 +345,18 @@ $formatLocalizedDate = static function (?string $value, string $pattern, string 
                     .then(function(data) {
                         if (data.success) {
                             bootstrap.Modal.getInstance(modal)?.hide();
-                            showAppToast(data.message || <?= json_encode(lang('Guests.guestDeleteSuccess')) ?>, 'primary');
+                            showAppToast(data.message || <?= json_encode(lang('Visitors.visitorDeleteSuccess')) ?>, 'primary');
                             setTimeout(() => location.reload(), 900);
                         } else {
                             showAppToast(contractErrorMessage(data, errFallback), 'danger');
                             confirmBtn.disabled = false;
-                            confirmBtn.innerHTML = '<i class="bi bi-trash3 me-1" aria-hidden="true"></i><?= esc(lang('Guests.deleteConfirmBtn'), 'js') ?>';
+                            confirmBtn.innerHTML = '<i class="bi bi-trash3 me-1" aria-hidden="true"></i><?= esc(lang('Visitors.deleteConfirmBtn'), 'js') ?>';
                         }
                     })
                     .catch(function() {
                         showAppToast(errFallback, 'danger');
                         confirmBtn.disabled = false;
-                        confirmBtn.innerHTML = '<i class="bi bi-trash3 me-1" aria-hidden="true"></i><?= esc(lang('Guests.deleteConfirmBtn'), 'js') ?>';
+                        confirmBtn.innerHTML = '<i class="bi bi-trash3 me-1" aria-hidden="true"></i><?= esc(lang('Visitors.deleteConfirmBtn'), 'js') ?>';
                     });
             });
         }

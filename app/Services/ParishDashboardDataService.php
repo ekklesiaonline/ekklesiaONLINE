@@ -24,7 +24,7 @@ class ParishDashboardDataService
      *   done_followups_this_month: int,
      *   events_this_month: int,
      *   recent_services: array<int, array<string, mixed>>,
-     *   recent_guests: array<int, array<string, mixed>>,
+     *   recent_visitors: array<int, array<string, mixed>>,
      *   pending_registrations_count: int,
      * }
      */
@@ -89,8 +89,8 @@ class ParishDashboardDataService
         // Recent services
         $recentServices = model('ServiceModel')->getParishServices($parishId, 5);
 
-        // Recent guests
-        $recentGuests = (new \App\Services\GuestDirectoryService())->recentForParish($parishId, 5);
+        // Recent visitors
+        $recentVisitors = (new \App\Services\VisitorDirectoryService())->recentForParish($parishId, 5);
 
         // Pending registrations count
         $pendingRegistrationsCount = 0;
@@ -107,7 +107,7 @@ class ParishDashboardDataService
             'done_followups_this_month'     => $doneFollowUpsThisMonth,
             'events_this_month'             => $eventsThisMonth,
             'recent_services'               => $recentServices,
-            'recent_guests'                 => $recentGuests,
+            'recent_visitors'                 => $recentVisitors,
             'pending_registrations_count'   => $pendingRegistrationsCount,
         ];
     }

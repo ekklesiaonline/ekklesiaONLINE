@@ -58,7 +58,7 @@ final class MemberAffiliationScopeTest extends CIUnitTestCase
 
         $this->insertAffiliation($activeUserId, $parishId, $dioceseId, 'member');
         $this->insertAffiliation($inactiveUserId, $parishId, $dioceseId, 'inactive');
-        $this->insertAffiliation($visitorUserId, $parishId, $dioceseId, 'guest');
+        $this->insertAffiliation($visitorUserId, $parishId, $dioceseId, 'visitor');
 
         $count = model(MemberParishAffiliationModel::class)->countDistinctMembers($parishId);
 
@@ -215,7 +215,7 @@ final class MemberAffiliationScopeTest extends CIUnitTestCase
             'linked_user_id' => ['type' => 'INTEGER', 'null' => true],
             'parish_id' => ['type' => 'INTEGER'],
             'person_id' => ['type' => 'INTEGER', 'null' => true],
-            'membership_status' => ['type' => 'VARCHAR', 'constraint' => 20, 'default' => 'guest'],
+            'membership_status' => ['type' => 'VARCHAR', 'constraint' => 20, 'default' => 'visitor'],
             'source' => ['type' => 'VARCHAR', 'constraint' => 32, 'default' => 'system'],
             'start_date' => ['type' => 'DATE', 'null' => true],
             'is_primary' => ['type' => 'INTEGER', 'constraint' => 1, 'default' => 0],

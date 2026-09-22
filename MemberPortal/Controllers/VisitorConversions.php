@@ -4,14 +4,14 @@ namespace MemberPortal\Controllers;
 
 use App\Controllers\BaseController;
 use App\Libraries\DataEncryption;
-use App\Services\GuestDirectoryService;
+use App\Services\VisitorDirectoryService;
 use App\Services\PersonConversionService;
 
-class GuestConversions extends BaseController
+class VisitorConversions extends BaseController
 {
     public function index()
     {
-        if ($redirect = $this->requirePermission('guest.edit')) {
+        if ($redirect = $this->requirePermission('visitor.edit')) {
             return $redirect;
         }
 
@@ -78,17 +78,17 @@ class GuestConversions extends BaseController
         }
         $offset = ($page - 1) * $perPage;
 
-        $guests = $builder
+        $visitors = $builder
             ->limit($perPage, $offset)
             ->get()
             ->getResultArray();
 
-        $guestDirectory = new GuestDirectoryService();
-        $guests = array_map(fn(array $row): array => $guestDirectory->decryptRow($row), $guests);
+        $visitorDirectory = new VisitorDirectoryService();
+        $visitors = array_map(fn(array $row): array => $visitorDirectory->decryptRow($row), $visitors);
         $members = model('MemberParishAffiliationModel')->getParishMembers($parishId);
 
-        return view('MemberPortal\Views\GuestConversions/index', array_merge($this->getCommonViewData(lang('Guests.conversionsTitle')), [
-            'guests' => $guests,
+        return view('MemberPortal\Views\VisitorConversions/index', array_merge($this->getCommonViewData(lang('Visitors.conversionsTitle')), [
+            'visitors' => $visitors,
             'members' => $members,
             'search' => $search,
             'page' => $page,
@@ -98,9 +98,9 @@ class GuestConversions extends BaseController
         ]));
     }
 
-    public function convert($guestId)
+    public function convert($visitorId)
     {
-        if ($redirect = $this->requirePermission('guest.edit')) {
+        if ($redirect = $this->requirePermission('visitor.edit')) {
             return $redirect;
         }
 
@@ -113,15 +113,15 @@ class GuestConversions extends BaseController
             return redirect()->back()->with('error', lang('App.noSelection'));
         }
 
-        $guestDirectory = new GuestDirectoryService();
+        $visitorDirectory = new VisitorDirectoryService();
         $parishId = (int) ($this->getOperationalParishId() ?? 0);
 
-        // The guest id carried by this endpoint is the canonical person_id.
-        $personId = (int) $guestId;
-        $guest    = $guestDirectory->findByPerson($personId, $parishId);
+        // The visitor id carried by this endpoint is the canonical person_id.
+        $personId = (int) $visitorId;
+        $visitor    = $visitorDirectory->findByPerson($personId, $parishId);
 
-        if (! $guest) {
-            return redirect()->to('/guest-conversions')->with('error', lang('App.errorNotFound'));
+        if (! $visitor) {
+            return redirect()->to('/visitor-conversions')->with('error', lang('App.errorNotFound'));
         }
 
         $converted = PersonConversionService::convertToMember(
@@ -137,12 +137,12 @@ class GuestConversions extends BaseController
             return redirect()->back()->with('error', lang('App.errorFailed'));
         }
 
-        return redirect()->to('/guest-conversions')->with('success', lang('Guests.conversionLinkSuccess'));
+        return redirect()->to('/visitor-conversions')->with('success', lang('Visitors.conversionLinkSuccess'));
     }
 
-    public function revert($guestId)
+    public function revert($visitorId)
     {
-        if ($redirect = $this->requirePermission('guest.edit')) {
+        if ($redirect = $this->requirePermission('visitor.edit')) {
             return $redirect;
         }
 
@@ -150,17 +150,17 @@ class GuestConversions extends BaseController
             return $redirect;
         }
 
-        $guestDirectory = new GuestDirectoryService();
+        $visitorDirectory = new VisitorDirectoryService();
         $parishId = (int) ($this->getOperationalParishId() ?? 0);
-        $personId = (int) $guestId;
+        $personId = (int) $visitorId;
 
-        $guest = $guestDirectory->findByPerson($personId, $parishId);
-        if (! $guest) {
-            return redirect()->to('/guest-conversions')->with('error', lang('App.errorNotFound'));
+        $visitor = $visitorDirectory->findByPerson($personId, $parishId);
+        if (! $visitor) {
+            return redirect()->to('/visitor-conversions')->with('error', lang('App.errorNotFound'));
         }
 
-        $guestDirectory->revertConversion($personId, $parishId, (int) auth()->id());
+        $visitorDirectory->revertConversion($personId, $parishId, (int) auth()->id());
 
-        return redirect()->to('/guest-conversions')->with('success', lang('Guests.conversionRevertSuccess'));
+        return redirect()->to('/visitor-conversions')->with('success', lang('Visitors.conversionRevertSuccess'));
     }
 }

@@ -123,7 +123,7 @@ return [
     'impactAttendance' => 'Attendance via services (deleted)',
     'impactEvents' => 'Events (deleted)',
     'impactEventRegistrations' => 'Event registrations (deleted)',
-    'impactGuests' => 'Visitors (deleted)',
+    'impactVisitors' => 'Visitors (deleted)',
     'impactExpenses' => 'Expenses (deleted)',
     'impactFamilies' => 'Families (deleted)',
     'impactVolunteerTeams' => 'Volunteer teams (deleted)',

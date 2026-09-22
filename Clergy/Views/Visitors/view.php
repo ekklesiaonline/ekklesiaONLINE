@@ -34,28 +34,28 @@ $formatLocalizedDate = static function (?string $value, string $pattern, string 
 
 <div class="d-flex justify-content-start align-items-center mb-3">
     <div class="d-flex align-items-center gap-2 flex-wrap">
-        <?php if (empty($guest['followed_up']) && auth()->user()->can('guest.edit')): ?>
-            <a href="<?= base_url('guests/convertToMember/' . $guest['id']) ?>" class="btn btn-success">
-                <i class="bi bi-arrow-right-circle" aria-hidden="true"></i> <?= lang('Guests.convertToMember') ?>
+        <?php if (empty($visitor['followed_up']) && auth()->user()->can('visitor.edit')): ?>
+            <a href="<?= base_url('visitors/convertToMember/' . $visitor['id']) ?>" class="btn btn-success">
+                <i class="bi bi-arrow-right-circle" aria-hidden="true"></i> <?= lang('Visitors.convertToMember') ?>
             </a>
         <?php endif; ?>
-        <?php if (empty($guest['converted_to_member_at']) && auth()->user()->can('member.create')): ?>
-            <a href="<?= base_url('guests/create-account/' . $guest['id']) ?>" class="btn btn-outline-success">
-                <i class="bi bi-person-plus" aria-hidden="true"></i> <?= lang('Guests.createAccountBtn') ?>
+        <?php if (empty($visitor['converted_to_member_at']) && auth()->user()->can('member.create')): ?>
+            <a href="<?= base_url('visitors/create-account/' . $visitor['id']) ?>" class="btn btn-outline-success">
+                <i class="bi bi-person-plus" aria-hidden="true"></i> <?= lang('Visitors.createAccountBtn') ?>
             </a>
         <?php endif; ?>
-        <?php if (auth()->user()->can('guest.edit')): ?>
-            <a href="<?= base_url('guests/edit/' . $guest['id']) ?>" class="btn btn-warning">
+        <?php if (auth()->user()->can('visitor.edit')): ?>
+            <a href="<?= base_url('visitors/edit/' . $visitor['id']) ?>" class="btn btn-warning">
                 <i class="bi bi-pencil" aria-hidden="true"></i> <?= lang('App.edit') ?>
             </a>
         <?php endif; ?>
-        <?php if (auth()->user()->can('guest.view')): ?>
-            <a href="<?= base_url('guests/followup-manual/' . $guest['id']) ?>" class="btn btn-outline-primary">
-                <i class="bi bi-clock-history" aria-hidden="true"></i> <?= lang('Guests.followupManualBtn') ?>
+        <?php if (auth()->user()->can('visitor.view')): ?>
+            <a href="<?= base_url('visitors/followup-manual/' . $visitor['id']) ?>" class="btn btn-outline-primary">
+                <i class="bi bi-clock-history" aria-hidden="true"></i> <?= lang('Visitors.followupManualBtn') ?>
             </a>
         <?php endif; ?>
-        <a href="<?= base_url('guests/dashboard') ?>" class="btn btn-secondary">
-            <i class="bi bi-arrow-left" aria-hidden="true"></i> <?= lang('Guests.backToGuests') ?>
+        <a href="<?= base_url('visitors/dashboard') ?>" class="btn btn-secondary">
+            <i class="bi bi-arrow-left" aria-hidden="true"></i> <?= lang('Visitors.backToVisitors') ?>
         </a>
     </div>
 </div>
@@ -67,7 +67,7 @@ $formatLocalizedDate = static function (?string $value, string $pattern, string 
                 <div class="text-center mb-3">
                     <i class="bi bi-person-circle text-primary" style="font-size: 80px;" aria-hidden="true"></i>
                 </div>
-                <h4 class="text-center"><?= esc($guest['first_name'] . ' ' . $guest['last_name']) ?></h4>
+                <h4 class="text-center"><?= esc($visitor['first_name'] . ' ' . $visitor['last_name']) ?></h4>
 
                 <div class="text-center mb-3">
                     <?php
@@ -75,20 +75,20 @@ $formatLocalizedDate = static function (?string $value, string $pattern, string 
                     $tlTotal    = count($tl);
                     $tlDone     = count(array_filter($tl, fn($r) => in_array($r['status'], ['sent', 'skipped'])));
                     $tlPending  = count(array_filter($tl, fn($r) => $r['status'] === 'pending'));
-                    $isConverted = !empty($guest['converted_to_member_at']);
+                    $isConverted = !empty($visitor['converted_to_member_at']);
 
                     if ($isConverted) {
                         $badgeColor = 'success';
-                        $badgeLabel = lang('Guests.statusConverted');
-                    } elseif (!empty($guest['followed_up'])) {
+                        $badgeLabel = lang('Visitors.statusConverted');
+                    } elseif (!empty($visitor['followed_up'])) {
                         $badgeColor = 'success';
-                        $badgeLabel = lang('Guests.followedUpLabel');
+                        $badgeLabel = lang('Visitors.followedUpLabel');
                     } elseif ($tlTotal > 0 && $tlDone > 0 && $tlPending > 0) {
                         $badgeColor = 'primary';
-                        $badgeLabel = lang('Guests.followupInProgress');
+                        $badgeLabel = lang('Visitors.followupInProgress');
                     } else {
                         $badgeColor = 'warning';
-                        $badgeLabel = lang('Guests.pendingFollowUp');
+                        $badgeLabel = lang('Visitors.pendingFollowUp');
                     }
                     ?>
                     <span class="badge border border-<?= $badgeColor ?> text-<?= $badgeColor ?> fw-normal">
@@ -99,21 +99,21 @@ $formatLocalizedDate = static function (?string $value, string $pattern, string 
                 <hr>
 
                 <div>
-                    <p class="mb-2"><strong><i class="bi bi-envelope" aria-hidden="true"></i> <?= lang('Guests.colEmail') ?>:</strong><br>
-                        <?= esc($guest['email'] ?? lang('Guests.notProvided')) ?>
+                    <p class="mb-2"><strong><i class="bi bi-envelope" aria-hidden="true"></i> <?= lang('Visitors.colEmail') ?>:</strong><br>
+                        <?= esc($visitor['email'] ?? lang('Visitors.notProvided')) ?>
                     </p>
 
-                    <p class="mb-2"><strong><i class="bi bi-telephone" aria-hidden="true"></i> <?= lang('Guests.colPhone') ?>:</strong><br>
-                        <?= esc($guest['phone'] ?? lang('Guests.notProvided')) ?>
+                    <p class="mb-2"><strong><i class="bi bi-telephone" aria-hidden="true"></i> <?= lang('Visitors.colPhone') ?>:</strong><br>
+                        <?= esc($visitor['phone'] ?? lang('Visitors.notProvided')) ?>
                     </p>
 
-                    <p class="mb-2"><strong><i class="bi bi-calendar-check" aria-hidden="true"></i> <?= lang('Guests.colVisitDate') ?>:</strong><br>
-                        <?= esc($formatLocalizedDate((string) ($guest['visit_date'] ?? ''), 'MMMM d, y', $locale)) ?>
+                    <p class="mb-2"><strong><i class="bi bi-calendar-check" aria-hidden="true"></i> <?= lang('Visitors.colVisitDate') ?>:</strong><br>
+                        <?= esc($formatLocalizedDate((string) ($visitor['visit_date'] ?? ''), 'MMMM d, y', $locale)) ?>
                     </p>
 
-                    <?php if (!empty($guest['service_attended'])): ?>
-                        <p class="mb-2"><strong><i class="bi bi-signpost" aria-hidden="true"></i> <?= lang('Guests.colService') ?>:</strong><br>
-                            <?= esc($guest['service_attended']) ?>
+                    <?php if (!empty($visitor['service_attended'])): ?>
+                        <p class="mb-2"><strong><i class="bi bi-signpost" aria-hidden="true"></i> <?= lang('Visitors.colService') ?>:</strong><br>
+                            <?= esc($visitor['service_attended']) ?>
                         </p>
                     <?php endif; ?>
                 </div>
@@ -126,11 +126,11 @@ $formatLocalizedDate = static function (?string $value, string $pattern, string 
             <div class="card-header">
                 <ul class="nav nav-tabs card-header-tabs" role="tablist">
                     <li class="nav-item">
-                        <a class="nav-link active" data-bs-toggle="tab" href="#details"><?= lang('Guests.detailsTab') ?></a>
+                        <a class="nav-link active" data-bs-toggle="tab" href="#details"><?= lang('Visitors.detailsTab') ?></a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" data-bs-toggle="tab" href="#followup">
-                            <i class="bi bi-clock-history" aria-hidden="true"></i> <?= lang('Guests.viewFollowupTab') ?>
+                            <i class="bi bi-clock-history" aria-hidden="true"></i> <?= lang('Visitors.viewFollowupTab') ?>
                             <?php
                             $pendingCount = count(array_filter($followupTimeline ?? [], fn($r) => $r['status'] === 'pending'));
                             if ($pendingCount > 0):
@@ -140,16 +140,16 @@ $formatLocalizedDate = static function (?string $value, string $pattern, string 
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" data-bs-toggle="tab" href="#notes"><?= lang('Guests.notes') ?></a>
+                        <a class="nav-link" data-bs-toggle="tab" href="#notes"><?= lang('Visitors.notes') ?></a>
                     </li>
                 </ul>
             </div>
             <div class="card-body">
                 <div class="tab-content">
                     <div class="tab-pane fade show active" id="details">
-                        <?php if (!empty($guest['service_attended'])): ?>
-                            <h6><?= lang('Guests.serviceAttended') ?></h6>
-                            <p><?= esc($guest['service_attended']) ?></p>
+                        <?php if (!empty($visitor['service_attended'])): ?>
+                            <h6><?= lang('Visitors.serviceAttended') ?></h6>
+                            <p><?= esc($visitor['service_attended']) ?></p>
                         <?php endif; ?>
                     </div>
 
@@ -163,43 +163,43 @@ $formatLocalizedDate = static function (?string $value, string $pattern, string 
                             <div class="alert alert-warning d-flex align-items-center gap-3 mb-3 py-2">
                                 <i class="bi bi-bell fs-5 flex-shrink-0" aria-hidden="true"></i>
                                 <div class="flex-grow-1 small">
-                                    <strong><?= lang('Guests.viewFollowupNextTitle') ?>:</strong>
-                                    <?= esc($nextPending['template_name'] ?? lang('Guests.channelCall')) ?>
+                                    <strong><?= lang('Visitors.viewFollowupNextTitle') ?>:</strong>
+                                    <?= esc($nextPending['template_name'] ?? lang('Visitors.channelCall')) ?>
                                     &mdash;
                                     <span class="text-capitalize"><?= esc($nextPending['channel'] ?? '') ?></span>
                                     &mdash;
-                                    <?= lang('Guests.viewFollowupScheduled') ?>:
+                                    <?= lang('Visitors.viewFollowupScheduled') ?>:
                                     <strong><?= esc($nextPending['scheduled_date'] ?? '') ?></strong>
                                 </div>
-                                <a href="<?= base_url('guests/followup-manual/' . (int) $guest['id']) ?>"
+                                <a href="<?= base_url('visitors/followup-manual/' . (int) $visitor['id']) ?>"
                                     class="btn btn-sm btn-outline-warning flex-shrink-0">
-                                    <?= lang('Guests.viewFollowupOpenTimeline') ?>
+                                    <?= lang('Visitors.viewFollowupOpenTimeline') ?>
                                 </a>
                             </div>
                         <?php elseif ($totalTimeline > 0): ?>
                             <div class="alert alert-success d-flex align-items-center gap-2 mb-3 py-2 small">
                                 <i class="bi bi-check-circle-fill flex-shrink-0" aria-hidden="true"></i>
-                                <?= lang('Guests.viewFollowupNoNext') ?>
+                                <?= lang('Visitors.viewFollowupNoNext') ?>
                             </div>
                         <?php endif; ?>
 
                         <?php if ($totalTimeline > 0): ?>
                             <div class="d-flex align-items-center justify-content-between mb-3">
-                                <small class="text-muted"><?= lang('Guests.viewFollowupSummaryTitle') ?>: <?= $doneTimeline ?>/<?= $totalTimeline ?></small>
+                                <small class="text-muted"><?= lang('Visitors.viewFollowupSummaryTitle') ?>: <?= $doneTimeline ?>/<?= $totalTimeline ?></small>
                                 <div class="progress flex-grow-1 mx-3" style="height:6px;">
                                     <div class="progress-bar bg-success" style="width:<?= $totalTimeline > 0 ? round(($doneTimeline / $totalTimeline) * 100) : 0 ?>%"></div>
                                 </div>
-                                <a href="<?= base_url('guests/followup-manual/' . (int) $guest['id']) ?>" class="btn btn-sm btn-outline-primary">
-                                    <i class="bi bi-clock-history" aria-hidden="true"></i> <?= lang('Guests.viewFollowupOpenTimeline') ?>
+                                <a href="<?= base_url('visitors/followup-manual/' . (int) $visitor['id']) ?>" class="btn btn-sm btn-outline-primary">
+                                    <i class="bi bi-clock-history" aria-hidden="true"></i> <?= lang('Visitors.viewFollowupOpenTimeline') ?>
                                 </a>
                             </div>
                         <?php else: ?>
-                            <p class="text-muted small"><?= lang('Guests.followupNoActionsScheduled') ?></p>
+                            <p class="text-muted small"><?= lang('Visitors.followupNoActionsScheduled') ?></p>
                         <?php endif; ?>
 
                         <?php if (auth()->user()->can('followup.manage') && !empty($sequences)): ?>
                             <hr>
-                            <h6 class="small fw-semibold mb-2"><?= lang('Guests.viewAssignSequenceTitle') ?></h6>
+                            <h6 class="small fw-semibold mb-2"><?= lang('Visitors.viewAssignSequenceTitle') ?></h6>
                             <form id="assignSeqForm" class="d-flex gap-2 align-items-center">
                                 <?= csrf_field() ?>
                                 <select name="sequence_id" id="assignSeqSelect" class="form-select form-select-sm flex-grow-1">
@@ -208,19 +208,19 @@ $formatLocalizedDate = static function (?string $value, string $pattern, string 
                                     <?php endforeach; ?>
                                 </select>
                                 <button type="submit" class="btn btn-sm btn-outline-primary flex-shrink-0">
-                                    <i class="bi bi-plus-circle" aria-hidden="true"></i> <?= lang('Guests.viewAssignSequenceBtn') ?>
+                                    <i class="bi bi-plus-circle" aria-hidden="true"></i> <?= lang('Visitors.viewAssignSequenceBtn') ?>
                                 </button>
                             </form>
                         <?php elseif (auth()->user()->can('followup.manage')): ?>
-                            <p class="text-muted small mt-2"><?= lang('Guests.viewAssignSequenceNone') ?></p>
+                            <p class="text-muted small mt-2"><?= lang('Visitors.viewAssignSequenceNone') ?></p>
                         <?php endif; ?>
                     </div>
 
                     <div class="tab-pane fade" id="notes">
-                        <?php if ($guest['notes']): ?>
-                            <p><?= nl2br((string) esc($guest['notes'])) ?></p>
+                        <?php if ($visitor['notes']): ?>
+                            <p><?= nl2br((string) esc($visitor['notes'])) ?></p>
                         <?php else: ?>
-                            <p class="text-muted"><?= lang('Guests.noNotesYet') ?></p>
+                            <p class="text-muted"><?= lang('Visitors.noNotesYet') ?></p>
                         <?php endif; ?>
                     </div>
                 </div>
@@ -239,7 +239,7 @@ $formatLocalizedDate = static function (?string $value, string $pattern, string 
 
         const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content ?? '';
         const csrfHeader = document.querySelector('meta[name="csrf-header"]')?.content ?? 'X-CSRF-TOKEN';
-        const assignUrl = <?= json_encode(base_url('guests/assign-sequence/' . (int) $guest['id'])) ?>;
+        const assignUrl = <?= json_encode(base_url('visitors/assign-sequence/' . (int) $visitor['id'])) ?>;
 
         form.addEventListener('submit', function(e) {
             e.preventDefault();

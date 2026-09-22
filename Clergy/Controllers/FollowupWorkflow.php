@@ -12,8 +12,8 @@ use App\Controllers\BaseController;
  * follow-up action immediately (bypassing scheduled execution).
  *
  * Permissions required:
- *   Read  – guests.view
- *   Write – guests.edit
+ *   Read  – visitors.view
+ *   Write – visitors.edit
  */
 class FollowupWorkflow extends BaseController
 {
@@ -21,7 +21,7 @@ class FollowupWorkflow extends BaseController
     protected $actionModel;
     protected $templateModel;
     protected $logModel;
-    protected $guestDirectory;
+    protected $visitorDirectory;
 
     public function __construct()
     {
@@ -29,7 +29,7 @@ class FollowupWorkflow extends BaseController
         $this->actionModel    = model('FollowupActionModel');
         $this->templateModel  = model('FollowupTemplateModel');
         $this->logModel       = model('FollowupLogModel');
-        $this->guestDirectory = new \App\Services\GuestDirectoryService();
+        $this->visitorDirectory = new \App\Services\VisitorDirectoryService();
     }
 
     // ------------------------------------------------------------------
@@ -68,7 +68,7 @@ class FollowupWorkflow extends BaseController
         unset($seq);
 
         return view('Clergy\Views\FollowupWorkflow/sequences', array_merge(
-            $this->getCommonViewData(lang('Guests.pageTitleSequences')),
+            $this->getCommonViewData(lang('Visitors.pageTitleSequences')),
             [
                 'sequences' => $sequences,
                 'parishId'  => $parishId,
@@ -117,8 +117,8 @@ class FollowupWorkflow extends BaseController
         $templates = $this->templateModel->getAllForParish($parishId);
 
         $pageTitle = $id > 0
-            ? lang('Guests.pageTitleEditSequence', [esc($sequence['name'])])
-            : lang('Guests.pageTitleNewSequence');
+            ? lang('Visitors.pageTitleEditSequence', [esc($sequence['name'])])
+            : lang('Visitors.pageTitleNewSequence');
 
         return view('Clergy\Views\FollowupWorkflow/edit_sequence', array_merge(
             $this->getCommonViewData($pageTitle),
@@ -518,15 +518,15 @@ class FollowupWorkflow extends BaseController
             return strcmp((string) ($a['name'] ?? ''), (string) ($b['name'] ?? ''));
         });
 
-        // Recent guests for the live-preview guest selector (50 most recent)
-        $guestsForPreview = $this->guestDirectory->pickerRowsForParish($parishId, 50);
+        // Recent visitors for the live-preview visitor selector (50 most recent)
+        $visitorsForPreview = $this->visitorDirectory->pickerRowsForParish($parishId, 50);
 
         return view('Clergy\Views\FollowupWorkflow/templates', array_merge(
-            $this->getCommonViewData(lang('Guests.pageTitleTemplates')),
+            $this->getCommonViewData(lang('Visitors.pageTitleTemplates')),
             [
                 'templates'        => $templates,
                 'parishId'         => $parishId,
-                'guestsForPreview' => $guestsForPreview,
+                'visitorsForPreview' => $visitorsForPreview,
             ]
         ));
     }
@@ -713,7 +713,7 @@ class FollowupWorkflow extends BaseController
         ];
 
         return view('Clergy\Views\FollowupWorkflow/preview_template', array_merge(
-            $this->getCommonViewData(lang('Guests.pageTitlePreviewTemplate')),
+            $this->getCommonViewData(lang('Visitors.pageTitlePreviewTemplate')),
             [
                 'template'    => $template,
                 'preview'     => $preview,
@@ -728,11 +728,11 @@ class FollowupWorkflow extends BaseController
     // ------------------------------------------------------------------
 
     /**
-     * Return a parsed preview of a template body using a real guest's data.
+     * Return a parsed preview of a template body using a real visitor's data.
      *
      * POST body:
      *   template_id  – (int) ID of the template to preview.
-     *   guest_id     – (int|optional) Guest to use for variable substitution.
+     *   visitor_id     – (int|optional) Visitor to use for variable substitution.
      *                  If omitted or invalid, falls back to hardcoded sample data.
      *
      * Returns JSON:
@@ -749,7 +749,7 @@ class FollowupWorkflow extends BaseController
         }
 
         $templateId = (int) $this->request->getPost('template_id');
-        $guestId    = (int) $this->request->getPost('guest_id');
+        $visitorId    = (int) $this->request->getPost('visitor_id');
         $parishId   = (int) $this->getOperationalParishId();
 
         // Load template and guard ownership
@@ -774,14 +774,14 @@ class FollowupWorkflow extends BaseController
             $parishSettings[(string) $row['key']] = (string) ($row['value'] ?? '');
         }
 
-        // Load and decrypt guest, or fall back to sample data
-        $guest = null;
-        if ($guestId > 0) {
-            $guest = $this->guestDirectory->findByPerson($guestId, $parishId);
+        // Load and decrypt visitor, or fall back to sample data
+        $visitor = null;
+        if ($visitorId > 0) {
+            $visitor = $this->visitorDirectory->findByPerson($visitorId, $parishId);
         }
 
-        if ($guest === null) {
-            $guest = [
+        if ($visitor === null) {
+            $visitor = [
                 'first_name'  => 'María',
                 'last_name'   => 'García',
                 'visit_date'  => date('Y-m-d'),
@@ -806,7 +806,7 @@ class FollowupWorkflow extends BaseController
 
         // Apply token substitution via the helper
         helper('followup_template');
-        $vars = parse_template_vars($guest, $parishSettings, $parish, $nextEvent);
+        $vars = parse_template_vars($visitor, $parishSettings, $parish, $nextEvent);
 
         return $this->jsonResponse([
             'success'   => true,
@@ -821,24 +821,24 @@ class FollowupWorkflow extends BaseController
     // ------------------------------------------------------------------
 
     /**
-     * Immediately dispatch a follow-up action for a guest, bypassing
+     * Immediately dispatch a follow-up action for a visitor, bypassing
      * the scheduled execution date.
      *
-     * If a pending log entry exists for the (guest, action) pair, it is
+     * If a pending log entry exists for the (visitor, action) pair, it is
      * marked executed. Otherwise a new log row is inserted in the
      * 'sent' state so the timeline reflects the manual send.
      */
-    public function manual_trigger(int $guestId, int $actionId)
+    public function manual_trigger(int $visitorId, int $actionId)
     {
         if ($redirect = $this->requirePermission('followup.manage')) {
             return $redirect;
         }
 
         $parishId = (int) $this->getOperationalParishId();
-        $guest    = $this->guestDirectory->findByPerson($guestId, $parishId);
+        $visitor    = $this->visitorDirectory->findByPerson($visitorId, $parishId);
 
-        if (!$guest) {
-            return $this->jsonResponse(['success' => false, 'message' => 'Guest not found or forbidden.'], 404);
+        if (!$visitor) {
+            return $this->jsonResponse(['success' => false, 'message' => 'Visitor not found or forbidden.'], 404);
         }
 
         $action = $this->actionModel->find($actionId);
@@ -850,7 +850,7 @@ class FollowupWorkflow extends BaseController
 
         // Prefer marking an existing pending row over creating a duplicate
         $logEntry = $this->logModel
-            ->where('person_id', $guestId)
+            ->where('person_id', $visitorId)
             ->where('action_id', $actionId)
             ->where('status', 'pending')
             ->first();
@@ -863,7 +863,7 @@ class FollowupWorkflow extends BaseController
             $logId = (int) $logEntry['id'];
         } else {
             $logId = (int) $this->logModel->insert([
-                'person_id'         => $guestId,
+                'person_id'         => $visitorId,
                 'parish_id'         => $parishId,
                 'action_id'         => $actionId,
                 'assigned_to'       => $currentUserId,
@@ -879,7 +879,7 @@ class FollowupWorkflow extends BaseController
             'entity_type' => 'followup_log',
             'entity_id'   => $logId,
             'meta'        => [
-                'guest_id'  => $guestId,
+                'visitor_id'  => $visitorId,
                 'action_id' => $actionId,
                 'channel'   => $action['channel'],
             ],
@@ -927,7 +927,7 @@ class FollowupWorkflow extends BaseController
         }
 
         return view('Clergy\Views\FollowupWorkflow/call_tasks', array_merge(
-            $this->getCommonViewData(lang('Guests.pageTitleCallTasks')),
+            $this->getCommonViewData(lang('Visitors.pageTitleCallTasks')),
             [
                 'tasks'          => $tasks,
                 'activeStatus'   => $status,

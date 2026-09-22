@@ -5,10 +5,10 @@ namespace App\Services;
 use App\Models\PersonModel;
 use App\Models\PersonVisitModel;
 
-class GuestIntakeService
+class VisitorIntakeService
 {
     /**
-     * Record a guest/visitor intake as a person_visit.
+     * Record a visitor/visitor intake as a person_visit.
      *
      * Deduplicates by email or phone hash within the parish. If no person is
      * found, provisions a full person/parish_affiliation chain first.
@@ -42,7 +42,7 @@ class GuestIntakeService
                     'phone'                    => $phone,
                     'address'                  => $data['address'] ?? null,
                     'preferred_contact_method' => $data['preferred_contact_method'] ?? 'email',
-                    'source'                   => $data['source'] ?? 'guest_intake',
+                    'source'                   => $data['source'] ?? 'visitor_intake',
                     'membership_status'        => 'visitor',
                     'notes'                    => $data['notes'] ?? null,
                 ]);

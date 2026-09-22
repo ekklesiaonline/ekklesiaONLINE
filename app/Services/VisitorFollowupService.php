@@ -5,14 +5,14 @@ namespace App\Services;
 use CodeIgniter\Database\BaseConnection;
 
 /**
- * GuestFollowupService
+ * VisitorFollowupService
  *
- * Read-side queries for guest follow-up workflows: per-person progress
+ * Read-side queries for visitor follow-up workflows: per-person progress
  * badges, next pending action, status counts, single log rows, the
  * manual timeline (including orphaned legacy call_task rows), and the
- * guest-hub dashboard aggregates. Writes stay on FollowupLogModel.
+ * visitor-hub dashboard aggregates. Writes stay on FollowupLogModel.
  */
-class GuestFollowupService
+class VisitorFollowupService
 {
     private BaseConnection $db;
 
@@ -23,7 +23,7 @@ class GuestFollowupService
 
     /**
      * Done/pending follow-up counts keyed by person_id, for the
-     * 4-state progress badge on guest lists.
+     * 4-state progress badge on visitor lists.
      *
      * @param list<int> $personIds
      * @return array<int, array{done: int, pending: int}>
@@ -55,7 +55,7 @@ class GuestFollowupService
 
     /**
      * Next pending follow-up action for a person, with channel and
-     * template metadata. Superset select covers both the guest view
+     * template metadata. Superset select covers both the visitor view
      * card and the followup-status JSON endpoint.
      *
      * @return array<string, mixed>|null
@@ -146,7 +146,7 @@ class GuestFollowupService
         $callTaskRows = array_map(static function (array $task): array {
             return [
                 'id'                => (int) $task['id'],
-                'guest_id'          => (int) $task['person_id'],
+                'visitor_id'          => (int) $task['person_id'],
                 'action_id'         => null,
                 'scheduled_date'    => $task['scheduled_date'] ?? null,
                 'status'            => $task['status'] === 'completed' ? 'sent' : $task['status'],
@@ -185,10 +185,10 @@ class GuestFollowupService
     }
 
     /**
-     * Guests mid-sequence: not followed up, not converted, with at
+     * Visitors mid-sequence: not followed up, not converted, with at
      * least one completed and one pending follow-up entry.
      */
-    public function inProgressGuestsCount(int $parishId): int
+    public function inProgressVisitorsCount(int $parishId): int
     {
         return (int) $this->db->table('parish_affiliation pa')
             ->where('pa.parish_id', $parishId)

@@ -305,7 +305,7 @@ class FollowupLogModel extends Model
     }
 
     // -----------------------------------------------------------------------
-    // Per-guest timeline
+    // Per-visitor timeline
     // -----------------------------------------------------------------------
 
     /**
@@ -336,12 +336,12 @@ class FollowupLogModel extends Model
      * @param  int    $parishId          Parish scope stored on each log row
      * @param  int    $sequenceId
      * @param  string $visitDate        Y-m-d  — base date for computing scheduled_date
-     * @param  string $guestTimezone    IANA timezone string (e.g. "America/New_York").
+     * @param  string $visitorTimezone    IANA timezone string (e.g. "America/New_York").
      *                                  When provided, scheduled_date is converted so the
-     *                                  action fires at midnight in the guest's local zone.
+     *                                  action fires at midnight in the visitor's local zone.
      * @return int    Number of rows inserted
      */
-    public function scheduleSequenceForPerson(int $personId, int $parishId, int $sequenceId, string $visitDate, string $guestTimezone = ''): int
+    public function scheduleSequenceForPerson(int $personId, int $parishId, int $sequenceId, string $visitDate, string $visitorTimezone = ''): int
     {
         $actionTable = $this->resolveFollowupActionTable();
         $dateColumn = $this->getLogDateColumn();
@@ -364,11 +364,11 @@ class FollowupLogModel extends Model
             return 0;
         }
 
-        // Resolve timezone: use guest preference, fall back to server default.
+        // Resolve timezone: use visitor preference, fall back to server default.
         $tz = null;
-        if ($guestTimezone !== '') {
+        if ($visitorTimezone !== '') {
             try {
-                $tz = new \DateTimeZone($guestTimezone);
+                $tz = new \DateTimeZone($visitorTimezone);
             } catch (\Exception $e) {
                 $tz = null;
             }
@@ -378,7 +378,7 @@ class FollowupLogModel extends Model
 
         foreach ($actions as $action) {
             if ($tz !== null) {
-                // Create a DateTime at midnight in the guest's local zone, then
+                // Create a DateTime at midnight in the visitor's local zone, then
                 // convert to UTC for storage so the cron comparison is timezone-safe.
                 $localDate = new \DateTime($visitDate . ' 00:00:00', $tz);
                 $localDate->modify('+' . (int) $action['day_offset'] . ' days');
@@ -428,10 +428,10 @@ class FollowupLogModel extends Model
      * @param int    $personId      Person whose log to populate
      * @param int    $parishId      Parish used to scope active sequences
      * @param string $visitDate     Y-m-d base date
-     * @param string $guestTimezone IANA timezone string (optional)
+     * @param string $visitorTimezone IANA timezone string (optional)
      * @return int Number of new log rows inserted
      */
-    public function scheduleActiveSequencesForPerson(int $personId, int $parishId, string $visitDate, string $guestTimezone = ''): int
+    public function scheduleActiveSequencesForPerson(int $personId, int $parishId, string $visitDate, string $visitorTimezone = ''): int
     {
         $scopeColumn = $this->getSequenceScopeColumn();
         $sequenceTable = $this->resolveFollowupSequenceTable();
@@ -476,9 +476,9 @@ class FollowupLogModel extends Model
         $scheduledActionIds = array_flip(array_map('intval', array_column($existingRows, 'action_id')));
 
         $tz = null;
-        if ($guestTimezone !== '') {
+        if ($visitorTimezone !== '') {
             try {
-                $tz = new \DateTimeZone($guestTimezone);
+                $tz = new \DateTimeZone($visitorTimezone);
             } catch (\Exception $e) {
                 $tz = null;
             }

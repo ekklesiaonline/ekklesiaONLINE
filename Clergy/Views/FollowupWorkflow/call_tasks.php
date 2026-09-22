@@ -4,10 +4,10 @@
 
 <div class="d-flex justify-content-start align-items-center flex-wrap gap-2 mb-3">
     <a href="<?= base_url('followup-workflow/sequences') ?>" class="btn btn-outline-secondary">
-        <i class="bi bi-diagram-3" aria-hidden="true"></i> <?= lang('Guests.callTasksSequencesBtn') ?>
+        <i class="bi bi-diagram-3" aria-hidden="true"></i> <?= lang('Visitors.callTasksSequencesBtn') ?>
     </a>
-    <a href="<?= base_url('guests/dashboard') ?>" class="btn btn-outline-secondary">
-        <i class="bi bi-arrow-left" aria-hidden="true"></i> <?= lang('Guests.backToGuests') ?>
+    <a href="<?= base_url('visitors/dashboard') ?>" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left" aria-hidden="true"></i> <?= lang('Visitors.backToVisitors') ?>
     </a>
 </div>
 
@@ -38,19 +38,19 @@
         <?php if (empty($tasks)): ?>
             <div class="text-center py-5 text-muted">
                 <i class="bi bi-telephone-x fs-2 d-block mb-2" aria-hidden="true"></i>
-                <?= lang('Guests.callTasksEmpty') ?>
+                <?= lang('Visitors.callTasksEmpty') ?>
             </div>
         <?php else: ?>
             <div class="table-responsive">
                 <table class="table table-hover align-middle mb-0" id="callTasksTable">
                     <thead>
                         <tr>
-                            <th scope="col"><?= lang('Guests.callTasksColGuest') ?></th>
-                            <th scope="col"><?= lang('Guests.colPhone') ?></th>
-                            <th scope="col"><?= lang('Guests.scheduledLabel') ?></th>
+                            <th scope="col"><?= lang('Visitors.callTasksColVisitor') ?></th>
+                            <th scope="col"><?= lang('Visitors.colPhone') ?></th>
+                            <th scope="col"><?= lang('Visitors.scheduledLabel') ?></th>
                             <th scope="col"><?= lang('App.colNotes') ?></th>
-                            <th scope="col" class="text-center"><?= lang('Guests.colStatus') ?></th>
-                            <?php if (auth()->user()->can('guest.edit')): ?>
+                            <th scope="col" class="text-center"><?= lang('Visitors.colStatus') ?></th>
+                            <?php if (auth()->user()->can('visitor.edit')): ?>
                                 <th scope="col" class="text-center"><?= lang('App.colActions') ?></th>
                             <?php endif; ?>
                         </tr>
@@ -64,7 +64,7 @@
                                             <?= esc($task['first_name'] . ' ' . $task['last_name']) ?>
                                         </span>
                                     <?php else: ?>
-                                        <a href="<?= base_url('guests/view/' . (int) ($task['guest_id'] ?? 0)) ?>"
+                                        <a href="<?= base_url('visitors/view/' . (int) ($task['visitor_id'] ?? 0)) ?>"
                                             class="text-decoration-none">
                                             <?= esc($task['first_name'] . ' ' . $task['last_name']) ?>
                                         </a>
@@ -105,14 +105,14 @@
                                         <?= esc($statusLabel) ?>
                                     </span>
                                 </td>
-                                <?php if (auth()->user()->can('guest.edit')): ?>
+                                <?php if (auth()->user()->can('visitor.edit')): ?>
                                     <td class="text-center">
                                         <?php if ($task['status'] === 'pending'): ?>
                                             <button
                                                 class="btn btn-sm btn-outline-success complete-task-btn"
                                                 data-task-id="<?= (int) $task['id'] ?>"
-                                                data-guest="<?= esc($task['first_name'] . ' ' . $task['last_name'], 'attr') ?>">
-                                                <i class="bi bi-check2-circle" aria-hidden="true"></i> <?= lang('Guests.callTasksDoneBtn') ?>
+                                                data-visitor="<?= esc($task['first_name'] . ' ' . $task['last_name'], 'attr') ?>">
+                                                <i class="bi bi-check2-circle" aria-hidden="true"></i> <?= lang('Visitors.callTasksDoneBtn') ?>
                                             </button>
                                         <?php else: ?>
                                             <span class="text-muted small">
@@ -141,23 +141,23 @@
         const CSRF_NAME = '<?= csrf_token() ?>';
         const CSRF_HASH = '<?= csrf_hash() ?>';
         const i18n = {
-            completeTitle: <?= json_encode(lang('Guests.callTasksCompleteTitle')) ?>,
-            completeBody: <?= json_encode(lang('Guests.callTasksCompleteBody')) ?>,
-            completeBtnLabel: <?= json_encode(lang('Guests.callTasksCompleteBtnLabel')) ?>,
-            completeSuccess: <?= json_encode(lang('Guests.taskCompleteSuccess')) ?>,
+            completeTitle: <?= json_encode(lang('Visitors.callTasksCompleteTitle')) ?>,
+            completeBody: <?= json_encode(lang('Visitors.callTasksCompleteBody')) ?>,
+            completeBtnLabel: <?= json_encode(lang('Visitors.callTasksCompleteBtnLabel')) ?>,
+            completeSuccess: <?= json_encode(lang('Visitors.taskCompleteSuccess')) ?>,
             statusCompleted: <?= json_encode(lang('App.statusCompleted')) ?>,
-            updateFailed: <?= json_encode(lang('Guests.callTasksUpdateFailed')) ?>,
-            networkError: <?= json_encode(lang('Guests.callTasksNetworkError')) ?>,
+            updateFailed: <?= json_encode(lang('Visitors.callTasksUpdateFailed')) ?>,
+            networkError: <?= json_encode(lang('Visitors.callTasksNetworkError')) ?>,
         };
 
         document.querySelectorAll('.complete-task-btn').forEach(function(btn) {
             btn.addEventListener('click', function() {
                 const taskId = btn.dataset.taskId;
-                const guest = btn.dataset.guest;
+                const visitor = btn.dataset.visitor;
 
                 showAppConfirm(
                     i18n.completeTitle,
-                    i18n.completeBody.replace('{0}', '<strong>' + guest + '</strong>'),
+                    i18n.completeBody.replace('{0}', '<strong>' + visitor + '</strong>'),
                     function() {
                         markComplete(taskId, btn);
                     },

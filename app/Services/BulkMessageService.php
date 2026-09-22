@@ -12,7 +12,7 @@ use CodeIgniter\Database\BaseConnection;
  * BulkMessageService
  *
  * Resolves a parish-scoped audience (membership statuses, small groups,
- * ministry teams, legacy guests) into canonical recipients, then drafts and
+ * ministry teams, legacy visitors) into canonical recipients, then drafts and
  * dispatches a message_campaign.
  *
  * Channels:
@@ -21,16 +21,16 @@ use CodeIgniter\Database\BaseConnection;
  *  - notification — one notification + notification_recipient per linked user
  *
  * Compliance:
- *  - person.opted_out_channels / guest.opted_out_channels are honored
+ *  - person.opted_out_channels / visitor.opted_out_channels are honored
  *    (channel synonyms: sms=text, notification=in_app)
  *  - Recipients without a usable address/user are recorded as 'skipped'
  *    with a reason, never silently dropped
  *  - Contact fields are hydrated through the models so encrypted
- *    person/guest email/phone values are decrypted
+ *    person/visitor email/phone values are decrypted
  *
  * Audience descriptor shape (stored as JSON on the campaign):
  *   ['statuses' => string[], 'group_ids' => int[], 'team_ids' => int[],
- *    'include_guests' => bool]
+ *    'include_visitors' => bool]
  */
 class BulkMessageService
 {
@@ -69,8 +69,8 @@ class BulkMessageService
     /**
      * Resolve the audience descriptor into unique recipients.
      *
-     * @param array{statuses?: array, group_ids?: array, team_ids?: array, include_guests?: bool} $audience
-     * @return array<int, array<string, mixed>> keyed list: person_id, guest_id,
+     * @param array{statuses?: array, group_ids?: array, team_ids?: array, include_visitors?: bool} $audience
+     * @return array<int, array<string, mixed>> keyed list: person_id,
      *         user_id, first_name, last_name, name, email, phone, opted_out
      */
     public function resolveAudience(int $parishId, array $audience): array
@@ -87,7 +87,6 @@ class BulkMessageService
                 $pid = (int) $person['id'];
                 $recipients['p' . $pid] = [
                     'person_id'  => $pid,
-                    'guest_id'   => null,
                     'user_id'    => $userMap[$pid] ?? null,
                     'first_name' => (string) ($person['first_name'] ?? ''),
                     'last_name'  => (string) ($person['last_name'] ?? ''),
@@ -99,23 +98,22 @@ class BulkMessageService
             }
         }
 
-        if (! empty($audience['include_guests'])) {
-            foreach ($this->guestPersonRows($parishId) as $guest) {
-                $pid = (int) $guest['id'];
+        if (! empty($audience['include_visitors'])) {
+            foreach ($this->visitorPersonRows($parishId) as $visitor) {
+                $pid = (int) $visitor['id'];
                 if (isset($recipients['p' . $pid])) {
                     continue;
                 }
 
                 $recipients['p' . $pid] = [
                     'person_id'  => $pid,
-                    'guest_id'   => null,
                     'user_id'    => $userMap[$pid] ?? ($this->userIdsForPersons([$pid])[$pid] ?? null),
-                    'first_name' => (string) ($guest['first_name'] ?? ''),
-                    'last_name'  => (string) ($guest['last_name'] ?? ''),
-                    'name'       => trim((string) ($guest['first_name'] ?? '') . ' ' . (string) ($guest['last_name'] ?? '')),
-                    'email'      => (string) ($guest['email'] ?? ''),
-                    'phone'      => (string) ($guest['phone'] ?? ''),
-                    'opted_out'  => $this->parseOptedOut($guest['opted_out_channels'] ?? null),
+                    'first_name' => (string) ($visitor['first_name'] ?? ''),
+                    'last_name'  => (string) ($visitor['last_name'] ?? ''),
+                    'name'       => trim((string) ($visitor['first_name'] ?? '') . ' ' . (string) ($visitor['last_name'] ?? '')),
+                    'email'      => (string) ($visitor['email'] ?? ''),
+                    'phone'      => (string) ($visitor['phone'] ?? ''),
+                    'opted_out'  => $this->parseOptedOut($visitor['opted_out_channels'] ?? null),
                 ];
             }
         }
@@ -195,7 +193,6 @@ class BulkMessageService
             $this->recipients->insert([
                 'campaign_id' => (int) $campaignId,
                 'person_id'   => $recipient['person_id'],
-                'guest_id'    => $recipient['guest_id'],
                 'user_id'     => $recipient['user_id'],
                 'name'        => $recipient['name'] !== '' ? $recipient['name'] : null,
                 'first_name'  => $recipient['first_name'] !== '' ? $recipient['first_name'] : null,
@@ -479,17 +476,17 @@ class BulkMessageService
     }
 
     /**
-     * Unconverted parish guests (decrypted via the model).
+     * Unconverted parish visitors (decrypted via the model).
      *
      * @return array<int, array<string, mixed>>
      */
     /**
-     * Unconverted guests as canonical person rows (contact fields still
+     * Unconverted visitors as canonical person rows (contact fields still
      * encrypted — decrypted downstream before dispatch).
      */
-    private function guestPersonRows(int $parishId): array
+    private function visitorPersonRows(int $parishId): array
     {
-        $rows = (new GuestDirectoryService())
+        $rows = (new VisitorDirectoryService())
             ->scopeBuilder($parishId)
             ->select('pe.id, pe.first_name, pe.last_name, pe.email, pe.phone, pe.opted_out_channels')
             ->where('pa.converted_to_member_at IS NULL', null, false)
@@ -497,7 +494,7 @@ class BulkMessageService
             ->get()
             ->getResultArray();
 
-        $directory = new GuestDirectoryService();
+        $directory = new VisitorDirectoryService();
         return array_map(static fn(array $row): array => $directory->decryptRow($row), $rows);
     }
 

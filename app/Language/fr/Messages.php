@@ -15,7 +15,7 @@ return [
     'audienceStatuses'    => 'Statuts de membre',
     'audienceGroups'      => 'Petits groupes',
     'audienceTeams'       => 'Équipes de ministère',
-    'audienceGuests'      => 'Inclure les invités (non encore convertis)',
+    'audienceVisitors'      => 'Inclure les invités (non encore convertis)',
     'channel'             => 'Canal',
     'channelEmail'        => 'Courriel',
     'channelSms'          => 'Message texte (SMS)',

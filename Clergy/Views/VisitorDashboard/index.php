@@ -43,41 +43,41 @@ $kpiTile = static function (
 };
 ?>
 
-<p class="text-muted mb-4"><?= lang('Guests.hubSubtitle') ?></p>
+<p class="text-muted mb-4"><?= lang('Visitors.hubSubtitle') ?></p>
 
 
 <div class="row g-3 mb-4">
     <div class="col-6 col-md-4 col-xl-2">
         <?= $kpiTile(
             (string) $notFollowedUp,
-            lang('Guests.hubKpiNotFollowedUp'),
+            lang('Visitors.hubKpiNotFollowedUp'),
             'bi-hourglass-split',
             'warning',
-            base_url('guests?followup_stage=pending')
+            base_url('visitors?followup_stage=pending')
         ) ?>
     </div>
     <div class="col-6 col-md-4 col-xl-2">
         <?= $kpiTile(
             (string) $inProgressCount,
-            lang('Guests.hubKpiFollowupInProgress'),
+            lang('Visitors.hubKpiFollowupInProgress'),
             'bi-arrow-repeat',
             'primary',
-            base_url('guests?followup_stage=inprogress')
+            base_url('visitors?followup_stage=inprogress')
         ) ?>
     </div>
     <div class="col-6 col-md-4 col-xl-2">
         <?= $kpiTile(
             (string) $convertedCount,
-            lang('Guests.hubKpiConverted'),
+            lang('Visitors.hubKpiConverted'),
             'bi-person-check-fill',
             'success',
-            base_url('guest-conversions')
+            base_url('visitor-conversions')
         ) ?>
     </div>
     <div class="col-6 col-md-4 col-xl-2">
         <?= $kpiTile(
             (string) $pendingCalls,
-            lang('Guests.hubKpiPendingCalls'),
+            lang('Visitors.hubKpiPendingCalls'),
             'bi-telephone-fill',
             $pendingCalls > 0 ? 'danger' : 'secondary',
             base_url('followup-workflow/call-tasks')
@@ -86,7 +86,7 @@ $kpiTile = static function (
     <div class="col-6 col-md-4 col-xl-2">
         <?= $kpiTile(
             (string) $sequenceCount,
-            lang('Guests.hubKpiActiveSequences'),
+            lang('Visitors.hubKpiActiveSequences'),
             'bi-diagram-3-fill',
             'info',
             base_url('followup-workflow/sequences')
@@ -95,7 +95,7 @@ $kpiTile = static function (
     <div class="col-6 col-md-4 col-xl-2">
         <?= $kpiTile(
             (string) $templateCount,
-            lang('Guests.hubKpiTemplates'),
+            lang('Visitors.hubKpiTemplates'),
             'bi-file-earmark-text-fill',
             'secondary',
             base_url('followup-workflow/templates')
@@ -104,42 +104,42 @@ $kpiTile = static function (
 </div>
 
 
-<h5 class="mb-3"><?= lang('Guests.hubSectionActions') ?></h5>
+<h5 class="mb-3"><?= lang('Visitors.hubSectionActions') ?></h5>
 <div class="row g-3 mb-4">
 
     <?php
     $cards = [
         [
-            'href'  => base_url('guests'),
+            'href'  => base_url('visitors'),
             'icon'  => 'bi-people',
             'color' => 'primary',
-            'label' => lang('Guests.hubLinkAllGuests'),
-            'desc'  => lang('Guests.hubDescAllGuests'),
-            'perm'  => 'guest.view',
+            'label' => lang('Visitors.hubLinkAllVisitors'),
+            'desc'  => lang('Visitors.hubDescAllVisitors'),
+            'perm'  => 'visitor.view',
         ],
         [
-            'href'  => base_url('guests/create'),
+            'href'  => base_url('visitors/create'),
             'icon'  => 'bi-person-plus',
             'color' => 'success',
-            'label' => lang('Guests.hubLinkAddGuest'),
-            'desc'  => lang('Guests.hubDescAddGuest'),
-            'perm'  => 'guest.create',
+            'label' => lang('Visitors.hubLinkAddVisitor'),
+            'desc'  => lang('Visitors.hubDescAddVisitor'),
+            'perm'  => 'visitor.create',
         ],
         [
-            'href'  => base_url('guest-conversions'),
+            'href'  => base_url('visitor-conversions'),
             'icon'  => 'bi-person-up',
             'color' => 'success',
-            'label' => lang('Guests.hubLinkConversions'),
-            'desc'  => lang('Guests.hubDescConversions'),
-            'perm'  => 'guest.view',
+            'label' => lang('Visitors.hubLinkConversions'),
+            'desc'  => lang('Visitors.hubDescConversions'),
+            'perm'  => 'visitor.view',
         ],
         [
-            'href'  => base_url('guests/import'),
+            'href'  => base_url('visitors/import'),
             'icon'  => 'bi-upload',
             'color' => 'secondary',
-            'label' => lang('Guests.hubLinkImport'),
-            'desc'  => lang('Guests.hubDescImport'),
-            'perm'  => 'guest.create',
+            'label' => lang('Visitors.hubLinkImport'),
+            'desc'  => lang('Visitors.hubDescImport'),
+            'perm'  => 'visitor.create',
         ],
     ];
 
@@ -163,7 +163,7 @@ $kpiTile = static function (
 </div>
 
 <?php if (auth()->user()->can('followup.view')): ?>
-    <h5 class="mb-3"><?= lang('Guests.hubSectionFollowup') ?></h5>
+    <h5 class="mb-3"><?= lang('Visitors.hubSectionFollowup') ?></h5>
     <div class="row g-3 mb-4">
         <?php
         $wfCards = [
@@ -171,22 +171,22 @@ $kpiTile = static function (
                 'href'  => base_url('followup-workflow/call-tasks'),
                 'icon'  => 'bi-telephone',
                 'color' => 'warning',
-                'label' => lang('Guests.hubLinkCallTasks'),
-                'desc'  => lang('Guests.hubDescCallTasks'),
+                'label' => lang('Visitors.hubLinkCallTasks'),
+                'desc'  => lang('Visitors.hubDescCallTasks'),
             ],
             [
                 'href'  => base_url('followup-workflow/sequences'),
                 'icon'  => 'bi-diagram-3',
                 'color' => 'info',
-                'label' => lang('Guests.hubLinkSequences'),
-                'desc'  => lang('Guests.hubDescSequences'),
+                'label' => lang('Visitors.hubLinkSequences'),
+                'desc'  => lang('Visitors.hubDescSequences'),
             ],
             [
                 'href'  => base_url('followup-workflow/templates'),
                 'icon'  => 'bi-file-earmark-text',
                 'color' => 'secondary',
-                'label' => lang('Guests.hubLinkTemplates'),
-                'desc'  => lang('Guests.hubDescTemplates'),
+                'label' => lang('Visitors.hubLinkTemplates'),
+                'desc'  => lang('Visitors.hubDescTemplates'),
             ],
         ];
         foreach ($wfCards as $wc):
@@ -207,23 +207,23 @@ $kpiTile = static function (
 <?php endif; ?>
 
 <?php if (auth()->user()->can('report.view')): ?>
-    <h5 class="mb-3"><?= lang('Guests.hubSectionReports') ?></h5>
+    <h5 class="mb-3"><?= lang('Visitors.hubSectionReports') ?></h5>
     <div class="row g-3 mb-4">
         <?php
         $reportCards = [
             [
-                'href'  => base_url('guests/reports/followup-completion'),
+                'href'  => base_url('visitors/reports/followup-completion'),
                 'icon'  => 'bi-bar-chart-line',
                 'color' => 'primary',
-                'label' => lang('Guests.hubLinkCompletionReport'),
-                'desc'  => lang('Guests.hubDescCompletionReport'),
+                'label' => lang('Visitors.hubLinkCompletionReport'),
+                'desc'  => lang('Visitors.hubDescCompletionReport'),
             ],
             [
-                'href'  => base_url('guests/reports/roi-second-visit'),
+                'href'  => base_url('visitors/reports/roi-second-visit'),
                 'icon'  => 'bi-trophy',
                 'color' => 'warning',
-                'label' => lang('Guests.hubLinkRoiReport'),
-                'desc'  => lang('Guests.hubDescRoiReport'),
+                'label' => lang('Visitors.hubLinkRoiReport'),
+                'desc'  => lang('Visitors.hubDescRoiReport'),
             ],
         ];
         foreach ($reportCards as $rc):
@@ -250,48 +250,48 @@ $kpiTile = static function (
     <div class="col-lg-7">
         <div class="card shadow-sm h-100">
             <div class="card-header d-flex justify-content-between align-items-center">
-                <span><i class="bi bi-clock-history me-1" aria-hidden="true"></i><?= lang('Guests.pageTitle') ?></span>
-                <a href="<?= base_url('guests') ?>" class="btn btn-sm btn-outline-primary">
+                <span><i class="bi bi-clock-history me-1" aria-hidden="true"></i><?= lang('Visitors.pageTitle') ?></span>
+                <a href="<?= base_url('visitors') ?>" class="btn btn-sm btn-outline-primary">
                     <?= lang('App.viewAll') ?>
                 </a>
             </div>
             <div class="card-body p-0">
-                <?php if (empty($recentGuests)): ?>
+                <?php if (empty($recentVisitors)): ?>
                     <p class="text-muted text-center py-4 mb-0">
                         <i class="bi bi-people fs-2 d-block mb-2" aria-hidden="true"></i>
-                        <?= lang('Guests.noGuestsFound') ?>
+                        <?= lang('Visitors.noVisitorsFound') ?>
                     </p>
                 <?php else: ?>
                     <div class="table-responsive">
                         <table class="table table-hover align-middle mb-0">
                             <thead>
                                 <tr>
-                                    <th scope="col"><?= lang('Guests.colName') ?></th>
-                                    <th scope="col"><?= lang('Guests.colVisitDate') ?></th>
-                                    <th scope="col"><?= lang('Guests.colStatus') ?></th>
+                                    <th scope="col"><?= lang('Visitors.colName') ?></th>
+                                    <th scope="col"><?= lang('Visitors.colVisitDate') ?></th>
+                                    <th scope="col"><?= lang('Visitors.colStatus') ?></th>
                                 </tr>
                             </thead>
                             <tbody>
-                                <?php foreach ($recentGuests as $g):
+                                <?php foreach ($recentVisitors as $g):
                                     $name = esc(trim($g['first_name'] . ' ' . $g['last_name']));
                                     $prog = $recentProgressMap[(int) ($g['person_id'] ?? 0)] ?? null;
                                     if (!empty($g['converted_to_member_at'])) {
                                         $statusColor = 'success';
-                                        $statusLabel = lang('Guests.statusConverted');
+                                        $statusLabel = lang('Visitors.statusConverted');
                                     } elseif ($g['followed_up']) {
                                         $statusColor = 'success';
-                                        $statusLabel = lang('Guests.statusFollowedUp');
+                                        $statusLabel = lang('Visitors.statusFollowedUp');
                                     } elseif ($prog && $prog['done'] > 0 && $prog['pending'] > 0) {
                                         $statusColor = 'primary';
-                                        $statusLabel = lang('Guests.followupInProgress');
+                                        $statusLabel = lang('Visitors.followupInProgress');
                                     } else {
                                         $statusColor = 'warning';
-                                        $statusLabel = lang('Guests.statusPending');
+                                        $statusLabel = lang('Visitors.statusPending');
                                     }
                                 ?>
                                     <tr>
                                         <td>
-                                            <a href="<?= base_url('guests/view/' . (int) $g['id']) ?>"
+                                            <a href="<?= base_url('visitors/view/' . (int) $g['id']) ?>"
                                                 class="text-decoration-none">
                                                 <?= $name ?>
                                             </a>
@@ -317,7 +317,7 @@ $kpiTile = static function (
         <div class="col-lg-5">
             <div class="card shadow-sm h-100">
                 <div class="card-header d-flex justify-content-between align-items-center">
-                    <span><i class="bi bi-telephone me-1" aria-hidden="true"></i><?= lang('Guests.hubLinkCallTasks') ?></span>
+                    <span><i class="bi bi-telephone me-1" aria-hidden="true"></i><?= lang('Visitors.hubLinkCallTasks') ?></span>
                     <?php if ($pendingCalls > 0): ?>
                         <span class="badge border border-warning text-warning fw-normal">
                             <?= (int) $pendingCalls ?>
@@ -328,7 +328,7 @@ $kpiTile = static function (
                     <?php if (empty($pendingCallTasks)): ?>
                         <p class="text-muted text-center py-4 mb-0">
                             <i class="bi bi-telephone-x fs-2 d-block mb-2" aria-hidden="true"></i>
-                            <?= lang('Guests.callTasksEmpty') ?>
+                            <?= lang('Visitors.callTasksEmpty') ?>
                         </p>
                     <?php else: ?>
                         <ul class="list-group list-group-flush">
@@ -336,7 +336,7 @@ $kpiTile = static function (
                                 <li class="list-group-item d-flex justify-content-between align-items-center">
                                     <div>
                                         <div class="fw-semibold small">
-                                            <?= esc(trim(($ct['guest_first_name'] ?? '') . ' ' . ($ct['guest_last_name'] ?? ''))) ?>
+                                            <?= esc(trim(($ct['visitor_first_name'] ?? '') . ' ' . ($ct['visitor_last_name'] ?? ''))) ?>
                                         </div>
                                         <div class="text-muted" style="font-size:.75rem;">
                                             <?= esc($ct['scheduled_date'] ?? '') ?>
@@ -344,7 +344,7 @@ $kpiTile = static function (
                                     </div>
                                     <a href="<?= base_url('followup-workflow/call-tasks') ?>"
                                         class="btn btn-sm btn-outline-warning"
-                                        aria-label="<?= esc(lang('Guests.hubLinkCallTasks')) ?>">
+                                        aria-label="<?= esc(lang('Visitors.hubLinkCallTasks')) ?>">
                                         <i class="bi bi-telephone" aria-hidden="true"></i>
                                     </a>
                                 </li>

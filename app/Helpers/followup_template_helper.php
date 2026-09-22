@@ -5,9 +5,9 @@ use App\Libraries\DataEncryption;
 /**
  * parse_template_vars()
  *
- * Build the full token-to-value replacement map for a guest + parish context.
+ * Build the full token-to-value replacement map for a visitor + parish context.
  *
- * @param  array       $guest          Decrypted guest row (keys: first_name, last_name, phone, address, interests…)
+ * @param  array       $visitor          Decrypted visitor row (keys: first_name, last_name, phone, address, interests…)
  * @param  array       $parishSettings Flat key→value map (keys: clergy_name, service_time, parish_address, …)
  *                                     Typically produced by ParishSettingModel::getParishSettings() → key_value flattened.
  * @param  array|null  $parish         Row from the `parishes` table (name, address, …).  If null, name falls back to
@@ -16,17 +16,17 @@ use App\Libraries\DataEncryption;
  * @return array<string,string>        Map of {token} → replacement value (both keys and values are plain strings).
  */
 if (! function_exists('parse_template_vars')) {
-    function parse_template_vars(array $guest, array $parishSettings = [], ?array $parish = null, ?array $nextEvent = null): array
+    function parse_template_vars(array $visitor, array $parishSettings = [], ?array $parish = null, ?array $nextEvent = null): array
     {
         // ---------------------------------------------------------------
-        // Guest fields
+        // Visitor fields
         // ---------------------------------------------------------------
-        $firstName = (string) ($guest['first_name'] ?? '');
-        $lastName  = (string) ($guest['last_name']  ?? '');
+        $firstName = (string) ($visitor['first_name'] ?? '');
+        $lastName  = (string) ($visitor['last_name']  ?? '');
         $fullName  = trim($firstName . ' ' . $lastName);
 
         // Phone may be encrypted
-        $phone = (string) ($guest['phone'] ?? '');
+        $phone = (string) ($visitor['phone'] ?? '');
         if ($phone !== '' && class_exists(DataEncryption::class) && DataEncryption::isEncrypted($phone)) {
             $phone = (string) (DataEncryption::decrypt($phone) ?? '');
         }
@@ -63,9 +63,9 @@ if (! function_exists('parse_template_vars')) {
         }
 
         // ---------------------------------------------------------------
-        // Interests (from guest.interests JSON)
+        // Interests (from visitor.interests JSON)
         //
-        // If the guest has:  {"children": true, "youth": true, "music": false}
+        // If the visitor has:  {"children": true, "youth": true, "music": false}
         // or a plain array:  ["children", "music"]
         //
         // We expose tokens like:
@@ -76,7 +76,7 @@ if (! function_exists('parse_template_vars')) {
         $interestTokens = [];
         $interestLabels  = [];
 
-        $rawInterests = $guest['interests'] ?? null;
+        $rawInterests = $visitor['interests'] ?? null;
         if (is_string($rawInterests) && $rawInterests !== '') {
             $decoded = json_decode($rawInterests, true);
             if (is_array($decoded)) {
@@ -123,7 +123,7 @@ if (! function_exists('parse_template_vars')) {
             '{parish_address}' => $parishAddress,
             '{next_event_name}' => $nextEventName,
             '{event_date}'    => $eventDate,
-            '{visit_date}'    => (string) ($guest['visit_date'] ?? ''),
+            '{visit_date}'    => (string) ($visitor['visit_date'] ?? ''),
             '{phone}'         => $phone,
             '{interests_list}' => implode(', ', $interestLabels),
         ];
@@ -136,19 +136,19 @@ if (! function_exists('parse_template_vars')) {
  * parse_template()
  *
  * Replace all {tokens} in $templateBody with values derived from the
- * supplied guest, parish settings, and optional next-event row.
+ * supplied visitor, parish settings, and optional next-event row.
  *
  * @param  string      $templateBody   Raw template text containing {tokens}.
- * @param  array       $guest          Decrypted guest row.
+ * @param  array       $visitor          Decrypted visitor row.
  * @param  array       $parishSettings Flat key→value settings map.
  * @param  array|null  $parish         Optional `parishes` table row.
  * @param  array|null  $nextEvent      Optional upcoming event row (title, start_at).
  * @return string                      Template with all known tokens replaced.
  */
 if (! function_exists('parse_template')) {
-    function parse_template(string $templateBody, array $guest, array $parishSettings = [], ?array $parish = null, ?array $nextEvent = null): string
+    function parse_template(string $templateBody, array $visitor, array $parishSettings = [], ?array $parish = null, ?array $nextEvent = null): string
     {
-        $vars = parse_template_vars($guest, $parishSettings, $parish, $nextEvent);
+        $vars = parse_template_vars($visitor, $parishSettings, $parish, $nextEvent);
         return str_replace(array_keys($vars), array_values($vars), $templateBody);
     }
 }
@@ -163,18 +163,18 @@ if (! function_exists('available_template_tokens')) {
     function available_template_tokens(): array
     {
         return [
-            '{first_name}'     => "Guest's first name",
-            '{last_name}'      => "Guest's last name",
-            '{full_name}'      => "Guest's full name",
+            '{first_name}'     => "Visitor's first name",
+            '{last_name}'      => "Visitor's last name",
+            '{full_name}'      => "Visitor's full name",
             '{parish_name}'    => "Parish name",
             '{clergy_name}'    => "Clergy name (from parish settings)",
             '{service_time}'   => "Main service time (from parish settings)",
             '{parish_address}' => "Parish address (from parish settings or parishes table)",
             '{next_event_name}' => "Upcoming event title",
             '{event_date}'     => "Upcoming event date",
-            '{visit_date}'     => "Guest's visit date",
-            '{phone}'          => "Guest's phone number",
-            '{interests_list}' => "Comma-separated list of guest interests",
+            '{visit_date}'     => "Visitor's visit date",
+            '{phone}'          => "Visitor's phone number",
+            '{interests_list}' => "Comma-separated list of visitor interests",
             '{interest_*}'     => "Individual interest flag, e.g. {interest_children}",
         ];
     }

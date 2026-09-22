@@ -285,10 +285,10 @@
                 </li>
             <?php endif; ?>
 
-            <?php if (!$isSystemAdminSidebar && !$isProvinceAdminSidebar && !$isDioceseAdminSidebar && auth()->user()->can('guest.view')): ?>
+            <?php if (!$isSystemAdminSidebar && !$isProvinceAdminSidebar && !$isDioceseAdminSidebar && auth()->user()->can('visitor.view')): ?>
                 <li class="nav-item">
-                    <a class="nav-link <?= (str_starts_with(uri_string(), 'guests')) ? 'active' : '' ?>" href="<?= base_url('guests/dashboard') ?>">
-                        <i class="bi bi-house-heart" aria-hidden="true"></i> <?= lang('App.navGuestHub') ?>
+                    <a class="nav-link <?= (str_starts_with(uri_string(), 'visitors')) ? 'active' : '' ?>" href="<?= base_url('visitors/dashboard') ?>">
+                        <i class="bi bi-house-heart" aria-hidden="true"></i> <?= lang('App.navVisitorHub') ?>
                     </a>
                 </li>
             <?php endif; ?>

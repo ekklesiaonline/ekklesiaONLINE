@@ -190,7 +190,7 @@ final class ParishAffiliationSecurityIntegrationTest extends CIUnitTestCase
             'parish_id' => ['type' => 'INTEGER'],
             'person_id' => ['type' => 'INTEGER', 'default' => 0],
             'linked_user_id' => ['type' => 'INTEGER', 'null' => true],
-            'membership_status' => ['type' => 'VARCHAR', 'constraint' => 20, 'default' => 'guest'],
+            'membership_status' => ['type' => 'VARCHAR', 'constraint' => 20, 'default' => 'visitor'],
             'source' => ['type' => 'VARCHAR', 'constraint' => 30, 'default' => 'system'],
             'start_date' => ['type' => 'DATE', 'null' => true],
             'end_date' => ['type' => 'DATE', 'null' => true],

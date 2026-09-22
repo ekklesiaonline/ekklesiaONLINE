@@ -9,7 +9,7 @@ use CodeIgniter\Test\DatabaseTestTrait;
  * and ::isRecordableMember().
  *
  * **Business policy locked by this suite:**
- *   - Granting is_member to a guest/attendee person is rejected — promotion
+ *   - Granting is_member to a visitor/attender person is rejected — promotion
  *     to member goes through MembershipPathwayService transitions; a flag
  *     flip cannot manufacture membership.
  *   - Revoking is_member from a member/inactive person demotes status -> 'visitor'.
@@ -32,19 +32,19 @@ final class MemberTagToggleIntegrationTest extends CIUnitTestCase
 
     // -------------------------------------------- grant is_member
 
-    public function testGrantMemberTagOnGuestIsRejected(): void
+    public function testGrantMemberTagOnVisitorIsRejected(): void
     {
         $parishId = $this->insertParish();
-        $userId   = $this->insertUser('guest.grant');
-        $this->insertAffiliation($userId, $parishId, 'guest');
+        $userId   = $this->insertUser('visitor.grant');
+        $this->insertAffiliation($userId, $parishId, 'visitor');
 
         $model = $this->makeModel();
         $ok = $model->setMemberTag($userId, $parishId, true);
 
-        $this->assertFalse($ok, 'a flag flip cannot promote a guest — use pathway transitions');
+        $this->assertFalse($ok, 'a flag flip cannot promote a visitor — use pathway transitions');
         $row = $this->fetchAffiliation($userId, $parishId);
         $this->assertSame(0,       (int)    ($row['is_member']        ?? -1));
-        $this->assertSame('guest', (string) ($row['membership_status'] ?? ''), 'guest stays guest on rejected grant');
+        $this->assertSame('visitor', (string) ($row['membership_status'] ?? ''), 'visitor stays visitor on rejected grant');
     }
 
     public function testGrantMemberTagOnAttendeeIsRejected(): void
@@ -98,9 +98,9 @@ final class MemberTagToggleIntegrationTest extends CIUnitTestCase
 
     /**
      * POLICY LOCK: revoking member tag on a member person must set
-     * membership_status = 'guest', NOT 'attendee'.
+     * membership_status = 'visitor', NOT 'attendee'.
      */
-    public function testRevokeMemberTagFromMemberDemotesToGuest(): void
+    public function testRevokeMemberTagFromMemberDemotesToVisitor(): void
     {
         $parishId = $this->insertParish();
         $userId   = $this->insertUser('member.revoke');
@@ -139,8 +139,8 @@ final class MemberTagToggleIntegrationTest extends CIUnitTestCase
     public function testRevokeMemberTagFromAlreadyNonMemberIsIdempotent(): void
     {
         $parishId = $this->insertParish();
-        $userId   = $this->insertUser('guest.revoke');
-        $this->insertAffiliation($userId, $parishId, 'guest');
+        $userId   = $this->insertUser('visitor.revoke');
+        $this->insertAffiliation($userId, $parishId, 'visitor');
 
         $model = $this->makeModel();
         $ok = $model->setMemberTag($userId, $parishId, false);
@@ -148,7 +148,7 @@ final class MemberTagToggleIntegrationTest extends CIUnitTestCase
         $this->assertTrue($ok);
         $row = $this->fetchAffiliation($userId, $parishId);
         $this->assertSame(0,         (int)    ($row['is_member']        ?? -1));
-        $this->assertSame('visitor', (string) ($row['membership_status'] ?? ''), 'guest stays visitor on re-revoke');
+        $this->assertSame('visitor', (string) ($row['membership_status'] ?? ''), 'visitor stays visitor on re-revoke');
     }
 
     // -------------------------------------------- missing affiliation guard
@@ -169,13 +169,13 @@ final class MemberTagToggleIntegrationTest extends CIUnitTestCase
     {
         $parishId = $this->insertParish();
         $userId   = $this->insertUser('deactivated.user');
-        // Off-register row: guest status generates is_member=0, so the
+        // Off-register row: visitor status generates is_member=0, so the
         // setMemberTag() grant guard returns false.
         $this->db->table('parish_affiliation')->insert([
             'linked_user_id'    => $userId,
             'parish_id'         => $parishId,
             'person_id'         => null,
-            'membership_status' => 'guest',
+            'membership_status' => 'visitor',
             'source'            => 'system',
             'start_date'        => date('Y-m-d'),
             'end_date'          => null,
@@ -206,11 +206,11 @@ final class MemberTagToggleIntegrationTest extends CIUnitTestCase
     {
         $parishId = $this->insertParish();
         $userId   = $this->insertUser('visitor.tagged');
-        $this->insertAffiliation($userId, $parishId, 'guest');
+        $this->insertAffiliation($userId, $parishId, 'visitor');
 
         $this->assertFalse(
             model(MemberParishAffiliationModel::class)->isRecordableMember($userId, $parishId),
-            'guest status must not qualify as recordable'
+            'visitor status must not qualify as recordable'
         );
     }
 
@@ -274,7 +274,7 @@ final class MemberTagToggleIntegrationTest extends CIUnitTestCase
             'linked_user_id'    => ['type' => 'INTEGER', 'null' => true],
             'parish_id'         => ['type' => 'INTEGER'],
             'person_id'         => ['type' => 'INTEGER', 'null' => true],
-            'membership_status' => ['type' => 'VARCHAR', 'constraint' => 20, 'default' => 'guest'],
+            'membership_status' => ['type' => 'VARCHAR', 'constraint' => 20, 'default' => 'visitor'],
             'source'            => ['type' => 'VARCHAR', 'constraint' => 32, 'default' => 'system'],
             'start_date'        => ['type' => 'DATE', 'null' => true],
             'end_date'          => ['type' => 'DATE', 'null' => true],

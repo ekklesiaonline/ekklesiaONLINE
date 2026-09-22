@@ -14,18 +14,18 @@
 <?php if (empty($actions)): ?>
     <div class="text-center py-4 text-muted" id="actionsEmpty">
         <i class="bi bi-list-task fs-2 d-block mb-2" aria-hidden="true"></i>
-        <?= lang('Guests.seqStepsEmpty') ?>
+        <?= lang('Visitors.seqStepsEmpty') ?>
     </div>
 <?php else: ?>
     <div class="table-responsive">
         <table class="table table-hover align-middle mb-0">
             <thead>
                 <tr>
-                    <th scope="col"><?= lang('Guests.seqColWeek') ?></th>
-                    <th scope="col"><?= lang('Guests.seqColDayOffset') ?></th>
-                    <th scope="col"><?= lang('Guests.seqColChannel') ?></th>
-                    <th scope="col"><?= lang('Guests.seqColTemplate') ?></th>
-                    <th scope="col"><?= lang('Guests.seqColType') ?></th>
+                    <th scope="col"><?= lang('Visitors.seqColWeek') ?></th>
+                    <th scope="col"><?= lang('Visitors.seqColDayOffset') ?></th>
+                    <th scope="col"><?= lang('Visitors.seqColChannel') ?></th>
+                    <th scope="col"><?= lang('Visitors.seqColTemplate') ?></th>
+                    <th scope="col"><?= lang('Visitors.seqColType') ?></th>
                     <th scope="col" class="text-end"><?= lang('App.colActions') ?></th>
                 </tr>
             </thead>
@@ -52,14 +52,14 @@
                             <?php if (!empty($a['template_name'])): ?>
                                 <?= esc($a['template_name']) ?>
                             <?php else: ?>
-                                <em class="text-muted"><?= lang('Guests.seqStepNone') ?></em>
+                                <em class="text-muted"><?= lang('Visitors.seqStepNone') ?></em>
                             <?php endif; ?>
                         </td>
                         <td>
                             <?php if ($a['is_automated']): ?>
-                                <span class="badge border border-success text-success fw-normal"><?= lang('Guests.seqTypeAuto') ?></span>
+                                <span class="badge border border-success text-success fw-normal"><?= lang('Visitors.seqTypeAuto') ?></span>
                             <?php else: ?>
-                                <span class="badge border border-secondary text-body fw-normal"><?= lang('Guests.seqTypeManual') ?></span>
+                                <span class="badge border border-secondary text-body fw-normal"><?= lang('Visitors.seqTypeManual') ?></span>
                             <?php endif; ?>
                         </td>
                         <td class="text-end">

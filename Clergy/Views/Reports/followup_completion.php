@@ -19,16 +19,16 @@
 
 <!-- Top action row -->
 <div class="d-flex justify-content-start align-items-center mb-3 gap-2">
-    <a href="<?= base_url('guests') ?>" class="btn btn-outline-secondary btn-sm">
-        <i class="bi bi-arrow-left" aria-hidden="true"></i> <?= lang('Guests.pageTitle') ?>
+    <a href="<?= base_url('visitors') ?>" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-arrow-left" aria-hidden="true"></i> <?= lang('Visitors.pageTitle') ?>
     </a>
-    <a href="<?= base_url('guests/reports/roi-second-visit?start_date=' . esc($report_start_date, 'url') . '&end_date=' . esc($report_end_date, 'url')) ?>"
+    <a href="<?= base_url('visitors/reports/roi-second-visit?start_date=' . esc($report_start_date, 'url') . '&end_date=' . esc($report_end_date, 'url')) ?>"
         class="btn btn-outline-primary btn-sm">
-        <i class="bi bi-bar-chart-line" aria-hidden="true"></i> <?= lang('Guests.rptRoiReport') ?>
+        <i class="bi bi-bar-chart-line" aria-hidden="true"></i> <?= lang('Visitors.rptRoiReport') ?>
     </a>
-    <a href="<?= base_url('guests/reports/export-csv/followup-completion?start_date=' . esc($report_start_date, 'url') . '&end_date=' . esc($report_end_date, 'url')) ?>"
+    <a href="<?= base_url('visitors/reports/export-csv/followup-completion?start_date=' . esc($report_start_date, 'url') . '&end_date=' . esc($report_end_date, 'url')) ?>"
         class="btn btn-outline-success btn-sm ms-auto">
-        <i class="bi bi-download" aria-hidden="true"></i> <?= lang('Guests.rptExportCsv') ?>
+        <i class="bi bi-download" aria-hidden="true"></i> <?= lang('Visitors.rptExportCsv') ?>
     </a>
 </div>
 
@@ -66,7 +66,7 @@
 <?php if (empty($rows)): ?>
     <div class="alert alert-info">
         <i class="bi bi-info-circle me-2" aria-hidden="true"></i>
-        <?= lang('Guests.rptNoData') ?>
+        <?= lang('Visitors.rptNoData') ?>
     </div>
 <?php else: ?>
 
@@ -74,12 +74,12 @@
     <div class="card mb-4">
         <div class="card-header d-flex align-items-center gap-2">
             <i class="bi bi-bar-chart-fill text-primary" aria-hidden="true"></i>
-            <span class="fw-semibold"><?= lang('Guests.rptCompletionChartTitle') ?></span>
-            <small class="text-muted ms-auto"><?= lang('Guests.rptCompletionChartNote') ?></small>
+            <span class="fw-semibold"><?= lang('Visitors.rptCompletionChartTitle') ?></span>
+            <small class="text-muted ms-auto"><?= lang('Visitors.rptCompletionChartNote') ?></small>
         </div>
         <div class="card-body">
             <div style="height: 340px;">
-                <canvas id="completionChart" aria-label="<?= esc(lang('Guests.rptCompletionChartAria')) ?>" role="img"></canvas>
+                <canvas id="completionChart" aria-label="<?= esc(lang('Visitors.rptCompletionChartAria')) ?>" role="img"></canvas>
             </div>
         </div>
     </div>
@@ -88,18 +88,18 @@
     <div class="card">
         <div class="card-header d-flex align-items-center gap-2">
             <i class="bi bi-table text-secondary" aria-hidden="true"></i>
-            <span class="fw-semibold"><?= lang('Guests.rptWeeklyDetail') ?></span>
+            <span class="fw-semibold"><?= lang('Visitors.rptWeeklyDetail') ?></span>
         </div>
         <div class="table-responsive">
             <table class="table table-hover mb-0 align-middle">
                 <thead>
                     <tr>
-                        <th scope="col"><?= lang('Guests.rptColSequenceWeek') ?></th>
-                        <th scope="col" class="text-end"><?= lang('Guests.rptColScheduled') ?></th>
-                        <th scope="col" class="text-end"><?= lang('Guests.rptColCompleted') ?></th>
-                        <th scope="col" class="text-end"><?= lang('Guests.rptColMissed') ?></th>
-                        <th scope="col" class="text-end"><?= lang('Guests.rptColCompletionPct') ?></th>
-                        <th scope="col" style="min-width:140px;"><?= lang('Guests.rptColProgress') ?></th>
+                        <th scope="col"><?= lang('Visitors.rptColSequenceWeek') ?></th>
+                        <th scope="col" class="text-end"><?= lang('Visitors.rptColScheduled') ?></th>
+                        <th scope="col" class="text-end"><?= lang('Visitors.rptColCompleted') ?></th>
+                        <th scope="col" class="text-end"><?= lang('Visitors.rptColMissed') ?></th>
+                        <th scope="col" class="text-end"><?= lang('Visitors.rptColCompletionPct') ?></th>
+                        <th scope="col" style="min-width:140px;"><?= lang('Visitors.rptColProgress') ?></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -111,7 +111,7 @@
                         $barClass  = $pct >= 75 ? 'bg-success' : ($pct >= 40 ? 'bg-warning' : 'bg-danger');
                     ?>
                         <tr>
-                            <td class="fw-semibold"><?= lang('Guests.rptWeek') ?> <?= (int) $row['week_number'] ?></td>
+                            <td class="fw-semibold"><?= lang('Visitors.rptWeek') ?> <?= (int) $row['week_number'] ?></td>
                             <td class="text-end"><?= $total ?></td>
                             <td class="text-end text-success"><?= $done ?></td>
                             <td class="text-end text-danger"><?= $missed ?></td>
@@ -136,7 +136,7 @@
                         $sumDone  = array_sum(array_column($rows, 'completed_actions'));
                         $sumPct   = $sumTotal > 0 ? round($sumDone / $sumTotal * 100, 1) : 0.0;
                         ?>
-                        <td><?= lang('Guests.rptOverall') ?></td>
+                        <td><?= lang('Visitors.rptOverall') ?></td>
                         <td class="text-end"><?= $sumTotal ?></td>
                         <td class="text-end text-success"><?= $sumDone ?></td>
                         <td class="text-end text-danger"><?= $sumTotal - $sumDone ?></td>
@@ -167,7 +167,7 @@
             data: {
                 labels,
                 datasets: [{
-                        label: '<?= esc(lang('Guests.rptCompletedSent'), 'js') ?>',
+                        label: '<?= esc(lang('Visitors.rptCompletedSent'), 'js') ?>',
                         data: completed,
                         backgroundColor: 'rgba(25,135,84,0.75)',
                         borderColor: 'rgba(25,135,84,1)',
@@ -176,7 +176,7 @@
                         stack: 'actions',
                     },
                     {
-                        label: '<?= esc(lang('Guests.rptNotCompleted'), 'js') ?>',
+                        label: '<?= esc(lang('Visitors.rptNotCompleted'), 'js') ?>',
                         data: missed,
                         backgroundColor: 'rgba(220,53,69,0.55)',
                         borderColor: 'rgba(220,53,69,0.8)',
@@ -199,7 +199,7 @@
                                 const idx = items[0].dataIndex;
                                 const total = completed[idx] + missed[idx];
                                 const pct = total > 0 ? Math.round(completed[idx] / total * 1000) / 10 : 0;
-                                return '<?= esc(lang('Guests.rptCompletionLabel'), 'js') ?>: ' + pct + '%';
+                                return '<?= esc(lang('Visitors.rptCompletionLabel'), 'js') ?>: ' + pct + '%';
                             },
                         },
                     },
@@ -216,7 +216,7 @@
                         },
                         title: {
                             display: true,
-                            text: '<?= esc(lang('Guests.rptColActions'), 'js') ?>'
+                            text: '<?= esc(lang('Visitors.rptColActions'), 'js') ?>'
                         },
                     },
                 },

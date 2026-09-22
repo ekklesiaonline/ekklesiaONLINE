@@ -36,7 +36,7 @@ class Feature extends BaseConfig
     public bool $strictLocaleNegotiation = false;
 
     /**
-     * Store guest intakes as person records (dual-write mode).
+     * Store visitor intakes as person records (dual-write mode).
      */
     public bool $guestAsPerson = false;
 }

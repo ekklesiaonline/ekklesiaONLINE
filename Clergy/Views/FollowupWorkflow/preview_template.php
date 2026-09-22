@@ -15,9 +15,9 @@ $badge = $channelBadge[$template['channel']] ?? 'border border-secondary text-bo
 
 <div class="d-flex justify-content-start align-items-center flex-wrap gap-2 mb-3">
     <a href="<?= base_url('followup-workflow/templates') ?>" class="btn btn-outline-secondary">
-        <i class="bi bi-arrow-left" aria-hidden="true"></i> <?= lang('Guests.tplBackToTemplates') ?>
+        <i class="bi bi-arrow-left" aria-hidden="true"></i> <?= lang('Visitors.tplBackToTemplates') ?>
     </a>
-    <?php if (!empty($template['parish_id']) && auth()->user()->can('guest.edit')): ?>
+    <?php if (!empty($template['parish_id']) && auth()->user()->can('visitor.edit')): ?>
         <button type="button"
             class="btn btn-outline-secondary btn-edit-template"
             data-id="<?= (int) $template['id'] ?>"
@@ -27,7 +27,7 @@ $badge = $channelBadge[$template['channel']] ?? 'border border-secondary text-bo
             data-body-text="<?= esc($template['body_text'], 'attr') ?>"
             data-body-html="<?= esc($template['body_html'] ?? '', 'attr') ?>"
             data-variables="<?= esc($template['variables'] ?? '', 'attr') ?>">
-            <i class="bi bi-pencil" aria-hidden="true"></i> <?= lang('Guests.tplEditTemplateBtn') ?>
+            <i class="bi bi-pencil" aria-hidden="true"></i> <?= lang('Visitors.tplEditTemplateBtn') ?>
         </button>
     <?php endif; ?>
 </div>
@@ -37,31 +37,31 @@ $badge = $channelBadge[$template['channel']] ?? 'border border-secondary text-bo
     <!-- Template meta ──────────────────────────────────────────────── -->
     <div class="col-lg-4">
         <div class="card h-100">
-            <div class="card-header fw-semibold"><?= lang('Guests.tplInfoCardTitle') ?></div>
+            <div class="card-header fw-semibold"><?= lang('Visitors.tplInfoCardTitle') ?></div>
             <div class="card-body">
                 <dl class="mb-0 small">
-                    <dt class="text-muted"><?= lang('Guests.tplInfoName') ?></dt>
+                    <dt class="text-muted"><?= lang('Visitors.tplInfoName') ?></dt>
                     <dd class="fw-semibold"><?= esc($template['name']) ?></dd>
 
-                    <dt class="text-muted mt-2"><?= lang('Guests.tplInfoChannel') ?></dt>
+                    <dt class="text-muted mt-2"><?= lang('Visitors.tplInfoChannel') ?></dt>
                     <dd><span class="badge <?= $badge ?>"><?= esc($template['channel']) ?></span></dd>
 
                     <?php if (!empty($template['subject'])): ?>
-                        <dt class="text-muted mt-2"><?= lang('Guests.tplInfoSubjectLabel') ?></dt>
+                        <dt class="text-muted mt-2"><?= lang('Visitors.tplInfoSubjectLabel') ?></dt>
                         <dd><?= esc($template['subject']) ?></dd>
                     <?php endif; ?>
 
-                    <dt class="text-muted mt-2"><?= lang('Guests.tplInfoScopeLabel') ?></dt>
+                    <dt class="text-muted mt-2"><?= lang('Visitors.tplInfoScopeLabel') ?></dt>
                     <dd>
                         <?php if ($template['parish_id'] === null): ?>
-                            <span class="badge border border-info text-info fw-normal"><?= lang('Guests.tplScopeGlobal') ?></span>
+                            <span class="badge border border-info text-info fw-normal"><?= lang('Visitors.tplScopeGlobal') ?></span>
                         <?php else: ?>
-                            <span class="badge border border-secondary text-body fw-normal"><?= lang('Guests.tplScopeParish') ?></span>
+                            <span class="badge border border-secondary text-body fw-normal"><?= lang('Visitors.tplScopeParish') ?></span>
                         <?php endif; ?>
                     </dd>
 
                     <?php if (!empty($definedVars)): ?>
-                        <dt class="text-muted mt-3"><?= lang('Guests.tplInfoDeclaredTokens') ?></dt>
+                        <dt class="text-muted mt-3"><?= lang('Visitors.tplInfoDeclaredTokens') ?></dt>
                         <dd>
                             <?php foreach ($definedVars as $tag): ?>
                                 <code class="me-1"><?= esc($tag) ?></code>
@@ -80,14 +80,14 @@ $badge = $channelBadge[$template['channel']] ?? 'border border-secondary text-bo
         <div class="card mb-3">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <span class="fw-semibold">
-                    <i class="bi bi-file-text me-1" aria-hidden="true"></i> <?= lang('Guests.tplPreviewPlainText') ?>
+                    <i class="bi bi-file-text me-1" aria-hidden="true"></i> <?= lang('Visitors.tplPreviewPlainText') ?>
                 </span>
-                <small class="text-muted"><?= lang('Guests.tplPreviewSampleApplied') ?></small>
+                <small class="text-muted"><?= lang('Visitors.tplPreviewSampleApplied') ?></small>
             </div>
             <div class="card-body">
                 <?php if (!empty($preview['subject'])): ?>
                     <p class="mb-1">
-                        <strong><?= lang('Guests.tplInfoSubjectLabel') ?>:</strong> <?= esc($preview['subject']) ?>
+                        <strong><?= lang('Visitors.tplInfoSubjectLabel') ?>:</strong> <?= esc($preview['subject']) ?>
                     </p>
                     <hr>
                 <?php endif; ?>
@@ -100,11 +100,11 @@ $badge = $channelBadge[$template['channel']] ?? 'border border-secondary text-bo
             <div class="card mb-3">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <span class="fw-semibold">
-                        <i class="bi bi-code-slash me-1" aria-hidden="true"></i> <?= lang('Guests.tplPreviewHtmlTitle') ?>
+                        <i class="bi bi-code-slash me-1" aria-hidden="true"></i> <?= lang('Visitors.tplPreviewHtmlTitle') ?>
                     </span>
                     <div class="btn-group btn-group-sm" role="group">
-                        <button class="btn btn-outline-secondary active" id="btnHtmlRendered"><?= lang('Guests.tplPreviewRendered') ?></button>
-                        <button class="btn btn-outline-secondary" id="btnHtmlSource"><?= lang('Guests.tplPreviewSourceBtn') ?></button>
+                        <button class="btn btn-outline-secondary active" id="btnHtmlRendered"><?= lang('Visitors.tplPreviewRendered') ?></button>
+                        <button class="btn btn-outline-secondary" id="btnHtmlSource"><?= lang('Visitors.tplPreviewSourceBtn') ?></button>
                     </div>
                 </div>
                 <div class="card-body p-0">
@@ -113,7 +113,7 @@ $badge = $channelBadge[$template['channel']] ?? 'border border-secondary text-bo
                         sandbox="allow-same-origin"
                         class="w-100 border-0 rounded-bottom"
                         style="min-height: 260px;"
-                        title="<?= esc(lang('Guests.tplHtmlPreviewLabel')) ?>"></iframe>
+                        title="<?= esc(lang('Visitors.tplHtmlPreviewLabel')) ?>"></iframe>
                     <!-- Raw source -->
                     <pre id="htmlPreviewSource"
                         class="d-none mb-0 p-3 small"
@@ -125,14 +125,14 @@ $badge = $channelBadge[$template['channel']] ?? 'border border-secondary text-bo
         <!-- Sample substitution table -->
         <div class="card">
             <div class="card-header fw-semibold">
-                <i class="bi bi-table me-1" aria-hidden="true"></i> <?= lang('Guests.tplSampleValuesTitle') ?>
+                <i class="bi bi-table me-1" aria-hidden="true"></i> <?= lang('Visitors.tplSampleValuesTitle') ?>
             </div>
             <div class="card-body p-0">
                 <table class="table table-sm mb-0">
                     <thead>
                         <tr>
-                            <th scope="col"><?= lang('Guests.tplTokenCol') ?></th>
-                            <th scope="col"><?= lang('Guests.tplSampleValueCol') ?></th>
+                            <th scope="col"><?= lang('Visitors.tplTokenCol') ?></th>
+                            <th scope="col"><?= lang('Visitors.tplSampleValueCol') ?></th>
                         </tr>
                     </thead>
                     <tbody>

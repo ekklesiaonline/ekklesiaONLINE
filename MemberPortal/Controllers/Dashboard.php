@@ -412,14 +412,14 @@ class Dashboard extends BaseController
     }
 
     /**
-     * AJAX endpoint — guest follow-up KPI stats for the parish admin dashboard.
+     * AJAX endpoint — visitor follow-up KPI stats for the parish admin dashboard.
      * GET /dashboard/followup-stats
      *
      * Returns JSON:
-     *   guests_in_followup  int  Distinct guests with at least one pending followup-log entry.
+     *   visitors_in_followup  int  Distinct visitors with at least one pending followup-log entry.
      *   call_tasks_today    int  Pending call tasks scheduled on or before today.
      *   failed_messages_7d  int  SMS queue rows with status=failed in the last 7 days.
-     *   new_guests_weekly   array  [ {week: "Apr 7", count: N}, … ] last 12 ISO weeks.
+     *   new_visitors_weekly   array  [ {week: "Apr 7", count: N}, … ] last 12 ISO weeks.
      */
     public function followupStats()
     {
@@ -432,7 +432,7 @@ class Dashboard extends BaseController
         $db = db_connect();
 
         // 1. Distinct people with at least one pending followup log entry.
-        $guestsInFollowup = (int) ($db->table('followup_log gfl')
+        $visitorsInFollowup = (int) ($db->table('followup_log gfl')
             ->select('COUNT(DISTINCT gfl.person_id) AS cnt')
             ->where('gfl.status', 'pending')
             ->where('gfl.parish_id', $parishId)
@@ -452,7 +452,7 @@ class Dashboard extends BaseController
             ->where('created_at >=', date('Y-m-d H:i:s', strtotime('-7 days')))
             ->countAllResults();
 
-        // 4. New guests per ISO week — last 12 weeks (canonical first visits).
+        // 4. New visitors per ISO week — last 12 weeks (canonical first visits).
         $cutoff = date('Y-m-d', strtotime('-12 weeks'));
         $rows = $db->table('person_visit')
             ->select('YEARWEEK(visit_date, 3) AS yw, MIN(visit_date) AS week_start, COUNT(*) AS count')
@@ -464,17 +464,17 @@ class Dashboard extends BaseController
             ->get()
             ->getResultArray();
 
-        $weeklyGuests = array_map(static function (array $row): array {
+        $weeklyVisitors = array_map(static function (array $row): array {
             $label = date('M j', strtotime((string) $row['week_start']));
             return ['week' => $label, 'count' => (int) $row['count']];
         }, $rows);
 
         return $this->response->setJSON([
             'success' => true,
-            'guests_in_followup' => $guestsInFollowup,
+            'visitors_in_followup' => $visitorsInFollowup,
             'call_tasks_today' => $callTasksToday,
             'failed_messages_7d' => $failedMessages7d,
-            'new_guests_weekly' => $weeklyGuests,
+            'new_visitors_weekly' => $weeklyVisitors,
         ]);
     }
 

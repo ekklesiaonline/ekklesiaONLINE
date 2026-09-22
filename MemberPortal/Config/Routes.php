@@ -89,11 +89,17 @@ $routes->group('', ['filter' => 'session'], function ($routes) {
         $routes->post('delete/(:num)', '\\MemberPortal\\Controllers\\LeadershipPositions::delete/$1');
     });
 
-    $routes->group('guest-conversions', ['filter' => 'permission:guest.edit'], function ($routes) {
-        $routes->get('/', '\\MemberPortal\\Controllers\\GuestConversions::index');
-        $routes->post('convert/(:num)', '\\MemberPortal\\Controllers\\GuestConversions::convert/$1');
-        $routes->post('revert/(:num)', '\\MemberPortal\\Controllers\\GuestConversions::revert/$1');
+    $routes->group('visitor-conversions', ['filter' => 'permission:visitor.edit'], function ($routes) {
+        $routes->get('/', '\\MemberPortal\\Controllers\\VisitorConversions::index');
+        $routes->post('convert/(:num)', '\\MemberPortal\\Controllers\\VisitorConversions::convert/$1');
+        $routes->post('revert/(:num)', '\\MemberPortal\\Controllers\\VisitorConversions::revert/$1');
     });
+
+    // Legacy /guest-conversions shims: GET redirects, POSTs alias to the
+    // same controller actions for one release.
+    $routes->get('guest-conversions', static fn() => redirect()->to(base_url('visitor-conversions')));
+    $routes->post('guest-conversions/convert/(:num)', '\\MemberPortal\\Controllers\\VisitorConversions::convert/$1', ['filter' => 'permission:visitor.edit']);
+    $routes->post('guest-conversions/revert/(:num)', '\\MemberPortal\\Controllers\\VisitorConversions::revert/$1', ['filter' => 'permission:visitor.edit']);
 
     $routes->group('standing', ['filter' => 'permission:member.edit'], function ($routes) {
         $routes->get('/', '\\MemberPortal\\Controllers\\Standing::index');

@@ -3,16 +3,16 @@
 <?= $this->section('content') ?>
 
 <div class="d-flex justify-content-start align-items-center flex-wrap gap-2 mb-3">
-    <?php if (auth()->user()->can('guest.edit')): ?>
+    <?php if (auth()->user()->can('visitor.edit')): ?>
         <a href="<?= base_url('followup-workflow/sequences/create') ?>" class="btn btn-outline-primary">
-            <i class="bi bi-plus-circle" aria-hidden="true"></i> <?= lang('Guests.seqNewBtn') ?>
+            <i class="bi bi-plus-circle" aria-hidden="true"></i> <?= lang('Visitors.seqNewBtn') ?>
         </a>
     <?php endif; ?>
     <a href="<?= base_url('followup-workflow/templates') ?>" class="btn btn-outline-secondary">
-        <i class="bi bi-file-text" aria-hidden="true"></i> <?= lang('Guests.seqMsgTemplatesBtn') ?>
+        <i class="bi bi-file-text" aria-hidden="true"></i> <?= lang('Visitors.seqMsgTemplatesBtn') ?>
     </a>
-    <a href="<?= base_url('guests/dashboard') ?>" class="btn btn-outline-secondary">
-        <i class="bi bi-arrow-left" aria-hidden="true"></i> <?= lang('Guests.backToGuests') ?>
+    <a href="<?= base_url('visitors/dashboard') ?>" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left" aria-hidden="true"></i> <?= lang('Visitors.backToVisitors') ?>
     </a>
 </div>
 
@@ -22,9 +22,9 @@ $translateSequenceName = static function (array $sequence): string {
 
     if (
         ($sequence['parish_id'] ?? null) === null
-        && $name === '6-Week First-Time Guest Journey'
+        && $name === '6-Week First-Time Visitor Journey'
     ) {
-        return lang('Guests.sequenceDefaultSixWeekName');
+        return lang('Visitors.sequenceDefaultSixWeekName');
     }
 
     return $name;
@@ -35,9 +35,9 @@ $translateSequenceDescription = static function (array $sequence): string {
 
     if (
         ($sequence['parish_id'] ?? null) === null
-        && $description === 'System default: a structured 6-week touchpoint cadence for first-time guests, combining automated emails/texts with personal volunteer calls and a welcome gift.'
+        && $description === 'System default: a structured 6-week touchpoint cadence for first-time visitors, combining automated emails/texts with personal volunteer calls and a welcome gift.'
     ) {
-        return lang('Guests.sequenceDefaultSixWeekDescription');
+        return lang('Visitors.sequenceDefaultSixWeekDescription');
     }
 
     return $description;
@@ -49,9 +49,9 @@ $translateSequenceDescription = static function (array $sequence): string {
         <?php if (empty($sequences)): ?>
             <div class="text-center py-5 text-muted">
                 <i class="bi bi-diagram-3 fs-2 d-block mb-2" aria-hidden="true"></i>
-                <?= lang('Guests.seqEmpty') ?>
-                <?php if (auth()->user()->can('guest.edit')): ?>
-                    <a href="<?= base_url('followup-workflow/sequences/create') ?>"><?= lang('Guests.seqCreateNow') ?></a>
+                <?= lang('Visitors.seqEmpty') ?>
+                <?php if (auth()->user()->can('visitor.edit')): ?>
+                    <a href="<?= base_url('followup-workflow/sequences/create') ?>"><?= lang('Visitors.seqCreateNow') ?></a>
                 <?php endif; ?>
             </div>
         <?php else: ?>
@@ -59,12 +59,12 @@ $translateSequenceDescription = static function (array $sequence): string {
                 <table class="table table-hover align-middle mb-0">
                     <thead>
                         <tr>
-                            <th scope="col"><?= lang('Guests.seqColName') ?></th>
-                            <th scope="col"><?= lang('Guests.seqColDescription') ?></th>
-                            <th scope="col" class="text-center"><?= lang('Guests.seqColSteps') ?></th>
-                            <th scope="col" class="text-center"><?= lang('Guests.seqColStatus') ?></th>
-                            <th scope="col"><?= lang('Guests.seqColScope') ?></th>
-                            <?php if (auth()->user()->can('guest.edit')): ?>
+                            <th scope="col"><?= lang('Visitors.seqColName') ?></th>
+                            <th scope="col"><?= lang('Visitors.seqColDescription') ?></th>
+                            <th scope="col" class="text-center"><?= lang('Visitors.seqColSteps') ?></th>
+                            <th scope="col" class="text-center"><?= lang('Visitors.seqColStatus') ?></th>
+                            <th scope="col"><?= lang('Visitors.seqColScope') ?></th>
+                            <?php if (auth()->user()->can('visitor.edit')): ?>
                                 <th scope="col" class="text-end"><?= lang('App.colActions') ?></th>
                             <?php endif; ?>
                         </tr>
@@ -76,7 +76,7 @@ $translateSequenceDescription = static function (array $sequence): string {
                             <?php $displayDescription = $translateSequenceDescription($seq); ?>
                             <tr data-sequence-id="<?= (int) $seq['id'] ?>">
                                 <td>
-                                    <?php if (!$isGlobal && auth()->user()->can('guest.edit')): ?>
+                                    <?php if (!$isGlobal && auth()->user()->can('visitor.edit')): ?>
                                         <a href="<?= base_url('followup-workflow/sequences/edit/' . $seq['id']) ?>"
                                             class="fw-semibold text-decoration-none">
                                             <?= esc($displayName) ?>
@@ -98,12 +98,12 @@ $translateSequenceDescription = static function (array $sequence): string {
                                 </td>
                                 <td>
                                     <?php if ($isGlobal): ?>
-                                        <span class="badge border border-info text-info fw-normal"><?= lang('Guests.seqScopeGlobal') ?></span>
+                                        <span class="badge border border-info text-info fw-normal"><?= lang('Visitors.seqScopeGlobal') ?></span>
                                     <?php else: ?>
-                                        <span class="badge border border-secondary text-body fw-normal"><?= lang('Guests.seqScopeParish') ?></span>
+                                        <span class="badge border border-secondary text-body fw-normal"><?= lang('Visitors.seqScopeParish') ?></span>
                                     <?php endif; ?>
                                 </td>
-                                <?php if (auth()->user()->can('guest.edit')): ?>
+                                <?php if (auth()->user()->can('visitor.edit')): ?>
                                     <td class="text-end">
                                         <?php if (!$isGlobal): ?>
                                             <div class="dropdown">
@@ -125,7 +125,7 @@ $translateSequenceDescription = static function (array $sequence): string {
                                                             type="button"
                                                             data-id="<?= (int) $seq['id'] ?>"
                                                             data-active="<?= (int) $seq['is_active'] ?>">
-                                                            <i class="bi <?= $seq['is_active'] ? 'bi-toggle-on' : 'bi-toggle-off' ?> me-2" aria-hidden="true"></i><?= $seq['is_active'] ? lang('Guests.seqDeactivateTitle') : lang('Guests.seqActivateTitle') ?>
+                                                            <i class="bi <?= $seq['is_active'] ? 'bi-toggle-on' : 'bi-toggle-off' ?> me-2" aria-hidden="true"></i><?= $seq['is_active'] ? lang('Visitors.seqDeactivateTitle') : lang('Visitors.seqActivateTitle') ?>
                                                         </button>
                                                     </li>
                                                     <li>
@@ -165,11 +165,11 @@ $translateSequenceDescription = static function (array $sequence): string {
             btn.addEventListener('click', function() {
                 const id = btn.dataset.id;
                 const active = parseInt(btn.dataset.active, 10);
-                const label = active ? '<?= esc(lang('Guests.seqDeactivateVerb'), 'js') ?>' : '<?= esc(lang('Guests.seqActivateVerb'), 'js') ?>';
+                const label = active ? '<?= esc(lang('Visitors.seqDeactivateVerb'), 'js') ?>' : '<?= esc(lang('Visitors.seqActivateVerb'), 'js') ?>';
 
                 showAppConfirm(
                     '<?= esc(lang('App.confirm'), 'js') ?>',
-                    '<?= esc(lang('Guests.seqToggleConfirm'), 'js') ?>'.replace('{0}', label),
+                    '<?= esc(lang('Visitors.seqToggleConfirm'), 'js') ?>'.replace('{0}', label),
                     function() {
                         fetch('<?= base_url('followup-workflow/sequences/toggle/') ?>' + id, {
                                 method: 'POST',
@@ -184,7 +184,7 @@ $translateSequenceDescription = static function (array $sequence): string {
                                 if (data.success) {
                                     location.reload();
                                 } else {
-                                    showAppToast(data.message ?? '<?= esc(lang('Guests.seqToggleFailed'), 'js') ?>', 'danger');
+                                    showAppToast(data.message ?? '<?= esc(lang('Visitors.seqToggleFailed'), 'js') ?>', 'danger');
                                 }
                             })
                             .catch(() => showAppToast('<?= esc(lang('App.networkError'), 'js') ?>', 'danger'));
@@ -200,8 +200,8 @@ $translateSequenceDescription = static function (array $sequence): string {
                 const name = btn.dataset.name;
 
                 showAppConfirm(
-                    '<?= esc(lang('Guests.seqDeleteTitle'), 'js') ?>',
-                    '<?= esc(lang('Guests.seqDeleteConfirm'), 'js') ?>'.replace('{0}', '<strong>' + name + '</strong>'),
+                    '<?= esc(lang('Visitors.seqDeleteTitle'), 'js') ?>',
+                    '<?= esc(lang('Visitors.seqDeleteConfirm'), 'js') ?>'.replace('{0}', '<strong>' + name + '</strong>'),
                     function() {
                         fetch('<?= base_url('followup-workflow/sequences/delete/') ?>' + id, {
                                 method: 'POST',
@@ -214,15 +214,15 @@ $translateSequenceDescription = static function (array $sequence): string {
                             .then(r => r.json())
                             .then(data => {
                                 if (data.success) {
-                                    showAppToast('<?= esc(lang('Guests.seqDeleteSuccess'), 'js') ?>', 'primary');
+                                    showAppToast('<?= esc(lang('Visitors.seqDeleteSuccess'), 'js') ?>', 'primary');
                                     setTimeout(() => location.reload(), 800);
                                 } else {
-                                    showAppToast(data.message ?? '<?= esc(lang('Guests.seqDeleteFailed'), 'js') ?>', 'danger');
+                                    showAppToast(data.message ?? '<?= esc(lang('Visitors.seqDeleteFailed'), 'js') ?>', 'danger');
                                 }
                             })
                             .catch(() => showAppToast('<?= esc(lang('App.networkError'), 'js') ?>', 'danger'));
                     },
-                    '<?= esc(lang('Guests.seqDeleteBtn'), 'js') ?>'
+                    '<?= esc(lang('Visitors.seqDeleteBtn'), 'js') ?>'
                 );
             });
         });

@@ -435,7 +435,6 @@ final class CanonicalTestSchema
         'message_recipient' => [
             'campaign_id' => 'INTEGER',
             'person_id'   => 'INTEGER',
-            'guest_id'    => 'INTEGER',
             'user_id'     => 'INTEGER',
             'name'        => 'TEXT',
             'first_name'  => 'TEXT',

@@ -8,19 +8,19 @@ use CodeIgniter\Database\BaseBuilder;
 use CodeIgniter\Pager\Pager;
 
 /**
- * GuestDirectoryService — canonical read/write facade for the guest
+ * VisitorDirectoryService — canonical read/write facade for the visitor
  * directory (T4.5).
  *
- * A "guest" is a canonical person with a parish_affiliation whose
+ * A "visitor" is a canonical person with a parish_affiliation whose
  * membership_status is 'visitor' (or which carries conversion markers left
  * by a visitor→member conversion). Contact fields live on `person`
  * (encrypted at rest), visit metadata on `person_visit`, and follow-up /
  * conversion workflow state on `parish_affiliation`.
  *
- * Rows returned here keep the legacy guest-array shape so existing views
+ * Rows returned here keep the legacy visitor-array shape so existing views
  * keep working; the row `id` is the canonical `person.id`.
  */
-class GuestDirectoryService
+class VisitorDirectoryService
 {
     /** Fields merged from the earliest person_visit row. */
     private const VISIT_FIELD_MAP = [
@@ -39,8 +39,8 @@ class GuestDirectoryService
     // ------------------------------------------------------------------
 
     /**
-     * Base builder: guest affiliations (or affiliations converted from a
-     * guest) joined to the canonical person row.
+     * Base builder: visitor affiliations (or affiliations converted from a
+     * visitor) joined to the canonical person row.
      */
     /** Correlated subquery fetching the earliest visit date for a person+parish (pa/pe aliases). */
     public function firstVisitDateSql(): string
@@ -58,7 +58,7 @@ class GuestDirectoryService
     }
 
     /**
-     * Guest-scope join only (pa + pe aliases, no select list) — for
+     * Visitor-scope join only (pa + pe aliases, no select list) — for
      * reports/metrics that need their own columns.
      */
     public function scopeBuilder(?int $parishId = null): BaseBuilder
@@ -98,7 +98,7 @@ class GuestDirectoryService
     }
 
     /**
-     * Fetch a single guest row by canonical person id within a parish.
+     * Fetch a single visitor row by canonical person id within a parish.
      */
     public function findByPerson(int $personId, ?int $parishId = null): ?array
     {
@@ -116,7 +116,7 @@ class GuestDirectoryService
     }
 
     /**
-     * Paginated guest list for a parish with the legacy filter set.
+     * Paginated visitor list for a parish with the legacy filter set.
      *
      * @param array{followed_up?: string|int|null, search?: ?string, date_from?: ?string,
      *              date_to?: ?string, followup_stage?: ?string, source?: ?string} $filters
@@ -199,7 +199,7 @@ class GuestDirectoryService
     }
 
     /**
-     * Most recent guests for a parish (dashboard widgets).
+     * Most recent visitors for a parish (dashboard widgets).
      */
     public function recentForParish(int $parishId, int $limit = 10): array
     {
@@ -214,7 +214,7 @@ class GuestDirectoryService
     }
 
     /**
-     * Total guests for a parish; optionally excluding converted ones.
+     * Total visitors for a parish; optionally excluding converted ones.
      */
     public function countForParish(int $parishId, bool $excludeConverted = true): int
     {
@@ -248,7 +248,7 @@ class GuestDirectoryService
     }
 
     /**
-     * Whether the person has a guest-scoped affiliation in the parish
+     * Whether the person has a visitor-scoped affiliation in the parish
      * (used for follow-up log scope checks).
      */
     public function affiliationExists(int $personId, int $parishId): bool
@@ -265,7 +265,7 @@ class GuestDirectoryService
     }
 
     /**
-     * Decrypt contact fields on a guest row (person stores them encrypted).
+     * Decrypt contact fields on a visitor row (person stores them encrypted).
      */
     public function decryptRow(array $row): array
     {
@@ -280,11 +280,11 @@ class GuestDirectoryService
     }
 
     /**
-     * Channel opt-out check on a guest-shaped row (person.opted_out_channels).
+     * Channel opt-out check on a visitor-shaped row (person.opted_out_channels).
      */
-    public function isOptedOut(array $guest, string $channel): bool
+    public function isOptedOut(array $visitor, string $channel): bool
     {
-        $raw = $guest['opted_out_channels'] ?? null;
+        $raw = $visitor['opted_out_channels'] ?? null;
         if ($raw === null || $raw === '' || $raw === '[]') {
             return false;
         }
@@ -299,12 +299,12 @@ class GuestDirectoryService
     // ------------------------------------------------------------------
 
     /**
-     * Create a guest through the canonical intake chain (person +
-     * parish_affiliation(type=guest,status=visitor) + person_visit).
-     * Extra guest-form fields (interests, opt-outs, timezone) land on
+     * Create a visitor through the canonical intake chain (person +
+     * parish_affiliation(type=visitor,status=visitor) + person_visit).
+     * Extra visitor-form fields (interests, opt-outs, timezone) land on
      * `person`.
      *
-     * @return int The canonical person_id (guest row id going forward)
+     * @return int The canonical person_id (visitor row id going forward)
      */
     public function create(array $data, int $parishId): int
     {
@@ -319,10 +319,10 @@ class GuestDirectoryService
      */
     public function intake(array $data, int $parishId): array
     {
-        $intake   = GuestIntakeService::record($data, $parishId);
+        $intake   = VisitorIntakeService::record($data, $parishId);
         $personId = (int) $intake['person_id'];
 
-        // Extra guest-form fields land on the person row, but only for
+        // Extra visitor-form fields land on the person row, but only for
         // newly provisioned persons — a dedup match must not clobber the
         // existing person's recorded preferences.
         if (! empty($intake['is_new']) && $personId > 0) {
@@ -341,7 +341,7 @@ class GuestDirectoryService
     }
 
     /**
-     * Update a guest: person contact/preference fields, the earliest
+     * Update a visitor: person contact/preference fields, the earliest
      * visit row (visit_date / service_attended / notes), and the
      * affiliation followed_up flag.
      */
@@ -408,13 +408,13 @@ class GuestDirectoryService
             return true;
         } catch (\Throwable $e) {
             $db->transRollback();
-            log_message('error', 'GuestDirectoryService::update failed: ' . $e->getMessage());
+            log_message('error', 'VisitorDirectoryService::update failed: ' . $e->getMessage());
             return false;
         }
     }
 
     /**
-     * Delete a guest: soft-delete the parish affiliation and, when the
+     * Delete a visitor: soft-delete the parish affiliation and, when the
      * person has no remaining live affiliations, the person row itself.
      * followup_log / person_visit history is preserved for audit.
      */
@@ -443,14 +443,14 @@ class GuestDirectoryService
             return true;
         } catch (\Throwable $e) {
             $db->transRollback();
-            log_message('error', 'GuestDirectoryService::delete failed: ' . $e->getMessage());
+            log_message('error', 'VisitorDirectoryService::delete failed: ' . $e->getMessage());
             return false;
         }
     }
 
     /**
-     * Record a guest→member conversion on the affiliation (canonical
-     * replacement for the legacy guest.converted_* columns).
+     * Record a visitor→member conversion on the affiliation (canonical
+     * replacement for the legacy visitor.converted_* columns).
      */
     public function markConverted(int $personId, int $parishId, ?int $userId, ?int $convertedByUserId): void
     {
@@ -471,8 +471,8 @@ class GuestDirectoryService
     }
 
     /**
-     * Revert a guest→member conversion: clears the conversion markers and
-     * restores the affiliation to guest/visitor.
+     * Revert a visitor→member conversion: clears the conversion markers and
+     * restores the affiliation to visitor/visitor.
      */
     public function revertConversion(int $personId, int $parishId, ?int $revertedByUserId): void
     {

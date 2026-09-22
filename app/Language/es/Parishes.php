@@ -116,7 +116,7 @@ return [
     'impactAttendance' => 'Asistencia via servicios (eliminada)',
     'impactEvents' => 'Eventos (eliminados)',
     'impactEventRegistrations' => 'Registros de eventos (eliminados)',
-    'impactGuests' => 'Visitantes (eliminados)',
+    'impactVisitors' => 'Visitantes (eliminados)',
     'impactExpenses' => 'Gastos (eliminados)',
     'impactFamilies' => 'Familias (eliminadas)',
     'impactVolunteerTeams' => 'Equipos de voluntarios (eliminados)',

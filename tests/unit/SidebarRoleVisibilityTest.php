@@ -78,7 +78,7 @@ final class SidebarRoleVisibilityTest extends CIUnitTestCase
                 ['provinceadmin'],
                 ['province.admin', 'member.view'],
                 ['province/dashboard', 'province/events/calendar', 'province/events', 'province/health', 'province/directory', 'admin/audit-logs', 'profile', 'logout', 'liturgical-source'],
-                ['services', 'guests', 'followup', 'volunteers', 'events', 'worship-planning', 'reports'],
+                ['services', 'visitors', 'followup', 'volunteers', 'events', 'worship-planning', 'reports'],
             ],
             'diocesan admin' => [
                 ['dioceseadmin'],
@@ -88,14 +88,14 @@ final class SidebarRoleVisibilityTest extends CIUnitTestCase
             ],
             'parish admin' => [
                 ['parishadmin'],
-                ['member.view', 'family.view', 'service.view', 'attendance.view', 'guest.view', 'guest.edit', 'member.edit', 'followup.manage', 'finance.view', 'volunteer.manage', 'volunteer.schedule', 'event.view', 'worship.view', 'report.view', 'dashboard.view'],
-                ['parish/dashboard', 'me', 'members', 'families', 'services', 'attendance/reports', 'guests/dashboard', 'leadership', 'standing', 'donations', 'expenses', 'budgets', 'volunteers', 'volunteers/schedules', 'events', 'worship-planning', 'reports', 'admin/audit-logs'],
+                ['member.view', 'family.view', 'service.view', 'attendance.view', 'visitor.view', 'visitor.edit', 'member.edit', 'followup.manage', 'finance.view', 'volunteer.manage', 'volunteer.schedule', 'event.view', 'worship.view', 'report.view', 'dashboard.view'],
+                ['parish/dashboard', 'me', 'members', 'families', 'services', 'attendance/reports', 'visitors/dashboard', 'leadership', 'standing', 'donations', 'expenses', 'budgets', 'volunteers', 'volunteers/schedules', 'events', 'worship-planning', 'reports', 'admin/audit-logs'],
                 ['province/dashboard', 'diocesan/dashboard', 'dioceses', 'liturgical-source', 'parish_list', 'dashboard'],
             ],
             'clergy' => [
                 ['clergy'],
-                ['member.view', 'family.view', 'service.view', 'attendance.view', 'guest.view', 'followup.manage', 'event.view', 'worship.view', 'report.view'],
-                ['parish/worship', 'me', 'members', 'families', 'services', 'attendance/reports', 'guests/dashboard', 'events', 'worship-planning', 'reports'],
+                ['member.view', 'family.view', 'service.view', 'attendance.view', 'visitor.view', 'followup.manage', 'event.view', 'worship.view', 'report.view'],
+                ['parish/worship', 'me', 'members', 'families', 'services', 'attendance/reports', 'visitors/dashboard', 'events', 'worship-planning', 'reports'],
                 ['donations', 'volunteers/schedules', 'admin/audit-logs', 'diocesan/dashboard', 'dioceses', 'province/dashboard', 'dashboard'],
             ],
             'treasurer' => [

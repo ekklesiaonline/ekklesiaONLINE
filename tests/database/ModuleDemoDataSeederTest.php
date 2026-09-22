@@ -32,7 +32,7 @@ final class ModuleDemoDataSeederTest extends CIUnitTestCase
         $this->assertNotNull($parish);
         $parishId = (int) $parish['id'];
 
-        foreach (['profile', 'services', 'guests', 'donations', 'expenses', 'volunteer_teams', 'families'] as $baseTable) {
+        foreach (['profile', 'services', 'person_visit', 'donations', 'expenses', 'volunteer_teams', 'families'] as $baseTable) {
             $table = $this->resolveTableName($baseTable);
             if ($table === null) {
                 continue;

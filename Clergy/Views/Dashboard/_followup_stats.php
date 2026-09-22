@@ -27,7 +27,7 @@
             <div class="card-body">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
-                        <h6 class="text-muted mb-1"><?= lang('Dashboard.followupPendingGuests') ?></h6>
+                        <h6 class="text-muted mb-1"><?= lang('Dashboard.followupPendingVisitors') ?></h6>
                         <h3 class="mb-0" id="fusPendingFollowup">—</h3>
                     </div>
                     <div class="text-warning fs-1">
@@ -70,15 +70,15 @@
         </div>
     </div>
 
-    <!-- New guests per week chart -->
+    <!-- New visitors per week chart -->
     <div class="col-12 mb-3">
         <div class="card">
             <div class="card-header">
-                <h5 class="mb-0"><i class="bi bi-people" aria-hidden="true"></i> <?= lang('Dashboard.followupNewGuestsPerWeek') ?></h5>
+                <h5 class="mb-0"><i class="bi bi-people" aria-hidden="true"></i> <?= lang('Dashboard.followupNewVisitorsPerWeek') ?></h5>
             </div>
             <div class="card-body" style="min-height: 220px;">
                 <div style="height: 200px; max-height: 200px;">
-                    <canvas id="newGuestsPerWeekChart"></canvas>
+                    <canvas id="newVisitorsPerWeekChart"></canvas>
                 </div>
             </div>
         </div>
@@ -95,27 +95,27 @@
         const failedEl = document.getElementById('fusFailedMsgs');
         const lastUpEl = document.getElementById('fusLastUpdated');
         const spinner = document.getElementById('fuSpinner');
-        const canvas = document.getElementById('newGuestsPerWeekChart');
+        const canvas = document.getElementById('newVisitorsPerWeekChart');
 
-        let guestChart = null;
+        let visitorChart = null;
 
         function buildChart(labels, data) {
             if (!canvas) {
                 return;
             }
             const ctx = canvas.getContext('2d');
-            if (guestChart) {
-                guestChart.data.labels = labels;
-                guestChart.data.datasets[0].data = data;
-                guestChart.update();
+            if (visitorChart) {
+                visitorChart.data.labels = labels;
+                visitorChart.data.datasets[0].data = data;
+                visitorChart.update();
                 return;
             }
-            guestChart = new Chart(ctx, {
+            visitorChart = new Chart(ctx, {
                 type: 'bar',
                 data: {
                     labels: labels,
                     datasets: [{
-                        label: <?= json_encode(lang('Dashboard.followupNewGuestsDatasetLabel')) ?>,
+                        label: <?= json_encode(lang('Dashboard.followupNewVisitorsDatasetLabel')) ?>,
                         data: data,
                         backgroundColor: 'rgba(13, 110, 253, 0.65)',
                         borderColor: '#0d6efd',
@@ -173,7 +173,7 @@
                     }
 
                     if (pendingEl) {
-                        pendingEl.textContent = res.guests_in_followup ?? '—';
+                        pendingEl.textContent = res.visitors_in_followup ?? '—';
                     }
                     if (callsEl) {
                         callsEl.textContent = res.call_tasks_today ?? '—';
@@ -182,7 +182,7 @@
                         failedEl.textContent = res.failed_messages_7d ?? '—';
                     }
 
-                    const weekly = Array.isArray(res.new_guests_weekly) ? res.new_guests_weekly : [];
+                    const weekly = Array.isArray(res.new_visitors_weekly) ? res.new_visitors_weekly : [];
                     buildChart(
                         weekly.map(function(r) {
                             return r.week;

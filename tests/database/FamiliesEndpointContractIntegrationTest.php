@@ -608,7 +608,7 @@ final class FamiliesEndpointContractIntegrationTest extends CIUnitTestCase
                 linked_user_id INTEGER NULL,
                 parish_id INTEGER NOT NULL,
                 person_id INTEGER NULL,
-                membership_status TEXT DEFAULT "guest",
+                membership_status TEXT DEFAULT "visitor",
                 source TEXT DEFAULT "system",
                 start_date TEXT NULL,
                 end_date TEXT NULL,

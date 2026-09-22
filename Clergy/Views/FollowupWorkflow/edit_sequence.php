@@ -12,20 +12,20 @@ $saveUrl    = $isNew
 
 <div class="d-flex justify-content-start align-items-center flex-wrap gap-2 mb-3">
     <a href="<?= base_url('followup-workflow/sequences') ?>" class="btn btn-outline-secondary">
-        <i class="bi bi-arrow-left" aria-hidden="true"></i> <?= lang('Guests.pageTitleSequences') ?>
+        <i class="bi bi-arrow-left" aria-hidden="true"></i> <?= lang('Visitors.pageTitleSequences') ?>
     </a>
 </div>
 
 <!-- ── Sequence details card ───────────────────────────────────────── -->
 <div class="card mb-4">
-    <div class="card-header fw-semibold"><?= lang('Guests.seqCardDetails') ?></div>
+    <div class="card-header fw-semibold"><?= lang('Visitors.seqCardDetails') ?></div>
     <div class="card-body">
         <form method="post" action="<?= $saveUrl ?>">
             <?= csrf_field() ?>
 
             <div class="row g-3">
                 <div class="col-md-7">
-                    <label class="form-label" for="seq_name"><?= lang('Guests.seqFieldName') ?> <span class="text-danger">*</span></label>
+                    <label class="form-label" for="seq_name"><?= lang('Visitors.seqFieldName') ?> <span class="text-danger">*</span></label>
                     <input type="text"
                         id="seq_name"
                         name="name"
@@ -36,15 +36,15 @@ $saveUrl    = $isNew
                 </div>
 
                 <div class="col-md-3">
-                    <label class="form-label" for="seq_active"><?= lang('Guests.seqFieldStatus') ?></label>
+                    <label class="form-label" for="seq_active"><?= lang('Visitors.seqFieldStatus') ?></label>
                     <select id="seq_active" name="is_active" class="form-select">
-                        <option value="1" <?= ((int) ($sequence['is_active'] ?? 1)) === 1 ? 'selected' : '' ?>><?= lang('Guests.seqStatusActive') ?></option>
-                        <option value="0" <?= ((int) ($sequence['is_active'] ?? 1)) === 0 ? 'selected' : '' ?>><?= lang('Guests.seqStatusInactive') ?></option>
+                        <option value="1" <?= ((int) ($sequence['is_active'] ?? 1)) === 1 ? 'selected' : '' ?>><?= lang('Visitors.seqStatusActive') ?></option>
+                        <option value="0" <?= ((int) ($sequence['is_active'] ?? 1)) === 0 ? 'selected' : '' ?>><?= lang('Visitors.seqStatusInactive') ?></option>
                     </select>
                 </div>
 
                 <div class="col-12">
-                    <label class="form-label" for="seq_description"><?= lang('Guests.seqFieldDescription') ?></label>
+                    <label class="form-label" for="seq_description"><?= lang('Visitors.seqFieldDescription') ?></label>
                     <textarea id="seq_description"
                         name="description"
                         class="form-control"
@@ -55,9 +55,9 @@ $saveUrl    = $isNew
 
             <div class="mt-3 d-flex gap-2">
                 <button type="submit" class="btn btn-primary">
-                    <i class="bi bi-check-lg" aria-hidden="true"></i> <?= $isNew ? lang('Guests.seqBtnCreate') : lang('Guests.seqBtnSave') ?>
+                    <i class="bi bi-check-lg" aria-hidden="true"></i> <?= $isNew ? lang('Visitors.seqBtnCreate') : lang('Visitors.seqBtnSave') ?>
                 </button>
-                <a href="<?= base_url('followup-workflow/sequences') ?>" class="btn btn-outline-secondary"><?= lang('Guests.seqBtnCancel') ?></a>
+                <a href="<?= base_url('followup-workflow/sequences') ?>" class="btn btn-outline-secondary"><?= lang('Visitors.seqBtnCancel') ?></a>
             </div>
         </form>
     </div>
@@ -67,9 +67,9 @@ $saveUrl    = $isNew
     <!-- ── Action steps card ────────────────────────────────────────────── -->
     <div class="card">
         <div class="card-header d-flex justify-content-between align-items-center">
-            <span class="fw-semibold"><?= lang('Guests.seqCardSteps') ?></span>
+            <span class="fw-semibold"><?= lang('Visitors.seqCardSteps') ?></span>
             <button type="button" class="btn btn-sm btn-outline-primary" id="btnAddAction">
-                <i class="bi bi-plus-circle" aria-hidden="true"></i> <?= lang('Guests.seqBtnAddStep') ?>
+                <i class="bi bi-plus-circle" aria-hidden="true"></i> <?= lang('Visitors.seqBtnAddStep') ?>
             </button>
         </div>
         <div class="card-body p-0">
@@ -89,7 +89,7 @@ $saveUrl    = $isNew
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="actionModalLabel"><?= lang('Guests.seqModalAddStep') ?></h5>
+                    <h5 class="modal-title" id="actionModalLabel"><?= lang('Visitors.seqModalAddStep') ?></h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
@@ -98,32 +98,32 @@ $saveUrl    = $isNew
 
                     <div class="row g-3">
                         <div class="col-6">
-                            <label class="form-label" for="action_week"><?= lang('Guests.seqFieldWeek') ?> <span class="text-danger">*</span></label>
+                            <label class="form-label" for="action_week"><?= lang('Visitors.seqFieldWeek') ?> <span class="text-danger">*</span></label>
                             <input type="number" id="action_week" class="form-control" min="1" max="52" required placeholder="e.g. 1">
-                            <div class="form-text"><?= lang('Guests.seqFieldWeekHint') ?></div>
+                            <div class="form-text"><?= lang('Visitors.seqFieldWeekHint') ?></div>
                         </div>
                         <div class="col-6">
-                            <label class="form-label" for="action_day_offset"><?= lang('Guests.seqFieldDayOffset') ?> <span class="text-danger">*</span></label>
+                            <label class="form-label" for="action_day_offset"><?= lang('Visitors.seqFieldDayOffset') ?> <span class="text-danger">*</span></label>
                             <input type="number" id="action_day_offset" class="form-control" min="0" max="365" required placeholder="e.g. 3">
-                            <div class="form-text"><?= lang('Guests.seqFieldDayOffsetHint') ?></div>
+                            <div class="form-text"><?= lang('Visitors.seqFieldDayOffsetHint') ?></div>
                         </div>
 
                         <div class="col-12">
-                            <label class="form-label" for="action_channel"><?= lang('Guests.seqFieldChannel') ?> <span class="text-danger">*</span></label>
+                            <label class="form-label" for="action_channel"><?= lang('Visitors.seqFieldChannel') ?> <span class="text-danger">*</span></label>
                             <select id="action_channel" class="form-select" required>
-                                <option value=""><?= lang('Guests.seqFieldChannelSelect') ?></option>
-                                <option value="text"><?= lang('Guests.seqChannelText') ?></option>
-                                <option value="email"><?= lang('Guests.seqChannelEmail') ?></option>
-                                <option value="call"><?= lang('Guests.seqChannelCall') ?></option>
-                                <option value="mail"><?= lang('Guests.seqChannelMail') ?></option>
-                                <option value="gift"><?= lang('Guests.seqChannelGift') ?></option>
+                                <option value=""><?= lang('Visitors.seqFieldChannelSelect') ?></option>
+                                <option value="text"><?= lang('Visitors.seqChannelText') ?></option>
+                                <option value="email"><?= lang('Visitors.seqChannelEmail') ?></option>
+                                <option value="call"><?= lang('Visitors.seqChannelCall') ?></option>
+                                <option value="mail"><?= lang('Visitors.seqChannelMail') ?></option>
+                                <option value="gift"><?= lang('Visitors.seqChannelGift') ?></option>
                             </select>
                         </div>
 
                         <div class="col-12">
-                            <label class="form-label" for="action_template"><?= lang('Guests.seqFieldTemplate') ?></label>
+                            <label class="form-label" for="action_template"><?= lang('Visitors.seqFieldTemplate') ?></label>
                             <select id="action_template" class="form-select">
-                                <option value=""><?= lang('Guests.seqFieldTemplateNone') ?></option>
+                                <option value=""><?= lang('Visitors.seqFieldTemplateNone') ?></option>
                                 <?php foreach ($templates as $tpl): ?>
                                     <option value="<?= (int) $tpl['id'] ?>"
                                         data-channel="<?= esc($tpl['channel']) ?>">
@@ -131,14 +131,14 @@ $saveUrl    = $isNew
                                     </option>
                                 <?php endforeach; ?>
                             </select>
-                            <div class="form-text"><?= lang('Guests.seqFieldTemplateHint') ?></div>
+                            <div class="form-text"><?= lang('Visitors.seqFieldTemplateHint') ?></div>
                         </div>
 
                         <div class="col-12">
                             <div class="form-check">
                                 <input class="form-check-input" type="checkbox" id="action_automated" value="1">
                                 <label class="form-check-label" for="action_automated">
-                                    <?= lang('Guests.seqFieldAutomated') ?>
+                                    <?= lang('Visitors.seqFieldAutomated') ?>
                                 </label>
                             </div>
                         </div>
@@ -147,10 +147,10 @@ $saveUrl    = $isNew
                     <div id="actionModalErrors" class="alert alert-danger mt-3 d-none"></div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal"><?= lang('Guests.seqBtnCancel') ?></button>
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal"><?= lang('Visitors.seqBtnCancel') ?></button>
                     <button type="button" class="btn btn-primary" id="btnSaveAction">
                         <span class="spinner-border spinner-border-sm d-none me-1" id="actionSpinner"></span>
-                        <?= lang('Guests.seqBtnSaveStep') ?>
+                        <?= lang('Visitors.seqBtnSaveStep') ?>
                     </button>
                 </div>
             </div>
@@ -193,10 +193,10 @@ $saveUrl    = $isNew
             // Open modal for a new action
             btnAdd?.addEventListener('click', function() {
                 if (!bsModal) {
-                    showAppToast(<?= json_encode(lang('Guests.seqModalUnavailable')) ?>, 'warning');
+                    showAppToast(<?= json_encode(lang('Visitors.seqModalUnavailable')) ?>, 'warning');
                     return;
                 }
-                document.getElementById('actionModalLabel').textContent = <?= json_encode(lang('Guests.seqModalAddStep')) ?>;
+                document.getElementById('actionModalLabel').textContent = <?= json_encode(lang('Visitors.seqModalAddStep')) ?>;
                 document.getElementById('action_id').value = '';
                 document.getElementById('action_week').value = '';
                 document.getElementById('action_day_offset').value = '';
@@ -213,11 +213,11 @@ $saveUrl    = $isNew
                 const btn = e.target.closest('.btn-edit-action');
                 if (!btn) return;
                 if (!bsModal) {
-                    showAppToast(<?= json_encode(lang('Guests.seqModalUnavailable')) ?>, 'warning');
+                    showAppToast(<?= json_encode(lang('Visitors.seqModalUnavailable')) ?>, 'warning');
                     return;
                 }
 
-                document.getElementById('actionModalLabel').textContent = <?= json_encode(lang('Guests.seqModalEditStep')) ?>;
+                document.getElementById('actionModalLabel').textContent = <?= json_encode(lang('Visitors.seqModalEditStep')) ?>;
                 document.getElementById('action_id').value = btn.dataset.id;
                 document.getElementById('action_week').value = btn.dataset.week;
                 document.getElementById('action_day_offset').value = btn.dataset.dayOffset;
@@ -238,7 +238,7 @@ $saveUrl    = $isNew
                 const channel = channelSel?.value ?? '';
 
                 if (!week || !day || !channel) {
-                    errBox.textContent = <?= json_encode(lang('Guests.seqValidationRequired')) ?>;
+                    errBox.textContent = <?= json_encode(lang('Visitors.seqValidationRequired')) ?>;
                     errBox.classList.remove('d-none');
                     return;
                 }
@@ -270,17 +270,17 @@ $saveUrl    = $isNew
                         if (data.success) {
                             bsModal?.hide();
                             renderActions(data.actions);
-                            showAppToast(<?= json_encode(lang('Guests.seqStepSaved')) ?>, 'primary');
+                            showAppToast(<?= json_encode(lang('Visitors.seqStepSaved')) ?>, 'primary');
                         } else {
                             const msgs = data.errors ?
                                 Object.values(data.errors).join('<br>') :
-                                (data.message ?? <?= json_encode(lang('Guests.seqStepSaveFailed')) ?>);
+                                (data.message ?? <?= json_encode(lang('Visitors.seqStepSaveFailed')) ?>);
                             errBox.innerHTML = msgs;
                             errBox.classList.remove('d-none');
                         }
                     })
                     .catch(() => {
-                        errBox.textContent = <?= json_encode(lang('Guests.seqNetworkError')) ?>;
+                        errBox.textContent = <?= json_encode(lang('Visitors.seqNetworkError')) ?>;
                         errBox.classList.remove('d-none');
                     })
                     .finally(() => {
@@ -297,8 +297,8 @@ $saveUrl    = $isNew
                 const channel = btn.dataset.channel;
 
                 showAppConfirm(
-                    <?= json_encode(lang('Guests.seqDeleteStepTitle')) ?>,
-                    <?= json_encode(lang('Guests.seqDeleteStepBody', ['{channel}'])) ?>.replace('{channel}', channel),
+                    <?= json_encode(lang('Visitors.seqDeleteStepTitle')) ?>,
+                    <?= json_encode(lang('Visitors.seqDeleteStepBody', ['{channel}'])) ?>.replace('{channel}', channel),
                     function() {
                         fetch(deleteUrl + id, {
                                 method: 'POST',
@@ -312,12 +312,12 @@ $saveUrl    = $isNew
                             .then(data => {
                                 if (data.success) {
                                     renderActions(data.actions);
-                                    showAppToast(<?= json_encode(lang('Guests.seqStepDeleted')) ?>, 'primary');
+                                    showAppToast(<?= json_encode(lang('Visitors.seqStepDeleted')) ?>, 'primary');
                                 } else {
-                                    showAppToast(data.message ?? <?= json_encode(lang('Guests.seqStepDeleteFailed')) ?>, 'danger');
+                                    showAppToast(data.message ?? <?= json_encode(lang('Visitors.seqStepDeleteFailed')) ?>, 'danger');
                                 }
                             })
-                            .catch(() => showAppToast(<?= json_encode(lang('Guests.seqNetworkError')) ?>, 'danger'));
+                            .catch(() => showAppToast(<?= json_encode(lang('Visitors.seqNetworkError')) ?>, 'danger'));
                     },
                     <?= json_encode(lang('App.delete')) ?>
                 );
@@ -330,7 +330,7 @@ $saveUrl    = $isNew
                     wrapper.innerHTML = `
                 <div class="text-center py-4 text-muted">
                     <i class="bi bi-list-task fs-2 d-block mb-2" aria-hidden="true"></i>
-                    ${<?= json_encode(lang('Guests.seqStepsEmpty')) ?>}
+                    ${<?= json_encode(lang('Visitors.seqStepsEmpty')) ?>}
                 </div>`;
                     return;
                 }
@@ -342,9 +342,9 @@ $saveUrl    = $isNew
                     mail: 'bg-secondary',
                     gift: 'bg-success',
                 };
-                const labelNone = <?= json_encode(lang('Guests.seqStepNone')) ?>;
-                const labelAuto = <?= json_encode(lang('Guests.seqTypeAuto')) ?>;
-                const labelManual = <?= json_encode(lang('Guests.seqTypeManual')) ?>;
+                const labelNone = <?= json_encode(lang('Visitors.seqStepNone')) ?>;
+                const labelAuto = <?= json_encode(lang('Visitors.seqTypeAuto')) ?>;
+                const labelManual = <?= json_encode(lang('Visitors.seqTypeManual')) ?>;
 
                 let rows = actions.map(function(a) {
                     const badge = channelBadge[a.channel] ?? 'bg-light text-dark';
@@ -383,11 +383,11 @@ $saveUrl    = $isNew
                 <table class="table table-hover align-middle mb-0">
                     <thead>
                         <tr>
-                            <th scope="col">${<?= json_encode(lang('Guests.seqColWeek')) ?>}</th>
-                            <th scope="col">${<?= json_encode(lang('Guests.seqColDayOffset')) ?>}</th>
-                            <th scope="col">${<?= json_encode(lang('Guests.seqColChannel')) ?>}</th>
-                            <th scope="col">${<?= json_encode(lang('Guests.seqColTemplate')) ?>}</th>
-                            <th scope="col">${<?= json_encode(lang('Guests.seqColType')) ?>}</th>
+                            <th scope="col">${<?= json_encode(lang('Visitors.seqColWeek')) ?>}</th>
+                            <th scope="col">${<?= json_encode(lang('Visitors.seqColDayOffset')) ?>}</th>
+                            <th scope="col">${<?= json_encode(lang('Visitors.seqColChannel')) ?>}</th>
+                            <th scope="col">${<?= json_encode(lang('Visitors.seqColTemplate')) ?>}</th>
+                            <th scope="col">${<?= json_encode(lang('Visitors.seqColType')) ?>}</th>
                             <th scope="col" class="text-end">${<?= json_encode(lang('App.colActions')) ?>}</th>
                         </tr>
                     </thead>

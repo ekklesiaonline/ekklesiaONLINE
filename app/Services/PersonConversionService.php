@@ -84,7 +84,7 @@ class PersonConversionService
                 ]);
 
             self::markPendingFollowupsSkipped($personId, $now);
-            self::markGuestConverted($affiliationId, $userId, $convertedByUserId, $now);
+            self::markVisitorConverted($affiliationId, $userId, $convertedByUserId, $now);
 
             $db->transCommit();
 
@@ -191,7 +191,7 @@ class PersonConversionService
     }
 
     /**
-     * Mark a person's guest affiliation as converted when the member
+     * Mark a person's visitor affiliation as converted when the member
      * account was created through a different path (e.g. the pre-filled
      * member create form). Skips pending follow-ups for the person.
      */
@@ -231,7 +231,7 @@ class PersonConversionService
             ]);
     }
 
-    private static function markGuestConverted(int $affiliationId, ?int $userId, ?int $convertedByUserId, string $now): void
+    private static function markVisitorConverted(int $affiliationId, ?int $userId, ?int $convertedByUserId, string $now): void
     {
         db_connect()->table('parish_affiliation')
             ->where('id', $affiliationId)

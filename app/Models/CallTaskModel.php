@@ -55,7 +55,7 @@ class CallTaskModel extends Model
     // ------------------------------------------------------------------
 
     /**
-     * Return all pending call tasks for a parish, enriched with guest name.
+     * Return all pending call tasks for a parish, enriched with visitor name.
      */
     public function getPendingForParish(int $parishId): array
     {

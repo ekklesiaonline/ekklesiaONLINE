@@ -37,7 +37,7 @@ return [
     // -------------------------------------------------------------------------
     'totalPeople'         => 'Personas',
     'membersLabel'        => 'Miembros',
-    'guestsNotConverted'  => '{0} visitantes aún no convertidos',
+    'visitorsNotConverted'  => '{0} visitantes aún no convertidos',
     'parishMembers'       => 'Miembros de la parroquia',
     'goodStanding'        => 'Buena conducta',
     'inLeadership'        => '{0} en liderazgo',
@@ -55,8 +55,8 @@ return [
     'membershipStatus'    => 'Estado de membresía',
     'asaAscGraphics'      => 'Graficos ASA / ASC',
     'parishSundayAttendanceTitle' => 'Asistencia Dominical',
-    'recentGuests'        => 'Visitantes recientes',
-    'noRecentGuests'      => 'No hay visitantes recientes.',
+    'recentVisitors'        => 'Visitantes recientes',
+    'noRecentVisitors'      => 'No hay visitantes recientes.',
 
     // -------------------------------------------------------------------------
     // Panel provincial - resumen por diócesis
@@ -68,7 +68,7 @@ return [
     'colDiocese'           => 'Diócesis',
     'colParishes'          => 'Iglesias',
     'colPeople'            => 'Personas',
-    'colGuests'            => 'Visitantes',
+    'colVisitors'            => 'Visitantes',
     'colMembers'           => 'Miembros',
     'colActive'            => 'Activos',
     'colAttendance'        => 'Asistencia',
@@ -99,7 +99,7 @@ return [
     'applyFilter' => 'Aplicar Filtro',
     'showFilter' => 'Mostrar Filtro',
     'hideFilter' => 'Ocultar Filtro',
-    'guestsLabel' => 'visitantes',
+    'visitorsLabel' => 'visitantes',
     'goodStandingLabel' => 'buena conducta',
     'leadershipLabel' => 'liderazgo',
     'avgSundayWeekdayAttendance' => 'Promedio de Asistencia Dominical / Entre Semana',
@@ -301,11 +301,11 @@ return [
 
     // Follow-up overview panel (parish admin dashboard)
     'followupOverviewTitle'          => 'Resumen de Seguimiento',
-    'followupPendingGuests'          => 'Visitantes en Seguimiento',
+    'followupPendingVisitors'          => 'Visitantes en Seguimiento',
     'followupCallsToday'             => 'Llamadas Pendientes Hoy',
     'followupFailedMessages7d'       => 'Mensajes Fallidos (7 días)',
-    'followupNewGuestsPerWeek'       => 'Nuevos Visitantes por Semana',
-    'followupNewGuestsDatasetLabel'  => 'Nuevos Visitantes',
+    'followupNewVisitorsPerWeek'       => 'Nuevos Visitantes por Semana',
+    'followupNewVisitorsDatasetLabel'  => 'Nuevos Visitantes',
     'followupLastUpdated'            => 'Actualizado a las',
     'followupLoadError'              => 'No se pudieron cargar las estadísticas de seguimiento. Inténtalo de nuevo.',
     'exportCsv' => 'Exportar CSV', 'adminCoverage' => 'Cobertura administrativa', 'adminCovered' => 'Cubierta', 'adminMissing' => 'Falta', 'lastServiceDate' => 'Último servicio', 'noServiceReported' => 'No se informó ningún servicio', 'healthStatus' => 'Estado', 'health_healthy' => 'Saludable', 'health_overdue' => 'Informe atrasado', 'health_attention' => 'Requiere atención', 'invalidPeriod' => 'Seleccione un período de informe válido.', 'invalidDateRange' => 'Introduzca un intervalo de fechas válido con la fecha final igual o posterior a la fecha inicial.', 'attendanceComparison' => 'Cambio de asistencia comparado con {0} a {1}', 'provinceReportDefinition' => 'Las métricas reflejan el período y alcance seleccionados. Los informes atrasados usan el umbral configurado de servicios.',

@@ -10,15 +10,15 @@
 
 <div class="card">
     <div class="card-body">
-        <?php if (old('guest_id')): ?>
+        <?php if (old('visitor_id')): ?>
             <div class="alert alert-info d-flex align-items-center gap-2" role="status">
                 <i class="bi bi-info-circle" aria-hidden="true"></i>
-                <div><?= lang('Members.prefilledFromGuest') ?></div>
+                <div><?= lang('Members.prefilledFromVisitor') ?></div>
             </div>
         <?php endif; ?>
         <form action="<?= base_url('members/store') ?>" method="post" enctype="multipart/form-data">
             <?= csrf_field() ?>
-            <input type="hidden" name="guest_id" value="<?= esc(old('guest_id')) ?>">
+            <input type="hidden" name="visitor_id" value="<?= esc(old('visitor_id')) ?>">
 
             <div class="row">
                 <div class="col-md-6">

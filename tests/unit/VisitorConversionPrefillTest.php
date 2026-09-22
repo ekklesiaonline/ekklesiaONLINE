@@ -5,24 +5,24 @@ use CodeIgniter\Test\CIUnitTestCase;
 use CodeIgniter\Test\DatabaseTestTrait;
 
 /**
- * T3.2/T4.5: guest-to-member conversion pre-fill.
+ * T3.2/T4.5: visitor-to-member conversion pre-fill.
  *
  * Covers the bookkeeping side: recordManualConversion() marks the canonical
- * guest affiliation converted and skips pending follow-ups for the person,
- * and the wiring that carries guest_data into the member create form exists.
+ * visitor affiliation converted and skips pending follow-ups for the person,
+ * and the wiring that carries visitor_data into the member create form exists.
  *
  * @internal
  */
-final class GuestConversionPrefillTest extends CIUnitTestCase
+final class VisitorConversionPrefillTest extends CIUnitTestCase
 {
     use DatabaseTestTrait;
 
     protected $migrate = true;
     protected $refresh = true;
 
-    public function testRecordManualConversionMarksGuestConverted(): void
+    public function testRecordManualConversionMarksVisitorConverted(): void
     {
-        $personId = $this->insertGuestPerson(301);
+        $personId = $this->insertVisitorPerson(301);
 
         PersonConversionService::recordManualConversion($personId, 301, 55, 7);
 
@@ -40,7 +40,7 @@ final class GuestConversionPrefillTest extends CIUnitTestCase
 
     public function testRecordManualConversionSkipsPendingFollowups(): void
     {
-        $personId = $this->insertGuestPerson(301);
+        $personId = $this->insertVisitorPerson(301);
         $pendingId = $this->insertFollowup($personId, 'pending');
         $doneId = $this->insertFollowup($personId, 'sent');
         $otherId = $this->insertFollowup(43, 'pending');
@@ -57,25 +57,25 @@ final class GuestConversionPrefillTest extends CIUnitTestCase
     }
 
     /**
-     * Wiring contract: the create-account endpoint sets guest_data flashdata,
+     * Wiring contract: the create-account endpoint sets visitor_data flashdata,
      * Members::create consumes it into old input, and the form carries
-     * guest_id (the canonical person_id) back to store().
+     * visitor_id (the canonical person_id) back to store().
      */
     public function testPrefillWiringExists(): void
     {
-        $guests = (string) file_get_contents(ROOTPATH . 'Clergy/Controllers/Guests.php');
+        $visitors = (string) file_get_contents(ROOTPATH . 'Clergy/Controllers/Visitors.php');
         $members = (string) file_get_contents(ROOTPATH . 'Clergy/Controllers/Members.php');
         $view = (string) file_get_contents(ROOTPATH . 'Clergy/Views/Members/create.php');
         $routes = (string) file_get_contents(ROOTPATH . 'Clergy/Config/Routes.php');
 
         $this->assertStringContainsString('create-account', $routes);
-        $this->assertStringContainsString("setFlashdata('guest_data'", $guests);
-        $this->assertStringContainsString("session('guest_data')", $members);
-        $this->assertStringContainsString('name="guest_id"', $view);
-        $this->assertStringContainsString("getPost('guest_id')", $members);
+        $this->assertStringContainsString("setFlashdata('visitor_data'", $visitors);
+        $this->assertStringContainsString("session('visitor_data')", $members);
+        $this->assertStringContainsString('name="visitor_id"', $view);
+        $this->assertStringContainsString("getPost('visitor_id')", $members);
     }
 
-    private function insertGuestPerson(int $parishId): int
+    private function insertVisitorPerson(int $parishId): int
     {
         $this->db->table('person')->insert([
             'first_name' => 'Ana',

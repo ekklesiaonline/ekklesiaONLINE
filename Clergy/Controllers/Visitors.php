@@ -3,33 +3,33 @@
 namespace Clergy\Controllers;
 
 use App\Controllers\BaseController;
-use App\Services\GuestDirectoryService;
-use App\Services\GuestFollowupService;
+use App\Services\VisitorDirectoryService;
+use App\Services\VisitorFollowupService;
 use App\Services\PersonConversionService;
 
-class Guests extends BaseController
+class Visitors extends BaseController
 {
     protected $personVisitModel;
     protected $followupLogModel;
     protected $followupSequenceModel;
-    private GuestFollowupService $followupQueries;
-    private GuestDirectoryService $guestDirectory;
+    private VisitorFollowupService $followupQueries;
+    private VisitorDirectoryService $visitorDirectory;
 
     public function __construct()
     {
-        $this->guestDirectory        = new GuestDirectoryService();
+        $this->visitorDirectory        = new VisitorDirectoryService();
         $this->personVisitModel      = model('PersonVisitModel');
         $this->followupLogModel      = model('FollowupLogModel');
         $this->followupSequenceModel = model('FollowupSequenceModel');
-        $this->followupQueries       = new GuestFollowupService();
+        $this->followupQueries       = new VisitorFollowupService();
     }
 
     /**
-     * Display list of guests
+     * Display list of visitors
      */
     public function index()
     {
-        if ($redirect = $this->requirePermission('guest.view')) {
+        if ($redirect = $this->requirePermission('visitor.view')) {
             return $redirect;
         }
 
@@ -49,7 +49,7 @@ class Guests extends BaseController
         $source        = $this->request->getGet('source');
 
         $page   = max(1, (int) ($this->request->getGet('page') ?? 1));
-        $result = $this->guestDirectory->paginateForParish((int) $parishId, [
+        $result = $this->visitorDirectory->paginateForParish((int) $parishId, [
             'followed_up'    => $followedUp,
             'search'         => $search,
             'date_from'      => $dateFrom,
@@ -58,14 +58,14 @@ class Guests extends BaseController
             'source'         => $source,
         ], $perPage, $page);
 
-        $guests = $result['rows'];
+        $visitors = $result['rows'];
 
-        // Per-guest followup progress for 4-state badge (by person_id)
-        $personIds = array_filter(array_column($guests, 'person_id'));
+        // Per-visitor followup progress for 4-state badge (by person_id)
+        $personIds = array_filter(array_column($visitors, 'person_id'));
         $progressMap = $this->followupQueries->progressMapForPersons($personIds);
 
         $data = [
-            'guests'        => $guests,
+            'visitors'        => $visitors,
             'pager'         => $result['pager'],
             'followed_up'   => $followedUp,
             'search'        => $search,
@@ -76,15 +76,15 @@ class Guests extends BaseController
             'progressMap'   => $progressMap,
         ];
 
-        return view('Clergy\Views\Guests/index', array_merge($this->getCommonViewData(lang('Guests.pageTitle')), $data));
+        return view('Clergy\Views\Visitors/index', array_merge($this->getCommonViewData(lang('Visitors.pageTitle')), $data));
     }
 
     /**
-     * Display single guest
+     * Display single visitor
      */
     public function view($id)
     {
-        if ($redirect = $this->requirePermission('guest.view')) {
+        if ($redirect = $this->requirePermission('visitor.view')) {
             return $redirect;
         }
 
@@ -92,16 +92,16 @@ class Guests extends BaseController
             return $redirect;
         }
 
-        $guest = $this->guestDirectory->findByPerson((int) $id, (int) $this->getOperationalParishId());
+        $visitor = $this->visitorDirectory->findByPerson((int) $id, (int) $this->getOperationalParishId());
 
-        if (!$guest) {
-            return redirect()->to('/guests')->with('error', lang('Guests.guestNotFound'));
+        if (!$visitor) {
+            return redirect()->to('/visitors')->with('error', lang('Visitors.visitorNotFound'));
         }
 
         // Legacy ad-hoc tasks (retired — table dropped; pass empty array for view compatibility)
         $tasks = [];
 
-        $personId = (int) ($guest['person_id'] ?? 0);
+        $personId = (int) ($visitor['person_id'] ?? 0);
 
         // Structured visit history
         $visits = $personId > 0
@@ -119,10 +119,10 @@ class Guests extends BaseController
             : null;
 
         // Sequences available to assign
-        $sequences = $this->followupSequenceModel->getActiveForParish((int) $guest['parish_id']);
+        $sequences = $this->followupSequenceModel->getActiveForParish((int) $visitor['parish_id']);
 
         $data = [
-            'guest'            => $guest,
+            'visitor'            => $visitor,
             'tasks'            => $tasks,
             'visits'           => $visits,
             'followupTimeline' => $followupTimeline,
@@ -130,15 +130,15 @@ class Guests extends BaseController
             'sequences'        => $sequences,
         ];
 
-        return view('Clergy\Views\Guests/view', array_merge($this->getCommonViewData(lang('Guests.pageTitleView')), $data));
+        return view('Clergy\Views\Visitors/view', array_merge($this->getCommonViewData(lang('Visitors.pageTitleView')), $data));
     }
 
     /**
-     * Show create guest form
+     * Show create visitor form
      */
     public function create()
     {
-        if ($redirect = $this->requirePermission('guest.create')) {
+        if ($redirect = $this->requirePermission('visitor.create')) {
             return $redirect;
         }
 
@@ -146,15 +146,15 @@ class Guests extends BaseController
             return $redirect;
         }
 
-        return view('Clergy\Views\Guests/create', $this->getCommonViewData(lang('Guests.pageTitleAdd')));
+        return view('Clergy\Views\Visitors/create', $this->getCommonViewData(lang('Visitors.pageTitleAdd')));
     }
 
     /**
-     * Store new guest
+     * Store new visitor
      */
     public function store()
     {
-        if ($redirect = $this->requirePermission('guest.create')) {
+        if ($redirect = $this->requirePermission('visitor.create')) {
             return $redirect;
         }
 
@@ -204,22 +204,22 @@ class Guests extends BaseController
 
         $parishId = (int) $this->getOperationalParishId();
         try {
-            $intake   = $this->guestDirectory->intake($data, $parishId);
+            $intake   = $this->visitorDirectory->intake($data, $parishId);
             $personId = (int) $intake['person_id'];
 
             if (! $intake['is_new'] && $personId > 0) {
                 // Dedup matched an existing person — apply the submitted edits.
-                $this->guestDirectory->update($personId, $parishId, $data);
+                $this->visitorDirectory->update($personId, $parishId, $data);
             }
         } catch (\Throwable $e) {
-            log_message('error', 'Guest intake failed: ' . $e->getMessage());
+            log_message('error', 'Visitor intake failed: ' . $e->getMessage());
             $personId = 0;
         }
 
         if ($personId > 0) {
-            $this->audit()->log('guest.create', [
+            $this->audit()->log('visitor.create', [
                 'parish_id' => (int) ($this->getOperationalParishId() ?? 0),
-                'entity_type' => 'guest',
+                'entity_type' => 'visitor',
                 'entity_id' => $personId,
                 'new_values' => [
                     'visit_date' => (string) ($data['visit_date'] ?? ''),
@@ -228,18 +228,18 @@ class Guests extends BaseController
                 ],
             ]);
 
-            return redirect()->to('/guests/view/' . $personId)->with('success', lang('Guests.guestCreateSuccess'));
+            return redirect()->to('/visitors/view/' . $personId)->with('success', lang('Visitors.visitorCreateSuccess'));
         }
 
-        return redirect()->back()->withInput()->with('error', lang('Guests.guestCreateFailed'));
+        return redirect()->back()->withInput()->with('error', lang('Visitors.visitorCreateFailed'));
     }
 
     /**
-     * Show edit guest form
+     * Show edit visitor form
      */
     public function edit($id)
     {
-        if ($redirect = $this->requirePermission('guest.edit')) {
+        if ($redirect = $this->requirePermission('visitor.edit')) {
             return $redirect;
         }
 
@@ -247,21 +247,21 @@ class Guests extends BaseController
             return $redirect;
         }
 
-        $guest = $this->guestDirectory->findByPerson((int) $id, (int) $this->getOperationalParishId());
+        $visitor = $this->visitorDirectory->findByPerson((int) $id, (int) $this->getOperationalParishId());
 
-        if (!$guest) {
-            return redirect()->to('/guests')->with('error', lang('Guests.guestNotFound'));
+        if (!$visitor) {
+            return redirect()->to('/visitors')->with('error', lang('Visitors.visitorNotFound'));
         }
 
-        return view('Clergy\Views\Guests/edit', array_merge($this->getCommonViewData(lang('Guests.pageTitleEdit')), ['guest' => $guest]));
+        return view('Clergy\Views\Visitors/edit', array_merge($this->getCommonViewData(lang('Visitors.pageTitleEdit')), ['visitor' => $visitor]));
     }
 
     /**
-     * Update guest
+     * Update visitor
      */
     public function update($id)
     {
-        if ($redirect = $this->requirePermission('guest.edit')) {
+        if ($redirect = $this->requirePermission('visitor.edit')) {
             return $redirect;
         }
 
@@ -269,10 +269,10 @@ class Guests extends BaseController
             return $redirect;
         }
 
-        $guest = $this->guestDirectory->findByPerson((int) $id, (int) $this->getOperationalParishId());
+        $visitor = $this->visitorDirectory->findByPerson((int) $id, (int) $this->getOperationalParishId());
 
-        if (!$guest) {
-            return redirect()->to('/guests')->with('error', lang('Guests.guestNotFound'));
+        if (!$visitor) {
+            return redirect()->to('/visitors')->with('error', lang('Visitors.visitorNotFound'));
         }
 
         $rules = [
@@ -328,37 +328,37 @@ class Guests extends BaseController
             'notes'                    => $this->request->getPost('notes'),
         ];
 
-        if ($this->guestDirectory->update((int) $id, (int) $this->getOperationalParishId(), $data)) {
-            $this->audit()->log('guest.update', [
+        if ($this->visitorDirectory->update((int) $id, (int) $this->getOperationalParishId(), $data)) {
+            $this->audit()->log('visitor.update', [
                 'parish_id' => (int) ($this->getOperationalParishId() ?? 0),
-                'entity_type' => 'guest',
+                'entity_type' => 'visitor',
                 'entity_id' => (int) $id,
                 'old_values' => [
-                    'visit_date' => (string) ($guest['visit_date'] ?? ''),
-                    'service_attended' => (string) ($guest['service_attended'] ?? ''),
-                    'followed_up' => (int) ($guest['followed_up'] ?? 0),
-                    'converted_to_member_at' => (string) ($guest['converted_to_member_at'] ?? ''),
+                    'visit_date' => (string) ($visitor['visit_date'] ?? ''),
+                    'service_attended' => (string) ($visitor['service_attended'] ?? ''),
+                    'followed_up' => (int) ($visitor['followed_up'] ?? 0),
+                    'converted_to_member_at' => (string) ($visitor['converted_to_member_at'] ?? ''),
                 ],
                 'new_values' => [
                     'visit_date' => (string) ($data['visit_date'] ?? ''),
                     'service_attended' => (string) ($data['service_attended'] ?? ''),
                     'followed_up' => (int) ($data['followed_up'] ?? 0),
-                    'converted_to_member_at' => (string) ($guest['converted_to_member_at'] ?? ''),
+                    'converted_to_member_at' => (string) ($visitor['converted_to_member_at'] ?? ''),
                 ],
             ]);
 
-            return redirect()->to('/guests/view/' . $id)->with('success', lang('Guests.guestUpdateSuccess'));
+            return redirect()->to('/visitors/view/' . $id)->with('success', lang('Visitors.visitorUpdateSuccess'));
         }
 
-        return redirect()->back()->withInput()->with('error', lang('Guests.guestUpdateFailed'));
+        return redirect()->back()->withInput()->with('error', lang('Visitors.visitorUpdateFailed'));
     }
 
     /**
-     * Delete guest
+     * Delete visitor
      */
     public function delete($id)
     {
-        if ($redirect = $this->requirePermission('guest.delete')) {
+        if ($redirect = $this->requirePermission('visitor.delete')) {
             return $redirect;
         }
 
@@ -366,10 +366,10 @@ class Guests extends BaseController
             return $redirect;
         }
 
-        $guest = $this->guestDirectory->findByPerson((int) $id, (int) $this->getOperationalParishId());
+        $visitor = $this->visitorDirectory->findByPerson((int) $id, (int) $this->getOperationalParishId());
 
-        if (!$guest) {
-            return $this->jsonResponse(['success' => false, 'message' => lang('Guests.guestNotFound')]);
+        if (!$visitor) {
+            return $this->jsonResponse(['success' => false, 'message' => lang('Visitors.visitorNotFound')]);
         }
 
         // Require a reason (min 10 chars) — accept from POST body or JSON body.
@@ -382,23 +382,23 @@ class Guests extends BaseController
         if (strlen($deleteReason) < 10) {
             return $this->jsonResponse([
                 'success' => false,
-                'message' => lang('Guests.deleteReasonRequired'),
+                'message' => lang('Visitors.deleteReasonRequired'),
             ]);
         }
 
         // Count pending followup log entries before the delete detaches them.
         $pendingSequences = $this->followupLogModel->countPendingForPerson((int) $id);
 
-        if ($this->guestDirectory->delete((int) $id, (int) $this->getOperationalParishId())) {
-            $this->audit()->log('guest.delete', [
+        if ($this->visitorDirectory->delete((int) $id, (int) $this->getOperationalParishId())) {
+            $this->audit()->log('visitor.delete', [
                 'parish_id'  => (int) ($this->getOperationalParishId() ?? 0),
-                'entity_type' => 'guest',
+                'entity_type' => 'visitor',
                 'entity_id'  => (int) $id,
                 'old_values' => [
-                    'visit_date'             => (string) ($guest['visit_date'] ?? ''),
-                    'service_attended'       => (string) ($guest['service_attended'] ?? ''),
-                    'followed_up'            => (int)    ($guest['followed_up'] ?? 0),
-                    'converted_to_member_at' => (string) ($guest['converted_to_member_at'] ?? ''),
+                    'visit_date'             => (string) ($visitor['visit_date'] ?? ''),
+                    'service_attended'       => (string) ($visitor['service_attended'] ?? ''),
+                    'followed_up'            => (int)    ($visitor['followed_up'] ?? 0),
+                    'converted_to_member_at' => (string) ($visitor['converted_to_member_at'] ?? ''),
                 ],
                 'meta' => [
                     'delete_reason'            => $deleteReason,
@@ -406,10 +406,10 @@ class Guests extends BaseController
                 ],
             ]);
 
-            return $this->jsonResponse(['success' => true, 'message' => lang('Guests.guestDeleteSuccess')]);
+            return $this->jsonResponse(['success' => true, 'message' => lang('Visitors.visitorDeleteSuccess')]);
         }
 
-        return $this->jsonResponse(['success' => false, 'message' => lang('Guests.guestDeleteFailed')]);
+        return $this->jsonResponse(['success' => false, 'message' => lang('Visitors.visitorDeleteFailed')]);
     }
 
     // -----------------------------------------------------------------------
@@ -417,22 +417,22 @@ class Guests extends BaseController
     // -----------------------------------------------------------------------
 
     /**
-     * GET guests/followup-status/:id
-     * Returns the next pending sequence-driven action for a guest,
+     * GET visitors/followup-status/:id
+     * Returns the next pending sequence-driven action for a visitor,
      * plus a summary count by status.
      */
-    public function getFollowupStatus(int $guestId)
+    public function getFollowupStatus(int $visitorId)
     {
         if ($redirect = $this->requirePermission('followup.view')) {
             return $redirect;
         }
 
-        $guest = $this->guestDirectory->findByPerson((int) $guestId, (int) $this->getOperationalParishId());
-        if (!$guest) {
-            return $this->jsonResponse(['success' => false, 'message' => lang('Guests.guestNotFound')], 404);
+        $visitor = $this->visitorDirectory->findByPerson((int) $visitorId, (int) $this->getOperationalParishId());
+        if (!$visitor) {
+            return $this->jsonResponse(['success' => false, 'message' => lang('Visitors.visitorNotFound')], 404);
         }
 
-        $personId = (int) ($guest['person_id'] ?? 0);
+        $personId = (int) ($visitor['person_id'] ?? 0);
 
         $next = $this->followupQueries->nextPendingForPerson($personId);
         $summary = $this->followupQueries->statusCountsForPerson($personId);
@@ -445,8 +445,8 @@ class Guests extends BaseController
     }
 
     /**
-     * POST guests/followup-trigger/:logId
-     * Manually marks a guest_followup_log entry as executed (status → sent).
+     * POST visitors/followup-trigger/:logId
+     * Manually marks a visitor_followup_log entry as executed (status → sent).
      */
     public function triggerFollowupAction(int $logId)
     {
@@ -457,18 +457,18 @@ class Guests extends BaseController
         $log = $this->followupQueries->logRow($logId);
 
         if (!$log) {
-            return $this->jsonResponse(['success' => false, 'message' => lang('Guests.followupLogNotFound')], 404);
+            return $this->jsonResponse(['success' => false, 'message' => lang('Visitors.followupLogNotFound')], 404);
         }
 
-        if (! $this->guestDirectory->affiliationExists((int) $log['person_id'], (int) $log['parish_id'])
+        if (! $this->visitorDirectory->affiliationExists((int) $log['person_id'], (int) $log['parish_id'])
             || (int) $log['parish_id'] !== (int) $this->getOperationalParishId()) {
-            return $this->jsonResponse(['success' => false, 'message' => lang('Guests.guestNotFound')], 403);
+            return $this->jsonResponse(['success' => false, 'message' => lang('Visitors.visitorNotFound')], 403);
         }
 
         if ($log['status'] !== 'pending') {
             return $this->jsonResponse([
                 'success' => false,
-                'message' => lang('Guests.followupAlreadyProcessed'),
+                'message' => lang('Visitors.followupAlreadyProcessed'),
                 'status'  => $log['status'],
             ], 422);
         }
@@ -481,72 +481,72 @@ class Guests extends BaseController
         ]);
 
         if ($ok) {
-            $this->audit()->log('guest.followup.trigger', [
+            $this->audit()->log('visitor.followup.trigger', [
                 'parish_id'   => (int) ($this->getOperationalParishId() ?? 0),
                 'entity_type' => 'followup_log',
                 'entity_id'   => $logId,
                 'new_values'  => ['status' => 'sent', 'triggered_by' => (int) auth()->id()],
-                'meta'        => ['guest_id' => (int) $log['person_id']],
+                'meta'        => ['visitor_id' => (int) $log['person_id']],
             ]);
 
-            return $this->jsonResponse(['success' => true, 'message' => lang('Guests.followupTriggered')]);
+            return $this->jsonResponse(['success' => true, 'message' => lang('Visitors.followupTriggered')]);
         }
 
-        return $this->jsonResponse(['success' => false, 'message' => lang('Guests.followupTriggerFailed')], 500);
+        return $this->jsonResponse(['success' => false, 'message' => lang('Visitors.followupTriggerFailed')], 500);
     }
 
     /**
-     * POST guests/assign-sequence/:guestId
-     * Assigns a follow-up sequence to a guest, bulk-creating all log rows.
+     * POST visitors/assign-sequence/:visitorId
+     * Assigns a follow-up sequence to a visitor, bulk-creating all log rows.
      */
-    public function assignSequence(int $guestId)
+    public function assignSequence(int $visitorId)
     {
         if ($redirect = $this->requirePermission('followup.manage')) {
             return $redirect;
         }
 
-        $guest = $this->guestDirectory->findByPerson((int) $guestId, (int) $this->getOperationalParishId());
-        if (!$guest) {
-            return $this->jsonResponse(['success' => false, 'message' => lang('Guests.guestNotFound')], 404);
+        $visitor = $this->visitorDirectory->findByPerson((int) $visitorId, (int) $this->getOperationalParishId());
+        if (!$visitor) {
+            return $this->jsonResponse(['success' => false, 'message' => lang('Visitors.visitorNotFound')], 404);
         }
 
         $sequenceId = (int) $this->request->getPost('sequence_id');
         if ($sequenceId < 1) {
-            return $this->jsonResponse(['success' => false, 'message' => lang('Guests.sequenceRequired')], 422);
+            return $this->jsonResponse(['success' => false, 'message' => lang('Visitors.sequenceRequired')], 422);
         }
 
-        $visitDate = $guest['visit_date'] ?: date('Y-m-d');
+        $visitDate = $visitor['visit_date'] ?: date('Y-m-d');
         $count     = $this->followupLogModel->scheduleSequenceForPerson(
-            (int) $guestId,
+            (int) $visitorId,
             (int) $this->getOperationalParishId(),
             $sequenceId,
             $visitDate
         );
 
         if ($count > 0) {
-            $this->audit()->log('guest.sequence.assign', [
+            $this->audit()->log('visitor.sequence.assign', [
                 'parish_id'   => (int) ($this->getOperationalParishId() ?? 0),
-                'entity_type' => 'guest',
-                'entity_id'   => $guestId,
+                'entity_type' => 'visitor',
+                'entity_id'   => $visitorId,
                 'new_values'  => ['sequence_id' => $sequenceId, 'actions_scheduled' => $count],
             ]);
 
             return $this->jsonResponse([
                 'success' => true,
-                'message' => lang('Guests.sequenceAssigned'),
+                'message' => lang('Visitors.sequenceAssigned'),
                 'count'   => $count,
             ]);
         }
 
-        return $this->jsonResponse(['success' => false, 'message' => lang('Guests.sequenceHasNoActions')], 422);
+        return $this->jsonResponse(['success' => false, 'message' => lang('Visitors.sequenceHasNoActions')], 422);
     }
 
     /**
-     * Convert guest to member
+     * Convert visitor to member
      */
     public function convertToMember($id)
     {
-        if ($redirect = $this->requirePermission('guest.edit')) {
+        if ($redirect = $this->requirePermission('visitor.edit')) {
             return $redirect;
         }
 
@@ -554,16 +554,16 @@ class Guests extends BaseController
             return $redirect;
         }
 
-        $guest = $this->guestDirectory->findByPerson((int) $id, (int) $this->getOperationalParishId());
+        $visitor = $this->visitorDirectory->findByPerson((int) $id, (int) $this->getOperationalParishId());
 
-        if (!$guest) {
-            return redirect()->to('/guests')->with('error', lang('Guests.guestNotFound'));
+        if (!$visitor) {
+            return redirect()->to('/visitors')->with('error', lang('Visitors.visitorNotFound'));
         }
 
         $currentUserId = (int) (auth()->id());
         $parishId = (int) ($this->getOperationalParishId() ?? 0);
 
-        // The guest row id is the canonical person_id after the T4.5 migration.
+        // The visitor row id is the canonical person_id after the T4.5 migration.
         $personId = (int) $id;
 
         $converted = PersonConversionService::convertToMember(
@@ -576,21 +576,21 @@ class Guests extends BaseController
         );
 
         if (! $converted) {
-            return redirect()->to('/guests')->with('error', lang('Guests.guestConversionFailed'));
+            return redirect()->to('/visitors')->with('error', lang('Visitors.visitorConversionFailed'));
         }
 
         return redirect()->to('/people/view/' . $personId)
-            ->with('success', lang('Guests.guestStatusUpdated'));
+            ->with('success', lang('Visitors.visitorStatusUpdated'));
     }
 
     /**
-     * Redirect to the member create form with the guest's details pre-filled
-     * (flashdata 'guest_data' consumed by Members::create). The guest_id is
+     * Redirect to the member create form with the visitor's details pre-filled
+     * (flashdata 'visitor_data' consumed by Members::create). The visitor_id is
      * carried through so store() can complete the conversion bookkeeping.
      */
-    public function createAccountFromGuest($id)
+    public function createAccountFromVisitor($id)
     {
-        if ($redirect = $this->requirePermission('guest.edit')) {
+        if ($redirect = $this->requirePermission('visitor.edit')) {
             return $redirect;
         }
 
@@ -602,24 +602,24 @@ class Guests extends BaseController
             return $redirect;
         }
 
-        $guest = $this->guestDirectory->findByPerson((int) $id, (int) $this->getOperationalParishId());
+        $visitor = $this->visitorDirectory->findByPerson((int) $id, (int) $this->getOperationalParishId());
 
-        if (!$guest) {
-            return redirect()->to('/guests')->with('error', lang('Guests.guestNotFound'));
+        if (!$visitor) {
+            return redirect()->to('/visitors')->with('error', lang('Visitors.visitorNotFound'));
         }
 
-        if (!empty($guest['converted_to_member_at'])) {
-            return redirect()->to('/guests/view/' . $id)->with('error', lang('Guests.guestAlreadyConverted'));
+        if (!empty($visitor['converted_to_member_at'])) {
+            return redirect()->to('/visitors/view/' . $id)->with('error', lang('Visitors.visitorAlreadyConverted'));
         }
 
-        session()->setFlashdata('guest_data', [
-            'guest_id'   => (int) $guest['id'],
+        session()->setFlashdata('visitor_data', [
+            'visitor_id'   => (int) $visitor['id'],
             'role'       => 'member',
-            'first_name' => (string) ($guest['first_name'] ?? ''),
-            'last_name'  => (string) ($guest['last_name'] ?? ''),
-            'email'      => (string) ($guest['email'] ?? ''),
-            'phone'      => (string) ($guest['phone'] ?? ''),
-            'address'    => (string) ($guest['address'] ?? ''),
+            'first_name' => (string) ($visitor['first_name'] ?? ''),
+            'last_name'  => (string) ($visitor['last_name'] ?? ''),
+            'email'      => (string) ($visitor['email'] ?? ''),
+            'phone'      => (string) ($visitor['phone'] ?? ''),
+            'address'    => (string) ($visitor['address'] ?? ''),
         ]);
 
         return redirect()->to('/members/create');
@@ -630,11 +630,11 @@ class Guests extends BaseController
     // ------------------------------------------------------------------
 
     /**
-     * GET  guests/followup-manual/:guestId
-     * Display the full follow-up timeline for a single guest with inline
+     * GET  visitors/followup-manual/:visitorId
+     * Display the full follow-up timeline for a single visitor with inline
      * action controls (Mark Done, Reschedule, Skip, Print Label).
      */
-    public function followupManual(int $guestId)
+    public function followupManual(int $visitorId)
     {
         if ($redirect = $this->requirePermission('followup.view')) {
             return $redirect;
@@ -644,28 +644,28 @@ class Guests extends BaseController
             return $redirect;
         }
 
-        $guest = $this->guestDirectory->findByPerson((int) $guestId, (int) $this->getOperationalParishId());
-        if (!$guest) {
-            return redirect()->to('/guests')->with('error', lang('Guests.guestNotFound'));
+        $visitor = $this->visitorDirectory->findByPerson((int) $visitorId, (int) $this->getOperationalParishId());
+        if (!$visitor) {
+            return redirect()->to('/visitors')->with('error', lang('Visitors.visitorNotFound'));
         }
 
-        $personId = (int) ($guest['person_id'] ?? 0);
+        $personId = (int) ($visitor['person_id'] ?? 0);
 
         $timeline = $this->followupQueries->timelineForPerson($personId);
 
         $data = [
-            'guest'    => $guest,
+            'visitor'    => $visitor,
             'timeline' => $timeline,
         ];
 
         return view(
-            'Clergy\Views\Guests/followup_manual',
-            array_merge($this->getCommonViewData(lang('Guests.followupManualTitle')), $data)
+            'Clergy\Views\Visitors/followup_manual',
+            array_merge($this->getCommonViewData(lang('Visitors.followupManualTitle')), $data)
         );
     }
 
     /**
-     * POST  guests/followup-log/mark-done/:logId  (AJAX)
+     * POST  visitors/followup-log/mark-done/:logId  (AJAX)
      * Mark a pending followup log entry as done (status → sent).
      */
     public function logMarkDone(int $logId)
@@ -676,18 +676,18 @@ class Guests extends BaseController
 
         $log = $this->followupQueries->logRow($logId);
         if (!$log) {
-            return $this->jsonResponse(['success' => false, 'message' => lang('Guests.followupLogNotFound')], 404);
+            return $this->jsonResponse(['success' => false, 'message' => lang('Visitors.followupLogNotFound')], 404);
         }
 
-        if (! $this->guestDirectory->affiliationExists((int) $log['person_id'], (int) $log['parish_id'])
+        if (! $this->visitorDirectory->affiliationExists((int) $log['person_id'], (int) $log['parish_id'])
             || (int) $log['parish_id'] !== (int) $this->getOperationalParishId()) {
-            return $this->jsonResponse(['success' => false, 'message' => lang('Guests.guestNotFound')], 403);
+            return $this->jsonResponse(['success' => false, 'message' => lang('Visitors.visitorNotFound')], 403);
         }
 
         if ($log['status'] !== 'pending') {
             return $this->jsonResponse([
                 'success' => false,
-                'message' => lang('Guests.followupAlreadyProcessed'),
+                'message' => lang('Visitors.followupAlreadyProcessed'),
                 'status'  => $log['status'],
             ], 422);
         }
@@ -707,19 +707,19 @@ class Guests extends BaseController
             'response_metadata' => json_encode($meta),
         ]);
 
-        $this->audit()->log('guest.followup.manual_done', [
+        $this->audit()->log('visitor.followup.manual_done', [
             'parish_id'   => (int) ($this->getOperationalParishId() ?? 0),
             'entity_type' => 'followup_log',
             'entity_id'   => $logId,
             'new_values'  => ['status' => 'sent'],
-            'meta'        => ['guest_id' => (int) $log['person_id']],
+            'meta'        => ['visitor_id' => (int) $log['person_id']],
         ]);
 
-        return $this->jsonResponse(['success' => true, 'message' => lang('Guests.followupMarkedDone')]);
+        return $this->jsonResponse(['success' => true, 'message' => lang('Visitors.followupMarkedDone')]);
     }
 
     /**
-     * POST  guests/followup-log/reschedule/:logId  (AJAX)
+     * POST  visitors/followup-log/reschedule/:logId  (AJAX)
      * Update the scheduled_date of a pending log entry.
      */
     public function logReschedule(int $logId)
@@ -730,25 +730,25 @@ class Guests extends BaseController
 
         $log = $this->followupQueries->logRow($logId);
         if (!$log) {
-            return $this->jsonResponse(['success' => false, 'message' => lang('Guests.followupLogNotFound')], 404);
+            return $this->jsonResponse(['success' => false, 'message' => lang('Visitors.followupLogNotFound')], 404);
         }
 
-        if (! $this->guestDirectory->affiliationExists((int) $log['person_id'], (int) $log['parish_id'])
+        if (! $this->visitorDirectory->affiliationExists((int) $log['person_id'], (int) $log['parish_id'])
             || (int) $log['parish_id'] !== (int) $this->getOperationalParishId()) {
-            return $this->jsonResponse(['success' => false, 'message' => lang('Guests.guestNotFound')], 403);
+            return $this->jsonResponse(['success' => false, 'message' => lang('Visitors.visitorNotFound')], 403);
         }
 
         if ($log['status'] !== 'pending') {
             return $this->jsonResponse([
                 'success' => false,
-                'message' => lang('Guests.followupAlreadyProcessed'),
+                'message' => lang('Visitors.followupAlreadyProcessed'),
                 'status'  => $log['status'],
             ], 422);
         }
 
         $newDate = trim((string) ($this->request->getPost('new_date') ?? ''));
         if ($newDate === '' || !preg_match('/^\d{4}-\d{2}-\d{2}$/', $newDate) || strtotime($newDate) === false) {
-            return $this->jsonResponse(['success' => false, 'message' => lang('Guests.followupInvalidDate')], 422);
+            return $this->jsonResponse(['success' => false, 'message' => lang('Visitors.followupInvalidDate')], 422);
         }
 
         $reason = trim((string) ($this->request->getPost('notes') ?? ''));
@@ -758,23 +758,23 @@ class Guests extends BaseController
             'notes'          => $reason !== '' ? $reason : null,
         ]);
 
-        $this->audit()->log('guest.followup.rescheduled', [
+        $this->audit()->log('visitor.followup.rescheduled', [
             'parish_id'   => (int) ($this->getOperationalParishId() ?? 0),
             'entity_type' => 'followup_log',
             'entity_id'   => $logId,
             'new_values'  => ['scheduled_date' => $newDate],
-            'meta'        => ['guest_id' => (int) $log['person_id']],
+            'meta'        => ['visitor_id' => (int) $log['person_id']],
         ]);
 
         return $this->jsonResponse([
             'success'  => true,
-            'message'  => lang('Guests.followupRescheduled'),
+            'message'  => lang('Visitors.followupRescheduled'),
             'new_date' => $newDate,
         ]);
     }
 
     /**
-     * POST  guests/followup-log/skip/:logId  (AJAX)
+     * POST  visitors/followup-log/skip/:logId  (AJAX)
      * Mark a pending log entry as skipped.
      */
     public function logSkip(int $logId)
@@ -785,18 +785,18 @@ class Guests extends BaseController
 
         $log = $this->followupQueries->logRow($logId);
         if (!$log) {
-            return $this->jsonResponse(['success' => false, 'message' => lang('Guests.followupLogNotFound')], 404);
+            return $this->jsonResponse(['success' => false, 'message' => lang('Visitors.followupLogNotFound')], 404);
         }
 
-        if (! $this->guestDirectory->affiliationExists((int) $log['person_id'], (int) $log['parish_id'])
+        if (! $this->visitorDirectory->affiliationExists((int) $log['person_id'], (int) $log['parish_id'])
             || (int) $log['parish_id'] !== (int) $this->getOperationalParishId()) {
-            return $this->jsonResponse(['success' => false, 'message' => lang('Guests.guestNotFound')], 403);
+            return $this->jsonResponse(['success' => false, 'message' => lang('Visitors.visitorNotFound')], 403);
         }
 
         if ($log['status'] !== 'pending') {
             return $this->jsonResponse([
                 'success' => false,
-                'message' => lang('Guests.followupAlreadyProcessed'),
+                'message' => lang('Visitors.followupAlreadyProcessed'),
                 'status'  => $log['status'],
             ], 422);
         }
@@ -804,18 +804,18 @@ class Guests extends BaseController
         $notes = trim((string) ($this->request->getPost('notes') ?? ''));
         $this->followupLogModel->markSkipped($logId, $notes !== '' ? $notes : null);
 
-        $this->audit()->log('guest.followup.skipped', [
+        $this->audit()->log('visitor.followup.skipped', [
             'parish_id'   => (int) ($this->getOperationalParishId() ?? 0),
             'entity_type' => 'followup_log',
             'entity_id'   => $logId,
-            'meta'        => ['guest_id' => (int) $log['person_id']],
+            'meta'        => ['visitor_id' => (int) $log['person_id']],
         ]);
 
-        return $this->jsonResponse(['success' => true, 'message' => lang('Guests.followupSkipped')]);
+        return $this->jsonResponse(['success' => true, 'message' => lang('Visitors.followupSkipped')]);
     }
 
     /**
-     * POST  guests/followup-log/mark-failed/:logId  (AJAX)
+     * POST  visitors/followup-log/mark-failed/:logId  (AJAX)
      * Manually mark a pending follow-up log entry as failed with a required reason.
      */
     public function logMarkFailed(int $logId)
@@ -826,25 +826,25 @@ class Guests extends BaseController
 
         $log = $this->followupQueries->logRow($logId);
         if (!$log) {
-            return $this->jsonResponse(['success' => false, 'message' => lang('Guests.followupLogNotFound')], 404);
+            return $this->jsonResponse(['success' => false, 'message' => lang('Visitors.followupLogNotFound')], 404);
         }
 
-        if (! $this->guestDirectory->affiliationExists((int) $log['person_id'], (int) $log['parish_id'])
+        if (! $this->visitorDirectory->affiliationExists((int) $log['person_id'], (int) $log['parish_id'])
             || (int) $log['parish_id'] !== (int) $this->getOperationalParishId()) {
-            return $this->jsonResponse(['success' => false, 'message' => lang('Guests.guestNotFound')], 403);
+            return $this->jsonResponse(['success' => false, 'message' => lang('Visitors.visitorNotFound')], 403);
         }
 
         if ($log['status'] !== 'pending') {
             return $this->jsonResponse([
                 'success' => false,
-                'message' => lang('Guests.followupAlreadyProcessed'),
+                'message' => lang('Visitors.followupAlreadyProcessed'),
                 'status'  => $log['status'],
             ], 422);
         }
 
         $reason = trim((string) ($this->request->getPost('reason') ?? ''));
         if ($reason === '') {
-            return $this->jsonResponse(['success' => false, 'message' => lang('Guests.markFailedReasonRequired')], 422);
+            return $this->jsonResponse(['success' => false, 'message' => lang('Visitors.markFailedReasonRequired')], 422);
         }
 
         $meta = [
@@ -860,15 +860,15 @@ class Guests extends BaseController
             'response_metadata' => json_encode($meta),
         ]);
 
-        $this->audit()->log('guest.followup.manual_failed', [
+        $this->audit()->log('visitor.followup.manual_failed', [
             'parish_id'   => (int) ($this->getOperationalParishId() ?? 0),
             'entity_type' => 'followup_log',
             'entity_id'   => $logId,
             'new_values'  => ['status' => 'failed'],
-            'meta'        => ['guest_id' => (int) $log['person_id'], 'reason' => $reason],
+            'meta'        => ['visitor_id' => (int) $log['person_id'], 'reason' => $reason],
         ]);
 
-        return $this->jsonResponse(['success' => true, 'message' => lang('Guests.markFailedSuccess')]);
+        return $this->jsonResponse(['success' => true, 'message' => lang('Visitors.markFailedSuccess')]);
     }
 
     /**
@@ -882,17 +882,17 @@ class Guests extends BaseController
      */
 
     // =========================================================================
-    // Guest Hub Dashboard
+    // Visitor Hub Dashboard
     // =========================================================================
 
     /**
-     * Consolidated guest hub: KPI tiles, quick-action cards, recent guests.
+     * Consolidated visitor hub: KPI tiles, quick-action cards, recent visitors.
      *
-     * Requires: guests.view
+     * Requires: visitors.view
      */
     public function dashboard()
     {
-        if ($redirect = $this->requirePermission('guest.view')) {
+        if ($redirect = $this->requirePermission('visitor.view')) {
             return $redirect;
         }
 
@@ -902,13 +902,13 @@ class Guests extends BaseController
 
         $parishId = (int) $this->getOperationalParishId();
 
-        // KPI: total guests (all time) vs converted
-        $totalGuests    = $this->guestDirectory->countForParish($parishId, false);
-        $convertedCount = $this->guestDirectory->convertedCountForParish($parishId);
+        // KPI: total visitors (all time) vs converted
+        $totalVisitors    = $this->visitorDirectory->countForParish($parishId, false);
+        $convertedCount = $this->visitorDirectory->convertedCountForParish($parishId);
 
         $notFollowedUp = $this->followupQueries->pendingDistinctPersonsCount($parishId);
 
-        $inProgressCount = $this->followupQueries->inProgressGuestsCount($parishId);
+        $inProgressCount = $this->followupQueries->inProgressVisitorsCount($parishId);
 
         // KPI: pending call tasks
         $callTaskModel   = model('CallTaskModel');
@@ -923,32 +923,32 @@ class Guests extends BaseController
         $templates       = $templateModel->getAllForParish($parishId);
         $templateCount   = count($templates);
 
-        // Recent guests (last 10)
-        $recentGuests = $this->guestDirectory->recentForParish($parishId, 10);
+        // Recent visitors (last 10)
+        $recentVisitors = $this->visitorDirectory->recentForParish($parishId, 10);
 
         // Pending call tasks preview (top 5)
         $pendingCallTasks = array_slice($callTaskModel->getPendingForParish($parishId), 0, 5);
 
-        // Per-guest progress map for recent guests 4-state badge
-        $recentPersonIds = array_filter(array_column($recentGuests, 'person_id'));
+        // Per-visitor progress map for recent visitors 4-state badge
+        $recentPersonIds = array_filter(array_column($recentVisitors, 'person_id'));
         $recentProgressMap = $this->followupQueries->progressMapForPersons($recentPersonIds);
 
         $data = [
-            'totalGuests'       => $totalGuests,
+            'totalVisitors'       => $totalVisitors,
             'convertedCount'    => $convertedCount,
             'notFollowedUp'     => $notFollowedUp,
             'inProgressCount'   => $inProgressCount,
             'pendingCalls'      => $pendingCalls,
             'sequenceCount'     => $sequenceCount,
             'templateCount'     => $templateCount,
-            'recentGuests'      => $recentGuests,
+            'recentVisitors'      => $recentVisitors,
             'recentProgressMap' => $recentProgressMap,
             'pendingCallTasks'  => $pendingCallTasks,
         ];
 
         return view(
-            'Clergy\Views\GuestDashboard/index',
-            array_merge($this->getCommonViewData(lang('Guests.hubTitle')), $data)
+            'Clergy\Views\VisitorDashboard/index',
+            array_merge($this->getCommonViewData(lang('Visitors.hubTitle')), $data)
         );
     }
 
@@ -972,8 +972,8 @@ class Guests extends BaseController
         $items = array_map(static function (array $t): array {
             return [
                 'id'             => (int) $t['id'],
-                'guest_id'       => (int) $t['person_id'],
-                'guest_name'     => trim(($t['first_name'] ?? '') . ' ' . ($t['last_name'] ?? '')),
+                'visitor_id'       => (int) $t['person_id'],
+                'visitor_name'     => trim(($t['first_name'] ?? '') . ' ' . ($t['last_name'] ?? '')),
                 'scheduled_date' => $t['scheduled_date'] ?? '',
             ];
         }, $tasks);

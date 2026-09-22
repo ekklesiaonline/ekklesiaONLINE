@@ -11,7 +11,7 @@ class PeopleMetricsService
     {
         $year ??= (int) date('Y');
 
-        $guestDirectory = new \App\Services\GuestDirectoryService();
+        $visitorDirectory = new \App\Services\VisitorDirectoryService();
         $affiliationModel = model(MemberParishAffiliationModel::class);
         $leadershipModel = model(LeadershipPositionModel::class);
         $hasIsMember = $this->hasAffiliationMemberTag();
@@ -36,12 +36,12 @@ class PeopleMetricsService
         $goodStandingRow = $goodStandingBuilder->get()->getRowArray();
 
         $totalUsers = $affiliationModel->countDistinctAffiliatedPeople($parishId);
-        $totalGuests = $guestDirectory->countForParish($parishId, true);
+        $totalVisitors = $visitorDirectory->countForParish($parishId, true);
         $totalPeople = $affiliationModel->countDistinctPeople($parishId);
 
         return [
             'total_users' => $totalUsers,
-            'total_guests' => $totalGuests,
+            'total_visitors' => $totalVisitors,
             'total_people' => $totalPeople,
             'total_members' => $affiliationModel->countDistinctMembers($parishId),
             'active_members' => $affiliationModel->countDistinctMembers($parishId, ['member']),

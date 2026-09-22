@@ -220,10 +220,10 @@ class Members extends BaseController
             return redirect()->to('/members')->with('error', lang('Members.notAllowed'));
         }
 
-        $guestData = (array) session('guest_data');
-        if ($guestData !== []) {
-            $guestData['role'] = $guestData['role'] ?? 'member';
-            session()->setFlashdata('_ci_old_input', ['post' => $guestData, 'get' => []]);
+        $visitorData = (array) session('visitor_data');
+        if ($visitorData !== []) {
+            $visitorData['role'] = $visitorData['role'] ?? 'member';
+            session()->setFlashdata('_ci_old_input', ['post' => $visitorData, 'get' => []]);
         }
 
         return view('Clergy\Views\Members/create', array_merge(
@@ -269,7 +269,7 @@ class Members extends BaseController
             'phone' => 'permit_empty|valid_phone_e164',
             'country' => 'permit_empty|valid_country',
             'profile_picture' => 'permit_empty|uploaded[profile_picture]|max_size[profile_picture,2048]|is_image[profile_picture]|mime_in[profile_picture,image/jpg,image/jpeg,image/png,image/gif]',
-            'guest_id' => 'permit_empty|is_natural_no_zero',
+            'visitor_id' => 'permit_empty|is_natural_no_zero',
         ];
 
         if (!$this->validate($rules)) {
@@ -311,24 +311,24 @@ class Members extends BaseController
             $localPhone = $this->request->getPost('phone');
             $e164Phone = PhoneHelper::toE164($callingCode, $localPhone);
 
-            // Guest conversion pre-fill: when a valid in-scope, not-yet-converted
-            // guest is carried through the form, reuse its canonical person record
+            // Visitor conversion pre-fill: when a valid in-scope, not-yet-converted
+            // visitor is carried through the form, reuse its canonical person record
             // instead of provisioning a duplicate.
-            $guestPersonId = 0;
-            // The posted guest_id is the canonical person_id (T4.5).
-            $postedGuestId = (int) $this->request->getPost('guest_id');
-            if ($postedGuestId > 0) {
-                $candidate = (new \App\Services\GuestDirectoryService())
-                    ->findByPerson($postedGuestId, $assignedParishId);
+            $visitorPersonId = 0;
+            // The posted visitor_id is the canonical person_id (T4.5).
+            $postedVisitorId = (int) $this->request->getPost('visitor_id');
+            if ($postedVisitorId > 0) {
+                $candidate = (new \App\Services\VisitorDirectoryService())
+                    ->findByPerson($postedVisitorId, $assignedParishId);
                 if (is_array($candidate)
                     && empty($candidate['converted_to_member_at'])) {
-                    $guestPersonId = $postedGuestId;
+                    $visitorPersonId = $postedVisitorId;
                 }
             }
 
             // Ensure the canonical person row exists and link the profile to it.
-            $personId = $guestPersonId > 0
-                ? $guestPersonId
+            $personId = $visitorPersonId > 0
+                ? $visitorPersonId
                 : ($assignedParishId > 0
                     ? $this->getMemberParishAffiliationModel()->getOrCreatePersonIdForUser((int) $user->id)
                     : null);
@@ -375,12 +375,12 @@ class Members extends BaseController
                 (new \App\Services\PersonProfileSyncService())->syncFromProfile($profileId);
             }
 
-            if ($guestPersonId > 0 && $assignedParishId > 0) {
-                // Reuse the guest's person: link the new account, mark the
+            if ($visitorPersonId > 0 && $assignedParishId > 0) {
+                // Reuse the visitor's person: link the new account, mark the
                 // affiliation as member, skip pending follow-ups, and mark the
-                // guest record converted — all inside convertToMember().
+                // visitor record converted — all inside convertToMember().
                 $linked = \App\Services\PersonConversionService::convertToMember(
-                    $guestPersonId,
+                    $visitorPersonId,
                     $assignedParishId,
                     (int) $user->id,
                     null,

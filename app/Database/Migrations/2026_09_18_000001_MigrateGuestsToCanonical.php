@@ -120,7 +120,7 @@ class MigrateGuestsToCanonical extends Migration
             }
         }
 
-        // Dedup by contact hash within the parish (same rule GuestIntakeService uses).
+        // Dedup by contact hash within the parish (same rule VisitorIntakeService uses).
         $emailHash = isset($guest['email_hash']) ? (string) $guest['email_hash'] : null;
         $phoneHash = isset($guest['phone_hash']) ? (string) $guest['phone_hash'] : null;
         if (($emailHash === null || $emailHash === '') && ! empty($guest['email'])) {

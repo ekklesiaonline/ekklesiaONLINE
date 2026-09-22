@@ -138,7 +138,7 @@ class Dashboard extends BaseController
 
             'total_parishes'          => (int) ($membershipOverview['total_parishes'] ?? 0),
             'total_people'            => (int) ($membershipOverview['total_people'] ?? 0),
-            'total_guests'            => (int) ($membershipOverview['guest_count'] ?? 0),
+            'total_visitors'            => (int) ($membershipOverview['visitor_count'] ?? 0),
             'total_members'           => (int) ($membershipOverview['total_members'] ?? 0),
             'active_members'          => (int) ($membershipOverview['active_members'] ?? 0),
             'good_standing_members'   => (int) ($membershipOverview['good_standing_members'] ?? 0),
@@ -158,7 +158,7 @@ class Dashboard extends BaseController
             'show_parish_scope_dashboard' => $showParishScopeDashboard,
             'scope_total_people'      => (int) ($membershipOverview['total_people'] ?? 0),
             'scope_total_members'     => (int) ($membershipOverview['total_members'] ?? 0),
-            'scope_total_guests'      => (int) ($membershipOverview['guest_count'] ?? 0),
+            'scope_total_visitors'      => (int) ($membershipOverview['visitor_count'] ?? 0),
             'scope_good_standing_members' => (int) ($membershipOverview['good_standing_members'] ?? 0),
             'scope_leadership_members' => (int) ($membershipOverview['leadership_members'] ?? 0),
             'scope_total_attendance'  => (int) ($attendanceStats['total_attendance'] ?? 0),
@@ -383,7 +383,7 @@ class Dashboard extends BaseController
                 COUNT(DISTINCT pa.person_id) AS total_people,
                 COUNT(DISTINCT CASE WHEN pa.is_member = 1 THEN pa.person_id END) AS total_members,
                 COUNT(DISTINCT CASE WHEN pa.is_member = 1 AND pa.membership_status = 'member' THEN pa.person_id END) AS active_members,
-                COUNT(DISTINCT CASE WHEN pa.membership_status = 'visitor' THEN pa.person_id END) AS guest_count
+                COUNT(DISTINCT CASE WHEN pa.membership_status = 'visitor' THEN pa.person_id END) AS visitor_count
             ", false)
             ->join('parish c', 'c.id = pa.parish_id')
             ->where('pa.deleted_at IS NULL', null, false)
@@ -429,7 +429,7 @@ class Dashboard extends BaseController
             'active_members'        => (int) ($row['active_members'] ?? 0),
             'good_standing_members' => (int) ($row['good_standing_members'] ?? 0),
             'leadership_members'    => (int) ($leaderRow['leadership_members'] ?? 0),
-            'guest_count'           => (int) ($row['guest_count'] ?? 0),
+            'visitor_count'           => (int) ($row['visitor_count'] ?? 0),
         ];
     }
 

@@ -10,9 +10,9 @@ use App\Controllers\BaseController;
  * Followup-focused reporting for parish admins.
  *
  * Routes (all require permission:report.view):
- *   GET  guests/reports/followup-completion         → followupCompletion()
- *   GET  guests/reports/roi-second-visit            → roiSecondVisit()
- *   GET  guests/reports/export-csv/(:segment)       → exportCsv($reportType)
+ *   GET  visitors/reports/followup-completion         → followupCompletion()
+ *   GET  visitors/reports/roi-second-visit            → roiSecondVisit()
+ *   GET  visitors/reports/export-csv/(:segment)       → exportCsv($reportType)
  */
 class Reports extends BaseController
 {
@@ -28,7 +28,7 @@ class Reports extends BaseController
     // ── ── ── ── ── ── ── ── ── ── ── ── ── ── ── ── ── ── ── ──
 
     /**
-     * GET  guests/reports/followup-completion
+     * GET  visitors/reports/followup-completion
      *
      * Shows, for each followup-sequence week number (1–N), what percentage of
      * scheduled actions were completed (status = 'sent') within the selected date
@@ -67,7 +67,7 @@ class Reports extends BaseController
             $done      = (int) $row['completed_actions'];
             $pct       = $total > 0 ? round($done / $total * 100, 1) : 0.0;
 
-            $labels[]    = lang('Guests.rptWeek') . ' ' . $week;
+            $labels[]    = lang('Visitors.rptWeek') . ' ' . $week;
             $completed[] = $done;
             $missed[]    = $total - $done;
             $pctsRaw[]   = $pct;
@@ -91,9 +91,9 @@ class Reports extends BaseController
     // ── ── ── ── ── ── ── ── ── ── ── ── ── ── ── ── ── ── ── ──
 
     /**
-     * GET  guests/reports/roi-second-visit
+     * GET  visitors/reports/roi-second-visit
      *
-     * Compares guests who received at least one sent followup action versus those who
+     * Compares visitors who received at least one sent followup action versus those who
      * did not.  "Return rate" is measured as conversion to membership
      * (converted_to_member_at IS NOT NULL), which is the only durable second-visit
      * signal stored in the schema.
@@ -120,16 +120,16 @@ class Reports extends BaseController
         [$withFollowup, $withoutFollowup] = $this->queryRoiCohorts($parishId, $startDate, $endDate);
 
         // ---- Chart.js dataset (grouped bar: total vs converted per cohort) ----
-        $wfTotal     = (int) ($withFollowup['total_guests'] ?? 0);
+        $wfTotal     = (int) ($withFollowup['total_visitors'] ?? 0);
         $wfConverted = (int) ($withFollowup['converted'] ?? 0);
         $wfPct       = $wfTotal > 0 ? round($wfConverted / $wfTotal * 100, 1) : 0.0;
 
-        $nfTotal     = (int) ($withoutFollowup['total_guests'] ?? 0);
+        $nfTotal     = (int) ($withoutFollowup['total_visitors'] ?? 0);
         $nfConverted = (int) ($withoutFollowup['converted'] ?? 0);
         $nfPct       = $nfTotal > 0 ? round($nfConverted / $nfTotal * 100, 1) : 0.0;
 
         // Also retrieve per-week breakdown for the detailed table
-        $weekBreakdown = $this->queryWeeklyGuestVolume($parishId, $startDate, $endDate);
+        $weekBreakdown = $this->queryWeeklyVisitorVolume($parishId, $startDate, $endDate);
 
         $data = array_merge($this->getCommonViewData('ROI – Second Visit'), [
             'report_start_date'  => $startDate,
@@ -138,7 +138,7 @@ class Reports extends BaseController
             'without_followup'   => array_merge($withoutFollowup, ['pct' => $nfPct]),
             'week_breakdown'     => $weekBreakdown,
             // Chart data
-            'chart_labels'       => json_encode([lang('Guests.rptReceivedFollowup'), lang('Guests.rptNoFollowup')]),
+            'chart_labels'       => json_encode([lang('Visitors.rptReceivedFollowup'), lang('Visitors.rptNoFollowup')]),
             'chart_total'        => json_encode([$wfTotal, $nfTotal]),
             'chart_converted'    => json_encode([$wfConverted, $nfConverted]),
             'chart_pcts'         => json_encode([$wfPct, $nfPct]),
@@ -152,14 +152,14 @@ class Reports extends BaseController
     // ── ── ── ── ── ── ── ── ── ── ── ── ── ── ── ── ── ── ── ──
 
     /**
-     * GET  guests/reports/export-csv/{reportType}
+     * GET  visitors/reports/export-csv/{reportType}
      *
      * Supported reportType values:
      *   followup-completion  – week-level completion summary
      *   roi-second-visit     – cohort comparison summary
-     *   guests-all           – full guest list suitable for mail-merge
+     *   visitors-all           – full visitor list suitable for mail-merge
      */
-    public function exportCsv(string $reportType = 'guests-all')
+    public function exportCsv(string $reportType = 'visitors-all')
     {
         if ($redirect = $this->requirePermission('report.view')) {
             return $redirect;
@@ -178,15 +178,15 @@ class Reports extends BaseController
             date('Y-m-d')
         );
 
-        $allowed = ['followup-completion', 'roi-second-visit', 'guests-all'];
+        $allowed = ['followup-completion', 'roi-second-visit', 'visitors-all'];
         if (! in_array($reportType, $allowed, true)) {
-            $reportType = 'guests-all';
+            $reportType = 'visitors-all';
         }
 
         [$headers, $rows] = match ($reportType) {
             'followup-completion' => $this->csvFollowupCompletion($parishId, $startDate, $endDate),
             'roi-second-visit'    => $this->csvRoiSecondVisit($parishId, $startDate, $endDate),
-            default               => $this->csvGuestsAll($parishId, $startDate, $endDate),
+            default               => $this->csvVisitorsAll($parishId, $startDate, $endDate),
         };
 
         $this->audit()->log('report.export_csv', [
@@ -247,16 +247,16 @@ class Reports extends BaseController
 
     /**
      * Return two cohort rows: [withFollowup, withoutFollowup]
-     * Each row has keys: total_guests, converted
+     * Each row has keys: total_visitors, converted
      */
     private function queryRoiCohorts(int $parishId, string $startDate, string $endDate): array
     {
         $db = $this->db;
-        $directory = new \App\Services\GuestDirectoryService();
+        $directory = new \App\Services\VisitorDirectoryService();
         $visitDate = $directory->firstVisitDateSql();
 
         $selects = [
-            'COUNT(DISTINCT pa.person_id) AS total_guests',
+            'COUNT(DISTINCT pa.person_id) AS total_visitors',
             'SUM(CASE WHEN pa.converted_to_member_at IS NOT NULL THEN 1 ELSE 0 END) AS converted',
         ];
 
@@ -266,7 +266,7 @@ class Reports extends BaseController
             ->where($visitDate . ' <= ' . $db->escape($endDate), null, false)
             ->where("EXISTS (SELECT 1 FROM followup_log gfl WHERE gfl.person_id = pa.person_id AND gfl.status = 'sent')", null, false)
             ->get()
-            ->getRowArray() ?? ['total_guests' => 0, 'converted' => 0];
+            ->getRowArray() ?? ['total_visitors' => 0, 'converted' => 0];
 
         $withoutFollowup = $directory->scopeBuilder($parishId)
             ->select($selects)
@@ -274,24 +274,24 @@ class Reports extends BaseController
             ->where($visitDate . ' <= ' . $db->escape($endDate), null, false)
             ->where("NOT EXISTS (SELECT 1 FROM followup_log gfl WHERE gfl.person_id = pa.person_id AND gfl.status = 'sent')", null, false)
             ->get()
-            ->getRowArray() ?? ['total_guests' => 0, 'converted' => 0];
+            ->getRowArray() ?? ['total_visitors' => 0, 'converted' => 0];
 
         return [$withFollowup, $withoutFollowup];
     }
 
     /**
-     * Per-ISO-week new guest volume (for the ROI detail table).
+     * Per-ISO-week new visitor volume (for the ROI detail table).
      */
-    private function queryWeeklyGuestVolume(int $parishId, string $startDate, string $endDate): array
+    private function queryWeeklyVisitorVolume(int $parishId, string $startDate, string $endDate): array
     {
-        $directory = new \App\Services\GuestDirectoryService();
+        $directory = new \App\Services\VisitorDirectoryService();
         $visitDate = $directory->firstVisitDateSql();
 
         return $directory->scopeBuilder($parishId)
             ->select([
                 "YEARWEEK({$visitDate}, 1) AS iso_week",
                 "MIN({$visitDate}) AS week_start",
-                'COUNT(pa.person_id) AS new_guests',
+                'COUNT(pa.person_id) AS new_visitors',
                 'SUM(CASE WHEN pa.converted_to_member_at IS NOT NULL THEN 1 ELSE 0 END) AS converted',
                 "SUM(CASE WHEN EXISTS (SELECT 1 FROM followup_log gfl WHERE gfl.person_id = pa.person_id AND gfl.status = 'sent') THEN 1 ELSE 0 END) AS received_followup",
             ])
@@ -310,7 +310,7 @@ class Reports extends BaseController
     /** @return array{0: string[], 1: array[]} */
     private function csvFollowupCompletion(int $parishId, string $startDate, string $endDate): array
     {
-        $headers = [lang('Guests.rptColSequenceWeek'), lang('Guests.rptColTotalScheduled'), lang('Guests.rptCompletedSent'), lang('Guests.rptColCompletionPct')];
+        $headers = [lang('Visitors.rptColSequenceWeek'), lang('Visitors.rptColTotalScheduled'), lang('Visitors.rptCompletedSent'), lang('Visitors.rptColCompletionPct')];
         $source  = $this->queryCompletionByWeek($parishId, $startDate, $endDate);
         $rows    = [];
         foreach ($source as $r) {
@@ -325,42 +325,42 @@ class Reports extends BaseController
     /** @return array{0: string[], 1: array[]} */
     private function csvRoiSecondVisit(int $parishId, string $startDate, string $endDate): array
     {
-        $headers = [lang('Guests.rptColCohort'), lang('Guests.rptTotalGuests'), lang('Guests.rptColConverted'), lang('Guests.rptColConversionPct')];
+        $headers = [lang('Visitors.rptColCohort'), lang('Visitors.rptTotalVisitors'), lang('Visitors.rptColConverted'), lang('Visitors.rptColConversionPct')];
         [$with, $without] = $this->queryRoiCohorts($parishId, $startDate, $endDate);
 
-        $wfTotal = (int) ($with['total_guests'] ?? 0);
+        $wfTotal = (int) ($with['total_visitors'] ?? 0);
         $wfConv  = (int) ($with['converted'] ?? 0);
-        $nfTotal = (int) ($without['total_guests'] ?? 0);
+        $nfTotal = (int) ($without['total_visitors'] ?? 0);
         $nfConv  = (int) ($without['converted'] ?? 0);
 
         return [$headers, [
-            [lang('Guests.rptReceivedFollowup'), $wfTotal, $wfConv, $wfTotal > 0 ? round($wfConv / $wfTotal * 100, 1) : 0.0],
-            [lang('Guests.rptNoFollowup'),       $nfTotal, $nfConv, $nfTotal > 0 ? round($nfConv / $nfTotal * 100, 1) : 0.0],
+            [lang('Visitors.rptReceivedFollowup'), $wfTotal, $wfConv, $wfTotal > 0 ? round($wfConv / $wfTotal * 100, 1) : 0.0],
+            [lang('Visitors.rptNoFollowup'),       $nfTotal, $nfConv, $nfTotal > 0 ? round($nfConv / $nfTotal * 100, 1) : 0.0],
         ]];
     }
 
     /** @return array{0: string[], 1: array[]} */
-    private function csvGuestsAll(int $parishId, string $startDate, string $endDate): array
+    private function csvVisitorsAll(int $parishId, string $startDate, string $endDate): array
     {
         $headers = [
-            lang('Guests.firstName'),
-            lang('Guests.lastName'),
-            lang('Guests.colEmail'),
-            lang('Guests.colPhone'),
-            lang('Guests.visitDate'),
-            lang('Guests.source'),
-            lang('Guests.interestsMinistries'),
-            lang('Guests.followedUpLabel'),
-            lang('Guests.rptLogTotal'),
-            lang('Guests.rptLogSent'),
-            lang('Guests.rptColConverted'),
-            lang('Guests.rptConvertedDate'),
+            lang('Visitors.firstName'),
+            lang('Visitors.lastName'),
+            lang('Visitors.colEmail'),
+            lang('Visitors.colPhone'),
+            lang('Visitors.visitDate'),
+            lang('Visitors.source'),
+            lang('Visitors.interestsMinistries'),
+            lang('Visitors.followedUpLabel'),
+            lang('Visitors.rptLogTotal'),
+            lang('Visitors.rptLogSent'),
+            lang('Visitors.rptColConverted'),
+            lang('Visitors.rptConvertedDate'),
         ];
 
-        $directory = new \App\Services\GuestDirectoryService();
+        $directory = new \App\Services\VisitorDirectoryService();
         $visitDate = $directory->firstVisitDateSql();
 
-        $guestRows = $directory->scopeBuilder($parishId)
+        $visitorRows = $directory->scopeBuilder($parishId)
             ->select('pe.id AS id, pe.first_name, pe.last_name, pe.email, pe.phone, pe.source, pe.interests,'
                 . ' pa.followed_up, pa.converted_to_member_at,'
                 . ' COUNT(gfl.id) AS log_total,'
@@ -376,7 +376,7 @@ class Reports extends BaseController
 
         $enc  = new \App\Libraries\DataEncryption();
         $rows = [];
-        foreach ($guestRows as $g) {
+        foreach ($visitorRows as $g) {
             $rows[] = [
                 $g['first_name'],
                 $g['last_name'],

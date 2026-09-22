@@ -52,7 +52,7 @@ return [
     // -------------------------------------------------------------------------
     'totalPeople'         => 'People',
     'membersLabel'        => 'Members',
-    'guestsNotConverted'  => '{0} visitors not yet converted',
+    'visitorsNotConverted'  => '{0} visitors not yet converted',
     'parishMembers'       => 'Parish Members',
     'goodStanding'        => 'Good Standing',
     'inLeadership'        => '{0} in leadership',
@@ -73,8 +73,8 @@ return [
     'membershipStatus'    => 'Membership Status',
     'asaAscGraphics'      => 'ASA / ASC Graphics',
     'parishSundayAttendanceTitle' => 'Sunday Attendance',
-    'recentGuests'        => 'Recent Visitors',
-    'noRecentGuests'      => 'No recent visitors.',
+    'recentVisitors'        => 'Recent Visitors',
+    'noRecentVisitors'      => 'No recent visitors.',
 
     // -------------------------------------------------------------------------
     // Province dashboard - per-diocese summary
@@ -86,7 +86,7 @@ return [
     'colDiocese'           => 'Diocese',
     'colParishes'          => 'Parishes',
     'colPeople'            => 'People',
-    'colGuests'            => 'Visitors',
+    'colVisitors'            => 'Visitors',
     'colMembers'           => 'Members',
     'colActive'            => 'Active',
     'colAttendance'        => 'Attendance',
@@ -116,7 +116,7 @@ return [
     'applyFilter' => 'Apply Filter',
     'showFilter' => 'Show Filter',
     'hideFilter' => 'Hide Filter',
-    'guestsLabel' => 'visitors',
+    'visitorsLabel' => 'visitors',
     'goodStandingLabel' => 'good standing',
     'leadershipLabel' => 'leadership',
     'avgSundayWeekdayAttendance' => 'Average Sunday / Weekday Attendance',
@@ -315,11 +315,11 @@ return [
 
     // Follow-up overview panel (parish admin dashboard)
     'followupOverviewTitle'          => 'Follow-up Overview',
-    'followupPendingGuests'          => 'Visitors in Follow-up',
+    'followupPendingVisitors'          => 'Visitors in Follow-up',
     'followupCallsToday'             => 'Calls Due Today',
     'followupFailedMessages7d'       => 'Failed Messages (7 days)',
-    'followupNewGuestsPerWeek'       => 'New Visitors per Week',
-    'followupNewGuestsDatasetLabel'  => 'New Visitors',
+    'followupNewVisitorsPerWeek'       => 'New Visitors per Week',
+    'followupNewVisitorsDatasetLabel'  => 'New Visitors',
     'followupLastUpdated'            => 'Updated at',
     'followupLoadError'              => 'Could not load follow-up stats. Please try again.',
     'exportCsv' => 'Export CSV',

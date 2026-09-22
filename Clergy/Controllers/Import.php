@@ -7,29 +7,29 @@ use App\Controllers\BaseController;
 /**
  * Import
  *
- * Two entry points for bringing guests into the system:
+ * Two entry points for bringing visitors into the system:
  *
- * 1. CSV bulk import (admin-only, requires guests.create)
- *    GET  guests/import         → connectionCards()   – upload form + QR display
- *    POST guests/import/process → processConnectionCards() – parse & save CSV
- *    GET  guests/import/qr      → qrCode()            – serves QR code PNG (proxied)
+ * 1. CSV bulk import (admin-only, requires visitors.create)
+ *    GET  visitors/import         → connectionCards()   – upload form + QR display
+ *    POST visitors/import/process → processConnectionCards() – parse & save CSV
+ *    GET  visitors/import/qr      → qrCode()            – serves QR code PNG (proxied)
  *
  * 2. Public digital connection card (no auth, token-gated by parish)
- *    GET  connect/{token}       → cardForm($token)    – public-facing guest form
+ *    GET  connect/{token}       → cardForm($token)    – public-facing visitor form
  *    POST connect/{token}       → digitalCard($token) – save & trigger workflow
  *
  * Deduplication logic (both paths):
  *  - If a matching email_hash OR phone_hash already exists for the parish → update visit_date.
- *  - Otherwise insert a new guest row and schedule all active followup sequences.
+ *  - Otherwise insert a new visitor row and schedule all active followup sequences.
  */
 class Import extends BaseController
 {
-    private \App\Services\GuestDirectoryService $guestDirectory;
+    private \App\Services\VisitorDirectoryService $visitorDirectory;
     private \App\Models\FollowupLogModel $followupLogModel;
 
     public function __construct()
     {
-        $this->guestDirectory   = new \App\Services\GuestDirectoryService();
+        $this->visitorDirectory   = new \App\Services\VisitorDirectoryService();
         $this->followupLogModel = model('FollowupLogModel');
     }
 
@@ -38,12 +38,12 @@ class Import extends BaseController
     // ── ── ── ── ── ── ── ── ── ── ── ── ── ── ── ── ── ── ── ──
 
     /**
-     * GET  guests/import
+     * GET  visitors/import
      * Show the CSV upload form and the parish's shareable QR code.
      */
     public function connectionCards()
     {
-        if ($redirect = $this->requirePermission('guest.create')) {
+        if ($redirect = $this->requirePermission('visitor.create')) {
             return $redirect;
         }
 
@@ -57,7 +57,7 @@ class Import extends BaseController
         $cardUrl = base_url('connect/' . $parish['public_token']);
 
         return view('Clergy\Views\Import/index', array_merge(
-            $this->getCommonViewData(lang('Guests.importPageTitle')),
+            $this->getCommonViewData(lang('Visitors.importPageTitle')),
             [
                 'parish'  => $parish,
                 'cardUrl' => $cardUrl,
@@ -66,8 +66,8 @@ class Import extends BaseController
     }
 
     /**
-     * POST  guests/import/process
-     * Accept a CSV file, validate rows, and upsert guests.
+     * POST  visitors/import/process
+     * Accept a CSV file, validate rows, and upsert visitors.
      *
      * Expected CSV columns (header row required):
      *   first_name, last_name, email, phone, address, interests, visit_date
@@ -76,7 +76,7 @@ class Import extends BaseController
      */
     public function processConnectionCards()
     {
-        if ($redirect = $this->requirePermission('guest.create')) {
+        if ($redirect = $this->requirePermission('visitor.create')) {
             return $redirect;
         }
 
@@ -99,9 +99,9 @@ class Import extends BaseController
 
         $result = $this->parseCsvAndUpsert($file->getTempName(), $parishId);
 
-        $this->audit()->log('guest.csv_import', [
+        $this->audit()->log('visitor.csv_import', [
             'parish_id'   => $parishId,
-            'entity_type' => 'guest',
+            'entity_type' => 'visitor',
             'new_values'  => [
                 'inserted' => $result['inserted'],
                 'updated'  => $result['updated'],
@@ -115,18 +115,18 @@ class Import extends BaseController
         }
 
         return redirect()
-            ->to('guests/import')
+            ->to('visitors/import')
             ->with('import_result', $result);
     }
 
     /**
-     * GET  guests/import/qr
+     * GET  visitors/import/qr
      * Proxy the QR code image from api.qrserver.com and stream it as PNG.
      * Caches the result in writable/cache/ for 24 hours to avoid hammering the API.
      */
     public function qrCode()
     {
-        if ($redirect = $this->requirePermission('guest.create')) {
+        if ($redirect = $this->requirePermission('visitor.create')) {
             return $redirect;
         }
 
@@ -193,7 +193,7 @@ class Import extends BaseController
 
     /**
      * POST  connect/{token}
-     * Accept digital card submission, upsert guest, trigger workflow.
+     * Accept digital card submission, upsert visitor, trigger workflow.
      */
     public function digitalCard(string $token)
     {
@@ -236,7 +236,7 @@ class Import extends BaseController
             'source'      => 'digital_card',
         ];
 
-        $upsert = $this->upsertGuest($parishId, $data);
+        $upsert = $this->upsertVisitor($parishId, $data);
 
         if ($upsert['is_new']) {
             $this->followupLogModel->scheduleActiveSequencesForPerson(
@@ -253,12 +253,12 @@ class Import extends BaseController
     }
 
     /**
-     * GET  guests/import/sample-csv
+     * GET  visitors/import/sample-csv
      * Return a downloadable sample CSV so admins can see the expected column format.
      */
     public function sampleCsv()
     {
-        if ($redirect = $this->requirePermission('guest.create')) {
+        if ($redirect = $this->requirePermission('visitor.create')) {
             return $redirect;
         }
 
@@ -284,7 +284,7 @@ class Import extends BaseController
     // ── ── ── ── ── ── ── ── ── ── ── ── ── ── ── ── ── ── ── ──
 
     /**
-     * Parse a CSV file and upsert guests into the given parish.
+     * Parse a CSV file and upsert visitors into the given parish.
      *
      * @return array{ inserted: int, updated: int, row_errors: list<array{row: int, errors: string[]}> }
      */
@@ -368,7 +368,7 @@ class Import extends BaseController
                 'source'     => 'csv_import',
             ];
 
-            $upsert = $this->upsertGuest($parishId, $data);
+            $upsert = $this->upsertVisitor($parishId, $data);
 
             if ($upsert['is_new']) {
                 $result['inserted']++;
@@ -387,9 +387,9 @@ class Import extends BaseController
     }
 
     /**
-     * Insert a new guest or record a return visit for an existing one.
+     * Insert a new visitor or record a return visit for an existing one.
      *
-     * Dedup happens inside GuestIntakeService: an existing person with a
+     * Dedup happens inside VisitorIntakeService: an existing person with a
      * matching email/phone hash in the parish gets a new person_visit row;
      * otherwise a full person + parish_affiliation + visit chain is
      * provisioned.
@@ -398,12 +398,12 @@ class Import extends BaseController
      * @param  array  $data  Plain-text fields (email/phone not yet encrypted)
      * @return array{ person_id: int, is_new: bool }
      */
-    private function upsertGuest(int $parishId, array $data): array
+    private function upsertVisitor(int $parishId, array $data): array
     {
         try {
-            $intake = $this->guestDirectory->intake($data, $parishId);
+            $intake = $this->visitorDirectory->intake($data, $parishId);
         } catch (\Throwable $e) {
-            log_message('error', 'Guest intake failed during import: ' . $e->getMessage());
+            log_message('error', 'Visitor intake failed during import: ' . $e->getMessage());
             return ['person_id' => 0, 'is_new' => false];
         }
 

@@ -3,16 +3,16 @@
 <?= $this->section('content') ?>
 
 <div class="d-flex justify-content-start align-items-center flex-wrap gap-2 mb-3">
-    <?php if (auth()->user()->can('guest.edit')): ?>
+    <?php if (auth()->user()->can('visitor.edit')): ?>
         <button type="button" class="btn btn-outline-primary" id="btnNewTemplate">
-            <i class="bi bi-plus-circle" aria-hidden="true"></i> <?= lang('Guests.tplNewBtn') ?>
+            <i class="bi bi-plus-circle" aria-hidden="true"></i> <?= lang('Visitors.tplNewBtn') ?>
         </button>
     <?php endif; ?>
     <a href="<?= base_url('followup-workflow/sequences') ?>" class="btn btn-outline-secondary">
-        <i class="bi bi-diagram-3" aria-hidden="true"></i> <?= lang('Guests.tplSequencesBtn') ?>
+        <i class="bi bi-diagram-3" aria-hidden="true"></i> <?= lang('Visitors.tplSequencesBtn') ?>
     </a>
-    <a href="<?= base_url('guests/dashboard') ?>" class="btn btn-outline-secondary">
-        <i class="bi bi-arrow-left" aria-hidden="true"></i> <?= lang('Guests.backToGuests') ?>
+    <a href="<?= base_url('visitors/dashboard') ?>" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left" aria-hidden="true"></i> <?= lang('Visitors.backToVisitors') ?>
     </a>
 </div>
 
@@ -31,9 +31,9 @@ $channelBadge = [
         <?php if (empty($templates)): ?>
             <div class="text-center py-5 text-muted">
                 <i class="bi bi-file-text fs-2 d-block mb-2" aria-hidden="true"></i>
-                <?= lang('Guests.tplEmpty') ?>
-                <?php if (auth()->user()->can('guest.edit')): ?>
-                    <a href="#" id="btnNewTemplateEmpty"><?= lang('Guests.tplEmptyCreate') ?></a>
+                <?= lang('Visitors.tplEmpty') ?>
+                <?php if (auth()->user()->can('visitor.edit')): ?>
+                    <a href="#" id="btnNewTemplateEmpty"><?= lang('Visitors.tplEmptyCreate') ?></a>
                 <?php endif; ?>
             </div>
         <?php else: ?>
@@ -41,12 +41,12 @@ $channelBadge = [
                 <table class="table table-hover align-middle mb-0">
                     <thead>
                         <tr>
-                            <th scope="col"><?= lang('Guests.tplColStep') ?></th>
-                            <th scope="col"><?= lang('Guests.tplColName') ?></th>
-                            <th scope="col"><?= lang('Guests.tplColChannel') ?></th>
-                            <th scope="col"><?= lang('Guests.tplColSubjectPreview') ?></th>
-                            <th scope="col"><?= lang('Guests.tplColScope') ?></th>
-                            <th scope="col" class="text-end"><?= lang('Guests.tplColActions') ?></th>
+                            <th scope="col"><?= lang('Visitors.tplColStep') ?></th>
+                            <th scope="col"><?= lang('Visitors.tplColName') ?></th>
+                            <th scope="col"><?= lang('Visitors.tplColChannel') ?></th>
+                            <th scope="col"><?= lang('Visitors.tplColSubjectPreview') ?></th>
+                            <th scope="col"><?= lang('Visitors.tplColScope') ?></th>
+                            <th scope="col" class="text-end"><?= lang('Visitors.tplColActions') ?></th>
                         </tr>
                     </thead>
                     <tbody>
@@ -74,9 +74,9 @@ $channelBadge = [
                                 </td>
                                 <td>
                                     <?php if ($isGlobal): ?>
-                                        <span class="badge border border-info text-info fw-normal"><?= lang('Guests.tplScopeGlobal') ?></span>
+                                        <span class="badge border border-info text-info fw-normal"><?= lang('Visitors.tplScopeGlobal') ?></span>
                                     <?php else: ?>
-                                        <span class="badge border border-secondary text-body fw-normal"><?= lang('Guests.tplScopeParish') ?></span>
+                                        <span class="badge border border-secondary text-body fw-normal"><?= lang('Visitors.tplScopeParish') ?></span>
                                     <?php endif; ?>
                                 </td>
                                 <td class="text-end">
@@ -94,7 +94,7 @@ $channelBadge = [
                                                     <i class="bi bi-eye me-2" aria-hidden="true"></i><?= lang('App.preview') ?>
                                                 </a>
                                             </li>
-                                            <?php if (!$isGlobal && auth()->user()->can('guest.edit')): ?>
+                                            <?php if (!$isGlobal && auth()->user()->can('visitor.edit')): ?>
                                                 <li>
                                                     <button class="dropdown-item btn-edit-template"
                                                         type="button"
@@ -137,7 +137,7 @@ $channelBadge = [
     <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="templateModalLabel"><?= lang('Guests.tplModalTitleNew') ?></h5>
+                <h5 class="modal-title" id="templateModalLabel"><?= lang('Visitors.tplModalTitleNew') ?></h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
@@ -145,32 +145,32 @@ $channelBadge = [
 
                 <div class="row g-3">
                     <div class="col-md-7">
-                        <label class="form-label" for="tpl_name"><?= lang('Guests.tplFieldName') ?> <span class="text-danger">*</span></label>
+                        <label class="form-label" for="tpl_name"><?= lang('Visitors.tplFieldName') ?> <span class="text-danger">*</span></label>
                         <input type="text" id="tpl_name" class="form-control" maxlength="150" required>
                     </div>
                     <div class="col-md-5">
-                        <label class="form-label" for="tpl_channel"><?= lang('Guests.tplFieldChannel') ?> <span class="text-danger">*</span></label>
+                        <label class="form-label" for="tpl_channel"><?= lang('Visitors.tplFieldChannel') ?> <span class="text-danger">*</span></label>
                         <select id="tpl_channel" class="form-select" required>
-                            <option value=""><?= lang('Guests.tplFieldChannelSelect') ?></option>
-                            <option value="text"><?= lang('Guests.tplChannelText') ?></option>
-                            <option value="email"><?= lang('Guests.tplChannelEmail') ?></option>
-                            <option value="call"><?= lang('Guests.tplChannelCall') ?></option>
-                            <option value="mail"><?= lang('Guests.tplChannelMail') ?></option>
-                            <option value="gift"><?= lang('Guests.tplChannelGift') ?></option>
+                            <option value=""><?= lang('Visitors.tplFieldChannelSelect') ?></option>
+                            <option value="text"><?= lang('Visitors.tplChannelText') ?></option>
+                            <option value="email"><?= lang('Visitors.tplChannelEmail') ?></option>
+                            <option value="call"><?= lang('Visitors.tplChannelCall') ?></option>
+                            <option value="mail"><?= lang('Visitors.tplChannelMail') ?></option>
+                            <option value="gift"><?= lang('Visitors.tplChannelGift') ?></option>
                         </select>
                     </div>
 
                     <div class="col-12" id="tpl_subject_row">
-                        <label class="form-label" for="tpl_subject"><?= lang('Guests.tplFieldSubject') ?></label>
+                        <label class="form-label" for="tpl_subject"><?= lang('Visitors.tplFieldSubject') ?></label>
                         <input type="text" id="tpl_subject" class="form-control" maxlength="255">
                     </div>
 
                     <div class="col-12">
-                        <label class="form-label" for="tpl_body_text"><?= lang('Guests.tplFieldBodyText') ?> <span class="text-danger">*</span></label>
+                        <label class="form-label" for="tpl_body_text"><?= lang('Visitors.tplFieldBodyText') ?> <span class="text-danger">*</span></label>
                         <textarea id="tpl_body_text" class="form-control font-monospace" rows="5" required
                             placeholder="Hi {first_name}, we loved having you at {parish_name}!"></textarea>
                         <div class="form-text">
-                            <?= lang('Guests.tplFieldAvailableTokens') ?>
+                            <?= lang('Visitors.tplFieldAvailableTokens') ?>
                             <code>{first_name}</code> <code>{last_name}</code> <code>{full_name}</code>
                             <code>{parish_name}</code> <code>{clergy_name}</code> <code>{service_time}</code>
                             <code>{parish_address}</code> <code>{visit_date}</code> <code>{phone}</code>
@@ -180,16 +180,16 @@ $channelBadge = [
                     </div>
 
                     <div class="col-12">
-                        <label class="form-label" for="tpl_body_html"><?= lang('Guests.tplFieldBodyHtml') ?> <span class="text-muted small"><?= lang('Guests.tplFieldBodyHtmlOptional') ?></span></label>
+                        <label class="form-label" for="tpl_body_html"><?= lang('Visitors.tplFieldBodyHtml') ?> <span class="text-muted small"><?= lang('Visitors.tplFieldBodyHtmlOptional') ?></span></label>
                         <textarea id="tpl_body_html" class="form-control font-monospace" rows="5"
                             placeholder="<p>Hi {first_name}, …</p>"></textarea>
                     </div>
 
                     <div class="col-12">
-                        <label class="form-label" for="tpl_variables"><?= lang('Guests.tplFieldVariables') ?> <span class="text-muted small">(<?= lang('Guests.tplFieldVariablesHint') ?>)</span></label>
+                        <label class="form-label" for="tpl_variables"><?= lang('Visitors.tplFieldVariables') ?> <span class="text-muted small">(<?= lang('Visitors.tplFieldVariablesHint') ?>)</span></label>
                         <input type="text" id="tpl_variables" class="form-control"
                             placeholder="{first_name},{parish_name},{visit_date}">
-                        <div class="form-text"><?= lang('Guests.tplFieldVariablesHelp') ?></div>
+                        <div class="form-text"><?= lang('Visitors.tplFieldVariablesHelp') ?></div>
                     </div>
                 </div>
 
@@ -198,11 +198,11 @@ $channelBadge = [
             <div class="modal-footer">
                 <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal"><?= lang('App.cancel') ?></button>
                 <button type="button" class="btn btn-outline-info me-auto" id="btnPreviewTemplate">
-                    <i class="bi bi-eye" aria-hidden="true"></i> <?= lang('Guests.tplBtnPreview') ?>
+                    <i class="bi bi-eye" aria-hidden="true"></i> <?= lang('Visitors.tplBtnPreview') ?>
                 </button>
                 <button type="button" class="btn btn-primary" id="btnSaveTemplate">
                     <span class="spinner-border spinner-border-sm d-none me-1" id="templateSpinner"></span>
-                    <?= lang('Guests.tplBtnSave') ?>
+                    <?= lang('Visitors.tplBtnSave') ?>
                 </button>
             </div>
         </div>
@@ -228,10 +228,10 @@ $channelBadge = [
 
         function openNew() {
             if (!bsModal) {
-                showAppToast(<?= json_encode(lang('Guests.tplModalUnavailable')) ?>, 'warning');
+                showAppToast(<?= json_encode(lang('Visitors.tplModalUnavailable')) ?>, 'warning');
                 return;
             }
-            document.getElementById('templateModalLabel').textContent = <?= json_encode(lang('Guests.tplModalTitleNew')) ?>;
+            document.getElementById('templateModalLabel').textContent = <?= json_encode(lang('Visitors.tplModalTitleNew')) ?>;
             document.getElementById('tpl_id').value = '';
             document.getElementById('tpl_name').value = '';
             channelSel.value = '';
@@ -261,11 +261,11 @@ $channelBadge = [
             const btn = e.target.closest('.btn-edit-template');
             if (!btn) return;
             if (!bsModal) {
-                showAppToast(<?= json_encode(lang('Guests.tplModalUnavailable')) ?>, 'warning');
+                showAppToast(<?= json_encode(lang('Visitors.tplModalUnavailable')) ?>, 'warning');
                 return;
             }
 
-            document.getElementById('templateModalLabel').textContent = <?= json_encode(lang('Guests.tplModalTitleEdit')) ?>;
+            document.getElementById('templateModalLabel').textContent = <?= json_encode(lang('Visitors.tplModalTitleEdit')) ?>;
             document.getElementById('tpl_id').value = btn.dataset.id;
             document.getElementById('tpl_name').value = btn.dataset.name;
             channelSel.value = btn.dataset.channel;
@@ -287,7 +287,7 @@ $channelBadge = [
             const bodyText = document.getElementById('tpl_body_text').value.trim();
 
             if (!name || !channel || !bodyText) {
-                errBox.textContent = <?= json_encode(lang('Guests.tplSaveRequired')) ?>;
+                errBox.textContent = <?= json_encode(lang('Visitors.tplSaveRequired')) ?>;
                 errBox.classList.remove('d-none');
                 return;
             }
@@ -318,18 +318,18 @@ $channelBadge = [
                 .then(data => {
                     if (data.success) {
                         bsModal?.hide();
-                        showAppToast(<?= json_encode(lang('Guests.tplSaved')) ?>, 'primary');
+                        showAppToast(<?= json_encode(lang('Visitors.tplSaved')) ?>, 'primary');
                         setTimeout(() => location.reload(), 700);
                     } else {
                         const msgs = data.errors ?
                             Object.values(data.errors).join('<br>') :
-                            (data.message ?? <?= json_encode(lang('Guests.tplSaveFailed')) ?>);
+                            (data.message ?? <?= json_encode(lang('Visitors.tplSaveFailed')) ?>);
                         errBox.innerHTML = msgs;
                         errBox.classList.remove('d-none');
                     }
                 })
                 .catch(() => {
-                    errBox.textContent = <?= json_encode(lang('Guests.tplNetworkError')) ?>;
+                    errBox.textContent = <?= json_encode(lang('Visitors.tplNetworkError')) ?>;
                     errBox.classList.remove('d-none');
                 })
                 .finally(() => {
@@ -346,8 +346,8 @@ $channelBadge = [
             const name = btn.dataset.name;
 
             showAppConfirm(
-                <?= json_encode(lang('Guests.tplDeleteConfirmTitle')) ?>,
-                <?= json_encode(lang('Guests.tplDeleteConfirmBody', ['{name}'])) ?>.replace('{name}', name),
+                <?= json_encode(lang('Visitors.tplDeleteConfirmTitle')) ?>,
+                <?= json_encode(lang('Visitors.tplDeleteConfirmBody', ['{name}'])) ?>.replace('{name}', name),
                 function() {
                     fetch(deleteUrl + id, {
                             method: 'POST',
@@ -360,13 +360,13 @@ $channelBadge = [
                         .then(r => r.json())
                         .then(data => {
                             if (data.success) {
-                                showAppToast(<?= json_encode(lang('Guests.tplDeleted')) ?>, 'primary');
+                                showAppToast(<?= json_encode(lang('Visitors.tplDeleted')) ?>, 'primary');
                                 setTimeout(() => location.reload(), 700);
                             } else {
-                                showAppToast(data.message ?? <?= json_encode(lang('Guests.tplDeleteFailed')) ?>, 'danger');
+                                showAppToast(data.message ?? <?= json_encode(lang('Visitors.tplDeleteFailed')) ?>, 'danger');
                             }
                         })
-                        .catch(() => showAppToast(<?= json_encode(lang('Guests.tplNetworkError')) ?>, 'danger'));
+                        .catch(() => showAppToast(<?= json_encode(lang('Visitors.tplNetworkError')) ?>, 'danger'));
                 },
                 <?= json_encode(lang('App.delete')) ?>
             );
@@ -383,20 +383,20 @@ $channelBadge = [
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="tplPreviewModalLabel">
-                    <i class="bi bi-eye me-1" aria-hidden="true"></i> <?= lang('Guests.tplPreviewModalTitle') ?>
+                    <i class="bi bi-eye me-1" aria-hidden="true"></i> <?= lang('Visitors.tplPreviewModalTitle') ?>
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
-                <!-- Guest selector row -->
+                <!-- Visitor selector row -->
                 <div class="row g-2 mb-3 align-items-end">
                     <div class="col-md-8">
-                        <label class="form-label mb-1 small fw-semibold" for="previewGuestSel">
-                            <?= lang('Guests.tplPreviewGuestLabel') ?>
+                        <label class="form-label mb-1 small fw-semibold" for="previewVisitorSel">
+                            <?= lang('Visitors.tplPreviewVisitorLabel') ?>
                         </label>
-                        <select id="previewGuestSel" class="form-select form-select-sm">
-                            <option value=""><?= lang('Guests.tplPreviewGuestDefault') ?></option>
-                            <?php foreach ($guestsForPreview as $g): ?>
+                        <select id="previewVisitorSel" class="form-select form-select-sm">
+                            <option value=""><?= lang('Visitors.tplPreviewVisitorDefault') ?></option>
+                            <?php foreach ($visitorsForPreview as $g): ?>
                                 <option value="<?= (int) $g['id'] ?>">
                                     <?= esc($g['first_name'] . ' ' . $g['last_name']) ?>
                                 </option>
@@ -406,7 +406,7 @@ $channelBadge = [
                     <div class="col-md-4">
                         <button type="button" class="btn btn-sm btn-outline-secondary w-100" id="btnRefreshPreview">
                             <span class="spinner-border spinner-border-sm d-none me-1" id="previewSpinner"></span>
-                            <i class="bi bi-arrow-clockwise" aria-hidden="true"></i> <?= lang('Guests.tplPreviewRefreshBtn') ?>
+                            <i class="bi bi-arrow-clockwise" aria-hidden="true"></i> <?= lang('Visitors.tplPreviewRefreshBtn') ?>
                         </button>
                     </div>
                 </div>
@@ -415,22 +415,22 @@ $channelBadge = [
 
                 <!-- Subject (email only) -->
                 <div id="previewSubjectRow" class="mb-3 d-none">
-                    <p class="text-muted small mb-1 fw-semibold"><?= lang('Guests.tplPreviewSubjectLabel') ?></p>
+                    <p class="text-muted small mb-1 fw-semibold"><?= lang('Visitors.tplPreviewSubjectLabel') ?></p>
                     <p id="previewSubjectOut" class="p-2 bg-light rounded border small mb-0"></p>
                 </div>
 
                 <!-- Plain-text body (always shown) -->
                 <div class="mb-3">
-                    <p class="text-muted small mb-1 fw-semibold"><?= lang('Guests.tplPreviewBodyTextLabel') ?></p>
+                    <p class="text-muted small mb-1 fw-semibold"><?= lang('Visitors.tplPreviewBodyTextLabel') ?></p>
                     <pre id="previewBodyTextOut" class="p-3 bg-light rounded border small mb-0" style="white-space: pre-wrap; word-break: break-word;"></pre>
                 </div>
 
                 <!-- HTML body (shown only when non-empty) -->
                 <div id="previewBodyHtmlRow" class="d-none">
-                    <p class="text-muted small mb-1 fw-semibold"><?= lang('Guests.tplPreviewBodyHtmlLabel') ?></p>
+                    <p class="text-muted small mb-1 fw-semibold"><?= lang('Visitors.tplPreviewBodyHtmlLabel') ?></p>
                     <div id="previewBodyHtmlOut" class="p-3 border rounded bg-white small"></div>
                     <details class="mt-2">
-                        <summary class="text-muted small"><?= lang('Guests.tplPreviewRawHtml') ?></summary>
+                        <summary class="text-muted small"><?= lang('Visitors.tplPreviewRawHtml') ?></summary>
                         <pre id="previewBodyHtmlRaw" class="p-2 bg-light rounded border small mt-1" style="white-space: pre-wrap; word-break: break-word;"></pre>
                     </details>
                 </div>
@@ -450,7 +450,7 @@ $channelBadge = [
 
         const previewModal = document.getElementById('tplPreviewModal');
         const bsPreviewModal = previewModal ? new bootstrap.Modal(previewModal) : null;
-        const guestSel = document.getElementById('previewGuestSel');
+        const visitorSel = document.getElementById('previewVisitorSel');
         const refreshBtn = document.getElementById('btnRefreshPreview');
         const previewSpinner = document.getElementById('previewSpinner');
         const alertBox = document.getElementById('previewAlertBox');
@@ -469,7 +469,7 @@ $channelBadge = [
             const templateId = getCurrentTemplateId();
             if (!templateId) {
                 if (alertBox) {
-                    alertBox.textContent = <?= json_encode(lang('Guests.tplPreviewSaveFirst')) ?>;
+                    alertBox.textContent = <?= json_encode(lang('Visitors.tplPreviewSaveFirst')) ?>;
                     alertBox.classList.remove('d-none');
                 }
                 return;
@@ -482,7 +482,7 @@ $channelBadge = [
             const params = new URLSearchParams({
                 [csrfName]: getCsrf(),
                 template_id: templateId,
-                guest_id: guestSel?.value ?? '',
+                visitor_id: visitorSel?.value ?? '',
             });
 
             fetch(previewUrl, {
@@ -496,7 +496,7 @@ $channelBadge = [
                 .then(r => r.json())
                 .then(data => {
                     if (!data.success) {
-                        alertBox.textContent = data.message ?? <?= json_encode(lang('Guests.tplPreviewFailed')) ?>;
+                        alertBox.textContent = data.message ?? <?= json_encode(lang('Visitors.tplPreviewFailed')) ?>;
                         alertBox.classList.remove('d-none');
                         return;
                     }
@@ -522,7 +522,7 @@ $channelBadge = [
                     }
                 })
                 .catch(() => {
-                    alertBox.textContent = <?= json_encode(lang('Guests.tplNetworkError')) ?>;
+                    alertBox.textContent = <?= json_encode(lang('Visitors.tplNetworkError')) ?>;
                     alertBox.classList.remove('d-none');
                 })
                 .finally(() => {
@@ -535,7 +535,7 @@ $channelBadge = [
         document.getElementById('btnPreviewTemplate')?.addEventListener('click', function() {
             const templateId = getCurrentTemplateId();
             if (!templateId) {
-                showAppToast(<?= json_encode(lang('Guests.tplPreviewSaveFirstToast')) ?>, 'warning');
+                showAppToast(<?= json_encode(lang('Visitors.tplPreviewSaveFirstToast')) ?>, 'warning');
                 return;
             }
             // Reset state
@@ -551,8 +551,8 @@ $channelBadge = [
             }
         });
 
-        // Refresh on guest change
-        guestSel?.addEventListener('change', function() {
+        // Refresh on visitor change
+        visitorSel?.addEventListener('change', function() {
             if (previewModal?.classList.contains('show')) {
                 loadPreview();
             }

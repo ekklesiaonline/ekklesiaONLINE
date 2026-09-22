@@ -15,7 +15,7 @@ return [
     'audienceStatuses'    => 'Membership statuses',
     'audienceGroups'      => 'Small groups',
     'audienceTeams'       => 'Ministry teams',
-    'audienceGuests'      => 'Include visitors (not yet converted)',
+    'audienceVisitors'      => 'Include visitors (not yet converted)',
     'channel'             => 'Channel',
     'channelEmail'        => 'Email',
     'channelSms'          => 'Text message (SMS)',

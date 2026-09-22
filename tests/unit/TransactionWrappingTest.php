@@ -41,17 +41,17 @@ final class TransactionWrappingTest extends CIUnitTestCase
     }
 
     /**
-     * GuestIntakeService::record must wrap its writes (provision + person_visit)
+     * VisitorIntakeService::record must wrap its writes (provision + person_visit)
      * in a transaction.
      */
-    public function testGuestIntakeServiceWrapsRecordInTransaction(): void
+    public function testVisitorIntakeServiceWrapsRecordInTransaction(): void
     {
-        $reflection = new ReflectionMethod(\App\Services\GuestIntakeService::class, 'record');
+        $reflection = new ReflectionMethod(\App\Services\VisitorIntakeService::class, 'record');
         $source = $this->getMethodSource($reflection);
 
-        $this->assertStringContainsString('transBegin', $source, 'GuestIntakeService::record must call transBegin().');
-        $this->assertStringContainsString('transCommit', $source, 'GuestIntakeService::record must call transCommit().');
-        $this->assertStringContainsString('transRollback', $source, 'GuestIntakeService::record must call transRollback().');
+        $this->assertStringContainsString('transBegin', $source, 'VisitorIntakeService::record must call transBegin().');
+        $this->assertStringContainsString('transCommit', $source, 'VisitorIntakeService::record must call transCommit().');
+        $this->assertStringContainsString('transRollback', $source, 'VisitorIntakeService::record must call transRollback().');
     }
 
     /**

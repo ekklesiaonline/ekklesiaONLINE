@@ -2,7 +2,7 @@
 
 namespace App\Database\Migrations;
 
-use App\Services\GuestIntakeService;
+use App\Services\VisitorIntakeService;
 use CodeIgniter\Database\Migration;
 
 class BackfillGuestsToPersons extends Migration
@@ -25,7 +25,7 @@ class BackfillGuestsToPersons extends Migration
             }
 
             try {
-                $intake = GuestIntakeService::record($guest, $parishId);
+                $intake = VisitorIntakeService::record($guest, $parishId);
                 if ($intake['person_id'] > 0) {
                     $this->db->table('guest')
                         ->where('id', (int) $guest['id'])

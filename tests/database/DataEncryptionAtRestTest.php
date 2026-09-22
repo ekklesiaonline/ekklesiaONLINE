@@ -53,9 +53,9 @@ final class DataEncryptionAtRestTest extends CIUnitTestCase
 
         $personModel = model(PersonModel::class);
         $personId = (int) $personModel->insert([
-            'first_name' => 'Guest',
+            'first_name' => 'Visitor',
             'last_name' => 'Cipher',
-            'email' => 'guest.cipher@example.org',
+            'email' => 'visitor.cipher@example.org',
             'phone' => '+1 (809) 555-1212',
         ], true);
 
@@ -65,12 +65,12 @@ final class DataEncryptionAtRestTest extends CIUnitTestCase
         $this->assertNotNull($storedPerson);
         $this->assertStringStartsWith('enc:v1:', (string) ($storedPerson['email'] ?? ''));
         $this->assertStringStartsWith('enc:v1:', (string) ($storedPerson['phone'] ?? ''));
-        $this->assertSame(DataEncryption::emailIndex('guest.cipher@example.org'), $storedPerson['email_hash']);
+        $this->assertSame(DataEncryption::emailIndex('visitor.cipher@example.org'), $storedPerson['email_hash']);
         $this->assertSame(DataEncryption::phoneIndex('+1 (809) 555-1212'), $storedPerson['phone_hash']);
 
         $readPerson = $personModel->find($personId);
         $this->assertIsArray($readPerson);
-        $this->assertSame('guest.cipher@example.org', $readPerson['email']);
+        $this->assertSame('visitor.cipher@example.org', $readPerson['email']);
         $this->assertSame('+1 (809) 555-1212', $readPerson['phone']);
     }
 
@@ -311,7 +311,7 @@ final class DataEncryptionAtRestTest extends CIUnitTestCase
             'linked_user_id' => ['type' => 'INTEGER', 'null' => true],
             'parish_id' => ['type' => 'INTEGER', 'null' => false],
             'person_id' => ['type' => 'INTEGER', 'null' => true],
-            'membership_status' => ['type' => 'VARCHAR', 'constraint' => 20, 'default' => 'guest'],
+            'membership_status' => ['type' => 'VARCHAR', 'constraint' => 20, 'default' => 'visitor'],
             'source' => ['type' => 'VARCHAR', 'constraint' => 32, 'default' => 'system'],
             'start_date' => ['type' => 'DATE', 'null' => true],
             'end_date' => ['type' => 'DATE', 'null' => true],
