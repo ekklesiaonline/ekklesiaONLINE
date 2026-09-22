@@ -125,6 +125,8 @@ $routes->group('', ['filter' => 'session'], function ($routes) {
         $routes->post('delete/(:num)', '\\Clergy\\Controllers\\Visitors::delete/$1', ['filter' => 'permission:visitor.delete']);
         $routes->get('convertToMember/(:num)', '\\Clergy\\Controllers\\Visitors::convertToMember/$1', ['filter' => 'permission:visitor.edit']);
         $routes->get('create-account/(:num)', '\\Clergy\\Controllers\\Visitors::createAccountFromVisitor/$1', ['filter' => 'permission:visitor.edit']);
+        $routes->post('promote-attender/(:num)', '\\Clergy\\Controllers\\Visitors::promoteAttender/$1', ['filter' => 'permission:visitor.edit']);
+        $routes->post('demote/(:num)', '\\Clergy\\Controllers\\Visitors::demoteToVisitor/$1', ['filter' => 'permission:visitor.edit']);
         // AJAX endpoints
         $routes->get('followup-status/(:num)', '\\Clergy\\Controllers\\Visitors::getFollowupStatus/$1', ['filter' => 'permission:followup.view']);
         $routes->post('followup-trigger/(:num)', '\\Clergy\\Controllers\\Visitors::triggerFollowupAction/$1', ['filter' => 'permission:followup.manage']);

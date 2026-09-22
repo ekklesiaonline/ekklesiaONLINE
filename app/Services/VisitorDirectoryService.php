@@ -45,14 +45,18 @@ class VisitorDirectoryService
     /** Correlated subquery fetching the earliest visit date for a person+parish (pa/pe aliases). */
     public function firstVisitDateSql(): string
     {
-        return '(SELECT MIN(pvx.visit_date) FROM person_visit pvx'
+        $table = $this->db()->prefixTable('person_visit');
+
+        return '(SELECT MIN(pvx.visit_date) FROM ' . $table . ' pvx'
             . ' WHERE pvx.person_id = pa.person_id AND pvx.parish_id = pa.parish_id)';
     }
 
     /** Correlated subquery fetching a column from the earliest visit row. */
     private function firstVisitFieldSql(string $column): string
     {
-        return '(SELECT pvx.' . $column . ' FROM person_visit pvx'
+        $table = $this->db()->prefixTable('person_visit');
+
+        return '(SELECT pvx.' . $column . ' FROM ' . $table . ' pvx'
             . ' WHERE pvx.person_id = pa.person_id AND pvx.parish_id = pa.parish_id'
             . ' ORDER BY pvx.visit_date ASC, pvx.id ASC LIMIT 1)';
     }
@@ -60,6 +64,11 @@ class VisitorDirectoryService
     /**
      * Visitor-scope join only (pa + pe aliases, no select list) — for
      * reports/metrics that need their own columns.
+     *
+     * Scope covers the pre-member pipeline: `visitor` and
+     * `regular_attender` affiliations, plus any affiliation that was
+     * converted from a visitor (membership_status is then 'member' and
+     * the row is kept visible via converted_to_member_at).
      */
     public function scopeBuilder(?int $parishId = null): BaseBuilder
     {
@@ -67,7 +76,7 @@ class VisitorDirectoryService
             ->join('person pe', 'pe.id = pa.person_id AND pe.deleted_at IS NULL', 'inner')
             ->where('pa.deleted_at IS NULL', null, false)
             ->groupStart()
-                ->where('pa.membership_status', 'visitor')
+                ->whereIn('pa.membership_status', ['visitor', 'regular_attender'])
                 ->orWhere('pa.converted_to_member_at IS NOT NULL', null, false)
             ->groupEnd();
 
@@ -92,7 +101,9 @@ class VisitorDirectoryService
                 . ' pa.created_at, pa.updated_at')
             ->select($visitDate . ' AS visit_date', false)
             ->select($this->firstVisitFieldSql('attended_event') . ' AS service_attended', false)
-            ->select($this->firstVisitFieldSql('notes') . ' AS notes', false);
+            ->select($this->firstVisitFieldSql('notes') . ' AS notes', false)
+            ->select('(SELECT COUNT(*) FROM ' . $this->db()->prefixTable('person_visit') . ' pvc'
+                . ' WHERE pvc.person_id = pa.person_id AND pvc.parish_id = pa.parish_id) AS visit_count', false);
 
         return $builder;
     }
@@ -119,12 +130,28 @@ class VisitorDirectoryService
      * Paginated visitor list for a parish with the legacy filter set.
      *
      * @param array{followed_up?: string|int|null, search?: ?string, date_from?: ?string,
-     *              date_to?: ?string, followup_stage?: ?string, source?: ?string} $filters
+     *              date_to?: ?string, followup_stage?: ?string, source?: ?string,
+     *              lifecycle?: ?string} $filters
      * @return array{rows: array, pager: Pager}
      */
     public function paginateForParish(int $parishId, array $filters, int $perPage, int $page): array
     {
         $builder = $this->baseBuilder($parishId);
+
+        // Lifecycle filter: default shows the unconverted pipeline
+        // (visitors + regular attenders); 'converted' lists members that
+        // came through the visitor pathway; 'all' disables the split.
+        $lifecycle = (string) ($filters['lifecycle'] ?? '');
+        if ($lifecycle === 'converted') {
+            $builder->where('pa.converted_to_member_at IS NOT NULL', null, false);
+        } elseif ($lifecycle === 'all') {
+            // no additional restriction
+        } else {
+            $builder->where('pa.converted_to_member_at IS NULL', null, false);
+            if (in_array($lifecycle, ['visitor', 'regular_attender'], true)) {
+                $builder->where('pa.membership_status', $lifecycle);
+            }
+        }
 
         $followedUp = $filters['followed_up'] ?? null;
         if ($followedUp !== null && $followedUp !== '') {
@@ -148,14 +175,15 @@ class VisitorDirectoryService
 
         $stage = $filters['followup_stage'] ?? null;
         if ($stage !== null && $stage !== '') {
+            $logTable = $this->db()->prefixTable('followup_log');
             if ($stage === 'none') {
-                $builder->where('pa.person_id NOT IN (SELECT DISTINCT person_id FROM followup_log WHERE status IN ("sent","skipped"))', null, false);
+                $builder->where("pa.person_id NOT IN (SELECT DISTINCT person_id FROM {$logTable} WHERE status IN (\"sent\",\"skipped\"))", null, false);
             } elseif ($stage === 'inprogress') {
-                $builder->where('pa.person_id IN (SELECT DISTINCT person_id FROM followup_log WHERE status IN ("sent","skipped"))', null, false)
-                    ->where('pa.person_id IN (SELECT DISTINCT person_id FROM followup_log WHERE status = "pending")', null, false);
+                $builder->where("pa.person_id IN (SELECT DISTINCT person_id FROM {$logTable} WHERE status IN (\"sent\",\"skipped\"))", null, false)
+                    ->where("pa.person_id IN (SELECT DISTINCT person_id FROM {$logTable} WHERE status = \"pending\")", null, false);
             } elseif (in_array($stage, ['pending', 'sent', 'failed', 'skipped'], true)) {
                 $builder->where(
-                    "pa.person_id IN (SELECT DISTINCT person_id FROM followup_log WHERE status = '{$stage}')",
+                    "pa.person_id IN (SELECT DISTINCT person_id FROM {$logTable} WHERE status = '{$stage}')",
                     null,
                     false
                 );
@@ -179,7 +207,10 @@ class VisitorDirectoryService
             $builder->groupEnd();
         }
 
-        $total  = (int) (clone $builder)->countAllResults();
+        // countAllResults(false): the clone shares the connection's alias
+        // registry — resetting it would re-prefix aliased columns on the
+        // main builder's ->get() under a prefixed connection.
+        $total  = (int) (clone $builder)->countAllResults(false);
         $page   = max(1, $page);
         $offset = ($page - 1) * $perPage;
 
@@ -204,6 +235,7 @@ class VisitorDirectoryService
     public function recentForParish(int $parishId, int $limit = 10): array
     {
         $rows = $this->baseBuilder($parishId)
+            ->where('pa.converted_to_member_at IS NULL', null, false)
             ->orderBy($this->firstVisitDateSql(), 'DESC', false)
             ->orderBy('pe.id', 'DESC')
             ->limit($limit)
@@ -245,6 +277,22 @@ class VisitorDirectoryService
             ->limit($limit)
             ->get()
             ->getResultArray();
+    }
+
+    /**
+     * Per-parish visit-count threshold at which a visitor is *suggested*
+     * for promotion to regular_attender. Advisory only — nothing here
+     * auto-transitions a status.
+     */
+    public function attenderSuggestionThreshold(int $parishId): int
+    {
+        try {
+            $raw = (new ParishConfigService())->getSetting($parishId, 'visitor.attender_suggest_threshold', 2);
+        } catch (\Throwable $e) {
+            $raw = 2;
+        }
+
+        return max(1, (int) $raw);
     }
 
     /**

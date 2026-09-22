@@ -47,6 +47,7 @@ class Visitors extends BaseController
         $dateTo        = $this->request->getGet('date_to');       // Y-m-d
         $followupStage = $this->request->getGet('followup_stage'); // pending|sent|failed|skipped|none
         $source        = $this->request->getGet('source');
+        $lifecycle     = $this->request->getGet('lifecycle'); // ''|visitor|regular_attender|converted|all
 
         $page   = max(1, (int) ($this->request->getGet('page') ?? 1));
         $result = $this->visitorDirectory->paginateForParish((int) $parishId, [
@@ -56,6 +57,7 @@ class Visitors extends BaseController
             'date_to'        => $dateTo,
             'followup_stage' => $followupStage,
             'source'         => $source,
+            'lifecycle'      => $lifecycle,
         ], $perPage, $page);
 
         $visitors = $result['rows'];
@@ -73,7 +75,9 @@ class Visitors extends BaseController
             'date_to'       => $dateTo,
             'followup_stage' => $followupStage,
             'source'        => $source,
+            'lifecycle'     => $lifecycle,
             'progressMap'   => $progressMap,
+            'attenderThreshold' => $this->visitorDirectory->attenderSuggestionThreshold((int) $parishId),
         ];
 
         return view('Clergy\Views\Visitors/index', array_merge($this->getCommonViewData(lang('Visitors.pageTitle')), $data));
@@ -128,6 +132,7 @@ class Visitors extends BaseController
             'followupTimeline' => $followupTimeline,
             'nextPending'      => $nextPending,
             'sequences'        => $sequences,
+            'attenderThreshold' => $this->visitorDirectory->attenderSuggestionThreshold((int) $visitor['parish_id']),
         ];
 
         return view('Clergy\Views\Visitors/view', array_merge($this->getCommonViewData(lang('Visitors.pageTitleView')), $data));
@@ -623,6 +628,89 @@ class Visitors extends BaseController
         ]);
 
         return redirect()->to('/members/create');
+    }
+
+    /**
+     * POST visitors/promote-attender/:personId
+     * Promote a visitor to regular_attender through the canonical pathway.
+     */
+    public function promoteAttender($id)
+    {
+        return $this->attenderTransition($id, 'regular_attender');
+    }
+
+    /**
+     * POST visitors/demote/:personId
+     * Move a regular_attender back to visitor through the canonical pathway.
+     */
+    public function demoteToVisitor($id)
+    {
+        return $this->attenderTransition($id, 'visitor');
+    }
+
+    /**
+     * Shared visitor ⇄ regular_attender transition handler. Only those two
+     * targets are reachable here — member promotion is Phase-3 territory.
+     */
+    private function attenderTransition($id, string $toStatus)
+    {
+        if ($redirect = $this->requirePermission('visitor.edit')) {
+            return $redirect;
+        }
+
+        if ($redirect = $this->requireParish()) {
+            return $redirect;
+        }
+
+        $parishId = (int) ($this->getOperationalParishId() ?? 0);
+        $visitor  = $this->visitorDirectory->findByPerson((int) $id, $parishId);
+
+        if (!$visitor) {
+            return redirect()->to('/visitors')->with('error', lang('Visitors.visitorNotFound'));
+        }
+
+        if (!empty($visitor['converted_to_member_at'])) {
+            return redirect()->to('/visitors/view/' . $id)
+                ->with('error', lang('Visitors.visitorAlreadyConverted'));
+        }
+
+        $personId = (int) ($visitor['person_id'] ?? $visitor['id']);
+        $from     = (string) ($visitor['membership_status'] ?? 'visitor');
+
+        if ($from === $toStatus) {
+            return redirect()->back()
+                ->with('error', lang('Visitors.transitionNoop'));
+        }
+
+        $reason = $toStatus === 'regular_attender'
+            ? 'Promoted to regular attender'
+            : 'Moved back to visitor';
+
+        $result = (new \App\Services\MembershipPathwayService())->transitionForPerson(
+            $personId,
+            $parishId,
+            $toStatus,
+            (int) auth()->id(),
+            $reason
+        );
+
+        if (! ($result['ok'] ?? false)) {
+            return redirect()->back()->with('error', lang('Visitors.transitionFailed'));
+        }
+
+        $this->audit()->log('visitor.' . ($toStatus === 'regular_attender' ? 'promote_attender' : 'demote'), [
+            'parish_id'   => $parishId,
+            'entity_type' => 'visitor',
+            'entity_id'   => $personId,
+            'old_values'  => ['membership_status' => $from],
+            'new_values'  => ['membership_status' => $toStatus],
+        ]);
+
+        $message = $toStatus === 'regular_attender'
+            ? lang('Visitors.promoteAttenderSuccess')
+            : lang('Visitors.demoteVisitorSuccess');
+
+        return redirect()->back()->with('success', $message);
     }
 
     // ------------------------------------------------------------------

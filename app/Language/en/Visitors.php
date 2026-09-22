@@ -189,6 +189,23 @@ return [
     'markCompleted'       => 'Mark as completed',
 
     // -------------------------------------------------------------------------
+    // Lifecycle / regular-attender pathway
+    // -------------------------------------------------------------------------
+    'colVisits'               => 'Visits',
+    'lifecycleFilter'         => 'Stage',
+    'lifecyclePipeline'       => 'Visitors & Attenders',
+    'lifecycleAll'            => 'All (incl. converted)',
+    'suggestedAttender'       => 'Suggested: Regular Attender',
+    'promoteToAttender'       => 'Promote to Regular Attender',
+    'demoteToVisitor'         => 'Move back to Visitor',
+    'promoteAttenderSuccess'  => 'Visitor promoted to regular attender.',
+    'demoteVisitorSuccess'    => 'Moved back to visitor.',
+    'transitionFailed'        => 'Status transition failed.',
+    'transitionNoop'          => 'Already at that stage.',
+    'confirmPromoteAttender'  => 'Promote this visitor to regular attender?',
+    'confirmDemoteVisitor'    => 'Move this regular attender back to visitor?',
+
+    // -------------------------------------------------------------------------
     // Flash / toast messages
     // -------------------------------------------------------------------------
     'visitorCreateSuccess'  => 'Visitor added successfully.',

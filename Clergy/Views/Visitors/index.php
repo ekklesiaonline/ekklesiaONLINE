@@ -52,17 +52,26 @@ $formatLocalizedDate = static function (?string $value, string $pattern, string 
             type="button"
             data-bs-toggle="collapse"
             data-bs-target="#visitorsFilterPanel"
-            aria-expanded="<?= ($request->getGet('search') !== null || $request->getGet('followed_up') !== null) ? 'true' : 'false' ?>"
+            aria-expanded="<?= ($request->getGet('search') !== null || $request->getGet('followed_up') !== null || $request->getGet('lifecycle') !== null) ? 'true' : 'false' ?>"
             aria-controls="visitorsFilterPanel">
             <i class="bi bi-funnel" aria-hidden="true"></i> <?= lang('App.filter') ?>
         </button>
     </div>
-    <div id="visitorsFilterPanel" class="collapse <?= ($request->getGet('search') !== null || $request->getGet('followed_up') !== null) ? 'show' : '' ?>">
+    <div id="visitorsFilterPanel" class="collapse <?= ($request->getGet('search') !== null || $request->getGet('followed_up') !== null || $request->getGet('lifecycle') !== null) ? 'show' : '' ?>">
         <div class="card-body border-top filter-panel-body">
             <form method="get" action="<?= base_url('visitors') ?>">
                 <div class="row g-2">
                     <div class="col-md-4">
                         <input type="text" class="form-control" name="search" placeholder="<?= lang('Visitors.searchByNameEmailPhone') ?>" value="<?= esc($search ?? '') ?>">
+                    </div>
+                    <div class="col-md-3">
+                        <select class="form-select" name="lifecycle" aria-label="<?= esc(lang('Visitors.lifecycleFilter')) ?>">
+                            <option value=""><?= lang('Visitors.lifecyclePipeline') ?></option>
+                            <option value="visitor" <?= ($lifecycle ?? '') === 'visitor' ? 'selected' : '' ?>><?= lang('App.statusVisitor') ?></option>
+                            <option value="regular_attender" <?= ($lifecycle ?? '') === 'regular_attender' ? 'selected' : '' ?>><?= lang('App.statusRegular_attender') ?></option>
+                            <option value="converted" <?= ($lifecycle ?? '') === 'converted' ? 'selected' : '' ?>><?= lang('Visitors.statusConverted') ?></option>
+                            <option value="all" <?= ($lifecycle ?? '') === 'all' ? 'selected' : '' ?>><?= lang('Visitors.lifecycleAll') ?></option>
+                        </select>
                     </div>
                     <div class="col-md-3">
                         <select class="form-select" name="followed_up">
@@ -102,6 +111,23 @@ $formatLocalizedDate = static function (?string $value, string $pattern, string 
                             <tr>
                                 <td>
                                     <strong><?= esc($visitor['first_name'] . ' ' . $visitor['last_name']) ?></strong>
+                                    <br>
+                                    <?php
+                                    $rowStatus   = (string) ($visitor['membership_status'] ?? 'visitor');
+                                    $rowVisits   = (int) ($visitor['visit_count'] ?? 0);
+                                    $rowConverted = !empty($visitor['converted_to_member_at']);
+                                    $statusKey   = 'App.status' . ucfirst($rowStatus);
+                                    $statusBadge = $rowConverted ? 'success' : ($rowStatus === 'regular_attender' ? 'info' : 'secondary');
+                                    ?>
+                                    <span class="badge border border-<?= $statusBadge ?> text-<?= $statusBadge ?> fw-normal">
+                                        <?= esc(lang($statusKey)) ?>
+                                    </span>
+                                    <?php if (! $rowConverted && $rowStatus === 'visitor' && $rowVisits >= (int) ($attenderThreshold ?? 2)): ?>
+                                        <span class="badge border border-primary text-primary fw-normal">
+                                            <?= lang('Visitors.suggestedAttender') ?>
+                                        </span>
+                                    <?php endif; ?>
+                                    <small class="text-muted d-block"><?= lang('Visitors.colVisits') ?>: <?= $rowVisits ?></small>
                                 </td>
                                 <td>
                                     <?= esc($visitor['email']) ?><br>
@@ -151,6 +177,27 @@ $formatLocalizedDate = static function (?string $value, string $pattern, string 
                                                         <i class="bi bi-pencil me-2" aria-hidden="true"></i><?= lang('App.edit') ?>
                                                     </a>
                                                 </li>
+                                                <?php if (! $rowConverted && $rowStatus === 'visitor'): ?>
+                                                    <li>
+                                                        <form method="post" action="<?= base_url('visitors/promote-attender/' . $visitor['id']) ?>"
+                                                            onsubmit="return confirm(<?= json_encode(lang('Visitors.confirmPromoteAttender')) ?>);">
+                                                            <?= csrf_field() ?>
+                                                            <button type="submit" class="dropdown-item">
+                                                                <i class="bi bi-arrow-up-circle me-2" aria-hidden="true"></i><?= lang('Visitors.promoteToAttender') ?>
+                                                            </button>
+                                                        </form>
+                                                    </li>
+                                                <?php elseif (! $rowConverted && $rowStatus === 'regular_attender'): ?>
+                                                    <li>
+                                                        <form method="post" action="<?= base_url('visitors/demote/' . $visitor['id']) ?>"
+                                                            onsubmit="return confirm(<?= json_encode(lang('Visitors.confirmDemoteVisitor')) ?>);">
+                                                            <?= csrf_field() ?>
+                                                            <button type="submit" class="dropdown-item">
+                                                                <i class="bi bi-arrow-down-circle me-2" aria-hidden="true"></i><?= lang('Visitors.demoteToVisitor') ?>
+                                                            </button>
+                                                        </form>
+                                                    </li>
+                                                <?php endif; ?>
                                             <?php endif; ?>
                                             <?php if (auth()->user()->can('visitor.delete')): ?>
                                                 <li>

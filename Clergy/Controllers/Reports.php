@@ -264,7 +264,7 @@ class Reports extends BaseController
             ->select($selects)
             ->where($visitDate . ' >= ' . $db->escape($startDate), null, false)
             ->where($visitDate . ' <= ' . $db->escape($endDate), null, false)
-            ->where("EXISTS (SELECT 1 FROM followup_log gfl WHERE gfl.person_id = pa.person_id AND gfl.status = 'sent')", null, false)
+            ->where("EXISTS (SELECT 1 FROM " . $db->prefixTable('followup_log') . " gfl WHERE gfl.person_id = pa.person_id AND gfl.status = 'sent')", null, false)
             ->get()
             ->getRowArray() ?? ['total_visitors' => 0, 'converted' => 0];
 
@@ -272,7 +272,7 @@ class Reports extends BaseController
             ->select($selects)
             ->where($visitDate . ' >= ' . $db->escape($startDate), null, false)
             ->where($visitDate . ' <= ' . $db->escape($endDate), null, false)
-            ->where("NOT EXISTS (SELECT 1 FROM followup_log gfl WHERE gfl.person_id = pa.person_id AND gfl.status = 'sent')", null, false)
+            ->where("NOT EXISTS (SELECT 1 FROM " . $db->prefixTable('followup_log') . " gfl WHERE gfl.person_id = pa.person_id AND gfl.status = 'sent')", null, false)
             ->get()
             ->getRowArray() ?? ['total_visitors' => 0, 'converted' => 0];
 
@@ -293,7 +293,7 @@ class Reports extends BaseController
                 "MIN({$visitDate}) AS week_start",
                 'COUNT(pa.person_id) AS new_visitors',
                 'SUM(CASE WHEN pa.converted_to_member_at IS NOT NULL THEN 1 ELSE 0 END) AS converted',
-                "SUM(CASE WHEN EXISTS (SELECT 1 FROM followup_log gfl WHERE gfl.person_id = pa.person_id AND gfl.status = 'sent') THEN 1 ELSE 0 END) AS received_followup",
+                "SUM(CASE WHEN EXISTS (SELECT 1 FROM " . $this->db->prefixTable('followup_log') . " gfl WHERE gfl.person_id = pa.person_id AND gfl.status = 'sent') THEN 1 ELSE 0 END) AS received_followup",
             ])
             ->where($visitDate . ' >= ' . $this->db->escape($startDate), null, false)
             ->where($visitDate . ' <= ' . $this->db->escape($endDate), null, false)

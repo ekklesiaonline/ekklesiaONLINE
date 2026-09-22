@@ -32,8 +32,33 @@ $formatLocalizedDate = static function (?string $value, string $pattern, string 
 };
 ?>
 
+<?php
+$visitorStatus    = (string) ($visitor['membership_status'] ?? 'visitor');
+$visitorConverted = !empty($visitor['converted_to_member_at']);
+$visitorVisits    = (int) ($visitor['visit_count'] ?? count($visits ?? []));
+$attenderThreshold = (int) ($attenderThreshold ?? 2);
+$suggestAttender  = ! $visitorConverted && $visitorStatus === 'visitor' && $visitorVisits >= $attenderThreshold;
+?>
+
 <div class="d-flex justify-content-start align-items-center mb-3">
     <div class="d-flex align-items-center gap-2 flex-wrap">
+        <?php if (! $visitorConverted && $visitorStatus === 'visitor' && auth()->user()->can('visitor.edit')): ?>
+            <form method="post" action="<?= base_url('visitors/promote-attender/' . $visitor['id']) ?>"
+                onsubmit="return confirm(<?= json_encode(lang('Visitors.confirmPromoteAttender')) ?>);" class="d-inline">
+                <?= csrf_field() ?>
+                <button type="submit" class="btn btn-outline-info">
+                    <i class="bi bi-arrow-up-circle" aria-hidden="true"></i> <?= lang('Visitors.promoteToAttender') ?>
+                </button>
+            </form>
+        <?php elseif (! $visitorConverted && $visitorStatus === 'regular_attender' && auth()->user()->can('visitor.edit')): ?>
+            <form method="post" action="<?= base_url('visitors/demote/' . $visitor['id']) ?>"
+                onsubmit="return confirm(<?= json_encode(lang('Visitors.confirmDemoteVisitor')) ?>);" class="d-inline">
+                <?= csrf_field() ?>
+                <button type="submit" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-down-circle" aria-hidden="true"></i> <?= lang('Visitors.demoteToVisitor') ?>
+                </button>
+            </form>
+        <?php endif; ?>
         <?php if (empty($visitor['followed_up']) && auth()->user()->can('visitor.edit')): ?>
             <a href="<?= base_url('visitors/convertToMember/' . $visitor['id']) ?>" class="btn btn-success">
                 <i class="bi bi-arrow-right-circle" aria-hidden="true"></i> <?= lang('Visitors.convertToMember') ?>
@@ -68,6 +93,21 @@ $formatLocalizedDate = static function (?string $value, string $pattern, string 
                     <i class="bi bi-person-circle text-primary" style="font-size: 80px;" aria-hidden="true"></i>
                 </div>
                 <h4 class="text-center"><?= esc($visitor['first_name'] . ' ' . $visitor['last_name']) ?></h4>
+
+                <div class="text-center mb-2">
+                    <?php
+                    $lifecycleBadge = $visitorConverted ? 'success' : ($visitorStatus === 'regular_attender' ? 'info' : 'secondary');
+                    ?>
+                    <span class="badge border border-<?= $lifecycleBadge ?> text-<?= $lifecycleBadge ?> fw-normal">
+                        <?= esc(lang('App.status' . ucfirst($visitorStatus))) ?>
+                    </span>
+                    <?php if ($suggestAttender): ?>
+                        <span class="badge border border-primary text-primary fw-normal">
+                            <?= lang('Visitors.suggestedAttender') ?>
+                        </span>
+                    <?php endif; ?>
+                    <div class="small text-muted mt-1"><?= lang('Visitors.colVisits') ?>: <?= $visitorVisits ?></div>
+                </div>
 
                 <div class="text-center mb-3">
                     <?php

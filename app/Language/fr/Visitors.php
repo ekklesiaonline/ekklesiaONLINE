@@ -174,6 +174,23 @@ return [
     'statusCompleted'     => 'Terminé',
     'markCompleted'       => 'Marquer comme terminé',
 
+    // -------------------------------------------------------------------------
+    // Lifecycle / regular-attender pathway
+    // -------------------------------------------------------------------------
+    'colVisits'               => 'Visites',
+    'lifecycleFilter'         => 'Étape',
+    'lifecyclePipeline'       => 'Visiteurs et participants',
+    'lifecycleAll'            => 'Tous (incl. convertis)',
+    'suggestedAttender'       => 'Suggéré : Participant régulier',
+    'promoteToAttender'       => 'Promouvoir en participant régulier',
+    'demoteToVisitor'         => 'Rétrograder en visiteur',
+    'promoteAttenderSuccess'  => 'Visiteur promu en participant régulier.',
+    'demoteVisitorSuccess'    => 'Rétrogradé en visiteur.',
+    'transitionFailed'        => 'Le changement de statut a échoué.',
+    'transitionNoop'          => 'Déjà à cette étape.',
+    'confirmPromoteAttender'  => 'Promouvoir ce visiteur en participant régulier ?',
+    'confirmDemoteVisitor'    => 'Rétrograder ce participant régulier en visiteur ?',
+
     'visitorCreateSuccess'  => 'Visiteur ajouté avec succès.',
     'visitorCreateFailed'   => 'Impossible d\'ajouter le visiteur.',
     'visitorUpdateSuccess'  => 'Visiteur mis à jour avec succès.',
@@ -517,7 +534,7 @@ return [
     'viewAssignSequenceNone'       => 'Aucune séquence active disponible.',
 
     'optOutsLabel'                 => 'Canaux d’exclusion des communications',
-    'optOutsHintPre'               => 'Cochez les canaux par lesquels cet invité a demandé de',
+    'optOutsHintPre'               => 'Cochez les canaux par lesquels ce visiteur a demandé de',
     'optOutsHintNot'               => 'ne pas',
     'optOutsHintPost'              => 'être contacté.',
     'preferredTimezone'            => 'Fuseau horaire préféré',
@@ -554,8 +571,8 @@ return [
     'interestSeniors'              => 'Ministère des aînés',
     'interestCounseling'           => 'Accompagnement et soutien',
     'interestEvangelism'           => 'Évangélisation',
-    'visitorIntakeFailed'            => 'Impossible de créer la fiche de personne pour cet invité.',
-    'visitorConversionFailed'        => 'Impossible de convertir cet invité en membre.',
+    'visitorIntakeFailed'            => 'Impossible de créer la fiche de personne pour ce visiteur.',
+    'visitorConversionFailed'        => 'Impossible de convertir ce visiteur en membre.',
     'createAccountBtn'             => 'Créer un compte membre',
-    'visitorAlreadyConverted'        => 'Cet invité a déjà été converti en membre.',
+    'visitorAlreadyConverted'        => 'Ce visiteur a déjà été converti en membre.',
 ];

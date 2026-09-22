@@ -29,7 +29,7 @@ class VisitorConversions extends BaseController
 
         $db = db_connect();
 
-        $visitDate = '(SELECT MIN(pvx.visit_date) FROM person_visit pvx'
+        $visitDate = '(SELECT MIN(pvx.visit_date) FROM ' . $db->prefixTable('person_visit') . ' pvx'
             . ' WHERE pvx.person_id = pa.person_id AND pvx.parish_id = pa.parish_id)';
 
         $builder = $db->table('parish_affiliation pa')
@@ -46,7 +46,7 @@ class VisitorConversions extends BaseController
             ->where('pa.parish_id', $parishId)
             ->where('pa.deleted_at IS NULL', null, false)
             ->groupStart()
-                ->where('pa.membership_status', 'visitor')
+                ->whereIn('pa.membership_status', ['visitor', 'regular_attender'])
                 ->orWhere('pa.converted_to_member_at IS NOT NULL', null, false)
             ->groupEnd()
             ->orderBy($visitDate, 'DESC', false)
