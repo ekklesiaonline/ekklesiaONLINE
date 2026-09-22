@@ -299,6 +299,11 @@ class MemberAffiliationService
         if ($existing) {
             if ((int) ($existing['is_primary'] ?? 0) !== 1) {
                 $this->db->table('parish_affiliation')
+                    ->where('linked_user_id', $userId)
+                    ->where('is_primary', 1)
+                    ->update(['is_primary' => 0, 'updated_at' => date('Y-m-d H:i:s')]);
+
+                $this->db->table('parish_affiliation')
                     ->where('id', (int) $existing['id'])
                     ->update(['is_primary' => 1, 'updated_at' => date('Y-m-d H:i:s')]);
             }
@@ -307,6 +312,20 @@ class MemberAffiliationService
         }
 
         $this->affiliations->attachToParish($userId, $primaryParishId, true, 'regular_attender', false, $personId);
+
+        // The model's attachToParish ignores its $isHome flag and
+        // setHomeParish() requires is_member=1, so a freshly inserted
+        // regular_attender row would never become primary. Mark it here.
+        $this->db->table('parish_affiliation')
+            ->where('linked_user_id', $userId)
+            ->where('is_primary', 1)
+            ->update(['is_primary' => 0, 'updated_at' => date('Y-m-d H:i:s')]);
+
+        $this->db->table('parish_affiliation')
+            ->where('linked_user_id', $userId)
+            ->where('parish_id', $primaryParishId)
+            ->where('deleted_at', null)
+            ->update(['is_primary' => 1, 'updated_at' => date('Y-m-d H:i:s')]);
     }
 
     /**

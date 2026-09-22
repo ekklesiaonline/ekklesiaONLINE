@@ -209,14 +209,41 @@ class RegistrationApprovalService
             // profile.membership_status is an ENUM (visitor/regular_attender/
             // member/non_active/inactive/transferred/deceased); 'active' is not
             // a valid value and MySQL silently stores '' for it.
-            'membership_status' => 'member',
+            // Approval affiliates the person but does not confer canonical
+            // membership: the parish promotes regular_attender -> member once
+            // sacramental/standing requirements are verified.
+            'membership_status' => 'regular_attender',
             'province_id' => (int) $scope['province_id'],
             'diocese_id' => (int) $scope['diocese_id'],
             'parish_id' => $parishId > 0 ? $parishId : null,
         ]);
 
         // Sync the canonical person record with the approved profile.
-        (new \App\Services\PersonProfileSyncService())->syncFromProfile((int) $profile['id']);
+        $personId = (new \App\Services\PersonProfileSyncService())->syncFromProfile((int) $profile['id'])
+            ?? ((int) ($profile['person_id'] ?? 0) ?: null);
+
+        // The people directory is affiliation-driven: approval must create
+        // the person's canonical parish_affiliation row or they remain
+        // invisible to parish people lists. regular_attender keeps them out
+        // of member counts until a parish admin promotes them.
+        if ($parishId > 0) {
+            (new MemberAffiliationService($this->db))->ensurePrimaryAffiliationForUser(
+                (int) $user->id,
+                $parishId,
+                $personId
+            );
+
+            $affiliationCreated = $this->db->table('parish_affiliation')
+                ->where('linked_user_id', (int) $user->id)
+                ->where('parish_id', $parishId)
+                ->where('deleted_at', null)
+                ->countAllResults() > 0;
+
+            if (! $affiliationCreated) {
+                $this->db->transRollback();
+                return lang('Diocesan.registrationApproveFailed');
+            }
+        }
 
         model('UserRegistrationRequestModel')->update((int) $request['id'], [
             'status' => 'approved',

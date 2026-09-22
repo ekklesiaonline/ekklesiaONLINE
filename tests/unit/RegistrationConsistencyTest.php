@@ -91,6 +91,36 @@ final class RegistrationConsistencyTest extends CIUnitTestCase
     }
 
     /**
+     * Approval must create the canonical parish_affiliation row: the people
+     * directory is affiliation-driven, so an approved registration without
+     * one stays invisible to parish member/people lists.
+     */
+    public function testPerformApproveCreatesParishAffiliation(): void
+    {
+        $reflection = new ReflectionMethod(
+            \App\Services\RegistrationApprovalService::class,
+            'performApprove'
+        );
+        $source = $this->getMethodSource($reflection);
+
+        $this->assertStringContainsString(
+            'MemberAffiliationService',
+            $source,
+            'performApprove must use MemberAffiliationService to create the parish_affiliation row.'
+        );
+        $this->assertStringContainsString(
+            'ensurePrimaryAffiliationForUser',
+            $source,
+            'performApprove must attach the user to the parish so directory listings include them.'
+        );
+        $this->assertStringContainsString(
+            'regular_attender',
+            $source,
+            'Approval must not confer canonical membership; regular_attender requires parish promotion to member.'
+        );
+    }
+
+    /**
      * H7: Direct permission grants in controllers must only use the
      * documented primary/delegation permissions, not arbitrary role permissions.
      */
