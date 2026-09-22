@@ -880,9 +880,9 @@ class Members extends BaseController
         $profileId = (int) $this->request->getPost('profile_id');
         $parishId = (int) $this->request->getPost('parish_id');
         $allowedStatuses = ['visitor', 'regular_attender', 'member', 'inactive', 'transferred', 'deceased'];
-        $status = MembershipStatusService::normalizeAffiliationStatus((string) ($this->request->getPost('membership_status') ?? 'member'));
+        $status = MembershipStatusService::normalizeAffiliationStatus((string) ($this->request->getPost('membership_status') ?? 'visitor'));
         if (!in_array($status, $allowedStatuses, true)) {
-            $status = 'member';
+            $status = 'visitor';
         }
         $isHome = (int) ($this->request->getPost('is_primary') ?? 0) === 1;
 

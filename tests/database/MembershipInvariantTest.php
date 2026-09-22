@@ -187,6 +187,25 @@ final class MembershipInvariantTest extends CIUnitTestCase
     }
 
     /**
+     * Regression: callers still pass the retired 'active' status to
+     * getParishMembers()/getParishMembersPaginated(). The model must
+     * normalize it to 'member' — a literal filter silently empties
+     * attendance, pledge, and event member lists.
+     */
+    public function testParishMembersQueriesNormalizeLegacyActiveAlias(): void
+    {
+        $parishId = $this->insertParish();
+        $userId   = $this->insertUser('register.alias');
+        $this->insertProfile($userId, $parishId);
+
+        $model = model(MemberParishAffiliationModel::class);
+        $model->attachToParish($userId, $parishId, false, 'member');
+
+        $this->assertCount(1, $model->getParishMembers($parishId, 'active'));
+        $this->assertSame(1, $model->getParishMembersPaginated($parishId, 'active')['total']);
+    }
+
+    /**
      * An inactive (lapsed) member must be reactivatable through the pathway —
      * transitionForUser() deliberately does not require is_member=1 so that
      * legacy rows written before the register semantics can still move.

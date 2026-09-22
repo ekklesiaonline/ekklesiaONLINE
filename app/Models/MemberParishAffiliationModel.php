@@ -85,7 +85,10 @@ class MemberParishAffiliationModel extends BaseTenantModel
         }
 
         if ($status !== null && $status !== '') {
-            $builder->where('mca.membership_status', $status);
+            // Normalize legacy aliases ('active' → 'member', etc.) — callers
+            // still pass retired vocabulary; a literal filter would silently
+            // return an empty member list.
+            $builder->where('mca.membership_status', MembershipStatusService::normalizeAffiliationStatus($status));
         }
 
         $rows = $builder
@@ -169,11 +172,15 @@ class MemberParishAffiliationModel extends BaseTenantModel
         $builder->where('mca.is_member', 1);
 
         if ($status !== null && $status !== '') {
-            $builder->where('mca.membership_status', $status);
+            $builder->where('mca.membership_status', MembershipStatusService::normalizeAffiliationStatus($status));
         }
 
+        // reset=false: countAllResults()'s default resetSelect() clears the
+        // shared connection's alias registry (p, mca, u, ai, agu), and the
+        // main builder's get() below would then prefix p.deleted_at into
+        // db_p.deleted_at on prefixed connections (e.g. the tests DB).
         $countBuilder = clone $builder;
-        $total = (int) $countBuilder->countAllResults();
+        $total = (int) $countBuilder->countAllResults(false);
 
         $page = max(1, $page);
         $perPage = max(1, $perPage);
@@ -468,7 +475,9 @@ class MemberParishAffiliationModel extends BaseTenantModel
             : $existingPersonId;
 
         $updateData = $statusFields + [
-            'end_date'  => null,
+            // Terminal exits stamp end_date (same rule the pathway applies);
+            // every other status clears it on (re)attach.
+            'end_date'  => MembershipStatusService::isTerminalStatus($status) ? date('Y-m-d') : null,
             'person_id' => $targetPersonId > 0 ? $targetPersonId : ($resolvedPersonId > 0 ? $resolvedPersonId : 0),
         ];
 

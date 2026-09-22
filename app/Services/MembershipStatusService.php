@@ -118,6 +118,15 @@ class MembershipStatusService
         return $normalized === 'member';
     }
 
+    /**
+     * Terminal lifecycle exits — entering or leaving them requires a
+     * recorded reason (MembershipPathwayService::requiresReason).
+     */
+    public static function isTerminalStatus(string $status): bool
+    {
+        return in_array(self::normalizeAffiliationStatus($status), ['transferred', 'deceased'], true);
+    }
+
     public static function label(string $status): string
     {
         $normalized = self::normalizeAffiliationStatus($status);
