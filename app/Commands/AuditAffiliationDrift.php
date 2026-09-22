@@ -13,9 +13,9 @@ use CodeIgniter\CLI\CLI;
  *  - is_member equals isOnRegister(membership_status)  (member|inactive)
  *    — structurally enforced once the column is GENERATED; the check
  *    remains for pre-migration databases,
- *  - affiliation_type equals affiliationTypeForStatus(membership_status)
- *    (clergy/staff are exempt — legacy enum values, unset by lifecycle
- *    flows),
+ *  - affiliation_type equals membership_status's derived bucket (skipped
+ *    once the column is dropped; clergy/staff are exempt — legacy enum
+ *    values, unset by lifecycle flows),
  *  - canonical_status mirrors membership_status (skipped once the column
  *    is dropped),
  *  - end_date is only set on terminal statuses (transferred|deceased).
@@ -50,13 +50,17 @@ class AuditAffiliationDrift extends BaseCommand
 
         $hasCanonicalStatus = $db->fieldExists('canonical_status', 'parish_affiliation');
         $hasIsMember        = $db->fieldExists('is_member', 'parish_affiliation');
+        $hasAffiliationType = $db->fieldExists('affiliation_type', 'parish_affiliation');
 
-        $select = 'id, parish_id, person_id, linked_user_id, membership_status, affiliation_type, end_date';
+        $select = 'id, parish_id, person_id, linked_user_id, membership_status, end_date';
         if ($hasCanonicalStatus) {
             $select .= ', canonical_status';
         }
         if ($hasIsMember) {
             $select .= ', is_member';
+        }
+        if ($hasAffiliationType) {
+            $select .= ', affiliation_type';
         }
 
         $rows = $db->table('parish_affiliation')
@@ -93,12 +97,19 @@ class AuditAffiliationDrift extends BaseCommand
                 }
             }
 
-            $type = (string) ($row['affiliation_type'] ?? '');
-            // clergy/staff are not reachable through the lifecycle ladder —
-            // they are set by staff/leadership flows and exempt here.
-            if (! in_array($type, ['clergy', 'staff'], true)
-                && $type !== MembershipStatusService::affiliationTypeForStatus($status)) {
-                $typeDrift[] = $id;
+            if ($hasAffiliationType) {
+                $type = (string) ($row['affiliation_type'] ?? '');
+                $expectedType = match ($status) {
+                    'visitor'          => 'guest',
+                    'regular_attender' => 'attendee',
+                    default            => 'member',
+                };
+                // clergy/staff are not reachable through the lifecycle
+                // ladder — they are set by staff/leadership flows and
+                // exempt here.
+                if (! in_array($type, ['clergy', 'staff'], true) && $type !== $expectedType) {
+                    $typeDrift[] = $id;
+                }
             }
 
             if ($hasCanonicalStatus) {
@@ -116,7 +127,9 @@ class AuditAffiliationDrift extends BaseCommand
 
         $issues += $this->report('membership_status outside canonical vocabulary', $nonCanonical);
         $issues += $this->report('is_member disagrees with isOnRegister(status)', $isMemberDrift);
-        $issues += $this->report('affiliation_type disagrees with affiliationTypeForStatus(status)', $typeDrift);
+        if ($hasAffiliationType) {
+            $issues += $this->report('affiliation_type disagrees with derived bucket', $typeDrift);
+        }
         if ($hasCanonicalStatus) {
             $issues += $this->report('canonical_status disagrees with membership_status', $canonicalDrift);
         }

@@ -153,7 +153,6 @@ class PeopleDirectoryService
                 'p.gender',
                 'pa.id AS affiliation_id',
                 'pa.parish_id',
-                'pa.affiliation_type',
                 'pa.membership_status',
                 'pa.is_member',
                 'pa.start_date',

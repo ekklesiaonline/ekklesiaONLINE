@@ -383,7 +383,7 @@ class Dashboard extends BaseController
                 COUNT(DISTINCT pa.person_id) AS total_people,
                 COUNT(DISTINCT CASE WHEN pa.is_member = 1 THEN pa.person_id END) AS total_members,
                 COUNT(DISTINCT CASE WHEN pa.is_member = 1 AND pa.membership_status = 'member' THEN pa.person_id END) AS active_members,
-                COUNT(DISTINCT CASE WHEN pa.affiliation_type = 'guest' THEN pa.person_id END) AS guest_count
+                COUNT(DISTINCT CASE WHEN pa.membership_status = 'visitor' THEN pa.person_id END) AS guest_count
             ", false)
             ->join('parish c', 'c.id = pa.parish_id')
             ->where('pa.deleted_at IS NULL', null, false)

@@ -9,7 +9,7 @@ use CodeIgniter\Test\CIUnitTestCase;
  * (docs/MEMBERSHIP_STATUS_SIMPLIFICATION_PLAN.md — Phase 4).
  *
  * parish_affiliation owns the parish lifecycle. The status columns
- * (membership_status, affiliation_type, is_member) may only be written by
+ * (membership_status, is_member) may only be written by
  * the choke points below; every other writer must route through
  * MemberParishAffiliationModel / MembershipPathwayService /
  * MemberAffiliationService so rows can never disagree with themselves.
@@ -44,7 +44,6 @@ final class ParishAffiliationWriteScopeTest extends CIUnitTestCase
      */
     private const STATUS_COLUMNS = [
         'membership_status',
-        'affiliation_type',
         'is_member',
     ];
 
@@ -119,7 +118,7 @@ final class ParishAffiliationWriteScopeTest extends CIUnitTestCase
         //   $db->table('parish_affiliation')->insert($data);
         // is_member is excluded: audit new_values legitimately carry it.
         if ($hasAffiliationWrite
-            && $this->hasStatusArrayKey($source, ['membership_status', 'affiliation_type'])
+            && $this->hasStatusArrayKey($source, ['membership_status'])
         ) {
             $violations[] = $relative . ' — status payload key alongside parish_affiliation writes';
         }

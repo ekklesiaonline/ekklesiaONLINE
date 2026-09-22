@@ -8,7 +8,7 @@ use CodeIgniter\Test\DatabaseTestTrait;
  * T3.3: membership pathway transitions.
  *
  * Affiliation status changes go through MembershipPathwayService so the
- * canonical status vocabulary, is_member / affiliation_type / end_date
+ * canonical status vocabulary, is_member / end_date
  * consistency, person_status_history audit rows (keyed by person_id), and
  * terminal-status reason requirements are enforced in one place.
  *
@@ -80,7 +80,6 @@ final class MembershipPathwayTest extends CIUnitTestCase
 
         $row = $this->db->table('parish_affiliation')->where('id', $affiliationId)->get()->getRowArray();
         $this->assertSame('member', $row['membership_status']);
-        $this->assertSame('member', $row['affiliation_type']);
         $this->assertSame(1, (int) $row['is_member']);
 
         $history = $this->db->table('person_status_history')
@@ -209,7 +208,6 @@ final class MembershipPathwayTest extends CIUnitTestCase
             'linked_user_id'    => $userId,
             'person_id'         => $personId,
             'parish_id'         => $parishId,
-            'affiliation_type'  => \App\Services\MembershipStatusService::affiliationTypeForStatus($status),
             'membership_status' => $status,
             'start_date'        => date('Y-m-d'),
             'created_at'        => date('Y-m-d H:i:s'),

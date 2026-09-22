@@ -162,7 +162,6 @@ final class CleanupOrphanedPersonRowsMigrationTest extends CIUnitTestCase
             'linked_user_id'      => ['type' => 'INTEGER', 'null' => true],
             'parish_id'           => ['type' => 'INTEGER'],
             'person_id'           => ['type' => 'INTEGER', 'null' => true],
-            'affiliation_type'    => ['type' => 'VARCHAR', 'constraint' => 32, 'default' => 'member'],
             'membership_status'   => ['type' => 'VARCHAR', 'constraint' => 20, 'default' => 'guest'],
             'created_at'          => ['type' => 'DATETIME', 'null' => true],
             'updated_at'          => ['type' => 'DATETIME', 'null' => true],

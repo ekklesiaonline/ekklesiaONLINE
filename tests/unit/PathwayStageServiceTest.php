@@ -231,7 +231,6 @@ final class PathwayStageServiceTest extends CIUnitTestCase
         $this->db->table('parish_affiliation')->insert([
             'person_id'         => $personId,
             'parish_id'         => $parishId,
-            'affiliation_type'  => \App\Services\MembershipStatusService::affiliationTypeForStatus($status),
             'membership_status' => $status,
             'start_date'        => date('Y-m-d'),
             'created_at'        => date('Y-m-d H:i:s'),

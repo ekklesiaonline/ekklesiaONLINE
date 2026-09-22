@@ -59,7 +59,7 @@ class BackfillFollowups extends BaseCommand
             ->select('pa.person_id AS id, pa.person_id, pa.parish_id, pa.created_at, pe.first_name, pe.last_name, pe.preferred_timezone')
             ->join('person pe', 'pe.id = pa.person_id AND pe.deleted_at IS NULL', 'inner')
             ->join('followup_log gfl', 'gfl.person_id = pa.person_id', 'left')
-            ->where('pa.affiliation_type', 'guest')
+            ->where('pa.membership_status', 'visitor')
             ->where('pa.deleted_at IS NULL', null, false)
             ->where('gfl.id IS NULL', null, false);
 

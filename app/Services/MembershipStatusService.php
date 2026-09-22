@@ -89,15 +89,16 @@ class MembershipStatusService
     }
 
     /**
-     * Derived parish_affiliation columns for a lifecycle status — the
-     * single place where membership_status and affiliation_type are kept
-     * consistent. Write paths should merge this array rather than
-     * setting the derived columns by hand.
+     * Normalized lifecycle status for parish_affiliation write paths — the
+     * single place a raw status string becomes canonical. Write paths
+     * should merge this array rather than setting membership_status by
+     * hand.
      *
-     * is_member is a generated column (isOnRegister(status)) and
-     * canonical_status was dropped — neither may be written.
+     * is_member is a generated column (isOnRegister(status));
+     * canonical_status and affiliation_type were dropped — none may be
+     * written.
      *
-     * @return array{membership_status: string, affiliation_type: string}
+     * @return array{membership_status: string}
      */
     public static function fieldsForStatus(string $status): array
     {
@@ -108,7 +109,6 @@ class MembershipStatusService
 
         return [
             'membership_status' => $normalized,
-            'affiliation_type'  => self::affiliationTypeForStatus($normalized),
         ];
     }
 
@@ -162,26 +162,5 @@ class MembershipStatusService
         }
 
         return $normalized;
-    }
-
-    /**
-     * Map a normalized membership_status to the corresponding affiliation_type.
-     *
-     * The two columns have different vocabularies: affiliation_type is a
-     * high-level bucket (guest/attendee/member/clergy/staff) while
-     * membership_status tracks the lifecycle (visitor/regular_attender/member/
-     * inactive/transferred/deceased).
-     */
-    public static function affiliationTypeForStatus(string $status): string
-    {
-        $normalized = self::normalizeAffiliationStatus($status);
-
-        return match ($normalized) {
-            'visitor'          => 'guest',
-            'regular_attender' => 'attendee',
-            'clergy'           => 'clergy',
-            'staff'            => 'staff',
-            default            => 'member',
-        };
     }
 }

@@ -258,7 +258,6 @@ final class StandingRefreshWorkflowTest extends CIUnitTestCase
                 linked_user_id INTEGER NULL,
                 parish_id INTEGER NOT NULL,
                 person_id INTEGER NULL,
-                affiliation_type TEXT DEFAULT "member",
                 membership_status TEXT NULL,
                 source TEXT DEFAULT "system",
                 start_date TEXT NULL,
@@ -274,7 +273,6 @@ final class StandingRefreshWorkflowTest extends CIUnitTestCase
         $this->ensureColumnExists($affiliationTable, 'parish_id', 'INTEGER NULL');
         $this->ensureColumnExists($affiliationTable, 'parish_id', 'INTEGER NULL');
         $this->ensureColumnExists($affiliationTable, 'person_id', 'INTEGER NULL');
-        $this->ensureColumnExists($affiliationTable, 'affiliation_type', 'TEXT NULL');
         $this->ensureColumnExists($affiliationTable, 'source', 'TEXT NULL');
         $this->ensureColumnExists($affiliationTable, 'start_date', 'TEXT NULL');
         $this->ensureColumnExists($affiliationTable, 'end_date', 'TEXT NULL');

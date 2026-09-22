@@ -1204,7 +1204,6 @@ CREATE TABLE `parish_affiliation` (
   `parish_id` int unsigned NOT NULL,
   `person_id` int unsigned NOT NULL,
   `linked_user_id` int unsigned DEFAULT NULL,
-  `affiliation_type` enum('guest','attendee','member') COLLATE utf8mb4_general_ci NOT NULL DEFAULT 'guest',
   `membership_status` enum('visitor','regular_attender','member','inactive','transferred','deceased') COLLATE utf8mb4_general_ci NOT NULL DEFAULT 'visitor',
   `pathway_stage` tinyint unsigned DEFAULT NULL,
   `is_member` tinyint(1) GENERATED ALWAYS AS ((`membership_status` in (_utf8mb4'member',_utf8mb4'inactive'))) STORED,

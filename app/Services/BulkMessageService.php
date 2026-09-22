@@ -493,7 +493,7 @@ class BulkMessageService
             ->scopeBuilder($parishId)
             ->select('pe.id, pe.first_name, pe.last_name, pe.email, pe.phone, pe.opted_out_channels')
             ->where('pa.converted_to_member_at IS NULL', null, false)
-            ->where('pa.affiliation_type', 'guest')
+            ->where('pa.membership_status', 'visitor')
             ->get()
             ->getResultArray();
 

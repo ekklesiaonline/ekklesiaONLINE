@@ -266,7 +266,6 @@ final class CanonicalTestSchema
             'parish_id'         => 'INTEGER',
             'person_id'         => 'INTEGER',
             'linked_user_id'    => 'INTEGER',
-            'affiliation_type'  => 'TEXT',
             'membership_status' => 'TEXT',
             'pathway_stage'     => 'INTEGER',
             // Mirrors the production generated column: is_member is the

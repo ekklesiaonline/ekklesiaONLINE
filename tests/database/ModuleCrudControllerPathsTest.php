@@ -38,7 +38,6 @@ final class ModuleCrudControllerPathsTest extends CIUnitTestCase
             'linked_user_id' => $userId,
             'parish_id' => $parishId,
             'person_id' => null,
-            'affiliation_type' => 'member',
             'membership_status' => 'member',
             'source' => 'system',
             'start_date' => date('Y-m-d'),

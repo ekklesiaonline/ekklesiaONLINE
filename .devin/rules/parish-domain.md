@@ -14,12 +14,12 @@ trigger: always_on
 
 ## Membership Status Invariants
 
-- `parish_affiliation.membership_status` is the only stored lifecycle status. `affiliation_type` is derived from it via `MembershipStatusService::fieldsForStatus($status)`; `is_member` is a generated column (`status IN ('member','inactive')`) and `canonical_status`/`is_good_standing` no longer exist — never write any of them.
+- `parish_affiliation.membership_status` is the only stored lifecycle status. `is_member` is a generated column (`status IN ('member','inactive')`); `affiliation_type`, `canonical_status`, and `is_good_standing` no longer exist — never write any of them. "Guest" is jargon for `membership_status='visitor'` (the guest directory/follow-up feature), not a separate status.
 - `is_member` means "on the parish register": `status IN ('member','inactive')` (`MembershipStatusService::isOnRegister()`). `isMember()` is the stricter "active member" check (`status='member'`). Do not conflate them.
 - Off-register removal (detach, member delete, tag revoke) writes `visitor` + `end_date` — never a stale `member` status.
 - New affiliations default to `visitor`: registration approval, non-portal person creation (children, unflagged), and `attachToParish()`'s signature default all start at `visitor`. `member` is only ever set by an explicit operator choice (member checkbox) or a `MembershipPathwayService` promotion.
 - Good standing lives on `member_standing_summary.is_good_standing` (keyed by `user_id` + `year`), not on the affiliation row.
-- `affiliation_type` is `guest|attendee|member` only; clergy/staff are expressed through `leadership_position`, not lifecycle buckets.
+- Clergy/staff are expressed through `leadership_position`, not lifecycle statuses.
 - Audit existing data with `php spark people:audit-affiliation-drift`.
 - Full plan: `docs/MEMBERSHIP_STATUS_SIMPLIFICATION_PLAN.md`.
 
@@ -27,7 +27,7 @@ trigger: always_on
 
 - Parish-level people counts must be based on `parish_affiliation.person_id` (the canonical `person` row), not `parish_affiliation.linked_user_id` and not `profile`.
 - `countDistinctMembers()` and `countDistinctPeople()` must `JOIN person` and `COUNT(DISTINCT parish_affiliation.person_id)`.
-- `total_guests` = legacy guest table + `parish_affiliation` rows where `affiliation_type = 'guest'`.
+- `total_guests` = legacy guest table + `parish_affiliation` rows where `membership_status = 'visitor'`.
 
 ## Person Identity
 

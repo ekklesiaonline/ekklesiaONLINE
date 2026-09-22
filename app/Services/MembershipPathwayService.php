@@ -12,7 +12,7 @@ use App\Models\MemberParishAffiliationModel;
  *
  *  - the status vocabulary stays canonical (visitor / regular_attender /
  *    member / inactive / transferred / deceased),
- *  - is_member, affiliation_type and end_date stay consistent with the status,
+ *  - is_member and end_date stay consistent with the status,
  *  - an immutable person_status_history row is written under the canonical
  *    person_id (never the profile id).
  *

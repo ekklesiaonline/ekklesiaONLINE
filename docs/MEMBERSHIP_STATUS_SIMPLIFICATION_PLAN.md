@@ -264,6 +264,28 @@ Full suite after Phase 4: 665 tests, 2955 assertions, 6 skipped.
    whole standing pipeline first, which is its own epic outside this
    plan's scope. Documented here so the decision is on record.
 
+## Phase 6 — Collapse the guest bucket; single `visitor` default — DONE
+
+1. **All creation paths default to `visitor`.** Registration approval
+   (`MemberAffiliationService::ensurePrimaryAffiliationForUser`), non-portal
+   provisioning (children and unflagged adults; the absent-`is_member`
+   fallback flipped from a latent `member` default to `visitor`), and
+   `attachToParish()`'s signature default all land at `visitor`. `member` is
+   reached only by an explicit operator choice or a pathway promotion.
+2. **`parish_affiliation.affiliation_type` dropped** —
+   `2026-09-25-000000_DropParishAffiliationType`. Phase 2 narrowed the enum;
+   with "guest = visitor" the column was pure derivation (`visitor`→guest,
+   `regular_attender`→attendee, else member). Every reader was repointed to
+   `membership_status = 'visitor'`; `affiliationTypeForStatus()` and the
+   `fieldsForStatus()` payload key removed; the write-scope test's guarded
+   column list updated.
+3. **Jargon unified on "visitor."** English lang values relabeled
+   Guest→Visitor (es/fr already said visitante/visiteur). Code-level
+   names — `Guests.*` lang keys, `guest.*` permissions, `/guests` routes,
+   `GuestDirectoryService` — kept as-is: the guest directory is the
+   follow-up workflow *for* visitors, and renaming the feature surface is
+   cosmetic churn with no schema benefit.
+
 ## Sequencing
 
 Phases 0→1→2 are the core fix (kills the bug class). Phase 3 is the largest

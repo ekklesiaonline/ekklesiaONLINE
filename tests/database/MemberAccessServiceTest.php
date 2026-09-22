@@ -434,7 +434,6 @@ final class MemberAccessServiceTest extends CIUnitTestCase
                 linked_user_id INTEGER NULL,
                 parish_id INTEGER NOT NULL,
                 person_id INTEGER NULL,
-                affiliation_type TEXT DEFAULT "member",
                 membership_status TEXT DEFAULT "guest",
                 source TEXT DEFAULT "system",
                 start_date TEXT NULL,

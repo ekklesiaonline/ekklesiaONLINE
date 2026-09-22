@@ -245,7 +245,6 @@ final class SmallGroupServiceTest extends CIUnitTestCase
         $this->db->table('parish_affiliation')->insert([
             'parish_id'         => $parishId,
             'person_id'         => $personId,
-            'affiliation_type'  => 'member',
             'membership_status' => 'member',
             'is_primary'        => 1,
             'source'            => 'system',

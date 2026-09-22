@@ -23,7 +23,7 @@ final class LegacyFallbackInventoryTest extends CIUnitTestCase
      *
      * Classification: retired
      * Guest rows were migrated to person + parish_affiliation
-     * (affiliation_type = 'guest') + person_visit; GuestModel is removed and
+     * (membership_status = 'visitor') + person_visit; GuestModel is removed and
      * reads go through GuestDirectoryService over canonical tables.
      */
     public function testGuestTableUsageRetired(): void

@@ -89,7 +89,6 @@ final class GuestConversionPrefillTest extends CIUnitTestCase
         $this->db->table('parish_affiliation')->insert([
             'person_id'        => $personId,
             'parish_id'        => $parishId,
-            'affiliation_type' => 'guest',
             'membership_status'=> 'visitor',
             'followed_up'      => 0,
             'created_at'       => date('Y-m-d H:i:s'),

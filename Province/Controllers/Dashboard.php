@@ -478,7 +478,7 @@ class Dashboard extends BaseController
             ->join('parish c', 'c.id = g.parish_id')
             ->join('diocese d', 'd.id = c.diocese_id')
             ->where('d.province_id', $provinceId)
-            ->where('g.affiliation_type', 'guest')
+            ->where('g.membership_status', 'visitor')
             ->where('g.deleted_at IS NULL', null, false)
             ->where('g.converted_to_member_at IS NULL', null, false);
 
@@ -624,7 +624,7 @@ class Dashboard extends BaseController
             ->join('parish c', 'c.id = g.parish_id', 'inner')
             ->join('diocese d', 'd.id = c.diocese_id', 'inner')
             ->where('d.province_id', $provinceId)
-            ->where('g.affiliation_type', 'guest')
+            ->where('g.membership_status', 'visitor')
             ->where('g.deleted_at IS NULL', null, false)
             ->where('g.converted_to_member_at IS NULL', null, false);
 

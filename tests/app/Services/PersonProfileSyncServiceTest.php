@@ -155,7 +155,6 @@ final class PersonProfileSyncServiceTest extends CIUnitTestCase
             'linked_user_id'    => ['type' => 'INTEGER', 'null' => true],
             'parish_id'         => ['type' => 'INTEGER', 'null' => true],
             'person_id'         => ['type' => 'INTEGER', 'null' => true],
-            'affiliation_type'  => ['type' => 'VARCHAR', 'constraint' => 32, 'default' => 'member'],
             'membership_status' => ['type' => 'VARCHAR', 'constraint' => 20, 'default' => 'guest'],
             'source'            => ['type' => 'VARCHAR', 'constraint' => 32, 'default' => 'system'],
             'start_date'        => ['type' => 'DATE', 'null' => true],

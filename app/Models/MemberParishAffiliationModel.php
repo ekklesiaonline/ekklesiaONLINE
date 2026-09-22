@@ -18,12 +18,12 @@ class MemberParishAffiliationModel extends BaseTenantModel
     protected $useSoftDeletes   = true;
     protected $protectFields    = true;
     // is_member is a generated column (isOnRegister(membership_status)) and
-    // canonical_status / is_good_standing were dropped — none are writable.
+    // canonical_status / is_good_standing / affiliation_type were dropped —
+    // none are writable.
     protected $allowedFields    = [
         'linked_user_id',
         'parish_id',
         'person_id',
-        'affiliation_type',
         'membership_status',
         'pathway_stage',
         'source',
@@ -445,9 +445,8 @@ class MemberParishAffiliationModel extends BaseTenantModel
 
     /**
      * Attach (or re-attach) a user to a parish under the given lifecycle
-     * status. affiliation_type and the is_member register flag are always
-     * derived from the status — callers cannot pass them, which keeps the
-     * row internally consistent.
+     * status. The is_member register flag is generated from the status —
+     * callers cannot pass it, which keeps the row internally consistent.
      */
     public function attachToParish(int $userId, int $parishId, bool $isHome = false, string $status = 'visitor', ?int $personId = null): bool
     {

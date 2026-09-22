@@ -192,7 +192,7 @@ class GuestFollowupService
     {
         return (int) $this->db->table('parish_affiliation pa')
             ->where('pa.parish_id', $parishId)
-            ->where('pa.affiliation_type', 'guest')
+            ->where('pa.membership_status', 'visitor')
             ->where('pa.followed_up', 0)
             ->where('pa.converted_to_member_at IS NULL', null, false)
             ->where('pa.deleted_at IS NULL', null, false)

@@ -97,7 +97,7 @@ class ParishDeletionService
                 ->countAllResults(),
             'guests' => (int) $this->db->table('parish_affiliation')
                 ->where('parish_id', $parishId)
-                ->where('affiliation_type', 'guest')
+                ->where('membership_status', 'visitor')
                 ->countAllResults(),
             'expenses' => (int) $this->db->table('expense')
                 ->where('parish_id', $parishId)

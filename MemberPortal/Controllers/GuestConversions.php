@@ -46,7 +46,7 @@ class GuestConversions extends BaseController
             ->where('pa.parish_id', $parishId)
             ->where('pa.deleted_at IS NULL', null, false)
             ->groupStart()
-                ->where('pa.affiliation_type', 'guest')
+                ->where('pa.membership_status', 'visitor')
                 ->orWhere('pa.converted_to_member_at IS NOT NULL', null, false)
             ->groupEnd()
             ->orderBy($visitDate, 'DESC', false)

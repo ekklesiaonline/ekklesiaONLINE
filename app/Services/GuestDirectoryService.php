@@ -12,8 +12,8 @@ use CodeIgniter\Pager\Pager;
  * directory (T4.5).
  *
  * A "guest" is a canonical person with a parish_affiliation whose
- * affiliation_type is 'guest' (or which carries conversion markers left
- * by a guest→member conversion). Contact fields live on `person`
+ * membership_status is 'visitor' (or which carries conversion markers left
+ * by a visitor→member conversion). Contact fields live on `person`
  * (encrypted at rest), visit metadata on `person_visit`, and follow-up /
  * conversion workflow state on `parish_affiliation`.
  *
@@ -67,7 +67,7 @@ class GuestDirectoryService
             ->join('person pe', 'pe.id = pa.person_id AND pe.deleted_at IS NULL', 'inner')
             ->where('pa.deleted_at IS NULL', null, false)
             ->groupStart()
-                ->where('pa.affiliation_type', 'guest')
+                ->where('pa.membership_status', 'visitor')
                 ->orWhere('pa.converted_to_member_at IS NOT NULL', null, false)
             ->groupEnd();
 

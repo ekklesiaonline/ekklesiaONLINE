@@ -361,7 +361,6 @@ final class PeopleFilterIntegrationTest extends CIUnitTestCase
             'linked_user_id'     => ['type' => 'INTEGER', 'null' => true],
             'parish_id'          => ['type' => 'INTEGER'],
             'person_id'          => ['type' => 'INTEGER', 'null' => true],
-            'affiliation_type'   => ['type' => 'VARCHAR', 'constraint' => 32, 'default' => 'member'],
             'membership_status'  => ['type' => 'VARCHAR', 'constraint' => 20, 'default' => 'visitor'],
             'source'             => ['type' => 'VARCHAR', 'constraint' => 32, 'default' => 'system'],
             'start_date'         => ['type' => 'DATE', 'null' => true],
@@ -404,7 +403,6 @@ final class PeopleFilterIntegrationTest extends CIUnitTestCase
         $this->db->table('parish_affiliation')->insert([
             'parish_id'         => $parishId,
             'person_id'         => $personId,
-            'affiliation_type'  => 'member',
             'membership_status' => $status,
             'source'            => 'test',
             'start_date'        => date('Y-m-d'),

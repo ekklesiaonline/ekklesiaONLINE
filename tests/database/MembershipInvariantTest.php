@@ -13,8 +13,8 @@ use Tests\Support\Database\CanonicalTestSchema;
  *
  * Every write path must produce rows where the derived values agree with
  * membership_status:
- *   - affiliation_type  = affiliationTypeForStatus(status)
  *   - is_member         = isOnRegister(status)   (member|inactive stay on the register)
+ *   (affiliation_type is dropped — membership_status is the only bucket.)
  *
  * Phase 2 enforces them structurally: is_member is a generated column and
  * canonical_status / is_good_standing are dropped. This suite locks the
@@ -51,11 +51,7 @@ final class MembershipInvariantTest extends CIUnitTestCase
             $fields = MembershipStatusService::fieldsForStatus($status);
 
             $this->assertSame($status, $fields['membership_status']);
-            $this->assertSame(
-                MembershipStatusService::affiliationTypeForStatus($status),
-                $fields['affiliation_type'],
-                "affiliation_type drift for {$status}"
-            );
+            $this->assertArrayNotHasKey('affiliation_type', $fields, 'affiliation_type is dropped — never written');
             $this->assertArrayNotHasKey('is_member', $fields, 'is_member is a generated column — never written');
             $this->assertArrayNotHasKey('canonical_status', $fields, 'canonical_status is dropped — never written');
         }
@@ -100,7 +96,6 @@ final class MembershipInvariantTest extends CIUnitTestCase
         $row = $this->fetchAffiliation($userId, $parishId);
         $this->assertSame('regular_attender', $row['membership_status']);
         $this->assertSame(0, (int) $row['is_member'], 'regular_attender must not be on the register');
-        $this->assertSame('attendee', $row['affiliation_type']);
     }
 
     public function testAttachToParishHonorsIsHomeForMember(): void
@@ -276,11 +271,6 @@ final class MembershipInvariantTest extends CIUnitTestCase
     private function assertRowConsistent(array $row, string $expectedStatus): void
     {
         $this->assertSame($expectedStatus, (string) ($row['membership_status'] ?? ''));
-        $this->assertSame(
-            MembershipStatusService::affiliationTypeForStatus($expectedStatus),
-            (string) ($row['affiliation_type'] ?? ''),
-            "affiliation_type inconsistent for {$expectedStatus}"
-        );
         $this->assertSame(
             MembershipStatusService::isOnRegister($expectedStatus) ? 1 : 0,
             (int) ($row['is_member'] ?? -1),

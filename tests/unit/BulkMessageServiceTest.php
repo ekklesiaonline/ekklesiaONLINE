@@ -337,7 +337,6 @@ final class BulkMessageServiceTest extends CIUnitTestCase
         $this->db->table('parish_affiliation')->insert([
             'parish_id'         => $parishId,
             'person_id'         => $personId,
-            'affiliation_type'  => 'member',
             'membership_status' => $status,
             'is_primary'        => 1,
             'source'            => 'system',
@@ -362,7 +361,6 @@ final class BulkMessageServiceTest extends CIUnitTestCase
         $this->db->table('parish_affiliation')->insert([
             'parish_id'              => $parishId,
             'person_id'              => $personId,
-            'affiliation_type'       => 'guest',
             'membership_status'      => 'visitor',
             'converted_to_member_at' => $convertedAt,
             'created_at'             => date('Y-m-d H:i:s'),

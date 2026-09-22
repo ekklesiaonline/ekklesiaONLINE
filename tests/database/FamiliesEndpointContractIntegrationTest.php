@@ -497,7 +497,6 @@ final class FamiliesEndpointContractIntegrationTest extends CIUnitTestCase
             'linked_user_id' => $userId,
             'parish_id' => $parishId,
             'person_id' => null,
-            'affiliation_type' => 'member',
             'membership_status' => 'member',
             'source' => 'system',
             'start_date' => date('Y-m-d'),
@@ -609,7 +608,6 @@ final class FamiliesEndpointContractIntegrationTest extends CIUnitTestCase
                 linked_user_id INTEGER NULL,
                 parish_id INTEGER NOT NULL,
                 person_id INTEGER NULL,
-                affiliation_type TEXT DEFAULT "member",
                 membership_status TEXT DEFAULT "guest",
                 source TEXT DEFAULT "system",
                 start_date TEXT NULL,
@@ -624,7 +622,6 @@ final class FamiliesEndpointContractIntegrationTest extends CIUnitTestCase
         $this->ensureColumnExists($affiliationTable, 'linked_user_id', 'INTEGER NULL');
         $this->ensureColumnExists($affiliationTable, 'parish_id', 'INTEGER NULL');
         $this->ensureColumnExists($affiliationTable, 'person_id', 'INTEGER NULL');
-        $this->ensureColumnExists($affiliationTable, 'affiliation_type', 'TEXT NULL');
         $this->ensureColumnExists($affiliationTable, 'membership_status', 'TEXT NULL');
         $this->ensureColumnExists($affiliationTable, 'source', 'TEXT NULL');
         $this->ensureColumnExists($affiliationTable, 'start_date', 'TEXT NULL');
