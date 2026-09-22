@@ -48,7 +48,7 @@ final class EventsControllerFeatureTest extends CIUnitTestCase
 
         $memberId = $this->insertUser('event.feature.member.create');
         $this->insertProfile($memberId, $parishId, $dioceseId, 'Martha', 'Member');
-        $this->insertAffiliation($memberId, $parishId, 1);
+        $this->insertAffiliation($memberId, $parishId, 'member');
 
         $this->insertCalendar($parishId, $dioceseId, 'Feature Calendar');
         $this->insertTeam($parishId, 'Feature Team', $memberId);
@@ -78,7 +78,7 @@ final class EventsControllerFeatureTest extends CIUnitTestCase
 
         $inviteeId = $this->insertUser('event.feature.invitee.edit');
         $this->insertProfile($inviteeId, $parishId, $dioceseId, 'Irene', 'Invitee');
-        $this->insertAffiliation($inviteeId, $parishId, 1);
+        $this->insertAffiliation($inviteeId, $parishId, 'member');
 
         $calendarId = $this->insertCalendar($parishId, $dioceseId, 'Feature Edit Calendar');
         $eventId = $this->insertEvent($parishId, $calendarId, [
@@ -190,13 +190,12 @@ final class EventsControllerFeatureTest extends CIUnitTestCase
         $this->db->table($profileTable)->insert($payload);
     }
 
-    private function insertAffiliation(int $userId, int $parishId, int $isMember): void
+    private function insertAffiliation(int $userId, int $parishId, string $status): void
     {
         $this->db->table($this->resolveTableName('parish_affiliation'))->insert([
             'linked_user_id' => $userId,
             'parish_id' => $parishId,
-            'membership_status' => $isMember === 1 ? 'member' : 'attendee',
-            'is_member' => $isMember,
+            'membership_status' => $status,
             'created_at' => date('Y-m-d H:i:s'),
             'updated_at' => date('Y-m-d H:i:s'),
         ]);
@@ -532,7 +531,6 @@ final class EventsControllerFeatureTest extends CIUnitTestCase
                 linked_user_id INTEGER NOT NULL,
                 parish_id INTEGER NOT NULL,
                 membership_status TEXT NULL,
-                is_member INTEGER DEFAULT 0,
                 created_at TEXT NULL,
                 updated_at TEXT NULL,
                 deleted_at TEXT NULL

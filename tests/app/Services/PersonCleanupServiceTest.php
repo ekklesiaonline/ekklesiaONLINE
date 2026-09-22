@@ -174,8 +174,6 @@ final class PersonCleanupServiceTest extends CIUnitTestCase
             'person_id'           => ['type' => 'INTEGER', 'null' => true],
             'affiliation_type'    => ['type' => 'VARCHAR', 'constraint' => 32, 'default' => 'member'],
             'membership_status'   => ['type' => 'VARCHAR', 'constraint' => 20, 'default' => 'guest'],
-            'canonical_status'    => ['type' => 'VARCHAR', 'constraint' => 32, 'null' => true],
-            'is_member'           => ['type' => 'INTEGER', 'default' => 0],
             'created_at'          => ['type' => 'DATETIME', 'null' => true],
             'updated_at'          => ['type' => 'DATETIME', 'null' => true],
             'deleted_at'          => ['type' => 'DATETIME', 'null' => true],

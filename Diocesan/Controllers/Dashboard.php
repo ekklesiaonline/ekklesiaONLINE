@@ -377,17 +377,32 @@ class Dashboard extends BaseController
         $totalParishes = (int) $parishQuery->countAllResults();
 
         // Canonical affiliation metrics (parish_people snapshot retired).
+        $hasStandingSummary = $db->tableExists('member_standing_summary');
         $peopleQuery = $db->table('parish_affiliation pa')
             ->select("
                 COUNT(DISTINCT pa.person_id) AS total_people,
                 COUNT(DISTINCT CASE WHEN pa.is_member = 1 THEN pa.person_id END) AS total_members,
                 COUNT(DISTINCT CASE WHEN pa.is_member = 1 AND pa.membership_status = 'member' THEN pa.person_id END) AS active_members,
-                COUNT(DISTINCT CASE WHEN pa.is_member = 1 AND pa.is_good_standing = 1 THEN pa.person_id END) AS good_standing_members,
                 COUNT(DISTINCT CASE WHEN pa.affiliation_type = 'guest' THEN pa.person_id END) AS guest_count
             ", false)
             ->join('parish c', 'c.id = pa.parish_id')
             ->where('pa.deleted_at IS NULL', null, false)
             ->where('c.diocese_id', $dioceseId);
+
+        if ($hasStandingSummary) {
+            // Good standing lives in member_standing_summary (keyed by user +
+            // year), not on the affiliation row.
+            $peopleQuery->select(
+                'COUNT(DISTINCT CASE WHEN pa.is_member = 1 AND mss.is_good_standing = 1 THEN pa.person_id END) AS good_standing_members',
+                false
+            )->join(
+                'member_standing_summary mss',
+                'mss.user_id = pa.linked_user_id AND mss.year = ' . (int) date('Y'),
+                'left'
+            );
+        } else {
+            $peopleQuery->select('0 AS good_standing_members', false);
+        }
 
         if ($parishId !== null) {
             $peopleQuery->where('pa.parish_id', $parishId);

@@ -40,9 +40,6 @@ final class ModuleCrudControllerPathsTest extends CIUnitTestCase
             'person_id' => null,
             'affiliation_type' => 'member',
             'membership_status' => 'member',
-            'canonical_status' => 'member',
-            'is_member' => 1,
-            'is_good_standing' => 0,
             'source' => 'system',
             'start_date' => date('Y-m-d'),
             'end_date' => null,
@@ -55,8 +52,6 @@ final class ModuleCrudControllerPathsTest extends CIUnitTestCase
             ->where('parish_id', $parishId)
             ->update([
                 'membership_status' => 'inactive',
-                'canonical_status' => 'inactive',
-                'is_member' => 1,
                 'updated_at' => date('Y-m-d H:i:s'),
             ]);
 

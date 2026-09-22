@@ -11,14 +11,14 @@ use Tests\Support\Database\CanonicalTestSchema;
 /**
  * Invariant tests for the parish_affiliation status tuple.
  *
- * Every write path must produce rows where the derived columns agree with
+ * Every write path must produce rows where the derived values agree with
  * membership_status:
  *   - affiliation_type  = affiliationTypeForStatus(status)
- *   - canonical_status  = status
  *   - is_member         = isOnRegister(status)   (member|inactive stay on the register)
  *
- * These invariants are what Phase 2 will enforce structurally (generated
- * columns / dropped mirrors); this suite locks them at the write-path level.
+ * Phase 2 enforces them structurally: is_member is a generated column and
+ * canonical_status / is_good_standing are dropped. This suite locks the
+ * remaining write-path invariants.
  *
  * @internal
  */
@@ -56,12 +56,8 @@ final class MembershipInvariantTest extends CIUnitTestCase
                 $fields['affiliation_type'],
                 "affiliation_type drift for {$status}"
             );
-            $this->assertSame($status, $fields['canonical_status']);
-            $this->assertSame(
-                MembershipStatusService::isOnRegister($status) ? 1 : 0,
-                $fields['is_member'],
-                "is_member drift for {$status}"
-            );
+            $this->assertArrayNotHasKey('is_member', $fields, 'is_member is a generated column — never written');
+            $this->assertArrayNotHasKey('canonical_status', $fields, 'canonical_status is dropped — never written');
         }
     }
 
@@ -263,8 +259,8 @@ final class MembershipInvariantTest extends CIUnitTestCase
 
         $model->setMemberTag($userId, $parishId, true);
         $row = $this->fetchAffiliation($userId, $parishId);
-        // Re-granting after a revoke: the row was already off-register, so
-        // the guard promotes status to member — the result stays consistent.
+        // Re-granting on an off-register row is rejected by the guard — a
+        // flag flip cannot manufacture membership; the row stays visitor.
         $this->assertRowConsistent($row, $row['membership_status']);
         $this->assertSame(
             MembershipStatusService::isOnRegister($row['membership_status']) ? 1 : 0,
@@ -284,11 +280,6 @@ final class MembershipInvariantTest extends CIUnitTestCase
             MembershipStatusService::affiliationTypeForStatus($expectedStatus),
             (string) ($row['affiliation_type'] ?? ''),
             "affiliation_type inconsistent for {$expectedStatus}"
-        );
-        $this->assertSame(
-            $expectedStatus,
-            (string) ($row['canonical_status'] ?? ''),
-            "canonical_status inconsistent for {$expectedStatus}"
         );
         $this->assertSame(
             MembershipStatusService::isOnRegister($expectedStatus) ? 1 : 0,

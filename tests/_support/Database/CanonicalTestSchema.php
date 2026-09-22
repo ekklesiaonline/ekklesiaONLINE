@@ -269,10 +269,11 @@ final class CanonicalTestSchema
             'linked_user_id'    => 'INTEGER',
             'affiliation_type'  => 'TEXT',
             'membership_status' => 'TEXT',
-            'canonical_status'  => 'TEXT',
             'pathway_stage'     => 'INTEGER',
-            'is_member'         => 'INTEGER DEFAULT 0',
-            'is_good_standing'  => 'INTEGER DEFAULT 0',
+            // Mirrors the production generated column: is_member is the
+            // on-register flag = membership_status IN ('member','inactive').
+            // VIRTUAL (not STORED) so repairColumns can ADD COLUMN it.
+            'is_member'         => "INTEGER GENERATED ALWAYS AS (CASE WHEN \"membership_status\" IN ('member','inactive') THEN 1 ELSE 0 END) VIRTUAL",
             'is_primary'             => 'INTEGER DEFAULT 0',
             'followed_up'            => 'INTEGER DEFAULT 0',
             'converted_to_member_at' => 'TEXT',
@@ -692,7 +693,40 @@ final class CanonicalTestSchema
             }
 
             self::repairColumns($db, $physical, $columns);
+
+            if ($table === 'parish_affiliation') {
+                self::ensureGeneratedIsMember($db);
+            }
         }
+    }
+
+    /**
+     * Convert a plain is_member column on parish_affiliation into the
+     * generated register flag. Tests that recreate the table through Forge
+     * get a normal column; this restores the production semantics.
+     */
+    public static function ensureGeneratedIsMember(BaseConnection $db, string $table = 'parish_affiliation'): void
+    {
+        $physical = $db->getPrefix() . $table;
+        if ($db->DBDriver !== 'SQLite3' || ! self::tableExists($db, $physical)) {
+            return;
+        }
+
+        $definition = 'INTEGER GENERATED ALWAYS AS (CASE WHEN "membership_status" '
+            . "IN ('member','inactive') THEN 1 ELSE 0 END) VIRTUAL";
+
+        foreach ($db->query('PRAGMA table_xinfo("' . $physical . '")')->getResultArray() as $row) {
+            if (($row['name'] ?? '') === 'is_member') {
+                if ((int) ($row['hidden'] ?? 0) !== 0) {
+                    return; // already generated
+                }
+                $db->query('ALTER TABLE "' . $physical . '" DROP COLUMN "is_member"');
+                break;
+            }
+        }
+
+        $db->query('ALTER TABLE "' . $physical . '" ADD COLUMN "is_member" ' . $definition);
+        $db->resetDataCache();
     }
 
     /**
@@ -759,7 +793,9 @@ final class CanonicalTestSchema
      */
     private static function columnNames(BaseConnection $db, string $physical): array
     {
-        $rows = $db->query('PRAGMA table_info("' . $physical . '")')->getResultArray();
+        // table_xinfo (not table_info) so generated columns are included —
+        // otherwise repairColumns would try to re-add them every call.
+        $rows = $db->query('PRAGMA table_xinfo("' . $physical . '")')->getResultArray();
 
         return array_map(static fn (array $row): string => (string) $row['name'], $rows);
     }

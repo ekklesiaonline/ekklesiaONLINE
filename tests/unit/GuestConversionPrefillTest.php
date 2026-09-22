@@ -91,8 +91,6 @@ final class GuestConversionPrefillTest extends CIUnitTestCase
             'parish_id'        => $parishId,
             'affiliation_type' => 'guest',
             'membership_status'=> 'visitor',
-            'canonical_status' => 'visitor',
-            'is_member'        => 0,
             'followed_up'      => 0,
             'created_at'       => date('Y-m-d H:i:s'),
             'updated_at'       => date('Y-m-d H:i:s'),

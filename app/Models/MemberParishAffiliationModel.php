@@ -9,7 +9,6 @@ use Config\AuthGroups;
 
 class MemberParishAffiliationModel extends BaseTenantModel
 {
-    private ?bool $hasIsMemberColumn = null;
     private PersonStatusHistoryService $history;
 
     protected $table            = 'parish_affiliation';
@@ -18,16 +17,15 @@ class MemberParishAffiliationModel extends BaseTenantModel
     protected $returnType       = 'array';
     protected $useSoftDeletes   = true;
     protected $protectFields    = true;
+    // is_member is a generated column (isOnRegister(membership_status)) and
+    // canonical_status / is_good_standing were dropped — none are writable.
     protected $allowedFields    = [
         'linked_user_id',
         'parish_id',
         'person_id',
         'affiliation_type',
         'membership_status',
-        'canonical_status',
         'pathway_stage',
-        'is_member',
-        'is_good_standing',
         'source',
         'start_date',
         'end_date',
@@ -48,7 +46,6 @@ class MemberParishAffiliationModel extends BaseTenantModel
         'linked_user_id'    => 'permit_empty|is_not_unique[users.id]',
         'parish_id'         => 'required|is_not_unique[parish.id]',
         'membership_status' => 'required|in_list[visitor,regular_attender,member,inactive,transferred,deceased]',
-        'is_member'         => 'permit_empty|in_list[0,1]',
     ];
 
     public function isUserAffiliatedWithParish(int $userId, int $parishId, bool $activeOnly = true): bool
@@ -145,15 +142,6 @@ class MemberParishAffiliationModel extends BaseTenantModel
     {
         $standingYear = (int) date('Y');
 
-        $hasIsMember = false;
-        $hasMembershipStatus = false;
-        try {
-            $hasIsMember = $this->db->fieldExists('is_member', 'parish_affiliation');
-            $hasMembershipStatus = $this->db->fieldExists('membership_status', 'parish_affiliation');
-        } catch (\Throwable $e) {
-            // Use defaults below.
-        }
-
         $hasStandingSummary = false;
         try {
             $hasStandingSummary = $this->db->tableExists('member_standing_summary');
@@ -161,12 +149,10 @@ class MemberParishAffiliationModel extends BaseTenantModel
             // Leave false.
         }
 
-        $isMemberSelect = $hasIsMember ? 'mca.is_member' : '1 as is_member';
-        $affiliationStatusSelect = $hasMembershipStatus ? 'mca.membership_status as affiliation_status' : 'NULL as affiliation_status';
         $standingSelect = $hasStandingSummary ? 'COALESCE(mss.is_good_standing, 0) as is_good_standing' : '0 as is_good_standing';
 
         $builder = $this->db->table('parish_affiliation mca')
-            ->select('p.*, u.username, u.active as user_active, ai.secret as email, ai.force_reset, ' . $affiliationStatusSelect . ', ' . $isMemberSelect . ', ' . $standingSelect, false)
+            ->select('p.*, u.username, u.active as user_active, ai.secret as email, ai.force_reset, mca.membership_status as affiliation_status, mca.is_member, ' . $standingSelect, false)
             ->join('profile p', 'p.user_id = mca.linked_user_id')
             ->where('p.deleted_at', null)
             ->join('users u', 'u.id = mca.linked_user_id')
@@ -180,15 +166,9 @@ class MemberParishAffiliationModel extends BaseTenantModel
             $builder->join('member_standing_summary mss', 'mss.user_id = mca.linked_user_id AND mss.year = ' . $standingYear, 'left');
         }
 
-        if ($hasIsMember) {
-            $builder->where('mca.is_member', 1);
-        }
+        $builder->where('mca.is_member', 1);
 
-        if ($membersOnly && $hasIsMember) {
-            $builder->where('mca.is_member', 1);
-        }
-
-        if ($status !== null && $status !== '' && $hasMembershipStatus) {
+        if ($status !== null && $status !== '') {
             $builder->where('mca.membership_status', $status);
         }
 
@@ -216,16 +196,7 @@ class MemberParishAffiliationModel extends BaseTenantModel
 
     public function getParishStatusCounts(int $parishId): array
     {
-        $hasIsMember = false;
-        $hasMembershipStatus = false;
-        try {
-            $hasIsMember = $this->db->fieldExists('is_member', 'parish_affiliation');
-            $hasMembershipStatus = $this->db->fieldExists('membership_status', 'parish_affiliation');
-        } catch (\Throwable $e) {
-            return [];
-        }
-
-        if (! $hasMembershipStatus) {
+        if (! $this->db->fieldExists('membership_status', 'parish_affiliation')) {
             return [];
         }
 
@@ -236,11 +207,8 @@ class MemberParishAffiliationModel extends BaseTenantModel
             ->where('mca.parish_id', $parishId)
             ->where('mca.deleted_at', null)
             ->where('agu.id IS NULL')
+            ->where('mca.is_member', 1)
             ->groupBy('mca.membership_status');
-
-        if ($hasIsMember) {
-            $builder->where('mca.is_member', 1);
-        }
 
         return $this->normalizeStatusCountRows($builder->get()->getResultArray());
     }
@@ -448,9 +416,9 @@ class MemberParishAffiliationModel extends BaseTenantModel
 
     /**
      * Attach (or re-attach) a user to a parish under the given lifecycle
-     * status. affiliation_type, canonical_status and the is_member
-     * register flag are always derived from the status — callers cannot
-     * pass them, which keeps the row internally consistent.
+     * status. affiliation_type and the is_member register flag are always
+     * derived from the status — callers cannot pass them, which keeps the
+     * row internally consistent.
      */
     public function attachToParish(int $userId, int $parishId, bool $isHome = false, string $status = 'member', ?int $personId = null): bool
     {
@@ -547,7 +515,7 @@ class MemberParishAffiliationModel extends BaseTenantModel
 
         // $isHome only applies to on-register affiliations — setHomeParish()
         // requires is_member=1, so a visitor/attendee attach stays non-primary.
-        if ($result && $isHome && (int) $statusFields['is_member'] === 1) {
+        if ($result && $isHome && MembershipStatusService::isOnRegister($status)) {
             $this->setHomeParish($userId, $parishId);
         }
 
@@ -614,12 +582,6 @@ class MemberParishAffiliationModel extends BaseTenantModel
             ->first();
 
         return $row !== null;
-    }
-
-    private function isMemberColumnAvailable(): bool
-    {
-        // parish_affiliation always has is_member — kept for backward-compat call sites.
-        return true;
     }
 
     public function detachFromParish(int $userId, int $parishId): bool

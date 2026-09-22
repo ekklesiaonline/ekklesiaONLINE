@@ -440,9 +440,6 @@ final class MemberAccessServiceTest extends CIUnitTestCase
                 person_id INTEGER NULL,
                 affiliation_type TEXT DEFAULT "member",
                 membership_status TEXT DEFAULT "guest",
-                canonical_status TEXT NULL,
-                is_member INTEGER DEFAULT 0,
-                is_good_standing INTEGER DEFAULT 0,
                 source TEXT DEFAULT "system",
                 start_date TEXT NULL,
                 end_date TEXT NULL,
@@ -456,8 +453,6 @@ final class MemberAccessServiceTest extends CIUnitTestCase
         $this->ensureColumnExists($affiliationsTable, 'linked_user_id', 'INTEGER NULL');
         $this->ensureColumnExists($affiliationsTable, 'parish_id', 'INTEGER NOT NULL DEFAULT 0');
         $this->ensureColumnExists($affiliationsTable, 'membership_status', 'TEXT NULL');
-        $this->ensureColumnExists($affiliationsTable, 'canonical_status', 'TEXT NULL');
-        $this->ensureColumnExists($affiliationsTable, 'is_member', 'INTEGER NOT NULL DEFAULT 0');
         $this->ensureColumnExists($affiliationsTable, 'start_date', 'TEXT NULL');
         $this->ensureColumnExists($affiliationsTable, 'end_date', 'TEXT NULL');
 

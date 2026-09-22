@@ -1973,11 +1973,10 @@ CREATE TABLE `parish_affiliation` (
   `parish_id` int unsigned NOT NULL,
   `person_id` int unsigned NOT NULL,
   `linked_user_id` int unsigned DEFAULT NULL,
-  `affiliation_type` enum('guest','attendee','member','clergy','staff') CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT 'guest',
+  `affiliation_type` enum('guest','attendee','member') CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT 'guest',
   `membership_status` enum('visitor','regular_attender','member','inactive','transferred','deceased') COLLATE utf8mb4_general_ci NOT NULL DEFAULT 'visitor',
-  `canonical_status` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
-  `is_member` tinyint(1) NOT NULL DEFAULT '0',
-  `is_good_standing` tinyint(1) NOT NULL DEFAULT '0',
+  `pathway_stage` tinyint unsigned DEFAULT NULL,
+  `is_member` tinyint(1) GENERATED ALWAYS AS ((`membership_status` in (_utf8mb4'member',_utf8mb4'inactive'))) STORED,
   `source` varchar(30) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT 'system',
   `start_date` date DEFAULT NULL,
   `end_date` date DEFAULT NULL,
@@ -3557,23 +3556,6 @@ SET @saved_cs_client     = @@character_set_client;
  1 AS `total_amount`,
  1 AS `outstanding_amount`*/;
 SET character_set_client = @saved_cs_client;
-DROP TABLE IF EXISTS `vw_parish_active_affiliation`;
-/*!50001 DROP VIEW IF EXISTS `vw_parish_active_affiliation`*/;
-SET @saved_cs_client     = @@character_set_client;
-/*!50503 SET character_set_client = utf8mb4 */;
-/*!50001 CREATE VIEW `vw_parish_active_affiliation` AS SELECT 
- 1 AS `id`,
- 1 AS `parish_id`,
- 1 AS `person_id`,
- 1 AS `linked_user_id`,
- 1 AS `affiliation_type`,
- 1 AS `membership_status`,
- 1 AS `canonical_status`,
- 1 AS `is_member`,
- 1 AS `is_good_standing`,
- 1 AS `start_date`,
- 1 AS `end_date`*/;
-SET character_set_client = @saved_cs_client;
 DROP TABLE IF EXISTS `webhook_delivery_attempt`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
@@ -3658,16 +3640,6 @@ CREATE TABLE `worship_template` (
 /*!50001 SET character_set_client      = @saved_cs_client */;
 /*!50001 SET character_set_results     = @saved_cs_results */;
 /*!50001 SET collation_connection      = @saved_col_connection */;
-/*!50001 DROP VIEW IF EXISTS `vw_parish_active_affiliation`*/;
-/*!50001 SET @saved_cs_client          = @@character_set_client */;
-/*!50001 SET @saved_cs_results         = @@character_set_results */;
-/*!50001 SET @saved_col_connection     = @@collation_connection */;
-/*!50001 SET character_set_client      = utf8mb4 */;
-/*!50001 SET character_set_results     = utf8mb4 */;
-/*!50001 SET collation_connection      = utf8mb4_unicode_ci */;
-/*!50001 CREATE ALGORITHM=UNDEFINED */
-/*!50013 DEFINER=`root`@`localhost` SQL SECURITY DEFINER */
-/*!50001 VIEW `vw_parish_active_affiliation` AS select `pa`.`id` AS `id`,`pa`.`parish_id` AS `parish_id`,`pa`.`person_id` AS `person_id`,`pa`.`linked_user_id` AS `linked_user_id`,`pa`.`affiliation_type` AS `affiliation_type`,`pa`.`membership_status` AS `membership_status`,`pa`.`canonical_status` AS `canonical_status`,`pa`.`is_member` AS `is_member`,`pa`.`is_good_standing` AS `is_good_standing`,`pa`.`start_date` AS `start_date`,`pa`.`end_date` AS `end_date` from `ekklesiaonline`.`parish_affiliation` `pa` where (`pa`.`end_date` is null) */;
 /*!50001 SET character_set_client      = @saved_cs_client */;
 /*!50001 SET character_set_results     = @saved_cs_results */;
 /*!50001 SET collation_connection      = @saved_col_connection */;

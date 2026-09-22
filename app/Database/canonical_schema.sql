@@ -2058,12 +2058,10 @@ CREATE TABLE `parish_affiliation` (
   `parish_id` int unsigned NOT NULL,
   `person_id` int unsigned NOT NULL,
   `linked_user_id` int unsigned DEFAULT NULL,
-  `affiliation_type` enum('guest','attendee','member','clergy','staff') COLLATE utf8mb4_general_ci NOT NULL DEFAULT 'guest',
+  `affiliation_type` enum('guest','attendee','member') COLLATE utf8mb4_general_ci NOT NULL DEFAULT 'guest',
   `membership_status` enum('visitor','regular_attender','member','inactive','transferred','deceased') COLLATE utf8mb4_general_ci NOT NULL DEFAULT 'visitor',
   `pathway_stage` tinyint unsigned DEFAULT NULL,
-  `canonical_status` varchar(50) COLLATE utf8mb4_general_ci DEFAULT NULL,
-  `is_member` tinyint(1) NOT NULL DEFAULT '0',
-  `is_good_standing` tinyint(1) NOT NULL DEFAULT '0',
+  `is_member` tinyint(1) GENERATED ALWAYS AS ((`membership_status` in (_utf8mb4'member',_utf8mb4'inactive'))) STORED,
   `source` varchar(30) COLLATE utf8mb4_general_ci NOT NULL DEFAULT 'system',
   `start_date` date DEFAULT NULL,
   `end_date` date DEFAULT NULL,
@@ -3748,7 +3746,7 @@ CREATE TABLE `worship_template` (
 /*!50001 SET collation_connection      = utf8mb4_0900_ai_ci */;
 /*!50001 CREATE ALGORITHM=UNDEFINED */
 /*!50013 DEFINER=`root`@`localhost` SQL SECURITY DEFINER */
-/*!50001 VIEW `member_parish_affiliations` AS select `parish_affiliation`.`id` AS `id`,`parish_affiliation`.`linked_user_id` AS `user_id`,`parish_affiliation`.`parish_id` AS `parish_id`,NULL AS `diocese_id`,(case `parish_affiliation`.`membership_status` when 'member' then 'active' when 'inactive' then 'inactive' when 'guest' then 'visitor' when 'attendee' then 'regular_attender' when 'transferred' then 'inactive' when 'deceased' then 'inactive' else `parish_affiliation`.`membership_status` end) AS `membership_status`,`parish_affiliation`.`is_member` AS `is_member`,0 AS `is_dependent`,0 AS `is_home`,`parish_affiliation`.`is_member` AS `active`,`parish_affiliation`.`start_date` AS `started_at`,`parish_affiliation`.`end_date` AS `ended_at`,`parish_affiliation`.`created_at` AS `created_at`,`parish_affiliation`.`updated_at` AS `updated_at` from `parish_affiliation` */;
+/*!50001 VIEW `member_parish_affiliations` AS select `parish_affiliation`.`id` AS `id`,`parish_affiliation`.`linked_user_id` AS `user_id`,`parish_affiliation`.`parish_id` AS `parish_id`,NULL AS `diocese_id`,(case `parish_affiliation`.`membership_status` when 'member' then 'active' when 'inactive' then 'inactive' when 'guest' then 'visitor' when 'attendee' then 'regular_attender' when 'transferred' then 'inactive' when 'deceased' then 'inactive' else `parish_affiliation`.`membership_status` end) AS `membership_status`,`parish_affiliation`.`is_member` AS `is_member`,0 AS `is_dependent`,0 AS `is_home`,(`parish_affiliation`.`membership_status` = 'member') AS `active`,`parish_affiliation`.`start_date` AS `started_at`,`parish_affiliation`.`end_date` AS `ended_at`,`parish_affiliation`.`created_at` AS `created_at`,`parish_affiliation`.`updated_at` AS `updated_at` from `parish_affiliation` */;
 /*!50001 SET character_set_client      = @saved_cs_client */;
 /*!50001 SET character_set_results     = @saved_cs_results */;
 /*!50001 SET collation_connection      = @saved_col_connection */;

@@ -97,18 +97,9 @@ class Standing extends BaseController
     private function buildSummary(string $scope, int $parishId, int $year): array
     {
         $db = db_connect();
-        // Check if is_member column exists
-        $hasIsMember = false;
-        try {
-            $columns = $db->getFieldNames($db->getPrefix() . 'parish_affiliation');
-            $hasIsMember = in_array('is_member', array_map('strtolower', $columns), true);
-        } catch (\Throwable $e) {
-        }
-
+        // is_member is a generated on-register flag (member|inactive) — the
+        // membership_status clause below is the explicit guard.
         $memberJoin = 'mca.linked_user_id = mss.user_id AND mca.is_member = 1 AND mca.membership_status IN ("member", "inactive")';
-        if ($hasIsMember) {
-            $memberJoin .= ' AND mca.is_member = 1';
-        }
 
         if ($scope === 'province') {
             $provinceId = (int) $this->resolveAdminProvinceId();

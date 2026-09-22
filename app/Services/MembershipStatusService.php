@@ -144,12 +144,14 @@ class MembershipStatusService
 
     /**
      * Derived parish_affiliation columns for a lifecycle status — the
-     * single place where membership_status, affiliation_type,
-     * canonical_status and the is_member register flag are kept
+     * single place where membership_status and affiliation_type are kept
      * consistent. Write paths should merge this array rather than
      * setting the derived columns by hand.
      *
-     * @return array{membership_status: string, affiliation_type: string, canonical_status: string, is_member: int}
+     * is_member is a generated column (isOnRegister(status)) and
+     * canonical_status was dropped — neither may be written.
+     *
+     * @return array{membership_status: string, affiliation_type: string}
      */
     public static function fieldsForStatus(string $status): array
     {
@@ -161,8 +163,6 @@ class MembershipStatusService
         return [
             'membership_status' => $normalized,
             'affiliation_type'  => self::affiliationTypeForStatus($normalized),
-            'canonical_status'  => $normalized,
-            'is_member'         => self::isOnRegister($normalized) ? 1 : 0,
         ];
     }
 

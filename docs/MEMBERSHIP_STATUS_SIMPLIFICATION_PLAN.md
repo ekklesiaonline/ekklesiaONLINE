@@ -123,25 +123,42 @@ or (c) deleted. All mutations go through two choke points:
 
 ## Phase 2 — Make derived columns structural
 
-1. Migration: `is_member` → `GENERATED ALWAYS AS (membership_status IN
-   ('member','inactive')) STORED` — the resolved on-register semantics.
-   Optionally rename to `is_on_register` in the same migration so the column
-   name matches the meaning (repoint the ~30 readers). Same treatment for
-   `affiliation_type`'s derivable buckets; `clergy`/`staff` can't be generated:
-   - **Option A (recommended):** narrow the enum to `guest|attendee|member` and
-     expose clergy/staff via the `leadership_position` EXISTS pattern already
-     used for `is_leader` in `PeopleDirectoryService`.
-   - **Option B:** keep the column stored, written only by staff/leadership
-     flows, with an invariant test.
-2. Drop `canonical_status` — only ever SELECTed; writers just copy
-   `membership_status`. Stop writing → backfill → drop column.
-3. Drop `parish_affiliation.is_good_standing` — unwritten; readers already
-   join `member_standing_summary`.
-4. `pathway_stage`: keep (real cache, single writer) but reconcile the schema
-   dumps — tinyint vs ENUM.
-5. Legacy `member_parish_affiliations` view aliases `is_member` AS `active` —
-   under register semantics that alias reports inactive members as `active=1`.
-   Review view consumers when touching the column.
+**DONE** — `2026-09-23-000000_SimplifyParishAffiliationStatusColumns` plus the
+reader/test sweep:
+
+1. `is_member` → `GENERATED ALWAYS AS (membership_status IN
+   ('member','inactive')) STORED` — the resolved on-register semantics. All
+   write payloads stripped; `fieldsForStatus()` no longer returns it. SQLite
+   test schema mirrors it as a VIRTUAL generated column via
+   `CanonicalTestSchema::ensureGeneratedIsMember()` (rebuilds plain columns
+   forge-created test tables leave behind). The column was NOT renamed to
+   `is_on_register` — deferred; the generated expression now guarantees the
+   meaning regardless of name.
+2. `affiliation_type` → **Option A implemented**: enum narrowed to
+   `guest|attendee|member`. The migration counts clergy/staff rows first and
+   skips the narrowing (with a warning log) if any exist — reclassify those
+   through `leadership_position` and re-run. No app code read or wrote the
+   clergy/staff buckets.
+3. `canonical_status` dropped — only ever SELECTed; writers just copied
+   `membership_status`. Removed from `allowedFields`, `fieldsForStatus()`,
+   `PeopleDirectoryService` selects, test payloads, and schema dumps.
+   `AuditAffiliationDrift` skips the check when the column is absent.
+4. `parish_affiliation.is_good_standing` dropped — unwritten; the one real
+   reader (`Diocesan/Dashboard` good_standing_members) now joins
+   `member_standing_summary` on `user_id` + current year.
+5. `pathway_stage` dumps reconciled — TINYINT per the migration, ENUM dump
+   entries corrected.
+6. `vw_parish_active_affiliation` dropped (it selected the removed columns);
+   `member_parish_affiliations` view now exposes `active` as
+   `membership_status='member'` instead of aliasing `is_member`, so inactive
+   members no longer report `active=1` to legacy consumers.
+7. `MemberTagToggleIntegrationTest` rewritten: the contradictory
+   `guest+is_member=1` / `member+is_member=0` rows it manufactured can no
+   longer exist. Grant on a non-member row is now correctly rejected (the
+   `setMemberTag` guard's unreachable-drift path collapsed); revoke still
+   demotes to `visitor`.
+
+Full suite after Phase 2: 664 tests, 2957 assertions, 6 skipped.
 
 ## Phase 3 — Retire `profile.membership_status`
 

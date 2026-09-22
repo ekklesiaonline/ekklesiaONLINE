@@ -14,10 +14,11 @@ trigger: always_on
 
 ## Membership Status Invariants
 
-- `parish_affiliation.membership_status` is the only stored lifecycle status; `affiliation_type`, `canonical_status`, and `is_member` are derived from it.
-- Derive all four via `MembershipStatusService::fieldsForStatus($status)` — never set `is_member`/`affiliation_type` by hand in write paths.
+- `parish_affiliation.membership_status` is the only stored lifecycle status. `affiliation_type` is derived from it via `MembershipStatusService::fieldsForStatus($status)`; `is_member` is a generated column (`status IN ('member','inactive')`) and `canonical_status`/`is_good_standing` no longer exist — never write any of them.
 - `is_member` means "on the parish register": `status IN ('member','inactive')` (`MembershipStatusService::isOnRegister()`). `isMember()` is the stricter "active member" check (`status='member'`). Do not conflate them.
-- Off-register removal (detach, member delete, tag revoke) writes `visitor` + `is_member=0` + `end_date` — never `is_member=0` with a stale `member` status.
+- Off-register removal (detach, member delete, tag revoke) writes `visitor` + `end_date` — never a stale `member` status.
+- Good standing lives on `member_standing_summary.is_good_standing` (keyed by `user_id` + `year`), not on the affiliation row.
+- `affiliation_type` is `guest|attendee|member` only; clergy/staff are expressed through `leadership_position`, not lifecycle buckets.
 - Audit existing data with `php spark people:audit-affiliation-drift`.
 - Full plan: `docs/MEMBERSHIP_STATUS_SIMPLIFICATION_PLAN.md`.
 

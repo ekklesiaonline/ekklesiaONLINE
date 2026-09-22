@@ -297,7 +297,6 @@ final class MembersPendingRegistrationsScopeIntegrationTest extends CIUnitTestCa
             membership_status TEXT NULL,
             is_home INTEGER DEFAULT 0,
             active INTEGER DEFAULT 1,
-            is_member INTEGER DEFAULT 1,
             created_at TEXT NULL,
             updated_at TEXT NULL,
             deleted_at TEXT NULL
@@ -307,7 +306,6 @@ final class MembersPendingRegistrationsScopeIntegrationTest extends CIUnitTestCa
         $this->ensureColumnExists($resolved, 'linked_user_id', 'INTEGER NULL');
         $this->ensureColumnExists($resolved, 'parish_id', 'INTEGER NULL');
         $this->ensureColumnExists($resolved, 'membership_status', 'TEXT NULL');
-        $this->ensureColumnExists($resolved, 'is_member', 'INTEGER DEFAULT 1');
         $this->ensureColumnExists($resolved, 'active', 'INTEGER DEFAULT 1');
     }
 

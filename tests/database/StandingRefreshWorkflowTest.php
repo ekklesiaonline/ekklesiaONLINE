@@ -260,9 +260,6 @@ final class StandingRefreshWorkflowTest extends CIUnitTestCase
                 person_id INTEGER NULL,
                 affiliation_type TEXT DEFAULT "member",
                 membership_status TEXT NULL,
-                canonical_status TEXT NULL,
-                is_member INTEGER DEFAULT 0,
-                is_good_standing INTEGER DEFAULT 0,
                 source TEXT DEFAULT "system",
                 start_date TEXT NULL,
                 end_date TEXT NULL,
@@ -277,9 +274,7 @@ final class StandingRefreshWorkflowTest extends CIUnitTestCase
         $this->ensureColumnExists($affiliationTable, 'parish_id', 'INTEGER NULL');
         $this->ensureColumnExists($affiliationTable, 'parish_id', 'INTEGER NULL');
         $this->ensureColumnExists($affiliationTable, 'person_id', 'INTEGER NULL');
-        $this->ensureColumnExists($affiliationTable, 'is_member', 'INTEGER NOT NULL DEFAULT 0');
         $this->ensureColumnExists($affiliationTable, 'affiliation_type', 'TEXT NULL');
-        $this->ensureColumnExists($affiliationTable, 'canonical_status', 'TEXT NULL');
         $this->ensureColumnExists($affiliationTable, 'source', 'TEXT NULL');
         $this->ensureColumnExists($affiliationTable, 'start_date', 'TEXT NULL');
         $this->ensureColumnExists($affiliationTable, 'end_date', 'TEXT NULL');
@@ -288,7 +283,6 @@ final class StandingRefreshWorkflowTest extends CIUnitTestCase
         $this->ensureColumnExists($prefixedAffiliation, 'parish_id', 'INTEGER NULL');
         $this->ensureColumnExists($prefixedAffiliation, 'parish_id', 'INTEGER NULL');
         $this->ensureColumnExists($prefixedAffiliation, 'person_id', 'INTEGER NULL');
-        $this->ensureColumnExists($prefixedAffiliation, 'is_member', 'INTEGER NOT NULL DEFAULT 0');
 
         if (!in_array($prefix . 'auth_groups_users', $tables, true) && !in_array('auth_groups_users', $tables, true)) {
             $this->db->query('CREATE TABLE IF NOT EXISTS ' . $prefix . 'auth_groups_users (

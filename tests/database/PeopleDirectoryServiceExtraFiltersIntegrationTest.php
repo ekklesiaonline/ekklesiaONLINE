@@ -35,8 +35,8 @@ final class PeopleDirectoryServiceExtraFiltersIntegrationTest extends CIUnitTest
         $youngPersonId = $this->insertProfile($underAge, $parishId, 'Young', 'Person');
         $this->insertProfile($adult, $parishId, 'Grown', 'Person');
 
-        $this->insertAffiliation($underAge, $parishId, 'member', 1);
-        $this->insertAffiliation($adult, $parishId, 'member', 1);
+        $this->insertAffiliation($underAge, $parishId, 'member');
+        $this->insertAffiliation($adult, $parishId, 'member');
 
         $this->setBirthdate($youngPersonId, date('Y-m-d', strtotime('-10 years')));
 
@@ -59,8 +59,8 @@ final class PeopleDirectoryServiceExtraFiltersIntegrationTest extends CIUnitTest
         $leaderPersonId = $this->insertProfile($leader, $parishId, 'Lead', 'Er');
         $this->insertProfile($follower, $parishId, 'Follow', 'Er');
 
-        $this->insertAffiliation($leader, $parishId, 'member', 1);
-        $this->insertAffiliation($follower, $parishId, 'member', 1);
+        $this->insertAffiliation($leader, $parishId, 'member');
+        $this->insertAffiliation($follower, $parishId, 'member');
 
         $this->insertLeadership($leader, $leaderPersonId, $parishId);
 
@@ -83,8 +83,8 @@ final class PeopleDirectoryServiceExtraFiltersIntegrationTest extends CIUnitTest
         $bothPersonId = $this->insertProfile($both, $parishId, 'Both', 'Flags');
         $onePersonId  = $this->insertProfile($onlyOne, $parishId, 'One', 'Flag');
 
-        $this->insertAffiliation($both, $parishId, 'member', 1);
-        $this->insertAffiliation($onlyOne, $parishId, 'member', 1);
+        $this->insertAffiliation($both, $parishId, 'member');
+        $this->insertAffiliation($onlyOne, $parishId, 'member');
 
         $this->insertMembershipDetails($bothPersonId, $parishId, ['is_baptized' => 1, 'has_pledge' => 1]);
         $this->insertMembershipDetails($onePersonId, $parishId, ['is_baptized' => 1, 'has_pledge' => 0]);
@@ -108,8 +108,8 @@ final class PeopleDirectoryServiceExtraFiltersIntegrationTest extends CIUnitTest
         $withDetailsId = $this->insertProfile($withSnapshot, $parishId, 'With', 'Details');
         $this->insertProfile($withoutSnapshot, $parishId, 'Without', 'Details');
 
-        $this->insertAffiliation($withSnapshot, $parishId, 'member', 1);
-        $this->insertAffiliation($withoutSnapshot, $parishId, 'member', 1);
+        $this->insertAffiliation($withSnapshot, $parishId, 'member');
+        $this->insertAffiliation($withoutSnapshot, $parishId, 'member');
 
         $this->insertMembershipDetails($withDetailsId, $parishId, ['is_baptized' => 1]);
         // Intentionally no membership-details row for $withoutSnapshot.
@@ -222,9 +222,6 @@ final class PeopleDirectoryServiceExtraFiltersIntegrationTest extends CIUnitTest
             'person_id'          => ['type' => 'INTEGER', 'null' => true],
             'affiliation_type'   => ['type' => 'VARCHAR', 'constraint' => 32, 'default' => 'member'],
             'membership_status'  => ['type' => 'VARCHAR', 'constraint' => 20, 'default' => 'guest'],
-            'canonical_status'   => ['type' => 'VARCHAR', 'constraint' => 32, 'null' => true],
-            'is_member'          => ['type' => 'INTEGER', 'constraint' => 1, 'default' => 0],
-            'is_good_standing'   => ['type' => 'INTEGER', 'constraint' => 1, 'default' => 0],
             'source'             => ['type' => 'VARCHAR', 'constraint' => 32, 'default' => 'system'],
             'start_date'         => ['type' => 'DATE', 'null' => true],
             'end_date'           => ['type' => 'DATE', 'null' => true],
@@ -313,7 +310,7 @@ final class PeopleDirectoryServiceExtraFiltersIntegrationTest extends CIUnitTest
         return $personId;
     }
 
-    private function insertAffiliation(int $userId, int $parishId, string $status, int $isMember): void
+    private function insertAffiliation(int $userId, int $parishId, string $status): void
     {
         $personId = (int) $this->db->table('profile')
             ->select('person_id')
@@ -328,7 +325,6 @@ final class PeopleDirectoryServiceExtraFiltersIntegrationTest extends CIUnitTest
             'person_id'         => $personId,
             'affiliation_type'  => 'member',
             'membership_status' => $status,
-            'is_member'         => $isMember,
             'source'            => 'test',
             'start_date'        => date('Y-m-d'),
             'created_at'        => date('Y-m-d H:i:s'),

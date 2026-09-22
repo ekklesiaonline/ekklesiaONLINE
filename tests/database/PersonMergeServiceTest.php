@@ -62,7 +62,6 @@ final class PersonMergeServiceTest extends CIUnitTestCase
             'person_id'         => $sourcePersonId,
             'affiliation_type'  => 'member',
             'membership_status' => 'member',
-            'is_member'         => 1,
             'created_at'        => date('Y-m-d H:i:s'),
             'updated_at'        => date('Y-m-d H:i:s'),
         ]);
@@ -72,7 +71,6 @@ final class PersonMergeServiceTest extends CIUnitTestCase
             'person_id'         => $targetPersonId,
             'affiliation_type'  => 'member',
             'membership_status' => 'member',
-            'is_member'         => 1,
             'created_at'        => date('Y-m-d H:i:s'),
             'updated_at'        => date('Y-m-d H:i:s'),
         ]);
@@ -246,9 +244,6 @@ final class PersonMergeServiceTest extends CIUnitTestCase
             'person_id'         => ['type' => 'INTEGER', 'null' => true],
             'affiliation_type'  => ['type' => 'VARCHAR', 'constraint' => 32, 'default' => 'member'],
             'membership_status' => ['type' => 'VARCHAR', 'constraint' => 20, 'default' => 'guest'],
-            'canonical_status'  => ['type' => 'VARCHAR', 'constraint' => 32, 'null' => true],
-            'is_member'         => ['type' => 'INTEGER', 'default' => 0],
-            'is_good_standing'  => ['type' => 'INTEGER', 'default' => 0],
             'source'            => ['type' => 'VARCHAR', 'constraint' => 32, 'default' => 'system'],
             'start_date'        => ['type' => 'DATE', 'null' => true],
             'end_date'          => ['type' => 'DATE', 'null' => true],
@@ -332,7 +327,6 @@ final class PersonMergeServiceTest extends CIUnitTestCase
             'person_id'         => $personId,
             'affiliation_type'  => 'member',
             'membership_status' => 'member',
-            'is_member'         => 1,
             'created_at'        => date('Y-m-d H:i:s'),
             'updated_at'        => date('Y-m-d H:i:s'),
         ]);

@@ -10,10 +10,14 @@ use CodeIgniter\CLI\CLI;
  * Reports rows that violate the parish_affiliation status invariants:
  *
  *  - membership_status is a canonical lifecycle status,
- *  - is_member equals isOnRegister(membership_status)  (member|inactive),
+ *  - is_member equals isOnRegister(membership_status)  (member|inactive)
+ *    — structurally enforced once the column is GENERATED; the check
+ *    remains for pre-migration databases,
  *  - affiliation_type equals affiliationTypeForStatus(membership_status)
- *    (clergy/staff are exempt — they are set by staff/leadership flows),
- *  - canonical_status mirrors membership_status,
+ *    (clergy/staff are exempt — legacy enum values, unset by lifecycle
+ *    flows),
+ *  - canonical_status mirrors membership_status (skipped once the column
+ *    is dropped),
  *  - end_date is only set on terminal statuses (transferred|deceased),
  *  - profile.membership_status is a valid profile enum value and agrees
  *    with the user's primary affiliation.
@@ -44,8 +48,19 @@ class AuditAffiliationDrift extends BaseCommand
 
         CLI::write('Auditing parish_affiliation status columns...', 'cyan');
 
+        $hasCanonicalStatus = $db->fieldExists('canonical_status', 'parish_affiliation');
+        $hasIsMember        = $db->fieldExists('is_member', 'parish_affiliation');
+
+        $select = 'id, parish_id, person_id, linked_user_id, membership_status, affiliation_type, end_date';
+        if ($hasCanonicalStatus) {
+            $select .= ', canonical_status';
+        }
+        if ($hasIsMember) {
+            $select .= ', is_member';
+        }
+
         $rows = $db->table('parish_affiliation')
-            ->select('id, parish_id, person_id, linked_user_id, membership_status, affiliation_type, canonical_status, is_member, end_date')
+            ->select($select)
             ->where('deleted_at', null)
             ->get()
             ->getResultArray();
@@ -71,9 +86,11 @@ class AuditAffiliationDrift extends BaseCommand
                 $nonCanonical[] = $id;
             }
 
-            $expectedIsMember = MembershipStatusService::isOnRegister($status) ? 1 : 0;
-            if ((int) ($row['is_member'] ?? 0) !== $expectedIsMember) {
-                $isMemberDrift[] = $id;
+            if ($hasIsMember) {
+                $expectedIsMember = MembershipStatusService::isOnRegister($status) ? 1 : 0;
+                if ((int) ($row['is_member'] ?? 0) !== $expectedIsMember) {
+                    $isMemberDrift[] = $id;
+                }
             }
 
             $type = (string) ($row['affiliation_type'] ?? '');
@@ -84,10 +101,12 @@ class AuditAffiliationDrift extends BaseCommand
                 $typeDrift[] = $id;
             }
 
-            $canonicalStatus = $row['canonical_status'] ?? null;
-            if ($canonicalStatus !== null && $canonicalStatus !== ''
-                && MembershipStatusService::normalizeAffiliationStatus((string) $canonicalStatus) !== $status) {
-                $canonicalDrift[] = $id;
+            if ($hasCanonicalStatus) {
+                $canonicalStatus = $row['canonical_status'] ?? null;
+                if ($canonicalStatus !== null && $canonicalStatus !== ''
+                    && MembershipStatusService::normalizeAffiliationStatus((string) $canonicalStatus) !== $status) {
+                    $canonicalDrift[] = $id;
+                }
             }
 
             if (($row['end_date'] ?? null) !== null && ! in_array($status, self::TERMINAL_STATUSES, true)) {
@@ -98,7 +117,9 @@ class AuditAffiliationDrift extends BaseCommand
         $issues += $this->report('membership_status outside canonical vocabulary', $nonCanonical);
         $issues += $this->report('is_member disagrees with isOnRegister(status)', $isMemberDrift);
         $issues += $this->report('affiliation_type disagrees with affiliationTypeForStatus(status)', $typeDrift);
-        $issues += $this->report('canonical_status disagrees with membership_status', $canonicalDrift);
+        if ($hasCanonicalStatus) {
+            $issues += $this->report('canonical_status disagrees with membership_status', $canonicalDrift);
+        }
         $issues += $this->report('end_date set on non-terminal status', $endDateDrift);
 
         CLI::write('');

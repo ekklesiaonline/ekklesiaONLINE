@@ -44,7 +44,7 @@ final class EventsAudienceIntegrationTest extends CIUnitTestCase
         $calendarId = $this->insertCalendar($parishId, $dioceseId, 'Parish Calendar');
         $inviteeId = $this->insertUser('event.audience.invitee');
         $this->insertProfile($inviteeId, $parishId, $dioceseId, 'Maria', 'Lopez');
-        $this->insertAffiliation($inviteeId, $parishId, 1);
+        $this->insertAffiliation($inviteeId, $parishId, 'member');
 
         $teamId = $this->insertTeam($parishId, 'Choir Team', $inviteeId);
         $familyId = $this->insertFamily($parishId, 'Lopez Household', $inviteeId);
@@ -110,15 +110,15 @@ final class EventsAudienceIntegrationTest extends CIUnitTestCase
 
         $memberId = $this->insertUser('event.audience.member');
         $this->insertProfile($memberId, $parishId, $dioceseId, 'Member', 'Visible');
-        $this->insertAffiliation($memberId, $parishId, 1);
+        $this->insertAffiliation($memberId, $parishId, 'member');
 
         $volunteerId = $this->insertUser('event.audience.volunteer');
         $this->insertProfile($volunteerId, $parishId, $dioceseId, 'Victor', 'Volunteer');
-        $this->insertAffiliation($volunteerId, $parishId, 1);
+        $this->insertAffiliation($volunteerId, $parishId, 'member');
 
         $invitedId = $this->insertUser('event.audience.invited');
         $this->insertProfile($invitedId, $parishId, $dioceseId, 'Ivy', 'Invitee');
-        $this->insertAffiliation($invitedId, $parishId, 1);
+        $this->insertAffiliation($invitedId, $parishId, 'member');
 
         $registeredId = $this->insertUser('event.audience.registered');
         $this->insertProfile($registeredId, $parishId, $dioceseId, 'Rita', 'Registered');
@@ -128,11 +128,11 @@ final class EventsAudienceIntegrationTest extends CIUnitTestCase
 
         $householdHeadId = $this->insertUser('event.audience.household.head');
         $this->insertProfile($householdHeadId, $parishId, $dioceseId, 'Hector', 'Household');
-        $this->insertAffiliation($householdHeadId, $parishId, 1);
+        $this->insertAffiliation($householdHeadId, $parishId, 'member');
 
         $householdMemberId = $this->insertUser('event.audience.household.member');
         $this->insertProfile($householdMemberId, $parishId, $dioceseId, 'Helen', 'Household');
-        $this->insertAffiliation($householdMemberId, $parishId, 1);
+        $this->insertAffiliation($householdMemberId, $parishId, 'member');
 
         $outsiderId = $this->insertUser('event.audience.outsider');
         $this->insertProfile($outsiderId, $parishId, $dioceseId, 'Oscar', 'Outsider');
@@ -281,13 +281,12 @@ final class EventsAudienceIntegrationTest extends CIUnitTestCase
         $this->db->table($profileTable)->insert($payload);
     }
 
-    private function insertAffiliation(int $userId, int $parishId, int $isMember): void
+    private function insertAffiliation(int $userId, int $parishId, string $status): void
     {
         $this->db->table($this->resolveTableName('parish_affiliation'))->insert([
             'linked_user_id' => $userId,
             'parish_id' => $parishId,
-            'membership_status' => $isMember === 1 ? 'member' : 'attendee',
-            'is_member' => $isMember,
+            'membership_status' => $status,
             'created_at' => date('Y-m-d H:i:s'),
             'updated_at' => date('Y-m-d H:i:s'),
         ]);
@@ -689,7 +688,6 @@ final class EventsAudienceIntegrationTest extends CIUnitTestCase
                 linked_user_id INTEGER NOT NULL,
                 parish_id INTEGER NOT NULL,
                 membership_status TEXT NULL,
-                is_member INTEGER DEFAULT 0,
                 end_date TEXT NULL,
                 created_at TEXT NULL,
                 updated_at TEXT NULL,
