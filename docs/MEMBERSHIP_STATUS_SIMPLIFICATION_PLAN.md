@@ -244,12 +244,25 @@ Full suite after Phase 3: 664 tests, 2954 assertions, 6 skipped.
 
 Full suite after Phase 4: 665 tests, 2955 assertions, 6 skipped.
 
-## Phase 5 — Schema hygiene (independent)
+## Phase 5 — Schema hygiene (independent) — DONE
 
-1. Make migrations the only schema truth; regenerate or delete the four
-   divergent SQL dumps.
-2. Consider re-keying `member_standing_summary` by `person_id` instead of
-   `user_id`.
+1. Migrations are now the only schema truth. Three dead dumps deleted —
+   `canonical_schema.sql`, `canonical_schema_tables_ordered.sql`,
+   `localhost.sql` (nothing read them; `localhost.sql.bak` is untracked
+   local debris, left alone). `canonical_schema_tables.sql` is **not** a
+   snapshot — it is the input `2026_05_12_000001_CreateCanonicalSchema`
+   executes on fresh installs, verified in step with the migrated dev DB.
+   `tests/unit/SchemaHygieneTest.php` fails if any other `*.sql` appears
+   under `app/Database/` or if the baseline migration stops reading the
+   canonical file. `docs/MIGRATIONS_AND_SEEDERS.md` now names the correct
+   file and documents the policy.
+2. `member_standing_summary` re-key (`user_id` → `person_id`): **deferred.**
+   Analysis: the table is `UNIQUE(user_id, year)` FK→`users`, and its
+   three data sources (`attendance.user_id`, `annual_pledge.user_id`,
+   `member_discipline.user_id`) are all user-keyed too. Re-keying the
+   summary alone would orphan the aggregates — it requires re-keying the
+   whole standing pipeline first, which is its own epic outside this
+   plan's scope. Documented here so the decision is on record.
 
 ## Sequencing
 

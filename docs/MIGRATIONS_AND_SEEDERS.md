@@ -26,7 +26,7 @@ Creates the Shield authentication framework tables required for roles and permis
 
 Creates all 138 remaining application tables in correct dependency order. This migration:
 
-- Reads from `app/Database/canonical_schema_tables_ordered.sql`
+- Reads from `app/Database/canonical_schema_tables.sql`
 - Disables foreign key checks during creation to handle table dependencies
 - Is idempotent (safe to re-run)
 
@@ -77,13 +77,17 @@ php spark db:seed DatabaseSeeder
 ### Adding New Features
 
 1. Create a new migration for schema changes:
+
     ```bash
     php spark make:migration AddNewFeatureTable
     ```
+
 2. Create new seeders for initial data:
+
     ```bash
     php spark make:seeder NewFeatureSeeder
     ```
+
 3. Add seeder to DatabaseSeeder::run() if needed
 
 ### Rollback (use with caution in production)
@@ -111,7 +115,15 @@ php spark migrate:rollback --batch=1
 
 - `app/Database/Migrations/2026_05_12_000000_CreateShieldTables.php`
 - `app/Database/Migrations/2026_05_12_000001_CreateCanonicalSchema.php`
-- `app/Database/canonical_schema_tables_ordered.sql` (schema source file, ordered by dependency)
+- `app/Database/canonical_schema_tables.sql` (schema source file for the baseline migration)
+
+**Schema truth policy:** migrations are the only source of schema truth.
+`canonical_schema_tables.sql` is not a snapshot — it is the input file the
+baseline migration executes on fresh installs, kept in step with the
+migration chain. Do not commit `mysqldump` exports or other `*.sql`
+snapshots under `app/Database/`; they drift from the migration truth.
+(The former `canonical_schema.sql`, `canonical_schema_tables_ordered.sql`,
+and `localhost.sql` dumps were retired for exactly that reason.)
 
 ## Seeder Files
 
