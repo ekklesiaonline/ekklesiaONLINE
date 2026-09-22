@@ -1,7 +1,7 @@
 # Membership Status Simplification Plan
 
 **Branch:** `refactor/membership-status-simplification`
-**Status:** In progress — Phase 0/1
+**Status:** Complete — all 5 phases shipped
 **Date:** 2026-09-21
 
 ## Problem
