@@ -149,6 +149,64 @@ final class VisitorConversionPrefillTest extends CIUnitTestCase
         $this->assertNotNull($row['deleted_at']);
     }
 
+    public function testConvertToMemberLinksExistingUser(): void
+    {
+        $personId = $this->insertVisitorPerson(301);
+        $userId   = $this->insertLinkedUser(301);
+
+        $this->assertTrue(PersonConversionService::convertToMember($personId, 301, $userId, null, null, 7));
+
+        $row = $this->db->table('parish_affiliation')
+            ->where('person_id', $personId)
+            ->where('parish_id', 301)
+            ->get()
+            ->getRowArray();
+
+        $this->assertSame('member', $row['membership_status']);
+        $this->assertSame($userId, (int) $row['linked_user_id']);
+
+        $this->assertSame(1, $this->db->table('user_person')
+            ->where('user_id', $userId)
+            ->where('person_id', $personId)
+            ->countAllResults());
+    }
+
+    public function testConvertToMemberCreatesPortalAccount(): void
+    {
+        $personId = $this->insertVisitorPerson(301);
+
+        $this->assertTrue(PersonConversionService::convertToMember(
+            $personId, 301, null, 'new.member@example.com', 'Str0ng!Pass', 7
+        ));
+
+        $affiliation = $this->db->table('parish_affiliation')
+            ->where('person_id', $personId)
+            ->where('parish_id', 301)
+            ->get()
+            ->getRowArray();
+
+        $this->assertSame('member', $affiliation['membership_status']);
+        $this->assertGreaterThan(0, (int) $affiliation['linked_user_id']);
+
+        $userId = (int) $affiliation['linked_user_id'];
+
+        $this->assertSame(1, $this->db->table('auth_identities')
+            ->where('user_id', $userId)
+            ->where('type', 'email_password')
+            ->where('secret', 'new.member@example.com')
+            ->countAllResults());
+
+        $this->assertSame(1, $this->db->table('auth_groups_users')
+            ->where('user_id', $userId)
+            ->where('group', 'member')
+            ->countAllResults());
+
+        $this->assertSame(1, $this->db->table('profile')
+            ->where('user_id', $userId)
+            ->where('person_id', $personId)
+            ->countAllResults());
+    }
+
     /**
      * Wiring contract: the consolidated POST promote/revert endpoints exist,
      * and the retired GET mutation + flashdata handoff are gone.
@@ -196,6 +254,39 @@ final class VisitorConversionPrefillTest extends CIUnitTestCase
         ]);
 
         return $personId;
+    }
+
+    private function insertLinkedUser(int $parishId): int
+    {
+        $this->db->table('users')->insert([
+            'username'   => 'linked_user_' . bin2hex(random_bytes(3)),
+            'active'     => 1,
+            'created_at' => date('Y-m-d H:i:s'),
+            'updated_at' => date('Y-m-d H:i:s'),
+        ]);
+        $userId = (int) $this->db->insertID();
+
+        // A parish affiliation makes the account linkable in-scope.
+        $this->db->table('person')->insert([
+            'first_name' => 'Linked',
+            'last_name'  => 'User',
+            'is_active'  => 1,
+            'created_at' => date('Y-m-d H:i:s'),
+            'updated_at' => date('Y-m-d H:i:s'),
+        ]);
+        $linkedPersonId = (int) $this->db->insertID();
+
+        $this->db->table('parish_affiliation')->insert([
+            'person_id'         => $linkedPersonId,
+            'parish_id'         => $parishId,
+            'linked_user_id'    => $userId,
+            'membership_status' => 'visitor',
+            'followed_up'       => 0,
+            'created_at'        => date('Y-m-d H:i:s'),
+            'updated_at'        => date('Y-m-d H:i:s'),
+        ]);
+
+        return $userId;
     }
 
     private function insertFollowup(int $personId, string $status): int
