@@ -44,10 +44,10 @@ class NonPortalMemberProvisioningService
         $relationship = $relationship === '' ? null : $relationship;
 
         $isChild = filter_var($payload['is_child'] ?? false, FILTER_VALIDATE_BOOLEAN);
-        $isMember = filter_var($payload['is_member'] ?? true, FILTER_VALIDATE_BOOLEAN);
+        $isMember = filter_var($payload['is_member'] ?? false, FILTER_VALIDATE_BOOLEAN);
         $defaultStatus = $isChild
-            ? 'regular_attender'
-            : ($isMember ? 'member' : 'regular_attender');
+            ? 'visitor'
+            : ($isMember ? 'member' : 'visitor');
         $paStatus = \App\Services\MembershipStatusService::normalizeAffiliationStatus($defaultStatus);
 
         $useTransaction = strtolower((string) ($this->db->DBDriver ?? '')) !== 'sqlite3';

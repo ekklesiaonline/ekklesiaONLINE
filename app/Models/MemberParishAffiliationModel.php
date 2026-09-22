@@ -449,7 +449,7 @@ class MemberParishAffiliationModel extends BaseTenantModel
      * derived from the status — callers cannot pass them, which keeps the
      * row internally consistent.
      */
-    public function attachToParish(int $userId, int $parishId, bool $isHome = false, string $status = 'member', ?int $personId = null): bool
+    public function attachToParish(int $userId, int $parishId, bool $isHome = false, string $status = 'visitor', ?int $personId = null): bool
     {
         $resolvedPersonId = $personId ?? $this->getOrCreatePersonIdForUser($userId) ?? 0;
         $statusFields     = MembershipStatusService::fieldsForStatus($status);

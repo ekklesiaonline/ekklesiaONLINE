@@ -309,10 +309,10 @@ class MemberAffiliationService
             return;
         }
 
-        $this->affiliations->attachToParish($userId, $primaryParishId, true, 'regular_attender', $personId);
+        $this->affiliations->attachToParish($userId, $primaryParishId, true, 'visitor', $personId);
 
         // setHomeParish() requires is_member=1, so a freshly inserted
-        // regular_attender row would never become primary. Mark it here.
+        // visitor row would never become primary. Mark it here.
         $this->db->table('parish_affiliation')
             ->where('linked_user_id', $userId)
             ->where('is_primary', 1)

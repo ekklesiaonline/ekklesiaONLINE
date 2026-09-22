@@ -206,7 +206,7 @@ class RegistrationApprovalService
         $this->setUserGroups($user->id, [$role]);
 
         // Approval affiliates the person but does not confer canonical
-        // membership: the parish promotes regular_attender -> member once
+        // membership: the parish promotes visitor -> member once
         // sacramental/standing requirements are verified. The affiliation
         // row (created below) owns membership_status.
         $profileModel->update($profile['id'], [
@@ -221,7 +221,7 @@ class RegistrationApprovalService
 
         // The people directory is affiliation-driven: approval must create
         // the person's canonical parish_affiliation row or they remain
-        // invisible to parish people lists. regular_attender keeps them out
+        // invisible to parish people lists. visitor keeps them out
         // of member counts until a parish admin promotes them.
         if ($parishId > 0) {
             (new MemberAffiliationService($this->db))->ensurePrimaryAffiliationForUser(

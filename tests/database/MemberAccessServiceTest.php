@@ -58,7 +58,7 @@ final class MemberAccessServiceTest extends CIUnitTestCase
             ->get()
             ->getRowArray();
         $this->assertNotNull($affiliation);
-        $this->assertSame('regular_attender', (string) ($affiliation['membership_status'] ?? ''));
+        $this->assertSame('visitor', (string) ($affiliation['membership_status'] ?? ''));
 
         $relation = $this->db->table('family_member')
             ->where('family_id', $familyId)
