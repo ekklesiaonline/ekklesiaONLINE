@@ -23,8 +23,7 @@ class DropFollowupLogFollowupDate extends Migration
                 $db->query(
                     'UPDATE ' . $db->prefixTable('followup_log')
                     . ' SET scheduled_date = followup_date'
-                    . ' WHERE (scheduled_date IS NULL OR scheduled_date = "")'
-                    . ' AND followup_date IS NOT NULL AND followup_date != ""'
+                    . ' WHERE scheduled_date IS NULL AND followup_date IS NOT NULL'
                 );
 
                 $this->forge->dropColumn('followup_log', 'followup_date');
