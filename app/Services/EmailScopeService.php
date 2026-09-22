@@ -17,8 +17,10 @@ use Config\Email as EmailConfig;
  *   - Tenant tiers (parish/diocese/province) may configure From identity and,
  *     optionally, their own SMTP transport for non-credential mail.
  *   - Credential-bearing mail (activation codes, magic links, OTP, device
- *     verification) uses tenant-scoped From identity but is ALWAYS sent
- *     through the System transport.
+ *     verification, password-change notices) ALWAYS uses System transport
+ *     via credentialMailer() — a tenant relay could intercept the code. The
+ *     From mailbox stays on the System-aligned domain; tenant branding is
+ *     carried only by the display name and Reply-To.
  */
 class EmailScopeService
 {

@@ -58,6 +58,15 @@ send path. Do not reintroduce raw settings values into `setFrom()` calls.
 
 ## Sender/transport alignment policy
 
+Why credential mail is pinned to System transport:
+
+- **Trust boundary.** Parish SMTP credentials are tenant-controlled. An
+  activation code or magic link transiting a tenant relay can be read by
+  whoever holds those credentials — that is an account-takeover path.
+- **Reliability.** If a tenant's SMTP block breaks (expired App Password,
+  provider change), users must still be able to register, log in, and
+  reset passwords. Auth mail cannot depend on tenant configuration.
+
 - Credential-bearing mail (activation codes, magic links, OTPs, device
   verification, password-change notices) always uses System transport via
   `EmailScopeService::credentialMailer()`: the From mailbox stays aligned
@@ -65,6 +74,9 @@ send path. Do not reintroduce raw settings values into `setFrom()` calls.
   and Reply-To carry the parish identity. Never override `setFrom()` on
   these paths with a tenant `from_email` — an unauthorized tenant domain on
   System SMTP fails DKIM/DMARC alignment (`550 5.7.30`).
+- Non-credential mail (pending-review notices, pastoral/operational
+  messages) carries no secrets, so it may use the tenant's own SMTP block
+  and From mailbox.
 - Tenant pastoral/operational mail may use tenant SMTP only when host, username,
   and password form a complete block at one hierarchy tier. Resolution is
   block-atomic: a partial block is skipped (never mixed with another tier) and
