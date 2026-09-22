@@ -157,8 +157,24 @@ $translateSequenceDescription = static function (array $sequence): string {
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        const csrfName = document.querySelector('meta[name="csrf-token"]')?.getAttribute('name') ?? 'csrf_token';
-        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ?? '';
+        const csrfMeta = document.querySelector('meta[name="csrf-token"]');
+        const csrfHeader = document.querySelector('meta[name="csrf-header"]')?.content ?? 'X-CSRF-TOKEN';
+        const csrfHeaders = () => {
+            const headers = {
+                'X-Requested-With': 'XMLHttpRequest',
+                'Content-Type': 'application/x-www-form-urlencoded',
+            };
+            if (csrfMeta) {
+                headers[csrfHeader] = csrfMeta.content;
+            }
+            return headers;
+        };
+        const refreshCsrf = (r) => {
+            const newToken = r.headers.get(csrfHeader);
+            if (newToken && csrfMeta) {
+                csrfMeta.content = newToken;
+            }
+        };
 
         // ── Toggle active ──────────────────────────────────────────────────
         document.querySelectorAll('.btn-toggle-sequence').forEach(function(btn) {
@@ -173,13 +189,13 @@ $translateSequenceDescription = static function (array $sequence): string {
                     function() {
                         fetch('<?= base_url('followup-workflow/sequences/toggle/') ?>' + id, {
                                 method: 'POST',
-                                headers: {
-                                    'X-Requested-With': 'XMLHttpRequest',
-                                    'Content-Type': 'application/x-www-form-urlencoded',
-                                },
-                                body: csrfName + '=' + encodeURIComponent(csrfToken),
+                                credentials: 'same-origin',
+                                headers: csrfHeaders(),
                             })
-                            .then(r => r.json())
+                            .then(r => {
+                                refreshCsrf(r);
+                                return r.json();
+                            })
                             .then(data => {
                                 if (data.success) {
                                     location.reload();
@@ -205,13 +221,13 @@ $translateSequenceDescription = static function (array $sequence): string {
                     function() {
                         fetch('<?= base_url('followup-workflow/sequences/delete/') ?>' + id, {
                                 method: 'POST',
-                                headers: {
-                                    'X-Requested-With': 'XMLHttpRequest',
-                                    'Content-Type': 'application/x-www-form-urlencoded',
-                                },
-                                body: csrfName + '=' + encodeURIComponent(csrfToken),
+                                credentials: 'same-origin',
+                                headers: csrfHeaders(),
                             })
-                            .then(r => r.json())
+                            .then(r => {
+                                refreshCsrf(r);
+                                return r.json();
+                            })
                             .then(data => {
                                 if (data.success) {
                                     showAppToast('<?= esc(lang('Visitors.seqDeleteSuccess'), 'js') ?>', 'primary');

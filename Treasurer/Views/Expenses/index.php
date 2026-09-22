@@ -284,13 +284,24 @@ $formatLocalizedDate = static function (?string $value, string $pattern, string 
             '<?= esc(lang('App.confirm'), 'js') ?>',
             '<?= esc(lang('Treasurer.expenseDeleteConfirm'), 'js') ?>',
             function() {
+                const csrfMeta = document.querySelector('meta[name="csrf-token"]');
+                const csrfHeader = document.querySelector('meta[name="csrf-header"]')?.content ?? 'X-CSRF-TOKEN';
+                const headers = { 'X-Requested-With': 'XMLHttpRequest' };
+                if (csrfMeta) {
+                    headers[csrfHeader] = csrfMeta.content;
+                }
                 fetch('<?= base_url('expenses/delete/') ?>' + id, {
                         method: 'POST',
-                        headers: {
-                            'X-Requested-With': 'XMLHttpRequest'
-                        }
+                        credentials: 'same-origin',
+                        headers: headers
                     })
-                    .then(response => response.json())
+                    .then(response => {
+                        const newToken = response.headers.get(csrfHeader);
+                        if (newToken && csrfMeta) {
+                            csrfMeta.content = newToken;
+                        }
+                        return response.json();
+                    })
                     .then(data => {
                         if (data.success) {
                             location.reload();

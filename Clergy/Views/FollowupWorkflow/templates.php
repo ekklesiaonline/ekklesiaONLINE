@@ -211,8 +211,24 @@ $channelBadge = [
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        const csrfName = document.querySelector('meta[name="csrf-token"]')?.getAttribute('name') ?? 'csrf_token';
-        const getCsrf = () => document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ?? '';
+        const csrfMeta = document.querySelector('meta[name="csrf-token"]');
+        const csrfHeader = document.querySelector('meta[name="csrf-header"]')?.content ?? 'X-CSRF-TOKEN';
+        const csrfHeaders = () => {
+            const headers = {
+                'X-Requested-With': 'XMLHttpRequest',
+                'Content-Type': 'application/x-www-form-urlencoded',
+            };
+            if (csrfMeta) {
+                headers[csrfHeader] = csrfMeta.content;
+            }
+            return headers;
+        };
+        const refreshCsrf = (r) => {
+            const newToken = r.headers.get(csrfHeader);
+            if (newToken && csrfMeta) {
+                csrfMeta.content = newToken;
+            }
+        };
         const saveUrl = '<?= base_url('followup-workflow/templates/save') ?>';
         const deleteUrl = '<?= base_url('followup-workflow/templates/delete/') ?>';
 
@@ -297,7 +313,6 @@ $channelBadge = [
             errBox.classList.add('d-none');
 
             const params = new URLSearchParams({
-                [csrfName]: getCsrf(),
                 name: name,
                 channel: channel,
                 subject: document.getElementById('tpl_subject').value,
@@ -308,13 +323,14 @@ $channelBadge = [
 
             fetch(url, {
                     method: 'POST',
-                    headers: {
-                        'X-Requested-With': 'XMLHttpRequest',
-                        'Content-Type': 'application/x-www-form-urlencoded',
-                    },
+                    credentials: 'same-origin',
+                    headers: csrfHeaders(),
                     body: params.toString(),
                 })
-                .then(r => r.json())
+                .then(r => {
+                    refreshCsrf(r);
+                    return r.json();
+                })
                 .then(data => {
                     if (data.success) {
                         bsModal?.hide();
@@ -351,13 +367,13 @@ $channelBadge = [
                 function() {
                     fetch(deleteUrl + id, {
                             method: 'POST',
-                            headers: {
-                                'X-Requested-With': 'XMLHttpRequest',
-                                'Content-Type': 'application/x-www-form-urlencoded',
-                            },
-                            body: csrfName + '=' + encodeURIComponent(getCsrf()),
+                            credentials: 'same-origin',
+                            headers: csrfHeaders(),
                         })
-                        .then(r => r.json())
+                        .then(r => {
+                            refreshCsrf(r);
+                            return r.json();
+                        })
                         .then(data => {
                             if (data.success) {
                                 showAppToast(<?= json_encode(lang('Visitors.tplDeleted')) ?>, 'primary');
@@ -445,8 +461,24 @@ $channelBadge = [
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         const previewUrl = '<?= base_url('followup-workflow/templates/preview-parsed') ?>';
-        const csrfName = document.querySelector('meta[name="csrf-token"]')?.getAttribute('name') ?? 'csrf_token';
-        const getCsrf = () => document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ?? '';
+        const csrfMeta = document.querySelector('meta[name="csrf-token"]');
+        const csrfHeader = document.querySelector('meta[name="csrf-header"]')?.content ?? 'X-CSRF-TOKEN';
+        const csrfHeaders = () => {
+            const headers = {
+                'X-Requested-With': 'XMLHttpRequest',
+                'Content-Type': 'application/x-www-form-urlencoded',
+            };
+            if (csrfMeta) {
+                headers[csrfHeader] = csrfMeta.content;
+            }
+            return headers;
+        };
+        const refreshCsrf = (r) => {
+            const newToken = r.headers.get(csrfHeader);
+            if (newToken && csrfMeta) {
+                csrfMeta.content = newToken;
+            }
+        };
 
         const previewModal = document.getElementById('tplPreviewModal');
         const bsPreviewModal = previewModal ? new bootstrap.Modal(previewModal) : null;
@@ -480,20 +512,20 @@ $channelBadge = [
             previewSpinner?.classList.remove('d-none');
 
             const params = new URLSearchParams({
-                [csrfName]: getCsrf(),
                 template_id: templateId,
                 visitor_id: visitorSel?.value ?? '',
             });
 
             fetch(previewUrl, {
                     method: 'POST',
-                    headers: {
-                        'X-Requested-With': 'XMLHttpRequest',
-                        'Content-Type': 'application/x-www-form-urlencoded',
-                    },
+                    credentials: 'same-origin',
+                    headers: csrfHeaders(),
                     body: params.toString(),
                 })
-                .then(r => r.json())
+                .then(r => {
+                    refreshCsrf(r);
+                    return r.json();
+                })
                 .then(data => {
                     if (!data.success) {
                         alertBox.textContent = data.message ?? <?= json_encode(lang('Visitors.tplPreviewFailed')) ?>;

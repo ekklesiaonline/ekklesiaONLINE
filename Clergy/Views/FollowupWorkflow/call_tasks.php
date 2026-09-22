@@ -138,8 +138,8 @@
         'use strict';
 
         const COMPLETE_URL = '<?= base_url('followup-workflow/call-tasks/complete') ?>';
-        const CSRF_NAME = '<?= csrf_token() ?>';
-        const CSRF_HASH = '<?= csrf_hash() ?>';
+        const csrfMeta = document.querySelector('meta[name="csrf-token"]');
+        const csrfHeader = document.querySelector('meta[name="csrf-header"]')?.content ?? 'X-CSRF-TOKEN';
         const i18n = {
             completeTitle: <?= json_encode(lang('Visitors.callTasksCompleteTitle')) ?>,
             completeBody: <?= json_encode(lang('Visitors.callTasksCompleteBody')) ?>,
@@ -172,17 +172,23 @@
             btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status"></span>';
 
             const headers = {
-                'Content-Type': 'application/json',
+                'Content-Type': 'application/x-www-form-urlencoded',
                 'X-Requested-With': 'XMLHttpRequest',
             };
-            headers[CSRF_NAME] = CSRF_HASH;
+            if (csrfMeta) {
+                headers[csrfHeader] = csrfMeta.content;
+            }
 
             fetch(COMPLETE_URL + '/' + taskId, {
                     method: 'POST',
+                    credentials: 'same-origin',
                     headers: headers,
-                    body: JSON.stringify({}),
                 })
                 .then(function(r) {
+                    const newToken = r.headers.get(csrfHeader);
+                    if (newToken && csrfMeta) {
+                        csrfMeta.content = newToken;
+                    }
                     return r.json();
                 })
                 .then(function(data) {

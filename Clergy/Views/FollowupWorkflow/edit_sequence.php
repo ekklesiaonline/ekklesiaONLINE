@@ -161,8 +161,24 @@ $saveUrl    = $isNew
 <?php if (!$isNew): ?>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            const csrfName = document.querySelector('meta[name="csrf-token"]')?.getAttribute('name') ?? 'csrf_token';
-            const getCsrf = () => document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ?? '';
+            const csrfMeta = document.querySelector('meta[name="csrf-token"]');
+            const csrfHeader = document.querySelector('meta[name="csrf-header"]')?.content ?? 'X-CSRF-TOKEN';
+            const csrfHeaders = () => {
+                const headers = {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                };
+                if (csrfMeta) {
+                    headers[csrfHeader] = csrfMeta.content;
+                }
+                return headers;
+            };
+            const refreshCsrf = (r) => {
+                const newToken = r.headers.get(csrfHeader);
+                if (newToken && csrfMeta) {
+                    csrfMeta.content = newToken;
+                }
+            };
             const saveUrl = '<?= base_url('followup-workflow/actions/save') ?>';
             const deleteUrl = '<?= base_url('followup-workflow/actions/delete/') ?>';
 
@@ -248,7 +264,6 @@ $saveUrl    = $isNew
                 errBox.classList.add('d-none');
 
                 const params = new URLSearchParams({
-                    [csrfName]: getCsrf(),
                     sequence_id: '<?= $sequenceId ?>',
                     week_number: week,
                     day_offset: day,
@@ -259,13 +274,14 @@ $saveUrl    = $isNew
 
                 fetch(url, {
                         method: 'POST',
-                        headers: {
-                            'X-Requested-With': 'XMLHttpRequest',
-                            'Content-Type': 'application/x-www-form-urlencoded',
-                        },
+                        credentials: 'same-origin',
+                        headers: csrfHeaders(),
                         body: params.toString(),
                     })
-                    .then(r => r.json())
+                    .then(r => {
+                        refreshCsrf(r);
+                        return r.json();
+                    })
                     .then(data => {
                         if (data.success) {
                             bsModal?.hide();
@@ -302,13 +318,13 @@ $saveUrl    = $isNew
                     function() {
                         fetch(deleteUrl + id, {
                                 method: 'POST',
-                                headers: {
-                                    'X-Requested-With': 'XMLHttpRequest',
-                                    'Content-Type': 'application/x-www-form-urlencoded',
-                                },
-                                body: csrfName + '=' + encodeURIComponent(getCsrf()),
+                                credentials: 'same-origin',
+                                headers: csrfHeaders(),
                             })
-                            .then(r => r.json())
+                            .then(r => {
+                                refreshCsrf(r);
+                                return r.json();
+                            })
                             .then(data => {
                                 if (data.success) {
                                     renderActions(data.actions);
