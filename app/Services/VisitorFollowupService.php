@@ -9,8 +9,8 @@ use CodeIgniter\Database\BaseConnection;
  *
  * Read-side queries for visitor follow-up workflows: per-person progress
  * badges, next pending action, status counts, single log rows, the
- * manual timeline (including orphaned legacy call_task rows), and the
- * visitor-hub dashboard aggregates. Writes stay on FollowupLogModel.
+ * manual timeline, and the visitor-hub dashboard aggregates.
+ * Writes stay on FollowupLogModel.
  */
 class VisitorFollowupService
 {
@@ -112,64 +112,37 @@ class VisitorFollowupService
 
     /**
      * Full follow-up timeline for a person: followup_log rows joined to
-     * action/template/sequence, merged with orphaned legacy call_task
-     * rows (log_id IS NULL) normalized into the same shape.
+     * action/template/sequence. A linked call_task (log_id) marks the row
+     * as a call-channel item — the dispatcher always sets it, and the
+     * backfill migration linked the legacy orphans.
      *
      * @return list<array<string, mixed>>
      */
     public function timelineForPerson(int $personId): array
     {
-        $timeline = $this->db->table('followup_log gfl')
+        $rows = $this->db->table('followup_log gfl')
             ->select('gfl.*, fa.channel, fa.week_number, fa.day_offset, fa.is_automated,
-                      ft.name AS template_name, fs.name AS sequence_name')
+                      ft.name AS template_name, fs.name AS sequence_name,
+                      ct.id AS call_task_id')
             ->join('followup_action fa', 'fa.id = gfl.action_id', 'left')
             ->join('followup_template ft', 'ft.id = fa.template_id', 'left')
             ->join('followup_sequence fs', 'fs.id = fa.sequence_id', 'left')
+            ->join('call_task ct', 'ct.log_id = gfl.id', 'left')
             ->where('gfl.person_id', $personId)
             ->orderBy('gfl.scheduled_date', 'ASC')
             ->orderBy('gfl.id', 'ASC')
             ->get()
             ->getResultArray();
 
-        $orphanedCallTasks = $this->db->table('call_task')
-            ->where('person_id', $personId)
-            ->where('log_id IS NULL', null, false)
-            ->where('status !=', 'cancelled')
-            ->orderBy('scheduled_date', 'ASC')
-            ->get()
-            ->getResultArray();
-
-        if ($orphanedCallTasks === []) {
-            return $timeline;
+        foreach ($rows as &$row) {
+            if (! empty($row['call_task_id'])) {
+                $row['_source'] = 'call_task';
+                $row['channel'] = $row['channel'] ?? 'call';
+            }
         }
+        unset($row);
 
-        $callTaskRows = array_map(static function (array $task): array {
-            return [
-                'id'                => (int) $task['id'],
-                'visitor_id'          => (int) $task['person_id'],
-                'action_id'         => null,
-                'scheduled_date'    => $task['scheduled_date'] ?? null,
-                'status'            => $task['status'] === 'completed' ? 'sent' : $task['status'],
-                'executed_at'       => $task['completed_at'] ?? null,
-                'notes'             => $task['notes'] ?? null,
-                'response_metadata' => null,
-                'channel'           => 'call',
-                'week_number'       => null,
-                'day_offset'        => null,
-                'is_automated'      => 0,
-                'template_name'     => null,
-                'sequence_name'     => null,
-                '_source'           => 'call_task',
-            ];
-        }, $orphanedCallTasks);
-
-        $timeline = array_merge($timeline, $callTaskRows);
-        usort($timeline, static function (array $a, array $b): int {
-            $cmp = strcmp($a['scheduled_date'] ?? '', $b['scheduled_date'] ?? '');
-            return $cmp !== 0 ? $cmp : ((int) ($a['id'] ?? 0)) - ((int) ($b['id'] ?? 0));
-        });
-
-        return $timeline;
+        return $rows;
     }
 
     /**

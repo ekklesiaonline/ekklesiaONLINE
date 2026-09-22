@@ -496,7 +496,7 @@ class Visitors extends BaseController
             return $this->jsonResponse(['success' => false, 'message' => lang('Visitors.followupLogNotFound')], 404);
         }
 
-        if (! $this->visitorDirectory->affiliationExists((int) $log['person_id'], (int) $log['parish_id'])
+        if (! $this->visitorDirectory->visitorAffiliationExists((int) $log['person_id'], (int) $log['parish_id'])
             || (int) $log['parish_id'] !== (int) $this->getOperationalParishId()) {
             return $this->jsonResponse(['success' => false, 'message' => lang('Visitors.visitorNotFound')], 403);
         }
@@ -875,7 +875,7 @@ class Visitors extends BaseController
             return $this->jsonResponse(['success' => false, 'message' => lang('Visitors.followupLogNotFound')], 404);
         }
 
-        if (! $this->visitorDirectory->affiliationExists((int) $log['person_id'], (int) $log['parish_id'])
+        if (! $this->visitorDirectory->visitorAffiliationExists((int) $log['person_id'], (int) $log['parish_id'])
             || (int) $log['parish_id'] !== (int) $this->getOperationalParishId()) {
             return $this->jsonResponse(['success' => false, 'message' => lang('Visitors.visitorNotFound')], 403);
         }
@@ -929,7 +929,7 @@ class Visitors extends BaseController
             return $this->jsonResponse(['success' => false, 'message' => lang('Visitors.followupLogNotFound')], 404);
         }
 
-        if (! $this->visitorDirectory->affiliationExists((int) $log['person_id'], (int) $log['parish_id'])
+        if (! $this->visitorDirectory->visitorAffiliationExists((int) $log['person_id'], (int) $log['parish_id'])
             || (int) $log['parish_id'] !== (int) $this->getOperationalParishId()) {
             return $this->jsonResponse(['success' => false, 'message' => lang('Visitors.visitorNotFound')], 403);
         }
@@ -984,7 +984,7 @@ class Visitors extends BaseController
             return $this->jsonResponse(['success' => false, 'message' => lang('Visitors.followupLogNotFound')], 404);
         }
 
-        if (! $this->visitorDirectory->affiliationExists((int) $log['person_id'], (int) $log['parish_id'])
+        if (! $this->visitorDirectory->visitorAffiliationExists((int) $log['person_id'], (int) $log['parish_id'])
             || (int) $log['parish_id'] !== (int) $this->getOperationalParishId()) {
             return $this->jsonResponse(['success' => false, 'message' => lang('Visitors.visitorNotFound')], 403);
         }
@@ -1025,7 +1025,7 @@ class Visitors extends BaseController
             return $this->jsonResponse(['success' => false, 'message' => lang('Visitors.followupLogNotFound')], 404);
         }
 
-        if (! $this->visitorDirectory->affiliationExists((int) $log['person_id'], (int) $log['parish_id'])
+        if (! $this->visitorDirectory->visitorAffiliationExists((int) $log['person_id'], (int) $log['parish_id'])
             || (int) $log['parish_id'] !== (int) $this->getOperationalParishId()) {
             return $this->jsonResponse(['success' => false, 'message' => lang('Visitors.visitorNotFound')], 403);
         }

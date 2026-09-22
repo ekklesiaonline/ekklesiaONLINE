@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Libraries\DataEncryption;
 use App\Models\PersonModel;
+use App\Models\PersonVisitModel;
 use CodeIgniter\Database\BaseBuilder;
 use CodeIgniter\Pager\Pager;
 
@@ -296,10 +297,11 @@ class VisitorDirectoryService
     }
 
     /**
-     * Whether the person has a visitor-scoped affiliation in the parish
-     * (used for follow-up log scope checks).
+     * Whether the person has a visitor-domain affiliation in the parish
+     * (visitor or regular_attender). Follow-up mutations are scoped to
+     * these — members and exited rows are managed from People.
      */
-    public function affiliationExists(int $personId, int $parishId): bool
+    public function visitorAffiliationExists(int $personId, int $parishId): bool
     {
         if ($personId <= 0 || $parishId <= 0) {
             return false;
@@ -308,6 +310,7 @@ class VisitorDirectoryService
         return $this->db()->table('parish_affiliation')
             ->where('person_id', $personId)
             ->where('parish_id', $parishId)
+            ->whereIn('membership_status', ['visitor', 'regular_attender'])
             ->where('deleted_at IS NULL', null, false)
             ->countAllResults() > 0;
     }
@@ -432,7 +435,9 @@ class VisitorDirectoryService
                 if ($visit !== null) {
                     $db->table('person_visit')->where('id', (int) $visit['id'])->update($visitFields);
                 } elseif (isset($visitFields['visit_date'])) {
-                    $db->table('person_visit')->insert(array_merge($visitFields, [
+                    // Through the model so the afterInsert hook schedules
+                    // follow-up sequences for this first visit.
+                    model(PersonVisitModel::class)->insert(array_merge($visitFields, [
                         'person_id'  => $personId,
                         'parish_id'  => $parishId,
                         'visit_type' => 'first',

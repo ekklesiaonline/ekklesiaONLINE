@@ -53,13 +53,16 @@ class PersonVisitModel extends Model
 
     protected function scheduleFollowups(array $data)
     {
-        if (! isset($data['id']) || (string) ($data['visit_type'] ?? '') !== 'first') {
+        // CI4 afterInsert payload: ['id' => insertID, 'data' => [row], 'result' => bool]
+        $row = (array) ($data['data'] ?? $data);
+
+        if (! isset($data['id']) || (string) ($row['visit_type'] ?? '') !== 'first') {
             return $data;
         }
 
-        $personId = (int) ($data['person_id'] ?? 0);
-        $parishId = (int) ($data['parish_id'] ?? 0);
-        $visitDate = (string) ($data['visit_date'] ?? date('Y-m-d'));
+        $personId = (int) ($row['person_id'] ?? 0);
+        $parishId = (int) ($row['parish_id'] ?? 0);
+        $visitDate = (string) ($row['visit_date'] ?? date('Y-m-d'));
 
         if ($personId <= 0 || $parishId <= 0) {
             return $data;

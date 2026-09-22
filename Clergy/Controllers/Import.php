@@ -25,12 +25,10 @@ use App\Controllers\BaseController;
 class Import extends BaseController
 {
     private \App\Services\VisitorDirectoryService $visitorDirectory;
-    private \App\Models\FollowupLogModel $followupLogModel;
 
     public function __construct()
     {
         $this->visitorDirectory   = new \App\Services\VisitorDirectoryService();
-        $this->followupLogModel = model('FollowupLogModel');
     }
 
     // ── ── ── ── ── ── ── ── ── ── ── ── ── ── ── ── ── ── ── ──
@@ -236,15 +234,9 @@ class Import extends BaseController
             'source'      => 'digital_card',
         ];
 
-        $upsert = $this->upsertVisitor($parishId, $data);
-
-        if ($upsert['is_new']) {
-            $this->followupLogModel->scheduleActiveSequencesForPerson(
-                $upsert['person_id'],
-                $parishId,
-                $data['visit_date']
-            );
-        }
+        // Follow-up scheduling happens in PersonVisitModel::afterInsert —
+        // the single scheduling point for every intake path.
+        $this->upsertVisitor($parishId, $data);
 
         return view('public/connection_card_thanks', [
             'parish' => $parish,
@@ -368,15 +360,12 @@ class Import extends BaseController
                 'source'     => 'csv_import',
             ];
 
+            // Follow-up scheduling happens in PersonVisitModel::afterInsert —
+            // the single scheduling point for every intake path.
             $upsert = $this->upsertVisitor($parishId, $data);
 
             if ($upsert['is_new']) {
                 $result['inserted']++;
-                $this->followupLogModel->scheduleActiveSequencesForPerson(
-                    $upsert['person_id'],
-                    $parishId,
-                    $visitDate
-                );
             } else {
                 $result['updated']++;
             }
