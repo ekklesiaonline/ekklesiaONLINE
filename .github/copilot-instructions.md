@@ -3,7 +3,7 @@
 ## 1. Project Overview
 
 ekklesiaRD is a multi‑parish web application designed to streamline administrative tasks for parishes, dioceses and provincial networks in the Episcopal Church.
-A system admin (Presiding Bishop, or staff from the central office or 815 ) can view aggregated data across all parishes, while each parish has its own administrators (clergy, vestry members[Senior and Junior Guardians, clerk, treasurer], ministry leaders) who manage only their parish’s data. Diocesan bishop and bishops’ staff have read-only access to all parishes in their diocese. The system supports member management, service attendance tracking, financial record-keeping, volunteer coordination, and guest follow-up.
+A system admin (Presiding Bishop, or staff from the central office or 815 ) can view aggregated data across all parishes, while each parish has its own administrators (clergy, vestry members[Senior and Junior Guardians, clerk, treasurer], ministry leaders) who manage only their parish’s data. Diocesan bishop and bishops’ staff have read-only access to all parishes in their diocese. The system supports member management, service attendance tracking, financial record-keeping, volunteer coordination, and visitor follow-up.
 
 Built on CodeIgniter 4.7 with Shield 1.2 for authentication and authorization, and MySQL 8.0, the system uses a modular architecture.
 User account data (login credentials) is kept separate from extended profile information to allow flexible user management.
@@ -29,7 +29,7 @@ User Profiles
 
 Membership Status
 
-- Active, Inactive, Visitor, Pending, Regular Attender – managed in the profiles table.
+- Canonical lifecycle on `parish_affiliation.membership_status`: `visitor → regular_attender → member`, with `inactive`/`transferred`/`deceased` exits. All transitions go through `MembershipPathwayService`. See `docs/VISITOR_LIFECYCLE.md`.
 
 Family Grouping
 
@@ -100,9 +100,9 @@ Communication
 
 - Send email/SMS reminders for upcoming duties (integrated with an email service).
 
-### 2.5 First‑Time Guest Follow‑up
+### 2.5 First‑Time Visitor Follow‑up
 
-Guest Check‑in
+Visitor Check‑in
 
 - Simple form to capture visitor details (name, contact, visit date, service attended).
 
@@ -188,14 +188,10 @@ See the implementation plan below for details.
     3. Add UI for composing and sending bulk messages
     4. Add permissions: `messaging.send_bulk`, `messaging.view_logs`
 
-### 17.4 Guest Follow-up Enhancements
+### 17.4 Visitor Follow-up Enhancements
 
-- **Schema present:** `guests`, `follow_up_tasks`, `guest_followup_log`, etc.
-- **Missing:** Improved conversion pre-fill, more automation, reporting
-- **Plan:**
-    1. Fix guest-to-member conversion to pre-fill member form
-    2. Add reporting for follow-up effectiveness
-    3. Add workflow automation for status transitions
+- **Superseded:** the `guests`/`guest_visits`/`guest_followup_log`/`follow_up_tasks` schema era is retired. Visitor follow-up runs on `person_visit` + `followup_*` tables over `parish_affiliation` visitor/regular_attender rows.
+- **Done:** single `POST /visitors/promote/{personId}` conversion flow (mark member / link user / create account) replaced the flashdata pre-fill handoff; `regular_attender` is a managed intermediate stage.
 
 ### 17.5 Other Gaps
 
@@ -282,31 +278,22 @@ See also: docs/MIGRATIONS_AND_SEEDERS.md for migration status.
 - communicant (BOOLEAN, DEFAULT false) // whether they took communion
 - created_at
 
-### 4.7 Guests
+### 4.7 Visitors
 
-**guests**
+**Retired:** the standalone `guests` table was dropped. Visitors are `person` rows with `parish_affiliation.membership_status = 'visitor'`; visit history lives on `person_visit` (`visit_date`, `visit_type` first/return, `service_id`, `attended_event`). The affiliation row carries `followed_up` and `converted_to_member_at`/`converted_by_user_id` markers. See `docs/VISITOR_LIFECYCLE.md`.
 
-- id (INT, PK)
-- parish_id (INT, UNSIGNED, FK to parishes.id)
-- first_name, last_name (VARCHAR)
-- email (VARCHAR, nullable)
-- phone (VARCHAR, nullable)
-- visit_date (DATE)
-- service_attended (VARCHAR, nullable) // e.g., "Sunday 10am"
-- followed_up (BOOLEAN, DEFAULT false)
-- notes (TEXT, nullable)
-- created_at, updated_at
+### 4.8 Follow‑up Log
 
-### 4.8 Follow‑up Tasks
-
-**follow_up_tasks**
+**followup_log** (replaces the retired `follow_up_tasks` / `guest_followup_log`)
 
 - id (INT, PK)
-- guest_id (INT, UNSIGNED, FK to guests.id)
-- assigned_to (INT, UNSIGNED, FK to users.id) // volunteer/leader responsible
-- due_date (DATE)
-- status (ENUM: 'pending','completed')
-- notes (TEXT, nullable)
+- person_id, parish_id (INT)
+- action_id (INT, FK to followup_action.id, nullable)
+- assigned_to (INT, FK to users.id, nullable)
+- scheduled_date (DATE)
+- executed_at (DATETIME, nullable)
+- status ('pending','sent','failed','skipped')
+- notes, response_metadata
 - created_at, updated_at
 
 ### 4.9 Donations
@@ -389,7 +376,7 @@ attendance.mark – record attendance
 finance.view – view financial reports
 finance.manage – add/edit donations/expenses
 volunteers.assign – manage volunteer teams and schedules
-guests.followup – manage guest follow‑ups
+followup.manage – manage visitor follow‑ups
 admin.province – super admin (access all parishes)
 
 Define Roles
@@ -469,7 +456,7 @@ fetch(url, {
 - The meta tag name in the layout is `csrf-token` (all lowercase). Never use `X-CSRF-TOKEN` as the `querySelector` selector — that returns `null` and sends an empty token, causing a CI4 403 "The action you requested is not allowed."
 - Always read `csrfMeta` once before the fetch, then refresh `csrfMeta.content` from the response header inside `.then()`.
 - Send body fields as `URLSearchParams` (form-encoded), not `JSON.stringify`. Controller reads via `$this->request->getPost('field')`.
-- Reference implementation: `Clergy/Views/Guests/followup_manual.php` lines 514–539.
+- Reference implementation: `Clergy/Views/Visitors/followup_manual.php` lines 514–539.
 
 ## 7. Security Considerations
 
@@ -592,7 +579,7 @@ Every list/index view that exposes search or filter controls **must** use the co
 | ----------------------------------------------- | ----------------------- | ---------------------------------------------------------------- |
 | `Clergy/Views/People/index.php`                 | `#peopleFilterPanel`    | search / status / family                                         |
 | `MemberPortal/Views/Admin/audit_logs.php`       | `#auditLogFilterPanel`  | parish / action / start_date / end_date                          |
-| `MemberPortal/Views/GuestConversions/index.php` | `#guestConvFilterPanel` | search                                                           |
+| `Clergy/Views/Visitors/index.php`             | `#visitorFilterPanel`   | search / lifecycle / followup_stage / source                     |
 | `Clergy/Views/Reports/roi_second_visit.php`     | `#roiFilterPanel`       | from_date / to_date (collapsed by default — no active detection) |
 | `Clergy/Views/Events/index.php`                 | `#eventsFilterPanel`    | search / status                                                  |
 | `MemberPortal/Views/Pledges/index.php`          | `#pledgeFilterPanel`    | search / per_page ≠ 25                                           |
@@ -654,7 +641,7 @@ When a list row (table `<tr>` or `list-group-item`) would expose **3 or more act
 
 | View file                                 | Actions in dropdown                                   |
 | ----------------------------------------- | ----------------------------------------------------- |
-| `Clergy/Views/Guests/followup_manual.php` | Mark Done, Reschedule, Skip, Print Label, Mark Failed |
+| `Clergy/Views/Visitors/followup_manual.php` | Mark Done, Reschedule, Skip, Print Label, Mark Failed |
 
 **Views recommended for migration (3+ inline buttons per row):**
 
@@ -664,7 +651,7 @@ When a list row (table `<tr>` or `list-group-item`) would expose **3 or more act
 | `Diocesan/Views/Parishes/index.php`           | Switch, Edit, Staff, Delete                         |
 | `Clergy/Views/FollowupWorkflow/sequences.php` | View Actions, Toggle Active, Delete                 |
 | `Clergy/Views/FollowupWorkflow/templates.php` | Preview, Edit, Delete                               |
-| `Clergy/Views/Guests/index.php`               | View, Edit, Delete                                  |
+| `Clergy/Views/Visitors/index.php`               | View, Edit, Delete                                  |
 
 ## 9. Deployment & Maintenance
 
@@ -814,7 +801,7 @@ The query uses a self-join with `p1.id < p2.id` to avoid symmetric pairs.
 
 Inside `MemberMergeService::merge()` — single transaction:
 
-- **Phase 1**: `reassignUserReferences($duplicateUserId, $canonicalUserId)` — reassigns all transactional FK rows from duplicate → canonical (with dedup guards on `family_members`, `team_members`, `member_parish_affiliations`).
+- **Phase 1**: `reassignUserReferences($duplicateUserId, $canonicalUserId)` — reassigns all transactional FK rows from duplicate → canonical (with dedup guards on `family_members`, `team_members`, `parish_affiliation`).
 - **Phase 2**: Apply `$fieldOverrides` to the canonical `profiles` row.
 - **Phase 3**: `performHardDelete($duplicateUserId)` — delete all remaining data for the duplicate.
 
@@ -839,9 +826,9 @@ The audit log entry `member.hard_delete` is written **before** the service call 
 
 | Strategy                                          | Tables                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
 | ------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Reassign to canonical** (merge only)            | `attendance`, `annual_pledges`, `member_discipline`, `member_standing_summary`, `event_registrations`, `donations`, `family_members`, `team_members`, `volunteer_schedule`, `leadership_positions`, `member_parish_affiliations`, `follow_up_tasks`, `parish_role_audit_logs` (both columns), `families.head_of_household_id`, `volunteer_teams.leader_id`, `expenses.approved_by`, `guests.*`, `parish_budgets.*`, `audit_logs.user_id`, `user_registration_requests.reviewed_by`, `leadership_positions.appointed_by_user_id` |
-| **NULL** (hard-delete, preserve surrounding rows) | `donations.user_id`, `families.head_of_household_id`, `volunteer_teams.leader_id`, `expenses.approved_by`, `event_registrations.user_id`, `guests.*`, `parish_budgets.*`, `audit_logs.user_id`, `user_registration_requests.reviewed_by`, `leadership_positions.appointed_by_user_id`                                                                                                                                                                                                                                           |
-| **Delete rows**                                   | `parish_role_audit_logs` (NOT NULL, cannot be NULLed), `attendance`, `annual_pledges`, `family_members`, `team_members`, `volunteer_schedule`, `leadership_positions`, `member_parish_affiliations`, `member_discipline`, `member_standing_summary`, `follow_up_tasks`, `system_admin_primary`, `user_registration_requests (user_id)`, `parish_people`, `auth_identities`, `auth_groups_users`, `auth_permissions_users`, `auth_remember_tokens`, `user_sessions`, `profiles`, `users`                                         |
+| **Reassign to canonical** (merge only)            | `attendance`, `annual_pledges`, `member_discipline`, `member_standing_summary`, `event_registrations`, `donations`, `family_members`, `team_members`, `volunteer_schedule`, `leadership_positions`, `parish_affiliation`, `followup_log`, `call_task`, `parish_role_audit_logs` (both columns), `families.head_of_household_id`, `volunteer_teams.leader_id`, `expenses.approved_by`, `person_visit`, `parish_budgets.*`, `audit_logs.user_id`, `user_registration_requests.reviewed_by`, `leadership_positions.appointed_by_user_id` |
+| **NULL** (hard-delete, preserve surrounding rows) | `donations.user_id`, `families.head_of_household_id`, `volunteer_teams.leader_id`, `expenses.approved_by`, `event_registrations.user_id`, `person_visit`, `parish_budgets.*`, `audit_logs.user_id`, `user_registration_requests.reviewed_by`, `leadership_positions.appointed_by_user_id`                                                                                                                                                                                                                                           |
+| **Delete rows**                                   | `parish_role_audit_logs` (NOT NULL, cannot be NULLed), `attendance`, `annual_pledges`, `family_members`, `team_members`, `volunteer_schedule`, `leadership_positions`, `parish_affiliation`, `member_discipline`, `member_standing_summary`, `system_admin_primary`, `user_registration_requests (user_id)`, `parish_people`, `auth_identities`, `auth_groups_users`, `auth_permissions_users`, `auth_remember_tokens`, `user_sessions`, `profiles`, `users`                                         |
 
 ### 13.6 Portal Revocation Rule (critical invariant)
 
@@ -851,12 +838,12 @@ The audit log entry `member.hard_delete` is written **before** the service call 
 
 The correct revocation is: **delete the `auth_identities` row only** (type `email_password`). Shield requires that row to authenticate — login is impossible without it, and the member remains correctly visible.
 
-If you find `users.active = 0` rows that have active `member_parish_affiliations` and no `auth_identities`, restore them with:
+If you find `users.active = 0` rows that have active `parish_affiliation` and no `auth_identities`, restore them with:
 
 ```sql
 UPDATE users u
 LEFT JOIN auth_identities ai ON ai.user_id = u.id AND ai.type = 'email_password'
-INNER JOIN member_parish_affiliations mca ON mca.user_id = u.id AND mca.active = 1
+INNER JOIN parish_affiliation mca ON mca.linked_user_id = u.id AND mca.deleted_at IS NULL
 SET u.active = 1
 WHERE u.active = 0 AND ai.id IS NULL;
 ```
@@ -869,9 +856,9 @@ When deleting or reassigning user references, **do not assume every table uses `
 
 Critical mapping in this module:
 
-- `follow_up_tasks` references users via **`assigned_to`** (NOT `user_id`).
+- `followup_log` references users via **`assigned_to`** (NOT `user_id`).
 - During merge: reassign `assigned_to` to the canonical user.
-- During hard-delete: delete `follow_up_tasks` rows by `assigned_to = :userId`.
+- During hard-delete: delete `followup_log` rows by `assigned_to = :userId`.
 
 Implementation rule:
 
@@ -1022,34 +1009,32 @@ The OK button is **clone-replaced** on each `showAppConfirm()` call to prevent l
 
 All layouts contain a capture-phase `document.addEventListener('submit', …)` that intercepts any `<form>` with a `data-confirm-title` attribute, calls `showAppConfirm`, and only calls `form.submit()` inside the callback. No manual wiring needed per form.
 
-## 15. Guest Follow-up Workflow System
+## 15. Visitor Follow-up Workflow System
+
+Canonical reference: `docs/FOLLOWUP_WORKFLOW_SYSTEM.md`. Lifecycle: `docs/VISITOR_LIFECYCLE.md`.
 
 ### 15.1 Module Location
 
 | File                                               | Purpose                                                                                          |
 | -------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
 | `app/Commands/SendFollowups.php`                   | `php spark followup:send` Spark command — dispatches due log entries                             |
+| `app/Commands/BackfillFollowups.php`               | `php spark followup:backfill` — reconciles visitors missing scheduled rows                       |
 | `app/Services/FollowupDispatchService.php`         | Channel-specific dispatch logic (email/text/call/mail/gift)                                      |
+| `app/Services/VisitorFollowupService.php`          | Read-side queries: progress badges, next pending, timeline, dashboard aggregates                 |
 | `app/Services/SmsService.php`                      | Twilio or log-only SMS provider abstraction                                                      |
-| `app/Models/FollowupSequenceModel.php`             | Sequence CRUD; `getActiveForParish(int $parishId)`                                               |
-| `app/Models/FollowupActionModel.php`               | Action CRUD; `getBySequenceWithTemplates()`                                                      |
-| `app/Models/FollowupTemplateModel.php`             | Template CRUD                                                                                    |
-| `app/Models/GuestVisitModel.php`                   | Visit recording; auto-schedule hook in `onAfterInsert`; `triggerSecondVisitReward()`             |
-| `app/Models/GuestFollowupLogModel.php`             | Log CRUD; `scheduleActiveSequencesForGuest()`; `getPendingDue()`; `getTimelineForGuest()`        |
+| `app/Models/FollowupSequenceModel.php`             | Sequence CRUD; `getActiveForParish(int $parishId)` — table `followup_sequence`                   |
+| `app/Models/FollowupActionModel.php`               | Action CRUD; `getBySequenceWithTemplates()` — table `followup_action`                            |
+| `app/Models/FollowupTemplateModel.php`             | Template CRUD — table `followup_template`                                                        |
+| `app/Models/PersonVisitModel.php`                  | Visit recording; `afterInsert` hook schedules follow-ups on `visit_type='first'`                 |
+| `app/Models/FollowupLogModel.php`                  | Log CRUD; `scheduleActiveSequencesForPerson()`; `getPendingDue()`; `getTimelineForPerson()`      |
 | `app/Models/CallTaskModel.php`                     | Manual call task CRUD; `getPendingForParish()`                                                   |
-| `app/Database/Seeds/SixWeekFollowupSeeder.php`     | Default 6-week sequence + all templates (idempotent)                                             |
-| `app/Database/Seeds/FollowupPermissionsSeeder.php` | Permission + `followup_volunteer` group bootstrap                                                |
-| `Clergy/Controllers/Guests.php`                    | Guest CRUD + followup AJAX endpoints + `pendingCallsApi()` navbar badge                          |
+| `Clergy/Controllers/Visitors.php`                  | Visitor CRUD + followup AJAX endpoints + `pendingCallsApi()` navbar badge                        |
 | `Clergy/Controllers/FollowupWorkflow.php`          | Sequence / action / template admin; call-task queue; completion report                           |
-| `Clergy/Controllers/FollowUp.php`                  | **Legacy** — operates on old `follow_up_tasks` table; kept for data compatibility, do not extend |
-| `Clergy/Config/Routes.php`                         | All guest + followup routes                                                                      |
+| `Clergy/Config/Routes.php`                         | `/visitors/*` + `/followup-workflow/*` routes                                                    |
 
 ### 15.2 Data Flow
 
-When a guest visit is inserted, `GuestVisitModel::onAfterInsert()` fires:
-
-- **First visit** → `GuestFollowupLogModel::scheduleActiveSequencesForGuest()` creates one `guest_followup_log` row per action in every active sequence for the parish. `scheduled_date = visit_date + action.day_offset`.
-- **Second visit** → `triggerSecondVisitReward()` checks for a week-4 gift action, generates a coupon (`GIFT-XXXXXXXX`), inserts a log entry, and sends a gift email.
+When a `person_visit` row with `visit_type='first'` is inserted, `PersonVisitModel::scheduleFollowups()` (afterInsert hook — the single scheduling point) calls `FollowupLogModel::scheduleActiveSequencesForPerson()`, which creates one `followup_log` row per action in every active sequence for the parish (`scheduled_date = visit_date + action.day_offset`). Callers must not schedule explicitly — the hook dedupes by `action_id`.
 
 The cron command picks up due rows:
 
@@ -1057,13 +1042,13 @@ The cron command picks up due rows:
 [cron @ 9 AM] php spark followup:send
       │
       ▼
-GuestFollowupLogModel::getPendingDue($today)
+FollowupLogModel::getPendingDue($today)
       │
       ▼
-FollowupDispatchService::dispatch($logRow, $template, $guest)
-  ├─ email → CI4 SMTP email service
-  ├─ text  → SmsService → Twilio (or log_only stub)
-  ├─ call  → inserts call_tasks row for volunteer queue
+FollowupDispatchService::dispatch($logRow, $template, $person)
+  ├─ email → CI4 SMTP email service (scoped via EmailScopeService)
+  ├─ text  → SmsService → Twilio (or log_only stub) via sms_queue
+  ├─ call  → inserts call_task row (log_id always set) for volunteer queue
   ├─ mail  → Dompdf PDF written to writable/mail_queue/
   └─ gift  → metadata flag (manual task for admin)
 ```
@@ -1089,12 +1074,12 @@ Replaced at dispatch time in both `body_text` and `body_html`:
 
 | Tag             | Source                                                                        |
 | --------------- | ----------------------------------------------------------------------------- |
-| `{first_name}`  | `guests.first_name`                                                           |
-| `{last_name}`   | `guests.last_name`                                                            |
-| `{parish_name}` | `parishes.name` for the guest's parish                                        |
+| `{first_name}`  | `person.first_name`                                                           |
+| `{last_name}`   | `person.last_name`                                                            |
+| `{parish_name}` | `parish.name` for the visitor's parish                                        |
 | `{visit_date}`  | Scheduled date of the log entry                                               |
 | `{clergy_name}` | Blank by default; extend `FollowupDispatchService::buildVarMap()` to populate |
-| `{phone}`       | Decrypted `guests.phone`                                                      |
+| `{phone}`       | Decrypted `person.phone`                                                      |
 
 ### 15.5 Permissions
 
@@ -1102,7 +1087,7 @@ Replaced at dispatch time in both `body_text` and `body_html`:
 | --------------------------- | --------------------------------------------- | ---------------------------------------------------------------------- |
 | `followup.manage`           | `parishadmin`, `clergy`                       | CRUD sequences/actions/templates; trigger actions; complete call tasks |
 | `followup.view`             | `parishadmin`, `clergy`, `followup_volunteer` | Read-only: sequences, templates, call queue, timeline                  |
-| `followup.tasks` _(legacy)_ | `parishadmin`, `clergy`                       | Manage legacy `follow_up_tasks` table only                             |
+| `visitor.edit`              | `parishadmin`, `clergy`                       | Promote/demote attender and promote-to-member endpoints                |
 
 ### 15.6 Cron Setup
 
@@ -1117,15 +1102,16 @@ Replaced at dispatch time in both `body_text` and `body_html`:
 php spark followup:send --dry-run
 ```
 
-### 15.7 Guest Conversion Rule
+### 15.7 Visitor-to-Member Conversion Rule
 
-`Guests::convertToMember($id)` must:
+`POST /visitors/promote/{personId}` → `PersonConversionService::convertToMember()` (mark member / link user / create account modes). In one transaction it:
 
-1. Set `guests.followed_up = 1`.
-2. Call `GuestModel::markConvertedToMember($guestId, $currentUserId)` to stamp `converted_to_member_at`, `converted_user_id`, `converted_by_user_id`.
-3. Redirect to `/members/create` with `guest_data` flash so the form pre-fills.
+1. Transitions `parish_affiliation` to `member` via `MembershipPathwayService` (writes `person_status_history`, syncs `pathway_stage`).
+2. Links an existing user or creates a portal account (user + `email_password` identity + `member` group + profile).
+3. Marks pending `followup_log` rows `skipped` and stamps `followed_up = 1`, `converted_to_member_at`, `converted_by_user_id`.
+4. Redirects to `/people/view/{profile_id}`.
 
-Never use a raw `$this->guestModel->update($id, ['followed_up' => 1])` alone — the conversion fields must always be stamped at the same time.
+Never update `membership_status` or conversion markers directly — always go through the pathway/conversion services. `POST /visitors/revert-conversion/{personId}` reverses it.
 
 ### 15.8 Legacy System — Fully Retired (April 2026)
 
@@ -1140,7 +1126,7 @@ The legacy follow-up system has been **hard-retired**. The following no longer e
 
 **All follow-up functionality uses the current system only:**
 
-- `guest_followup_log` + `call_tasks` tables
+- `followup_log` + `call_task` tables
 - `FollowupWorkflow` controller (`/followup-workflow/*`)
 - `followup.view` / `followup.manage` permissions
 
@@ -1163,58 +1149,38 @@ Never commit real credentials to version control.
 
 ## 16. Membership Status Rules (Mandatory)
 
-### 16.1 Valid ENUM values
+### 16.1 Canonical lifecycle
 
-`profiles.membership_status` and `member_parish_affiliations.membership_status` share the same five-value set:
+`parish_affiliation.membership_status` is the only stored lifecycle status (the retired `profiles.membership_status` mirror and the `parish_affiliation` table no longer exist):
 
 ```
-active | inactive | visitor | pending | regular_attender
+visitor → regular_attender → member     (pathway)
+inactive | transferred | deceased       (exits)
 ```
 
-Default for new records: `regular_attender`.
+Default for new affiliations: `visitor`. `member` requires an explicit operator choice or a `MembershipPathwayService` transition — never write statuses outside `MembershipPathwayService`.
 
-### 16.2 Semantic mapping (Acts 1:8 model)
+### 16.2 Semantic mapping
 
-| Status             | Scope                                                            | Covenant member? | `is_member` flag |
-| ------------------ | ---------------------------------------------------------------- | ---------------- | ---------------- |
-| `visitor`          | First-time or occasional guest promoted from `guests` table      | No               | 0                |
-| `regular_attender` | Returns regularly; not yet in covenant (Judea scope)             | No               | 0                |
-| `pending`          | Enrolled in Stage 1 curriculum (Anglican Way)                    | No               | 0                |
-| `active`           | Stage 1+ complete; covenant member (Samaria / Ends of the Earth) | **Yes**          | 1                |
-| `inactive`         | Covenant member who has not met good standing for 12 months      | **Yes**          | 1                |
+| Status             | Meaning                                              | `is_member` (on register) |
+| ------------------ | ---------------------------------------------------- | ------------------------- |
+| `visitor`          | First-time or occasional visitor                     | 0                         |
+| `regular_attender` | Returns regularly; managed intermediate step         | 0                         |
+| `member`           | Active covenant member                               | **1**                     |
+| `inactive`         | Member not meeting standing; still on the register   | **1**                     |
+| `transferred`/`deceased` | Terminal exits                                 | 0                         |
 
-`is_member = 1` iff `membership_status IN ('active', 'inactive')`. Never expand this set — `regular_attender` and `pending` are intentionally non-member statuses.
+`is_member` is a MySQL generated column: `status IN ('member','inactive')`. `MembershipStatusService::isOnRegister()` vs `isMember()` (strict active member) — do not conflate. Legacy aliases normalize via `MembershipStatusService`: `'guest'` → `visitor`, `'active'` → `member`.
 
-### 16.3 Guard pattern (Mandatory)
+### 16.3 Write-path choke points
 
-Every place that normalizes or validates `membership_status` must include all five values. The fallback for an unknown value is `regular_attender` (not `pending`):
-
-```php
-if (!in_array($status, ['active', 'inactive', 'visitor', 'pending', 'regular_attender'], true)) {
-    $status = 'regular_attender';
-}
-```
-
-**Do not use a four-value list.** Omitting `regular_attender` silently rewrites newly-created records to `pending` on every save.
-
-Key locations where this guard exists:
-
-- `Clergy/Controllers/Members.php` — `in_list` validation rule + affiliation sync guard
-- `app/Models/MemberParishAffiliationModel.php` — `in_list` validation rule
-- `app/Models/ParishPeopleModel.php` — SQL CASE normalizer
-- `app/Services/ParishPeopleRegistryService.php` — snapshot sync normalizer
-- `Clergy/Views/People/index.php` — filter dropdown status chip
+- `MembershipPathwayService::transition()` / `transitionForPerson()` — canonical status moves; writes `person_status_history`, syncs `pathway_stage`.
+- `PersonConversionService::convertToMember()` — visitor→member promotion (`POST /visitors/promote/{personId}`).
+- `MemberParishAffiliationModel` — affiliation writes; never write `affiliation_type`, `canonical_status`, or `is_good_standing` on the affiliation row (dropped).
 
 ### 16.4 Language keys
 
-Dynamic lookups use `'App.status' . ucfirst($slug)` — note that `ucfirst('regular_attender')` produces `'Regular_attender'` (with underscore), so the lang key must be:
-
-```php
-// App.php
-'statusRegular_attender' => 'Regular Attender',
-```
-
-Explicit references (e.g., hardcoded option labels) use `Members.statusRegularAttender`.
+Status labels: `App.statusVisitor`, `App.statusRegular_attender` (note underscore — `ucfirst('regular_attender')` = `'Regular_attender'`), `App.statusMember`, `App.statusInactive`.
 
 ## 17. Post-Login Redirect Guard (Mandatory)
 

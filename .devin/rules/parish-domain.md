@@ -14,7 +14,7 @@ trigger: always_on
 
 ## Membership Status Invariants
 
-- `parish_affiliation.membership_status` is the only stored lifecycle status. `is_member` is a generated column (`status IN ('member','inactive')`); `affiliation_type`, `canonical_status`, and `is_good_standing` no longer exist — never write any of them. "Guest" is jargon for `membership_status='visitor'` (the guest directory/follow-up feature), not a separate status.
+- `parish_affiliation.membership_status` is the only stored lifecycle status. `is_member` is a generated column (`status IN ('member','inactive')`); `affiliation_type`, `canonical_status`, and `is_good_standing` no longer exist — never write any of them. Visitors are `membership_status='visitor'` (the `/visitors` directory + follow-up feature); legacy `'guest'` input normalizes to `'visitor'` via `MembershipStatusService`. Event-registration `guest_*` fields are plus-one companions, not lifecycle records — never conflate them.
 - `is_member` means "on the parish register": `status IN ('member','inactive')` (`MembershipStatusService::isOnRegister()`). `isMember()` is the stricter "active member" check (`status='member'`). Do not conflate them.
 - Off-register removal (detach, member delete, tag revoke) writes `visitor` + `end_date` — never a stale `member` status.
 - New affiliations default to `visitor`: registration approval, non-portal person creation (children, unflagged), and `attachToParish()`'s signature default all start at `visitor`. `member` is only ever set by an explicit operator choice (member checkbox) or a `MembershipPathwayService` promotion.
@@ -27,7 +27,8 @@ trigger: always_on
 
 - Parish-level people counts must be based on `parish_affiliation.person_id` (the canonical `person` row), not `parish_affiliation.linked_user_id` and not `profile`.
 - `countDistinctMembers()` and `countDistinctPeople()` must `JOIN person` and `COUNT(DISTINCT parish_affiliation.person_id)`.
-- `total_guests` = legacy guest table + `parish_affiliation` rows where `membership_status = 'visitor'`.
+- `total_visitors` = `parish_affiliation` rows where `membership_status IN ('visitor','regular_attender')` (the legacy `guest` table was dropped).
+- Visitor management is `/visitors/*` (`Clergy\Controllers\Visitors`); the visitor→member promotion is `POST /visitors/promote/{personId}` → `PersonConversionService::convertToMember()`. See `docs/VISITOR_LIFECYCLE.md`.
 
 ## Person Identity
 
