@@ -49,6 +49,7 @@ $channelIcon = [
     'call'  => 'bi-telephone',
     'mail'  => 'bi-envelope-paper',
     'gift'  => 'bi-gift',
+    'manual' => 'bi-person-check',
 ];
 
 $statusConfig = [
@@ -165,6 +166,7 @@ $canEdit = auth()->user()->can('visitor.edit');
                         <?php foreach ($timeline as $row): ?>
                             <?php
                             $isCallTask  = !empty($row['_source']) && $row['_source'] === 'call_task';
+                            $isManualTask = $isCallTask && ($row['call_task_type'] ?? 'call') === 'manual';
                             $status      = $row['status'] ?? 'pending';
                             $cfg         = $statusConfig[$status] ?? $statusConfig['pending'];
                             $channel     = $row['channel'] ?? '';
@@ -198,10 +200,12 @@ $canEdit = auth()->user()->can('visitor.edit');
                                         <div class="d-flex align-items-center gap-2 mb-1 flex-wrap">
                                             <i class="bi <?= $icon ?> <?= $textClass ?>"></i>
                                             <strong><?= $isCallTask
-                                                        ? esc(lang('Visitors.channelCall'))
+                                                        ? esc($isManualTask
+                                                            ? (trim((string) ($row['call_task_title'] ?? '')) ?: lang('Visitors.channelManual'))
+                                                            : lang('Visitors.channelCall'))
                                                         : esc($row['template_name'] ?? lang('Visitors.followupManualAction')) ?></strong>
                                             <?php if ($isCallTask): ?>
-                                                <span class="badge border border-secondary text-secondary fw-normal small"><?= lang('Visitors.callTaskSourceBadge') ?></span>
+                                                <span class="badge border border-secondary text-secondary fw-normal small"><?= $isManualTask ? lang('Visitors.manualTaskSourceBadge') : lang('Visitors.callTaskSourceBadge') ?></span>
                                             <?php else: ?>
                                                 <?php if ($isAutomated): ?>
                                                     <span class="badge border border-info text-info fw-normal small"><i class="bi bi-lightning-charge" aria-hidden="true"></i> <?= lang('Visitors.automatedBadge') ?></span>

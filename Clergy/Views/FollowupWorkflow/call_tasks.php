@@ -11,27 +11,39 @@
     </a>
 </div>
 
-<!-- Status filter tabs -->
-<ul class="nav nav-tabs mb-3">
-    <?php
-    $tabMap = [
-        'pending'   => lang('App.statusPending'),
-        'completed' => lang('App.statusCompleted'),
-        'cancelled' => lang('App.statusCancelled'),
-        'all'       => lang('App.all'),
-    ];
-    foreach ($tabMap as $key => $label): ?>
-        <li class="nav-item">
-            <a class="nav-link <?= $activeStatus === $key ? 'active' : '' ?>"
-                href="<?= base_url('followup-workflow/call-tasks?status=' . $key) ?>">
-                <?= esc($label) ?>
-                <?php if ($key === 'pending' && $pendingCount > 0): ?>
-                    <span class="badge rounded-pill border border-warning text-warning fw-normal ms-1"><?= (int) $pendingCount ?></span>
-                <?php endif; ?>
-            </a>
-        </li>
-    <?php endforeach; ?>
-</ul>
+<!-- Status filter tabs + task-type filter -->
+<div class="d-flex justify-content-between align-items-end flex-wrap gap-2 mb-3">
+    <ul class="nav nav-tabs mb-0">
+        <?php
+        $typeQuery = $activeType !== null ? '&type=' . $activeType : '';
+        $tabMap = [
+            'pending'   => lang('App.statusPending'),
+            'completed' => lang('App.statusCompleted'),
+            'cancelled' => lang('App.statusCancelled'),
+            'all'       => lang('App.all'),
+        ];
+        foreach ($tabMap as $key => $label): ?>
+            <li class="nav-item">
+                <a class="nav-link <?= $activeStatus === $key ? 'active' : '' ?>"
+                    href="<?= base_url('followup-workflow/call-tasks?status=' . $key . $typeQuery) ?>">
+                    <?= esc($label) ?>
+                    <?php if ($key === 'pending' && $pendingCount > 0): ?>
+                        <span class="badge rounded-pill border border-warning text-warning fw-normal ms-1"><?= (int) $pendingCount ?></span>
+                    <?php endif; ?>
+                </a>
+            </li>
+        <?php endforeach; ?>
+    </ul>
+    <form method="get" action="<?= base_url('followup-workflow/call-tasks') ?>" class="d-flex align-items-center gap-2">
+        <input type="hidden" name="status" value="<?= esc($activeStatus) ?>">
+        <label class="form-label mb-0 small text-muted" for="type_filter"><?= lang('Visitors.callTasksTypeFilter') ?></label>
+        <select id="type_filter" name="type" class="form-select form-select-sm w-auto" onchange="this.form.submit()">
+            <option value=""><?= lang('Visitors.callTasksTypeAll') ?></option>
+            <option value="call" <?= $activeType === 'call' ? 'selected' : '' ?>><?= lang('Visitors.callTasksTypeCall') ?></option>
+            <option value="manual" <?= $activeType === 'manual' ? 'selected' : '' ?>><?= lang('Visitors.callTasksTypeManual') ?></option>
+        </select>
+    </form>
+</div>
 
 <div class="card shadow-sm">
     <div class="card-body p-0">
@@ -46,8 +58,10 @@
                     <thead>
                         <tr>
                             <th scope="col"><?= lang('Visitors.callTasksColVisitor') ?></th>
-                            <th scope="col"><?= lang('Visitors.colPhone') ?></th>
+                            <th scope="col"><?= lang('Visitors.callTasksColType') ?></th>
+                            <th scope="col"><?= lang('Visitors.callTasksColTask') ?></th>
                             <th scope="col"><?= lang('Visitors.scheduledLabel') ?></th>
+                            <th scope="col"><?= lang('Visitors.callTasksColAssignee') ?></th>
                             <th scope="col"><?= lang('App.colNotes') ?></th>
                             <th scope="col" class="text-center"><?= lang('Visitors.colStatus') ?></th>
                             <?php if (auth()->user()->can('visitor.edit')): ?>
@@ -72,17 +86,38 @@
                                 </td>
                                 <td>
                                     <?php
-                                    $phone = $task['phone'] ?? '';
-                                    if ($phone !== '') {
-                                        // Show last 4 digits only for privacy
-                                        $masked = preg_replace('/\d(?=\d{4})/', '•', $phone);
-                                        echo esc($masked ?? $phone);
-                                    } else {
-                                        echo '<span class="text-muted">—</span>';
-                                    }
+                                    $isManualTask = ($task['task_type'] ?? 'call') === 'manual';
+                                    $typeBadge    = $isManualTask ? 'border-danger text-danger' : 'border-warning text-warning-emphasis';
+                                    $typeIcon     = $isManualTask ? 'bi-person-check' : 'bi-telephone';
+                                    $typeLabel    = $isManualTask ? lang('Visitors.callTasksTypeManual') : lang('Visitors.callTasksTypeCall');
                                     ?>
+                                    <span class="badge border <?= $typeBadge ?> fw-normal">
+                                        <i class="bi <?= $typeIcon ?>" aria-hidden="true"></i> <?= esc($typeLabel) ?>
+                                    </span>
+                                </td>
+                                <td>
+                                    <?php if ($isManualTask): ?>
+                                        <?= esc($task['title'] ?? '') ?: '<span class="text-muted">—</span>' ?>
+                                    <?php else: ?>
+                                        <?php
+                                        $phone = $task['phone'] ?? '';
+                                        if ($phone !== '') {
+                                            // Show last 4 digits only for privacy
+                                            $masked = preg_replace('/\d(?=\d{4})/', '•', $phone);
+                                            echo esc($masked ?? $phone);
+                                        } else {
+                                            echo '<span class="text-muted">—</span>';
+                                        }
+                                        ?>
+                                    <?php endif; ?>
                                 </td>
                                 <td><?= esc($task['scheduled_date']) ?></td>
+                                <td>
+                                    <?php
+                                    $assignee = trim((string) ($task['assignee_name'] ?? '')) ?: (string) ($task['assignee_username'] ?? '');
+                                    echo $assignee !== '' ? esc($assignee) : '<span class="text-muted">—</span>';
+                                    ?>
+                                </td>
                                 <td>
                                     <span class="task-notes"><?= esc($task['notes'] ?? '') ?: '<span class="text-muted">—</span>' ?></span>
                                 </td>

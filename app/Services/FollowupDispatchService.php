@@ -22,9 +22,10 @@ use App\Services\EmailScopeService;
  * Channel routing:
  *   text  → SmsService::send()
  *   email → CI4 email service
- *   call  → inserts a row in call_tasks
- *   mail  → generates a PDF letter and stores it in writable/mail_queue/
- *   gift  → marks the log with requires_manual_gift flag
+ *   call   → inserts a row in call_task (task_type = 'call')
+ *   manual → inserts an assigned row in call_task (task_type = 'manual')
+ *   mail   → generates a PDF letter and stores it in writable/mail_queue/
+ *   gift   → marks the log with requires_manual_gift flag
  */
 class FollowupDispatchService
 {
@@ -84,8 +85,9 @@ class FollowupDispatchService
         return match ($channel) {
             'text'  => $this->dispatchText($logRow, $template, $visitor, $vars),
             'email' => $this->dispatchEmail($logRow, $template, $visitor, $vars, $parishId),
-            'call'  => $this->dispatchCall($logRow, $visitor, $parishId),
-            'mail'  => $this->dispatchMail($logRow, $template, $visitor, $vars, $logId),
+            'call'   => $this->dispatchCall($logRow, $visitor, $parishId),
+            'manual' => $this->dispatchManual($logRow, $visitor, $vars, $parishId),
+            'mail'   => $this->dispatchMail($logRow, $template, $visitor, $vars, $logId),
             'gift'  => $this->dispatchGift($logRow, $visitor),
             default => ['success' => false, 'metadata' => [], 'error' => "Unknown channel: {$channel}"],
         };
@@ -209,6 +211,47 @@ class FollowupDispatchService
         return [
             'success'  => true,
             'metadata' => ['channel' => 'call', 'call_task_id' => (int) $inserted],
+            'error'    => '',
+        ];
+    }
+
+    /**
+     * Manual channel: create an assigned task in call_task
+     * (task_type = 'manual'). Nothing is sent to the visitor — a parish
+     * leader performs the action (e.g. a social-media invitation) and
+     * completes the task in the queue.
+     */
+    private function dispatchManual(array $logRow, array $visitor, array $vars, int $parishId): array
+    {
+        $personId   = (int) ($visitor['person_id'] ?? $logRow['person_id'] ?? 0) ?: null;
+        $assignedTo = (int) ($logRow['assigned_to'] ?? 0) ?: null;
+
+        $instructions = trim((string) ($logRow['instructions'] ?? ''));
+        $title        = $instructions !== '' ? $this->applyVars($instructions, $vars) : null;
+
+        $taskData = [
+            'parish_id'      => $parishId,
+            'person_id'      => $personId,
+            'log_id'         => (int) ($logRow['id'] ?? 0) ?: null,
+            'assigned_to'    => $assignedTo,
+            'task_type'      => 'manual',
+            'title'          => $title,
+            'phone'          => null,
+            'notes'          => 'Manual task from followup sequence.',
+            'status'         => 'pending',
+            'scheduled_date' => (string) ($logRow['scheduled_date'] ?? date('Y-m-d')),
+        ];
+
+        $inserted = $this->callTaskModel->insert($taskData, true);
+
+        if ($inserted === false) {
+            $errors = implode(', ', $this->callTaskModel->errors());
+            return ['success' => false, 'metadata' => ['channel' => 'manual'], 'error' => 'Failed to create manual task: ' . $errors];
+        }
+
+        return [
+            'success'  => true,
+            'metadata' => ['channel' => 'manual', 'call_task_id' => (int) $inserted, 'assigned_to' => $assignedTo],
             'error'    => '',
         ];
     }

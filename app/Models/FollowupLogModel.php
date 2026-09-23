@@ -63,7 +63,7 @@ class FollowupLogModel extends Model
         $today   = $this->db->escape($asOfDate);
 
         return $this->db->table('followup_log gfl')
-            ->select('gfl.*, fa.channel, fa.is_automated, fa.template_id, p.first_name, p.last_name, p.email, p.phone, p.opted_out_channels, p.preferred_timezone, p.interests, gfl.parish_id')
+            ->select('gfl.*, fa.channel, fa.is_automated, fa.template_id, fa.instructions, p.first_name, p.last_name, p.email, p.phone, p.opted_out_channels, p.preferred_timezone, p.interests, gfl.parish_id')
             ->join('person p',          'p.id = gfl.person_id', 'left')
             ->join('followup_action fa', 'fa.id = gfl.action_id', 'left')
             ->where('gfl.status', 'pending')
@@ -92,7 +92,7 @@ class FollowupLogModel extends Model
         $today   = $this->db->escape($asOfDate);
 
         return $this->db->table('followup_log gfl')
-            ->select('gfl.*, fa.channel, fa.is_automated, fa.template_id, p.first_name, p.last_name, p.email, p.phone, p.opted_out_channels, p.preferred_timezone, p.interests')
+            ->select('gfl.*, fa.channel, fa.is_automated, fa.template_id, fa.instructions, p.first_name, p.last_name, p.email, p.phone, p.opted_out_channels, p.preferred_timezone, p.interests')
             ->join('person p',           'p.id = gfl.person_id', 'left')
             ->join('followup_action fa', 'fa.id = gfl.action_id', 'left')
             ->where('gfl.parish_id', $parishId)
@@ -118,7 +118,7 @@ class FollowupLogModel extends Model
         $today   = $this->db->escape($asOfDate);
 
         return $this->db->table('followup_log gfl')
-            ->select('gfl.*, fa.channel, p.first_name, p.last_name, p.phone')
+            ->select('gfl.*, fa.channel, fa.instructions, p.first_name, p.last_name, p.phone')
             ->join('person p',           'p.id = gfl.person_id', 'left')
             ->join('followup_action fa', 'fa.id = gfl.action_id', 'left')
             ->where('gfl.assigned_to', $userId)
@@ -252,6 +252,7 @@ class FollowupLogModel extends Model
                 'person_id'      => $personId,
                 'parish_id'      => $parishId,
                 'action_id'      => (int) $action['id'],
+                'assigned_to'    => (int) ($action['assigned_to'] ?? 0) ?: null,
                 'scheduled_date' => $this->computeScheduledDate($visitDate, (int) $action['day_offset'], $tz),
                 'status'         => 'pending',
                 'created_at'     => $now,
@@ -326,6 +327,7 @@ class FollowupLogModel extends Model
                     'person_id'      => $personId,
                     'parish_id'      => $parishId,
                     'action_id'      => $actionId,
+                    'assigned_to'    => (int) ($action['assigned_to'] ?? 0) ?: null,
                     'scheduled_date' => $this->computeScheduledDate($visitDate, (int) $action['day_offset'], $tz),
                     'status'         => 'pending',
                     'created_at'     => $now,

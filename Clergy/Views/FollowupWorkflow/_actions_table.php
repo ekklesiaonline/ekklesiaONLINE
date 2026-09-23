@@ -32,11 +32,12 @@
             <tbody>
                 <?php
                 $channelBadge = [
-                    'text'  => 'bg-primary',
-                    'email' => 'bg-info text-dark',
-                    'call'  => 'bg-warning text-dark',
-                    'mail'  => 'bg-secondary',
-                    'gift'  => 'bg-success',
+                    'text'   => 'border-primary text-primary',
+                    'email'  => 'border-info text-info-emphasis',
+                    'call'   => 'border-warning text-warning-emphasis',
+                    'mail'   => 'border-secondary text-secondary',
+                    'gift'   => 'border-success text-success',
+                    'manual' => 'border-danger text-danger',
                 ];
                 ?>
                 <?php foreach ($actions as $a): ?>
@@ -44,12 +45,19 @@
                         <td><?= (int) $a['week_number'] ?></td>
                         <td><?= (int) $a['day_offset'] ?></td>
                         <td>
-                            <span class="badge <?= $channelBadge[$a['channel']] ?? 'bg-light text-dark' ?>">
+                            <span class="badge border fw-normal <?= $channelBadge[$a['channel']] ?? 'border-secondary text-secondary' ?>">
                                 <?= esc($a['channel']) ?>
                             </span>
                         </td>
                         <td>
-                            <?php if (!empty($a['template_name'])): ?>
+                            <?php if ($a['channel'] === 'manual'): ?>
+                                <?= esc($a['instructions'] ?? '') ?>
+                                <?php if (!empty($a['assignee_name'])): ?>
+                                    <div class="small text-muted">
+                                        <i class="bi bi-person-check" aria-hidden="true"></i> <?= esc($a['assignee_name']) ?>
+                                    </div>
+                                <?php endif; ?>
+                            <?php elseif (!empty($a['template_name'])): ?>
                                 <?= esc($a['template_name']) ?>
                             <?php else: ?>
                                 <em class="text-muted"><?= lang('Visitors.seqStepNone') ?></em>
@@ -70,6 +78,8 @@
                                 data-day-offset="<?= (int) $a['day_offset'] ?>"
                                 data-channel="<?= esc($a['channel'], 'attr') ?>"
                                 data-template-id="<?= esc((string) ($a['template_id'] ?? ''), 'attr') ?>"
+                                data-assigned-to="<?= esc((string) ($a['assigned_to'] ?? ''), 'attr') ?>"
+                                data-instructions="<?= esc((string) ($a['instructions'] ?? ''), 'attr') ?>"
                                 data-automated="<?= (int) $a['is_automated'] ?>" aria-label="<?= esc(lang('App.edit')) ?>">
                                 <i class="bi bi-pencil" aria-hidden="true"></i>
                             </button>

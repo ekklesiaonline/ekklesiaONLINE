@@ -17,10 +17,12 @@ Explain or work with the visitor follow-up engine. Canonical doc:
 
 - `followup_sequence` (parish-scoped or global `parish_id IS NULL`, `is_active`)
   → `followup_action` (`sequence_id`, `day_offset`, `channel`, `template_id`,
-  `is_automated`) → `followup_log` rows per person.
+  `assigned_to`, `instructions`, `is_automated`) → `followup_log` rows per person.
 - Channels: email (scoped SMTP via `EmailScopeService`), text (`sms_queue` →
-  Twilio/log_only), call (`call_task` volunteer queue), mail (Dompdf PDF),
-  gift (manual flag).
+  Twilio/log_only), call (`call_task` queue, `task_type='call'`), manual
+  (`call_task` row `task_type='manual'` assigned to a parish leader via
+  `leadership_position`; `instructions` → `call_task.title` with tokens),
+  mail (Dompdf PDF), gift (manual flag).
 - Dispatch: `php spark followup:send [--parish N] [--dry-run]` →
   `FollowupLogModel::getPendingDue()` → `FollowupDispatchService`.
 - Reconcile missing schedules: `php spark followup:backfill [--parish N] [--dry-run]`.
@@ -40,6 +42,12 @@ CI4 `afterInsert` payload is `['id', 'data' => [row], 'result']` — read
 `followup_date` dual-write column is dropped), `parish_id`, `action_id`,
 `is_active` on `followup_sequence`. `call_task.log_id` is always set —
 `BackfillCallTaskLogIds` reconciled legacy orphans.
+
+Manual-channel assignees are validated by
+`LeadershipPositionModel::getAssignableParishLeaders`/`isActiveParishLeader`
+— parish-scoped `active=1` positions inside their `started_at`/`ended_at`
+window. Scheduling stamps `followup_action.assigned_to` onto
+`followup_log.assigned_to`.
 
 ## Scope rules
 

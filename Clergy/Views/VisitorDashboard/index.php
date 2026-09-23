@@ -317,7 +317,7 @@ $kpiTile = static function (
         <div class="col-lg-5">
             <div class="card shadow-sm h-100">
                 <div class="card-header d-flex justify-content-between align-items-center">
-                    <span><i class="bi bi-telephone me-1" aria-hidden="true"></i><?= lang('Visitors.hubLinkCallTasks') ?></span>
+                    <span><i class="bi bi-list-task me-1" aria-hidden="true"></i><?= lang('Visitors.hubLinkCallTasks') ?></span>
                     <?php if ($pendingCalls > 0): ?>
                         <span class="badge border border-warning text-warning fw-normal">
                             <?= (int) $pendingCalls ?>
@@ -333,19 +333,25 @@ $kpiTile = static function (
                     <?php else: ?>
                         <ul class="list-group list-group-flush">
                             <?php foreach ($pendingCallTasks as $ct): ?>
+                                <?php $ctIsManual = ($ct['task_type'] ?? 'call') === 'manual'; ?>
                                 <li class="list-group-item d-flex justify-content-between align-items-center">
                                     <div>
                                         <div class="fw-semibold small">
-                                            <?= esc(trim(($ct['visitor_first_name'] ?? '') . ' ' . ($ct['visitor_last_name'] ?? ''))) ?>
+                                            <?= esc(trim(($ct['first_name'] ?? '') . ' ' . ($ct['last_name'] ?? ''))) ?>
                                         </div>
+                                        <?php if ($ctIsManual && !empty($ct['title'])): ?>
+                                            <div class="text-muted" style="font-size:.75rem;">
+                                                <?= esc($ct['title']) ?>
+                                            </div>
+                                        <?php endif; ?>
                                         <div class="text-muted" style="font-size:.75rem;">
                                             <?= esc($ct['scheduled_date'] ?? '') ?>
                                         </div>
                                     </div>
-                                    <a href="<?= base_url('followup-workflow/call-tasks') ?>"
+                                    <a href="<?= base_url('followup-workflow/call-tasks?status=pending&type=' . ($ctIsManual ? 'manual' : 'call')) ?>"
                                         class="btn btn-sm btn-outline-warning"
                                         aria-label="<?= esc(lang('Visitors.hubLinkCallTasks')) ?>">
-                                        <i class="bi bi-telephone" aria-hidden="true"></i>
+                                        <i class="bi <?= $ctIsManual ? 'bi-person-check' : 'bi-telephone' ?>" aria-hidden="true"></i>
                                     </a>
                                 </li>
                             <?php endforeach; ?>

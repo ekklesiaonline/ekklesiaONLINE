@@ -115,6 +115,7 @@ class FollowupWorkflow extends BaseController
 
         $actions   = $id > 0 ? $this->actionModel->getBySequenceWithTemplates($id) : [];
         $templates = $this->templateModel->getAllForParish($parishId);
+        $leaders   = model('LeadershipPositionModel')->getAssignableParishLeaders($parishId);
 
         $pageTitle = $id > 0
             ? lang('Visitors.pageTitleEditSequence', [esc($sequence['name'])])
@@ -126,6 +127,7 @@ class FollowupWorkflow extends BaseController
                 'sequence'  => $sequence,
                 'actions'   => $actions,
                 'templates' => $templates,
+                'leaders'   => $leaders,
                 'parishId'  => $parishId,
             ]
         ));
@@ -292,16 +294,37 @@ class FollowupWorkflow extends BaseController
             return $this->jsonResponse(['success' => false, 'message' => 'Forbidden.'], 403);
         }
 
+        $isManual = $this->request->getPost('channel') === 'manual';
+
         $rules = [
             'week_number'  => 'required|is_natural_no_zero|less_than_equal_to[52]',
             'day_offset'   => 'required|is_natural|less_than_equal_to[365]',
-            'channel'      => 'required|in_list[text,email,call,mail,gift]',
+            'channel'      => 'required|in_list[text,email,call,mail,gift,manual]',
             'template_id'  => 'permit_empty|is_not_unique[followup_template.id]',
             'is_automated' => 'permit_empty|in_list[0,1]',
         ];
 
+        if ($isManual) {
+            $rules['assigned_to']  = 'required|is_not_unique[users.id]';
+            $rules['instructions'] = 'required|max_length[255]';
+        } else {
+            $rules['assigned_to']  = 'permit_empty|is_not_unique[users.id]';
+            $rules['instructions'] = 'permit_empty|max_length[255]';
+        }
+
         if (!$this->validate($rules)) {
             return $this->jsonResponse(['success' => false, 'errors' => $this->validator->getErrors()], 422);
+        }
+
+        $assignedTo = (int) ($this->request->getPost('assigned_to') ?? 0);
+
+        // Parish-scope guard: a manual task may only be assigned to a user
+        // holding an active leadership_position scoped to this parish.
+        if ($assignedTo > 0 && !model('LeadershipPositionModel')->isActiveParishLeader($assignedTo, $parishId)) {
+            return $this->jsonResponse([
+                'success' => false,
+                'errors'  => ['assigned_to' => lang('Visitors.seqAssigneeNotLeader')],
+            ], 422);
         }
 
         $templateId = $this->request->getPost('template_id');
@@ -312,6 +335,8 @@ class FollowupWorkflow extends BaseController
             'day_offset'   => (int) $this->request->getPost('day_offset'),
             'channel'      => $this->request->getPost('channel'),
             'template_id'  => ($templateId !== '' && $templateId !== null) ? (int) $templateId : null,
+            'assigned_to'  => $assignedTo > 0 ? $assignedTo : null,
+            'instructions' => trim((string) $this->request->getPost('instructions')) ?: null,
             'is_automated' => (int) ($this->request->getPost('is_automated') ?? 0),
         ];
 
@@ -861,6 +886,16 @@ class FollowupWorkflow extends BaseController
                 ['triggered_by' => $currentUserId, 'manual' => true]
             );
             $logId = (int) $logEntry['id'];
+
+            // A dispatched task (call or manual) may still be open for this
+            // log — completing the step directly closes it.
+            $openTask = model('CallTaskModel')
+                ->where('log_id', $logId)
+                ->where('status', 'pending')
+                ->first();
+            if ($openTask) {
+                model('CallTaskModel')->markCompleted((int) $openTask['id']);
+            }
         } else {
             $logId = (int) $this->logModel->insert([
                 'person_id'         => $visitorId,
@@ -912,14 +947,16 @@ class FollowupWorkflow extends BaseController
 
         $parishId = $this->getOperationalParishId();
         $status   = $this->request->getGet('status') ?? 'pending';
+        $taskType = $this->request->getGet('type');
+        $taskType = in_array($taskType, ['call', 'manual'], true) ? $taskType : null;
 
         /** @var \App\Models\CallTaskModel $model */
         $model = model('CallTaskModel');
 
         if ($status === 'pending') {
-            $tasks = $model->getPendingForParish($parishId);
+            $tasks = $model->getPendingForParish($parishId, $taskType);
         } else {
-            $tasks = $model->getAllForParish($parishId);
+            $tasks = $model->getAllForParish($parishId, 100, $taskType);
             if (in_array($status, ['completed', 'cancelled'], true)) {
                 $tasks = array_filter($tasks, fn($t) => $t['status'] === $status);
                 $tasks = array_values($tasks);
@@ -931,6 +968,7 @@ class FollowupWorkflow extends BaseController
             [
                 'tasks'          => $tasks,
                 'activeStatus'   => $status,
+                'activeType'     => $taskType,
                 'pendingCount'   => $model->countPending($parishId),
             ]
         ));

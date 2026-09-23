@@ -117,10 +117,32 @@ $saveUrl    = $isNew
                                 <option value="call"><?= lang('Visitors.seqChannelCall') ?></option>
                                 <option value="mail"><?= lang('Visitors.seqChannelMail') ?></option>
                                 <option value="gift"><?= lang('Visitors.seqChannelGift') ?></option>
+                                <option value="manual"><?= lang('Visitors.seqChannelManual') ?></option>
                             </select>
+                            <div class="form-text" id="action_channel_hint_manual" hidden><?= lang('Visitors.seqChannelManualHint') ?></div>
                         </div>
 
-                        <div class="col-12">
+                        <div class="col-12" id="pane_manual_assignee" hidden>
+                            <label class="form-label" for="action_assigned_to"><?= lang('Visitors.seqFieldAssignee') ?> <span class="text-danger">*</span></label>
+                            <select id="action_assigned_to" class="form-select">
+                                <option value=""><?= lang('Visitors.seqFieldAssigneeSelect') ?></option>
+                                <?php foreach ($leaders ?? [] as $leader): ?>
+                                    <option value="<?= (int) $leader['user_id'] ?>">
+                                        <?= esc(trim($leader['first_name'] . ' ' . $leader['last_name'])) ?> — <?= esc($leader['title']) ?>
+                                    </option>
+                                <?php endforeach; ?>
+                            </select>
+                            <div class="form-text"><?= lang('Visitors.seqFieldAssigneeHint') ?></div>
+                        </div>
+
+                        <div class="col-12" id="pane_manual_instructions" hidden>
+                            <label class="form-label" for="action_instructions"><?= lang('Visitors.seqFieldInstructions') ?> <span class="text-danger">*</span></label>
+                            <input type="text" id="action_instructions" class="form-control" maxlength="255"
+                                placeholder="<?= esc(lang('Visitors.seqFieldInstructionsPlaceholder'), 'attr') ?>">
+                            <div class="form-text"><?= lang('Visitors.seqFieldInstructionsHint') ?></div>
+                        </div>
+
+                        <div class="col-12" id="pane_action_template">
                             <label class="form-label" for="action_template"><?= lang('Visitors.seqFieldTemplate') ?></label>
                             <select id="action_template" class="form-select">
                                 <option value=""><?= lang('Visitors.seqFieldTemplateNone') ?></option>
@@ -134,7 +156,7 @@ $saveUrl    = $isNew
                             <div class="form-text"><?= lang('Visitors.seqFieldTemplateHint') ?></div>
                         </div>
 
-                        <div class="col-12">
+                        <div class="col-12" id="pane_action_automated">
                             <div class="form-check">
                                 <input class="form-check-input" type="checkbox" id="action_automated" value="1">
                                 <label class="form-check-label" for="action_automated">
@@ -190,6 +212,8 @@ $saveUrl    = $isNew
             const errBox = document.getElementById('actionModalErrors');
             const channelSel = document.getElementById('action_channel');
             const templateSel = document.getElementById('action_template');
+            const assigneeSel = document.getElementById('action_assigned_to');
+            const instructionsInput = document.getElementById('action_instructions');
 
             // Filter template options by channel
             function filterTemplates(channel) {
@@ -204,7 +228,21 @@ $saveUrl    = $isNew
                 }
             }
 
-            channelSel?.addEventListener('change', () => filterTemplates(channelSel.value));
+            // Manual tasks need an assignee + instructions instead of a
+            // template/automated flag.
+            function toggleChannelPanes(channel) {
+                const isManual = channel === 'manual';
+                document.getElementById('pane_manual_assignee').hidden = !isManual;
+                document.getElementById('pane_manual_instructions').hidden = !isManual;
+                document.getElementById('pane_action_template').hidden = isManual;
+                document.getElementById('pane_action_automated').hidden = isManual;
+                document.getElementById('action_channel_hint_manual').hidden = !isManual;
+            }
+
+            channelSel?.addEventListener('change', () => {
+                filterTemplates(channelSel.value);
+                toggleChannelPanes(channelSel.value);
+            });
 
             // Open modal for a new action
             btnAdd?.addEventListener('click', function() {
@@ -218,8 +256,11 @@ $saveUrl    = $isNew
                 document.getElementById('action_day_offset').value = '';
                 channelSel.value = '';
                 templateSel.value = '';
+                assigneeSel.value = '';
+                instructionsInput.value = '';
                 document.getElementById('action_automated').checked = false;
                 filterTemplates('');
+                toggleChannelPanes('');
                 errBox.classList.add('d-none');
                 bsModal.show();
             });
@@ -239,7 +280,10 @@ $saveUrl    = $isNew
                 document.getElementById('action_day_offset').value = btn.dataset.dayOffset;
                 channelSel.value = btn.dataset.channel;
                 filterTemplates(btn.dataset.channel);
+                toggleChannelPanes(btn.dataset.channel);
                 templateSel.value = btn.dataset.templateId ?? '';
+                assigneeSel.value = btn.dataset.assignedTo ?? '';
+                instructionsInput.value = btn.dataset.instructions ?? '';
                 document.getElementById('action_automated').checked = btn.dataset.automated === '1';
                 errBox.classList.add('d-none');
                 bsModal.show();
@@ -253,8 +297,22 @@ $saveUrl    = $isNew
                 const day = document.getElementById('action_day_offset').value.trim();
                 const channel = channelSel?.value ?? '';
 
+                const isManual = channel === 'manual';
+                const assignedTo = isManual ? (assigneeSel?.value ?? '') : '';
+                const instructions = isManual ? (instructionsInput?.value.trim() ?? '') : '';
+
                 if (!week || !day || !channel) {
                     errBox.textContent = <?= json_encode(lang('Visitors.seqValidationRequired')) ?>;
+                    errBox.classList.remove('d-none');
+                    return;
+                }
+                if (isManual && !assignedTo) {
+                    errBox.textContent = <?= json_encode(lang('Visitors.seqAssigneeRequired')) ?>;
+                    errBox.classList.remove('d-none');
+                    return;
+                }
+                if (isManual && !instructions) {
+                    errBox.textContent = <?= json_encode(lang('Visitors.seqInstructionsRequired')) ?>;
                     errBox.classList.remove('d-none');
                     return;
                 }
@@ -268,8 +326,10 @@ $saveUrl    = $isNew
                     week_number: week,
                     day_offset: day,
                     channel: channel,
-                    template_id: templateSel?.value ?? '',
-                    is_automated: document.getElementById('action_automated').checked ? '1' : '0',
+                    template_id: isManual ? '' : (templateSel?.value ?? ''),
+                    assigned_to: assignedTo,
+                    instructions: instructions,
+                    is_automated: isManual ? '0' : (document.getElementById('action_automated').checked ? '1' : '0'),
                 });
 
                 fetch(url, {
@@ -352,19 +412,29 @@ $saveUrl    = $isNew
                 }
 
                 const channelBadge = {
-                    text: 'bg-primary',
-                    email: 'bg-info text-dark',
-                    call: 'bg-warning text-dark',
-                    mail: 'bg-secondary',
-                    gift: 'bg-success',
+                    text: 'border-primary text-primary',
+                    email: 'border-info text-info-emphasis',
+                    call: 'border-warning text-warning-emphasis',
+                    mail: 'border-secondary text-secondary',
+                    gift: 'border-success text-success',
+                    manual: 'border-danger text-danger',
                 };
                 const labelNone = <?= json_encode(lang('Visitors.seqStepNone')) ?>;
                 const labelAuto = <?= json_encode(lang('Visitors.seqTypeAuto')) ?>;
                 const labelManual = <?= json_encode(lang('Visitors.seqTypeManual')) ?>;
 
                 let rows = actions.map(function(a) {
-                    const badge = channelBadge[a.channel] ?? 'bg-light text-dark';
-                    const tplName = a.template_name ? escHtml(a.template_name) : '<em class="text-muted">' + labelNone + '</em>';
+                    const badge = channelBadge[a.channel] ?? 'border-secondary text-secondary';
+                    let detail;
+                    if (a.channel === 'manual') {
+                        detail = escHtml(a.instructions ?? '');
+                        if (a.assignee_name) {
+                            detail += '<div class="small text-muted"><i class="bi bi-person-check" aria-hidden="true"></i> '
+                                + escHtml(a.assignee_name) + '</div>';
+                        }
+                    } else {
+                        detail = a.template_name ? escHtml(a.template_name) : '<em class="text-muted">' + labelNone + '</em>';
+                    }
                     const autoBadge = a.is_automated ?
                         '<span class="badge border border-success text-success fw-normal">' + labelAuto + '</span>' :
                         '<span class="badge border border-secondary text-body fw-normal">' + labelManual + '</span>';
@@ -372,8 +442,8 @@ $saveUrl    = $isNew
                     return `<tr>
                 <td>${escHtml(String(a.week_number))}</td>
                 <td>${escHtml(String(a.day_offset))}</td>
-                <td><span class="badge ${badge}">${escHtml(a.channel)}</span></td>
-                <td>${tplName}</td>
+                <td><span class="badge border fw-normal ${badge}">${escHtml(a.channel)}</span></td>
+                <td>${detail}</td>
                 <td>${autoBadge}</td>
                 <td class="text-end">
                     <button type="button" class="btn btn-sm btn-outline-secondary me-1 btn-edit-action"
@@ -382,6 +452,8 @@ $saveUrl    = $isNew
                         data-day-offset="${escHtml(String(a.day_offset))}"
                         data-channel="${escHtml(a.channel)}"
                         data-template-id="${a.template_id ?? ''}"
+                        data-assigned-to="${a.assigned_to ?? ''}"
+                        data-instructions="${escHtml(a.instructions ?? '')}"
                         data-automated="${escHtml(String(a.is_automated))}" aria-label="<?= esc(lang('App.edit')) ?>">
                         <i class="bi bi-pencil" aria-hidden="true"></i>
                     </button>
