@@ -60,6 +60,7 @@ class Filters extends BaseFilters
         'loginRateLimit'    => LoginRateLimitFilter::class,
         'apiRateLimit'      => ApiRateLimitFilter::class,
         'requestMonitoring' => RequestMonitoringFilter::class,
+        'csrfTokenHeader'   => \App\Filters\CsrfTokenHeaderFilter::class,
         'sessionTracking'   => SessionTrackingFilter::class,
         'deviceVerification' => DeviceVerificationFilter::class,
         'forcePasswordReset' => ForcePasswordResetFilter::class,
@@ -216,6 +217,9 @@ class Filters extends BaseFilters
             // 'honeypot',
             'secureheaders',
             'requestMonitoring',
+            // Returns the rotated CSRF token on AJAX responses so pages can
+            // refresh their meta tag (session tokens regenerate per request).
+            'csrfTokenHeader',
         ],
     ];
 

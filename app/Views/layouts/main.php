@@ -826,6 +826,18 @@
                 });
             });
 
+            // Keep the meta token in sync: session CSRF regenerates the hash
+            // after each verified request, and AJAX responses echo the new
+            // token via the X-CSRF-TOKEN header (csrfTokenHeader filter).
+            $(document).ajaxComplete(function (_event, xhr) {
+                var newToken = xhr && typeof xhr.getResponseHeader === 'function'
+                    ? xhr.getResponseHeader('X-CSRF-TOKEN')
+                    : null;
+                if (newToken && token) {
+                    token.setAttribute('content', newToken);
+                }
+            });
+
             $(document).ajaxError(function (_event, xhr) {
                 var status = xhr && xhr.status ? xhr.status : 0;
                 var retryAfter = xhr && typeof xhr.getResponseHeader === 'function' ?
