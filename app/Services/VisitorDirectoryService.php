@@ -469,6 +469,7 @@ class VisitorDirectoryService
     /**
      * Delete a visitor: soft-delete the parish affiliation and, when the
      * person has no remaining live affiliations, the person row itself.
+     * Pending follow-up entries are skipped so dispatch stops; the
      * followup_log / person_visit history is preserved for audit.
      *
      * Refuses rows that are on the parish register (member/inactive) or
@@ -499,6 +500,16 @@ class VisitorDirectoryService
                 ->where('person_id', $personId)
                 ->where('parish_id', $parishId)
                 ->update(['deleted_at' => $now, 'updated_at' => $now]);
+
+            $db->table('followup_log')
+                ->where('person_id', $personId)
+                ->where('parish_id', $parishId)
+                ->where('status', 'pending')
+                ->update([
+                    'status'     => 'skipped',
+                    'notes'      => 'Visitor deleted',
+                    'updated_at' => $now,
+                ]);
 
             $remaining = $db->table('parish_affiliation')
                 ->where('person_id', $personId)

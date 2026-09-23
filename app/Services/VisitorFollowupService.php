@@ -147,13 +147,19 @@ class VisitorFollowupService
 
     /**
      * Distinct persons with a pending follow-up entry in the parish.
+     * Scoped to live, unconverted visitor-domain affiliations — the same
+     * population the visitors list shows under followup_stage=pending.
      */
     public function pendingDistinctPersonsCount(int $parishId): int
     {
         return (int) ($this->db->table('followup_log gfl')
             ->select('COUNT(DISTINCT gfl.person_id) AS cnt')
+            ->join('person pe', 'pe.id = gfl.person_id AND pe.deleted_at IS NULL', 'inner')
+            ->join('parish_affiliation pa', 'pa.person_id = gfl.person_id AND pa.parish_id = gfl.parish_id AND pa.deleted_at IS NULL', 'inner')
             ->where('gfl.status', 'pending')
             ->where('gfl.parish_id', $parishId)
+            ->where('pa.converted_to_member_at IS NULL', null, false)
+            ->whereIn('pa.membership_status', ['visitor', 'regular_attender'])
             ->get()->getRowArray()['cnt'] ?? 0);
     }
 

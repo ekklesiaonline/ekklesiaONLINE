@@ -59,12 +59,17 @@ class FollowupLogModel extends Model
             $asOfDate = date('Y-m-d');
         }
 
+        $paTable = $this->db->prefixTable('parish_affiliation');
+        $today   = $this->db->escape($asOfDate);
+
         return $this->db->table('followup_log gfl')
             ->select('gfl.*, fa.channel, fa.is_automated, fa.template_id, p.first_name, p.last_name, p.email, p.phone, p.opted_out_channels, p.preferred_timezone, p.interests, gfl.parish_id')
             ->join('person p',          'p.id = gfl.person_id', 'left')
             ->join('followup_action fa', 'fa.id = gfl.action_id', 'left')
             ->where('gfl.status', 'pending')
             ->where('gfl.scheduled_date <=', $asOfDate)
+            ->where('p.deleted_at IS NULL', null, false)
+            ->where("EXISTS (SELECT 1 FROM {$paTable} pa WHERE pa.person_id = gfl.person_id AND pa.parish_id = gfl.parish_id AND pa.deleted_at IS NULL AND (pa.end_date IS NULL OR pa.end_date >= {$today}))", null, false)
             ->orderBy('gfl.scheduled_date', 'ASC')
             ->get()
             ->getResultArray();
@@ -83,6 +88,9 @@ class FollowupLogModel extends Model
             $asOfDate = date('Y-m-d');
         }
 
+        $paTable = $this->db->prefixTable('parish_affiliation');
+        $today   = $this->db->escape($asOfDate);
+
         return $this->db->table('followup_log gfl')
             ->select('gfl.*, fa.channel, fa.is_automated, fa.template_id, p.first_name, p.last_name, p.email, p.phone, p.opted_out_channels, p.preferred_timezone, p.interests')
             ->join('person p',           'p.id = gfl.person_id', 'left')
@@ -90,6 +98,8 @@ class FollowupLogModel extends Model
             ->where('gfl.parish_id', $parishId)
             ->where('gfl.status', 'pending')
             ->where('gfl.scheduled_date <=', $asOfDate)
+            ->where('p.deleted_at IS NULL', null, false)
+            ->where("EXISTS (SELECT 1 FROM {$paTable} pa WHERE pa.person_id = gfl.person_id AND pa.parish_id = gfl.parish_id AND pa.deleted_at IS NULL AND (pa.end_date IS NULL OR pa.end_date >= {$today}))", null, false)
             ->orderBy('gfl.scheduled_date', 'ASC')
             ->get()
             ->getResultArray();
@@ -104,6 +114,9 @@ class FollowupLogModel extends Model
             $asOfDate = date('Y-m-d');
         }
 
+        $paTable = $this->db->prefixTable('parish_affiliation');
+        $today   = $this->db->escape($asOfDate);
+
         return $this->db->table('followup_log gfl')
             ->select('gfl.*, fa.channel, p.first_name, p.last_name, p.phone')
             ->join('person p',           'p.id = gfl.person_id', 'left')
@@ -111,6 +124,8 @@ class FollowupLogModel extends Model
             ->where('gfl.assigned_to', $userId)
             ->where('gfl.status', 'pending')
             ->where('gfl.scheduled_date <=', $asOfDate)
+            ->where('p.deleted_at IS NULL', null, false)
+            ->where("EXISTS (SELECT 1 FROM {$paTable} pa WHERE pa.person_id = gfl.person_id AND pa.parish_id = gfl.parish_id AND pa.deleted_at IS NULL AND (pa.end_date IS NULL OR pa.end_date >= {$today}))", null, false)
             ->orderBy('gfl.scheduled_date', 'ASC')
             ->get()
             ->getResultArray();
