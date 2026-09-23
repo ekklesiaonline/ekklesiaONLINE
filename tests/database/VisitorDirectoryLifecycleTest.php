@@ -98,6 +98,51 @@ final class VisitorDirectoryLifecycleTest extends CIUnitTestCase
         $this->assertNotContains($visitorId, $ids);
     }
 
+    public function testConvertedCountRespectsWindow(): void
+    {
+        $this->insertPipelinePerson('member', true, self::PARISH, date('Y-m-d H:i:s'));          // now
+        $this->insertPipelinePerson('member', true, self::PARISH, date('Y-m-d H:i:s', strtotime('-60 days')));
+
+        $this->assertSame(2, $this->directory->convertedCountForParish(self::PARISH));
+        $this->assertSame(1, $this->directory->convertedCountForParish(self::PARISH, 30));
+        $this->assertSame(2, $this->directory->convertedCountForParish(self::PARISH, 90));
+    }
+
+    public function testConvertedWindowFilterOnConvertedList(): void
+    {
+        $recent = $this->insertPipelinePerson('member', true, self::PARISH, date('Y-m-d H:i:s'));
+        $old    = $this->insertPipelinePerson('member', true, self::PARISH, date('Y-m-d H:i:s', strtotime('-60 days')));
+
+        $all = $this->directory->paginateForParish(self::PARISH, ['lifecycle' => 'converted'], 20, 1);
+        $this->assertSame(2, count($all['rows']));
+
+        $windowed = $this->directory->paginateForParish(
+            self::PARISH,
+            ['lifecycle' => 'converted', 'converted_window' => '30'],
+            20,
+            1
+        );
+        $ids = array_map('intval', array_column($windowed['rows'], 'person_id'));
+        $this->assertSame([$recent], $ids);
+        $this->assertNotContains($old, $ids);
+    }
+
+    public function testConvertedWindowIgnoredOutsideConvertedLifecycle(): void
+    {
+        // The window applies only to the converted list — a stray
+        // converted_window param must not leak into the pipeline scope.
+        $visitor = $this->insertPipelinePerson('visitor');
+
+        $result = $this->directory->paginateForParish(
+            self::PARISH,
+            ['converted_window' => '30'],
+            20,
+            1
+        );
+        $ids = array_map('intval', array_column($result['rows'], 'person_id'));
+        $this->assertSame([$visitor], $ids);
+    }
+
     public function testVisitCountIsPopulated(): void
     {
         $personId = $this->insertPipelinePerson('visitor');
@@ -149,7 +194,7 @@ final class VisitorDirectoryLifecycleTest extends CIUnitTestCase
         ]);
     }
 
-    private function insertPipelinePerson(string $status, bool $converted = false, int $parishId = self::PARISH): int
+    private function insertPipelinePerson(string $status, bool $converted = false, int $parishId = self::PARISH, ?string $convertedAt = null): int
     {
         $this->db->table('person')->insert([
             'first_name' => 'Test',
@@ -164,7 +209,7 @@ final class VisitorDirectoryLifecycleTest extends CIUnitTestCase
             'person_id'              => $personId,
             'parish_id'              => $parishId,
             'membership_status'      => $status,
-            'converted_to_member_at' => $converted ? date('Y-m-d H:i:s') : null,
+            'converted_to_member_at' => $converted ? ($convertedAt ?? date('Y-m-d H:i:s')) : null,
             'start_date'             => date('Y-m-d'),
             'created_at'             => date('Y-m-d H:i:s'),
             'updated_at'             => date('Y-m-d H:i:s'),

@@ -32,8 +32,8 @@ visitor → regular_attender → member
 ## 2. Intake paths (all land at `visitor`)
 
 | Path | Entry point | Flow |
-|---|---|---|
-| Staff form | `GET/POST /visitors/create|store` | `VisitorDirectoryService::create()` |
+| --- | --- | --- |
+| Staff form | `GET/POST /visitors/create | store` | `VisitorDirectoryService::create()` |
 | CSV import | `POST /visitors/import/process` | `Import::processConnectionCards()` |
 | Public card | `POST /connect/{token}` | `Import::digitalCard()` |
 | Registration approval | admin action | `RegistrationApprovalService` |
@@ -51,13 +51,18 @@ which deduplicates by `email_hash`/`phone_hash` within the parish, provisions
 
 - Default tab: unconverted visitors + attenders.
 - `?lifecycle=converted` is a filter value — converted rows are no longer a
-  silent mixin.
+  silent mixin. It accepts `&converted_window=30|90|365` to bound the list to
+  conversions within that many days (empty = all time).
 - `visit_count` (COUNT of `person_visit`) is selected per row.
+- The hub "converted" tile counts conversions within a rolling window —
+  system setting `visitor.converted_window_days` (default 30, editable at
+  `/system/settings` under Visitors). The tile links to the converted list
+  pre-filtered to the same window.
 
 ### Badge states (derived, evaluated in order)
 
 | State | Condition |
-|---|---|
+| --- | --- |
 | Converted | `converted_to_member_at IS NOT NULL` |
 | Followed Up | `followed_up = 1` (manual staff assertion; auto-set on conversion) |
 | In Progress | ≥1 sent/skipped log AND ≥1 pending log |
@@ -82,7 +87,7 @@ One endpoint, three modes chosen in the confirmation modal
 (`visitor.edit`; `create_account` additionally requires `member.create`):
 
 | Mode | Call |
-|---|---|
+| --- | --- |
 | Mark member | `PersonConversionService::convertToMember($personId, $parishId, null, null, null, $actor)` |
 | Link existing user | `…->convertToMember(…, $userId, null, null, $actor)` — target user must already hold an affiliation in this parish |
 | Create account | `…->convertToMember(…, null, $email, $password, $actor)` — provisions user + `email_password` identity + `member` group + profile |
@@ -107,7 +112,7 @@ Converted/register members are managed from the People directory.
 ## 7. Permissions & routes
 
 | Permission | Gates |
-|---|---|
+| --- | --- |
 | `visitor.view` | list, detail, dashboard, exports |
 | `visitor.create` | store, CSV import, connection-card admin |
 | `visitor.edit` | update, promote-attender, demote, promote, revert-conversion |

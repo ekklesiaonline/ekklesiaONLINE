@@ -193,6 +193,7 @@ return [
     'settingsCategoryPolicy' => 'Politique de Mot de Passe',
     'settingsCategorySecurity' => 'Securite',
     'settingsCategorySystem' => 'Systeme',
+    'settingsCategoryVisitors' => 'Visiteurs',
     'setting_password_policy_min_length' => 'Longueur Minimale du Mot de Passe',
     'setting_password_policy_require_uppercase' => 'Exiger une Majuscule',
     'setting_password_policy_require_lowercase' => 'Exiger une Minuscule',
@@ -206,6 +207,7 @@ return [
     'setting_lockout_duration_seconds' => 'Duree du Verrouillage (secondes)',
     'setting_maintenance_enabled' => 'Mode Maintenance',
     'setting_maintenance_message' => 'Message de Maintenance',
+    'setting_visitor_converted_window_days' => 'Fenêtre des Visiteurs Convertis (jours)',
 
     'passwordTooShort' => 'Le mot de passe doit contenir au moins {0} caracteres.',
     'passwordRequiresUppercase' => 'Le mot de passe doit contenir au moins une lettre majuscule.',

@@ -145,6 +145,13 @@ class VisitorDirectoryService
         $lifecycle = (string) ($filters['lifecycle'] ?? '');
         if ($lifecycle === 'converted') {
             $builder->where('pa.converted_to_member_at IS NOT NULL', null, false);
+
+            // Optional rolling window on the conversion timestamp.
+            $convertedWindow = (int) ($filters['converted_window'] ?? 0);
+            if ($convertedWindow > 0) {
+                $cutoff = date('Y-m-d H:i:s', strtotime("-{$convertedWindow} days"));
+                $builder->where('pa.converted_to_member_at >=', $cutoff);
+            }
         } elseif ($lifecycle === 'all') {
             // no additional restriction
         } else {
@@ -260,11 +267,20 @@ class VisitorDirectoryService
         return (int) $builder->countAllResults();
     }
 
-    public function convertedCountForParish(int $parishId): int
+    /**
+     * Converted-visitor count for the parish. When $windowDays is given,
+     * counts only conversions within that rolling window.
+     */
+    public function convertedCountForParish(int $parishId, ?int $windowDays = null): int
     {
-        return (int) $this->baseBuilder($parishId)
-            ->where('pa.converted_to_member_at IS NOT NULL', null, false)
-            ->countAllResults();
+        $builder = $this->baseBuilder($parishId)
+            ->where('pa.converted_to_member_at IS NOT NULL', null, false);
+
+        if ($windowDays !== null && $windowDays > 0) {
+            $builder->where('pa.converted_to_member_at >=', date('Y-m-d H:i:s', strtotime("-{$windowDays} days")));
+        }
+
+        return (int) $builder->countAllResults();
     }
 
     /**

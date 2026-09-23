@@ -52,12 +52,12 @@ $formatLocalizedDate = static function (?string $value, string $pattern, string 
             type="button"
             data-bs-toggle="collapse"
             data-bs-target="#visitorsFilterPanel"
-            aria-expanded="<?= ($request->getGet('search') !== null || $request->getGet('followed_up') !== null || $request->getGet('lifecycle') !== null) ? 'true' : 'false' ?>"
+            aria-expanded="<?= ($request->getGet('search') !== null || $request->getGet('followed_up') !== null || $request->getGet('lifecycle') !== null || $request->getGet('converted_window') !== null) ? 'true' : 'false' ?>"
             aria-controls="visitorsFilterPanel">
             <i class="bi bi-funnel" aria-hidden="true"></i> <?= lang('App.filter') ?>
         </button>
     </div>
-    <div id="visitorsFilterPanel" class="collapse <?= ($request->getGet('search') !== null || $request->getGet('followed_up') !== null || $request->getGet('lifecycle') !== null) ? 'show' : '' ?>">
+    <div id="visitorsFilterPanel" class="collapse <?= ($request->getGet('search') !== null || $request->getGet('followed_up') !== null || $request->getGet('lifecycle') !== null || $request->getGet('converted_window') !== null) ? 'show' : '' ?>">
         <div class="card-body border-top filter-panel-body">
             <form method="get" action="<?= base_url('visitors') ?>">
                 <div class="row g-2">
@@ -73,6 +73,16 @@ $formatLocalizedDate = static function (?string $value, string $pattern, string 
                             <option value="all" <?= ($lifecycle ?? '') === 'all' ? 'selected' : '' ?>><?= lang('Visitors.lifecycleAll') ?></option>
                         </select>
                     </div>
+                    <?php if (($lifecycle ?? '') === 'converted'): ?>
+                    <div class="col-md-2">
+                        <select class="form-select" name="converted_window" aria-label="<?= esc(lang('Visitors.convertedWindowLabel')) ?>">
+                            <option value=""><?= lang('Visitors.convertedWindowAll') ?></option>
+                            <option value="30" <?= ($converted_window ?? '') === '30' ? 'selected' : '' ?>><?= lang('Visitors.convertedWindow30') ?></option>
+                            <option value="90" <?= ($converted_window ?? '') === '90' ? 'selected' : '' ?>><?= lang('Visitors.convertedWindow90') ?></option>
+                            <option value="365" <?= ($converted_window ?? '') === '365' ? 'selected' : '' ?>><?= lang('Visitors.convertedWindowYear') ?></option>
+                        </select>
+                    </div>
+                    <?php endif; ?>
                     <div class="col-md-3">
                         <select class="form-select" name="followed_up">
                             <option value=""><?= lang('Visitors.allVisitors') ?></option>

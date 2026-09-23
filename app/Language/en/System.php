@@ -200,6 +200,7 @@ return [
     'settingsCategoryPolicy' => 'Password Policy',
     'settingsCategorySecurity' => 'Security',
     'settingsCategorySystem' => 'System',
+    'settingsCategoryVisitors' => 'Visitors',
     'setting_password_policy_min_length' => 'Minimum Password Length',
     'setting_password_policy_require_uppercase' => 'Require Uppercase Letter',
     'setting_password_policy_require_lowercase' => 'Require Lowercase Letter',
@@ -213,6 +214,7 @@ return [
     'setting_lockout_duration_seconds' => 'Lockout Duration (seconds)',
     'setting_maintenance_enabled' => 'Maintenance Mode',
     'setting_maintenance_message' => 'Maintenance Message',
+    'setting_visitor_converted_window_days' => 'Converted Visitors Window (days)',
 
     'passwordTooShort' => 'Password must be at least {0} characters long.',
     'passwordRequiresUppercase' => 'Password must contain at least one uppercase letter.',

@@ -68,10 +68,10 @@ $kpiTile = static function (
     <div class="col-6 col-md-4 col-xl-2">
         <?= $kpiTile(
             (string) $convertedCount,
-            lang('Visitors.hubKpiConverted'),
+            lang('Visitors.hubKpiConvertedWindow', [(int) ($convertedWindowDays ?? 30)]),
             'bi-person-check-fill',
             'success',
-            base_url('visitors?lifecycle=converted')
+            base_url('visitors?lifecycle=converted&converted_window=' . (int) ($convertedWindowDays ?? 30))
         ) ?>
     </div>
     <div class="col-6 col-md-4 col-xl-2">

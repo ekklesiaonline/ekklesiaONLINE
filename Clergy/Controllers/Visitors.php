@@ -48,6 +48,7 @@ class Visitors extends BaseController
         $followupStage = $this->request->getGet('followup_stage'); // pending|sent|failed|skipped|none
         $source        = $this->request->getGet('source');
         $lifecycle     = $this->request->getGet('lifecycle'); // ''|visitor|regular_attender|converted|all
+        $convertedWindow = $this->request->getGet('converted_window'); // ''|30|90|365 (days)
 
         $page   = max(1, (int) ($this->request->getGet('page') ?? 1));
         $result = $this->visitorDirectory->paginateForParish((int) $parishId, [
@@ -58,6 +59,7 @@ class Visitors extends BaseController
             'followup_stage' => $followupStage,
             'source'         => $source,
             'lifecycle'      => $lifecycle,
+            'converted_window' => $convertedWindow,
         ], $perPage, $page);
 
         $visitors = $result['rows'];
@@ -76,6 +78,7 @@ class Visitors extends BaseController
             'followup_stage' => $followupStage,
             'source'        => $source,
             'lifecycle'     => $lifecycle,
+            'converted_window' => $convertedWindow,
             'progressMap'   => $progressMap,
             'attenderThreshold' => $this->visitorDirectory->attenderSuggestionThreshold((int) $parishId),
         ];
@@ -1098,9 +1101,11 @@ class Visitors extends BaseController
 
         $parishId = (int) $this->getOperationalParishId();
 
-        // KPI: total visitors (all time) vs converted
+        // KPI: total visitors (all time) vs converted (rolling window,
+        // configurable system-wide via visitor.converted_window_days)
+        $convertedWindowDays = max(1, (int) service('systemSettings')->get('visitor.converted_window_days', 30));
         $totalVisitors    = $this->visitorDirectory->countForParish($parishId, false);
-        $convertedCount = $this->visitorDirectory->convertedCountForParish($parishId);
+        $convertedCount = $this->visitorDirectory->convertedCountForParish($parishId, $convertedWindowDays);
 
         $notFollowedUp = $this->followupQueries->pendingDistinctPersonsCount($parishId);
 
@@ -1132,6 +1137,7 @@ class Visitors extends BaseController
         $data = [
             'totalVisitors'       => $totalVisitors,
             'convertedCount'    => $convertedCount,
+            'convertedWindowDays' => $convertedWindowDays,
             'notFollowedUp'     => $notFollowedUp,
             'inProgressCount'   => $inProgressCount,
             'pendingCalls'      => $pendingCalls,

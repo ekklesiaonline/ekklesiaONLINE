@@ -36,7 +36,10 @@ inserts `person_visit` (`first`/`return`). Entry points: staff form
 
 `VisitorDirectoryService::scopeBuilder()` = `membership_status IN
 ('visitor','regular_attender') OR converted_to_member_at IS NOT NULL`.
-`?lifecycle=converted` is a filter value. `visit_count` is selected per row.
+`?lifecycle=converted` is a filter value; `&converted_window=N` bounds it to
+conversions in the last N days. `visit_count` is selected per row.
+The hub "converted" tile uses the same window from the system setting
+`visitor.converted_window_days` (default 30, `/system/settings`).
 
 ## Managed steps
 
