@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\MemberParishAffiliationModel;
 use App\Models\PersonModel;
 use App\Models\ProfileModel;
 use DateTime;
@@ -54,24 +55,25 @@ class PersonProvisioningService
                 throw new \RuntimeException('Failed to create person.');
             }
 
-            $membershipStatus  = (string) ($data['membership_status'] ?? 'visitor');
-            $isMember          = (int) ($data['is_member'] ?? (int) MembershipStatusService::isMember($membershipStatus));
-            $affiliationType   = (string) ($data['affiliation_type'] ?? MembershipStatusService::affiliationTypeForStatus($membershipStatus));
-            $canonicalStatus   = (string) ($data['canonical_status'] ?? $membershipStatus);
+            // The affiliation row is created through the model so all
+            // status-column writes stay inside the choke point; callers
+            // only choose the status.
+            $affiliated = model(MemberParishAffiliationModel::class)->provisionForPerson(
+                $personId,
+                $parishId,
+                $userId,
+                (string) ($data['membership_status'] ?? 'visitor'),
+                [
+                    'source'     => (string) ($data['source'] ?? 'system'),
+                    'start_date' => (string) ($data['start_date'] ?? date('Y-m-d')),
+                    'created_at' => $now,
+                    'updated_at' => $now,
+                ]
+            );
 
-            $db->table('parish_affiliation')->insert([
-                'parish_id'        => $parishId,
-                'person_id'        => $personId,
-                'linked_user_id'   => $userId,
-                'affiliation_type' => $affiliationType,
-                'membership_status' => $membershipStatus,
-                'canonical_status'  => $canonicalStatus,
-                'is_member'        => $isMember,
-                'source'           => (string) ($data['source'] ?? 'system'),
-                'start_date'       => (string) ($data['start_date'] ?? date('Y-m-d')),
-                'created_at'       => $now,
-                'updated_at'       => $now,
-            ]);
+            if (! $affiliated) {
+                throw new \RuntimeException('Failed to create parish affiliation.');
+            }
 
             $profileId = null;
             if ($userId !== null && $userId > 0) {
@@ -142,7 +144,6 @@ class PersonProvisioningService
             'phone'            => (string) ($data['phone'] ?? '') ?: null,
             'address'          => (string) ($data['address'] ?? '') ?: null,
             'email'            => (string) ($data['email'] ?? '') ?: null,
-            'membership_status' => (string) ($data['profile_membership_status'] ?? $data['membership_status'] ?? 'regular_attender'),
             'portal_access'    => (string) ($data['portal_access'] ?? 'none'),
             'is_confirmed'     => 0,
             'birth_date'       => (string) ($data['birth_date'] ?? $data['birthdate'] ?? '') ?: null,

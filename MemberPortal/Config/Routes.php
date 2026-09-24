@@ -89,11 +89,12 @@ $routes->group('', ['filter' => 'session'], function ($routes) {
         $routes->post('delete/(:num)', '\\MemberPortal\\Controllers\\LeadershipPositions::delete/$1');
     });
 
-    $routes->group('guest-conversions', ['filter' => 'permission:guest.edit'], function ($routes) {
-        $routes->get('/', '\\MemberPortal\\Controllers\\GuestConversions::index');
-        $routes->post('convert/(:num)', '\\MemberPortal\\Controllers\\GuestConversions::convert/$1');
-        $routes->post('revert/(:num)', '\\MemberPortal\\Controllers\\GuestConversions::revert/$1');
-    });
+    // Retired: the standalone conversions screen folded into the visitor
+    // directory — /visitors?lifecycle=converted lists converted rows and
+    // /visitors/promote|revert-conversion are the canonical endpoints.
+    // Legacy URLs redirect to the directory's converted filter.
+    $routes->get('guest-conversions', static fn() => redirect()->to(base_url('visitors?lifecycle=converted')));
+    $routes->get('visitor-conversions', static fn() => redirect()->to(base_url('visitors?lifecycle=converted')));
 
     $routes->group('standing', ['filter' => 'permission:member.edit'], function ($routes) {
         $routes->get('/', '\\MemberPortal\\Controllers\\Standing::index');

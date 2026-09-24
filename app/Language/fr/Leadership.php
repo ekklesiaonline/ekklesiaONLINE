@@ -51,4 +51,11 @@ return [
     'deleteSuccess' => 'Poste de leadership supprime avec succes.',
     'deleteFailed' => 'Echec de la suppression du poste de leadership.',
     'notGoodStanding' => 'Cette personne n\'est pas enregistrée comme membre en règle. Les postes laïcs exigent un communiant en règle ; accordez une dérogation dans ses données d\'adhésion pour faire exception.',
+    'eligibilityMissing' => 'Cette personne ne remplit pas les conditions requises pour un poste de leadership : {0}.',
+    'reqPortalAccess' => 'un acces actif au portail (invitation acceptee et premiere connexion effectuee)',
+    'reqBaptized' => 'un bapteme enregistre',
+    'reqConfirmed' => 'une confirmation enregistree',
+    'reqPledged' => 'une promesse d offrande pour l annee en cours',
+    'reqGoodStanding' => 'le statut de communiant en regle (ou une derogation de bonne conduite)',
+    'noPortalAccess' => 'pas d acces au portail',
 ];

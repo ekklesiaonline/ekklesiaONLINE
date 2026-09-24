@@ -31,18 +31,14 @@ final class ModuleCrudControllerPathsTest extends CIUnitTestCase
         $parishId = $this->insertParish('CRUD Members Parish');
         $userId = $this->insertUser('member.crud.user');
 
-        $profileId = $this->insertProfile($userId, $parishId, 'Member', 'Crud', 'active');
+        $profileId = $this->insertProfile($userId, $parishId, 'Member', 'Crud');
         $this->assertGreaterThan(0, $profileId);
 
         $this->db->table('parish_affiliation')->insert([
             'linked_user_id' => $userId,
             'parish_id' => $parishId,
             'person_id' => null,
-            'affiliation_type' => 'member',
             'membership_status' => 'member',
-            'canonical_status' => 'member',
-            'is_member' => 1,
-            'is_good_standing' => 0,
             'source' => 'system',
             'start_date' => date('Y-m-d'),
             'end_date' => null,
@@ -55,8 +51,6 @@ final class ModuleCrudControllerPathsTest extends CIUnitTestCase
             ->where('parish_id', $parishId)
             ->update([
                 'membership_status' => 'inactive',
-                'canonical_status' => 'inactive',
-                'is_member' => 1,
                 'updated_at' => date('Y-m-d H:i:s'),
             ]);
 
@@ -88,7 +82,7 @@ final class ModuleCrudControllerPathsTest extends CIUnitTestCase
 
         $parishId = $this->insertParish('CRUD Attendance Parish');
         $userId = $this->insertUser('attendance.crud.user');
-        $this->insertProfile($userId, $parishId, 'Attendance', 'Crud', 'active');
+        $this->insertProfile($userId, $parishId, 'Attendance', 'Crud');
 
         $serviceId = $this->insertService($parishId, '2026-03-31');
 
@@ -124,7 +118,7 @@ final class ModuleCrudControllerPathsTest extends CIUnitTestCase
 
         $parishId = $this->insertParish('CRUD Donation Parish');
         $userId = $this->insertUser('donation.crud.user');
-        $this->insertProfile($userId, $parishId, 'Donation', 'Crud', 'active');
+        $this->insertProfile($userId, $parishId, 'Donation', 'Crud');
 
         $fundId = null;
         if ($this->tableAvailable('fund')) {
@@ -172,7 +166,7 @@ final class ModuleCrudControllerPathsTest extends CIUnitTestCase
 
         $parishId = $this->insertParish('CRUD Volunteer Parish');
         $userId = $this->insertUser('volunteer.crud.user');
-        $this->insertProfile($userId, $parishId, 'Volunteer', 'Crud', 'active');
+        $this->insertProfile($userId, $parishId, 'Volunteer', 'Crud');
 
         $serviceId = $this->insertService($parishId, '2026-03-31');
 
@@ -251,7 +245,7 @@ final class ModuleCrudControllerPathsTest extends CIUnitTestCase
         return (int) $this->db->insertID();
     }
 
-    private function insertProfile(int $userId, int $parishId, string $firstName, string $lastName, string $status): int
+    private function insertProfile(int $userId, int $parishId, string $firstName, string $lastName): int
     {
         $table = $this->resolveTableName('profile');
         if ($table === null) {
@@ -263,7 +257,6 @@ final class ModuleCrudControllerPathsTest extends CIUnitTestCase
             'parish_id' => $parishId,
             'first_name' => $firstName,
             'last_name' => $lastName,
-            'membership_status' => $status,
             'created_at' => date('Y-m-d H:i:s'),
             'updated_at' => date('Y-m-d H:i:s'),
         ]);

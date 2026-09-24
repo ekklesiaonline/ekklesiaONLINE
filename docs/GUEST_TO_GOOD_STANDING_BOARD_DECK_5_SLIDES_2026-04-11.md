@@ -1,3 +1,7 @@
+> **SUPERSEDED** — This document describes the retired guest-table era. The canonical lifecycle is `parish_affiliation.membership_status` (`visitor → regular_attender → member`); see `docs/VISITOR_LIFECYCLE.md` and `docs/FOLLOWUP_WORKFLOW_SYSTEM.md`.
+>
+> ---
+>
 # Board Deck: Guest to Good Standing (5 Slides)
 
 ## Slide 1 - Executive Lifecycle

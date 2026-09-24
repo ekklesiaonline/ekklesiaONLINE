@@ -92,16 +92,16 @@ final class BulkMessageServiceTest extends CIUnitTestCase
         $this->assertSame([$personId, $legacyUser], $ids);
     }
 
-    public function testGuestAudienceIncludesUnconvertedGuests(): void
+    public function testVisitorAudienceIncludesUnconvertedVisitors(): void
     {
-        $guestPersonId = $this->seedGuestPerson(301, 'guest@example.test');
-        $this->seedGuestPerson(301, 'converted@example.test', date('Y-m-d H:i:s'));
+        $visitorPersonId = $this->seedVisitorPerson(301, 'visitor@example.test');
+        $this->seedVisitorPerson(301, 'converted@example.test', date('Y-m-d H:i:s'));
 
-        $recipients = $this->service->resolveAudience(301, ['include_guests' => true]);
+        $recipients = $this->service->resolveAudience(301, ['include_visitors' => true]);
 
         $this->assertCount(1, $recipients);
-        $this->assertSame($guestPersonId, $recipients[0]['person_id']);
-        $this->assertSame('guest@example.test', $recipients[0]['email']);
+        $this->assertSame($visitorPersonId, $recipients[0]['person_id']);
+        $this->assertSame('visitor@example.test', $recipients[0]['email']);
     }
 
     public function testDuplicatePersonAcrossSelectorsResolvesOnce(): void
@@ -337,9 +337,7 @@ final class BulkMessageServiceTest extends CIUnitTestCase
         $this->db->table('parish_affiliation')->insert([
             'parish_id'         => $parishId,
             'person_id'         => $personId,
-            'affiliation_type'  => 'member',
             'membership_status' => $status,
-            'is_member'         => $status === 'member' ? 1 : 0,
             'is_primary'        => 1,
             'source'            => 'system',
             'created_at'        => date('Y-m-d H:i:s'),
@@ -349,10 +347,10 @@ final class BulkMessageServiceTest extends CIUnitTestCase
         return $personId;
     }
 
-    private function seedGuestPerson(int $parishId, string $email, ?string $convertedAt = null): int
+    private function seedVisitorPerson(int $parishId, string $email, ?string $convertedAt = null): int
     {
         $this->db->table('person')->insert([
-            'first_name' => 'Guest',
+            'first_name' => 'Visitor',
             'last_name'  => 'Person',
             'email'      => $email,
             'created_at' => date('Y-m-d H:i:s'),
@@ -363,9 +361,7 @@ final class BulkMessageServiceTest extends CIUnitTestCase
         $this->db->table('parish_affiliation')->insert([
             'parish_id'              => $parishId,
             'person_id'              => $personId,
-            'affiliation_type'       => 'guest',
             'membership_status'      => 'visitor',
-            'is_member'              => 0,
             'converted_to_member_at' => $convertedAt,
             'created_at'             => date('Y-m-d H:i:s'),
             'updated_at'             => date('Y-m-d H:i:s'),

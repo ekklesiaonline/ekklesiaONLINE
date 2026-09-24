@@ -100,8 +100,8 @@
             <div class="col-md-4">
                 <div class="feature-card text-center">
                     <i class="bi bi-person-heart text-danger" style="font-size: 3rem;" aria-hidden="true"></i>
-                    <h4 class="mt-3"><?= lang('Home.featureGuestTitle') ?></h4>
-                    <p><?= lang('Home.featureGuestBody') ?></p>
+                    <h4 class="mt-3"><?= lang('Home.featureVisitorTitle') ?></h4>
+                    <p><?= lang('Home.featureVisitorBody') ?></p>
                 </div>
             </div>
             <div class="col-md-4">

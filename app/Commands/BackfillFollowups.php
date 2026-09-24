@@ -10,7 +10,7 @@ use CodeIgniter\Database\ConnectionInterface;
 /**
  * BackfillFollowups — spark followup:backfill command
  *
- * Finds all canonical guest affiliations that have zero followup_log
+ * Finds all canonical visitor affiliations that have zero followup_log
  * entries and schedules the currently active follow-up sequences for
  * them, using the person's earliest recorded visit date (or the
  * affiliation created_at as a fallback).
@@ -25,7 +25,7 @@ class BackfillFollowups extends BaseCommand
 {
     protected $group       = 'Followup';
     protected $name        = 'followup:backfill';
-    protected $description = 'Schedule follow-up sequences for guests that have no log entries yet.';
+    protected $description = 'Schedule follow-up sequences for visitors that have no log entries yet.';
     protected $usage       = 'followup:backfill [--parish <id>] [--dry-run]';
     protected $options     = [
         '--parish'  => 'Scope backfill to a single parish_id.',
@@ -53,13 +53,13 @@ class BackfillFollowups extends BaseCommand
         $db = db_connect();
 
         // ---------------------------------------------------------------
-        // 1. Find canonical guest affiliations with zero followup_log rows
+        // 1. Find canonical visitor affiliations with zero followup_log rows
         // ---------------------------------------------------------------
         $query = $db->table('parish_affiliation pa')
             ->select('pa.person_id AS id, pa.person_id, pa.parish_id, pa.created_at, pe.first_name, pe.last_name, pe.preferred_timezone')
             ->join('person pe', 'pe.id = pa.person_id AND pe.deleted_at IS NULL', 'inner')
             ->join('followup_log gfl', 'gfl.person_id = pa.person_id', 'left')
-            ->where('pa.affiliation_type', 'guest')
+            ->where('pa.membership_status', 'visitor')
             ->where('pa.deleted_at IS NULL', null, false)
             ->where('gfl.id IS NULL', null, false);
 
@@ -67,14 +67,14 @@ class BackfillFollowups extends BaseCommand
             $query->where('pa.parish_id', $parishId);
         }
 
-        $guests = $query->get()->getResultArray();
+        $visitors = $query->get()->getResultArray();
 
-        if (empty($guests)) {
-            CLI::write('No guests need backfilling — all guests already have log entries.', 'green');
+        if (empty($visitors)) {
+            CLI::write('No visitors need backfilling — all visitors already have log entries.', 'green');
             return;
         }
 
-        CLI::write('Found ' . count($guests) . ' guest(s) with no log entries.', 'cyan');
+        CLI::write('Found ' . count($visitors) . ' visitor(s) with no log entries.', 'cyan');
 
         // ---------------------------------------------------------------
         // 2. Fetch available active sequences per parish (cache per parish)
@@ -87,17 +87,17 @@ class BackfillFollowups extends BaseCommand
         $skippedNoSeq   = 0;
 
         // ---------------------------------------------------------------
-        // 3. Schedule each guest
+        // 3. Schedule each visitor
         // ---------------------------------------------------------------
-        foreach ($guests as $guest) {
-            $personId = (int) $guest['person_id'];
-            $cId      = (int) $guest['parish_id'];
-            $name     = trim(($guest['first_name'] ?? '') . ' ' . ($guest['last_name'] ?? ''));
+        foreach ($visitors as $visitor) {
+            $personId = (int) $visitor['person_id'];
+            $cId      = (int) $visitor['parish_id'];
+            $name     = trim(($visitor['first_name'] ?? '') . ' ' . ($visitor['last_name'] ?? ''));
 
             // Use earliest recorded visit, then affiliation created_at
-            $visitDate = $this->resolveVisitDate($db, $personId, $guest);
+            $visitDate = $this->resolveVisitDate($db, $personId, $visitor);
 
-            $tz = (string) ($guest['preferred_timezone'] ?? '');
+            $tz = (string) ($visitor['preferred_timezone'] ?? '');
 
             // Check active sequences for this parish (cache result)
             if (!isset($seqCountByParish[$cId])) {
@@ -131,7 +131,7 @@ class BackfillFollowups extends BaseCommand
 
         if ($isDryRun) {
             CLI::write(
-                '[DRY-RUN] Would process ' . count($guests) . ' guest(s). Skipped (no sequences): ' . $skippedNoSeq . '.',
+                '[DRY-RUN] Would process ' . count($visitors) . ' visitor(s). Skipped (no sequences): ' . $skippedNoSeq . '.',
                 'yellow'
             );
         } else {
@@ -150,7 +150,7 @@ class BackfillFollowups extends BaseCommand
      * Determine the best visit date to use as the base for scheduling.
      * Priority: earliest person_visit row → affiliation created_at.
      */
-    private function resolveVisitDate(ConnectionInterface $db, int $personId, array $guest): string
+    private function resolveVisitDate(ConnectionInterface $db, int $personId, array $visitor): string
     {
         $earliest = $db->table('person_visit')
             ->select('visit_date')
@@ -165,6 +165,6 @@ class BackfillFollowups extends BaseCommand
         }
 
         // Fall back to the date portion of created_at
-        return substr((string) ($guest['created_at'] ?? date('Y-m-d')), 0, 10);
+        return substr((string) ($visitor['created_at'] ?? date('Y-m-d')), 0, 10);
     }
 }

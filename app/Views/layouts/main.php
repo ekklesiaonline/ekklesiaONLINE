@@ -401,7 +401,7 @@
                         'families' => 'App.navFamilies',
                         'services' => 'App.navServices',
                         'attendance' => 'App.navAttendance',
-                        'guests' => 'App.navGuests',
+                        'visitors' => 'App.navVisitors',
                         'followup' => 'App.navFollowUp',
                         'donations' => 'App.navDonations',
                         'expenses' => 'App.navExpenses',
@@ -824,6 +824,18 @@
                         delete pendingWrites[key];
                     }
                 });
+            });
+
+            // Keep the meta token in sync: session CSRF regenerates the hash
+            // after each verified request, and AJAX responses echo the new
+            // token via the X-CSRF-TOKEN header (csrfTokenHeader filter).
+            $(document).ajaxComplete(function (_event, xhr) {
+                var newToken = xhr && typeof xhr.getResponseHeader === 'function'
+                    ? xhr.getResponseHeader('X-CSRF-TOKEN')
+                    : null;
+                if (newToken && token) {
+                    token.setAttribute('content', newToken);
+                }
             });
 
             $(document).ajaxError(function (_event, xhr) {

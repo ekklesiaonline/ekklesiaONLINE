@@ -21,7 +21,7 @@ final class ModuleRoutesSmokeTest extends CIUnitTestCase
                 ROOTPATH . 'Clergy/Config/Routes.php',
                 [
                     'Members::index',
-                    'Guest::index',
+                    'Visitors::index',
                 ],
             ],
             'worship routes' => [

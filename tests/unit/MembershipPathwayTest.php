@@ -8,7 +8,7 @@ use CodeIgniter\Test\DatabaseTestTrait;
  * T3.3: membership pathway transitions.
  *
  * Affiliation status changes go through MembershipPathwayService so the
- * canonical status vocabulary, is_member / affiliation_type / end_date
+ * canonical status vocabulary, is_member / end_date
  * consistency, person_status_history audit rows (keyed by person_id), and
  * terminal-status reason requirements are enforced in one place.
  *
@@ -71,7 +71,7 @@ final class MembershipPathwayTest extends CIUnitTestCase
 
     public function testTransitionUpdatesAffiliationAndRecordsHistoryUnderPersonId(): void
     {
-        $affiliationId = $this->insertAffiliation(501, 9001, 'visitor', 0);
+        $affiliationId = $this->insertAffiliation(501, 9001, 'visitor');
 
         $result = $this->service->transitionForUser(501, 301, 'member', 77, 'Completed new member class');
 
@@ -80,7 +80,6 @@ final class MembershipPathwayTest extends CIUnitTestCase
 
         $row = $this->db->table('parish_affiliation')->where('id', $affiliationId)->get()->getRowArray();
         $this->assertSame('member', $row['membership_status']);
-        $this->assertSame('member', $row['affiliation_type']);
         $this->assertSame(1, (int) $row['is_member']);
 
         $history = $this->db->table('person_status_history')
@@ -99,7 +98,7 @@ final class MembershipPathwayTest extends CIUnitTestCase
 
     public function testTerminalTransitionRequiresReason(): void
     {
-        $affiliationId = $this->insertAffiliation(502, 9002, 'member', 1);
+        $affiliationId = $this->insertAffiliation(502, 9002, 'member');
 
         $result = $this->service->transitionForUser(502, 301, 'deceased', 77, '');
 
@@ -112,7 +111,7 @@ final class MembershipPathwayTest extends CIUnitTestCase
 
     public function testTerminalTransitionSetsEndDate(): void
     {
-        $affiliationId = $this->insertAffiliation(503, 9003, 'member', 1);
+        $affiliationId = $this->insertAffiliation(503, 9003, 'member');
 
         $result = $this->service->transitionForUser(503, 301, 'transferred', 77, 'Moved to another parish');
 
@@ -127,7 +126,7 @@ final class MembershipPathwayTest extends CIUnitTestCase
 
     public function testCorrectionOutOfTerminalAllowedWithReason(): void
     {
-        $affiliationId = $this->insertAffiliation(504, 9004, 'deceased', 0);
+        $affiliationId = $this->insertAffiliation(504, 9004, 'deceased');
 
         $result = $this->service->transitionForUser(504, 301, 'member', 77, 'Recorded in error');
 
@@ -141,7 +140,7 @@ final class MembershipPathwayTest extends CIUnitTestCase
 
     public function testInvalidStatusRejected(): void
     {
-        $this->insertAffiliation(505, 9005, 'visitor', 0);
+        $this->insertAffiliation(505, 9005, 'visitor');
 
         $result = $this->service->transitionForUser(505, 301, 'superstar', 77, 'test');
 
@@ -151,7 +150,7 @@ final class MembershipPathwayTest extends CIUnitTestCase
 
     public function testSameStatusIsNoOpWithoutHistory(): void
     {
-        $this->insertAffiliation(506, 9006, 'member', 1);
+        $this->insertAffiliation(506, 9006, 'member');
 
         $result = $this->service->transitionForUser(506, 301, 'member', 77, null);
 
@@ -175,7 +174,7 @@ final class MembershipPathwayTest extends CIUnitTestCase
     public function testCrossParishAffiliationIsNotTransitionable(): void
     {
         $this->seedParish(302);
-        $affiliationId = $this->insertAffiliation(507, 9007, 'visitor', 0, 302);
+        $affiliationId = $this->insertAffiliation(507, 9007, 'visitor', 302);
 
         // The model is tenant-scoped: an affiliation in parish 302 is not
         // reachable while operating in parish 301, even when addressed by id.
@@ -203,15 +202,13 @@ final class MembershipPathwayTest extends CIUnitTestCase
         ]);
     }
 
-    private function insertAffiliation(int $userId, int $personId, string $status, int $isMember, int $parishId = 301): int
+    private function insertAffiliation(int $userId, int $personId, string $status, int $parishId = 301): int
     {
         $this->db->table('parish_affiliation')->insert([
             'linked_user_id'    => $userId,
             'person_id'         => $personId,
             'parish_id'         => $parishId,
-            'affiliation_type'  => \App\Services\MembershipStatusService::affiliationTypeForStatus($status),
             'membership_status' => $status,
-            'is_member'         => $isMember,
             'start_date'        => date('Y-m-d'),
             'created_at'        => date('Y-m-d H:i:s'),
             'updated_at'        => date('Y-m-d H:i:s'),

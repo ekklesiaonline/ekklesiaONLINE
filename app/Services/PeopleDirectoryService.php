@@ -116,9 +116,6 @@ class PeopleDirectoryService
         foreach ($builder->groupBy('membership_status', false)->get()->getResultArray() as $row) {
             $status = MembershipStatusService::normalizeAffiliationStatus((string) ($row['membership_status'] ?? ''));
             if (! in_array($status, $validStatuses, true)) {
-                $status = MembershipStatusService::profileToAffiliation($status);
-            }
-            if (! in_array($status, $validStatuses, true)) {
                 $status = 'visitor';
             }
 
@@ -156,17 +153,13 @@ class PeopleDirectoryService
                 'p.gender',
                 'pa.id AS affiliation_id',
                 'pa.parish_id',
-                'pa.affiliation_type',
                 'pa.membership_status',
-                'pa.canonical_status',
                 'pa.is_member',
-                'pa.is_good_standing',
                 'pa.start_date',
                 'pr.id AS profile_id',
                 'pr.user_id',
                 'pr.nickname',
                 'pr.profile_picture',
-                'pr.membership_status AS profile_membership_status',
                 'u.username',
                 'u.active AS user_active',
                 'ai.secret AS email_identity',
@@ -303,7 +296,6 @@ class PeopleDirectoryService
                 'p.phone AS person_phone',
                 'pa.membership_status',
                 'pa.is_member',
-                'pa.is_good_standing',
                 'pa.linked_user_id AS user_id',
                 'pr.portal_access',
                 'ai.secret AS email_identity',

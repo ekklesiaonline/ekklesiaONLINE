@@ -138,6 +138,15 @@ abstract class BaseController extends Controller
 
             if ($this->profile) {
                 $this->parishId = (int) ($this->profile['parish_id'] ?? $this->profile['parish_id'] ?? 0);
+
+                // profile.membership_status was dropped; the canonical status
+                // lives on parish_affiliation. Decorate the row so views keep
+                // reading $profile['membership_status'].
+                $affiliationStatus = model('MemberParishAffiliationModel')
+                    ->statusForUser((int) $this->user->id);
+                if ($affiliationStatus !== null) {
+                    $this->profile['membership_status'] = $affiliationStatus;
+                }
             }
         }
 
@@ -882,7 +891,7 @@ abstract class BaseController extends Controller
             'Edit Parish' => 'App.headerEditParish',
             'Edit Event' => 'App.headerEditEvent',
             'Edit Expense' => 'App.headerEditExpense',
-            'Edit Guest' => 'App.headerEditGuest',
+            'Edit Visitor' => 'App.headerEditVisitor',
             'Edit Member' => 'App.headerEditMember',
             'Edit My Profile' => 'App.headerEditMyProfile',
             'Edit Schedule' => 'App.headerEditSchedule',
@@ -896,9 +905,9 @@ abstract class BaseController extends Controller
             'Finance Dashboard' => 'App.navFinanceDashboard',
             'Follow-up Tasks' => 'App.headerFollowUpTasks',
             'Good Standing' => 'App.navGoodStanding',
-            'Guest Conversions' => 'App.navGuestConversions',
-            'Guest Details' => 'App.headerGuestDetails',
-            'Guests' => 'App.navGuests',
+            'Visitor Details' => 'App.headerVisitorDetails',
+            'Visitor Detail' => 'App.headerVisitorDetails',
+            'Visitors' => 'App.navVisitors',
             'Leadership Positions' => 'App.headerLeadershipPositions',
             'Manage Parish Staff' => 'App.headerManageParishStaff',
             'Mark Attendance' => 'App.headerMarkAttendance',
@@ -908,7 +917,7 @@ abstract class BaseController extends Controller
             'Province Dashboard' => 'App.headerProvinceDashboard',
             'Record Donation' => 'App.headerRecordDonation',
             'Record Expense' => 'App.headerRecordExpense',
-            'Register Guest' => 'App.headerRegisterGuest',
+            'Register Visitor' => 'App.headerRegisterVisitor',
             'Reports' => 'App.navReports',
             'Service Details' => 'App.headerServiceDetails',
             'Service Worship Plan' => 'App.headerServiceWorshipPlan',

@@ -134,7 +134,7 @@ final class CriticalWorkflowContractCoverageTest extends CIUnitTestCase
      * daily cron can dispatch due followup_log entries.
      *
      * Without this command, even correctly-scheduled log rows will never be
-     * sent — guests will never receive automated follow-up emails/SMS/calls.
+     * sent — visitors will never receive automated follow-up emails/SMS/calls.
      */
     public function testFollowupSendCommandClassExists(): void
     {
@@ -143,7 +143,7 @@ final class CriticalWorkflowContractCoverageTest extends CIUnitTestCase
             $content,
             "app/Commands/SendFollowups.php must exist. This is the command invoked by the " .
                 "daily cron '0 9 * * * php spark followup:send'. Without it the automated " .
-                "guest follow-up dispatch is completely broken."
+                "visitor follow-up dispatch is completely broken."
         );
 
         $this->assertStringContainsString(

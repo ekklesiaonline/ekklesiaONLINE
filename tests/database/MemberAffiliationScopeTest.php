@@ -58,7 +58,7 @@ final class MemberAffiliationScopeTest extends CIUnitTestCase
 
         $this->insertAffiliation($activeUserId, $parishId, $dioceseId, 'member');
         $this->insertAffiliation($inactiveUserId, $parishId, $dioceseId, 'inactive');
-        $this->insertAffiliation($visitorUserId, $parishId, $dioceseId, 'guest');
+        $this->insertAffiliation($visitorUserId, $parishId, $dioceseId, 'visitor');
 
         $count = model(MemberParishAffiliationModel::class)->countDistinctMembers($parishId);
 
@@ -77,11 +77,7 @@ final class MemberAffiliationScopeTest extends CIUnitTestCase
             'linked_user_id' => $userId,
             'parish_id' => $parishId,
             'person_id' => null,
-            'affiliation_type' => 'member',
             'membership_status' => 'inactive',
-            'canonical_status' => 'inactive',
-            'is_member' => 0,
-            'is_good_standing' => 0,
             'source' => 'system',
             'start_date' => '2026-01-01',
             'end_date' => '2026-02-01',
@@ -184,7 +180,6 @@ final class MemberAffiliationScopeTest extends CIUnitTestCase
             'phone' => ['type' => 'TEXT', 'null' => true],
             'phone_hash' => ['type' => 'VARCHAR', 'constraint' => 64, 'null' => true],
             'address' => ['type' => 'TEXT', 'null' => true],
-            'membership_status' => ['type' => 'VARCHAR', 'constraint' => 20, 'default' => 'pending'],
             'created_at' => ['type' => 'DATETIME', 'null' => true],
             'updated_at' => ['type' => 'DATETIME', 'null' => true],
             'deleted_at' => ['type' => 'DATETIME', 'null' => true],
@@ -220,11 +215,7 @@ final class MemberAffiliationScopeTest extends CIUnitTestCase
             'linked_user_id' => ['type' => 'INTEGER', 'null' => true],
             'parish_id' => ['type' => 'INTEGER'],
             'person_id' => ['type' => 'INTEGER', 'null' => true],
-            'affiliation_type' => ['type' => 'VARCHAR', 'constraint' => 32, 'default' => 'member'],
-            'membership_status' => ['type' => 'VARCHAR', 'constraint' => 20, 'default' => 'guest'],
-            'canonical_status' => ['type' => 'VARCHAR', 'constraint' => 32, 'null' => true],
-            'is_member' => ['type' => 'INTEGER', 'constraint' => 1, 'default' => 0],
-            'is_good_standing' => ['type' => 'INTEGER', 'constraint' => 1, 'default' => 0],
+            'membership_status' => ['type' => 'VARCHAR', 'constraint' => 20, 'default' => 'visitor'],
             'source' => ['type' => 'VARCHAR', 'constraint' => 32, 'default' => 'system'],
             'start_date' => ['type' => 'DATE', 'null' => true],
             'is_primary' => ['type' => 'INTEGER', 'constraint' => 1, 'default' => 0],
@@ -289,7 +280,6 @@ final class MemberAffiliationScopeTest extends CIUnitTestCase
             'parish_id' => $parishId,
             'first_name' => $firstName,
             'last_name' => $lastName,
-            'membership_status' => 'member',
             'created_at' => date('Y-m-d H:i:s'),
             'updated_at' => date('Y-m-d H:i:s'),
         ]);
@@ -301,8 +291,7 @@ final class MemberAffiliationScopeTest extends CIUnitTestCase
             $userId,
             $parishId,
             false,
-            $status,
-            in_array($status, ['member', 'inactive'], true)
+            $status
         );
     }
 }

@@ -40,8 +40,8 @@ class WorshipDashboard extends BaseController
             ->where('scheduled_date <=', $monthEnd)
             ->countAllResults());
 
-        // Recent guests
-        $recentGuests = (new \App\Services\GuestDirectoryService())->recentForParish($parishId, 5);
+        // Recent visitors
+        $recentVisitors = (new \App\Services\VisitorDirectoryService())->recentForParish($parishId, 5);
 
         // Call tasks today
         $callTasksToday = (int) $db->table('call_task')
@@ -57,7 +57,7 @@ class WorshipDashboard extends BaseController
             'parish_id' => $parishId,
             'recent_services' => $recentServices,
             'pending_followups' => $pendingFollowUps,
-            'recent_guests' => $recentGuests,
+            'recent_visitors' => $recentVisitors,
             'call_tasks_today' => $callTasksToday,
             'sunday_attendance_labels' => $sundayAttendanceTrend['labels'],
             'sunday_attendance_averages' => $sundayAttendanceTrend['sunday_averages'],

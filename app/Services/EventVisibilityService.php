@@ -201,7 +201,7 @@ class EventVisibilityService
             return (int) ($affiliation['is_member'] ?? 0) === 1;
         }
 
-        return in_array((string) ($affiliation['membership_status'] ?? ''), ['active', 'inactive'], true);
+        return \App\Services\MembershipStatusService::isOnRegister((string) ($affiliation['membership_status'] ?? ''));
     }
 
     /**

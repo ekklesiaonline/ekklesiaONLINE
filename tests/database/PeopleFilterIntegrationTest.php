@@ -32,9 +32,9 @@ final class PeopleFilterIntegrationTest extends CIUnitTestCase
     public function testScopeAllReturnsEveryPersonForParish(): void
     {
         $parishId = $this->insertParish('Scope All Parish');
-        $this->insertParishPerson($parishId, 'Alice', 'member', 1);
-        $this->insertParishPerson($parishId, 'Bob', 'visitor', 0);
-        $this->insertParishPerson($parishId, 'Carol', 'visitor', 0);
+        $this->insertParishPerson($parishId, 'Alice', 'member');
+        $this->insertParishPerson($parishId, 'Bob', 'visitor');
+        $this->insertParishPerson($parishId, 'Carol', 'visitor');
 
         $result = $this->service->listForParish($parishId, ['scope' => 'all']);
 
@@ -45,10 +45,10 @@ final class PeopleFilterIntegrationTest extends CIUnitTestCase
     public function testScopeMembersReturnsOnlyTaggedMembers(): void
     {
         $parishId = $this->insertParish('Members Only Parish');
-        $this->insertParishPerson($parishId, 'Alice', 'member', 1);
-        $this->insertParishPerson($parishId, 'Bob', 'member', 1);
-        $this->insertParishPerson($parishId, 'Carol', 'visitor', 0);
-        $this->insertParishPerson($parishId, 'Dave', 'visitor', 0);
+        $this->insertParishPerson($parishId, 'Alice', 'member');
+        $this->insertParishPerson($parishId, 'Bob', 'member');
+        $this->insertParishPerson($parishId, 'Carol', 'visitor');
+        $this->insertParishPerson($parishId, 'Dave', 'visitor');
 
         $result = $this->service->listForParish($parishId, ['scope' => 'members']);
 
@@ -63,9 +63,9 @@ final class PeopleFilterIntegrationTest extends CIUnitTestCase
     public function testScopeNonMembersReturnsOnlyUntaggedPeople(): void
     {
         $parishId = $this->insertParish('Non Members Parish');
-        $this->insertParishPerson($parishId, 'Alice', 'member', 1);
-        $this->insertParishPerson($parishId, 'Bob', 'visitor', 0);
-        $this->insertParishPerson($parishId, 'Carol', 'visitor', 0);
+        $this->insertParishPerson($parishId, 'Alice', 'member');
+        $this->insertParishPerson($parishId, 'Bob', 'visitor');
+        $this->insertParishPerson($parishId, 'Carol', 'visitor');
 
         $result = $this->service->listForParish($parishId, ['scope' => 'non_members']);
 
@@ -79,8 +79,8 @@ final class PeopleFilterIntegrationTest extends CIUnitTestCase
     public function testInvalidOrNullScopeDefaultsToAll(): void
     {
         $parishId = $this->insertParish('Default Scope Parish');
-        $this->insertParishPerson($parishId, 'A', 'member', 1);
-        $this->insertParishPerson($parishId, 'B', 'visitor', 0);
+        $this->insertParishPerson($parishId, 'A', 'member');
+        $this->insertParishPerson($parishId, 'B', 'visitor');
 
         // No scope key at all
         $resultNull = $this->service->listForParish($parishId, []);
@@ -96,9 +96,9 @@ final class PeopleFilterIntegrationTest extends CIUnitTestCase
     public function testStatusFilterReturnsSingleMatchingStatus(): void
     {
         $parishId = $this->insertParish('Status Filter Parish');
-        $this->insertParishPerson($parishId, 'Alice', 'member', 1);
-        $this->insertParishPerson($parishId, 'Bob', 'inactive', 1);
-        $this->insertParishPerson($parishId, 'Carol', 'visitor', 0);
+        $this->insertParishPerson($parishId, 'Alice', 'member');
+        $this->insertParishPerson($parishId, 'Bob', 'inactive');
+        $this->insertParishPerson($parishId, 'Carol', 'visitor');
 
         $result = $this->service->listForParish($parishId, ['scope' => 'all', 'status' => 'member']);
 
@@ -109,11 +109,12 @@ final class PeopleFilterIntegrationTest extends CIUnitTestCase
     public function testStatusFilterCombinedWithScopeMembers(): void
     {
         $parishId = $this->insertParish('Combined Filter Parish');
-        $this->insertParishPerson($parishId, 'Alice', 'member', 1);
-        $this->insertParishPerson($parishId, 'Bob', 'inactive', 1);
-        $this->insertParishPerson($parishId, 'Carol', 'member', 0);
+        $this->insertParishPerson($parishId, 'Alice', 'member');
+        $this->insertParishPerson($parishId, 'Bob', 'inactive');
+        $this->insertParishPerson($parishId, 'Carol', 'regular_attender');
 
-        // members + status=member should return only tagged members
+        // members + status=member should return only active members —
+        // Bob is on the register but inactive; Carol is off-register
         $result = $this->service->listForParish($parishId, ['scope' => 'members', 'status' => 'member']);
 
         $this->assertSame(1, (int) $result['total']);
@@ -123,9 +124,9 @@ final class PeopleFilterIntegrationTest extends CIUnitTestCase
     public function testNullStatusReturnsAllStatuses(): void
     {
         $parishId = $this->insertParish('Null Status Parish');
-        $this->insertParishPerson($parishId, 'A', 'member', 1);
-        $this->insertParishPerson($parishId, 'B', 'visitor', 0);
-        $this->insertParishPerson($parishId, 'C', 'inactive', 0);
+        $this->insertParishPerson($parishId, 'A', 'member');
+        $this->insertParishPerson($parishId, 'B', 'visitor');
+        $this->insertParishPerson($parishId, 'C', 'inactive');
 
         $result = $this->service->listForParish($parishId, ['scope' => 'all']);
 
@@ -139,9 +140,9 @@ final class PeopleFilterIntegrationTest extends CIUnitTestCase
         $parishA = $this->insertParish('Parish A');
         $parishB = $this->insertParish('Parish B');
 
-        $this->insertParishPerson($parishA, 'Alice', 'member', 1);
-        $this->insertParishPerson($parishB, 'Bob', 'member', 1);
-        $this->insertParishPerson($parishB, 'Carol', 'member', 1);
+        $this->insertParishPerson($parishA, 'Alice', 'member');
+        $this->insertParishPerson($parishB, 'Bob', 'member');
+        $this->insertParishPerson($parishB, 'Carol', 'member');
 
         $resultA = $this->service->listForParish($parishA, ['scope' => 'members']);
         $this->assertSame(1, (int) $resultA['total']);
@@ -156,9 +157,9 @@ final class PeopleFilterIntegrationTest extends CIUnitTestCase
     public function testStatusCountsAllIncludesEveryPerson(): void
     {
         $parishId = $this->insertParish('Status Counts All Parish');
-        $this->insertParishPerson($parishId, 'Alice', 'member', 1);
-        $this->insertParishPerson($parishId, 'Bob', 'inactive', 1);
-        $this->insertParishPerson($parishId, 'Carol', 'visitor', 0);
+        $this->insertParishPerson($parishId, 'Alice', 'member');
+        $this->insertParishPerson($parishId, 'Bob', 'inactive');
+        $this->insertParishPerson($parishId, 'Carol', 'visitor');
 
         $counts = $this->service->statusCountsForParish($parishId, 'all');
 
@@ -169,9 +170,9 @@ final class PeopleFilterIntegrationTest extends CIUnitTestCase
     public function testStatusCountsMembersOnlyExcludesNonMembers(): void
     {
         $parishId = $this->insertParish('Status Counts Members Parish');
-        $this->insertParishPerson($parishId, 'Alice', 'member', 1);
-        $this->insertParishPerson($parishId, 'Bob', 'inactive', 1);
-        $this->insertParishPerson($parishId, 'Carol', 'visitor', 0);
+        $this->insertParishPerson($parishId, 'Alice', 'member');
+        $this->insertParishPerson($parishId, 'Bob', 'inactive');
+        $this->insertParishPerson($parishId, 'Carol', 'visitor');
 
         $counts = $this->service->statusCountsForParish($parishId, 'members');
 
@@ -185,9 +186,9 @@ final class PeopleFilterIntegrationTest extends CIUnitTestCase
     public function testStatusCountsNonMembersOnlyExcludesMembers(): void
     {
         $parishId = $this->insertParish('Status Counts Non Members Parish');
-        $this->insertParishPerson($parishId, 'Alice', 'member', 1);
-        $this->insertParishPerson($parishId, 'Bob', 'visitor', 0);
-        $this->insertParishPerson($parishId, 'Carol', 'visitor', 0);
+        $this->insertParishPerson($parishId, 'Alice', 'member');
+        $this->insertParishPerson($parishId, 'Bob', 'visitor');
+        $this->insertParishPerson($parishId, 'Carol', 'visitor');
 
         $counts = $this->service->statusCountsForParish($parishId, 'non_members');
 
@@ -198,8 +199,8 @@ final class PeopleFilterIntegrationTest extends CIUnitTestCase
     public function testStatusCountsDefaultsToAllWhenScopeOmitted(): void
     {
         $parishId = $this->insertParish('Status Counts Default Parish');
-        $this->insertParishPerson($parishId, 'Alice', 'member', 1);
-        $this->insertParishPerson($parishId, 'Bob', 'visitor', 0);
+        $this->insertParishPerson($parishId, 'Alice', 'member');
+        $this->insertParishPerson($parishId, 'Bob', 'visitor');
 
         $counts = $this->service->statusCountsForParish($parishId);
 
@@ -213,7 +214,7 @@ final class PeopleFilterIntegrationTest extends CIUnitTestCase
     {
         $parishId = $this->insertParish('Pagination Parish');
         for ($i = 1; $i <= 5; $i++) {
-            $this->insertParishPerson($parishId, 'Person' . str_pad((string) $i, 2, '0', STR_PAD_LEFT), 'member', 1);
+            $this->insertParishPerson($parishId, 'Person' . str_pad((string) $i, 2, '0', STR_PAD_LEFT), 'member');
         }
 
         // limit=2, offset=2 → second page of 2
@@ -226,7 +227,7 @@ final class PeopleFilterIntegrationTest extends CIUnitTestCase
     public function testPageBeyondLastReturnsEmptyRows(): void
     {
         $parishId = $this->insertParish('Overflow Pagination Parish');
-        $this->insertParishPerson($parishId, 'Solo', 'member', 1);
+        $this->insertParishPerson($parishId, 'Solo', 'member');
 
         $result = $this->service->listForParish($parishId, ['scope' => 'all', 'limit' => 25, 'offset' => 2475]);
 
@@ -249,9 +250,9 @@ final class PeopleFilterIntegrationTest extends CIUnitTestCase
     public function testResultsOrderedByLastNameThenFirstName(): void
     {
         $parishId = $this->insertParish('Sort Parish');
-        $this->insertParishPersonFull($parishId, 'Zoe', 'Archer', 'member', 1);
-        $this->insertParishPersonFull($parishId, 'Anna', 'Brown', 'member', 1);
-        $this->insertParishPersonFull($parishId, 'Mike', 'Archer', 'member', 1);
+        $this->insertParishPersonFull($parishId, 'Zoe', 'Archer', 'member');
+        $this->insertParishPersonFull($parishId, 'Anna', 'Brown', 'member');
+        $this->insertParishPersonFull($parishId, 'Mike', 'Archer', 'member');
 
         $result = $this->service->listForParish($parishId, ['scope' => 'all']);
 
@@ -325,7 +326,6 @@ final class PeopleFilterIntegrationTest extends CIUnitTestCase
             'profile_picture'   => ['type' => 'VARCHAR', 'constraint' => 255, 'null' => true],
             'phone'             => ['type' => 'VARCHAR', 'constraint' => 255, 'null' => true],
             'portal_access'     => ['type' => 'VARCHAR', 'constraint' => 20, 'default' => 'none'],
-            'membership_status' => ['type' => 'VARCHAR', 'constraint' => 30, 'default' => 'visitor'],
             'created_at'        => ['type' => 'DATETIME', 'null' => true],
             'updated_at'        => ['type' => 'DATETIME', 'null' => true],
             'deleted_at'        => ['type' => 'DATETIME', 'null' => true],
@@ -361,11 +361,7 @@ final class PeopleFilterIntegrationTest extends CIUnitTestCase
             'linked_user_id'     => ['type' => 'INTEGER', 'null' => true],
             'parish_id'          => ['type' => 'INTEGER'],
             'person_id'          => ['type' => 'INTEGER', 'null' => true],
-            'affiliation_type'   => ['type' => 'VARCHAR', 'constraint' => 32, 'default' => 'member'],
             'membership_status'  => ['type' => 'VARCHAR', 'constraint' => 20, 'default' => 'visitor'],
-            'canonical_status'   => ['type' => 'VARCHAR', 'constraint' => 32, 'null' => true],
-            'is_member'          => ['type' => 'INTEGER', 'constraint' => 1, 'default' => 0],
-            'is_good_standing'   => ['type' => 'INTEGER', 'constraint' => 1, 'default' => 0],
             'source'             => ['type' => 'VARCHAR', 'constraint' => 32, 'default' => 'system'],
             'start_date'         => ['type' => 'DATE', 'null' => true],
             'end_date'           => ['type' => 'DATE', 'null' => true],
@@ -389,12 +385,12 @@ final class PeopleFilterIntegrationTest extends CIUnitTestCase
         return (int) $this->db->insertID();
     }
 
-    private function insertParishPerson(int $parishId, string $firstName, string $status, int $isMember): void
+    private function insertParishPerson(int $parishId, string $firstName, string $status): void
     {
-        $this->insertParishPersonFull($parishId, $firstName, 'Lastname', $status, $isMember);
+        $this->insertParishPersonFull($parishId, $firstName, 'Lastname', $status);
     }
 
-    private function insertParishPersonFull(int $parishId, string $firstName, string $lastName, string $status, int $isMember): void
+    private function insertParishPersonFull(int $parishId, string $firstName, string $lastName, string $status): void
     {
         $this->db->table('person')->insert([
             'first_name' => $firstName,
@@ -407,9 +403,7 @@ final class PeopleFilterIntegrationTest extends CIUnitTestCase
         $this->db->table('parish_affiliation')->insert([
             'parish_id'         => $parishId,
             'person_id'         => $personId,
-            'affiliation_type'  => 'member',
             'membership_status' => $status,
-            'is_member'         => $isMember,
             'source'            => 'test',
             'start_date'        => date('Y-m-d'),
             'created_at'        => date('Y-m-d H:i:s'),

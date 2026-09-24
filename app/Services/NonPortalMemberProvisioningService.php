@@ -44,11 +44,11 @@ class NonPortalMemberProvisioningService
         $relationship = $relationship === '' ? null : $relationship;
 
         $isChild = filter_var($payload['is_child'] ?? false, FILTER_VALIDATE_BOOLEAN);
-        $isMember = filter_var($payload['is_member'] ?? true, FILTER_VALIDATE_BOOLEAN);
+        $isMember = filter_var($payload['is_member'] ?? false, FILTER_VALIDATE_BOOLEAN);
         $defaultStatus = $isChild
-            ? 'regular_attender'
-            : ($isMember ? 'member' : 'regular_attender');
-        $paStatus = \App\Services\MembershipStatusService::profileToAffiliation($defaultStatus);
+            ? 'visitor'
+            : ($isMember ? 'member' : 'visitor');
+        $paStatus = \App\Services\MembershipStatusService::normalizeAffiliationStatus($defaultStatus);
 
         $useTransaction = strtolower((string) ($this->db->DBDriver ?? '')) !== 'sqlite3';
         if ($useTransaction) {
@@ -68,9 +68,6 @@ class NonPortalMemberProvisioningService
                 'birthdate'              => $birthDate,
                 'is_child'               => $isChild,
                 'membership_status'      => $paStatus,
-                'profile_membership_status' => $defaultStatus,
-                'affiliation_type'       => (int) \App\Services\MembershipStatusService::isMember($paStatus) === 1 ? 'member' : 'attendee',
-                'is_member'              => (int) \App\Services\MembershipStatusService::isMember($paStatus),
                 'source'                 => 'system',
                 'preferred_contact_method' => 'email',
                 'create_user'              => true,
@@ -217,6 +214,25 @@ class NonPortalMemberProvisioningService
 
         if ($identityCount === 0) {
             return $this->result(false, 409, 'ALREADY_NON_PORTAL', 'This member has no active portal identity.');
+        }
+
+        // Leadership eligibility requires portal access — revoking it while
+        // the user holds active positions would silently recreate the
+        // "leader with no login" inconsistency.
+        if ($this->db->tableExists('leadership_position')) {
+            $activePositions = $this->db->table('leadership_position')
+                ->where('user_id', $userId)
+                ->where('active', 1)
+                ->countAllResults();
+            if ($activePositions > 0) {
+                return $this->result(false, 409, 'ACTIVE_LEADERSHIP_POSITIONS', 'Portal access cannot be revoked while the user holds active leadership positions. End or deactivate the positions first.', [
+                    [
+                        'field' => 'userId',
+                        'code' => 'ACTIVE_LEADERSHIP_POSITIONS',
+                        'message' => 'User holds ' . $activePositions . ' active leadership position(s).',
+                    ],
+                ]);
+            }
         }
 
         $this->db->transBegin();

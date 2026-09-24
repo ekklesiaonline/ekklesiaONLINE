@@ -52,7 +52,7 @@ return [
     // -------------------------------------------------------------------------
     'totalPeople'         => 'People',
     'membersLabel'        => 'Members',
-    'guestsNotConverted'  => '{0} guests not yet converted',
+    'visitorsNotConverted'  => '{0} visitors not yet converted',
     'parishMembers'       => 'Parish Members',
     'goodStanding'        => 'Good Standing',
     'inLeadership'        => '{0} in leadership',
@@ -63,7 +63,7 @@ return [
     'netThisMonth'        => 'Net (This Month)',
     'lastMonthLabel'      => 'Last month',
     'birthdaysThisWeek'   => 'Birthdays This Week',
-    'pendingFollowUpsThisMonth' => 'Guests Pending Follow-up This Month',
+    'pendingFollowUpsThisMonth' => 'Visitors Pending Follow-up This Month',
     'doneFollowUpsThisMonthAdmins' => 'Done Follow-ups This Month',
     'eventsThisMonth'     => 'Events This Month',
 
@@ -73,8 +73,8 @@ return [
     'membershipStatus'    => 'Membership Status',
     'asaAscGraphics'      => 'ASA / ASC Graphics',
     'parishSundayAttendanceTitle' => 'Sunday Attendance',
-    'recentGuests'        => 'Recent Guests',
-    'noRecentGuests'      => 'No recent guests.',
+    'recentVisitors'        => 'Recent Visitors',
+    'noRecentVisitors'      => 'No recent visitors.',
 
     // -------------------------------------------------------------------------
     // Province dashboard - per-diocese summary
@@ -86,7 +86,7 @@ return [
     'colDiocese'           => 'Diocese',
     'colParishes'          => 'Parishes',
     'colPeople'            => 'People',
-    'colGuests'            => 'Guests',
+    'colVisitors'            => 'Visitors',
     'colMembers'           => 'Members',
     'colActive'            => 'Active',
     'colAttendance'        => 'Attendance',
@@ -116,7 +116,7 @@ return [
     'applyFilter' => 'Apply Filter',
     'showFilter' => 'Show Filter',
     'hideFilter' => 'Hide Filter',
-    'guestsLabel' => 'guests',
+    'visitorsLabel' => 'visitors',
     'goodStandingLabel' => 'good standing',
     'leadershipLabel' => 'leadership',
     'avgSundayWeekdayAttendance' => 'Average Sunday / Weekday Attendance',
@@ -315,11 +315,11 @@ return [
 
     // Follow-up overview panel (parish admin dashboard)
     'followupOverviewTitle'          => 'Follow-up Overview',
-    'followupPendingGuests'          => 'Guests in Follow-up',
+    'followupPendingVisitors'          => 'Visitors in Follow-up',
     'followupCallsToday'             => 'Calls Due Today',
     'followupFailedMessages7d'       => 'Failed Messages (7 days)',
-    'followupNewGuestsPerWeek'       => 'New Guests per Week',
-    'followupNewGuestsDatasetLabel'  => 'New Guests',
+    'followupNewVisitorsPerWeek'       => 'New Visitors per Week',
+    'followupNewVisitorsDatasetLabel'  => 'New Visitors',
     'followupLastUpdated'            => 'Updated at',
     'followupLoadError'              => 'Could not load follow-up stats. Please try again.',
     'exportCsv' => 'Export CSV',

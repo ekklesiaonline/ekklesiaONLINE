@@ -96,7 +96,7 @@ class SendFollowups extends BaseCommand
 
             // Build a full person array with decrypted fields so the dispatcher
             // doesn't have to worry about encryption (it still handles it safely)
-            $guest = [
+            $visitor = [
                 'id'                   => (int)    ($row['person_id'] ?? 0),
                 'person_id'            => (int)    ($row['person_id'] ?? 0),
                 'parish_id'            => (int)    ($row['parish_id'] ?? 0),
@@ -116,7 +116,7 @@ class SendFollowups extends BaseCommand
                 continue;
             }
 
-            $result = $dispatcher->dispatch($row, $template, $guest);
+            $result = $dispatcher->dispatch($row, $template, $visitor);
 
             if ($result['success']) {
                 $metadata = $result['metadata'] ?? [];
@@ -132,7 +132,7 @@ class SendFollowups extends BaseCommand
                         'log_id'         => $logId,
                         'channel'        => $channel,
                         'scheduled_date' => $row['scheduled_date'] ?? '',
-                        'guest_name'     => $name,
+                        'visitor_name'     => $name,
                     ],
                 ]);
             } else {
@@ -140,7 +140,7 @@ class SendFollowups extends BaseCommand
                 $counters['failed']++;
                 $tableRows[] = [$channel, $name, 'failed — ' . $result['error'], $row['scheduled_date'] ?? ''];
 
-                log_message('error', '[followup:send] logId={id} channel={ch} guest={nm} error={err}', [
+                log_message('error', '[followup:send] logId={id} channel={ch} visitor={nm} error={err}', [
                     'id'  => $logId,
                     'ch'  => $channel,
                     'nm'  => $name,
@@ -155,7 +155,7 @@ class SendFollowups extends BaseCommand
                         'log_id'         => $logId,
                         'channel'        => $channel,
                         'scheduled_date' => $row['scheduled_date'] ?? '',
-                        'guest_name'     => $name,
+                        'visitor_name'     => $name,
                         'error'          => $result['error'],
                     ],
                 ]);
@@ -166,7 +166,7 @@ class SendFollowups extends BaseCommand
         // 4. Summary
         // ---------------------------------------------------------------
         if (!empty($tableRows)) {
-            CLI::table($tableRows, ['Channel', 'Guest', 'Status', 'Scheduled']);
+            CLI::table($tableRows, ['Channel', 'Visitor', 'Status', 'Scheduled']);
         }
 
         CLI::newLine();

@@ -106,7 +106,6 @@ final class SystemSettingsTestHelper
             last_name TEXT NULL,
             phone TEXT NULL,
             locale TEXT NULL,
-            membership_status TEXT NULL,
             is_confirmed INTEGER DEFAULT 0,
             created_at TEXT NULL,
             updated_at TEXT NULL,

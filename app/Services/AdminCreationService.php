@@ -79,11 +79,6 @@ class AdminCreationService
                 'first_name'      => $firstName,
                 'last_name'       => $lastName,
                 'phone'           => preg_replace('/[^0-9+\s-]/', '', (string) ($phone ?? '')),
-                // profile.membership_status is an ENUM of visitor/regular_attender/
-                // member/non_active/inactive/transferred/deceased — 'active' is not
-                // a valid value and MySQL silently stores '' for it. 'member' is the
-                // value MembershipStatusService normalizes/displays as "Active".
-                'membership_status' => 'member',
             ]);
 
             // user_registration_requests.province_id is NOT NULL, so we can only

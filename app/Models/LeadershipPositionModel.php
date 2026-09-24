@@ -106,6 +106,60 @@ class LeadershipPositionModel extends Model
             ->getResultArray();
     }
 
+    /**
+     * Parish leaders eligible for follow-up task assignment: an active
+     * leadership_position row in this parish whose started_at/ended_at
+     * window (when defined) covers today. One row per user.
+     */
+    public function getAssignableParishLeaders(int $parishId): array
+    {
+        $rows = $this->assignableLeaderBuilder($parishId)
+            ->select('lp.user_id, lp.title, COALESCE(p.nickname, p.first_name) AS first_name, p.last_name, ai.secret AS email')
+            ->join('profile p', 'p.user_id = lp.user_id', 'left')
+            ->join('users u', 'u.id = lp.user_id', 'left')
+            ->join('auth_identities ai', 'ai.user_id = u.id AND ai.type = "email_password"', 'left')
+            ->orderBy('p.last_name', 'ASC')
+            ->orderBy('lp.title', 'ASC')
+            ->get()
+            ->getResultArray();
+
+        $byUser = [];
+        foreach ($rows as $row) {
+            $byUser[(int) $row['user_id']] ??= $row;
+        }
+
+        return array_values($byUser);
+    }
+
+    /**
+     * Whether the user currently holds an active, in-window leadership
+     * position scoped to this parish.
+     */
+    public function isActiveParishLeader(int $userId, int $parishId): bool
+    {
+        return $this->assignableLeaderBuilder($parishId)
+            ->where('lp.user_id', $userId)
+            ->countAllResults() > 0;
+    }
+
+    private function assignableLeaderBuilder(int $parishId): \CodeIgniter\Database\BaseBuilder
+    {
+        $today = date('Y-m-d');
+
+        return $this->db->table('leadership_position lp')
+            ->where('lp.scope_type', 'parish')
+            ->where('lp.parish_id', $parishId)
+            ->where('lp.active', 1)
+            ->groupStart()
+                ->where('lp.started_at IS NULL', null, false)
+                ->orWhere('lp.started_at <=', $today)
+            ->groupEnd()
+            ->groupStart()
+                ->where('lp.ended_at IS NULL', null, false)
+                ->orWhere('lp.ended_at >=', $today)
+            ->groupEnd();
+    }
+
     public function countActiveForParish(int $parishId): int
     {
         $row = $this->db->table($this->table . ' lp')

@@ -12,28 +12,30 @@ This table defines the baseline least-privilege policy used by the canonical sid
 
 | Menu / Capability | Sidebar Gate | Baseline Roles |
 | --- | --- | --- |
-| Province Dashboard | `admin.province` | `provinceadmin` |
-| Diocesan Dashboard + diocesan links | `admin.diocese` | `diocesanadmin` |
+| Province Dashboard | `province.admin` | `provinceadmin` |
+| Diocesan Dashboard + diocesan links | `diocese.admin` | `diocesanadmin` |
 | Dashboard access fallback | `dashboard.view` | all baseline roles |
-| Members / Staff | `members.view` | `provinceadmin`, `diocesanadmin`, `parishadmin`, `pastor`, `treasurer` |
-| Members edit actions | `members.edit` | `provinceadmin`, `diocesanadmin`, `parishadmin`, `pastor` |
-| Families | `families.view` | `parishadmin`, `pastor` |
+| Members / Staff | `member.view` | `provinceadmin`, `diocesanadmin`, `parishadmin`, `pastor`, `treasurer` |
+| Members edit actions | `member.edit` | `provinceadmin`, `diocesanadmin`, `parishadmin`, `pastor` |
+| Families | `family.view` | `parishadmin`, `pastor` |
 | Small Groups | `groups.view` | `provinceadmin`, `diocesanadmin`, `parishadmin`, `clergy` |
 | Small group manage / roster | `groups.manage`, `groups.assign` | `parishadmin`, `clergy` |
 | Bulk Messages | `messaging.view` | `provinceadmin`, `diocesanadmin`, `parishadmin`, `clergy` |
 | Bulk send / templates | `messaging.send` | `parishadmin`, `clergy` |
-| Services | `services.view` | `diocesanadmin`, `parishadmin`, `pastor`, `volunteer_coordinator` |
+| Services | `service.view` | `diocesanadmin`, `parishadmin`, `pastor`, `volunteer_coordinator` |
 | Attendance reports | `attendance.view` | `parishadmin`, `pastor` |
-| Guests | `guests.view` | `parishadmin`, `pastor` |
-| Guest conversions / edit | `guests.edit` | `parishadmin`, `pastor` |
-| Follow-up tasks | `followup.tasks` | `parishadmin`, `pastor` |
-| Finance section visibility | `donations.view` OR `expenses.view` OR `finance.view` OR `finance.manage` | `diocesanadmin`, `parishadmin`, `treasurer` |
+| Visitors (directory, intake, import) | `visitor.view`, `visitor.create` | `parishadmin`, `pastor` |
+| Visitor edits, promote/demote, member promotion | `visitor.edit` | `parishadmin`, `pastor` |
+| Visitor deletion | `visitor.delete` | `parishadmin`, `pastor` |
+| Follow-up sequences, tasks, dispatch | `followup.manage` | `parishadmin`, `pastor` |
+| Follow-up read-only (queue, timeline) | `followup.view` | `parishadmin`, `pastor` |
+| Finance section visibility | `donation.view` OR `expense.view` OR `finance.view` OR `finance.manage` | `diocesanadmin`, `parishadmin`, `treasurer` |
 | Pledges (inside Finance) | `finance.manage` | `diocesanadmin`, `parishadmin`, `treasurer` |
-| Volunteers | `volunteers.manage` | `parishadmin`, `volunteer_coordinator` |
-| Volunteer schedules | `volunteers.schedule` | `parishadmin`, `volunteer_coordinator` |
-| Events | `events.view` | `parishadmin`, `pastor`, `volunteer_coordinator` |
+| Volunteers | `volunteer.manage` | `parishadmin`, `volunteer_coordinator` |
+| Volunteer schedules | `volunteer.schedule` | `parishadmin`, `volunteer_coordinator` |
+| Events | `event.view` | `parishadmin`, `pastor`, `volunteer_coordinator` |
 | Worship planning | `worship.view` | `parishadmin`, `pastor`, `volunteer_coordinator` |
-| Reports | `reports.view` | `provinceadmin`, `diocesanadmin`, `parishadmin`, `pastor`, `treasurer` |
+| Reports | `report.view` | `provinceadmin`, `diocesanadmin`, `parishadmin`, `pastor`, `treasurer` |
 | Parishes management | `parishes.edit` | `provinceadmin`, `diocesanadmin` |
 
 ## Enforcement Notes

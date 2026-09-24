@@ -12,7 +12,7 @@ use App\Models\MemberParishAffiliationModel;
  *
  *  - the status vocabulary stays canonical (visitor / regular_attender /
  *    member / inactive / transferred / deceased),
- *  - is_member, affiliation_type and end_date stay consistent with the status,
+ *  - is_member and end_date stay consistent with the status,
  *  - an immutable person_status_history row is written under the canonical
  *    person_id (never the profile id).
  *
@@ -215,11 +215,8 @@ class MembershipPathwayService
         $db->resetTransStatus();
         $db->transStart();
 
-        $this->affiliations->update($affiliationId, [
-            'membership_status' => $to,
-            'affiliation_type'  => MembershipStatusService::affiliationTypeForStatus($to),
-            'is_member'         => MembershipStatusService::isMember($to) ? 1 : 0,
-            'end_date'          => in_array($to, self::TERMINAL_STATUSES, true) ? date('Y-m-d') : null,
+        $this->affiliations->update($affiliationId, MembershipStatusService::fieldsForStatus($to) + [
+            'end_date' => in_array($to, self::TERMINAL_STATUSES, true) ? date('Y-m-d') : null,
         ]);
 
         if ($personId > 0) {

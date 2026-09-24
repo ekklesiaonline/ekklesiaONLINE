@@ -35,7 +35,6 @@ final class DataEncryptionAtRestTest extends CIUnitTestCase
             'last_name' => 'Encrypted',
             'phone' => '(809) 555-7777',
             'address' => '123 Prayer Street',
-            'membership_status' => 'active',
         ], true);
 
         $this->assertGreaterThan(0, $profileId);
@@ -54,9 +53,9 @@ final class DataEncryptionAtRestTest extends CIUnitTestCase
 
         $personModel = model(PersonModel::class);
         $personId = (int) $personModel->insert([
-            'first_name' => 'Guest',
+            'first_name' => 'Visitor',
             'last_name' => 'Cipher',
-            'email' => 'guest.cipher@example.org',
+            'email' => 'visitor.cipher@example.org',
             'phone' => '+1 (809) 555-1212',
         ], true);
 
@@ -66,12 +65,12 @@ final class DataEncryptionAtRestTest extends CIUnitTestCase
         $this->assertNotNull($storedPerson);
         $this->assertStringStartsWith('enc:v1:', (string) ($storedPerson['email'] ?? ''));
         $this->assertStringStartsWith('enc:v1:', (string) ($storedPerson['phone'] ?? ''));
-        $this->assertSame(DataEncryption::emailIndex('guest.cipher@example.org'), $storedPerson['email_hash']);
+        $this->assertSame(DataEncryption::emailIndex('visitor.cipher@example.org'), $storedPerson['email_hash']);
         $this->assertSame(DataEncryption::phoneIndex('+1 (809) 555-1212'), $storedPerson['phone_hash']);
 
         $readPerson = $personModel->find($personId);
         $this->assertIsArray($readPerson);
-        $this->assertSame('guest.cipher@example.org', $readPerson['email']);
+        $this->assertSame('visitor.cipher@example.org', $readPerson['email']);
         $this->assertSame('+1 (809) 555-1212', $readPerson['phone']);
     }
 
@@ -89,7 +88,6 @@ final class DataEncryptionAtRestTest extends CIUnitTestCase
             'first_name' => 'Maria',
             'last_name' => 'Lookup',
             'phone' => '(809) 555-9001',
-            'membership_status' => 'active',
         ]);
 
         $searchModel = model(MemberParishAffiliationModel::class);
@@ -197,11 +195,7 @@ final class DataEncryptionAtRestTest extends CIUnitTestCase
             'linked_user_id' => $userId,
             'parish_id' => $parishId,
             'person_id' => null,
-            'affiliation_type' => 'member',
             'membership_status' => $status,
-            'canonical_status' => $status,
-            'is_member' => in_array($status, ['member', 'inactive'], true) ? 1 : 0,
-            'is_good_standing' => 0,
             'source' => 'system',
             'start_date' => date('Y-m-d'),
             'end_date' => null,
@@ -289,7 +283,6 @@ final class DataEncryptionAtRestTest extends CIUnitTestCase
             'phone' => ['type' => 'TEXT', 'null' => true],
             'phone_hash' => ['type' => 'CHAR', 'constraint' => 64, 'null' => true],
             'address' => ['type' => 'TEXT', 'null' => true],
-            'membership_status' => ['type' => 'VARCHAR', 'constraint' => 20, 'default' => 'pending'],
             'created_at' => ['type' => 'DATETIME', 'null' => true],
             'updated_at' => ['type' => 'DATETIME', 'null' => true],
             'deleted_at' => ['type' => 'DATETIME', 'null' => true],
@@ -318,11 +311,7 @@ final class DataEncryptionAtRestTest extends CIUnitTestCase
             'linked_user_id' => ['type' => 'INTEGER', 'null' => true],
             'parish_id' => ['type' => 'INTEGER', 'null' => false],
             'person_id' => ['type' => 'INTEGER', 'null' => true],
-            'affiliation_type' => ['type' => 'VARCHAR', 'constraint' => 32, 'default' => 'member'],
-            'membership_status' => ['type' => 'VARCHAR', 'constraint' => 20, 'default' => 'guest'],
-            'canonical_status' => ['type' => 'VARCHAR', 'constraint' => 32, 'null' => true],
-            'is_member' => ['type' => 'INTEGER', 'constraint' => 1, 'default' => 0],
-            'is_good_standing' => ['type' => 'INTEGER', 'constraint' => 1, 'default' => 0],
+            'membership_status' => ['type' => 'VARCHAR', 'constraint' => 20, 'default' => 'visitor'],
             'source' => ['type' => 'VARCHAR', 'constraint' => 32, 'default' => 'system'],
             'start_date' => ['type' => 'DATE', 'null' => true],
             'end_date' => ['type' => 'DATE', 'null' => true],

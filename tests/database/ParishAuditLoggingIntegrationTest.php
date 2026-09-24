@@ -267,7 +267,6 @@ final class ParishAuditLoggingIntegrationTest extends CIUnitTestCase
             'diocese_id' => $dioceseId,
             'first_name' => $firstName,
             'last_name' => $lastName,
-            'membership_status' => 'active',
         ]);
     }
 

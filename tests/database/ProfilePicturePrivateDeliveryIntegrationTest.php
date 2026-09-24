@@ -194,7 +194,6 @@ final class ProfilePicturePrivateDeliveryIntegrationTest extends CIUnitTestCase
                 diocese_id INTEGER NULL,
                 first_name TEXT NULL,
                 last_name TEXT NULL,
-                membership_status TEXT NULL,
                 profile_picture TEXT NULL,
                 created_at TEXT NULL,
                 updated_at TEXT NULL,
@@ -233,7 +232,6 @@ final class ProfilePicturePrivateDeliveryIntegrationTest extends CIUnitTestCase
             'user_id' => $userId,
             'first_name' => 'First' . $userId,
             'last_name' => 'Last' . $userId,
-            'membership_status' => 'active',
             'created_at' => date('Y-m-d H:i:s'),
             'updated_at' => date('Y-m-d H:i:s'),
         ];

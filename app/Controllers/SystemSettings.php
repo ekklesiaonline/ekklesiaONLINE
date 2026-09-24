@@ -57,6 +57,7 @@ class SystemSettings extends BaseController
             'lockout.duration_seconds',
             'maintenance.enabled',
             'maintenance.message',
+            'visitor.converted_window_days',
         ];
 
         $rules = [
@@ -66,6 +67,7 @@ class SystemSettings extends BaseController
             'lockout.window_seconds' => 'required|integer|greater_than_equal_to[60]',
             'lockout.duration_seconds' => 'required|integer|greater_than_equal_to[60]',
             'maintenance.message' => 'permit_empty|max_length[1000]',
+            'visitor.converted_window_days' => 'required|integer|greater_than_equal_to[1]|less_than_equal_to[3650]',
         ];
 
         // PHP/HTML convert dotted input names like "password_policy.min_length"
@@ -166,7 +168,8 @@ class SystemSettings extends BaseController
             'password_policy.min_length',
             'lockout.max_attempts',
             'lockout.window_seconds',
-            'lockout.duration_seconds' => 'integer',
+            'lockout.duration_seconds',
+            'visitor.converted_window_days' => 'integer',
             'password_policy.require_uppercase',
             'password_policy.require_lowercase',
             'password_policy.require_digit',
@@ -193,6 +196,7 @@ class SystemSettings extends BaseController
             str_starts_with($key, 'password_policy.') => 'policy',
             str_starts_with($key, 'mfa.') || str_starts_with($key, 'lockout.') => 'security',
             str_starts_with($key, 'maintenance.') => 'system',
+            str_starts_with($key, 'visitor.') => 'visitors',
             default => 'system',
         };
     }
@@ -213,6 +217,7 @@ class SystemSettings extends BaseController
             'lockout.duration_seconds' => 'How long an account remains locked in seconds.',
             'maintenance.enabled' => 'Enable maintenance mode (blocks non-system-admins).',
             'maintenance.message' => 'Message shown during maintenance mode.',
+            'visitor.converted_window_days' => 'Rolling window in days for the visitor dashboard "converted to members" KPI tile.',
             default => '',
         };
     }
@@ -223,6 +228,7 @@ class SystemSettings extends BaseController
             'policy' => lang('System.settingsCategoryPolicy'),
             'security' => lang('System.settingsCategorySecurity'),
             'system' => lang('System.settingsCategorySystem'),
+            'visitors' => lang('System.settingsCategoryVisitors'),
         ];
     }
 }

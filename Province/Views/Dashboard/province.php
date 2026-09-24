@@ -74,7 +74,7 @@
                 <div class="card-body">
                     <h6 class="text-muted mb-1"><?= lang('Dashboard.totalPeople') ?></h6>
                     <h3 class="mb-0"><?= number_format((int) ($scope_total_people ?? 0)) ?></h3>
-                    <small class="text-muted"><?= number_format((int) ($scope_total_guests ?? 0)) ?> <?= lang('Dashboard.guestsLabel') ?></small>
+                    <small class="text-muted"><?= number_format((int) ($scope_total_visitors ?? 0)) ?> <?= lang('Dashboard.visitorsLabel') ?></small>
                 </div>
             </div>
         </div>
@@ -139,7 +139,7 @@
                 <div class="card-body">
                     <h6 class="text-muted mb-1"><?= lang('Dashboard.totalPeople') ?></h6>
                     <h3 class="mb-0"><?= number_format((int) ($province_totals['total_people'] ?? 0)) ?></h3>
-                    <small class="text-muted"><?= number_format((int) ($province_totals['total_guests'] ?? 0)) ?> <?= lang('Dashboard.guestsLabel') ?></small>
+                    <small class="text-muted"><?= number_format((int) ($province_totals['total_visitors'] ?? 0)) ?> <?= lang('Dashboard.visitorsLabel') ?></small>
                 </div>
             </div>
         </div>
@@ -257,7 +257,7 @@
                             <th scope="col"><?= lang('Dashboard.colDiocese') ?></th>
                             <th scope="col" class="text-end"><?= lang('Dashboard.colParishes') ?></th>
                             <th scope="col" class="text-end"><?= lang('Dashboard.colPeople') ?></th>
-                            <th scope="col" class="text-end"><?= lang('Dashboard.colGuests') ?></th>
+                            <th scope="col" class="text-end"><?= lang('Dashboard.colVisitors') ?></th>
                             <th scope="col" class="text-end"><?= lang('Dashboard.colMembers') ?></th>
                             <th scope="col" class="text-end"><?= lang('Dashboard.colActive') ?></th>
                             <th scope="col" class="text-end"><?= lang('Dashboard.colAttendance') ?></th>
@@ -276,7 +276,7 @@
                                     <td><?= esc($row['diocese_name']) ?></td>
                                     <td class="text-end"><?= number_format((int) $row['parishes_count']) ?></td>
                                     <td class="text-end"><?= number_format((int) ($row['total_people'] ?? 0)) ?></td>
-                                    <td class="text-end"><?= number_format((int) ($row['guest_count'] ?? 0)) ?></td>
+                                    <td class="text-end"><?= number_format((int) ($row['visitor_count'] ?? 0)) ?></td>
                                     <td class="text-end"><?= number_format((int) $row['total_members']) ?></td>
                                     <td class="text-end"><?= number_format((int) $row['active_members']) ?></td>
                                     <td class="text-end"><?= number_format((int) $row['total_attendance']) ?></td>

@@ -24,6 +24,8 @@ class CallTaskModel extends Model
         'person_id',
         'log_id',
         'assigned_to',
+        'task_type',
+        'title',
         'phone',
         'notes',
         'status',
@@ -43,6 +45,8 @@ class CallTaskModel extends Model
         'person_id'      => 'permit_empty|is_not_unique[person.id]',
         'scheduled_date' => 'required|valid_date',
         'status'         => 'permit_empty|in_list[pending,completed,cancelled]',
+        'task_type'      => 'permit_empty|in_list[call,manual]',
+        'title'          => 'permit_empty|max_length[255]',
         'log_id'         => 'permit_empty|is_not_unique[followup_log.id]',
         'assigned_to'    => 'permit_empty|is_not_unique[users.id]',
     ];
@@ -55,34 +59,59 @@ class CallTaskModel extends Model
     // ------------------------------------------------------------------
 
     /**
-     * Return all pending call tasks for a parish, enriched with guest name.
+     * Return all pending tasks for a parish, enriched with visitor name
+     * and assignee name. $taskType narrows to 'call' or 'manual'.
      */
-    public function getPendingForParish(int $parishId): array
+    public function getPendingForParish(int $parishId, ?string $taskType = null): array
     {
-        return $this->db->table('call_task ct')
-            ->select('ct.id, ct.person_id, ct.log_id, ct.assigned_to, ct.phone, ct.notes, ct.status, ct.scheduled_date, ct.created_at, ct.updated_at, ct.parish_id, p.first_name, p.last_name')
-            ->join('person p', 'p.id = ct.person_id', 'left')
-            ->where('ct.parish_id', $parishId)
-            ->where('ct.status', 'pending')
+        $builder = $this->pendingBuilder($parishId);
+
+        if ($taskType !== null && in_array($taskType, ['call', 'manual'], true)) {
+            $builder->where('ct.task_type', $taskType);
+        }
+
+        return $builder
             ->orderBy('ct.scheduled_date', 'ASC')
             ->get()
             ->getResultArray();
     }
 
     /**
-     * Return all call tasks for a parish (all statuses), newest first.
+     * Return all tasks for a parish (all statuses), oldest scheduled first.
      */
-    public function getAllForParish(int $parishId, int $limit = 100): array
+    public function getAllForParish(int $parishId, int $limit = 100, ?string $taskType = null): array
     {
-        return $this->db->table('call_task ct')
-            ->select('ct.id, ct.person_id, ct.log_id, ct.assigned_to, ct.phone, ct.notes, ct.status, ct.scheduled_date, ct.created_at, ct.updated_at, ct.parish_id, p.first_name, p.last_name')
-            ->join('person p', 'p.id = ct.person_id', 'left')
-            ->where('ct.parish_id', $parishId)
+        $builder = $this->baseBuilder()
+            ->where('ct.parish_id', $parishId);
+
+        if ($taskType !== null && in_array($taskType, ['call', 'manual'], true)) {
+            $builder->where('ct.task_type', $taskType);
+        }
+
+        return $builder
             ->orderBy('ct.scheduled_date', 'ASC')
             ->orderBy('ct.status', 'ASC')
             ->limit($limit)
             ->get()
             ->getResultArray();
+    }
+
+    private function baseBuilder(): \CodeIgniter\Database\BaseBuilder
+    {
+        return $this->db->table('call_task ct')
+            ->select('ct.id, ct.person_id, ct.log_id, ct.assigned_to, ct.task_type, ct.title, ct.phone, ct.notes, ct.status, ct.scheduled_date, ct.created_at, ct.updated_at, ct.parish_id, p.first_name, p.last_name,'
+                . ' au.username AS assignee_username,'
+                . ' TRIM(CONCAT(COALESCE(ap.first_name, ""), " ", COALESCE(ap.last_name, ""))) AS assignee_name')
+            ->join('person p', 'p.id = ct.person_id', 'left')
+            ->join('users au', 'au.id = ct.assigned_to', 'left')
+            ->join('profile ap', 'ap.user_id = au.id AND ap.deleted_at IS NULL', 'left');
+    }
+
+    private function pendingBuilder(int $parishId): \CodeIgniter\Database\BaseBuilder
+    {
+        return $this->baseBuilder()
+            ->where('ct.parish_id', $parishId)
+            ->where('ct.status', 'pending');
     }
 
     /**

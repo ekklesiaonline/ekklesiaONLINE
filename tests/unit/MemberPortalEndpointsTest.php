@@ -16,7 +16,6 @@ final class MemberPortalEndpointsTest extends CIUnitTestCase
         $expectedGetRoutes = [
             'AnnualPledges::index',
             'LeadershipPositions::index',
-            'GuestConversions::index',
             'Standing::index',
         ];
 
@@ -38,8 +37,6 @@ final class MemberPortalEndpointsTest extends CIUnitTestCase
             'LeadershipPositions::store',
             'LeadershipPositions::update',
             'LeadershipPositions::delete',
-            'GuestConversions::convert',
-            'GuestConversions::revert',
             'Standing::refresh',
         ];
 

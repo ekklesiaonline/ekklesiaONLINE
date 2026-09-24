@@ -73,7 +73,7 @@ class FamilyModel extends BaseTenantModel
             $hasMiddleName ? 'p.middle_name' : 'NULL as middle_name',
             'p.last_name',
             'p.phone',
-            'p.membership_status',
+            'pa.membership_status',
             $hasPortalAccess ? 'p.portal_access' : 'NULL as portal_access',
             $hasPortalEnabledAt ? 'p.portal_enabled_at' : 'NULL as portal_enabled_at',
             'CONCAT(p.first_name, " ", p.last_name) as full_name',
@@ -85,6 +85,7 @@ class FamilyModel extends BaseTenantModel
             ->join('family f', 'f.id = fm.family_id')
             ->join('profile p', 'p.user_id = fm.user_id')
             ->join('users u', 'u.id = fm.user_id')
+            ->join('parish_affiliation pa', 'pa.linked_user_id = fm.user_id AND pa.parish_id = f.parish_id AND pa.deleted_at IS NULL', 'left')
             ->join('auth_identities ai', 'ai.user_id = u.id AND ai.type = "email_password"', 'left')
             ->where('f.parish_id', $parishId)
             ->where('f.deleted_at', null)

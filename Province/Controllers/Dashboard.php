@@ -97,7 +97,7 @@ class Dashboard extends BaseController
             'total_dioceses' => (int) ($membershipOverview['total_dioceses'] ?? 0),
             'total_parishes' => (int) ($membershipOverview['total_parishes'] ?? 0),
             'total_people' => (int) ($membershipOverview['total_people'] ?? 0),
-            'total_guests' => (int) ($membershipOverview['guest_count'] ?? 0),
+            'total_visitors' => (int) ($membershipOverview['visitor_count'] ?? 0),
             'total_members' => (int) ($membershipOverview['total_members'] ?? 0),
             'active_members' => (int) ($membershipOverview['active_members'] ?? 0),
             'good_standing_members' => (int) ($membershipOverview['good_standing_members'] ?? 0),
@@ -123,7 +123,7 @@ class Dashboard extends BaseController
             'show_diocese_scope_dashboard' => $showDioceseScopeDashboard,
             'scope_total_people' => (int) ($membershipOverview['total_people'] ?? 0),
             'scope_total_members' => (int) ($membershipOverview['total_members'] ?? 0),
-            'scope_total_guests' => (int) ($membershipOverview['guest_count'] ?? 0),
+            'scope_total_visitors' => (int) ($membershipOverview['visitor_count'] ?? 0),
             'scope_good_standing_members' => (int) ($membershipOverview['good_standing_members'] ?? 0),
             'scope_leadership_members' => (int) ($membershipOverview['leadership_members'] ?? 0),
             'scope_total_attendance' => (int) ($attendanceStats['total_attendance'] ?? 0),
@@ -473,20 +473,20 @@ class Dashboard extends BaseController
 
         $row = $builder->get()->getRowArray();
 
-        $guestBuilder = db_connect()->table('parish_affiliation g')
-            ->select('COUNT(DISTINCT g.person_id) as guest_count')
+        $visitorBuilder = db_connect()->table('parish_affiliation g')
+            ->select('COUNT(DISTINCT g.person_id) as visitor_count')
             ->join('parish c', 'c.id = g.parish_id')
             ->join('diocese d', 'd.id = c.diocese_id')
             ->where('d.province_id', $provinceId)
-            ->where('g.affiliation_type', 'guest')
+            ->where('g.membership_status', 'visitor')
             ->where('g.deleted_at IS NULL', null, false)
             ->where('g.converted_to_member_at IS NULL', null, false);
 
         if ($dioceseId !== null) {
-            $guestBuilder->where('c.diocese_id', $dioceseId);
+            $visitorBuilder->where('c.diocese_id', $dioceseId);
         }
 
-        $guestRow = $guestBuilder->get()->getRowArray();
+        $visitorRow = $visitorBuilder->get()->getRowArray();
 
         $standingBuilder = db_connect()->table('member_standing_summary mss')
             ->select('COUNT(DISTINCT mss.user_id) as good_standing_members')
@@ -541,11 +541,11 @@ class Dashboard extends BaseController
         $leadershipRow = $leadershipBuilder->get()->getRowArray();
 
         $totalAffiliated = (int) ($row['total_affiliated'] ?? 0);
-        $guestCount = (int) ($guestRow['guest_count'] ?? 0);
+        $visitorCount = (int) ($visitorRow['visitor_count'] ?? 0);
 
         return [
-            'total_people' => $totalAffiliated + $guestCount,
-            'guest_count' => $guestCount,
+            'total_people' => $totalAffiliated + $visitorCount,
+            'visitor_count' => $visitorCount,
             'total_members' => (int) ($row['total_members'] ?? 0),
             'active_members' => (int) ($row['active_members'] ?? 0),
             'total_parishes' => (int) ($row['total_parishes'] ?? 0),
@@ -578,9 +578,6 @@ class Dashboard extends BaseController
 
         foreach ($rows as $row) {
             $status = MembershipStatusService::normalizeAffiliationStatus((string) ($row['membership_status'] ?? ''));
-            if (!in_array($status, $validStatuses, true)) {
-                $status = MembershipStatusService::profileToAffiliation($status);
-            }
             if (!in_array($status, $validStatuses, true)) {
                 $status = 'visitor';
             }
@@ -622,23 +619,23 @@ class Dashboard extends BaseController
 
         $baseRows = $baseBuilder->get()->getResultArray();
 
-        $guestBuilder = $db->table('parish_affiliation g')
-            ->select('c.diocese_id as diocese_id, COUNT(DISTINCT g.person_id) as guest_count')
+        $visitorBuilder = $db->table('parish_affiliation g')
+            ->select('c.diocese_id as diocese_id, COUNT(DISTINCT g.person_id) as visitor_count')
             ->join('parish c', 'c.id = g.parish_id', 'inner')
             ->join('diocese d', 'd.id = c.diocese_id', 'inner')
             ->where('d.province_id', $provinceId)
-            ->where('g.affiliation_type', 'guest')
+            ->where('g.membership_status', 'visitor')
             ->where('g.deleted_at IS NULL', null, false)
             ->where('g.converted_to_member_at IS NULL', null, false);
 
         if ($dioceseId !== null) {
-            $guestBuilder->where('c.diocese_id', $dioceseId);
+            $visitorBuilder->where('c.diocese_id', $dioceseId);
         }
 
-        $guestRows = $guestBuilder->groupBy('c.diocese_id')->get()->getResultArray();
-        $guestMap = [];
-        foreach ($guestRows as $gRow) {
-            $guestMap[(int) ($gRow['diocese_id'] ?? 0)] = (int) ($gRow['guest_count'] ?? 0);
+        $visitorRows = $visitorBuilder->groupBy('c.diocese_id')->get()->getResultArray();
+        $visitorMap = [];
+        foreach ($visitorRows as $gRow) {
+            $visitorMap[(int) ($gRow['diocese_id'] ?? 0)] = (int) ($gRow['visitor_count'] ?? 0);
         }
 
         $attendanceBuilder = $db->table('service s')
@@ -712,8 +709,8 @@ class Dashboard extends BaseController
                 'diocese_id' => $dioceseId,
                 'diocese_name' => (string) ($row['diocese_name'] ?? 'Unknown Diocese'),
                 'parishes_count' => (int) ($row['parishes_count'] ?? 0),
-                'total_people' => (int) ($row['total_affiliated'] ?? 0) + (int) ($guestMap[$dioceseId] ?? 0),
-                'guest_count' => (int) ($guestMap[$dioceseId] ?? 0),
+                'total_people' => (int) ($row['total_affiliated'] ?? 0) + (int) ($visitorMap[$dioceseId] ?? 0),
+                'visitor_count' => (int) ($visitorMap[$dioceseId] ?? 0),
                 'total_members' => (int) ($row['total_members'] ?? 0),
                 'active_members' => (int) ($row['active_members'] ?? 0),
                 'total_attendance' => $totalAttendance,
@@ -758,7 +755,7 @@ class Dashboard extends BaseController
             'total_dioceses' => 0,
             'total_parishes' => 0,
             'total_people' => 0,
-            'total_guests' => 0,
+            'total_visitors' => 0,
             'total_members' => 0,
             'active_members' => 0,
             'total_attendance' => 0,
@@ -770,7 +767,7 @@ class Dashboard extends BaseController
             $totals['total_dioceses']++;
             $totals['total_parishes'] += (int) ($row['parishes_count'] ?? 0);
             $totals['total_people'] += (int) ($row['total_people'] ?? 0);
-            $totals['total_guests'] += (int) ($row['guest_count'] ?? 0);
+            $totals['total_visitors'] += (int) ($row['visitor_count'] ?? 0);
             $totals['total_members'] += (int) ($row['total_members'] ?? 0);
             $totals['active_members'] += (int) ($row['active_members'] ?? 0);
             $totals['total_attendance'] += (int) ($row['total_attendance'] ?? 0);

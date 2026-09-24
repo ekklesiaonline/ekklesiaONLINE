@@ -8,8 +8,8 @@ $importErrors = session('import_errors');
 ?>
 
 <div class="d-flex justify-content-start align-items-center flex-wrap gap-2 mb-3">
-    <a href="<?= base_url('guests/dashboard') ?>" class="btn btn-outline-secondary">
-        <i class="bi bi-arrow-left" aria-hidden="true"></i> <?= lang('Guests.backToGuests') ?>
+    <a href="<?= base_url('visitors/dashboard') ?>" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left" aria-hidden="true"></i> <?= lang('Visitors.backToVisitors') ?>
     </a>
 </div>
 
@@ -18,11 +18,11 @@ $importErrors = session('import_errors');
 ══════════════════════════════════════════ -->
 <?php if ($importResult !== null): ?>
     <div class="alert alert-success alert-dismissible fade show" role="alert">
-        <strong><?= lang('Guests.importComplete') ?></strong>
-        <?= lang('Guests.importNewGuests', [(int) $importResult['inserted']]) ?>,
-        <?= lang('Guests.importUpdatedGuests', [(int) $importResult['updated']]) ?>.
+        <strong><?= lang('Visitors.importComplete') ?></strong>
+        <?= lang('Visitors.importNewVisitors', [(int) $importResult['inserted']]) ?>,
+        <?= lang('Visitors.importUpdatedVisitors', [(int) $importResult['updated']]) ?>.
         <?php if (! empty($importResult['row_errors'])): ?>
-            <strong><?= lang('Guests.importRowErrorsNote', [count($importResult['row_errors'])]) ?></strong>
+            <strong><?= lang('Visitors.importRowErrorsNote', [count($importResult['row_errors'])]) ?></strong>
         <?php endif; ?>
         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
     </div>
@@ -30,12 +30,12 @@ $importErrors = session('import_errors');
     <?php if (! empty($importResult['row_errors'])): ?>
         <div class="card mb-4 border-warning">
             <div class="card-header bg-warning text-dark fw-semibold">
-                <i class="bi bi-exclamation-triangle me-1" aria-hidden="true"></i> <?= lang('Guests.importRowErrors') ?>
+                <i class="bi bi-exclamation-triangle me-1" aria-hidden="true"></i> <?= lang('Visitors.importRowErrors') ?>
             </div>
             <ul class="list-group list-group-flush">
                 <?php foreach ($importResult['row_errors'] as $re): ?>
                     <li class="list-group-item py-2 small">
-                        <strong><?= lang('Guests.importRow') ?> <?= (int) $re['row'] ?>:</strong>
+                        <strong><?= lang('Visitors.importRow') ?> <?= (int) $re['row'] ?>:</strong>
                         <?= esc(implode('; ', (array) $re['errors'])) ?>
                     </li>
                 <?php endforeach; ?>
@@ -59,78 +59,78 @@ $importErrors = session('import_errors');
     <div class="col-lg-7">
         <div class="card">
             <div class="card-header fw-semibold">
-                <i class="bi bi-filetype-csv me-1" aria-hidden="true"></i> <?= lang('Guests.importFromCsv') ?>
+                <i class="bi bi-filetype-csv me-1" aria-hidden="true"></i> <?= lang('Visitors.importFromCsv') ?>
             </div>
             <div class="card-body">
                 <p class="text-muted small mb-3">
-                    <?= lang('Guests.importIntro') ?>
+                    <?= lang('Visitors.importIntro') ?>
                 </p>
 
                 <div class="table-responsive mb-4">
                     <table class="table table-bordered table-sm align-middle mb-0">
                         <thead>
                             <tr>
-                                <th scope="col"><?= lang('Guests.importColColumn') ?></th>
-                                <th scope="col"><?= lang('Guests.importColRequired') ?></th>
-                                <th scope="col"><?= lang('Guests.importColNotes') ?></th>
+                                <th scope="col"><?= lang('Visitors.importColColumn') ?></th>
+                                <th scope="col"><?= lang('Visitors.importColRequired') ?></th>
+                                <th scope="col"><?= lang('Visitors.importColNotes') ?></th>
                             </tr>
                         </thead>
                         <tbody class="small">
                             <tr>
                                 <td><code>first_name</code></td>
                                 <td><span class="badge border border-danger text-danger fw-normal"><?= lang('App.yes') ?></span></td>
-                                <td><?= lang('Guests.importFirstNameNote') ?></td>
+                                <td><?= lang('Visitors.importFirstNameNote') ?></td>
                             </tr>
                             <tr>
                                 <td><code>last_name</code></td>
                                 <td><span class="badge border border-danger text-danger fw-normal"><?= lang('App.yes') ?></span></td>
-                                <td><?= lang('Guests.importLastNameNote') ?></td>
+                                <td><?= lang('Visitors.importLastNameNote') ?></td>
                             </tr>
                             <tr>
                                 <td><code>email</code></td>
                                 <td><span class="badge border border-secondary text-secondary fw-normal"><?= lang('App.no') ?></span></td>
-                                <td><?= lang('Guests.importEmailNote') ?></td>
+                                <td><?= lang('Visitors.importEmailNote') ?></td>
                             </tr>
                             <tr>
                                 <td><code>phone</code></td>
                                 <td><span class="badge border border-secondary text-secondary fw-normal"><?= lang('App.no') ?></span></td>
-                                <td><?= lang('Guests.importPhoneNote') ?></td>
+                                <td><?= lang('Visitors.importPhoneNote') ?></td>
                             </tr>
                             <tr>
                                 <td><code>address</code></td>
                                 <td><span class="badge border border-secondary text-secondary fw-normal"><?= lang('App.no') ?></span></td>
-                                <td><?= lang('Guests.importAddressNote') ?></td>
+                                <td><?= lang('Visitors.importAddressNote') ?></td>
                             </tr>
                             <tr>
                                 <td><code>interests</code></td>
                                 <td><span class="badge border border-secondary text-secondary fw-normal"><?= lang('App.no') ?></span></td>
-                                <td><?= lang('Guests.importInterestsNote') ?> <code>children,music</code>.</td>
+                                <td><?= lang('Visitors.importInterestsNote') ?> <code>children,music</code>.</td>
                             </tr>
                             <tr>
                                 <td><code>visit_date</code></td>
                                 <td><span class="badge border border-secondary text-secondary fw-normal"><?= lang('App.no') ?></span></td>
-                                <td><?= lang('Guests.importVisitDateNote') ?></td>
+                                <td><?= lang('Visitors.importVisitDateNote') ?></td>
                             </tr>
                         </tbody>
                     </table>
                 </div>
 
-                <a href="<?= base_url('guests/import/sample-csv') ?>" class="btn btn-sm btn-outline-secondary mb-3">
-                    <i class="bi bi-download me-1" aria-hidden="true"></i> <?= lang('Guests.importSampleCsv') ?>
+                <a href="<?= base_url('visitors/import/sample-csv') ?>" class="btn btn-sm btn-outline-secondary mb-3">
+                    <i class="bi bi-download me-1" aria-hidden="true"></i> <?= lang('Visitors.importSampleCsv') ?>
                 </a>
 
                 <!-- Upload form -->
-                <form id="csvImportForm" method="post" action="<?= base_url('guests/import/process') ?>"
+                <form id="csvImportForm" method="post" action="<?= base_url('visitors/import/process') ?>"
                     enctype="multipart/form-data" novalidate>
                     <?= csrf_field() ?>
 
                     <div class="mb-3">
                         <label class="form-label fw-semibold" for="csv_file">
-                            <?= lang('Guests.importCsvFile') ?> <span class="text-danger">*</span>
+                            <?= lang('Visitors.importCsvFile') ?> <span class="text-danger">*</span>
                         </label>
                         <input type="file" id="csv_file" name="csv_file"
                             class="form-control" accept=".csv,.txt" required>
-                        <div class="form-text"><?= lang('Guests.importCsvHint') ?></div>
+                        <div class="form-text"><?= lang('Visitors.importCsvHint') ?></div>
                     </div>
 
                     <div id="csvImportErrors" class="alert alert-danger d-none mb-3"></div>
@@ -138,12 +138,12 @@ $importErrors = session('import_errors');
                         <div class="progress" style="height: 6px;">
                             <div class="progress-bar progress-bar-striped progress-bar-animated w-100"></div>
                         </div>
-                        <p class="text-muted small mt-2 mb-0"><?= lang('Guests.importUploading') ?></p>
+                        <p class="text-muted small mt-2 mb-0"><?= lang('Visitors.importUploading') ?></p>
                     </div>
 
                     <button type="submit" class="btn btn-primary" id="btnImportCsv">
                         <span class="spinner-border spinner-border-sm d-none me-1" id="importSpinner"></span>
-                        <i class="bi bi-upload me-1" aria-hidden="true"></i> <?= lang('Guests.importCsvBtn') ?>
+                        <i class="bi bi-upload me-1" aria-hidden="true"></i> <?= lang('Visitors.importCsvBtn') ?>
                     </button>
                 </form>
             </div>
@@ -154,16 +154,16 @@ $importErrors = session('import_errors');
     <div class="col-lg-5">
         <div class="card">
             <div class="card-header fw-semibold">
-                <i class="bi bi-qr-code me-1" aria-hidden="true"></i> <?= lang('Guests.digitalCardTitle') ?>
+                <i class="bi bi-qr-code me-1" aria-hidden="true"></i> <?= lang('Visitors.digitalCardTitle') ?>
             </div>
             <div class="card-body text-center">
                 <p class="text-muted small mb-3">
-                    <?= lang('Guests.digitalCardIntro') ?>
+                    <?= lang('Visitors.digitalCardIntro') ?>
                 </p>
 
                 <!-- QR code image – served from the server-side proxy route -->
-                <img src="<?= base_url('guests/import/qr') ?>"
-                    alt="<?= esc(lang('Guests.importQrAlt', [$parish['name']])) ?>"
+                <img src="<?= base_url('visitors/import/qr') ?>"
+                    alt="<?= esc(lang('Visitors.importQrAlt', [$parish['name']])) ?>"
                     class="img-fluid mb-3 border rounded p-2"
                     style="max-width: 220px;"
                     id="qrCodeImg">
@@ -182,16 +182,16 @@ $importErrors = session('import_errors');
                     </div>
 
                     <!-- Download QR button -->
-                    <a href="<?= base_url('guests/import/qr') ?>"
+                    <a href="<?= base_url('visitors/import/qr') ?>"
                         download="connection-card-qr.png"
                         class="btn btn-outline-secondary btn-sm">
-                        <i class="bi bi-download me-1" aria-hidden="true"></i> <?= lang('Guests.downloadQr') ?>
+                        <i class="bi bi-download me-1" aria-hidden="true"></i> <?= lang('Visitors.downloadQr') ?>
                     </a>
 
                     <!-- Open in new tab -->
                     <a href="<?= esc($cardUrl) ?>" target="_blank" rel="noopener noreferrer"
                         class="btn btn-outline-primary btn-sm">
-                        <i class="bi bi-box-arrow-up-right me-1" aria-hidden="true"></i> <?= lang('Guests.previewCardForm') ?>
+                        <i class="bi bi-box-arrow-up-right me-1" aria-hidden="true"></i> <?= lang('Visitors.previewCardForm') ?>
                     </a>
                 </div>
             </div>
@@ -200,7 +200,7 @@ $importErrors = session('import_errors');
         <!-- Interests hint card -->
         <div class="card mt-3">
             <div class="card-header fw-semibold small">
-                <i class="bi bi-tags me-1" aria-hidden="true"></i> <?= lang('Guests.interestSlugsTitle') ?>
+                <i class="bi bi-tags me-1" aria-hidden="true"></i> <?= lang('Visitors.interestSlugsTitle') ?>
             </div>
             <div class="card-body p-2">
                 <div class="d-flex flex-wrap gap-1">
@@ -219,15 +219,15 @@ $importErrors = session('import_errors');
 <script>
     (function() {
         const i18n = {
-            linkCopied: '<?= esc(lang('Guests.importLinkCopied'), 'js') ?>',
-            linkCopiedShort: '<?= esc(lang('Guests.importLinkCopiedShort'), 'js') ?>',
-            selectFile: '<?= esc(lang('Guests.importSelectFile'), 'js') ?>',
-            resultSummary: '<?= esc(lang('Guests.importResultSummary'), 'js') ?>',
-            rowErrorsSuffix: '<?= esc(lang('Guests.importRowErrorsSuffix'), 'js') ?>',
-            importFailed: '<?= esc(lang('Guests.importFailed'), 'js') ?>',
-            networkError: '<?= esc(lang('Guests.importNetworkError'), 'js') ?>',
-            rowErrors: '<?= esc(lang('Guests.importRowErrors'), 'js') ?>',
-            row: '<?= esc(lang('Guests.importRow'), 'js') ?>',
+            linkCopied: '<?= esc(lang('Visitors.importLinkCopied'), 'js') ?>',
+            linkCopiedShort: '<?= esc(lang('Visitors.importLinkCopiedShort'), 'js') ?>',
+            selectFile: '<?= esc(lang('Visitors.importSelectFile'), 'js') ?>',
+            resultSummary: '<?= esc(lang('Visitors.importResultSummary'), 'js') ?>',
+            rowErrorsSuffix: '<?= esc(lang('Visitors.importRowErrorsSuffix'), 'js') ?>',
+            importFailed: '<?= esc(lang('Visitors.importFailed'), 'js') ?>',
+            networkError: '<?= esc(lang('Visitors.importNetworkError'), 'js') ?>',
+            rowErrors: '<?= esc(lang('Visitors.importRowErrors'), 'js') ?>',
+            row: '<?= esc(lang('Visitors.importRow'), 'js') ?>',
         };
 
         // ── Copy link

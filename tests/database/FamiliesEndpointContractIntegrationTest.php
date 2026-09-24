@@ -464,7 +464,6 @@ final class FamiliesEndpointContractIntegrationTest extends CIUnitTestCase
             'parish_id' => $parishId,
             'first_name' => 'Test',
             'last_name' => 'User',
-            'membership_status' => 'active',
             'updated_at' => date('Y-m-d H:i:s'),
         ];
 
@@ -489,8 +488,6 @@ final class FamiliesEndpointContractIntegrationTest extends CIUnitTestCase
         if ($existing !== null) {
             $this->db->table('parish_affiliation')->where('id', $existing['id'])->update([
                 'membership_status' => 'member',
-                'canonical_status' => 'member',
-                'is_member' => 1,
                 'updated_at' => date('Y-m-d H:i:s'),
             ]);
             return;
@@ -500,11 +497,7 @@ final class FamiliesEndpointContractIntegrationTest extends CIUnitTestCase
             'linked_user_id' => $userId,
             'parish_id' => $parishId,
             'person_id' => null,
-            'affiliation_type' => 'member',
             'membership_status' => 'member',
-            'canonical_status' => 'member',
-            'is_member' => 1,
-            'is_good_standing' => 0,
             'source' => 'system',
             'start_date' => date('Y-m-d'),
             'end_date' => null,
@@ -589,7 +582,6 @@ final class FamiliesEndpointContractIntegrationTest extends CIUnitTestCase
                 parish_id INTEGER NOT NULL,
                 first_name TEXT NULL,
                 last_name TEXT NULL,
-                membership_status TEXT NULL,
                 created_at TEXT NULL,
                 updated_at TEXT NULL,
                 deleted_at TEXT NULL
@@ -600,7 +592,6 @@ final class FamiliesEndpointContractIntegrationTest extends CIUnitTestCase
         $this->ensureColumnExists($profileTable, 'parish_id', 'INTEGER NULL');
         $this->ensureColumnExists($profileTable, 'first_name', 'TEXT NULL');
         $this->ensureColumnExists($profileTable, 'last_name', 'TEXT NULL');
-        $this->ensureColumnExists($profileTable, 'membership_status', 'TEXT NULL');
         $this->ensureColumnExists($profileTable, 'portal_access', 'TEXT NULL');
         $this->ensureColumnExists($profileTable, 'portal_enabled_at', 'TEXT NULL');
 
@@ -608,7 +599,6 @@ final class FamiliesEndpointContractIntegrationTest extends CIUnitTestCase
         $this->ensureColumnExists($prefixedProfile, 'parish_id', 'INTEGER NULL');
         $this->ensureColumnExists($prefixedProfile, 'first_name', 'TEXT NULL');
         $this->ensureColumnExists($prefixedProfile, 'last_name', 'TEXT NULL');
-        $this->ensureColumnExists($prefixedProfile, 'membership_status', 'TEXT NULL');
         $this->ensureColumnExists($prefixedProfile, 'portal_access', 'TEXT NULL');
         $this->ensureColumnExists($prefixedProfile, 'portal_enabled_at', 'TEXT NULL');
 
@@ -618,11 +608,7 @@ final class FamiliesEndpointContractIntegrationTest extends CIUnitTestCase
                 linked_user_id INTEGER NULL,
                 parish_id INTEGER NOT NULL,
                 person_id INTEGER NULL,
-                affiliation_type TEXT DEFAULT "member",
-                membership_status TEXT DEFAULT "guest",
-                canonical_status TEXT NULL,
-                is_member INTEGER DEFAULT 0,
-                is_good_standing INTEGER DEFAULT 0,
+                membership_status TEXT DEFAULT "visitor",
                 source TEXT DEFAULT "system",
                 start_date TEXT NULL,
                 end_date TEXT NULL,
@@ -636,11 +622,7 @@ final class FamiliesEndpointContractIntegrationTest extends CIUnitTestCase
         $this->ensureColumnExists($affiliationTable, 'linked_user_id', 'INTEGER NULL');
         $this->ensureColumnExists($affiliationTable, 'parish_id', 'INTEGER NULL');
         $this->ensureColumnExists($affiliationTable, 'person_id', 'INTEGER NULL');
-        $this->ensureColumnExists($affiliationTable, 'affiliation_type', 'TEXT NULL');
         $this->ensureColumnExists($affiliationTable, 'membership_status', 'TEXT NULL');
-        $this->ensureColumnExists($affiliationTable, 'canonical_status', 'TEXT NULL');
-        $this->ensureColumnExists($affiliationTable, 'is_member', 'INTEGER DEFAULT 0');
-        $this->ensureColumnExists($affiliationTable, 'is_good_standing', 'INTEGER DEFAULT 0');
         $this->ensureColumnExists($affiliationTable, 'source', 'TEXT NULL');
         $this->ensureColumnExists($affiliationTable, 'start_date', 'TEXT NULL');
         $this->ensureColumnExists($affiliationTable, 'end_date', 'TEXT NULL');

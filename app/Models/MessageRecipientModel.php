@@ -25,7 +25,6 @@ class MessageRecipientModel extends Model
     protected $allowedFields    = [
         'campaign_id',
         'person_id',
-        'guest_id',
         'user_id',
         'name',
         'first_name',

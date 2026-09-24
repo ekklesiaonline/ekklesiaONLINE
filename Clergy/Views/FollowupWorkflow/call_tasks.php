@@ -4,53 +4,67 @@
 
 <div class="d-flex justify-content-start align-items-center flex-wrap gap-2 mb-3">
     <a href="<?= base_url('followup-workflow/sequences') ?>" class="btn btn-outline-secondary">
-        <i class="bi bi-diagram-3" aria-hidden="true"></i> <?= lang('Guests.callTasksSequencesBtn') ?>
+        <i class="bi bi-diagram-3" aria-hidden="true"></i> <?= lang('Visitors.callTasksSequencesBtn') ?>
     </a>
-    <a href="<?= base_url('guests/dashboard') ?>" class="btn btn-outline-secondary">
-        <i class="bi bi-arrow-left" aria-hidden="true"></i> <?= lang('Guests.backToGuests') ?>
+    <a href="<?= base_url('visitors/dashboard') ?>" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left" aria-hidden="true"></i> <?= lang('Visitors.backToVisitors') ?>
     </a>
 </div>
 
-<!-- Status filter tabs -->
-<ul class="nav nav-tabs mb-3">
-    <?php
-    $tabMap = [
-        'pending'   => lang('App.statusPending'),
-        'completed' => lang('App.statusCompleted'),
-        'cancelled' => lang('App.statusCancelled'),
-        'all'       => lang('App.all'),
-    ];
-    foreach ($tabMap as $key => $label): ?>
-        <li class="nav-item">
-            <a class="nav-link <?= $activeStatus === $key ? 'active' : '' ?>"
-                href="<?= base_url('followup-workflow/call-tasks?status=' . $key) ?>">
-                <?= esc($label) ?>
-                <?php if ($key === 'pending' && $pendingCount > 0): ?>
-                    <span class="badge rounded-pill border border-warning text-warning fw-normal ms-1"><?= (int) $pendingCount ?></span>
-                <?php endif; ?>
-            </a>
-        </li>
-    <?php endforeach; ?>
-</ul>
+<!-- Status filter tabs + task-type filter -->
+<div class="d-flex justify-content-between align-items-end flex-wrap gap-2 mb-3">
+    <ul class="nav nav-tabs mb-0">
+        <?php
+        $typeQuery = $activeType !== null ? '&type=' . $activeType : '';
+        $tabMap = [
+            'pending'   => lang('App.statusPending'),
+            'completed' => lang('App.statusCompleted'),
+            'cancelled' => lang('App.statusCancelled'),
+            'all'       => lang('App.all'),
+        ];
+        foreach ($tabMap as $key => $label): ?>
+            <li class="nav-item">
+                <a class="nav-link <?= $activeStatus === $key ? 'active' : '' ?>"
+                    href="<?= base_url('followup-workflow/call-tasks?status=' . $key . $typeQuery) ?>">
+                    <?= esc($label) ?>
+                    <?php if ($key === 'pending' && $pendingCount > 0): ?>
+                        <span class="badge rounded-pill border border-warning text-warning fw-normal ms-1"><?= (int) $pendingCount ?></span>
+                    <?php endif; ?>
+                </a>
+            </li>
+        <?php endforeach; ?>
+    </ul>
+    <form method="get" action="<?= base_url('followup-workflow/call-tasks') ?>" class="d-flex align-items-center gap-2">
+        <input type="hidden" name="status" value="<?= esc($activeStatus) ?>">
+        <label class="form-label mb-0 small text-muted" for="type_filter"><?= lang('Visitors.callTasksTypeFilter') ?></label>
+        <select id="type_filter" name="type" class="form-select form-select-sm w-auto" onchange="this.form.submit()">
+            <option value=""><?= lang('Visitors.callTasksTypeAll') ?></option>
+            <option value="call" <?= $activeType === 'call' ? 'selected' : '' ?>><?= lang('Visitors.callTasksTypeCall') ?></option>
+            <option value="manual" <?= $activeType === 'manual' ? 'selected' : '' ?>><?= lang('Visitors.callTasksTypeManual') ?></option>
+        </select>
+    </form>
+</div>
 
 <div class="card shadow-sm">
     <div class="card-body p-0">
         <?php if (empty($tasks)): ?>
             <div class="text-center py-5 text-muted">
                 <i class="bi bi-telephone-x fs-2 d-block mb-2" aria-hidden="true"></i>
-                <?= lang('Guests.callTasksEmpty') ?>
+                <?= lang('Visitors.callTasksEmpty') ?>
             </div>
         <?php else: ?>
             <div class="table-responsive">
                 <table class="table table-hover align-middle mb-0" id="callTasksTable">
                     <thead>
                         <tr>
-                            <th scope="col"><?= lang('Guests.callTasksColGuest') ?></th>
-                            <th scope="col"><?= lang('Guests.colPhone') ?></th>
-                            <th scope="col"><?= lang('Guests.scheduledLabel') ?></th>
+                            <th scope="col"><?= lang('Visitors.callTasksColVisitor') ?></th>
+                            <th scope="col"><?= lang('Visitors.callTasksColType') ?></th>
+                            <th scope="col"><?= lang('Visitors.callTasksColTask') ?></th>
+                            <th scope="col"><?= lang('Visitors.scheduledLabel') ?></th>
+                            <th scope="col"><?= lang('Visitors.callTasksColAssignee') ?></th>
                             <th scope="col"><?= lang('App.colNotes') ?></th>
-                            <th scope="col" class="text-center"><?= lang('Guests.colStatus') ?></th>
-                            <?php if (auth()->user()->can('guest.edit')): ?>
+                            <th scope="col" class="text-center"><?= lang('Visitors.colStatus') ?></th>
+                            <?php if (auth()->user()->can('visitor.edit')): ?>
                                 <th scope="col" class="text-center"><?= lang('App.colActions') ?></th>
                             <?php endif; ?>
                         </tr>
@@ -64,7 +78,7 @@
                                             <?= esc($task['first_name'] . ' ' . $task['last_name']) ?>
                                         </span>
                                     <?php else: ?>
-                                        <a href="<?= base_url('guests/view/' . (int) ($task['guest_id'] ?? 0)) ?>"
+                                        <a href="<?= base_url('visitors/view/' . (int) ($task['visitor_id'] ?? 0)) ?>"
                                             class="text-decoration-none">
                                             <?= esc($task['first_name'] . ' ' . $task['last_name']) ?>
                                         </a>
@@ -72,17 +86,38 @@
                                 </td>
                                 <td>
                                     <?php
-                                    $phone = $task['phone'] ?? '';
-                                    if ($phone !== '') {
-                                        // Show last 4 digits only for privacy
-                                        $masked = preg_replace('/\d(?=\d{4})/', '•', $phone);
-                                        echo esc($masked ?? $phone);
-                                    } else {
-                                        echo '<span class="text-muted">—</span>';
-                                    }
+                                    $isManualTask = ($task['task_type'] ?? 'call') === 'manual';
+                                    $typeBadge    = $isManualTask ? 'border-danger text-danger' : 'border-warning text-warning-emphasis';
+                                    $typeIcon     = $isManualTask ? 'bi-person-check' : 'bi-telephone';
+                                    $typeLabel    = $isManualTask ? lang('Visitors.callTasksTypeManual') : lang('Visitors.callTasksTypeCall');
                                     ?>
+                                    <span class="badge border <?= $typeBadge ?> fw-normal">
+                                        <i class="bi <?= $typeIcon ?>" aria-hidden="true"></i> <?= esc($typeLabel) ?>
+                                    </span>
+                                </td>
+                                <td>
+                                    <?php if ($isManualTask): ?>
+                                        <?= esc($task['title'] ?? '') ?: '<span class="text-muted">—</span>' ?>
+                                    <?php else: ?>
+                                        <?php
+                                        $phone = $task['phone'] ?? '';
+                                        if ($phone !== '') {
+                                            // Show last 4 digits only for privacy
+                                            $masked = preg_replace('/\d(?=\d{4})/', '•', $phone);
+                                            echo esc($masked ?? $phone);
+                                        } else {
+                                            echo '<span class="text-muted">—</span>';
+                                        }
+                                        ?>
+                                    <?php endif; ?>
                                 </td>
                                 <td><?= esc($task['scheduled_date']) ?></td>
+                                <td>
+                                    <?php
+                                    $assignee = trim((string) ($task['assignee_name'] ?? '')) ?: (string) ($task['assignee_username'] ?? '');
+                                    echo $assignee !== '' ? esc($assignee) : '<span class="text-muted">—</span>';
+                                    ?>
+                                </td>
                                 <td>
                                     <span class="task-notes"><?= esc($task['notes'] ?? '') ?: '<span class="text-muted">—</span>' ?></span>
                                 </td>
@@ -105,14 +140,14 @@
                                         <?= esc($statusLabel) ?>
                                     </span>
                                 </td>
-                                <?php if (auth()->user()->can('guest.edit')): ?>
+                                <?php if (auth()->user()->can('visitor.edit')): ?>
                                     <td class="text-center">
                                         <?php if ($task['status'] === 'pending'): ?>
                                             <button
                                                 class="btn btn-sm btn-outline-success complete-task-btn"
                                                 data-task-id="<?= (int) $task['id'] ?>"
-                                                data-guest="<?= esc($task['first_name'] . ' ' . $task['last_name'], 'attr') ?>">
-                                                <i class="bi bi-check2-circle" aria-hidden="true"></i> <?= lang('Guests.callTasksDoneBtn') ?>
+                                                data-visitor="<?= esc($task['first_name'] . ' ' . $task['last_name'], 'attr') ?>">
+                                                <i class="bi bi-check2-circle" aria-hidden="true"></i> <?= lang('Visitors.callTasksDoneBtn') ?>
                                             </button>
                                         <?php else: ?>
                                             <span class="text-muted small">
@@ -138,26 +173,26 @@
         'use strict';
 
         const COMPLETE_URL = '<?= base_url('followup-workflow/call-tasks/complete') ?>';
-        const CSRF_NAME = '<?= csrf_token() ?>';
-        const CSRF_HASH = '<?= csrf_hash() ?>';
+        const csrfMeta = document.querySelector('meta[name="csrf-token"]');
+        const csrfHeader = document.querySelector('meta[name="csrf-header"]')?.content ?? 'X-CSRF-TOKEN';
         const i18n = {
-            completeTitle: <?= json_encode(lang('Guests.callTasksCompleteTitle')) ?>,
-            completeBody: <?= json_encode(lang('Guests.callTasksCompleteBody')) ?>,
-            completeBtnLabel: <?= json_encode(lang('Guests.callTasksCompleteBtnLabel')) ?>,
-            completeSuccess: <?= json_encode(lang('Guests.taskCompleteSuccess')) ?>,
+            completeTitle: <?= json_encode(lang('Visitors.callTasksCompleteTitle')) ?>,
+            completeBody: <?= json_encode(lang('Visitors.callTasksCompleteBody')) ?>,
+            completeBtnLabel: <?= json_encode(lang('Visitors.callTasksCompleteBtnLabel')) ?>,
+            completeSuccess: <?= json_encode(lang('Visitors.taskCompleteSuccess')) ?>,
             statusCompleted: <?= json_encode(lang('App.statusCompleted')) ?>,
-            updateFailed: <?= json_encode(lang('Guests.callTasksUpdateFailed')) ?>,
-            networkError: <?= json_encode(lang('Guests.callTasksNetworkError')) ?>,
+            updateFailed: <?= json_encode(lang('Visitors.callTasksUpdateFailed')) ?>,
+            networkError: <?= json_encode(lang('Visitors.callTasksNetworkError')) ?>,
         };
 
         document.querySelectorAll('.complete-task-btn').forEach(function(btn) {
             btn.addEventListener('click', function() {
                 const taskId = btn.dataset.taskId;
-                const guest = btn.dataset.guest;
+                const visitor = btn.dataset.visitor;
 
                 showAppConfirm(
                     i18n.completeTitle,
-                    i18n.completeBody.replace('{0}', '<strong>' + guest + '</strong>'),
+                    i18n.completeBody.replace('{0}', '<strong>' + visitor + '</strong>'),
                     function() {
                         markComplete(taskId, btn);
                     },
@@ -172,17 +207,23 @@
             btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status"></span>';
 
             const headers = {
-                'Content-Type': 'application/json',
+                'Content-Type': 'application/x-www-form-urlencoded',
                 'X-Requested-With': 'XMLHttpRequest',
             };
-            headers[CSRF_NAME] = CSRF_HASH;
+            if (csrfMeta) {
+                headers[csrfHeader] = csrfMeta.content;
+            }
 
             fetch(COMPLETE_URL + '/' + taskId, {
                     method: 'POST',
+                    credentials: 'same-origin',
                     headers: headers,
-                    body: JSON.stringify({}),
                 })
                 .then(function(r) {
+                    const newToken = r.headers.get(csrfHeader);
+                    if (newToken && csrfMeta) {
+                        csrfMeta.content = newToken;
+                    }
                     return r.json();
                 })
                 .then(function(data) {

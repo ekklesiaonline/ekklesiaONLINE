@@ -52,8 +52,8 @@ $templateChannelLabels = $channelLabels + ['any' => 'Messages.channelAny'];
                 </div>
             </div>
             <div class="form-check">
-                <input class="form-check-input" type="checkbox" id="include_guests" name="include_guests" value="1" <?= (int) old('include_guests') === 1 ? 'checked' : '' ?>>
-                <label class="form-check-label" for="include_guests"><?= lang('Messages.audienceGuests') ?></label>
+                <input class="form-check-input" type="checkbox" id="include_visitors" name="include_visitors" value="1" <?= (int) old('include_visitors') === 1 ? 'checked' : '' ?>>
+                <label class="form-check-label" for="include_visitors"><?= lang('Messages.audienceVisitors') ?></label>
             </div>
         </div>
     </div>

@@ -1088,7 +1088,6 @@ final class SystemAdminCreateAdminUiIntegrationTest extends CIUnitTestCase
             last_name TEXT NULL,
             phone TEXT NULL,
             locale TEXT NULL,
-            membership_status TEXT NULL,
             created_at TEXT NULL,
             updated_at TEXT NULL,
             deleted_at TEXT NULL
@@ -1110,7 +1109,6 @@ final class SystemAdminCreateAdminUiIntegrationTest extends CIUnitTestCase
             'last_name'         => 'TEXT NULL',
             'phone'             => 'TEXT NULL',
             'locale'            => 'TEXT NULL',
-            'membership_status' => 'TEXT NULL',
             'portal_access'     => 'TEXT NULL',
             'is_confirmed'      => 'INTEGER DEFAULT 0',
             'deleted_at'        => 'TEXT NULL',
@@ -1303,7 +1301,6 @@ final class SystemAdminCreateAdminUiIntegrationTest extends CIUnitTestCase
             'first_name' => $firstName,
             'last_name' => $lastName,
             'locale' => 'en',
-            'membership_status' => 'active',
             'is_confirmed' => 0,
             'created_at' => date('Y-m-d H:i:s'),
             'updated_at' => date('Y-m-d H:i:s'),

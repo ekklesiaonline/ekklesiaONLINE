@@ -148,14 +148,24 @@ if (!in_array($selectedPerPage, [25, 50, 100], true)) {
             '<?= esc(lang('App.confirm'), 'js') ?>',
             <?= json_encode(lang('Services.deleteConfirmWithMetrics')) ?>,
             function() {
+                const csrfMeta = document.querySelector('meta[name="csrf-token"]');
+                const csrfHeader = document.querySelector('meta[name="csrf-header"]')?.content ?? 'X-CSRF-TOKEN';
+                const headers = { 'X-Requested-With': 'XMLHttpRequest' };
+                if (csrfMeta) {
+                    headers[csrfHeader] = csrfMeta.content;
+                }
                 fetch('<?= base_url('services/delete/') ?>' + id, {
                         method: 'POST',
-                        headers: {
-                            'X-Requested-With': 'XMLHttpRequest',
-                            'Content-Type': 'application/json'
-                        }
+                        credentials: 'same-origin',
+                        headers: headers
                     })
-                    .then(response => response.json())
+                    .then(response => {
+                        const newToken = response.headers.get(csrfHeader);
+                        if (newToken && csrfMeta) {
+                            csrfMeta.content = newToken;
+                        }
+                        return response.json();
+                    })
                     .then(data => {
                         if (data.success) {
                             location.reload();

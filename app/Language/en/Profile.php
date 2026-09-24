@@ -118,7 +118,7 @@ return [
     'statusMember'        => 'Member',
     'statusActiveHelp'    => 'Full member with all privileges',
     'statusInactiveHelp'  => 'Member on leave or sabbatical',
-    'statusVisitorHelp'   => 'Visiting friend or guest',
+    'statusVisitorHelp'   => 'Visiting friend or visitor',
     'statusPendingHelp'   => 'Awaiting membership approval',
     'tips'                => 'Tips',
     'tipContactCurrent'   => 'Keep your contact information up to date',

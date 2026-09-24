@@ -43,7 +43,6 @@ class ProfileModel extends BaseTenantModel
         'baptism_date',
         'confirmation_date',
         'is_confirmed',
-        'membership_status',
         'is_dependent',
         'portal_access',
         'portal_enabled_at',
@@ -356,9 +355,6 @@ class ProfileModel extends BaseTenantModel
         foreach ($rows as $row) {
             $status = MembershipStatusService::normalizeAffiliationStatus((string) ($row['membership_status'] ?? ''));
             if (!in_array($status, $validStatuses, true)) {
-                $status = MembershipStatusService::profileToAffiliation($status);
-            }
-            if (!in_array($status, $validStatuses, true)) {
                 $status = 'visitor';
             }
 
@@ -429,17 +425,17 @@ class ProfileModel extends BaseTenantModel
      */
     public function getAllParishesStatusCounts()
     {
-        $profileTable = $this->resolveExistingProfileTable();
-        if ($profileTable === null) {
+        if (! $this->db->tableExists('parish_affiliation')) {
             return [];
         }
 
-        $rows = $this->db->table($profileTable . ' p')
-            ->select('p.membership_status, COUNT(*) as count')
-            ->join('users u', 'u.id = p.user_id')
+        $rows = $this->db->table('parish_affiliation pa')
+            ->select('pa.membership_status, COUNT(*) as count')
+            ->join('users u', 'u.id = pa.linked_user_id')
             ->join('auth_groups_users agu', 'agu.user_id = u.id AND agu.group IN ("provinceadmin","dioceseadmin")', 'left')
+            ->where('pa.deleted_at', null)
             ->where('agu.id IS NULL') // Exclude province/diocesan admin users
-            ->groupBy('p.membership_status')
+            ->groupBy('pa.membership_status')
             ->get()
             ->getResultArray();
 

@@ -23,6 +23,7 @@ class ApiRateLimitFilter implements FilterInterface
         '#^members/(store|update|delete|transfer|reassign|attach-parish|detach-parish|set-home-parish)#' => 30,
         '#^members/province-staff/(store|update|delete)#' => 20,
         '#^guests/(store|update|delete)#' => 30,
+        '#^visitors/(store|update|delete|promote|revert-conversion|promote-attender|demote)#' => 30,
         '#^followup/(store|update-status|delete)#' => 25,
         '#^events/(store|update|delete|register)#' => 30,
         '#^events/registrations/.+/status$#' => 25,
@@ -33,7 +34,6 @@ class ApiRateLimitFilter implements FilterInterface
         '#^pledges/(store|update|delete)#' => 20,
         '#^leadership/(store|update|delete)#' => 20,
         '#^standing/refresh$#' => 15,
-        '#^guest-conversions/(convert|revert)#' => 20,
         '#^profile/(update|delete-picture|complete)$#' => 20,
     ];
 

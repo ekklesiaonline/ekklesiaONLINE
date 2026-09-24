@@ -423,7 +423,7 @@ if ($filterMailingDiffers)   $paginationBase .= '&mailing_differs=1';
         const impactLabelAttendance = <?= json_encode(lang('Parishes.impactAttendance')) ?>;
         const impactLabelEvents = <?= json_encode(lang('Parishes.impactEvents')) ?>;
         const impactLabelRegistrations = <?= json_encode(lang('Parishes.impactEventRegistrations')) ?>;
-        const impactLabelGuests = <?= json_encode(lang('Parishes.impactGuests')) ?>;
+        const impactLabelVisitors = <?= json_encode(lang('Parishes.impactVisitors')) ?>;
         const impactLabelExpenses = <?= json_encode(lang('Parishes.impactExpenses')) ?>;
         const impactLabelFamilies = <?= json_encode(lang('Parishes.impactFamilies')) ?>;
         const impactLabelTeams = <?= json_encode(lang('Parishes.impactVolunteerTeams')) ?>;
@@ -529,7 +529,7 @@ if ($filterMailingDiffers)   $paginationBase .= '&mailing_differs=1';
                 impactItem(impactLabelAttendance, impact.attendance),
                 impactItem(impactLabelEvents, impact.events),
                 impactItem(impactLabelRegistrations, impact.event_registrations),
-                impactItem(impactLabelGuests, impact.guests),
+                impactItem(impactLabelVisitors, impact.visitors),
                 impactItem(impactLabelExpenses, impact.expenses),
                 impactItem(impactLabelFamilies, impact.families),
                 impactItem(impactLabelTeams, impact.volunteer_teams),

@@ -147,15 +147,18 @@ $formatLocalizedDate = static function (?string $value, string $pattern, string 
                                         </td>
                                         <td>
                                             <?php
+                                            $memberStatus = (string) ($member['membership_status'] ?? '');
                                             $statusLabelMap = [
-                                                'active' => lang('App.statusActive'),
+                                                'member' => lang('App.statusActive'),
+                                                'regular_attender' => lang('App.statusRegular_attender'),
                                                 'inactive' => lang('App.statusInactive'),
                                                 'pending' => lang('App.statusPending'),
                                                 'visitor' => lang('App.statusVisitor'),
                                             ];
-                                            $statusLabel = $statusLabelMap[$member['membership_status']] ?? ucfirst($member['membership_status']);
+                                            $statusLabel = $statusLabelMap[$memberStatus] ?? \App\Services\MembershipStatusService::label($memberStatus);
+                                            $statusBadge = $memberStatus === 'member' ? 'success' : 'secondary';
                                             ?>
-                                            <span class="badge border border-<?= $member['membership_status'] == 'active' ? 'success' : 'secondary' ?> text-<?= $member['membership_status'] == 'active' ? 'success' : 'secondary' ?> fw-normal">
+                                            <span class="badge border border-<?= $statusBadge ?> text-<?= $statusBadge ?> fw-normal">
                                                 <?= esc($statusLabel) ?>
                                             </span>
                                         </td>
@@ -201,7 +204,7 @@ $formatLocalizedDate = static function (?string $value, string $pattern, string 
                 <div class="d-flex justify-content-between align-items-center">
                     <span><?= lang('Families.activeMembers') ?>:</span>
                     <strong class="h4 mb-0">
-                        <?= count(array_filter($family['members'], fn($m) => $m['membership_status'] == 'active')) ?>
+                        <?= count(array_filter($family['members'], fn($m) => ($m['membership_status'] ?? '') === 'member')) ?>
                     </strong>
                 </div>
             </div>

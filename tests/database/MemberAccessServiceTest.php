@@ -58,7 +58,7 @@ final class MemberAccessServiceTest extends CIUnitTestCase
             ->get()
             ->getRowArray();
         $this->assertNotNull($affiliation);
-        $this->assertSame('regular_attender', (string) ($affiliation['membership_status'] ?? ''));
+        $this->assertSame('visitor', (string) ($affiliation['membership_status'] ?? ''));
 
         $relation = $this->db->table('family_member')
             ->where('family_id', $familyId)
@@ -190,6 +190,71 @@ final class MemberAccessServiceTest extends CIUnitTestCase
         $this->assertSame(0, $familyLinks);
     }
 
+    public function testRevokePortalAccessBlockedByActiveLeadershipPositions(): void
+    {
+        $parishId = $this->insertParish('Revoke Leader Parish');
+
+        $this->db->table('users')->insert([
+            'username' => 'revoke.leader',
+            'active' => 1,
+            'created_at' => date('Y-m-d H:i:s'),
+            'updated_at' => date('Y-m-d H:i:s'),
+        ]);
+        $userId = (int) $this->db->insertID();
+
+        $this->db->table('profile')->insert([
+            'user_id' => $userId,
+            'parish_id' => $parishId,
+            'first_name' => 'Revoke',
+            'last_name' => 'Leader',
+            'portal_access' => 'enabled',
+            'created_at' => date('Y-m-d H:i:s'),
+            'updated_at' => date('Y-m-d H:i:s'),
+        ]);
+
+        $this->db->table('auth_identities')->insert([
+            'user_id' => $userId,
+            'type' => 'email_password',
+            'secret' => 'revoke.leader@example.test',
+            'secret2' => password_hash('StrongPass123', PASSWORD_DEFAULT),
+            'force_reset' => 0,
+            'created_at' => date('Y-m-d H:i:s'),
+            'updated_at' => date('Y-m-d H:i:s'),
+        ]);
+
+        $this->db->table('leadership_position')->insert([
+            'user_id' => $userId,
+            'scope_type' => 'parish',
+            'parish_id' => $parishId,
+            'title' => 'Parish Warden',
+            'active' => 1,
+            'created_at' => date('Y-m-d H:i:s'),
+            'updated_at' => date('Y-m-d H:i:s'),
+        ]);
+        $positionId = (int) $this->db->insertID();
+
+        $service = new \App\Services\NonPortalMemberProvisioningService($this->db);
+        $blocked = $service->revokePortalAccess($userId, $parishId);
+
+        $this->assertFalse((bool) ($blocked['ok'] ?? true));
+        $this->assertSame('ACTIVE_LEADERSHIP_POSITIONS', (string) ($blocked['code'] ?? ''));
+        $this->assertSame(409, (int) ($blocked['http_status'] ?? 0));
+
+        // Identity and enabled flag are untouched.
+        $this->assertSame(1, (int) $this->db->table('auth_identities')
+            ->where('user_id', $userId)
+            ->where('type', 'email_password')
+            ->countAllResults());
+        $this->assertSame('enabled', (string) ($this->db->table('profile')
+            ->where('user_id', $userId)->get()->getRowArray()['portal_access'] ?? ''));
+
+        // Ending the position releases the block and revoke succeeds.
+        $this->db->table('leadership_position')->where('id', $positionId)->update(['active' => 0]);
+        $released = $service->revokePortalAccess($userId, $parishId);
+        $this->assertTrue((bool) ($released['ok'] ?? false), json_encode($released));
+        $this->assertSame('PORTAL_ACCESS_REVOKED', (string) ($released['code'] ?? ''));
+    }
+
     private function insertParish(string $name): int
     {
         $this->db->table('parish')->insert([
@@ -280,7 +345,6 @@ final class MemberAccessServiceTest extends CIUnitTestCase
                 nickname TEXT NULL,
                 last_name TEXT NULL,
                 birth_date TEXT NULL,
-                membership_status TEXT NULL,
                 portal_access TEXT NOT NULL DEFAULT 'none',
                 portal_enabled_at TEXT NULL,
                 is_dependent INTEGER DEFAULT 0,
@@ -310,7 +374,6 @@ final class MemberAccessServiceTest extends CIUnitTestCase
                         nickname TEXT NULL,
                         last_name TEXT NULL,
                         birth_date TEXT NULL,
-                        membership_status TEXT NULL,
                         portal_access TEXT NOT NULL DEFAULT 'none',
                         portal_enabled_at TEXT NULL,
                         is_dependent INTEGER DEFAULT 0,
@@ -329,7 +392,6 @@ final class MemberAccessServiceTest extends CIUnitTestCase
         $this->ensureColumnExists($profilesResolved, 'first_name', 'TEXT NULL');
         $this->ensureColumnExists($profilesResolved, 'last_name', 'TEXT NULL');
         $this->ensureColumnExists($profilesResolved, 'birth_date', 'TEXT NULL');
-        $this->ensureColumnExists($profilesResolved, 'membership_status', 'TEXT NULL');
         $this->ensureColumnExists($profilesResolved, 'portal_access', 'TEXT NOT NULL DEFAULT "none"');
         $this->ensureColumnExists($profilesResolved, 'portal_enabled_at', 'TEXT NULL');
         $prefixedProfiles = $this->db->getPrefix() . 'profile';
@@ -337,7 +399,6 @@ final class MemberAccessServiceTest extends CIUnitTestCase
         $this->ensureColumnExists($prefixedProfiles, 'first_name', 'TEXT NULL');
         $this->ensureColumnExists($prefixedProfiles, 'last_name', 'TEXT NULL');
         $this->ensureColumnExists($prefixedProfiles, 'birth_date', 'TEXT NULL');
-        $this->ensureColumnExists($prefixedProfiles, 'membership_status', 'TEXT NULL');
         $this->ensureColumnExists($prefixedProfiles, 'portal_access', 'TEXT NOT NULL DEFAULT "none"');
         $this->ensureColumnExists($prefixedProfiles, 'portal_enabled_at', 'TEXT NULL');
         $this->ensureColumnExists($profilesResolved, 'nickname', 'TEXT NULL');
@@ -438,11 +499,7 @@ final class MemberAccessServiceTest extends CIUnitTestCase
                 linked_user_id INTEGER NULL,
                 parish_id INTEGER NOT NULL,
                 person_id INTEGER NULL,
-                affiliation_type TEXT DEFAULT "member",
-                membership_status TEXT DEFAULT "guest",
-                canonical_status TEXT NULL,
-                is_member INTEGER DEFAULT 0,
-                is_good_standing INTEGER DEFAULT 0,
+                membership_status TEXT DEFAULT "visitor",
                 source TEXT DEFAULT "system",
                 start_date TEXT NULL,
                 end_date TEXT NULL,
@@ -456,8 +513,6 @@ final class MemberAccessServiceTest extends CIUnitTestCase
         $this->ensureColumnExists($affiliationsTable, 'linked_user_id', 'INTEGER NULL');
         $this->ensureColumnExists($affiliationsTable, 'parish_id', 'INTEGER NOT NULL DEFAULT 0');
         $this->ensureColumnExists($affiliationsTable, 'membership_status', 'TEXT NULL');
-        $this->ensureColumnExists($affiliationsTable, 'canonical_status', 'TEXT NULL');
-        $this->ensureColumnExists($affiliationsTable, 'is_member', 'INTEGER NOT NULL DEFAULT 0');
         $this->ensureColumnExists($affiliationsTable, 'start_date', 'TEXT NULL');
         $this->ensureColumnExists($affiliationsTable, 'end_date', 'TEXT NULL');
 

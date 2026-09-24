@@ -88,7 +88,7 @@ $portalAccess = strtolower(trim((string) ($profile['portal_access'] ?? 'none')))
                     <?php endif; ?>
 
                     <?php
-                    $statusValue = strtolower(trim((string) ($person['membership_status'] ?? $profile['membership_status'] ?? 'visitor')));
+                    $statusValue = strtolower(trim((string) ($person['membership_status'] ?? 'visitor')));
                     $statusLabel = \App\Services\MembershipStatusService::label($statusValue);
                     $statusColor = \App\Services\MembershipStatusService::badgeColor($statusValue);
                     ?>
@@ -273,7 +273,7 @@ $portalAccess = strtolower(trim((string) ($profile['portal_access'] ?? 'none')))
                             <?php foreach ($affiliations as $aff): ?>
                                 <li class="list-group-item d-flex justify-content-between align-items-center">
                                     <?= esc($aff['parish_name'] ?? $aff['parish_id'] ?? '') ?>
-                                    <span class="badge bg-info text-dark"><?= esc($aff['membership_status'] ?? '') ?></span>
+                                    <span class="badge border border-<?= \App\Services\MembershipStatusService::badgeColor((string) ($aff['membership_status'] ?? '')) ?> text-<?= \App\Services\MembershipStatusService::badgeColor((string) ($aff['membership_status'] ?? '')) ?> fw-normal"><?= esc(\App\Services\MembershipStatusService::label((string) ($aff['membership_status'] ?? ''))) ?></span>
                                 </li>
                             <?php endforeach; ?>
                         </ul>
@@ -820,6 +820,12 @@ $portalAccess = strtolower(trim((string) ($profile['portal_access'] ?? 'none')))
                 </div>
                 <div class="modal-body">
                     <div class="row g-3">
+                        <div class="col-12 d-none" id="lp_eligibility_alert">
+                            <div class="alert alert-warning py-2 px-3 mb-0 small">
+                                <i class="bi bi-exclamation-triangle me-1" aria-hidden="true"></i>
+                                <span id="lp_eligibility_text"></span>
+                            </div>
+                        </div>
                         <div class="col-md-6">
                             <label for="lp_title" class="form-label"><?= lang('Leadership.title') ?> <span class="text-danger">*</span></label>
                             <input type="text" class="form-control" id="lp_title" name="title" required maxlength="150">
@@ -1380,6 +1386,32 @@ $portalAccess = strtolower(trim((string) ($profile['portal_access'] ?? 'none')))
     const addBtn = document.getElementById('addLeadershipPositionBtn');
     const saveBtn = document.getElementById('saveLeadershipPositionBtn');
     const modalTitle = document.getElementById('leadershipPositionModalLabel');
+    const eligAlert = document.getElementById('lp_eligibility_alert');
+    const eligText = document.getElementById('lp_eligibility_text');
+    const roleCategorySel = document.getElementById('lp_role_category');
+
+    function refreshEligibilityHint() {
+        if (!eligAlert || !eligText) return;
+        const cat = roleCategorySel ? roleCategorySel.value : '';
+        fetch('<?= base_url('people/leadership-eligibility/' . $profileId) ?>?role_category=' + encodeURIComponent(cat), {
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json',
+            },
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(payload) {
+            if (payload && payload.success && payload.data && payload.data.message) {
+                eligText.textContent = payload.data.message;
+                eligAlert.classList.remove('d-none');
+            } else {
+                eligAlert.classList.add('d-none');
+            }
+        })
+        .catch(function() {
+            eligAlert.classList.add('d-none');
+        });
+    }
 
     function getLeadershipModal() {
         if (!modalEl || typeof window.bootstrap === 'undefined' || typeof window.bootstrap.Modal !== 'function') {
@@ -1411,9 +1443,14 @@ $portalAccess = strtolower(trim((string) ($profile['portal_access'] ?? 'none')))
         }
     }
 
+    if (roleCategorySel) {
+        roleCategorySel.addEventListener('change', refreshEligibilityHint);
+    }
+
     if (addBtn) {
         addBtn.addEventListener('click', function() {
             resetForm();
+            refreshEligibilityHint();
             const modal = getLeadershipModal();
             if (modal) modal.show();
         });
@@ -1443,6 +1480,7 @@ $portalAccess = strtolower(trim((string) ($profile['portal_access'] ?? 'none')))
                 modalTitle.textContent = '<?= esc(lang('Leadership.editPosition'), 'js') ?>';
             }
 
+            refreshEligibilityHint();
             const modal = getLeadershipModal();
             if (modal) modal.show();
         });

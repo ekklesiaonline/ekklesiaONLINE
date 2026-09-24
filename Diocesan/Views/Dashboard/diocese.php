@@ -106,7 +106,7 @@ $formatLocalizedDateTime = static function (?string $value, string $locale): str
                 <div class="card-body">
                     <h6 class="text-muted mb-1"><?= lang('Dashboard.totalPeople') ?></h6>
                     <h3 class="mb-0"><?= number_format((int) ($scope_total_people ?? 0)) ?></h3>
-                    <small class="text-muted"><?= number_format((int) ($scope_total_guests ?? 0)) ?> <?= lang('Dashboard.guestsLabel') ?></small>
+                    <small class="text-muted"><?= number_format((int) ($scope_total_visitors ?? 0)) ?> <?= lang('Dashboard.visitorsLabel') ?></small>
                 </div>
             </div>
         </div>
@@ -164,7 +164,7 @@ $formatLocalizedDateTime = static function (?string $value, string $locale): str
                 <div class="card-body">
                     <h6 class="text-muted mb-1"><?= lang('Dashboard.totalPeople') ?></h6>
                     <h3 class="mb-0"><?= number_format((int) ($total_people ?? 0)) ?></h3>
-                    <small class="text-muted"><?= number_format((int) ($total_guests ?? 0)) ?> <?= lang('Dashboard.guestsLabel') ?></small>
+                    <small class="text-muted"><?= number_format((int) ($total_visitors ?? 0)) ?> <?= lang('Dashboard.visitorsLabel') ?></small>
                 </div>
             </div>
         </div>

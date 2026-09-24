@@ -5,7 +5,7 @@ use CodeIgniter\Test\CIUnitTestCase;
 /**
  * M7: Legacy migration inventory & observability.
  *
- * Inventories all `profile`, `guest`, `church_people`, and dynamic
+ * Inventories all `profile`, `visitor`, `church_people`, and dynamic
  * table fallbacks across the codebase. Each fallback is classified as:
  * - active compatibility: still needed for current behavior
  * - migration-only: only referenced in migration backfill code
@@ -23,8 +23,8 @@ final class LegacyFallbackInventoryTest extends CIUnitTestCase
      *
      * Classification: retired
      * Guest rows were migrated to person + parish_affiliation
-     * (affiliation_type = 'guest') + person_visit; GuestModel is removed and
-     * reads go through GuestDirectoryService over canonical tables.
+     * (membership_status = 'visitor') + person_visit; GuestModel is removed and
+     * reads go through VisitorDirectoryService over canonical tables.
      */
     public function testGuestTableUsageRetired(): void
     {
@@ -33,15 +33,20 @@ final class LegacyFallbackInventoryTest extends CIUnitTestCase
             'GuestModel must be removed (T4.5).'
         );
         $this->assertTrue(
-            file_exists(APPPATH . 'Services/GuestDirectoryService.php'),
-            'GuestDirectoryService must provide canonical guest-shaped reads (T4.5).'
+            file_exists(APPPATH . 'Services/VisitorDirectoryService.php'),
+            'VisitorDirectoryService must provide canonical visitor-shaped reads (T4.5).'
         );
 
-        $service = file_get_contents(APPPATH . 'Services/GuestDirectoryService.php');
+        $service = file_get_contents(APPPATH . 'Services/VisitorDirectoryService.php');
         $this->assertStringNotContainsString(
             "table('guest'",
             $service,
-            'GuestDirectoryService must not query the dropped guest table.'
+            'VisitorDirectoryService must not query the dropped guest table.'
+        );
+        $this->assertStringNotContainsString(
+            "table('visitor'",
+            $service,
+            'VisitorDirectoryService must not query a nonexistent visitor table.'
         );
     }
 

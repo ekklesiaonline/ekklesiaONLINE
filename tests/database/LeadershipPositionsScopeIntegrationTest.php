@@ -57,6 +57,8 @@ final class LeadershipPositionsScopeIntegrationTest extends CIUnitTestCase
             'user_id' => $memberId,
             'scope_type' => 'parish',
             'title' => 'Parish Warden',
+            'role_category' => 'clergy',
+            'active' => 1,
         ]);
 
         $this->assertSame('/leadership', parse_url((string) $response->getRedirectUrl(), PHP_URL_PATH), (string) $response->getRedirectUrl());
@@ -70,6 +72,104 @@ final class LeadershipPositionsScopeIntegrationTest extends CIUnitTestCase
         $this->assertNotNull($stored);
         $this->assertSame('parish', $stored['scope_type']);
         $this->assertSame($parishId, (int) $stored['parish_id']);
+    }
+
+    public function testStoringPositionForMemberWithoutPortalAccessIsRejected(): void
+    {
+        $dioceseId = $this->insertDiocese('Leadership NoPortal Diocese');
+        $parishId = $this->insertParish($dioceseId, 'Leadership NoPortal Parish');
+
+        $adminId = $this->insertUser('leadership.noportal.admin');
+        $this->upsertProfile($adminId, $parishId, $dioceseId);
+        $this->injectLeadershipAuth($adminId);
+
+        // Non-portal person shape: a users row exists (so is_not_unique
+        // passes) but there is no login identity and no enabled access.
+        $memberId = $this->insertUserRowOnly('leadership.noportal.member');
+        $this->upsertProfile($memberId, $parishId, $dioceseId, 'none');
+
+        $this->withHeaders($this->withCsrfHeaders([
+            'X-Requested-With' => 'XMLHttpRequest',
+        ]))->withBodyFormat('form')->post('leadership/store', [
+            'user_id' => $memberId,
+            'scope_type' => 'parish',
+            'title' => 'Parish Warden',
+            'role_category' => 'clergy',
+            'active' => 1,
+        ]);
+
+        $this->assertNotNull(session('error'));
+        $this->assertNull(
+            $this->db->table('leadership_position')->where('user_id', $memberId)->get()->getRowArray()
+        );
+    }
+
+    public function testStoringLayPositionWithoutGoodStandingIsRejected(): void
+    {
+        $dioceseId = $this->insertDiocese('Leadership Lay Diocese');
+        $parishId = $this->insertParish($dioceseId, 'Leadership Lay Parish');
+
+        $adminId = $this->insertUser('leadership.lay.admin');
+        $this->upsertProfile($adminId, $parishId, $dioceseId);
+        $this->injectLeadershipAuth($adminId);
+
+        // Portal-enabled member with no baptism/standing data — a lay
+        // appointment must fail the standing block even though portal
+        // access is fine.
+        $memberId = $this->insertUser('leadership.lay.member');
+        $this->upsertProfile($memberId, $parishId, $dioceseId);
+
+        $this->withHeaders($this->withCsrfHeaders([
+            'X-Requested-With' => 'XMLHttpRequest',
+        ]))->withBodyFormat('form')->post('leadership/store', [
+            'user_id' => $memberId,
+            'scope_type' => 'parish',
+            'title' => 'Vestry Member',
+            'active' => 1,
+        ]);
+
+        $this->assertNotNull(session('error'));
+        $this->assertNull(
+            $this->db->table('leadership_position')->where('user_id', $memberId)->get()->getRowArray()
+        );
+    }
+
+    public function testReactivatingPositionForMemberWithoutPortalAccessIsRejected(): void
+    {
+        $dioceseId = $this->insertDiocese('Leadership Reactivate Diocese');
+        $parishId = $this->insertParish($dioceseId, 'Leadership Reactivate Parish');
+
+        $adminId = $this->insertUser('leadership.reactivate.admin');
+        $this->upsertProfile($adminId, $parishId, $dioceseId);
+        $this->injectLeadershipAuth($adminId);
+
+        $memberId = $this->insertUserRowOnly('leadership.reactivate.member');
+        $this->upsertProfile($memberId, $parishId, $dioceseId, 'none');
+
+        $this->db->table('leadership_position')->insert([
+            'user_id' => $memberId,
+            'scope_type' => 'parish',
+            'parish_id' => $parishId,
+            'title' => 'Former Warden',
+            'role_category' => 'clergy',
+            'active' => 0,
+            'created_at' => date('Y-m-d H:i:s'),
+            'updated_at' => date('Y-m-d H:i:s'),
+        ]);
+        $positionId = (int) $this->db->insertID();
+
+        $this->withHeaders($this->withCsrfHeaders([
+            'X-Requested-With' => 'XMLHttpRequest',
+        ]))->withBodyFormat('form')->post('leadership/update/' . $positionId, [
+            'title' => 'Former Warden',
+            'active' => 1,
+        ]);
+
+        $this->assertNotNull(session('error'));
+
+        $row = $this->db->table('leadership_position')->where('id', $positionId)->get()->getRowArray();
+        $this->assertNotNull($row);
+        $this->assertSame(0, (int) $row['active']);
     }
 
     private function withCsrfHeaders(array $headers): array
@@ -249,7 +349,19 @@ final class LeadershipPositionsScopeIntegrationTest extends CIUnitTestCase
         return $userId;
     }
 
-    private function upsertProfile(int $userId, int $parishId, int $dioceseId): void
+    private function insertUserRowOnly(string $username): int
+    {
+        $this->db->table('users')->insert([
+            'username' => $username,
+            'active' => 1,
+            'created_at' => date('Y-m-d H:i:s'),
+            'updated_at' => date('Y-m-d H:i:s'),
+        ]);
+
+        return (int) $this->db->insertID();
+    }
+
+    private function upsertProfile(int $userId, int $parishId, int $dioceseId, string $portalAccess = 'enabled'): void
     {
         $this->db->table('profile')->insert([
             'user_id' => $userId,
@@ -257,7 +369,7 @@ final class LeadershipPositionsScopeIntegrationTest extends CIUnitTestCase
             'diocese_id' => $dioceseId,
             'first_name' => 'Test',
             'last_name' => 'User',
-            'membership_status' => 'member',
+            'portal_access' => $portalAccess,
             'created_at' => date('Y-m-d H:i:s'),
             'updated_at' => date('Y-m-d H:i:s'),
         ]);
@@ -335,7 +447,7 @@ final class LeadershipPositionsScopeIntegrationTest extends CIUnitTestCase
                 province_id INTEGER NULL,
                 first_name TEXT NULL,
                 last_name TEXT NULL,
-                membership_status TEXT NULL,
+                portal_access TEXT NULL,
                 created_at TEXT NULL,
                 updated_at TEXT NULL,
                 deleted_at TEXT NULL

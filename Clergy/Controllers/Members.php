@@ -220,12 +220,6 @@ class Members extends BaseController
             return redirect()->to('/members')->with('error', lang('Members.notAllowed'));
         }
 
-        $guestData = (array) session('guest_data');
-        if ($guestData !== []) {
-            $guestData['role'] = $guestData['role'] ?? 'member';
-            session()->setFlashdata('_ci_old_input', ['post' => $guestData, 'get' => []]);
-        }
-
         return view('Clergy\Views\Members/create', array_merge(
             $this->getCommonViewData('Create Account'),
             ['allowedRoles' => $allowedRoles]
@@ -269,7 +263,6 @@ class Members extends BaseController
             'phone' => 'permit_empty|valid_phone_e164',
             'country' => 'permit_empty|valid_country',
             'profile_picture' => 'permit_empty|uploaded[profile_picture]|max_size[profile_picture,2048]|is_image[profile_picture]|mime_in[profile_picture,image/jpg,image/jpeg,image/png,image/gif]',
-            'guest_id' => 'permit_empty|is_natural_no_zero',
         ];
 
         if (!$this->validate($rules)) {
@@ -311,27 +304,10 @@ class Members extends BaseController
             $localPhone = $this->request->getPost('phone');
             $e164Phone = PhoneHelper::toE164($callingCode, $localPhone);
 
-            // Guest conversion pre-fill: when a valid in-scope, not-yet-converted
-            // guest is carried through the form, reuse its canonical person record
-            // instead of provisioning a duplicate.
-            $guestPersonId = 0;
-            // The posted guest_id is the canonical person_id (T4.5).
-            $postedGuestId = (int) $this->request->getPost('guest_id');
-            if ($postedGuestId > 0) {
-                $candidate = (new \App\Services\GuestDirectoryService())
-                    ->findByPerson($postedGuestId, $assignedParishId);
-                if (is_array($candidate)
-                    && empty($candidate['converted_to_member_at'])) {
-                    $guestPersonId = $postedGuestId;
-                }
-            }
-
             // Ensure the canonical person row exists and link the profile to it.
-            $personId = $guestPersonId > 0
-                ? $guestPersonId
-                : ($assignedParishId > 0
-                    ? $this->getMemberParishAffiliationModel()->getOrCreatePersonIdForUser((int) $user->id)
-                    : null);
+            $personId = $assignedParishId > 0
+                ? $this->getMemberParishAffiliationModel()->getOrCreatePersonIdForUser((int) $user->id)
+                : null;
 
             $profileData = [
                 'user_id' => $user->id,
@@ -355,7 +331,6 @@ class Members extends BaseController
                 'baptism_date' => $this->request->getPost('baptism_date') ?: null,
                 'is_confirmed' => $this->request->getPost('is_confirmed') ? 1 : 0,
                 'confirmation_date' => $this->request->getPost('confirmation_date') ?: null,
-                'membership_status' => 'member',
                 'spiritual_gifts' => $this->request->getPost('spiritual_gifts'),
             ];
 
@@ -376,23 +351,7 @@ class Members extends BaseController
                 (new \App\Services\PersonProfileSyncService())->syncFromProfile($profileId);
             }
 
-            if ($guestPersonId > 0 && $assignedParishId > 0) {
-                // Reuse the guest's person: link the new account, mark the
-                // affiliation as member, skip pending follow-ups, and mark the
-                // guest record converted — all inside convertToMember().
-                $linked = \App\Services\PersonConversionService::convertToMember(
-                    $guestPersonId,
-                    $assignedParishId,
-                    (int) $user->id,
-                    null,
-                    null,
-                    (int) (auth()->id() ?? 0)
-                );
-                if (! $linked) {
-                    $db->transRollback();
-                    return redirect()->back()->withInput()->with('error', lang('Members.affiliationFailed'));
-                }
-            } elseif ($assignedParishId > 0 && !$this->getMemberParishAffiliationModel()->attachToParish($user->id, $assignedParishId, true, 'member', true, $personId > 0 ? $personId : null)) {
+            if ($assignedParishId > 0 && !$this->getMemberParishAffiliationModel()->attachToParish($user->id, $assignedParishId, true, 'member', $personId > 0 ? $personId : null)) {
                 $db->transRollback();
                 return redirect()->back()->withInput()->with('error', lang('Members.affiliationFailed'));
             }
@@ -646,15 +605,22 @@ class Members extends BaseController
         // Sync the canonical person record with the updated profile data.
         (new \App\Services\PersonProfileSyncService())->syncFromProfile($id);
 
-        // Update the canonical profile's membership_status only when editing the home parish.
-        // The operational per-parish status lives in parish_affiliation.
+        // The affiliation row owns membership_status. Capture the current
+        // status for the audit trail before the pathway transition.
         $parishId = (int) ($this->getOperationalParishId() ?? 0);
-        $homeParishId = (int) ($profile['parish_id'] ?? 0);
         $statusReason = trim((string) ($this->request->getPost('status_reason') ?? ''));
+        $previousAffiliationStatus = null;
 
         // Sync affiliation status for current parish so /members, /people, and detail
         // views stay consistent with the status chosen in this edit form.
         if ($parishId > 0) {
+            $previousAffiliation = $this->getMemberParishAffiliationModel()
+                ->where('linked_user_id', (int) ($profile['user_id'] ?? 0))
+                ->where('parish_id', $parishId)
+                ->orderBy('id', 'DESC')
+                ->first();
+            $previousAffiliationStatus = (string) ($previousAffiliation['membership_status'] ?? '');
+
             $transition = (new \App\Services\MembershipPathwayService())->transitionForUser(
                 (int) ($profile['user_id'] ?? 0),
                 $parishId,
@@ -677,16 +643,9 @@ class Members extends BaseController
                         'membership_status' => lang('App.errorInvalidInput'),
                     ]);
                 }
-                // affiliation_not_found / update_failed: continue with the
-                // profile-only update below (member may not be affiliated).
-            }
-
-            if ($parishId === $homeParishId) {
-                // The profile enum lacks transferred/deceased; map through the
-                // canonical affiliation status.
-                $this->getProfileModel()->update($id, [
-                    'membership_status' => \App\Services\MembershipStatusService::affiliationToProfile($submittedStatus),
-                ]);
+                // affiliation_not_found / update_failed: the member may simply
+                // not be affiliated with this parish; the profile update above
+                // still stands.
             }
         }
 
@@ -695,7 +654,7 @@ class Members extends BaseController
             'entity_type' => 'member',
             'entity_id' => (int) $id,
             'old_values' => [
-                'membership_status' => (string) ($profile['membership_status'] ?? ''),
+                'membership_status' => $previousAffiliationStatus ?? '',
                 'profile_picture' => !empty($profile['profile_picture']),
             ],
             'new_values' => [
@@ -742,7 +701,7 @@ class Members extends BaseController
             'entity_id' => (int) $id,
             'old_values' => [
                 'user_id' => (int) ($profile['user_id'] ?? 0),
-                'membership_status' => (string) ($profile['membership_status'] ?? ''),
+                'membership_status' => (string) ($this->getMemberParishAffiliationModel()->statusForUser((int) ($profile['user_id'] ?? 0)) ?? ''),
             ],
         ]);
 
@@ -803,7 +762,7 @@ class Members extends BaseController
                 'entity_id' => (int) $memberId,
                 'old_values' => [
                     'user_id' => (int) ($profile['user_id'] ?? 0),
-                    'membership_status' => (string) ($profile['membership_status'] ?? ''),
+                    'membership_status' => (string) ($this->getMemberParishAffiliationModel()->statusForUser((int) ($profile['user_id'] ?? 0)) ?? ''),
                 ],
                 'new_values' => [
                     'delete_reason' => $deleteReason,
@@ -881,9 +840,9 @@ class Members extends BaseController
         $profileId = (int) $this->request->getPost('profile_id');
         $parishId = (int) $this->request->getPost('parish_id');
         $allowedStatuses = ['visitor', 'regular_attender', 'member', 'inactive', 'transferred', 'deceased'];
-        $status = MembershipStatusService::normalizeAffiliationStatus((string) ($this->request->getPost('membership_status') ?? 'member'));
+        $status = MembershipStatusService::normalizeAffiliationStatus((string) ($this->request->getPost('membership_status') ?? 'visitor'));
         if (!in_array($status, $allowedStatuses, true)) {
-            $status = 'member';
+            $status = 'visitor';
         }
         $isHome = (int) ($this->request->getPost('is_primary') ?? 0) === 1;
 

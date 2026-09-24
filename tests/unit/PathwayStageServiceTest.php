@@ -36,7 +36,7 @@ final class PathwayStageServiceTest extends CIUnitTestCase
     public function testVisitorHasNoStage(): void
     {
         $personId = $this->insertPerson();
-        $this->insertAffiliation($personId, 'visitor', 0);
+        $this->insertAffiliation($personId, 'visitor');
 
         $this->assertNull($this->service->stageFor($personId, 301));
     }
@@ -44,7 +44,7 @@ final class PathwayStageServiceTest extends CIUnitTestCase
     public function testMemberIsStageOne(): void
     {
         $personId = $this->insertPerson();
-        $this->insertAffiliation($personId, 'member', 1);
+        $this->insertAffiliation($personId, 'member');
 
         $this->assertSame(1, $this->service->stageFor($personId, 301));
     }
@@ -52,7 +52,7 @@ final class PathwayStageServiceTest extends CIUnitTestCase
     public function testGroupPlacementIsStageTwo(): void
     {
         $personId = $this->insertPerson();
-        $this->insertAffiliation($personId, 'member', 1);
+        $this->insertAffiliation($personId, 'member');
         $groupId = $this->insertGroup(301);
         $this->insertMembership($groupId, $personId);
 
@@ -62,7 +62,7 @@ final class PathwayStageServiceTest extends CIUnitTestCase
     public function testTeamPlacementIsStageThree(): void
     {
         $personId = $this->insertPerson();
-        $this->insertAffiliation($personId, 'member', 1);
+        $this->insertAffiliation($personId, 'member');
         $this->insertGroupMembershipAndTeam($personId);
 
         $this->assertSame(3, $this->service->stageFor($personId, 301));
@@ -78,7 +78,7 @@ final class PathwayStageServiceTest extends CIUnitTestCase
             'person_id' => $personId,
             'is_primary' => 1,
         ]);
-        $this->insertAffiliation($personId, 'member', 1);
+        $this->insertAffiliation($personId, 'member');
         $teamId = $this->insertTeam(301);
         $this->db->table('team_member')->insert([
             'team_id' => $teamId,
@@ -92,7 +92,7 @@ final class PathwayStageServiceTest extends CIUnitTestCase
     public function testInactiveMembershipDoesNotCountTowardStage(): void
     {
         $personId = $this->insertPerson();
-        $this->insertAffiliation($personId, 'member', 1);
+        $this->insertAffiliation($personId, 'member');
         $groupId = $this->insertGroup(301);
         $this->insertMembership($groupId, $personId, 'inactive');
 
@@ -102,7 +102,7 @@ final class PathwayStageServiceTest extends CIUnitTestCase
     public function testInactiveMemberKeepsStage(): void
     {
         $personId = $this->insertPerson();
-        $this->insertAffiliation($personId, 'inactive', 0);
+        $this->insertAffiliation($personId, 'inactive');
         $groupId = $this->insertGroup(301);
         $this->insertMembership($groupId, $personId);
 
@@ -112,7 +112,7 @@ final class PathwayStageServiceTest extends CIUnitTestCase
     public function testTerminalStatusClearsStage(): void
     {
         $personId = $this->insertPerson();
-        $this->insertAffiliation($personId, 'transferred', 0);
+        $this->insertAffiliation($personId, 'transferred');
         $groupId = $this->insertGroup(301);
         $this->insertMembership($groupId, $personId);
 
@@ -123,7 +123,7 @@ final class PathwayStageServiceTest extends CIUnitTestCase
     {
         $this->seedParish(302);
         $personId = $this->insertPerson();
-        $this->insertAffiliation($personId, 'member', 1);
+        $this->insertAffiliation($personId, 'member');
         $foreignGroup = $this->insertGroup(302);
         $this->insertMembership($foreignGroup, $personId);
 
@@ -133,7 +133,7 @@ final class PathwayStageServiceTest extends CIUnitTestCase
     public function testRecomputePersistsStageOnAffiliation(): void
     {
         $personId = $this->insertPerson();
-        $affiliationId = $this->insertAffiliation($personId, 'member', 1);
+        $affiliationId = $this->insertAffiliation($personId, 'member');
         $groupId = $this->insertGroup(301);
         $this->insertMembership($groupId, $personId);
 
@@ -153,7 +153,7 @@ final class PathwayStageServiceTest extends CIUnitTestCase
     public function testRecomputeIsIdempotent(): void
     {
         $personId = $this->insertPerson();
-        $this->insertAffiliation($personId, 'member', 1);
+        $this->insertAffiliation($personId, 'member');
 
         $first = $this->service->recompute($personId, 301);
         $second = $this->service->recompute($personId, 301);
@@ -167,8 +167,8 @@ final class PathwayStageServiceTest extends CIUnitTestCase
     {
         $p1 = $this->insertPerson();
         $p2 = $this->insertPerson();
-        $this->insertAffiliation($p1, 'member', 1);
-        $this->insertAffiliation($p2, 'visitor', 0);
+        $this->insertAffiliation($p1, 'member');
+        $this->insertAffiliation($p2, 'visitor');
         $groupId = $this->insertGroup(301);
         $this->insertMembership($groupId, $p1);
 
@@ -226,14 +226,12 @@ final class PathwayStageServiceTest extends CIUnitTestCase
         return (int) $this->db->insertID();
     }
 
-    private function insertAffiliation(int $personId, string $status, int $isMember, int $parishId = 301): int
+    private function insertAffiliation(int $personId, string $status, int $parishId = 301): int
     {
         $this->db->table('parish_affiliation')->insert([
             'person_id'         => $personId,
             'parish_id'         => $parishId,
-            'affiliation_type'  => \App\Services\MembershipStatusService::affiliationTypeForStatus($status),
             'membership_status' => $status,
-            'is_member'         => $isMember,
             'start_date'        => date('Y-m-d'),
             'created_at'        => date('Y-m-d H:i:s'),
             'updated_at'        => date('Y-m-d H:i:s'),

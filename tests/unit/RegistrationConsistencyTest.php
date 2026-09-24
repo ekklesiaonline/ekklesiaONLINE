@@ -114,9 +114,9 @@ final class RegistrationConsistencyTest extends CIUnitTestCase
             'performApprove must attach the user to the parish so directory listings include them.'
         );
         $this->assertStringContainsString(
-            'regular_attender',
+            'visitor',
             $source,
-            'Approval must not confer canonical membership; regular_attender requires parish promotion to member.'
+            'Approval must not confer canonical membership; visitor requires parish promotion to member.'
         );
     }
 

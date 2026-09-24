@@ -37,6 +37,12 @@ This file is the single source of truth for which documentation should be retain
   Canonical private profile picture model (per-user folders, random names, guarded delivery, path hardening, and cache behavior).
 - `docs/EMAIL_DELIVERABILITY.md`
   Canonical scoped SMTP, SPF, DKIM, DMARC, provider alignment, and safe diagnostic guidance.
+- `docs/VISITOR_LIFECYCLE.md`
+  Canonical visitor lifecycle (`visitor → regular_attender → member`), intake paths, directory scope, promotion modes, and permissions.
+- `docs/FOLLOWUP_WORKFLOW_SYSTEM.md`
+  Canonical visitor follow-up engine: sequences, scheduling, dispatch, call tasks, and cron.
+- `docs/ROLE_MENU_PERMISSION_POLICY.md`
+  Canonical role-to-menu permission policy enforced by `PermissionRoleSyncSeeder`.
 
 ## Removed as Redundant or Historical
 

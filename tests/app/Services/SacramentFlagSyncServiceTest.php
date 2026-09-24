@@ -198,7 +198,6 @@ final class SacramentFlagSyncServiceTest extends CIUnitTestCase
             'parish_id'        => $parishId,
             'first_name'       => 'Jane',
             'last_name'        => 'Doe',
-            'membership_status' => 'member',
             'created_at'       => date('Y-m-d H:i:s'),
             'updated_at'       => date('Y-m-d H:i:s'),
         ]);

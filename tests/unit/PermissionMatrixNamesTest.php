@@ -46,7 +46,7 @@ final class PermissionMatrixNamesTest extends CIUnitTestCase
             'finance.view',
             'governance.vestry.manage',
             'governance.vestry.view',
-            'guest.view',
+            'visitor.view',
             'member.delete',
             'member.edit',
             'member.view',

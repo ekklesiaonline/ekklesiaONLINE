@@ -8,10 +8,10 @@ $locale = service('request')->getLocale() ?: config('App')->defaultLocale;
 $isElevatedAdmin = $isElevatedAdmin ?? false;
 $adminScope = $adminScope ?? null;
 // Elevated admins (system/province/diocese) are not tied to a single parish by
-// design, so their real membership_status should be shown as-is rather than
+// design, so their real affiliation status should be shown as-is rather than
 // being forced to "pending" just because parish_id is empty.
 $membershipStatus = $isElevatedAdmin
-    ? (string) ($profile['membership_status'] ?? 'active')
+    ? (string) ($profile['membership_status'] ?? 'member')
     : (!empty($profile['parish_id']) ? (string) ($profile['membership_status'] ?? 'pending') : 'pending');
 $profilePicturePath = trim((string) ($profile['profile_picture'] ?? ''));
 $profilePictureUrl = ($profilePicturePath !== '' && !empty($user->id))
@@ -48,10 +48,11 @@ $formatLocalizedDate = static function (?string $value, string $pattern, string 
 };
 
 $memberStatusColor = match ($membershipStatus) {
-    'active' => 'success',
-    'inactive' => 'danger',
+    'member' => 'success',
+    'regular_attender' => 'primary',
     'visitor' => 'info',
     'pending' => 'warning',
+    'deceased' => 'dark',
     default => 'secondary'
 };
 
@@ -301,10 +302,10 @@ $adminParishNames = $hasAdminScope
                                         <?php
                                         $affStatus = (string) ($affiliation['membership_status'] ?? 'regular_attender');
                                         $affStatusColor = match ($affStatus) {
-                                            'active' => 'success',
-                                            'inactive' => 'danger',
+                                            'member' => 'success',
+                                            'regular_attender' => 'primary',
                                             'visitor' => 'info',
-                                            'pending' => 'warning',
+                                            'deceased' => 'dark',
                                             default => 'secondary'
                                         };
                                         ?>

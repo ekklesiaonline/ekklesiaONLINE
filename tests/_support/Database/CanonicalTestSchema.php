@@ -169,7 +169,6 @@ final class CanonicalTestSchema
             'baptism_date'       => 'TEXT',
             'confirmation_date'  => 'TEXT',
             'is_confirmed'       => 'INTEGER DEFAULT 0',
-            'membership_status'  => "TEXT DEFAULT 'visitor'",
             'spiritual_gifts'    => 'TEXT',
             'portal_access'      => 'TEXT',
             'portal_enabled_at'  => 'TEXT',
@@ -267,12 +266,12 @@ final class CanonicalTestSchema
             'parish_id'         => 'INTEGER',
             'person_id'         => 'INTEGER',
             'linked_user_id'    => 'INTEGER',
-            'affiliation_type'  => 'TEXT',
             'membership_status' => 'TEXT',
-            'canonical_status'  => 'TEXT',
             'pathway_stage'     => 'INTEGER',
-            'is_member'         => 'INTEGER DEFAULT 0',
-            'is_good_standing'  => 'INTEGER DEFAULT 0',
+            // Mirrors the production generated column: is_member is the
+            // on-register flag = membership_status IN ('member','inactive').
+            // VIRTUAL (not STORED) so repairColumns can ADD COLUMN it.
+            'is_member'         => "INTEGER GENERATED ALWAYS AS (CASE WHEN \"membership_status\" IN ('member','inactive') THEN 1 ELSE 0 END) VIRTUAL",
             'is_primary'             => 'INTEGER DEFAULT 0',
             'followed_up'            => 'INTEGER DEFAULT 0',
             'converted_to_member_at' => 'TEXT',
@@ -291,7 +290,7 @@ final class CanonicalTestSchema
             'assigned_to'   => 'INTEGER',
             'executed_at'   => 'TEXT',
             'completed_at'  => 'TEXT',
-            'followup_date' => 'TEXT',
+
             'response_metadata' => 'TEXT',
             'action_type'   => 'TEXT',
             'channel'       => 'TEXT',
@@ -305,11 +304,44 @@ final class CanonicalTestSchema
             'created_at'    => 'TEXT',
             'updated_at'    => 'TEXT',
         ],
+        'followup_sequence' => [
+            'parish_id'   => 'INTEGER',
+            'name'        => 'TEXT',
+            'description' => 'TEXT',
+            'is_active'   => 'INTEGER DEFAULT 1',
+            'created_at'  => 'TEXT',
+            'updated_at'  => 'TEXT',
+        ],
+        'followup_action' => [
+            'sequence_id'  => 'INTEGER',
+            'week_number'  => 'INTEGER',
+            'day_offset'   => 'INTEGER',
+            'channel'      => 'TEXT',
+            'template_id'  => 'INTEGER',
+            'assigned_to'  => 'INTEGER',
+            'instructions' => 'TEXT',
+            'is_automated' => 'INTEGER DEFAULT 0',
+            'created_at'   => 'TEXT',
+            'updated_at'   => 'TEXT',
+        ],
+        'followup_template' => [
+            'parish_id' => 'INTEGER',
+            'channel'   => 'TEXT',
+            'name'      => 'TEXT',
+            'subject'   => 'TEXT',
+            'body_text' => 'TEXT',
+            'body_html' => 'TEXT',
+            'variables' => 'TEXT',
+            'created_at' => 'TEXT',
+            'updated_at' => 'TEXT',
+        ],
         'call_task' => [
             'parish_id'      => 'INTEGER',
             'person_id'      => 'INTEGER',
             'log_id'         => 'INTEGER',
             'assigned_to'    => 'INTEGER',
+            'task_type'      => "TEXT DEFAULT 'call'",
+            'title'          => 'TEXT',
             'phone'          => 'TEXT',
             'notes'          => 'TEXT',
             'status'         => "TEXT DEFAULT 'pending'",
@@ -436,7 +468,6 @@ final class CanonicalTestSchema
         'message_recipient' => [
             'campaign_id' => 'INTEGER',
             'person_id'   => 'INTEGER',
-            'guest_id'    => 'INTEGER',
             'user_id'     => 'INTEGER',
             'name'        => 'TEXT',
             'first_name'  => 'TEXT',
@@ -692,7 +723,40 @@ final class CanonicalTestSchema
             }
 
             self::repairColumns($db, $physical, $columns);
+
+            if ($table === 'parish_affiliation') {
+                self::ensureGeneratedIsMember($db);
+            }
         }
+    }
+
+    /**
+     * Convert a plain is_member column on parish_affiliation into the
+     * generated register flag. Tests that recreate the table through Forge
+     * get a normal column; this restores the production semantics.
+     */
+    public static function ensureGeneratedIsMember(BaseConnection $db, string $table = 'parish_affiliation'): void
+    {
+        $physical = $db->getPrefix() . $table;
+        if ($db->DBDriver !== 'SQLite3' || ! self::tableExists($db, $physical)) {
+            return;
+        }
+
+        $definition = 'INTEGER GENERATED ALWAYS AS (CASE WHEN "membership_status" '
+            . "IN ('member','inactive') THEN 1 ELSE 0 END) VIRTUAL";
+
+        foreach ($db->query('PRAGMA table_xinfo("' . $physical . '")')->getResultArray() as $row) {
+            if (($row['name'] ?? '') === 'is_member') {
+                if ((int) ($row['hidden'] ?? 0) !== 0) {
+                    return; // already generated
+                }
+                $db->query('ALTER TABLE "' . $physical . '" DROP COLUMN "is_member"');
+                break;
+            }
+        }
+
+        $db->query('ALTER TABLE "' . $physical . '" ADD COLUMN "is_member" ' . $definition);
+        $db->resetDataCache();
     }
 
     /**
@@ -759,7 +823,9 @@ final class CanonicalTestSchema
      */
     private static function columnNames(BaseConnection $db, string $physical): array
     {
-        $rows = $db->query('PRAGMA table_info("' . $physical . '")')->getResultArray();
+        // table_xinfo (not table_info) so generated columns are included —
+        // otherwise repairColumns would try to re-add them every call.
+        $rows = $db->query('PRAGMA table_xinfo("' . $physical . '")')->getResultArray();
 
         return array_map(static fn (array $row): string => (string) $row['name'], $rows);
     }

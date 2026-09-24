@@ -196,6 +196,7 @@ return [
     'settingsCategoryPolicy' => 'Politica de Contrasenas',
     'settingsCategorySecurity' => 'Seguridad',
     'settingsCategorySystem' => 'Sistema',
+    'settingsCategoryVisitors' => 'Visitantes',
     'setting_password_policy_min_length' => 'Longitud Minima de Contrasena',
     'setting_password_policy_require_uppercase' => 'Requerir Letra Mayuscula',
     'setting_password_policy_require_lowercase' => 'Requerir Letra Minuscula',
@@ -209,6 +210,7 @@ return [
     'setting_lockout_duration_seconds' => 'Duracion del Bloqueo (segundos)',
     'setting_maintenance_enabled' => 'Modo de Mantenimiento',
     'setting_maintenance_message' => 'Mensaje de Mantenimiento',
+    'setting_visitor_converted_window_days' => 'Ventana de Visitantes Convertidos (días)',
 
     'passwordTooShort' => 'La contrasena debe tener al menos {0} caracteres.',
     'passwordRequiresUppercase' => 'La contrasena debe contener al menos una letra mayuscula.',

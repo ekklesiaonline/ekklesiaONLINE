@@ -433,13 +433,13 @@ class Messages extends BaseController
             )),
             'group_ids'      => array_values(array_filter(array_map('intval', (array) $this->request->getPost('group_ids')))),
             'team_ids'       => array_values(array_filter(array_map('intval', (array) $this->request->getPost('team_ids')))),
-            'include_guests' => (int) $this->request->getPost('include_guests') === 1,
+            'include_visitors' => (int) $this->request->getPost('include_visitors') === 1,
         ];
 
         $hasAny = $audience['statuses'] !== []
             || $audience['group_ids'] !== []
             || $audience['team_ids'] !== []
-            || $audience['include_guests'];
+            || $audience['include_visitors'];
 
         return $hasAny ? $audience : null;
     }

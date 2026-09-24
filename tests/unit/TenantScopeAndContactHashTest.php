@@ -128,12 +128,12 @@ final class TenantScopeAndContactHashTest extends CIUnitTestCase
     }
 
     /**
-     * H5: GuestIntakeService must use emailIndex() and phoneIndex() for
+     * H5: VisitorIntakeService must use emailIndex() and phoneIndex() for
      * correct normalization, not the generic hash().
      */
-    public function testGuestIntakeServiceUsesTypedIndexMethods(): void
+    public function testVisitorIntakeServiceUsesTypedIndexMethods(): void
     {
-        $reflection = new ReflectionMethod(\App\Services\GuestIntakeService::class, 'record');
+        $reflection = new ReflectionMethod(\App\Services\VisitorIntakeService::class, 'record');
         $source = $this->getMethodSource($reflection);
 
         $this->assertStringContainsString('emailIndex', $source);
