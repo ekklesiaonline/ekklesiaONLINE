@@ -190,6 +190,71 @@ final class MemberAccessServiceTest extends CIUnitTestCase
         $this->assertSame(0, $familyLinks);
     }
 
+    public function testRevokePortalAccessBlockedByActiveLeadershipPositions(): void
+    {
+        $parishId = $this->insertParish('Revoke Leader Parish');
+
+        $this->db->table('users')->insert([
+            'username' => 'revoke.leader',
+            'active' => 1,
+            'created_at' => date('Y-m-d H:i:s'),
+            'updated_at' => date('Y-m-d H:i:s'),
+        ]);
+        $userId = (int) $this->db->insertID();
+
+        $this->db->table('profile')->insert([
+            'user_id' => $userId,
+            'parish_id' => $parishId,
+            'first_name' => 'Revoke',
+            'last_name' => 'Leader',
+            'portal_access' => 'enabled',
+            'created_at' => date('Y-m-d H:i:s'),
+            'updated_at' => date('Y-m-d H:i:s'),
+        ]);
+
+        $this->db->table('auth_identities')->insert([
+            'user_id' => $userId,
+            'type' => 'email_password',
+            'secret' => 'revoke.leader@example.test',
+            'secret2' => password_hash('StrongPass123', PASSWORD_DEFAULT),
+            'force_reset' => 0,
+            'created_at' => date('Y-m-d H:i:s'),
+            'updated_at' => date('Y-m-d H:i:s'),
+        ]);
+
+        $this->db->table('leadership_position')->insert([
+            'user_id' => $userId,
+            'scope_type' => 'parish',
+            'parish_id' => $parishId,
+            'title' => 'Parish Warden',
+            'active' => 1,
+            'created_at' => date('Y-m-d H:i:s'),
+            'updated_at' => date('Y-m-d H:i:s'),
+        ]);
+        $positionId = (int) $this->db->insertID();
+
+        $service = new \App\Services\NonPortalMemberProvisioningService($this->db);
+        $blocked = $service->revokePortalAccess($userId, $parishId);
+
+        $this->assertFalse((bool) ($blocked['ok'] ?? true));
+        $this->assertSame('ACTIVE_LEADERSHIP_POSITIONS', (string) ($blocked['code'] ?? ''));
+        $this->assertSame(409, (int) ($blocked['http_status'] ?? 0));
+
+        // Identity and enabled flag are untouched.
+        $this->assertSame(1, (int) $this->db->table('auth_identities')
+            ->where('user_id', $userId)
+            ->where('type', 'email_password')
+            ->countAllResults());
+        $this->assertSame('enabled', (string) ($this->db->table('profile')
+            ->where('user_id', $userId)->get()->getRowArray()['portal_access'] ?? ''));
+
+        // Ending the position releases the block and revoke succeeds.
+        $this->db->table('leadership_position')->where('id', $positionId)->update(['active' => 0]);
+        $released = $service->revokePortalAccess($userId, $parishId);
+        $this->assertTrue((bool) ($released['ok'] ?? false), json_encode($released));
+        $this->assertSame('PORTAL_ACCESS_REVOKED', (string) ($released['code'] ?? ''));
+    }
+
     private function insertParish(string $name): int
     {
         $this->db->table('parish')->insert([

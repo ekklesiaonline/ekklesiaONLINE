@@ -54,4 +54,11 @@ return [
     'deleteSuccess' => 'Leadership position deleted successfully.',
     'deleteFailed' => 'Failed to delete leadership position.',
     'notGoodStanding' => 'This person is not recorded as being in good standing. Lay leadership appointments require a communicant in good standing; set a good-standing override on their membership details to grant an exception.',
+    'eligibilityMissing' => 'This person does not meet the requirements for a leadership position: {0}.',
+    'reqPortalAccess' => 'active portal access (invite accepted and first login completed)',
+    'reqBaptized' => 'a recorded baptism',
+    'reqConfirmed' => 'a recorded confirmation',
+    'reqPledged' => 'a current-year pledge',
+    'reqGoodStanding' => 'communicant-in-good-standing status (or a good-standing override)',
+    'noPortalAccess' => 'no portal access',
 ];

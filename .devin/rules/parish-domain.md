@@ -20,6 +20,9 @@ trigger: always_on
 - New affiliations default to `visitor`: registration approval, non-portal person creation (children, unflagged), and `attachToParish()`'s signature default all start at `visitor`. `member` is only ever set by an explicit operator choice (member checkbox) or a `MembershipPathwayService` promotion.
 - Good standing lives on `member_standing_summary.is_good_standing` (keyed by `user_id` + `year`), not on the affiliation row.
 - Clergy/staff are expressed through `leadership_position`, not lifecycle statuses.
+- Leadership eligibility is enforced by `LeadershipPositionService::eligibilityFor()` on every create and on reactivation (active 0→1) — never gate on `users.id` existence alone, because non-portal people still get a `users` row. Portal access is required for ALL positions including clergy: `users.active=1` + `auth_identities(type='email_password')` + `profile.portal_access='enabled'` (an `invited` profile is not enough). Lay positions additionally require a recorded baptism plus the standing block (confirmation, current-year pledge, communicant-in-good-standing or `good_standing_override`); clergy are exempt from the standing block only. `good_standing_override` never bypasses portal access or baptism.
+- `revokePortalAccess()` refuses to strip portal access while the user holds active leadership positions — end the positions first.
+- Audit existing violations with `php spark leadership:audit-eligibility` (report-only; remediation is manual).
 - Audit existing data with `php spark people:audit-affiliation-drift`.
 - Full plan: `docs/MEMBERSHIP_STATUS_SIMPLIFICATION_PLAN.md`.
 

@@ -669,6 +669,47 @@ class People extends BaseController
     }
 
     /**
+     * Leadership eligibility probe for the appointment modal: returns the
+     * per-requirement checklist for the person identified by profile_id so
+     * the UI can show what is missing before the form is submitted.
+     */
+    public function leadershipEligibility(int $profileId): \CodeIgniter\HTTP\ResponseInterface
+    {
+        if ($redirect = $this->requirePermission('member.edit')) {
+            return $this->jsonResponse($this->apiErrorPayload(lang('App.errorUnauthorized'), 403, 'FORBIDDEN'), 403);
+        }
+
+        if ($redirect = $this->requireParish()) {
+            return $this->jsonResponse($this->apiErrorPayload(lang('App.errorNoParishScope'), 403, 'NO_PARISH'), 403);
+        }
+
+        $profile = model('ProfileModel')->find($profileId);
+        if (!$profile) {
+            return $this->jsonResponse($this->apiErrorPayload(lang('App.errorNotFound'), 404, 'PROFILE_NOT_FOUND'), 404);
+        }
+
+        $userId = (int) ($profile['user_id'] ?? 0);
+        $personId = (int) ($profile['person_id'] ?? 0);
+        $parishId = (int) ($this->getOperationalParishId() ?? 0);
+
+        $eligibility = $this->leadershipPositionService->eligibilityFor(
+            $userId,
+            $personId,
+            $this->leadershipPositionService->resolveEligibilityParishId($personId, $parishId, $userId),
+            ['role_category' => (string) $this->request->getGet('role_category')]
+        );
+
+        return $this->jsonResponse([
+            'success' => true,
+            'data'    => $eligibility + [
+                'message' => ($eligibility['eligible'] ?? false)
+                    ? ''
+                    : $this->leadershipPositionService->eligibilityMessage($eligibility),
+            ],
+        ]);
+    }
+
+    /**
      * Add a leadership position for the person identified by profile_id.
      */
     public function addLeadershipPosition(int $profileId): \CodeIgniter\HTTP\ResponseInterface
@@ -741,9 +782,19 @@ class People extends BaseController
             'appointed_by_user_id' => (int) (auth()->id() ?? 0),
         ];
 
-        if ($this->leadershipPositionService->requiresGoodStanding($payload)
-            && ! $this->leadershipPositionService->isInGoodStanding($userId, $personId, $scopeIds['parish_id'])) {
-            return $this->jsonResponse($this->apiErrorPayload(lang('Leadership.notGoodStanding'), 422, 'NOT_GOOD_STANDING'), 422);
+        $eligibility = $this->leadershipPositionService->eligibilityFor(
+            $userId,
+            $personId,
+            $this->leadershipPositionService->resolveEligibilityParishId($personId, $scopeIds['parish_id'], $userId),
+            $payload
+        );
+        if (! ($eligibility['eligible'] ?? false)) {
+            return $this->jsonResponse($this->apiErrorPayload(
+                $this->leadershipPositionService->eligibilityMessage($eligibility),
+                422,
+                'LEADERSHIP_ELIGIBILITY_FAILED',
+                ['failed_requirements' => $eligibility['failed'] ?? []]
+            ), 422);
         }
 
         $positionId = $this->leadershipPositionService->create($payload);
@@ -823,6 +874,36 @@ class People extends BaseController
             'ended_at' => (string) ($this->request->getPost('ended_at') ?? '') ?: null,
             'notes' => trim((string) ($this->request->getPost('notes') ?? '')),
         ];
+
+        // Reactivating a position (active 0→1) must clear the same
+        // eligibility gate as a new appointment.
+        if ((int) ($position['active'] ?? 0) !== 1 && $payload['active'] === 1) {
+            $eligUserId = (int) ($position['user_id'] ?? 0);
+            $eligPersonId = (int) ($position['person_id'] ?? 0);
+            if ($eligPersonId <= 0) {
+                $eligPersonId = (int) ($this->leadershipPositionService->resolvePersonIdForUser($eligUserId) ?? 0);
+            }
+            $eligParishId = $this->leadershipPositionService->resolveEligibilityParishId(
+                $eligPersonId,
+                (int) ($position['parish_id'] ?? 0) > 0 ? (int) $position['parish_id'] : null,
+                $eligUserId
+            );
+
+            $eligibility = $this->leadershipPositionService->eligibilityFor(
+                $eligUserId,
+                $eligPersonId,
+                $eligParishId,
+                array_merge($position, $payload)
+            );
+            if (! ($eligibility['eligible'] ?? false)) {
+                return $this->jsonResponse($this->apiErrorPayload(
+                    $this->leadershipPositionService->eligibilityMessage($eligibility),
+                    422,
+                    'LEADERSHIP_ELIGIBILITY_FAILED',
+                    ['failed_requirements' => $eligibility['failed'] ?? []]
+                ), 422);
+            }
+        }
 
         if (!$this->leadershipPositionService->update($positionId, $payload)) {
             return $this->jsonResponse([

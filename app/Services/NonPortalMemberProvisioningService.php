@@ -216,6 +216,25 @@ class NonPortalMemberProvisioningService
             return $this->result(false, 409, 'ALREADY_NON_PORTAL', 'This member has no active portal identity.');
         }
 
+        // Leadership eligibility requires portal access — revoking it while
+        // the user holds active positions would silently recreate the
+        // "leader with no login" inconsistency.
+        if ($this->db->tableExists('leadership_position')) {
+            $activePositions = $this->db->table('leadership_position')
+                ->where('user_id', $userId)
+                ->where('active', 1)
+                ->countAllResults();
+            if ($activePositions > 0) {
+                return $this->result(false, 409, 'ACTIVE_LEADERSHIP_POSITIONS', 'Portal access cannot be revoked while the user holds active leadership positions. End or deactivate the positions first.', [
+                    [
+                        'field' => 'userId',
+                        'code' => 'ACTIVE_LEADERSHIP_POSITIONS',
+                        'message' => 'User holds ' . $activePositions . ' active leadership position(s).',
+                    ],
+                ]);
+            }
+        }
+
         $this->db->transBegin();
 
         try {

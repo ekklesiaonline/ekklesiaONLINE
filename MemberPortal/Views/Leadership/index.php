@@ -44,10 +44,14 @@
                 <select name="user_id" class="form-select" required>
                     <option value=""><?= lang('Leadership.selectMember') ?></option>
                     <?php foreach ($members as $member): ?>
+                        <?php $memberPortalOk = $member_portal_access[(int) ($member['user_id'] ?? 0)] ?? true; ?>
                         <option value="<?= (int) $member['user_id'] ?>">
                             <?= esc(trim(($member['first_name'] ?? '') . ' ' . ($member['last_name'] ?? ''))) ?>
                             <?php if (!empty($member['email'])): ?>
                                 - <?= esc($member['email']) ?>
+                            <?php endif; ?>
+                            <?php if (! $memberPortalOk): ?>
+                                — <?= esc(lang('Leadership.noPortalAccess')) ?>
                             <?php endif; ?>
                         </option>
                     <?php endforeach; ?>

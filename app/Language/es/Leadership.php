@@ -51,4 +51,11 @@ return [
     'deleteSuccess' => 'Cargo de liderazgo eliminado exitosamente.',
     'deleteFailed' => 'No se pudo eliminar el cargo de liderazgo.',
     'notGoodStanding' => 'Esta persona no consta como miembro en buen estado. Los cargos laicos requieren un comulgante en buen estado; establezca una excepción de buen estado en sus datos de membresía para otorgarla.',
+    'eligibilityMissing' => 'Esta persona no cumple los requisitos para un cargo de liderazgo: {0}.',
+    'reqPortalAccess' => 'acceso activo al portal (invitacion aceptada y primer inicio de sesion completado)',
+    'reqBaptized' => 'un bautismo registrado',
+    'reqConfirmed' => 'una confirmacion registrada',
+    'reqPledged' => 'una promesa de ofrenda del ano en curso',
+    'reqGoodStanding' => 'estar en buen estado como comulgante (o una excepcion de buen estado)',
+    'noPortalAccess' => 'sin acceso al portal',
 ];
