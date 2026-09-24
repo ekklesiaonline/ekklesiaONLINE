@@ -132,7 +132,20 @@ See `docs/FOLLOWUP_WORKFLOW_SYSTEM.md`. Key points: `person_visit` insert
 are scoped to visitor-domain affiliations via
 `VisitorDirectoryService::visitorAffiliationExists()`.
 
-## 9. Event-registration "guests" are a different concept
+## 9. Notes feed
+
+The visitor record's Notes tab (`/visitors/view/{personId}`) is a
+chronological feed aggregated by `PersonNoteService::feedForPerson()`:
+
+- `person_note` — appendable staff notes (`POST /visitors/notes/add/{personId}`,
+  `visitor.edit`); author + timestamp shown. Note bodies are freeform and
+  are never written to the audit trail.
+- `person_visit.notes` — intake-form and per-visit notes.
+- `followup_log.notes` — follow-up outcome notes (mark done / skip / fail).
+- `call_task.notes` — queue notes, deduped when identical to the linked
+  log's notes.
+
+## 10. Event-registration "guests" are a different concept
 
 `event_registration.guest_name|guest_email|guest_phone` are free-text
 plus-one companions on a staff-entered registration. They do not create

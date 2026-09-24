@@ -25,7 +25,7 @@ $formatLocalizedDate = static function (?string $value): string {
         </a>
     </div>
     <div class="col-md-4">
-        <a href="<?= base_url('followup-workflow/call-tasks') ?>" class="text-decoration-none d-block h-100">
+        <a href="<?= base_url('followup-workflow/tasks') ?>" class="text-decoration-none d-block h-100">
             <div class="card stat-card danger h-100">
                 <div class="card-body">
                     <h6 class="text-muted mb-1"><?= lang('Dashboard.callTasksToday') ?></h6>

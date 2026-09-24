@@ -123,7 +123,8 @@ class VisitorFollowupService
         $rows = $this->db->table('followup_log gfl')
             ->select('gfl.*, fa.channel, fa.week_number, fa.day_offset, fa.is_automated,
                       ft.name AS template_name, fs.name AS sequence_name,
-                      ct.id AS call_task_id, ct.task_type AS call_task_type, ct.title AS call_task_title')
+                      ct.id AS call_task_id, ct.task_type AS call_task_type, ct.title AS call_task_title,
+                      ct.notes AS call_task_notes')
             ->join('followup_action fa', 'fa.id = gfl.action_id', 'left')
             ->join('followup_template ft', 'ft.id = fa.template_id', 'left')
             ->join('followup_sequence fs', 'fs.id = fa.sequence_id', 'left')

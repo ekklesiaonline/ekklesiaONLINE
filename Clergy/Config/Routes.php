@@ -132,11 +132,14 @@ $routes->group('', ['filter' => 'session'], function ($routes) {
         $routes->get('followup-status/(:num)', '\\Clergy\\Controllers\\Visitors::getFollowupStatus/$1', ['filter' => 'permission:followup.view']);
         $routes->post('followup-trigger/(:num)', '\\Clergy\\Controllers\\Visitors::triggerFollowupAction/$1', ['filter' => 'permission:followup.manage']);
         $routes->post('assign-sequence/(:num)', '\\Clergy\\Controllers\\Visitors::assignSequence/$1', ['filter' => 'permission:followup.manage']);
-        $routes->get('followup-manual/(:num)', '\\Clergy\\Controllers\\Visitors::followupManual/$1', ['filter' => 'permission:followup.view']);
+        $routes->get('followup-timeline/(:num)', '\\Clergy\\Controllers\\Visitors::followupTimeline/$1', ['filter' => 'permission:followup.view']);
+        // Legacy /visitors/followup-manual/:id — retired name for the same page.
+        $routes->get('followup-manual/(:num)', static fn(int $id) => redirect()->to(base_url('visitors/followup-timeline/' . $id)));
         $routes->post('followup-log/mark-done/(:num)',   '\Clergy\Controllers\Visitors::logMarkDone/$1',   ['filter' => 'permission:followup.manage']);
         $routes->post('followup-log/reschedule/(:num)',  '\Clergy\Controllers\Visitors::logReschedule/$1', ['filter' => 'permission:followup.manage']);
         $routes->post('followup-log/skip/(:num)',        '\Clergy\Controllers\Visitors::logSkip/$1',        ['filter' => 'permission:followup.manage']);
         $routes->post('followup-log/mark-failed/(:num)', '\Clergy\Controllers\Visitors::logMarkFailed/$1',  ['filter' => 'permission:followup.manage']);
+        $routes->post('notes/add/(:num)', '\Clergy\Controllers\Visitors::addNote/$1', ['filter' => 'permission:visitor.edit']);
     });
 
     // ── Visitor connection-card import (CSV + QR code)
@@ -175,9 +178,9 @@ $routes->group('', ['filter' => 'session'], function ($routes) {
     $routes->post('guests/followup-log/mark-failed/(:num)', '\Clergy\Controllers\Visitors::logMarkFailed/$1',  ['filter' => 'permission:followup.manage']);
 
     // Legacy followup/* routes retired — redirected to new workflow system.
-    $routes->get('followup', static fn() => redirect()->to(base_url('followup-workflow/call-tasks')));
-    $routes->get('followup/(:any)', static fn() => redirect()->to(base_url('followup-workflow/call-tasks')));
-    $routes->post('followup/(:any)', static fn() => redirect()->to(base_url('followup-workflow/call-tasks')));
+    $routes->get('followup', static fn() => redirect()->to(base_url('followup-workflow/tasks')));
+    $routes->get('followup/(:any)', static fn() => redirect()->to(base_url('followup-workflow/tasks')));
+    $routes->post('followup/(:any)', static fn() => redirect()->to(base_url('followup-workflow/tasks')));
 
     $routes->group('events', ['filter' => 'permission:event.view'], function ($routes) {
         $routes->get('/', '\\Clergy\\Controllers\\Events::index');
@@ -238,8 +241,16 @@ $routes->group('', ['filter' => 'session'], function ($routes) {
         // Manual trigger (bypasses scheduling)
         $routes->post('manual-trigger/(:num)/(:num)', '\\Clergy\\Controllers\\FollowupWorkflow::manual_trigger/$1/$2', ['filter' => 'permission:followup.manage']);
 
-        // Call tasks
-        $routes->get('call-tasks', '\\Clergy\\Controllers\\FollowupWorkflow::callTasks');
+        // Human-task queue (call + manual task types)
+        $routes->get('tasks', '\\Clergy\\Controllers\\FollowupWorkflow::callTasks');
+        $routes->post('tasks/complete/(:num)', '\\Clergy\\Controllers\\FollowupWorkflow::completeCallTask/$1', ['filter' => 'permission:followup.manage']);
+
+        // Legacy /followup-workflow/call-tasks — retired slug. GETs redirect
+        // preserving status/type filters; POSTs alias (bodies can't redirect).
+        $routes->get('call-tasks', static function () {
+            $qs = (string) service('request')->getServer('QUERY_STRING');
+            return redirect()->to(base_url('followup-workflow/tasks') . ($qs !== '' ? '?' . $qs : ''));
+        });
         $routes->post('call-tasks/complete/(:num)', '\\Clergy\\Controllers\\FollowupWorkflow::completeCallTask/$1', ['filter' => 'permission:followup.manage']);
     });
 

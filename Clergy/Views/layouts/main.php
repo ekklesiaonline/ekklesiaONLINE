@@ -445,13 +445,13 @@
                     <h1 class="h4 top-header-title"><i class="bi bi-speedometer2 me-2" aria-hidden="true"></i><?= esc($headerTitle) ?></h1>
                     <div class="btn-toolbar mb-2 mb-md-0">
                         <div class="top-header-meta ms-auto">
-                            <!-- Pending calls badge – populated by the JS poller below -->
+                            <!-- Pending follow-up tasks badge – populated by the JS poller below -->
                             <a id="pendingCallsBadge"
-                                href="<?= base_url('followup-workflow/call-tasks') ?>"
+                                href="<?= base_url('followup-workflow/tasks') ?>"
                                 class="btn btn-sm btn-outline-warning d-none"
                                 title="<?= esc(lang('App.pendingCallsBadgeTitle')) ?>"
                                 aria-label="<?= esc(lang('App.pendingCallsAriaLabelSingle')) ?>">
-                                <i class="bi bi-telephone-fill" aria-hidden="true"></i>
+                                <i class="bi bi-list-task" aria-hidden="true"></i>
                                 <span id="pendingCallsCount"></span>
                             </a>
                             <button type="button" class="btn btn-outline-secondary btn-sm theme-toggle-btn" id="themeToggleBtn" aria-label="<?= esc(lang('App.themeToggle')) ?>">
@@ -1259,7 +1259,7 @@
             'use strict';
 
             var POLL_URL = '<?= base_url('api/followup/pending-calls') ?>';
-            var CALL_TASKS_URL = '<?= base_url('followup-workflow/call-tasks') ?>';
+            var CALL_TASKS_URL = '<?= base_url('followup-workflow/tasks') ?>';
             var POLL_INTERVAL = 30 * 1000; // 30 seconds
             var XHR_TIMEOUT = 10 * 1000; // give up after 10 s
 

@@ -32,7 +32,7 @@ All KPI tiles are clickable and route to their related modules.
 - Families -> `/families`
 - Birthdays This Week -> `/people`
 - Visitors Pending Follow-up -> `/visitors?followup_stage=pending`
-- Done Follow-ups This Month (Admins) -> `/followup-workflow/call-tasks?status=completed`
+- Done Follow-ups This Month (Admins) -> `/followup-workflow/tasks?status=completed`
 - Events This Month -> `/events`
 
 ## Layout and Spacing Rules

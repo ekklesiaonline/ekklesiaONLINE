@@ -67,7 +67,7 @@ FollowupDispatchService::dispatch()
   `completed`. When a log was resolved before a task existed, a terminal
   task is created so completed/skipped calls appear in queue history.
 - **Task completion** — completing a task via
-  `POST /followup-workflow/call-tasks/complete/{id}` also executes a still
+  `POST /followup-workflow/tasks/complete/{id}` also executes a still
   `pending` or `failed` linked log (early completion / retry).
 - **Backfill** — `BackfillHumanChannelTasks` materializes tasks for
   pre-existing logs: `pending→pending` (live affiliation only),
@@ -115,7 +115,7 @@ invitation".
   materializes the `call_task` row (`task_type='manual'`, `assigned_to`,
   `title`, `log_id`); `dispatchManual` reuses it (dedupe on `log_id`) or
   inserts when missing. Nothing is sent to the visitor.
-- The queue at `/followup-workflow/call-tasks` lists both types with a
+- The queue at `/followup-workflow/tasks` lists both types with a
   type badge, assignee column, and a `?type=call|manual` filter; the same
   complete/cancel flow applies.
 - `is_automated` is meaningless for `manual` — the channel is inherently

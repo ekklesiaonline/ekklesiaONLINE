@@ -78,9 +78,9 @@ $kpiTile = static function (
         <?= $kpiTile(
             (string) $pendingCalls,
             lang('Visitors.hubKpiPendingCalls'),
-            'bi-telephone-fill',
+            'bi-list-task',
             $pendingCalls > 0 ? 'danger' : 'secondary',
-            base_url('followup-workflow/call-tasks')
+            base_url('followup-workflow/tasks')
         ) ?>
     </div>
     <div class="col-6 col-md-4 col-xl-2">
@@ -168,7 +168,7 @@ $kpiTile = static function (
         <?php
         $wfCards = [
             [
-                'href'  => base_url('followup-workflow/call-tasks'),
+                'href'  => base_url('followup-workflow/tasks'),
                 'icon'  => 'bi-telephone',
                 'color' => 'warning',
                 'label' => lang('Visitors.hubLinkCallTasks'),
@@ -327,7 +327,7 @@ $kpiTile = static function (
                 <div class="card-body p-0">
                     <?php if (empty($pendingCallTasks)): ?>
                         <p class="text-muted text-center py-4 mb-0">
-                            <i class="bi bi-telephone-x fs-2 d-block mb-2" aria-hidden="true"></i>
+                            <i class="bi bi-list-task fs-2 d-block mb-2" aria-hidden="true"></i>
                             <?= lang('Visitors.callTasksEmpty') ?>
                         </p>
                     <?php else: ?>
@@ -348,7 +348,7 @@ $kpiTile = static function (
                                             <?= esc($ct['scheduled_date'] ?? '') ?>
                                         </div>
                                     </div>
-                                    <a href="<?= base_url('followup-workflow/call-tasks?status=pending&type=' . ($ctIsManual ? 'manual' : 'call')) ?>"
+                                    <a href="<?= base_url('followup-workflow/tasks?status=pending&type=' . ($ctIsManual ? 'manual' : 'call')) ?>"
                                         class="btn btn-sm btn-outline-warning"
                                         aria-label="<?= esc(lang('Visitors.hubLinkCallTasks')) ?>">
                                         <i class="bi <?= $ctIsManual ? 'bi-person-check' : 'bi-telephone' ?>" aria-hidden="true"></i>
@@ -358,7 +358,7 @@ $kpiTile = static function (
                         </ul>
                         <?php if ($pendingCalls > 5): ?>
                             <div class="text-center py-2">
-                                <a href="<?= base_url('followup-workflow/call-tasks') ?>" class="btn btn-sm btn-outline-secondary">
+                                <a href="<?= base_url('followup-workflow/tasks') ?>" class="btn btn-sm btn-outline-secondary">
                                     <?= lang('App.viewAll') ?> (<?= (int) $pendingCalls ?>)
                                 </a>
                             </div>

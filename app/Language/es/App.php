@@ -326,13 +326,13 @@ return [
     // -------------------------------------------------------------------------
     // Insignia de llamadas pendientes & i18n JS
     // -------------------------------------------------------------------------
-    'pendingCallsBadgeTitle'        => 'Haz clic para ver las llamadas pendientes',
-    'pendingCallsBadgeSingle'       => '1 llamada pendiente',
-    'pendingCallsBadgeMultiple'     => '{0} llamadas pendientes',
-    'pendingCallsAriaLabelSingle'   => '1 tarea de llamada pendiente',
-    'pendingCallsAriaLabelMultiple' => '{0} tareas de llamada pendientes',
-    'pendingCallsNewToastSingle'    => '1 nueva tarea de llamada pendiente.',
-    'pendingCallsNewToastMultiple'  => '{0} nuevas tareas de llamada pendientes.',
+    'pendingCallsBadgeTitle'        => 'Haz clic para ver las tareas de seguimiento pendientes',
+    'pendingCallsBadgeSingle'       => '1 tarea pendiente',
+    'pendingCallsBadgeMultiple'     => '{0} tareas pendientes',
+    'pendingCallsAriaLabelSingle'   => '1 tarea de seguimiento pendiente',
+    'pendingCallsAriaLabelMultiple' => '{0} tareas de seguimiento pendientes',
+    'pendingCallsNewToastSingle'    => '1 nueva tarea de seguimiento pendiente.',
+    'pendingCallsNewToastMultiple'  => '{0} nuevas tareas de seguimiento pendientes.',
     'pendingCallsViewNow'           => 'Ver ahora',
 
     // -------------------------------------------------------------------------

@@ -65,8 +65,13 @@ final class RouteOwnershipCutoverTest extends CIUnitTestCase
         $this->assertNotFalse($worshipRoutes);
         $this->assertNotFalse($volunteerRoutes);
 
-        $this->assertStringContainsString("get('followup', static fn() => redirect()->to(base_url('followup-workflow/call-tasks')))", $clergyRoutes);
-        $this->assertStringContainsString("post('followup/(:any)', static fn() => redirect()->to(base_url('followup-workflow/call-tasks')))", $clergyRoutes);
+        $this->assertStringContainsString("get('followup', static fn() => redirect()->to(base_url('followup-workflow/tasks')))", $clergyRoutes);
+        $this->assertStringContainsString("post('followup/(:any)', static fn() => redirect()->to(base_url('followup-workflow/tasks')))", $clergyRoutes);
+        // Retired queue slug keeps working: GET redirects (filters preserved),
+        // POST aliases to the same action.
+        $this->assertStringContainsString("get('call-tasks', static function ()", $clergyRoutes);
+        $this->assertStringContainsString("post('call-tasks/complete/(:num)'", $clergyRoutes);
+        $this->assertStringContainsString("get('tasks', '\\\\Clergy\\\\Controllers\\\\FollowupWorkflow::callTasks')", $clergyRoutes);
 
         $this->assertStringNotContainsString("addRedirect('attendance/bulkMark'", $worshipRoutes);
         $this->assertStringContainsString("post('attendance/bulkMark'", $worshipRoutes);

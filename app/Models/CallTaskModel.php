@@ -96,6 +96,29 @@ class CallTaskModel extends Model
             ->getResultArray();
     }
 
+    /**
+     * Tasks for a parish filtered to a single status in SQL (the LIMIT must
+     * apply after filtering, not before). Terminal statuses are ordered by
+     * most recently resolved first.
+     */
+    public function getByStatusForParish(int $parishId, string $status, int $limit = 100, ?string $taskType = null): array
+    {
+        $builder = $this->baseBuilder()
+            ->where('ct.parish_id', $parishId)
+            ->where('ct.status', $status);
+
+        if ($taskType !== null && in_array($taskType, ['call', 'manual'], true)) {
+            $builder->where('ct.task_type', $taskType);
+        }
+
+        return $builder
+            ->orderBy('ct.completed_at', 'DESC')
+            ->orderBy('ct.updated_at', 'DESC')
+            ->limit($limit)
+            ->get()
+            ->getResultArray();
+    }
+
     private function baseBuilder(): \CodeIgniter\Database\BaseBuilder
     {
         return $this->db->table('call_task ct')

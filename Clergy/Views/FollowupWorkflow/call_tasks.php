@@ -25,7 +25,7 @@
         foreach ($tabMap as $key => $label): ?>
             <li class="nav-item">
                 <a class="nav-link <?= $activeStatus === $key ? 'active' : '' ?>"
-                    href="<?= base_url('followup-workflow/call-tasks?status=' . $key . $typeQuery) ?>">
+                    href="<?= base_url('followup-workflow/tasks?status=' . $key . $typeQuery) ?>">
                     <?= esc($label) ?>
                     <?php if ($key === 'pending' && $pendingCount > 0): ?>
                         <span class="badge rounded-pill border border-warning text-warning fw-normal ms-1"><?= (int) $pendingCount ?></span>
@@ -34,7 +34,7 @@
             </li>
         <?php endforeach; ?>
     </ul>
-    <form method="get" action="<?= base_url('followup-workflow/call-tasks') ?>" class="d-flex align-items-center gap-2">
+    <form method="get" action="<?= base_url('followup-workflow/tasks') ?>" class="d-flex align-items-center gap-2">
         <input type="hidden" name="status" value="<?= esc($activeStatus) ?>">
         <label class="form-label mb-0 small text-muted" for="type_filter"><?= lang('Visitors.callTasksTypeFilter') ?></label>
         <select id="type_filter" name="type" class="form-select form-select-sm w-auto" onchange="this.form.submit()">
@@ -49,7 +49,7 @@
     <div class="card-body p-0">
         <?php if (empty($tasks)): ?>
             <div class="text-center py-5 text-muted">
-                <i class="bi bi-telephone-x fs-2 d-block mb-2" aria-hidden="true"></i>
+                <i class="bi bi-list-task fs-2 d-block mb-2" aria-hidden="true"></i>
                 <?= lang('Visitors.callTasksEmpty') ?>
             </div>
         <?php else: ?>
@@ -74,14 +74,14 @@
                             <tr id="task-row-<?= (int) $task['id'] ?>">
                                 <td>
                                     <?php if (!empty($task['person_id'])): ?>
-                                        <span class="text-decoration-none">
-                                            <?= esc($task['first_name'] . ' ' . $task['last_name']) ?>
-                                        </span>
-                                    <?php else: ?>
-                                        <a href="<?= base_url('visitors/view/' . (int) ($task['visitor_id'] ?? 0)) ?>"
+                                        <a href="<?= base_url('visitors/view/' . (int) $task['person_id']) ?>"
                                             class="text-decoration-none">
                                             <?= esc($task['first_name'] . ' ' . $task['last_name']) ?>
                                         </a>
+                                    <?php else: ?>
+                                        <span class="text-muted">
+                                            <?= esc(trim(($task['first_name'] ?? '') . ' ' . ($task['last_name'] ?? '')) ?: '—') ?>
+                                        </span>
                                     <?php endif; ?>
                                 </td>
                                 <td>
@@ -111,7 +111,13 @@
                                         ?>
                                     <?php endif; ?>
                                 </td>
-                                <td><?= esc($task['scheduled_date']) ?></td>
+                                <td>
+                                    <?php $isOverdue = $task['status'] === 'pending' && (string) $task['scheduled_date'] < date('Y-m-d'); ?>
+                                    <span class="<?= $isOverdue ? 'text-danger fw-semibold' : '' ?>"><?= esc($task['scheduled_date']) ?></span>
+                                    <?php if ($isOverdue): ?>
+                                        <span class="badge border border-danger text-danger fw-normal ms-1"><?= lang('Visitors.overdueLabel') ?></span>
+                                    <?php endif; ?>
+                                </td>
                                 <td>
                                     <?php
                                     $assignee = trim((string) ($task['assignee_name'] ?? '')) ?: (string) ($task['assignee_username'] ?? '');
@@ -172,7 +178,7 @@
     (function() {
         'use strict';
 
-        const COMPLETE_URL = '<?= base_url('followup-workflow/call-tasks/complete') ?>';
+        const COMPLETE_URL = '<?= base_url('followup-workflow/tasks/complete') ?>';
         const csrfMeta = document.querySelector('meta[name="csrf-token"]');
         const csrfHeader = document.querySelector('meta[name="csrf-header"]')?.content ?? 'X-CSRF-TOKEN';
         const i18n = {

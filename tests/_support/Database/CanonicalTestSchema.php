@@ -363,6 +363,15 @@ final class CanonicalTestSchema
             'created_at'             => 'TEXT',
             'updated_at'             => 'TEXT',
         ],
+        'person_note' => [
+            'person_id'  => 'INTEGER',
+            'parish_id'  => 'INTEGER',
+            'user_id'    => 'INTEGER',
+            'note'       => 'TEXT',
+            'created_at' => 'TEXT',
+            'updated_at' => 'TEXT',
+            'deleted_at' => 'TEXT',
+        ],
         'person_onboarding' => [
             'person_id'         => 'INTEGER',
             'parish_id'         => 'INTEGER',

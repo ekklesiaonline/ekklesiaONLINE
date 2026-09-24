@@ -239,6 +239,18 @@ $canEdit = auth()->user()->can('visitor.edit');
                                                 <?= nl2br((string) esc($row['notes'])) ?>
                                             </div>
                                         <?php endif; ?>
+                                        <?php
+                                        // Notes typed when completing the task in the queue live on
+                                        // call_task.notes — show them unless they merely mirror the
+                                        // log notes already rendered above.
+                                        $taskNotes = trim((string) ($row['call_task_notes'] ?? ''));
+                                        ?>
+                                        <?php if ($taskNotes !== '' && $taskNotes !== trim((string) ($row['notes'] ?? ''))): ?>
+                                            <div class="small text-muted mb-1">
+                                                <i class="bi bi-clipboard-check" aria-hidden="true"></i>
+                                                <?= nl2br((string) esc($taskNotes)) ?>
+                                            </div>
+                                        <?php endif; ?>
                                         <?php if (!empty($meta['left_voicemail'])): ?>
                                             <div class="small text-muted">
                                                 <i class="bi bi-voicemail" aria-hidden="true"></i> <?= lang('Visitors.leftVoicemailLabel') ?>
@@ -867,7 +879,7 @@ $canEdit = auth()->user()->can('visitor.edit');
         // -------------------------------------------------------------------
         (function() {
             const ctConfirmBody = <?= json_encode(lang('Visitors.callTasksCompleteBody', [$visitor['first_name'] . ' ' . $visitor['last_name']])) ?>;
-            const completeBaseUrl = <?= json_encode(base_url('followup-workflow/call-tasks/complete/')) ?>;
+            const completeBaseUrl = <?= json_encode(base_url('followup-workflow/tasks/complete/')) ?>;
             const markedDoneMsg = <?= json_encode(lang('Visitors.callTaskMarkedDone')) ?>;
             const failedMsg = <?= json_encode(lang('Visitors.callTasksUpdateFailed')) ?>;
             const networkErrMsg = <?= json_encode(lang('Visitors.callTasksNetworkError')) ?>;

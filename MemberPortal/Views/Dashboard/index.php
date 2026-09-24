@@ -242,7 +242,7 @@ $formatLocalizedDateTime = static function (?string $value, string $locale): str
     </div>
 
     <div class="col-md-3">
-        <a href="<?= base_url('followup-workflow/call-tasks?status=completed') ?>" class="dashboard-kpi-link text-decoration-none d-block h-100">
+        <a href="<?= base_url('followup-workflow/tasks?status=completed') ?>" class="dashboard-kpi-link text-decoration-none d-block h-100">
             <div class="card stat-card success h-100">
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-center">

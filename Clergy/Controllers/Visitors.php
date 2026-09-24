@@ -128,6 +128,11 @@ class Visitors extends BaseController
         // Sequences available to assign
         $sequences = $this->followupSequenceModel->getActiveForParish((int) $visitor['parish_id']);
 
+        // Aggregated notes feed (staff notes + visit + follow-up outcomes)
+        $notesFeed = $personId > 0
+            ? (new \App\Services\PersonNoteService())->feedForPerson($personId, (int) $visitor['parish_id'])
+            : [];
+
         // Linkable in-parish users for the promote-to-member modal
         // (link_user mode picker). Any linked user in scope qualifies — the
         // typical target is a portal user still at visitor status, which the
@@ -155,6 +160,7 @@ class Visitors extends BaseController
             'followupTimeline' => $followupTimeline,
             'nextPending'      => $nextPending,
             'sequences'        => $sequences,
+            'notesFeed'        => $notesFeed,
             'linkableMembers'  => $linkableMembers,
             'attenderThreshold' => $this->visitorDirectory->attenderSuggestionThreshold((int) $visitor['parish_id']),
         ];
@@ -825,15 +831,15 @@ class Visitors extends BaseController
     }
 
     // ------------------------------------------------------------------
-    // Follow-up Manual Timeline
+    // Follow-up Timeline
     // ------------------------------------------------------------------
 
     /**
-     * GET  visitors/followup-manual/:visitorId
+     * GET  visitors/followup-timeline/:visitorId
      * Display the full follow-up timeline for a single visitor with inline
      * action controls (Mark Done, Reschedule, Skip, Print Label).
      */
-    public function followupManual(int $visitorId)
+    public function followupTimeline(int $visitorId)
     {
         if ($redirect = $this->requirePermission('followup.view')) {
             return $redirect;
@@ -861,6 +867,54 @@ class Visitors extends BaseController
             'Clergy\Views\Visitors/followup_manual',
             array_merge($this->getCommonViewData(lang('Visitors.followupManualTitle')), $data)
         );
+    }
+
+    /**
+     * POST  visitors/notes/add/:personId
+     * Append a staff note to the visitor's notes feed.
+     */
+    public function addNote(int $personId)
+    {
+        if ($redirect = $this->requirePermission('visitor.edit')) {
+            return $redirect;
+        }
+
+        if ($redirect = $this->requireParish()) {
+            return $redirect;
+        }
+
+        $parishId = (int) $this->getOperationalParishId();
+        if (! $this->visitorDirectory->visitorAffiliationExists($personId, $parishId)) {
+            return redirect()->to('/visitors')->with('error', lang('Visitors.visitorNotFound'));
+        }
+
+        if (! $this->validate(['note' => 'required|max_length[2000]'])) {
+            return redirect()->to('visitors/view/' . $personId)
+                ->with('error', lang('Visitors.noteInvalid'));
+        }
+
+        $noteId = (new \App\Services\PersonNoteService())->addNote(
+            $personId,
+            $parishId,
+            (int) auth()->id(),
+            trim((string) $this->request->getPost('note'))
+        );
+
+        if ($noteId === false) {
+            return redirect()->to('visitors/view/' . $personId)
+                ->with('error', lang('Visitors.noteSaveFailed'));
+        }
+
+        // Note body is freeform text — never written to the audit trail.
+        $this->audit()->log('visitor.note_added', [
+            'parish_id'   => $parishId,
+            'entity_type' => 'person_note',
+            'entity_id'   => $noteId,
+            'meta'        => ['visitor_id' => $personId],
+        ]);
+
+        return redirect()->to('visitors/view/' . $personId)
+            ->with('success', lang('Visitors.noteAdded'));
     }
 
     /**

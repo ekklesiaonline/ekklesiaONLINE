@@ -325,13 +325,13 @@ return [
     // -------------------------------------------------------------------------
     // Badge d'appels en attente & i18n JS
     // -------------------------------------------------------------------------
-    'pendingCallsBadgeTitle'        => 'Cliquez pour voir les appels en attente',
-    'pendingCallsBadgeSingle'       => '1 appel en attente',
-    'pendingCallsBadgeMultiple'     => '{0} appels en attente',
-    'pendingCallsAriaLabelSingle'   => "1 tâche d'appel en attente",
-    'pendingCallsAriaLabelMultiple' => "{0} tâches d'appel en attente",
-    'pendingCallsNewToastSingle'    => "1 nouvelle tâche d'appel en attente.",
-    'pendingCallsNewToastMultiple'  => "{0} nouvelles tâches d'appel en attente.",
+    'pendingCallsBadgeTitle'        => 'Cliquez pour voir les tâches de suivi en attente',
+    'pendingCallsBadgeSingle'       => '1 tâche en attente',
+    'pendingCallsBadgeMultiple'     => '{0} tâches en attente',
+    'pendingCallsAriaLabelSingle'   => '1 tâche de suivi en attente',
+    'pendingCallsAriaLabelMultiple' => '{0} tâches de suivi en attente',
+    'pendingCallsNewToastSingle'    => '1 nouvelle tâche de suivi en attente.',
+    'pendingCallsNewToastMultiple'  => '{0} nouvelles tâches de suivi en attente.',
     'pendingCallsViewNow'           => 'Voir maintenant',
 
     // -------------------------------------------------------------------------

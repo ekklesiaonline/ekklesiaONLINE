@@ -79,7 +79,7 @@ $suggestAttender  = ! $visitorConverted && $visitorStatus === 'visitor' && $visi
             </a>
         <?php endif; ?>
         <?php if (auth()->user()->can('visitor.view')): ?>
-            <a href="<?= base_url('visitors/followup-manual/' . $visitor['id']) ?>" class="btn btn-outline-primary">
+            <a href="<?= base_url('visitors/followup-timeline/' . $visitor['id']) ?>" class="btn btn-outline-primary">
                 <i class="bi bi-clock-history" aria-hidden="true"></i> <?= lang('Visitors.followupManualBtn') ?>
             </a>
         <?php endif; ?>
@@ -215,7 +215,7 @@ $suggestAttender  = ! $visitorConverted && $visitorStatus === 'visitor' && $visi
                                     <?= lang('Visitors.viewFollowupScheduled') ?>:
                                     <strong><?= esc($nextPending['scheduled_date'] ?? '') ?></strong>
                                 </div>
-                                <a href="<?= base_url('visitors/followup-manual/' . (int) $visitor['id']) ?>"
+                                <a href="<?= base_url('visitors/followup-timeline/' . (int) $visitor['id']) ?>"
                                     class="btn btn-sm btn-outline-warning flex-shrink-0">
                                     <?= lang('Visitors.viewFollowupOpenTimeline') ?>
                                 </a>
@@ -233,7 +233,7 @@ $suggestAttender  = ! $visitorConverted && $visitorStatus === 'visitor' && $visi
                                 <div class="progress flex-grow-1 mx-3" style="height:6px;">
                                     <div class="progress-bar bg-success" style="width:<?= $totalTimeline > 0 ? round(($doneTimeline / $totalTimeline) * 100) : 0 ?>%"></div>
                                 </div>
-                                <a href="<?= base_url('visitors/followup-manual/' . (int) $visitor['id']) ?>" class="btn btn-sm btn-outline-primary">
+                                <a href="<?= base_url('visitors/followup-timeline/' . (int) $visitor['id']) ?>" class="btn btn-sm btn-outline-primary">
                                     <i class="bi bi-clock-history" aria-hidden="true"></i> <?= lang('Visitors.viewFollowupOpenTimeline') ?>
                                 </a>
                             </div>
@@ -261,10 +261,76 @@ $suggestAttender  = ! $visitorConverted && $visitorStatus === 'visitor' && $visi
                     </div>
 
                     <div class="tab-pane fade" id="notes">
-                        <?php if ($visitor['notes']): ?>
-                            <p><?= nl2br((string) esc($visitor['notes'])) ?></p>
-                        <?php else: ?>
+                        <?php if (auth()->user()->can('visitor.edit')): ?>
+                            <form method="post" action="<?= base_url('visitors/notes/add/' . (int) $visitor['id']) ?>" class="mb-3">
+                                <?= csrf_field() ?>
+                                <label for="visitorNote" class="form-label small fw-semibold"><?= lang('Visitors.noteAddTitle') ?></label>
+                                <textarea name="note" id="visitorNote" class="form-control form-control-sm" rows="2"
+                                    maxlength="2000" placeholder="<?= esc(lang('Visitors.noteAddPlaceholder'), 'attr') ?>"></textarea>
+                                <div class="d-flex justify-content-end mt-2">
+                                    <button type="submit" class="btn btn-sm btn-outline-primary">
+                                        <i class="bi bi-plus-circle" aria-hidden="true"></i> <?= lang('Visitors.noteAddBtn') ?>
+                                    </button>
+                                </div>
+                            </form>
+                            <hr>
+                        <?php endif; ?>
+
+                        <?php
+                        $feed = $notesFeed ?? [];
+                        $srcBadgeMap = [
+                            'note'     => 'primary',
+                            'visit'    => 'info',
+                            'followup' => 'warning',
+                            'task'     => 'secondary',
+                        ];
+                        $statusLabelMap = [
+                            'pending' => lang('Visitors.statusPending'),
+                            'sent'    => lang('Visitors.followupStatusSent'),
+                            'skipped' => lang('Visitors.followupStatusSkipped'),
+                            'failed'  => lang('Visitors.followupStatusFailed'),
+                        ];
+                        ?>
+                        <?php if (empty($feed)): ?>
                             <p class="text-muted"><?= lang('Visitors.noNotesYet') ?></p>
+                        <?php else: ?>
+                            <ul class="list-group list-group-flush">
+                                <?php foreach ($feed as $item): ?>
+                                    <?php
+                                    $src      = (string) ($item['source'] ?? 'note');
+                                    $srcBadge = $srcBadgeMap[$src] ?? 'secondary';
+                                    $srcLabel = lang('Visitors.noteSource' . ucfirst($src));
+                                    $ctx      = [];
+                                    if ($src === 'followup' || $src === 'task') {
+                                        $ch = (string) ($item['meta']['channel'] ?? '');
+                                        if ($ch !== '') {
+                                            $ctx[] = lang('Visitors.channel' . ucfirst($ch));
+                                        }
+                                        if (!empty($item['meta']['action'])) {
+                                            $ctx[] = (string) $item['meta']['action'];
+                                        }
+                                        $st = (string) ($item['meta']['status'] ?? '');
+                                        if (isset($statusLabelMap[$st])) {
+                                            $ctx[] = $statusLabelMap[$st];
+                                        }
+                                    } elseif ($src === 'visit' && !empty($item['meta']['service'])) {
+                                        $ctx[] = (string) $item['meta']['service'];
+                                    }
+                                    ?>
+                                    <li class="list-group-item px-0">
+                                        <div class="d-flex justify-content-between align-items-center gap-2 mb-1">
+                                            <span class="badge border border-<?= $srcBadge ?> text-<?= $srcBadge ?> fw-normal"><?= esc($srcLabel) ?></span>
+                                            <small class="text-muted">
+                                                <?= esc($item['date']) ?><?= $item['author'] ? ' · ' . esc(lang('Visitors.noteBy')) . ' ' . esc($item['author']) : '' ?>
+                                            </small>
+                                        </div>
+                                        <?php if ($ctx !== []): ?>
+                                            <div class="small text-muted mb-1"><?= esc(implode(' · ', $ctx)) ?></div>
+                                        <?php endif; ?>
+                                        <p class="mb-0 small"><?= nl2br((string) esc($item['body'])) ?></p>
+                                    </li>
+                                <?php endforeach; ?>
+                            </ul>
                         <?php endif; ?>
                     </div>
                 </div>

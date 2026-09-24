@@ -942,6 +942,7 @@ class FollowupWorkflow extends BaseController
 
         $parishId = $this->getOperationalParishId();
         $status   = $this->request->getGet('status') ?? 'pending';
+        $status   = in_array($status, ['pending', 'completed', 'cancelled', 'all'], true) ? $status : 'pending';
         $taskType = $this->request->getGet('type');
         $taskType = in_array($taskType, ['call', 'manual'], true) ? $taskType : null;
 
@@ -950,12 +951,12 @@ class FollowupWorkflow extends BaseController
 
         if ($status === 'pending') {
             $tasks = $model->getPendingForParish($parishId, $taskType);
-        } else {
+        } elseif ($status === 'all') {
             $tasks = $model->getAllForParish($parishId, 100, $taskType);
-            if (in_array($status, ['completed', 'cancelled'], true)) {
-                $tasks = array_filter($tasks, fn($t) => $t['status'] === $status);
-                $tasks = array_values($tasks);
-            }
+        } else {
+            // Status filtered in SQL — filtering after LIMIT would hide
+            // recent completions once the parish passes 100 tasks.
+            $tasks = $model->getByStatusForParish($parishId, $status, 100, $taskType);
         }
 
         return view('Clergy\Views\FollowupWorkflow/call_tasks', array_merge(

@@ -396,13 +396,13 @@ return [
     // -------------------------------------------------------------------------
     // Pending calls navbar badge & JS i18n
     // -------------------------------------------------------------------------
-    'pendingCallsBadgeTitle'        => 'Click to view pending call tasks',
-    'pendingCallsBadgeSingle'       => '1 pending call',
-    'pendingCallsBadgeMultiple'     => '{0} pending calls',
-    'pendingCallsAriaLabelSingle'   => '1 pending call task',
-    'pendingCallsAriaLabelMultiple' => '{0} pending call tasks',
-    'pendingCallsNewToastSingle'    => '1 new pending call task.',
-    'pendingCallsNewToastMultiple'  => '{0} new pending call tasks.',
+    'pendingCallsBadgeTitle'        => 'Click to view pending follow-up tasks',
+    'pendingCallsBadgeSingle'       => '1 pending task',
+    'pendingCallsBadgeMultiple'     => '{0} pending tasks',
+    'pendingCallsAriaLabelSingle'   => '1 pending follow-up task',
+    'pendingCallsAriaLabelMultiple' => '{0} pending follow-up tasks',
+    'pendingCallsNewToastSingle'    => '1 new pending follow-up task.',
+    'pendingCallsNewToastMultiple'  => '{0} new pending follow-up tasks.',
     'pendingCallsViewNow'           => 'View now',
 
     // -------------------------------------------------------------------------

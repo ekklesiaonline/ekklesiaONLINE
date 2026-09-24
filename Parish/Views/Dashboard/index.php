@@ -99,7 +99,7 @@ $formatLocalizedDate = static function (?string $value, string $pattern, string 
         </a>
     </div>
     <div class="col-md-3">
-        <a href="<?= base_url('followup-workflow/call-tasks?status=completed') ?>" class="text-decoration-none d-block h-100">
+        <a href="<?= base_url('followup-workflow/tasks?status=completed') ?>" class="text-decoration-none d-block h-100">
             <div class="card stat-card success h-100">
                 <div class="card-body">
                     <h6 class="text-muted mb-1"><?= lang('Dashboard.doneFollowUpsThisMonthAdmins') ?></h6>

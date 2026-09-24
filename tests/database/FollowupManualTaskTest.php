@@ -507,6 +507,47 @@ final class FollowupManualTaskTest extends CIUnitTestCase
         $this->assertSame('warden', $manual['assignee_username']);
     }
 
+    public function testGetByStatusForParishFiltersBeforeLimit(): void
+    {
+        $personId = $this->seedPerson();
+
+        // Recent completed task must surface even with older rows present —
+        // status filtering happens in SQL before LIMIT, not in PHP.
+        $this->db->table('call_task')->insert([
+            'parish_id'      => 301,
+            'person_id'      => $personId,
+            'task_type'      => 'call',
+            'status'         => 'completed',
+            'scheduled_date' => '2026-09-22',
+            'completed_at'   => '2026-09-22 18:30:00',
+            'created_at'     => date('Y-m-d H:i:s'),
+            'updated_at'     => date('Y-m-d H:i:s'),
+        ]);
+        $this->db->table('call_task')->insert([
+            'parish_id'      => 301,
+            'person_id'      => $personId,
+            'task_type'      => 'manual',
+            'status'         => 'cancelled',
+            'scheduled_date' => '2026-09-20',
+            'created_at'     => date('Y-m-d H:i:s'),
+            'updated_at'     => date('Y-m-d H:i:s'),
+        ]);
+
+        $model = model(CallTaskModel::class);
+
+        $completed = $model->getByStatusForParish(301, 'completed');
+        $this->assertCount(1, $completed);
+        $this->assertSame('completed', $completed[0]['status']);
+        $this->assertSame('2026-09-22 18:30:00', $completed[0]['completed_at']);
+
+        $cancelled = $model->getByStatusForParish(301, 'cancelled');
+        $this->assertCount(1, $cancelled);
+        $this->assertSame('cancelled', $cancelled[0]['status']);
+
+        // Parish isolation
+        $this->assertCount(0, $model->getByStatusForParish(302, 'completed'));
+    }
+
     public function testPendingQueueExcludesEndedAffiliations(): void
     {
         $personId = $this->seedPerson();
