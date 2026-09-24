@@ -48,7 +48,7 @@ return [
     'netThisMonth'        => 'Net (ce mois)',
     'lastMonthLabel'      => 'Mois précédent',
     'birthdaysThisWeek'   => 'Anniversaires cette semaine',
-    'pendingFollowUpsThisMonth' => 'Invités avec suivi en attente ce mois-ci',
+    'pendingVisitorFollowUps' => 'Visiteurs en attente de suivi',
     'doneFollowUpsThisMonthAdmins' => 'Suivis terminés ce mois-ci',
     'eventsThisMonth'     => 'Événements ce mois-ci',
 

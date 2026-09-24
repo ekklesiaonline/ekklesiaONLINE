@@ -26,6 +26,12 @@ Explain or work with the visitor follow-up engine. Canonical doc:
 - Dispatch: `php spark followup:send [--parish N] [--dry-run]` →
   `FollowupLogModel::getPendingDue()` → `FollowupDispatchService`.
 - Reconcile missing schedules: `php spark followup:backfill [--parish N] [--dry-run]`.
+- `call_task` is materialized at schedule time for call/manual logs (not
+  just at dispatch) via `CallTaskSyncService` — the queue therefore shows
+  pending/overdue work immediately; dispatch dedupes on `log_id`. Manual
+  resolutions (mark done/skip/trigger-now) transition or create the task
+  in a terminal state, conversion/delete cancels pending tasks, and
+  completing a task resolves its pending/failed log.
 
 ## Single scheduling point
 

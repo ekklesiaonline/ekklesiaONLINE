@@ -30,15 +30,10 @@ class WorshipDashboard extends BaseController
         // Recent services
         $recentServices = model('ServiceModel')->getParishServices($parishId, 5);
 
-        // Pending follow-ups this month
-        $monthStart = date('Y-m-01');
-        $monthEnd = date('Y-m-t');
-        $pendingFollowUps = (int) ($db->table('followup_log')
-            ->where('parish_id', $parishId)
-            ->where('status', 'pending')
-            ->where('scheduled_date >=', $monthStart)
-            ->where('scheduled_date <=', $monthEnd)
-            ->countAllResults());
+        // Visitors pending follow-up — same backlog metric as the
+        // parish dashboard tile and /visitors?followup_stage=pending.
+        $pendingFollowUps = (new \App\Services\VisitorFollowupService($db))
+            ->pendingDistinctPersonsCount($parishId);
 
         // Recent visitors
         $recentVisitors = (new \App\Services\VisitorDirectoryService())->recentForParish($parishId, 5);

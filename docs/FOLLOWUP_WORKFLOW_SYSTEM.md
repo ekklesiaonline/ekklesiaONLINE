@@ -51,6 +51,28 @@ FollowupDispatchService::dispatch()
       └─ gift  → metadata flag (manual task)
 ```
 
+### call_task ⇄ followup_log sync (CallTaskSyncService)
+
+`call_task` is the operational projection of the human-channel logs
+(`call` and `manual`); `followup_log` stays canonical. The sync rules:
+
+- **Schedule time** — `FollowupLogModel::scheduleSequenceForPerson` /
+  `scheduleActiveSequencesForPerson` materialize a `pending` task for each
+  new call/manual log, so the queue tracks pending *and* overdue work even
+  before the cron runs. `materializeForLog` dedupes on `log_id`, so
+  dispatch never creates a second row (it returns `existing => true`).
+- **Manual resolutions** — `logMarkDone` → task `completed`; `logSkip` /
+  conversion / visitor-delete → task `cancelled`; `logReschedule` moves
+  `scheduled_date` on a still-pending task; `manual_trigger` resolves to
+  `completed`. When a log was resolved before a task existed, a terminal
+  task is created so completed/skipped calls appear in queue history.
+- **Task completion** — completing a task via
+  `POST /followup-workflow/call-tasks/complete/{id}` also executes a still
+  `pending` or `failed` linked log (early completion / retry).
+- **Backfill** — `BackfillHumanChannelTasks` materializes tasks for
+  pre-existing logs: `pending→pending` (live affiliation only),
+  `sent→completed`, `skipped→cancelled`. `failed` gets no task.
+
 ## 3. Canonical schema (fixed — no probing)
 
 `FollowupLogModel` assumes the canonical schema; it does not probe for
@@ -89,9 +111,10 @@ invitation".
   `started_at`/`ended_at` window (when defined) covers today.
   `saveAction` re-validates the same rule server-side
   (`isActiveParishLeader`), so arbitrary user IDs are rejected.
-- Scheduling copies `action.assigned_to` → `followup_log.assigned_to`;
-  `dispatchManual` creates the `call_task` row (`task_type='manual'`,
-  `assigned_to`, `title`, `log_id`). Nothing is sent to the visitor.
+- Scheduling copies `action.assigned_to` → `followup_log.assigned_to` and
+  materializes the `call_task` row (`task_type='manual'`, `assigned_to`,
+  `title`, `log_id`); `dispatchManual` reuses it (dedupe on `log_id`) or
+  inserts when missing. Nothing is sent to the visitor.
 - The queue at `/followup-workflow/call-tasks` lists both types with a
   type badge, assignee column, and a `?type=call|manual` filter; the same
   complete/cancel flow applies.

@@ -906,6 +906,10 @@ class Visitors extends BaseController
             'response_metadata' => json_encode($meta),
         ]);
 
+        // Keep the human-task queue in sync: completes the pending task, or
+        // records a completed one when the action was never dispatched.
+        (new \App\Services\CallTaskSyncService())->resolveForLog($logId, 'completed', $notes !== '' ? $notes : null);
+
         $this->audit()->log('visitor.followup.manual_done', [
             'parish_id'   => (int) ($this->getOperationalParishId() ?? 0),
             'entity_type' => 'followup_log',
@@ -957,6 +961,9 @@ class Visitors extends BaseController
             'notes'          => $reason !== '' ? $reason : null,
         ]);
 
+        // A queued task follows the log's new due date.
+        (new \App\Services\CallTaskSyncService())->rescheduleForLog($logId, $newDate);
+
         $this->audit()->log('visitor.followup.rescheduled', [
             'parish_id'   => (int) ($this->getOperationalParishId() ?? 0),
             'entity_type' => 'followup_log',
@@ -1002,6 +1009,11 @@ class Visitors extends BaseController
 
         $notes = trim((string) ($this->request->getPost('notes') ?? ''));
         $this->followupLogModel->markSkipped($logId, $notes !== '' ? $notes : null);
+
+        // Cancels the pending task, or records a cancelled one when the
+        // action was never dispatched — skipped calls stay visible in the
+        // queue's cancelled view.
+        (new \App\Services\CallTaskSyncService())->resolveForLog($logId, 'cancelled', $notes !== '' ? $notes : null);
 
         $this->audit()->log('visitor.followup.skipped', [
             'parish_id'   => (int) ($this->getOperationalParishId() ?? 0),

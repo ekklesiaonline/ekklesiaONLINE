@@ -18,7 +18,7 @@ Row 1:
 Row 2:
 
 - Birthdays This Week
-- Guests Pending Follow-up This Month
+- Visitors Pending Follow-up
 - Done Follow-ups This Month (Admins)
 - Events This Month
 
@@ -31,8 +31,8 @@ All KPI tiles are clickable and route to their related modules.
 - Good Standing -> `/standing`
 - Families -> `/families`
 - Birthdays This Week -> `/people`
-- Guests Pending Follow-up This Month -> `/followup?status=pending`
-- Done Follow-ups This Month (Admins) -> `/followup?status=completed`
+- Visitors Pending Follow-up -> `/visitors?followup_stage=pending`
+- Done Follow-ups This Month (Admins) -> `/followup-workflow/call-tasks?status=completed`
 - Events This Month -> `/events`
 
 ## Layout and Spacing Rules
@@ -82,9 +82,9 @@ The second-row cards are computed in `MemberPortal/Controllers/Dashboard.php` fo
   - Uses active parish affiliations and profile `birth_date` values.
   - Counts by month-day in the current week window.
 
-- Guests Pending Follow-up This Month
-  - Counts **`COUNT(DISTINCT gfl.guest_id)`** with `status = 'pending'` and `scheduled_date` inside the current month (joined to `guests` for `parish_id` scoping). **Not** `call_tasks` — that was a bug fixed 2026-04-16. Counts distinct guests, not individual pending steps — a guest with 7 remaining steps contributes 1 to the total (fixed 2026-04-19).
-  - The count must equal the "Guests in Follow-up" tile on `/guests/dashboard` (both use `COUNT(DISTINCT gfl.guest_id)` where `status='pending'`).
+- Visitors Pending Follow-up
+  - Uses `VisitorFollowupService::pendingDistinctPersonsCount($parishId)`: `COUNT(DISTINCT gfl.person_id)` where `status = 'pending'`, scoped to live persons with a live, unconverted `visitor`/`regular_attender` affiliation in the parish. **Not** `call_task` rows — those only exist after the dispatcher runs a due call/manual action. **Not** month-scoped — pending is a backlog state and a month window hides overdue entries. A visitor with 7 remaining steps contributes 1 to the total.
+  - The count must equal the "Visitors in Follow-up" tile on `/visitors/dashboard` and the row count of `/visitors?followup_stage=pending` — all three describe the same population.
 
 - Done Follow-ups This Month (Admins):
   - Counts tasks with `status = completed`.

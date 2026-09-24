@@ -183,15 +183,18 @@ class VisitorDirectoryService
 
         $stage = $filters['followup_stage'] ?? null;
         if ($stage !== null && $stage !== '') {
+            // Subqueries are parish-correlated so the filtered list matches
+            // the pendingDistinctPersonsCount() population exactly — a log
+            // belonging to another parish must not leak into this list.
             $logTable = $this->db()->prefixTable('followup_log');
             if ($stage === 'none') {
-                $builder->where("pa.person_id NOT IN (SELECT DISTINCT person_id FROM {$logTable} WHERE status IN (\"sent\",\"skipped\"))", null, false);
+                $builder->where("pa.person_id NOT IN (SELECT DISTINCT person_id FROM {$logTable} WHERE status IN (\"sent\",\"skipped\") AND parish_id = pa.parish_id)", null, false);
             } elseif ($stage === 'inprogress') {
-                $builder->where("pa.person_id IN (SELECT DISTINCT person_id FROM {$logTable} WHERE status IN (\"sent\",\"skipped\"))", null, false)
-                    ->where("pa.person_id IN (SELECT DISTINCT person_id FROM {$logTable} WHERE status = \"pending\")", null, false);
+                $builder->where("pa.person_id IN (SELECT DISTINCT person_id FROM {$logTable} WHERE status IN (\"sent\",\"skipped\") AND parish_id = pa.parish_id)", null, false)
+                    ->where("pa.person_id IN (SELECT DISTINCT person_id FROM {$logTable} WHERE status = \"pending\" AND parish_id = pa.parish_id)", null, false);
             } elseif (in_array($stage, ['pending', 'sent', 'failed', 'skipped'], true)) {
                 $builder->where(
-                    "pa.person_id IN (SELECT DISTINCT person_id FROM {$logTable} WHERE status = '{$stage}')",
+                    "pa.person_id IN (SELECT DISTINCT person_id FROM {$logTable} WHERE status = '{$stage}' AND parish_id = pa.parish_id)",
                     null,
                     false
                 );
@@ -517,6 +520,9 @@ class VisitorDirectoryService
                 ->where('parish_id', $parishId)
                 ->update(['deleted_at' => $now, 'updated_at' => $now]);
 
+            $sync   = new CallTaskSyncService($db);
+            $logIds = $sync->pendingLogIdsForPerson($personId, $parishId);
+
             $db->table('followup_log')
                 ->where('person_id', $personId)
                 ->where('parish_id', $parishId)
@@ -526,6 +532,9 @@ class VisitorDirectoryService
                     'notes'      => 'Visitor deleted',
                     'updated_at' => $now,
                 ]);
+
+            // Cancel queued call/manual tasks for the skipped logs.
+            $sync->cancelForLogs($logIds);
 
             $remaining = $db->table('parish_affiliation')
                 ->where('person_id', $personId)

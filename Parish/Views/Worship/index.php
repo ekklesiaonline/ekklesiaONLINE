@@ -15,7 +15,7 @@ $formatLocalizedDate = static function (?string $value): string {
 <!-- KPI cards -->
 <div class="row g-4 mb-4">
     <div class="col-md-4">
-        <a href="<?= base_url('followup?status=pending') ?>" class="text-decoration-none d-block h-100">
+        <a href="<?= base_url('visitors?followup_stage=pending') ?>" class="text-decoration-none d-block h-100">
             <div class="card stat-card warning h-100">
                 <div class="card-body">
                     <h6 class="text-muted mb-1"><?= lang('Dashboard.pendingFollowUps') ?></h6>
@@ -25,12 +25,14 @@ $formatLocalizedDate = static function (?string $value): string {
         </a>
     </div>
     <div class="col-md-4">
-        <div class="card stat-card danger h-100">
-            <div class="card-body">
-                <h6 class="text-muted mb-1"><?= lang('Dashboard.callTasksToday') ?></h6>
-                <h3 class="mb-0"><?= number_format((int) ($call_tasks_today ?? 0)) ?></h3>
+        <a href="<?= base_url('followup-workflow/call-tasks') ?>" class="text-decoration-none d-block h-100">
+            <div class="card stat-card danger h-100">
+                <div class="card-body">
+                    <h6 class="text-muted mb-1"><?= lang('Dashboard.callTasksToday') ?></h6>
+                    <h3 class="mb-0"><?= number_format((int) ($call_tasks_today ?? 0)) ?></h3>
+                </div>
             </div>
-        </div>
+        </a>
     </div>
     <div class="col-md-4">
         <a href="<?= base_url('visitors') ?>" class="text-decoration-none d-block h-100">

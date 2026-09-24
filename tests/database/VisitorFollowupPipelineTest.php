@@ -185,6 +185,85 @@ final class VisitorFollowupPipelineTest extends CIUnitTestCase
         $this->assertFalse($directory->visitorAffiliationExists(0, 301));
     }
 
+    private function insertLog(int $personId, int $parishId, string $status = 'pending'): int
+    {
+        $this->db->table('followup_log')->insert([
+            'person_id'      => $personId,
+            'parish_id'      => $parishId,
+            'scheduled_date' => '2026-09-22',
+            'status'         => $status,
+            'created_at'     => date('Y-m-d H:i:s'),
+            'updated_at'     => date('Y-m-d H:i:s'),
+        ]);
+
+        return (int) $this->db->insertID();
+    }
+
+    /**
+     * The parish-dashboard tile uses pendingDistinctPersonsCount() and links
+     * to /visitors?followup_stage=pending — the two must describe the same
+     * population or the tile number and the detail panel drift apart.
+     */
+    public function testPendingCountMatchesPendingStageList(): void
+    {
+        $directory = new VisitorDirectoryService();
+        $queries   = new VisitorFollowupService($this->db);
+
+        $pendingVisitor = $this->seedPerson('visitor');
+        $this->insertLog($pendingVisitor, 301);
+        $this->insertLog($pendingVisitor, 301); // second action — still one person
+
+        // Member affiliation is outside the visitor pipeline.
+        $member = $this->seedPerson('member');
+        $this->insertLog($member, 301);
+
+        // Pending log belonging to a different parish must not leak in.
+        $crossParish = $this->seedPerson('visitor');
+        $this->seedParish(302);
+        $this->insertLog($crossParish, 302);
+
+        // Sent log is not pending.
+        $sentVisitor = $this->seedPerson('visitor');
+        $this->insertLog($sentVisitor, 301, 'sent');
+
+        $this->assertSame(1, $queries->pendingDistinctPersonsCount(301));
+
+        $list = $directory->paginateForParish(301, ['followup_stage' => 'pending'], 20, 1);
+
+        $this->assertCount(1, $list['rows']);
+        $this->assertSame($pendingVisitor, (int) $list['rows'][0]['person_id']);
+    }
+
+    public function testPendingCountExcludesConvertedAndDeleted(): void
+    {
+        $queries = new VisitorFollowupService($this->db);
+
+        $converted = $this->seedPerson('member');
+        $this->db->table('parish_affiliation')
+            ->where('person_id', $converted)
+            ->update(['converted_to_member_at' => date('Y-m-d H:i:s')]);
+        $this->insertLog($converted, 301);
+
+        $deleted = $this->seedPerson('visitor');
+        $this->insertLog($deleted, 301);
+        $this->db->table('person')
+            ->where('id', $deleted)
+            ->update(['deleted_at' => date('Y-m-d H:i:s')]);
+
+        $detached = $this->seedPerson('visitor');
+        $this->insertLog($detached, 301);
+        $this->db->table('parish_affiliation')
+            ->where('person_id', $detached)
+            ->update(['deleted_at' => date('Y-m-d H:i:s')]);
+
+        $this->assertSame(0, $queries->pendingDistinctPersonsCount(301));
+
+        $list = (new VisitorDirectoryService())
+            ->paginateForParish(301, ['followup_stage' => 'pending'], 20, 1);
+
+        $this->assertCount(0, $list['rows']);
+    }
+
     public function testTimelineMarksLinkedCallTasks(): void
     {
         $personId = $this->seedPerson();

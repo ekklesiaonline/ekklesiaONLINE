@@ -63,7 +63,7 @@ return [
     'netThisMonth'        => 'Net (This Month)',
     'lastMonthLabel'      => 'Last month',
     'birthdaysThisWeek'   => 'Birthdays This Week',
-    'pendingFollowUpsThisMonth' => 'Visitors Pending Follow-up This Month',
+    'pendingVisitorFollowUps' => 'Visitors Pending Follow-up',
     'doneFollowUpsThisMonthAdmins' => 'Done Follow-ups This Month',
     'eventsThisMonth'     => 'Events This Month',
 

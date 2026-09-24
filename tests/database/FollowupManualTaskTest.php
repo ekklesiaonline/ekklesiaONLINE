@@ -3,7 +3,9 @@
 use App\Models\CallTaskModel;
 use App\Models\FollowupLogModel;
 use App\Models\LeadershipPositionModel;
+use App\Services\CallTaskSyncService;
 use App\Services\FollowupDispatchService;
+use App\Services\VisitorDirectoryService;
 use App\Services\VisitorFollowupService;
 use CodeIgniter\Test\CIUnitTestCase;
 use CodeIgniter\Test\DatabaseTestTrait;
@@ -138,6 +140,31 @@ final class FollowupManualTaskTest extends CIUnitTestCase
         return (int) $this->db->insertID();
     }
 
+    private function seedCallAction(int $parishId, ?int $assignedTo = null): int
+    {
+        $this->db->table('followup_sequence')->insert([
+            'parish_id'  => $parishId,
+            'name'       => 'Call Sequence',
+            'is_active'  => 1,
+            'created_at' => date('Y-m-d H:i:s'),
+            'updated_at' => date('Y-m-d H:i:s'),
+        ]);
+        $sequenceId = (int) $this->db->insertID();
+
+        $this->db->table('followup_action')->insert([
+            'sequence_id'  => $sequenceId,
+            'week_number'  => 1,
+            'day_offset'   => 1,
+            'channel'      => 'call',
+            'assigned_to'  => $assignedTo,
+            'is_automated' => 1,
+            'created_at'   => date('Y-m-d H:i:s'),
+            'updated_at'   => date('Y-m-d H:i:s'),
+        ]);
+
+        return (int) $this->db->insertID();
+    }
+
     // ------------------------------------------------------------------
     // Leader eligibility
     // ------------------------------------------------------------------
@@ -262,6 +289,190 @@ final class FollowupManualTaskTest extends CIUnitTestCase
     }
 
     // ------------------------------------------------------------------
+    // Schedule-time task materialization (call_task keeps step with
+    // followup_log so pending/overdue calls are tracked before dispatch)
+    // ------------------------------------------------------------------
+
+    public function testSchedulingMaterializesPendingManualTask(): void
+    {
+        $leader   = $this->seedUser('warden');
+        $actionId = $this->seedManualAction(301, $leader);
+        $personId = $this->seedPerson();
+
+        model(FollowupLogModel::class)
+            ->scheduleActiveSequencesForPerson($personId, 301, '2026-09-20');
+
+        $log = $this->db->table('followup_log')
+            ->where('action_id', $actionId)
+            ->get()->getRowArray();
+        $this->assertNotNull($log);
+
+        $task = $this->db->table('call_task')
+            ->where('log_id', (int) $log['id'])
+            ->get()->getRowArray();
+
+        $this->assertNotNull($task);
+        $this->assertSame('manual', $task['task_type']);
+        $this->assertSame('pending', $task['status']);
+        $this->assertSame($leader, (int) $task['assigned_to']);
+        $this->assertSame($personId, (int) $task['person_id']);
+        $this->assertSame($log['scheduled_date'], $task['scheduled_date']);
+        $this->assertSame('Send Manual a social media invitation', $task['title']);
+    }
+
+    public function testSchedulingMaterializesPendingCallTask(): void
+    {
+        $actionId = $this->seedCallAction(301);
+        $personId = $this->seedPerson();
+
+        model(FollowupLogModel::class)
+            ->scheduleActiveSequencesForPerson($personId, 301, '2026-09-20');
+
+        $log = $this->db->table('followup_log')
+            ->where('action_id', $actionId)
+            ->get()->getRowArray();
+        $this->assertNotNull($log);
+
+        $task = $this->db->table('call_task')
+            ->where('log_id', (int) $log['id'])
+            ->get()->getRowArray();
+
+        $this->assertNotNull($task);
+        $this->assertSame('call', $task['task_type']);
+        $this->assertSame('pending', $task['status']);
+        $this->assertSame(301, (int) $task['parish_id']);
+    }
+
+    public function testDispatchDoesNotDuplicateMaterializedTask(): void
+    {
+        $leader   = $this->seedUser('warden');
+        $actionId = $this->seedManualAction(301, $leader);
+        $personId = $this->seedPerson();
+
+        model(FollowupLogModel::class)
+            ->scheduleActiveSequencesForPerson($personId, 301, '2026-09-20');
+
+        $log = $this->db->table('followup_log')
+            ->where('action_id', $actionId)
+            ->get()->getRowArray();
+
+        $logRow = array_merge($log, [
+            'channel'      => 'manual',
+            'instructions' => 'Send {first_name} a social media invitation',
+        ]);
+        $visitor = [
+            'person_id'          => $personId,
+            'parish_id'          => 301,
+            'first_name'         => 'Manual',
+            'last_name'          => 'Visitor',
+            'opted_out_channels' => null,
+        ];
+
+        $result = (new FollowupDispatchService())->dispatch($logRow, null, $visitor);
+
+        $this->assertTrue($result['success'], $result['error']);
+        $this->assertTrue($result['metadata']['existing'] ?? false);
+
+        $tasks = $this->db->table('call_task')
+            ->where('log_id', (int) $log['id'])
+            ->get()->getResultArray();
+        $this->assertCount(1, $tasks);
+    }
+
+    public function testResolveForLogTransitionsPendingTask(): void
+    {
+        $actionId = $this->seedCallAction(301);
+        $personId = $this->seedPerson();
+
+        model(FollowupLogModel::class)
+            ->scheduleActiveSequencesForPerson($personId, 301, '2026-09-20');
+
+        $log = $this->db->table('followup_log')
+            ->where('action_id', $actionId)
+            ->get()->getRowArray();
+        $logId = (int) $log['id'];
+
+        (new CallTaskSyncService($this->db))->resolveForLog($logId, 'completed', 'Called — left voicemail');
+
+        $task = $this->db->table('call_task')->where('log_id', $logId)->get()->getRowArray();
+        $this->assertSame('completed', $task['status']);
+        $this->assertNotEmpty($task['completed_at']);
+        $this->assertSame('Called — left voicemail', $task['notes']);
+    }
+
+    public function testResolveForLogCreatesTerminalTaskWhenMissing(): void
+    {
+        $actionId = $this->seedCallAction(301);
+        $personId = $this->seedPerson();
+
+        // Historical shape: log resolved manually before tasks existed.
+        $this->db->table('followup_log')->insert([
+            'person_id'      => $personId,
+            'parish_id'      => 301,
+            'action_id'      => $actionId,
+            'scheduled_date' => '2026-09-22',
+            'executed_at'    => '2026-09-22 18:30:00',
+            'status'         => 'sent',
+            'created_at'     => date('Y-m-d H:i:s'),
+            'updated_at'     => date('Y-m-d H:i:s'),
+        ]);
+        $logId = (int) $this->db->insertID();
+
+        (new CallTaskSyncService($this->db))->resolveForLog($logId, 'completed');
+
+        $task = $this->db->table('call_task')->where('log_id', $logId)->get()->getRowArray();
+        $this->assertNotNull($task);
+        $this->assertSame('call', $task['task_type']);
+        $this->assertSame('completed', $task['status']);
+        $this->assertSame('2026-09-22 18:30:00', $task['completed_at']);
+    }
+
+    public function testRescheduleMovesPendingTaskDate(): void
+    {
+        $actionId = $this->seedCallAction(301);
+        $personId = $this->seedPerson();
+
+        model(FollowupLogModel::class)
+            ->scheduleActiveSequencesForPerson($personId, 301, '2026-09-20');
+
+        $log = $this->db->table('followup_log')
+            ->where('action_id', $actionId)
+            ->get()->getRowArray();
+        $logId = (int) $log['id'];
+
+        (new CallTaskSyncService($this->db))->rescheduleForLog($logId, '2026-10-01');
+
+        $task = $this->db->table('call_task')->where('log_id', $logId)->get()->getRowArray();
+        $this->assertSame('2026-10-01', $task['scheduled_date']);
+        $this->assertSame('pending', $task['status']);
+    }
+
+    public function testDeleteVisitorCancelsPendingTasks(): void
+    {
+        $actionId = $this->seedManualAction(301);
+        $personId = $this->seedPerson();
+
+        model(FollowupLogModel::class)
+            ->scheduleActiveSequencesForPerson($personId, 301, '2026-09-20');
+
+        $log = $this->db->table('followup_log')
+            ->where('action_id', $actionId)
+            ->get()->getRowArray();
+        $logId = (int) $log['id'];
+
+        $this->assertSame('pending', $this->db->table('call_task')
+            ->where('log_id', $logId)->get()->getRowArray()['status'] ?? null);
+
+        $deleted = (new VisitorDirectoryService())->delete($personId, 301);
+
+        $this->assertTrue($deleted);
+        $this->assertSame('skipped', $this->db->table('followup_log')
+            ->where('id', $logId)->get()->getRowArray()['status'] ?? null);
+        $this->assertSame('cancelled', $this->db->table('call_task')
+            ->where('log_id', $logId)->get()->getRowArray()['status'] ?? null);
+    }
+
+    // ------------------------------------------------------------------
     // Queue model: type filter + assignee name
     // ------------------------------------------------------------------
 
@@ -294,6 +505,35 @@ final class FollowupManualTaskTest extends CIUnitTestCase
         $this->assertSame('manual', $manual['task_type']);
         // assignee_name falls back to profile-less row (username still joins)
         $this->assertSame('warden', $manual['assignee_username']);
+    }
+
+    public function testPendingQueueExcludesEndedAffiliations(): void
+    {
+        $personId = $this->seedPerson();
+
+        $this->db->table('call_task')->insert([
+            'parish_id'      => 301,
+            'person_id'      => $personId,
+            'task_type'      => 'call',
+            'status'         => 'pending',
+            'scheduled_date' => '2026-09-22',
+            'created_at'     => date('Y-m-d H:i:s'),
+            'updated_at'     => date('Y-m-d H:i:s'),
+        ]);
+
+        $model = model(CallTaskModel::class);
+        $this->assertSame(1, $model->countPending(301));
+        $this->assertCount(1, $model->getPendingForParish(301));
+
+        // Detach the visitor — the task must drop out of the actionable
+        // queue just like its log drops out of getPendingDue().
+        $this->db->table('parish_affiliation')
+            ->where('person_id', $personId)
+            ->where('parish_id', 301)
+            ->update(['end_date' => '2020-01-01']);
+
+        $this->assertSame(0, $model->countPending(301));
+        $this->assertCount(0, $model->getPendingForParish(301));
     }
 
     // ------------------------------------------------------------------

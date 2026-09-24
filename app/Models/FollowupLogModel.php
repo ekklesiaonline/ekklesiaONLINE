@@ -265,6 +265,8 @@ class FollowupLogModel extends Model
             return 0;
         }
 
+        $this->materializeHumanTasks($personId, $parishId);
+
         return count($rows);
     }
 
@@ -347,7 +349,39 @@ class FollowupLogModel extends Model
             return 0;
         }
 
+        $this->materializeHumanTasks($personId, $parishId);
+
         return count($toInsert);
+    }
+
+    /**
+     * Materialize call_task rows for the person's pending call/manual-channel
+     * log entries that lack one — the human work queue tracks the obligation
+     * from schedule time, so pending and overdue calls are visible even
+     * before the followup:send cron dispatches them.
+     */
+    private function materializeHumanTasks(int $personId, int $parishId): void
+    {
+        $ids = $this->db->table('followup_log gfl')
+            ->select('gfl.id')
+            ->join('followup_action fa', 'fa.id = gfl.action_id', 'inner')
+            ->join('call_task ct', 'ct.log_id = gfl.id', 'left')
+            ->where('gfl.person_id', $personId)
+            ->where('gfl.parish_id', $parishId)
+            ->where('gfl.status', 'pending')
+            ->whereIn('fa.channel', ['call', 'manual'])
+            ->where('ct.id IS NULL', null, false)
+            ->get()
+            ->getResultArray();
+
+        if ($ids === []) {
+            return;
+        }
+
+        $sync = new \App\Services\CallTaskSyncService($this->db);
+        foreach ($ids as $row) {
+            $sync->materializeForLog((int) $row['id']);
+        }
     }
 
     /**

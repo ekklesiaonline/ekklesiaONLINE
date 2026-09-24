@@ -20,7 +20,7 @@ class ParishDashboardDataService
      *   status_counts: array<int, array<string, mixed>>,
      *   total_families: int,
      *   birthdays_this_week: int,
-     *   pending_followups_this_month: int,
+     *   pending_visitor_followups: int,
      *   done_followups_this_month: int,
      *   events_this_month: int,
      *   recent_services: array<int, array<string, mixed>>,
@@ -59,14 +59,13 @@ class ParishDashboardDataService
         // Birthdays this week
         $birthdaysThisWeek = $this->countBirthdaysThisWeek($db, $parishId, $weekStart, $weekEnd);
 
-        // Pending follow-ups this month
-        $pendingFollowUpsThisMonth = (int) ($db->table('followup_log gfl')
-            ->select('COUNT(DISTINCT gfl.id) AS cnt')
-            ->where('gfl.parish_id', $parishId)
-            ->where('gfl.status', 'pending')
-            ->where('gfl.scheduled_date >=', $monthStart->format('Y-m-d'))
-            ->where('gfl.scheduled_date <=', $monthEnd->format('Y-m-d'))
-            ->get()->getRowArray()['cnt'] ?? 0);
+        // Visitors pending follow-up: distinct live, unconverted
+        // visitor/regular_attender persons with a pending followup_log
+        // entry — the same population listed by /visitors?followup_stage=pending.
+        // A backlog metric (not month-scoped): pending is a state, and the
+        // window also hid entries scheduled before the 1st (overdue items).
+        $pendingVisitorFollowUps = (new VisitorFollowupService($db))
+            ->pendingDistinctPersonsCount($parishId);
 
         // Completed follow-ups this month
         $completedFollowUpsRow = $db->table('call_task ct')
@@ -103,7 +102,7 @@ class ParishDashboardDataService
             'status_counts'                 => $statusCounts,
             'total_families'                => $totalFamilies,
             'birthdays_this_week'           => $birthdaysThisWeek,
-            'pending_followups_this_month'  => $pendingFollowUpsThisMonth,
+            'pending_visitor_followups'     => $pendingVisitorFollowUps,
             'done_followups_this_month'     => $doneFollowUpsThisMonth,
             'events_this_month'             => $eventsThisMonth,
             'recent_services'               => $recentServices,

@@ -99,7 +99,7 @@ class CallTaskModel extends Model
     private function baseBuilder(): \CodeIgniter\Database\BaseBuilder
     {
         return $this->db->table('call_task ct')
-            ->select('ct.id, ct.person_id, ct.log_id, ct.assigned_to, ct.task_type, ct.title, ct.phone, ct.notes, ct.status, ct.scheduled_date, ct.created_at, ct.updated_at, ct.parish_id, p.first_name, p.last_name,'
+            ->select('ct.id, ct.person_id, ct.log_id, ct.assigned_to, ct.task_type, ct.title, ct.phone, ct.notes, ct.status, ct.scheduled_date, ct.completed_at, ct.created_at, ct.updated_at, ct.parish_id, p.first_name, p.last_name,'
                 . ' au.username AS assignee_username,'
                 . ' TRIM(CONCAT(COALESCE(ap.first_name, ""), " ", COALESCE(ap.last_name, ""))) AS assignee_name')
             ->join('person p', 'p.id = ct.person_id', 'left')
@@ -109,9 +109,16 @@ class CallTaskModel extends Model
 
     private function pendingBuilder(int $parishId): \CodeIgniter\Database\BaseBuilder
     {
+        // Pending tasks are actionable work — apply the same live-affiliation
+        // gate getPendingDue() uses so detached/removed visitors do not stay
+        // queued even though their log rows may linger.
+        $paTable = $this->db->prefixTable('parish_affiliation');
+        $today   = $this->db->escape(date('Y-m-d'));
+
         return $this->baseBuilder()
             ->where('ct.parish_id', $parishId)
-            ->where('ct.status', 'pending');
+            ->where('ct.status', 'pending')
+            ->where("EXISTS (SELECT 1 FROM {$paTable} pa WHERE pa.person_id = ct.person_id AND pa.parish_id = ct.parish_id AND pa.deleted_at IS NULL AND (pa.end_date IS NULL OR pa.end_date >= {$today}))", null, false);
     }
 
     /**
@@ -138,8 +145,8 @@ class CallTaskModel extends Model
      */
     public function countPending(int $parishId): int
     {
-        return (int) $this->where('parish_id', $parishId)
-            ->where('status', 'pending')
+        return (int) $this->pendingBuilder($parishId)
+            ->select('ct.id')
             ->countAllResults();
     }
 }

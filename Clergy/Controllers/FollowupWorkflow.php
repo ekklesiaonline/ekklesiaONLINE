@@ -886,16 +886,6 @@ class FollowupWorkflow extends BaseController
                 ['triggered_by' => $currentUserId, 'manual' => true]
             );
             $logId = (int) $logEntry['id'];
-
-            // A dispatched task (call or manual) may still be open for this
-            // log — completing the step directly closes it.
-            $openTask = model('CallTaskModel')
-                ->where('log_id', $logId)
-                ->where('status', 'pending')
-                ->first();
-            if ($openTask) {
-                model('CallTaskModel')->markCompleted((int) $openTask['id']);
-            }
         } else {
             $logId = (int) $this->logModel->insert([
                 'person_id'         => $visitorId,
@@ -908,6 +898,11 @@ class FollowupWorkflow extends BaseController
                 'response_metadata' => json_encode(['triggered_by' => $currentUserId, 'manual' => true]),
             ]);
         }
+
+        // Keep the human-task queue in sync for call/manual actions:
+        // completes the pending task, or records a completed one when the
+        // action was never queued for dispatch.
+        (new \App\Services\CallTaskSyncService())->resolveForLog($logId, 'completed');
 
         $this->audit()->log('followup.manual_trigger', [
             'parish_id'   => $parishId,
@@ -1009,6 +1004,17 @@ class FollowupWorkflow extends BaseController
 
         if (!$model->markCompleted($id)) {
             return $this->jsonResponse(['success' => false, 'message' => 'Update failed.'], 500);
+        }
+
+        // Resolve the linked log when the task is closed ahead of dispatch
+        // ('pending') or completed on a retry ('failed') — the call is done,
+        // no cron run is needed to reflect it in the follow-up timeline.
+        $logId = (int) ($task['log_id'] ?? 0);
+        if ($logId > 0) {
+            $log = $this->logModel->find($logId);
+            if (is_array($log) && in_array($log['status'] ?? '', ['pending', 'failed'], true)) {
+                $this->logModel->markExecuted($logId, ['completed_via' => 'call_task']);
+            }
         }
 
         $this->audit()->log('followup.call_task_completed', ['call_task_id' => $id]);

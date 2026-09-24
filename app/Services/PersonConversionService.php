@@ -193,6 +193,10 @@ class PersonConversionService
     private static function markPendingFollowupsSkipped(int $personId, string $now): void
     {
         $db = db_connect();
+
+        $sync   = new CallTaskSyncService($db);
+        $logIds = $sync->pendingLogIdsForPerson($personId);
+
         $db->table('followup_log')
             ->where('person_id', $personId)
             ->where('status', 'pending')
@@ -201,6 +205,10 @@ class PersonConversionService
                 'notes'      => 'Converted to member',
                 'updated_at' => $now,
             ]);
+
+        // Queued call/manual tasks for the skipped logs must not linger —
+        // the visitor converted, there is no follow-up work left.
+        $sync->cancelForLogs($logIds);
     }
 
     private static function markVisitorConverted(int $affiliationId, ?int $userId, ?int $convertedByUserId, string $now): void

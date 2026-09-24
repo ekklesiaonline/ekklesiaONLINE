@@ -54,7 +54,7 @@ class Dashboard extends BaseController
             'total_visitors'                        => (int) ($metrics['total_visitors'] ?? 0),
             'total_families'                      => $data['total_families'],
             'birthdays_this_week'                 => $data['birthdays_this_week'],
-            'pending_followups_this_month'        => $data['pending_followups_this_month'],
+            'pending_visitor_followups'           => $data['pending_visitor_followups'],
             'done_followups_this_month_admins'    => $data['done_followups_this_month'],
             'events_this_month'                   => $data['events_this_month'],
             'status_counts'                       => $data['status_counts'],

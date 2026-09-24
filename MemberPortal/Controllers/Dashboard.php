@@ -431,12 +431,11 @@ class Dashboard extends BaseController
 
         $db = db_connect();
 
-        // 1. Distinct people with at least one pending followup log entry.
-        $visitorsInFollowup = (int) ($db->table('followup_log gfl')
-            ->select('COUNT(DISTINCT gfl.person_id) AS cnt')
-            ->where('gfl.status', 'pending')
-            ->where('gfl.parish_id', $parishId)
-            ->get()->getRowArray()['cnt'] ?? 0);
+        // 1. Distinct live, unconverted visitor/attender persons with at
+        //    least one pending followup log entry — the same backlog metric
+        //    as the parish dashboard tile and /visitors?followup_stage=pending.
+        $visitorsInFollowup = (new \App\Services\VisitorFollowupService($db))
+            ->pendingDistinctPersonsCount($parishId);
 
         // 2. Pending call tasks scheduled on or before today.
         $callTasksToday = (int) $db->table('call_task')

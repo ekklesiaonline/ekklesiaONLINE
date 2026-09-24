@@ -75,6 +75,12 @@ class FollowupDispatchService
 
         // Opt-out guard: skip silently if visitor has opted out of this channel.
         if ($this->visitorDirectory->isOptedOut($visitor, $channel)) {
+            // A task queued at schedule time must not linger for a channel
+            // the visitor opted out of.
+            if ($logId > 0 && in_array($channel, CallTaskSyncService::HUMAN_CHANNELS, true)) {
+                (new CallTaskSyncService())->cancelForLogs([$logId]);
+            }
+
             return [
                 'success'  => false,
                 'metadata' => ['channel' => $channel, 'skipped' => true, 'reason' => 'opted_out'],
@@ -186,6 +192,22 @@ class FollowupDispatchService
 
     private function dispatchCall(array $logRow, array $visitor, int $parishId): array
     {
+        $logId = (int) ($logRow['id'] ?? 0);
+
+        // Tasks are materialized at schedule time — a task already linked
+        // to this log (any status) means the work is queued or was resolved
+        // manually; never create a duplicate.
+        if ($logId > 0) {
+            $existing = $this->callTaskModel->where('log_id', $logId)->first();
+            if (is_array($existing)) {
+                return [
+                    'success'  => true,
+                    'metadata' => ['channel' => 'call', 'call_task_id' => (int) $existing['id'], 'existing' => true],
+                    'error'    => '',
+                ];
+            }
+        }
+
         $phone = $this->decryptField($visitor['phone'] ?? '');
 
         $personId = (int) ($visitor['person_id'] ?? $logRow['person_id'] ?? 0) ?: null;
@@ -223,6 +245,21 @@ class FollowupDispatchService
      */
     private function dispatchManual(array $logRow, array $visitor, array $vars, int $parishId): array
     {
+        $logId = (int) ($logRow['id'] ?? 0);
+
+        // Same dedupe as dispatchCall — tasks are materialized at schedule
+        // time, so dispatch only inserts when no task exists yet.
+        if ($logId > 0) {
+            $existing = $this->callTaskModel->where('log_id', $logId)->first();
+            if (is_array($existing)) {
+                return [
+                    'success'  => true,
+                    'metadata' => ['channel' => 'manual', 'call_task_id' => (int) $existing['id'], 'existing' => true],
+                    'error'    => '',
+                ];
+            }
+        }
+
         $personId   = (int) ($visitor['person_id'] ?? $logRow['person_id'] ?? 0) ?: null;
         $assignedTo = (int) ($logRow['assigned_to'] ?? 0) ?: null;
 

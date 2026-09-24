@@ -224,13 +224,13 @@ $formatLocalizedDateTime = static function (?string $value, string $locale): str
     </div>
 
     <div class="col-md-3">
-        <a href="<?= base_url('followup?status=pending') ?>" class="dashboard-kpi-link text-decoration-none d-block h-100">
+        <a href="<?= base_url('visitors?followup_stage=pending') ?>" class="dashboard-kpi-link text-decoration-none d-block h-100">
             <div class="card stat-card warning h-100">
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
-                            <h6 class="text-muted mb-1"><?= lang('Dashboard.pendingFollowUpsThisMonth') ?></h6>
-                            <h3 class="mb-0"><?= number_format((int) ($pending_followups_this_month ?? 0)) ?></h3>
+                            <h6 class="text-muted mb-1"><?= lang('Dashboard.pendingVisitorFollowUps') ?></h6>
+                            <h3 class="mb-0"><?= number_format((int) ($pending_visitor_followups ?? 0)) ?></h3>
                         </div>
                         <div class="text-warning fs-1">
                             <i class="bi bi-hourglass-split" aria-hidden="true"></i>
@@ -242,7 +242,7 @@ $formatLocalizedDateTime = static function (?string $value, string $locale): str
     </div>
 
     <div class="col-md-3">
-        <a href="<?= base_url('followup?status=completed') ?>" class="dashboard-kpi-link text-decoration-none d-block h-100">
+        <a href="<?= base_url('followup-workflow/call-tasks?status=completed') ?>" class="dashboard-kpi-link text-decoration-none d-block h-100">
             <div class="card stat-card success h-100">
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-center">
