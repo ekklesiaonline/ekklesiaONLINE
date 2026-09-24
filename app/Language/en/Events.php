@@ -139,7 +139,7 @@ return [
     'addRegistration' => 'Add Registration',
     'noRegistrationYet' => 'No registrations yet',
     'quickActions' => 'Quick Actions',
-    'selectMemberOrGuest' => 'Please select a member or fill in visitor details.',
+    'selectMemberOrVisitor' => 'Please select a member or fill in visitor details.',
     'formTextMemberGuest' => 'Select a member, or leave blank and fill visitor details.',
     'typeExamples' => 'Retreat, Workshop, Outreach',
     'noEvents' => 'No events found.',

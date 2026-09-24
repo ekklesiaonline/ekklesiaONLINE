@@ -253,7 +253,7 @@ return [
     'failedEvent'               => 'Failed to create event.',
     'failedUpdateEvent'         => 'Failed to update event.',
     'registrationNotRequired'   => 'This event does not require registration.',
-    'selectMemberOrGuest'       => 'Select a member or provide visitor details to register.',
+    'selectMemberOrVisitor'     => 'Select a member or provide visitor details to register.',
     'memberOutsideScope'        => 'Selected member is outside your parish scope.',
     'alreadyRegistered'         => 'This member is already registered for the event.',
     'capacityReached'           => 'Event capacity has been reached.',

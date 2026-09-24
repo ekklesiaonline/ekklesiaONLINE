@@ -135,7 +135,7 @@ return [
     'addRegistration' => 'Agregar Registro',
     'noRegistrationYet' => 'Sin registros todavia',
     'quickActions' => 'Acciones Rapidas',
-    'selectMemberOrGuest' => 'Por favor selecciona un miembro o completa los detalles del invitado.',
+    'selectMemberOrVisitor' => 'Por favor selecciona un miembro o completa los detalles del invitado.',
     'formTextMemberGuest' => 'Selecciona un miembro, o deja en blanco y completa los detalles del invitado.',
     'typeExamples' => 'Retiro, Taller, Actividad de Alcance',
     'noEvents' => 'No se encontraron eventos.',

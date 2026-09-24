@@ -387,7 +387,7 @@ class Events extends BaseController
         $guestName = trim((string) ($this->request->getPost('guest_name') ?? ''));
 
         if ($memberUserId <= 0 && $guestName === '') {
-            return redirect()->back()->withInput()->with('error', lang('Members.selectMemberOrGuest'));
+            return redirect()->back()->withInput()->with('error', lang('Members.selectMemberOrVisitor'));
         }
 
         if ($memberUserId > 0) {

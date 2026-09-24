@@ -392,7 +392,7 @@
                         'families' => 'App.navFamilies',
                         'services' => 'App.navServices',
                         'attendance' => 'App.navAttendance',
-                        'guests' => 'App.navGuests',
+                        'visitors' => 'App.navVisitors',
                         'followup' => 'App.navFollowUp',
                         'donations' => 'App.navDonations',
                         'expenses' => 'App.navExpenses',

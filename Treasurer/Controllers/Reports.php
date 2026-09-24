@@ -100,7 +100,7 @@ class Reports extends BaseController
         $rows[] = [lang('Treasurer.reportDateRange'), $startDate . ' ' . lang('Treasurer.reportTo') . ' ' . $endDate];
         $rows[] = [lang('Treasurer.reportTotalParishes'), (string) ($summary['parish_count'] ?? 0)];
         $rows[] = [lang('Treasurer.reportTotalPeople'), (string) ($summary['people_count'] ?? 0)];
-        $rows[] = [lang('Treasurer.reportTotalGuestsUnconverted'), (string) ($summary['guest_count'] ?? 0)];
+        $rows[] = [lang('Treasurer.reportTotalVisitorsUnconverted'), (string) ($summary['visitor_count'] ?? 0)];
         $rows[] = [lang('Treasurer.reportTotalMembers'), (string) ($summary['member_count'] ?? 0)];
         $rows[] = [lang('Treasurer.reportGoodStanding'), (string) ($summary['good_standing_count'] ?? 0)];
         $rows[] = [lang('Treasurer.reportTotalServices'), (string) ($summary['service_count'] ?? 0)];
@@ -115,7 +115,7 @@ class Reports extends BaseController
                 lang('Treasurer.reportDiocese'),
                 lang('Treasurer.reportParishes'),
                 lang('Treasurer.reportPeople'),
-                lang('Treasurer.reportGuests'),
+                lang('Treasurer.reportVisitors'),
                 lang('Treasurer.reportMembers'),
                 lang('Treasurer.reportGoodStanding'),
                 lang('Treasurer.reportServices'),
@@ -129,7 +129,7 @@ class Reports extends BaseController
                     (string) ($item['diocese_name'] ?? ''),
                     (string) ($item['parish_count'] ?? 0),
                     (string) ($item['people_count'] ?? 0),
-                    (string) ($item['guest_count'] ?? 0),
+                    (string) ($item['visitor_count'] ?? 0),
                     (string) ($item['member_count'] ?? 0),
                     (string) ($item['good_standing_count'] ?? 0),
                     (string) ($item['service_count'] ?? 0),
@@ -295,7 +295,7 @@ class Reports extends BaseController
                     <td style="padding: 8px; border: 1px solid #ddd;">' . htmlspecialchars($row['diocese_name']) . '</td>
                     <td style="padding: 8px; border: 1px solid #ddd; text-align: center;">' . number_format((int) $row['parish_count']) . '</td>
                     <td style="padding: 8px; border: 1px solid #ddd; text-align: center;">' . number_format((int) $row['people_count']) . '</td>
-                    <td style="padding: 8px; border: 1px solid #ddd; text-align: center;">' . number_format((int) $row['guest_count']) . '</td>
+                    <td style="padding: 8px; border: 1px solid #ddd; text-align: center;">' . number_format((int) $row['visitor_count']) . '</td>
                     <td style="padding: 8px; border: 1px solid #ddd; text-align: center;">' . number_format((int) $row['member_count']) . '</td>
                     <td style="padding: 8px; border: 1px solid #ddd; text-align: center;">' . number_format((int) ($row['good_standing_count'] ?? 0)) . '</td>
                     <td style="padding: 8px; border: 1px solid #ddd; text-align: center;">' . number_format((int) $row['service_count']) . '</td>
@@ -316,7 +316,7 @@ class Reports extends BaseController
                         <th style="padding: 8px; border: 1px solid #ddd; text-align: left;">' . htmlspecialchars(lang('Treasurer.reportDiocese')) . '</th>
                         <th style="padding: 8px; border: 1px solid #ddd; text-align: center;">' . htmlspecialchars(lang('Treasurer.reportParishes')) . '</th>
                         <th style="padding: 8px; border: 1px solid #ddd; text-align: center;">' . htmlspecialchars(lang('Treasurer.reportPeople')) . '</th>
-                        <th style="padding: 8px; border: 1px solid #ddd; text-align: center;">' . htmlspecialchars(lang('Treasurer.reportGuests')) . '</th>
+                        <th style="padding: 8px; border: 1px solid #ddd; text-align: center;">' . htmlspecialchars(lang('Treasurer.reportVisitors')) . '</th>
                         <th style="padding: 8px; border: 1px solid #ddd; text-align: center;">' . htmlspecialchars(lang('Treasurer.reportMembers')) . '</th>
                         <th style="padding: 8px; border: 1px solid #ddd; text-align: center;">' . htmlspecialchars(lang('Treasurer.reportGoodStanding')) . '</th>
                         <th style="padding: 8px; border: 1px solid #ddd; text-align: center;">' . htmlspecialchars(lang('Treasurer.reportServices')) . '</th>
@@ -386,8 +386,8 @@ class Reports extends BaseController
                 </div>
                 <div class="kpi-row">
                     <div class="kpi-item">
-                        <div class="kpi-label">' . htmlspecialchars(lang('Treasurer.reportGuestsUnconverted')) . '</div>
-                        <div class="kpi-value">' . number_format((int) ($summary['guest_count'] ?? 0)) . '</div>
+                        <div class="kpi-label">' . htmlspecialchars(lang('Treasurer.reportVisitorsUnconverted')) . '</div>
+                        <div class="kpi-value">' . number_format((int) ($summary['visitor_count'] ?? 0)) . '</div>
                     </div>
                     <div class="kpi-item">
                         <div class="kpi-label">' . htmlspecialchars(lang('Treasurer.reportAttendance')) . '</div>
@@ -440,7 +440,7 @@ class Reports extends BaseController
             return [
                 'parish_count' => 0,
                 'people_count' => 0,
-                'guest_count' => 0,
+                'visitor_count' => 0,
                 'member_count' => 0,
                 'good_standing_count' => 0,
                 'service_count' => 0,
@@ -456,7 +456,7 @@ class Reports extends BaseController
                 return [
                     'parish_count' => (int) ($provinceMembership['parish_count'] ?? 0),
                     'people_count' => (int) ($provinceMembership['people_count'] ?? 0),
-                    'guest_count' => (int) ($provinceMembership['guest_count'] ?? 0),
+                    'visitor_count' => (int) ($provinceMembership['visitor_count'] ?? 0),
                     'member_count' => (int) ($provinceMembership['member_count'] ?? 0),
                     'good_standing_count' => (int) ($provinceMembership['good_standing_count'] ?? 0),
                     'service_count' => (int) ($provinceMembership['service_count'] ?? 0),
@@ -484,7 +484,7 @@ class Reports extends BaseController
             return [
                 'parish_count' => 0,
                 'people_count' => 0,
-                'guest_count' => 0,
+                'visitor_count' => 0,
                 'member_count' => 0,
                 'good_standing_count' => 0,
                 'service_count' => 0,
@@ -498,30 +498,36 @@ class Reports extends BaseController
         $parishCount = count($parishIds);
 
         $peopleRow = $db->table('parish_affiliation mca')
-            ->select('COUNT(DISTINCT mca.linked_user_id) as count', false)
-            ->join('users u', 'u.id = mca.linked_user_id')
+            ->select('COUNT(DISTINCT mca.person_id) as count', false)
+            ->join('person pe', 'pe.id = mca.person_id AND pe.deleted_at IS NULL', 'inner')
+            ->join('users u', 'u.id = mca.linked_user_id', 'left')
             ->join('auth_groups_users agu', 'agu.user_id = u.id AND agu.group IN ("provinceadmin","diocesanadmin")', 'left')
             ->whereIn('mca.parish_id', $parishIds)
             ->where('mca.is_member', 1)
+            ->where('mca.deleted_at IS NULL', null, false)
             ->where('agu.id IS NULL')
             ->get()
             ->getRowArray();
 
         $memberRow = $db->table('parish_affiliation mca')
-            ->select('COUNT(DISTINCT mca.linked_user_id) as count', false)
-            ->join('users u', 'u.id = mca.linked_user_id')
+            ->select('COUNT(DISTINCT mca.person_id) as count', false)
+            ->join('person pe', 'pe.id = mca.person_id AND pe.deleted_at IS NULL', 'inner')
+            ->join('users u', 'u.id = mca.linked_user_id', 'left')
             ->join('auth_groups_users agu', 'agu.user_id = u.id AND agu.group IN ("provinceadmin","diocesanadmin")', 'left')
             ->whereIn('mca.parish_id', $parishIds)
-            ->where('mca.is_member', 1)
-            ->whereIn('mca.membership_status', ['member', 'attendee'])
+            ->where('mca.membership_status', 'member')
+            ->where('mca.deleted_at IS NULL', null, false)
             ->where('agu.id IS NULL')
             ->get()
             ->getRowArray();
 
-        $guestRow = $db->table('guest')
-            ->select('COUNT(*) AS guest_count')
-            ->whereIn('parish_id', $parishIds)
-            ->where('converted_to_member_at IS NULL', null, false)
+        $visitorRow = $db->table('parish_affiliation pa')
+            ->select('COUNT(DISTINCT pa.person_id) AS visitor_count', false)
+            ->join('person pe', 'pe.id = pa.person_id AND pe.deleted_at IS NULL', 'inner')
+            ->whereIn('pa.parish_id', $parishIds)
+            ->whereIn('pa.membership_status', ['visitor', 'regular_attender'])
+            ->where('pa.converted_to_member_at IS NULL', null, false)
+            ->where('pa.deleted_at IS NULL', null, false)
             ->get()
             ->getRowArray();
 
@@ -568,8 +574,8 @@ class Reports extends BaseController
 
         return [
             'parish_count' => $parishCount,
-            'people_count' => (int) ($peopleRow['count'] ?? 0) + (int) ($guestRow['guest_count'] ?? 0),
-            'guest_count' => (int) ($guestRow['guest_count'] ?? 0),
+            'people_count' => (int) ($peopleRow['count'] ?? 0) + (int) ($visitorRow['visitor_count'] ?? 0),
+            'visitor_count' => (int) ($visitorRow['visitor_count'] ?? 0),
             'member_count' => (int) ($memberRow['count'] ?? 0),
             'good_standing_count' => (int) ($goodStandingRow['count'] ?? 0),
             'service_count' => $serviceCount,
@@ -623,7 +629,7 @@ class Reports extends BaseController
                     'diocese_name' => (string) $diocese['name'],
                     'parish_count' => 0,
                     'people_count' => 0,
-                    'guest_count' => 0,
+                    'visitor_count' => 0,
                     'member_count' => 0,
                     'good_standing_count' => 0,
                     'service_count' => 0,
@@ -637,30 +643,36 @@ class Reports extends BaseController
 
             // Build summary for the whole diocese parish set.
             $peopleRow = $db->table('parish_affiliation mca')
-                ->select('COUNT(DISTINCT mca.linked_user_id) as count', false)
-                ->join('users u', 'u.id = mca.linked_user_id')
+                ->select('COUNT(DISTINCT mca.person_id) as count', false)
+                ->join('person pe', 'pe.id = mca.person_id AND pe.deleted_at IS NULL', 'inner')
+                ->join('users u', 'u.id = mca.linked_user_id', 'left')
                 ->join('auth_groups_users agu', 'agu.user_id = u.id AND agu.group IN ("provinceadmin","diocesanadmin")', 'left')
                 ->whereIn('mca.parish_id', $parishIds)
                 ->where('mca.is_member', 1)
+                ->where('mca.deleted_at IS NULL', null, false)
                 ->where('agu.id IS NULL')
                 ->get()
                 ->getRowArray();
 
             $memberRow = $db->table('parish_affiliation mca')
-                ->select('COUNT(DISTINCT mca.linked_user_id) as count', false)
-                ->join('users u', 'u.id = mca.linked_user_id')
+                ->select('COUNT(DISTINCT mca.person_id) as count', false)
+                ->join('person pe', 'pe.id = mca.person_id AND pe.deleted_at IS NULL', 'inner')
+                ->join('users u', 'u.id = mca.linked_user_id', 'left')
                 ->join('auth_groups_users agu', 'agu.user_id = u.id AND agu.group IN ("provinceadmin","diocesanadmin")', 'left')
                 ->whereIn('mca.parish_id', $parishIds)
-                ->where('mca.is_member', 1)
-                ->whereIn('mca.membership_status', ['member', 'attendee'])
+                ->where('mca.membership_status', 'member')
+                ->where('mca.deleted_at IS NULL', null, false)
                 ->where('agu.id IS NULL')
                 ->get()
                 ->getRowArray();
 
-            $guestRow = $db->table('guest')
-                ->select('COUNT(*) AS guest_count')
-                ->whereIn('parish_id', $parishIds)
-                ->where('converted_to_member_at IS NULL', null, false)
+            $visitorRow = $db->table('parish_affiliation pa')
+                ->select('COUNT(DISTINCT pa.person_id) AS visitor_count', false)
+                ->join('person pe', 'pe.id = pa.person_id AND pe.deleted_at IS NULL', 'inner')
+                ->whereIn('pa.parish_id', $parishIds)
+                ->whereIn('pa.membership_status', ['visitor', 'regular_attender'])
+                ->where('pa.converted_to_member_at IS NULL', null, false)
+                ->where('pa.deleted_at IS NULL', null, false)
                 ->get()
                 ->getRowArray();
 
@@ -709,8 +721,8 @@ class Reports extends BaseController
                 'diocese_id' => (int) $diocese['id'],
                 'diocese_name' => (string) $diocese['name'],
                 'parish_count' => count($parishIds),
-                'people_count' => (int) ($peopleRow['count'] ?? 0) + (int) ($guestRow['guest_count'] ?? 0),
-                'guest_count' => (int) ($guestRow['guest_count'] ?? 0),
+                'people_count' => (int) ($peopleRow['count'] ?? 0) + (int) ($visitorRow['visitor_count'] ?? 0),
+                'visitor_count' => (int) ($visitorRow['visitor_count'] ?? 0),
                 'member_count' => (int) ($memberRow['count'] ?? 0),
                 'good_standing_count' => (int) ($goodStandingRow['count'] ?? 0),
                 'service_count' => $serviceCount,
@@ -736,7 +748,7 @@ class Reports extends BaseController
             return [
                 'parish_count' => 0,
                 'people_count' => 0,
-                'guest_count' => 0,
+                'visitor_count' => 0,
                 'member_count' => 0,
                 'good_standing_count' => 0,
                 'service_count' => 0,
@@ -750,7 +762,7 @@ class Reports extends BaseController
         $summary = [
             'parish_count' => 0,
             'people_count' => 0,
-            'guest_count' => 0,
+            'visitor_count' => 0,
             'member_count' => 0,
             'good_standing_count' => 0,
             'service_count' => 0,
@@ -763,7 +775,7 @@ class Reports extends BaseController
         foreach ($breakdown as $row) {
             $summary['parish_count'] += (int) ($row['parish_count'] ?? 0);
             $summary['people_count'] += (int) ($row['people_count'] ?? 0);
-            $summary['guest_count'] += (int) ($row['guest_count'] ?? 0);
+            $summary['visitor_count'] += (int) ($row['visitor_count'] ?? 0);
             $summary['member_count'] += (int) ($row['member_count'] ?? 0);
             $summary['good_standing_count'] += (int) ($row['good_standing_count'] ?? 0);
             $summary['service_count'] += (int) ($row['service_count'] ?? 0);

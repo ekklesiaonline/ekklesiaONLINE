@@ -1,4 +1,4 @@
-# User Guide: Operating Users, Members, Guests, and Children (Portal and Non-Portal)
+# User Guide: Operating Users, Members, Visitors, and Children (Portal and Non-Portal)
 
 ## Audience
 
@@ -8,7 +8,7 @@ This guide is for parish admins, pastors, and authorized staff who manage people
 
 - How to manage members with portal access
 - How to manage non-portal (non-access) members
-- How to register and follow up guests
+- How to register and follow up visitors
 - How to add/manage children in families
 - How to keep data scope-safe and consistent
 
@@ -16,7 +16,7 @@ This guide is for parish admins, pastors, and authorized staff who manage people
 
 - Portal member: Can log in (has enabled account access).
 - Non-portal member: Exists in records but cannot log in.
-- Guest: Visitor record (not yet a member account).
+- Visitor: First-time or non-member attendee record (not yet a member account).
 - Child/children: Family-linked member records (may be portal or non-portal).
 
 ## Before You Start
@@ -75,24 +75,23 @@ Important:
 3. Keep parish affiliation and membership status accurate.
 4. If portal issues occur, verify identity email and group assignment.
 
-## 2. Managing Guests
+## 2. Managing Visitors
 
-Use guest flow for first-time or non-member visitors.
+Use the Visitors directory for first-time or non-member visitors.
 
-1. Open Guests module.
-2. Add guest details (name, contact, visit date, service attended).
-3. Save guest.
+1. Open Visitors module.
+2. Add visitor details (name, contact, visit date, service attended).
+3. Save visitor.
 4. Create/assign follow-up task.
 5. Mark follow-up outcome.
 
-Do not create a portal user for guests unless they are being converted to members.
+Do not create a portal user for visitors unless they are being converted to members.
 
-## A. Convert Guest to Member (When Needed)
+## A. Convert Visitor to Member (When Needed)
 
-1. Confirm guest has requested/accepted membership onboarding.
-2. Create member using non-portal or portal flow depending on access need.
+1. Confirm visitor has requested/accepted membership onboarding.
+2. Use the visitor promote action (mark member, link an existing user, or create an account).
 3. If family-linked, add to the correct family.
-4. Update guest follow-up record to reflect conversion.
 
 ## 3. Managing Children (Childs/Children)
 
@@ -168,7 +167,7 @@ After create/update operations, verify:
 
 ## 9. Recommended Admin Routine (Weekly)
 
-1. Review newly added guests and follow-up completion.
+1. Review newly added visitors and follow-up completion.
 2. Review non-portal members pending portal activation.
 3. Review family records for duplicates/inconsistencies.
 4. Review membership status updates (active/inactive/visitor/pending).

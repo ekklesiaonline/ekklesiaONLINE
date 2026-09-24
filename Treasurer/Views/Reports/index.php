@@ -67,7 +67,7 @@
             <div class="card-body">
                 <div class="text-muted small"><?= lang('Treasurer.reportPeople') ?></div>
                 <div class="h3 mb-0"><?= number_format((int) ($report_summary['people_count'] ?? 0)) ?></div>
-                <small class="text-muted"><?= number_format((int) ($report_summary['guest_count'] ?? 0)) ?> <?= lang('Treasurer.reportGuests') ?></small>
+                <small class="text-muted"><?= number_format((int) ($report_summary['visitor_count'] ?? 0)) ?> <?= lang('Treasurer.reportVisitors') ?></small>
             </div>
         </div>
     </div>
@@ -132,7 +132,7 @@
                             <th scope="col"><?= lang('Treasurer.reportDiocese') ?></th>
                             <th scope="col"><?= lang('Treasurer.reportParishes') ?></th>
                             <th scope="col"><?= lang('Treasurer.reportPeople') ?></th>
-                            <th scope="col"><?= lang('Treasurer.reportGuests') ?></th>
+                            <th scope="col"><?= lang('Treasurer.reportVisitors') ?></th>
                             <th scope="col"><?= lang('Treasurer.reportMembers') ?></th>
                             <th scope="col"><?= lang('Treasurer.reportGoodStanding') ?></th>
                             <th scope="col"><?= lang('Treasurer.reportServices') ?></th>
@@ -148,7 +148,7 @@
                                 <td><?= esc($row['diocese_name']) ?></td>
                                 <td><?= number_format((int) $row['parish_count']) ?></td>
                                 <td><?= number_format((int) ($row['people_count'] ?? 0)) ?></td>
-                                <td><?= number_format((int) ($row['guest_count'] ?? 0)) ?></td>
+                                <td><?= number_format((int) ($row['visitor_count'] ?? 0)) ?></td>
                                 <td><?= number_format((int) $row['member_count']) ?></td>
                                 <td><?= number_format((int) ($row['good_standing_count'] ?? 0)) ?></td>
                                 <td><?= number_format((int) $row['service_count']) ?></td>

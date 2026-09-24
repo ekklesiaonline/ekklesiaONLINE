@@ -226,7 +226,7 @@ return [
     'failedEvent'               => 'Impossible de créer l\'événement.',
     'failedUpdateEvent'         => 'Impossible de mettre à jour l\'événement.',
     'registrationNotRequired'   => 'Cet événement ne nécessite pas d\'inscription.',
-    'selectMemberOrGuest'       => 'Sélectionnez un membre ou fournissez les détails d\'un invité pour l\'inscription.',
+    'selectMemberOrVisitor'     => 'Sélectionnez un membre ou fournissez les détails d\'un invité pour l\'inscription.',
     'memberOutsideScope'        => 'Le membre sélectionné est hors de la portée de votre paroisse.',
     'alreadyRegistered'         => 'Ce membre est déjà inscrit à l\'événement.',
     'capacityReached'           => 'La capacité de l\'événement est atteinte.',

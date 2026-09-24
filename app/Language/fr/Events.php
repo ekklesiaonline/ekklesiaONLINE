@@ -135,7 +135,7 @@ return [
     'addRegistration' => 'Ajouter une Inscription',
     'noRegistrationYet' => 'Pas d\'enregistrements pour le moment',
     'quickActions' => 'Actions Rapides',
-    'selectMemberOrGuest' => 'Veuillez selectionner un membre ou remplir les details de l\'invite.',
+    'selectMemberOrVisitor' => 'Veuillez selectionner un membre ou remplir les details de l\'invite.',
     'formTextMemberGuest' => 'Selectionnez un membre, ou laissez vide et remplissez les details de l\'invite.',
     'typeExamples' => 'Retraite, Atelier, Activites de Sensibilisation',
     'noEvents' => 'Aucun evenement trouve.',

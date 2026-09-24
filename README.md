@@ -7,7 +7,7 @@ EkklesiaRD is a Parish Management System (PMS) for province, diocese, and local 
 - Multi-parish and role-scoped access control.
 - Member and family management.
 - Services and attendance tracking.
-- Guest follow-up workflow.
+- Visitor follow-up workflow.
 - Finance workflows for donations, expenses, budgets, and reports.
 - Volunteer teams and scheduling.
 

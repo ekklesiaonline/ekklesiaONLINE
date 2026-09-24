@@ -65,7 +65,7 @@ Typical widgets:
 - Good standing and leadership counts
 - Pending follow-ups
 - Monthly financial summary (income, expenses, net)
-- Recent services and recent guests
+- Recent services and recent visitors
 
 ## 4. Main Navigation Menu
 
@@ -76,8 +76,7 @@ The sidebar is permission-aware. Common menu items include:
 - Families
 - Services
 - Attendance
-- Guests
-- Guest Conversions
+- Visitors
 - Leadership
 - Good Standing
 - Follow-ups
@@ -144,17 +143,17 @@ Recommended flow:
 3. Mark attendees.
 4. Run attendance reports.
 
-### 5.4 Guest Follow-Up and Conversion
+### 5.4 Visitor Follow-Up and Conversion
 
-Use Guests and Follow-ups to track visitors.
-Use Guest Conversions to convert eligible guests into members.
+Use Visitors and Follow-ups to track visitors.
+Use the visitor promote action to convert eligible visitors into members.
 
 Recommended flow:
 
-1. Register guest visit.
+1. Register visitor.
 2. Assign follow-up task.
 3. Complete follow-up.
-4. Convert guest to member when appropriate.
+4. Convert visitor to member when appropriate.
 
 ### 5.5 Leadership and Good Standing
 
@@ -309,7 +308,7 @@ To build a screenshot appendix for this manual:
    - Diocesan Dashboard
    - Parish Dashboard
    - Finance Dashboard
-   - Members, Guests, Good Standing, Pledges, Volunteers
+   - Members, Visitors, Good Standing, Pledges, Volunteers
 3. Save files using this naming pattern:
    - screenshot-province-dashboard.png
    - screenshot-diocesan-dashboard.png
@@ -335,7 +334,7 @@ To build a screenshot appendix for this manual:
 
 ### Parish Admin
 
-- Manage members, families, services, attendance, guests, finance, volunteers
+- Manage members, families, services, attendance, visitors, finance, volunteers
 - Monitor consistency and reports
 
 ### Pastor

@@ -31,8 +31,11 @@ $OLD_TABLES = [
     'family_members',
     'annual_pledges',
     'guest_followup_log',
+    'guest_visit',
+    'guest_visits',
     'call_tasks',
     'donations',
+    'guest',
     'guests',
     // member_parish_affiliations is now a backward-compat VIEW — SELECT refs are valid
 ];
@@ -81,7 +84,6 @@ $MODEL_TABLE_MAP = [
     'app/Models/AnnualPledgeModel.php'             => 'annual_pledge',
     'app/Models/ServiceModel.php'                  => 'service',
     'app/Models/DonationModel.php'                 => 'donation',
-    'app/Models/GuestModel.php'                    => 'guest',
     'app/Models/CallTaskModel.php'                 => 'call_task',
 ];
 

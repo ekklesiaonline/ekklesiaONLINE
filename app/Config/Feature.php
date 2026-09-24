@@ -34,9 +34,4 @@ class Feature extends BaseConfig
      * Enabling strict comparison will also consider the region code (ISO 3166-1 alpha-2).
      */
     public bool $strictLocaleNegotiation = false;
-
-    /**
-     * Store visitor intakes as person records (dual-write mode).
-     */
-    public bool $guestAsPerson = false;
 }

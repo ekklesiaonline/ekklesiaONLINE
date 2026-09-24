@@ -76,8 +76,7 @@ La barra lateral depende de permisos. Los menus comunes incluyen:
 - Families
 - Services
 - Attendance
-- Guests
-- Guest Conversions
+- Visitors
 - Leadership
 - Good Standing
 - Follow-ups
@@ -146,8 +145,8 @@ Flujo recomendado:
 
 ### 5.4 Seguimiento de Invitados y Conversion
 
-Use Guests y Follow-ups para gestionar visitantes.
-Use Guest Conversions para convertir invitados elegibles a miembros.
+Use Visitors y Follow-ups para gestionar visitantes.
+Use la accion de promocion de visitantes para convertir visitantes elegibles a miembros.
 
 Flujo recomendado:
 
@@ -309,7 +308,7 @@ Para construir un anexo visual de este manual:
    - Diocesan Dashboard
    - Parish Dashboard
    - Finance Dashboard
-   - Members, Guests, Good Standing, Pledges, Volunteers
+   - Members, Visitors, Good Standing, Pledges, Volunteers
 3. Use este patron de nombres:
    - screenshot-province-dashboard.png
    - screenshot-diocesan-dashboard.png
