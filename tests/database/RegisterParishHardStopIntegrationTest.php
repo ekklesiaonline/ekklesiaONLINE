@@ -80,6 +80,39 @@ final class RegisterParishHardStopIntegrationTest extends CIUnitTestCase
         $this->assertSame($before, $after);
     }
 
+    public function testRegisterProceedsWhenParishIsValidAndCreatesUser(): void
+    {
+        $this->db->table('parish')->insert([
+            'id'         => 42,
+            'name'       => 'Valid Test Parish',
+            'created_at' => date('Y-m-d H:i:s'),
+            'updated_at' => date('Y-m-d H:i:s'),
+        ]);
+
+        $before = $this->db->table($this->resolveTableName('users'))->countAllResults();
+
+        $request = service('request');
+        $request->setMethod('post');
+        $postData = [
+            'username'          => 'valid.parish',
+            'email'             => 'valid.parish@example.org',
+            'password'          => 'T7vL!pQz9$rWk2mX',
+            'password_confirm'  => 'T7vL!pQz9$rWk2mX',
+            'parish_id'         => 42,
+        ];
+        $request->setGlobal('post', $postData);
+        $request->setGlobal('request', $postData);
+
+        $controller = new \App\Controllers\Auth\RegisterController();
+        $controller->initController($request, service('response'), service('logger'));
+        $result = $controller->registerAction();
+
+        $after = $this->db->table($this->resolveTableName('users'))->countAllResults();
+
+        $this->assertInstanceOf(RedirectResponse::class, $result);
+        $this->assertSame($before + 1, $after);
+    }
+
     private function ensureUsersTable(): void
     {
         $table = $this->createTableName('users');

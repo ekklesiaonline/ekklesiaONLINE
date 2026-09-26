@@ -48,13 +48,6 @@ class RegisterController extends ShieldRegisterController
     {
         $parishId = (int) ($this->request->getPost('parish_id') ?? 0);
 
-        // Backward compatibility for older forms posting parish_id.
-        if ($parishId > 0 && $this->request->getPost('parish_id') === null) {
-            $post = (array) $this->request->getPost();
-            $post['parish_id'] = $parishId;
-            $this->request->setGlobal('post', $post);
-        }
-
         if ($parishId <= 0 || !$this->parishExists($parishId)) {
             return redirect()->back()->withInput()->with('errors', [
                 'parish_id' => lang('Auth.parishSelectionRequired'),
