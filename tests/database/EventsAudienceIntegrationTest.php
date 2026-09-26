@@ -57,14 +57,16 @@ final class EventsAudienceIntegrationTest extends CIUnitTestCase
         $this->insertEventInvitee($eventId, $inviteeId);
 
         $calendarOptions = model('EventCalendarModel')->getAssignableCalendars($parishId, $dioceseId, false);
-        $audienceMembers = model('MemberParishAffiliationModel')->getParishMembers($parishId);
+        // The invitee picker is AJAX-backed: only slim options for the
+        // currently-selected invitees are embedded, never the full roster.
+        $inviteeOptions = model('MemberParishAffiliationModel')->memberOptions($parishId, [$inviteeId]);
         $audienceTeams = model('TeamModel')->getParishTeams($parishId);
         $audienceFamilies = model('FamilyModel')->getParishFamilies($parishId);
         $event = model('EventModel')->find($eventId);
 
         $createBody = view('Clergy\Views\Events/_form', [
             'calendar_options' => $calendarOptions,
-            'audience_members' => $audienceMembers,
+            'invitee_options' => [],
             'audience_teams' => $audienceTeams,
             'audience_families' => $audienceFamilies,
             'selected_invitee_ids' => [],
@@ -80,12 +82,12 @@ final class EventsAudienceIntegrationTest extends CIUnitTestCase
         $this->assertStringContainsString('value="household"', $createBody);
         $this->assertStringContainsString('Choir Team', $createBody);
         $this->assertStringContainsString('Lopez Household', $createBody);
-        $this->assertStringContainsString('Maria Lopez', $createBody);
+        $this->assertStringNotContainsString('Maria Lopez', $createBody);
 
         $editBody = view('Clergy\Views\Events/_form', [
             'event' => is_array($event) ? $event : [],
             'calendar_options' => $calendarOptions,
-            'audience_members' => $audienceMembers,
+            'invitee_options' => $inviteeOptions,
             'audience_teams' => $audienceTeams,
             'audience_families' => $audienceFamilies,
             'selected_invitee_ids' => [$inviteeId],

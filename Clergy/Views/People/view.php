@@ -448,7 +448,7 @@ $portalAccess = strtolower(trim((string) ($profile['portal_access'] ?? 'none')))
                                                 </span>
                                                 <?php if ($can_edit): ?>
                                                     <button type="button" class="btn btn-sm btn-link p-0 edit-leadership-position-btn"
-                                                        data-position="<?= esc(json_encode($position), 'attr') ?>"
+                                                        data-position="<?= esc(json_encode(array_intersect_key($position, array_flip(['id', 'title', 'role_code', 'scope_type', 'role_category', 'clergy_order', 'employment_type', 'started_at', 'ended_at', 'active', 'notes']))), 'attr') ?>"
                                                         title="<?= esc(lang('App.edit'), 'attr') ?>">
                                                         <i class="bi bi-pencil text-warning" aria-hidden="true"></i>
                                                     </button>
@@ -522,7 +522,7 @@ $portalAccess = strtolower(trim((string) ($profile['portal_access'] ?? 'none')))
                                                 <span class="fw-semibold"><?= esc(number_format((float) ($donation['amount'] ?? 0), 2)) ?></span>
                                                 <?php if (auth()->user()->can('donation.edit')): ?>
                                                     <button type="button" class="btn btn-sm btn-link p-0 edit-donation-btn"
-                                                        data-donation="<?= esc(json_encode($donation), 'attr') ?>"
+                                                        data-donation="<?= esc(json_encode(array_intersect_key($donation, array_flip(['id', 'date', 'amount', 'fund_id', 'category', 'chart_account_id', 'payment_method', 'notes', 'is_restricted', 'restriction_purpose']))), 'attr') ?>"
                                                         title="<?= esc(lang('App.edit'), 'attr') ?>">
                                                         <i class="bi bi-pencil text-warning" aria-hidden="true"></i>
                                                     </button>
@@ -594,7 +594,7 @@ $portalAccess = strtolower(trim((string) ($profile['portal_access'] ?? 'none')))
                                                 <span class="badge bg-<?= esc($statusColorMap[$pledgeStatus] ?? 'info') ?>"><?= esc($statusLabelMap[$pledgeStatus] ?? $pledgeStatus) ?></span>
                                                 <?php if (auth()->user()->can('annual_pledge.manage')): ?>
                                                     <button type="button" class="btn btn-sm btn-link p-0 edit-pledge-btn"
-                                                        data-pledge="<?= esc(json_encode($pledge), 'attr') ?>"
+                                                        data-pledge="<?= esc(json_encode(array_intersect_key($pledge, array_flip(['id', 'pledge_year', 'pledged_amount', 'fulfilled_amount', 'fulfillment_status', 'pledged_at', 'notes']))), 'attr') ?>"
                                                         title="<?= esc(lang('App.edit'), 'attr') ?>">
                                                         <i class="bi bi-pencil text-warning" aria-hidden="true"></i>
                                                     </button>
@@ -645,7 +645,7 @@ $portalAccess = strtolower(trim((string) ($profile['portal_access'] ?? 'none')))
                                             <div class="d-flex gap-1 align-items-center">
                                                 <?php if (auth()->user()->can('member.edit')): ?>
                                                     <button type="button" class="btn btn-sm btn-link p-0 edit-sacrament-btn"
-                                                        data-sacrament="<?= esc(json_encode($sacrament), 'attr') ?>"
+                                                        data-sacrament="<?= esc(json_encode(array_intersect_key($sacrament, array_flip(['id', 'sacrament_type', 'sacrament_date', 'register_ref', 'certificate_number', 'officiant_person_id', 'location_notes', 'notes']))), 'attr') ?>"
                                                         title="<?= esc(lang('App.edit'), 'attr') ?>">
                                                         <i class="bi bi-pencil text-warning" aria-hidden="true"></i>
                                                     </button>

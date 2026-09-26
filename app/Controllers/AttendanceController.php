@@ -101,12 +101,29 @@ class AttendanceController extends BaseController
         $services = $this->getManualServiceOptions($parishId, 50);
         $selectedServiceId = (int) ($this->request->getGet('service_id') ?? ($services[0]['id'] ?? 0));
 
-        $members = $this->searchActiveMembers($parishId, '', 200);
+        // A deep-linked service (e.g. from /attendance/service/{id}) may fall
+        // outside the recent-50 options; prepend it so the select stays valid.
+        if ($selectedServiceId > 0
+            && !in_array($selectedServiceId, array_map(static fn($row) => (int) ($row['id'] ?? 0), $services), true)
+            && $this->serviceBelongsToParish($selectedServiceId, $parishId)
+        ) {
+            $extra = db_connect()->query(
+                'SELECT s.id, s.service_date, s.service_time, s.service
+                 FROM service s
+                 WHERE s.id = ? AND s.parish_id = ?
+                 LIMIT 1',
+                [$selectedServiceId, $parishId]
+            )->getRowArray();
+
+            if (!empty($extra)) {
+                array_unshift($services, $extra);
+            }
+        }
 
         $data = array_merge($this->getCommonViewData('Mark Attendance'), [
             'services' => $services,
             'selected_service_id' => $selectedServiceId,
-            'member_options' => $members,
+            'member_options' => [],
             'csrf_name' => csrf_token(),
             'csrf_hash' => csrf_hash(),
             'flash_success' => session()->getFlashdata('success'),

@@ -590,6 +590,48 @@ class Visitors extends BaseController
             return $this->jsonResponse(['success' => false, 'message' => lang('Visitors.sequenceRequired')], 422);
         }
 
+        $parishId = (int) $this->getOperationalParishId();
+        $sequence = $this->followupSequenceModel->find($sequenceId);
+
+        if (!$sequence || (int) ($sequence['is_active'] ?? 0) !== 1) {
+            return $this->jsonResponse(['success' => false, 'message' => lang('Visitors.sequenceNotFound')], 404);
+        }
+
+        $scope = \App\Models\FollowupSequenceModel::scopeOf($sequence);
+
+        if ($scope === 'parish') {
+            if ((int) $sequence['parish_id'] !== $parishId) {
+                return $this->jsonResponse(['success' => false, 'message' => lang('Visitors.sequenceNotFound')], 404);
+            }
+        } else {
+            // Upstream rows are clone templates, not operational
+            // workflows: a global sequence or the parish's own diocesan
+            // sequence must be adopted (cloned) into the parish first so
+            // human-step assignees resolve to the primary admin and the
+            // copy keeps lineage for propagation.
+            $dioceseId = $this->followupSequenceModel->parishDioceseId($parishId);
+            $inScope   = $scope === 'global'
+                || ((int) ($sequence['diocese_id'] ?? 0) === $dioceseId && $dioceseId > 0);
+
+            if (!$inScope) {
+                return $this->jsonResponse(['success' => false, 'message' => lang('Visitors.sequenceNotFound')], 404);
+            }
+
+            $cloneId = (new \App\Services\FollowupCloneService())->cloneSequenceIntoParish($sequenceId, $parishId);
+            if (!$cloneId) {
+                return $this->jsonResponse(['success' => false, 'message' => lang('Visitors.seqCloneFailed')], 500);
+            }
+
+            $this->audit()->log('followup_sequence.cloned', [
+                'parish_id'   => $parishId,
+                'entity_type' => 'followup_sequence',
+                'entity_id'   => $cloneId,
+                'meta'        => ['source_sequence_id' => $sequenceId, 'via' => 'assign_sequence'],
+            ]);
+
+            $sequenceId = $cloneId;
+        }
+
         $visitDate = $visitor['visit_date'] ?: date('Y-m-d');
         $count     = $this->followupLogModel->scheduleSequenceForPerson(
             (int) $visitorId,

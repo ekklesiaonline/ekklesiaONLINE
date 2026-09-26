@@ -21,23 +21,11 @@ $skipReasonLabels = [
     'no_user'    => 'Messages.skipNoUser',
 ];
 
-$deliverable = 0;
-$skippedOptedOut = 0;
-$skippedNoAddress = 0;
-$skippedNoUser = 0;
-foreach (($recipients ?? []) as $r) {
-    if (($r['status'] ?? '') === 'skipped') {
-        if (($r['skip_reason'] ?? '') === 'opted_out') {
-            $skippedOptedOut++;
-        } elseif (($r['skip_reason'] ?? '') === 'no_user') {
-            $skippedNoUser++;
-        } else {
-            $skippedNoAddress++;
-        }
-    } else {
-        $deliverable++;
-    }
-}
+$recipientCounts = $recipientCounts ?? [];
+$deliverable = (int) ($recipientCounts['deliverable'] ?? 0);
+$skippedOptedOut = (int) ($recipientCounts['opted_out'] ?? 0);
+$skippedNoAddress = (int) ($recipientCounts['no_address'] ?? 0);
+$skippedNoUser = (int) ($recipientCounts['no_user'] ?? 0);
 $channelKey = $channelLabels[$campaign['channel'] ?? ''] ?? null;
 ?>
 
@@ -148,6 +136,9 @@ $channelKey = $channelLabels[$campaign['channel'] ?? ''] ?? null;
                 </tbody>
             </table>
         </div>
+        <?php if (isset($pager)): ?>
+            <div class="mt-3"><?= $pager->links() ?></div>
+        <?php endif; ?>
     </div>
 </div>
 

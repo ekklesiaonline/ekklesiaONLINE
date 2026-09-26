@@ -65,7 +65,11 @@ final class EventsControllerFeatureTest extends CIUnitTestCase
         $this->assertStringContainsString('value="household"', $body);
         $response->assertSee('Feature Team');
         $response->assertSee('Feature Family');
-        $response->assertSee('Martha Member');
+        // The invitee picker is AJAX-backed: the parish roster must not be
+        // embedded in the page payload.
+        $this->assertStringContainsString('id="invited_user_ids"', $body);
+        $this->assertStringContainsString('member-search', $body);
+        $this->assertStringNotContainsString('Martha Member', $body);
     }
 
     public function testEditRouteRetainsInvitedAudienceSelection(): void

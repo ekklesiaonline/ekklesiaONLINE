@@ -103,14 +103,12 @@
                 <div class="col-md-6">
                     <div class="mb-3" id="donor_field">
                         <label for="user_id" class="form-label"><?= lang('Finance.donorOptional') ?></label>
-                        <select class="form-select" id="user_id" name="user_id">
-                            <option value=""><?= lang('Finance.selectMember') ?></option>
-                            <?php foreach ($members as $member): ?>
-                                <option value="<?= $member['user_id'] ?>">
-                                    <?= esc($member['first_name'] . ' ' . $member['last_name']) ?>
-                                </option>
-                            <?php endforeach; ?>
-                        </select>
+                        <?= view('partials/_member_select_ajax', [
+                            'select_id'   => 'user_id',
+                            'name'        => 'user_id',
+                            'placeholder' => lang('Finance.selectMember'),
+                            'selected'    => $donor_option ?? [],
+                        ]) ?>
                     </div>
 
                     <div class="mb-3">

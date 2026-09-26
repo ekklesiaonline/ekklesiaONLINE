@@ -178,13 +178,11 @@ class Volunteers extends BaseController
 
         $members = $this->teamMemberModel->getTeamMembers($id);
         $schedules = $this->volunteerScheduleModel->getTeamSchedules($id, 10);
-        $availableMembers = $this->getMemberParishAffiliationModel()->getParishMembers((int) $this->getOperationalParishId());
 
         $data = [
             'team' => $team,
             'members' => $members,
             'schedules' => $schedules,
-            'available_members' => $availableMembers,
         ];
 
         return view('Volunteer\Views\Volunteers/view_team', array_merge($this->getCommonViewData(lang('Volunteer.pageTitleTeamDetails')), $data));

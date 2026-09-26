@@ -141,6 +141,9 @@ $isDraft = $status === 'draft';
                     </tbody>
                 </table>
             </div>
+            <?php if (isset($pager)): ?>
+                <div class="mt-3"><?= $pager->links() ?></div>
+            <?php endif; ?>
         <?php endif; ?>
     </div>
 </div>

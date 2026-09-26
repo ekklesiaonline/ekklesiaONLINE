@@ -65,15 +65,13 @@ $formatLocalizedDate = static function (?string $value, string $pattern, string 
 
                     <div class="mb-3">
                         <label for="head_of_household_id" class="form-label"><?= lang('Families.headOfHousehold') ?></label>
-                        <select class="form-select" id="head_of_household_id" name="head_of_household_id">
-                            <option value=""><?= lang('Families.notAssigned') ?></option>
-                            <?php foreach ($members as $member): ?>
-                                <option value="<?= $member['user_id'] ?>"
-                                    <?= old('head_of_household_id', $family['head_of_household_id']) == $member['user_id'] ? 'selected' : '' ?>>
-                                    <?= esc($member['first_name'] . ' ' . $member['last_name']) ?>
-                                </option>
-                            <?php endforeach; ?>
-                        </select>
+                        <?= view('partials/_member_select_ajax', [
+                            'select_id'    => 'head_of_household_id',
+                            'name'         => 'head_of_household_id',
+                            'members_only' => false,
+                            'placeholder'  => lang('Families.notAssigned'),
+                            'selected'     => $head_option ?? [],
+                        ]) ?>
                         <div class="form-text"><?= lang('Families.headOfHouseholdHelp') ?></div>
                     </div>
 

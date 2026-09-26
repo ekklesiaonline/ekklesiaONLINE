@@ -30,7 +30,6 @@ class AnnualPledges extends BaseController
         if ($profileTable === null) {
             return view('MemberPortal\\Views\\Pledges/index', array_merge($this->getCommonViewData(lang('Pledges.pageTitle')), [
                 'pledges' => [],
-                'members' => model('MemberParishAffiliationModel')->getParishMembers($parishId, 'active'),
                 'selected_year' => $year,
                 'search' => $search,
                 'page' => 1,
@@ -71,11 +70,8 @@ class AnnualPledges extends BaseController
             ->get()
             ->getResultArray();
 
-        $members = model('MemberParishAffiliationModel')->getParishMembers($parishId, 'active');
-
         return view('MemberPortal\Views\Pledges/index', array_merge($this->getCommonViewData(lang('Pledges.pageTitle')), [
             'pledges' => $pledges,
-            'members' => $members,
             'selected_year' => $year,
             'search' => $search,
             'page' => $page,

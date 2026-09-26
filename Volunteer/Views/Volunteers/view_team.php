@@ -25,14 +25,12 @@
                 <input type="hidden" name="team_id" value="<?= (int) $team['id'] ?>">
                 <div class="col-md-6">
                     <label class="form-label" for="user_id"><?= lang('Volunteer.addVolunteer') ?></label>
-                    <select class="form-select" id="user_id" name="user_id" required>
-                        <option value=""><?= lang('Volunteer.selectMember') ?></option>
-                        <?php foreach (($available_members ?? []) as $profile): ?>
-                            <option value="<?= (int) $profile['user_id'] ?>">
-                                <?= esc(trim(($profile['first_name'] ?? '') . ' ' . ($profile['last_name'] ?? ''))) ?>
-                            </option>
-                        <?php endforeach; ?>
-                    </select>
+                    <?= view('partials/_member_select_ajax', [
+                        'select_id'   => 'user_id',
+                        'name'        => 'user_id',
+                        'required'    => true,
+                        'placeholder' => lang('Volunteer.selectMember'),
+                    ]) ?>
                 </div>
                 <div class="col-md-4">
                     <label class="form-label" for="role"><?= lang('Volunteer.role') ?></label>

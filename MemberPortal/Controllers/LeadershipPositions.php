@@ -41,14 +41,8 @@ class LeadershipPositions extends BaseController
         $db = db_connect();
         $profileTable = $this->resolveExistingProfileTable($db);
         if ($profileTable === null) {
-            $members = model('MemberParishAffiliationModel')->getParishMembers($parishId);
-
             return view('MemberPortal\\Views\\Leadership/index', array_merge($this->getCommonViewData('Leadership Positions'), [
                 'positions' => [],
-                'members' => $members,
-                'member_portal_access' => $this->leadershipPositionService->portalAccessMapForUsers(
-                    array_map(static fn (array $m): int => (int) ($m['user_id'] ?? 0), $members)
-                ),
                 'selected_scope' => $scope,
                 'profile_data' => $this->getProfile(),
                 'page' => 1,
@@ -101,14 +95,8 @@ class LeadershipPositions extends BaseController
             ->get()
             ->getResultArray();
 
-        $members = model('MemberParishAffiliationModel')->getParishMembers($parishId);
-
         return view('MemberPortal\Views\Leadership/index', array_merge($this->getCommonViewData('Leadership Positions'), [
             'positions' => $positions,
-            'members' => $members,
-            'member_portal_access' => $this->leadershipPositionService->portalAccessMapForUsers(
-                array_map(static fn (array $m): int => (int) ($m['user_id'] ?? 0), $members)
-            ),
             'selected_scope' => $scope,
             'profile_data' => $this->getProfile(),
             'page' => $page,

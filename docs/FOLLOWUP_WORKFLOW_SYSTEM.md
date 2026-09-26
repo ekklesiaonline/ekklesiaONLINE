@@ -154,7 +154,13 @@ that parish is created, and the copy is marked as the parish default. Existing
 parishes can be backfilled with `php spark followup:apply-default`.
 
 Non-default sequences remain available for **explicit manual assignment**
-through `POST /visitors/assign-sequence/{personId}`.
+through `POST /visitors/assign-sequence/{personId}`. When the selected
+sequence is upstream (global, or the parish's own diocesan sequence), the
+endpoint first **clones it into the parish** (`cloneSequenceIntoParish`)
+so human steps resolve to the primary admin — then schedules the parish
+clone. Re-selecting the same source reuses the existing clone rather
+than creating duplicates. Sequences outside the parish hierarchy
+(another diocese's, or another parish's) are rejected with 404.
 
 ### Upstream scopes and the clone cascade
 

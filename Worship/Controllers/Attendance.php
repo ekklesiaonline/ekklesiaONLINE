@@ -56,23 +56,9 @@ class Attendance extends BaseController
             return redirect()->to('/services')->with('error', lang('Services.serviceNotFound'));
         }
 
-        // Get active members based on parish affiliations.
-        $members = $this->getMemberParishAffiliationModel()->getParishMembers((int) $this->getOperationalParishId(), 'active');
-
-        // Get attendance records for this service
-        $attendanceRecords = $this->attendanceModel->where('service_id', $serviceId)->findAll();
-        $attendanceMap = [];
-        foreach ($attendanceRecords as $record) {
-            $attendanceMap[$record['user_id']] = $record;
-        }
-
-        $data = array_merge($this->getCommonViewData(lang('Services.markAttendance')), [
-            'service' => $service,
-            'members' => $members,
-            'attendance' => $attendanceMap,
-        ]);
-
-        return view('Worship\Views\Attendance/service', $data);
+        // Full-roster marking was replaced by the search-first manual flow to
+        // keep the page payload bounded on large parishes.
+        return redirect()->to('/attendance/manual?service_id=' . (int) $serviceId);
     }
 
     /**

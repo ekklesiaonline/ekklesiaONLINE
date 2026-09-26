@@ -353,8 +353,7 @@ $auditFiltersActive = ((int) ($filter_parish_id ?? 0) > 0)
                                         <span class="text-muted">-</span>
                                     <?php else: ?>
                                         <button type="button" class="btn btn-sm btn-outline-primary audit-diff-btn"
-                                            data-old="<?= esc(json_encode($oldValues), 'attr') ?>"
-                                            data-new="<?= esc(json_encode($newValues), 'attr') ?>">
+                                            data-audit-id="<?= (int) ($row['id'] ?? 0) ?>">
                                             <i class="bi bi-eye" aria-hidden="true"></i> <?= lang('App.auditViewDiff') ?>
                                         </button>
                                     <?php endif; ?>

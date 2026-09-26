@@ -8,9 +8,7 @@ class ServiceAttendanceController extends Controller
 {
     public function attendanceForm($serviceId)
     {
-        return $this->response
-            ->setStatusCode(410)
-            ->setBody('Deprecated endpoint. Use /attendance/checkin and /attendance/manual.');
+        return redirect()->to('/attendance/manual?service_id=' . (int) $serviceId);
     }
 
     public function saveAttendance($serviceId)

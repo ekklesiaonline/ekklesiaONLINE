@@ -94,6 +94,11 @@ window. Scheduling stamps `followup_action.assigned_to` onto
   list hides upstream suggestions by default; `upstream_global=1` /
   `upstream_diocese=1` checkboxes opt each group in. Propagation is
   recursive: a global edit flows global → diocesan clone → parish clones.
+- `POST /visitors/assign-sequence/{personId}` never schedules against an
+  upstream row directly: an in-hierarchy global/diocesan sequence is first
+  cloned into the parish (`cloneSequenceIntoParish`), and cloning is
+  idempotent per scope — re-selecting the same source reuses the existing
+  clone. Out-of-hierarchy sequences are rejected (404).
 - Upstream edits propagate into parish clones via
   `FollowupPropagationService`: non-customized clones update in place,
   customized clones (`is_customized = 1`, set on any parish-local edit) are

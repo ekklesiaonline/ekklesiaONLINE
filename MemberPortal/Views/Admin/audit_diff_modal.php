@@ -217,16 +217,34 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Diff buttons
+    // Diff buttons: payload is fetched on demand so the listing stays slim.
     document.querySelectorAll('.audit-diff-btn').forEach(function(btn) {
         btn.addEventListener('click', function() {
-            try {
-                const oldValues = JSON.parse(this.dataset.old || 'null');
-                const newValues = JSON.parse(this.dataset.new || 'null');
-                showAuditDiff(oldValues, newValues);
-            } catch (e) {
-                console.error('Audit diff parse error', e);
+            const auditId = parseInt(this.dataset.auditId || '0', 10);
+            if (!auditId) return;
+
+            const diffContent = document.getElementById('auditDiffContent');
+            if (diffContent) {
+                diffContent.innerHTML = '<p class="text-muted">Loading…</p>';
             }
+
+            const modalEl = document.getElementById('auditDiffModal');
+            const modal = new bootstrap.Modal(modalEl);
+            modal.show();
+
+            fetch('/admin/audit-logs/diff/' + auditId)
+                .then(function(response) { return response.json(); })
+                .then(function(payload) {
+                    if (!payload || payload.success !== true) {
+                        showAuditDiff(null, null);
+                        return;
+                    }
+                    const data = payload.data || {};
+                    showAuditDiff(data.old_values || null, data.new_values || null);
+                })
+                .catch(function() {
+                    showAuditDiff(null, null);
+                });
         });
     });
 });

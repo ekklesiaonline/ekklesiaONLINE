@@ -112,11 +112,12 @@ class AuditLogs extends BaseController
         $this->auditQuery->applyScopeFilter($builder, $this->auditScopeRole(), $scopeParishIds, (int) $filters['parish_id']);
         $this->auditQuery->applyOptionalFilters($builder, $filters, $this->isSystemAdmin());
 
-        $rows = $builder
+        $query = $builder
             ->orderBy('audit_log.created_at', 'DESC')
-            ->get()
-            ->getResultArray();
+            ->get();
 
+        // Stream rows unbuffered into php://temp (spills to disk past 2 MB)
+        // so peak memory stays bounded regardless of audit table size.
         $handle = fopen('php://temp', 'w+');
         fputcsv($handle, [
             lang('App.auditCsvCreatedAt'),
@@ -131,7 +132,9 @@ class AuditLogs extends BaseController
             lang('App.auditCsvNewValues'),
         ]);
 
-        foreach ($rows as $row) {
+        $maxRows = 50000;
+        $rowCount = 0;
+        while ($rowCount < $maxRows && is_array($row = $query->getUnbufferedRow('array'))) {
             $actorName = trim((string) (($row['actor_first_name'] ?? '') . ' ' . ($row['actor_last_name'] ?? '')));
             if ($actorName === '') {
                 $actorName = lang('App.auditUserFallback', [(int) ($row['user_id'] ?? 0)]);
@@ -149,8 +152,10 @@ class AuditLogs extends BaseController
                 $this->toCsvSafeValue($row['old_values'] ?? null),
                 $this->toCsvSafeValue($row['new_values'] ?? null),
             ]);
+            $rowCount++;
         }
 
+        $query->freeResult();
         rewind($handle);
         $csv = stream_get_contents($handle);
         fclose($handle);
@@ -409,6 +414,80 @@ class AuditLogs extends BaseController
         return $this->response->setJSON([
             'rows' => $rows,
             'has_more' => $hasMore,
+        ]);
+    }
+
+    /**
+     * Return the decoded old/new value payloads for one audit row.
+     * The row must be inside the caller's audit scope — reuses the same
+     * scope filter as the index listing so visibility matches exactly.
+     */
+    public function diff($id)
+    {
+        if (!auth()->loggedIn()) {
+            return $this->response->setStatusCode(401)->setJSON([
+                'success' => false,
+                'status'  => 'error',
+                'message' => 'Unauthorized',
+                'error'   => ['code' => 'unauthorized', 'message' => 'Unauthorized', 'details' => []],
+            ]);
+        }
+
+        if (!$this->isAuditAdmin()) {
+            return $this->response->setStatusCode(403)->setJSON([
+                'success' => false,
+                'status'  => 'error',
+                'message' => 'Forbidden',
+                'error'   => ['code' => 'forbidden', 'message' => 'Forbidden', 'details' => []],
+            ]);
+        }
+
+        $auditId = (int) $id;
+
+        if ($auditId <= 0 || !$this->hasAuditLogsTable()) {
+            return $this->response->setStatusCode(404)->setJSON([
+                'success' => false,
+                'status'  => 'error',
+                'message' => 'Not found',
+                'error'   => ['code' => 'not_found', 'message' => 'Not found', 'details' => []],
+            ]);
+        }
+
+        $builder = $this->auditQuery->baseBuilder()
+            ->where('audit_log.id', $auditId);
+
+        // System admins can drill into any parish from the index, so a
+        // single-row diff is permitted for any audit row. Other roles reuse
+        // the listing scope filter (drill=0 applies the base role scope).
+        if (!$this->isSystemAdmin()) {
+            $this->auditQuery->applyScopeFilter(
+                $builder,
+                $this->auditScopeRole(),
+                $this->resolveScopedParishIds(),
+                0
+            );
+        }
+
+        $row = $builder->get()->getRowArray();
+
+        if (empty($row)) {
+            return $this->response->setStatusCode(404)->setJSON([
+                'success' => false,
+                'status'  => 'error',
+                'message' => 'Not found',
+                'error'   => ['code' => 'not_found', 'message' => 'Not found', 'details' => []],
+            ]);
+        }
+
+        return $this->response->setJSON([
+            'success' => true,
+            'status'  => 'success',
+            'message' => 'OK',
+            'data'    => [
+                'old_values' => $this->decodeJsonField($row['old_values'] ?? null),
+                'new_values' => $this->decodeJsonField($row['new_values'] ?? null),
+            ],
+            'meta'    => ['http_status' => 200, 'ts' => date(DATE_ATOM)],
         ]);
     }
 

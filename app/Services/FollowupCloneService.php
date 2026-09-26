@@ -112,6 +112,33 @@ class FollowupCloneService
             return null;
         }
 
+        // A scope only ever needs one clone of a given source: reuse the
+        // existing clone rather than stacking duplicates that would all
+        // receive the same propagation updates.
+        $existingQuery = $this->sequenceModel->builder()
+            ->where('source_sequence_id', (int) $source['id']);
+
+        if ($parishId > 0) {
+            $existingQuery->where('parish_id', $parishId);
+        } else {
+            $existingQuery->where('diocese_id', $dioceseId)->where('parish_id IS NULL', null, false);
+        }
+
+        $existing = $existingQuery->get()->getRowArray();
+
+        if ($existing) {
+            $existingId = (int) $existing['id'];
+            if ($forceDefault) {
+                if ($parishId > 0) {
+                    $this->sequenceService->setDefaultForSequence($existingId, $parishId);
+                } else {
+                    $this->sequenceService->setDioceseDefaultSequence($existingId, $dioceseId);
+                }
+            }
+            log_message('info', "Clone of upstream follow-up sequence {$sourceSequenceId} already exists in scope " . json_encode($scope) . " as sequence {$existingId}; reusing.");
+            return $existingId;
+        }
+
         $db = $this->sequenceModel->db;
 
         try {
@@ -122,7 +149,7 @@ class FollowupCloneService
                 'parish_id'           => $parishId > 0 ? $parishId : null,
                 'diocese_id'          => $dioceseId > 0 ? $dioceseId : null,
                 'source_sequence_id'  => (int) $source['id'],
-                'name'                => $source['name'] . ' (default)',
+                'name'                => preg_replace('/ \(default\)$/', '', (string) $source['name']) . ' (default)',
                 'description'         => $source['description'],
                 'is_active'           => 1,
                 'is_default'          => 0,
@@ -236,7 +263,7 @@ class FollowupCloneService
             'diocese_id'         => (int) ($scope['diocese_id'] ?? 0) > 0 ? (int) $scope['diocese_id'] : null,
             'source_template_id' => $templateId,
             'channel'            => $template['channel'],
-            'name'               => $template['name'] . ' (default)',
+            'name'               => preg_replace('/ \(default\)$/', '', (string) $template['name']) . ' (default)',
             'subject'            => $template['subject'] ?? null,
             'body_text'          => $template['body_text'],
             'body_html'          => $template['body_html'] ?? null,

@@ -84,17 +84,12 @@ $pledgeFiltersActive = trim((string) ($search ?? '')) !== ''
             <?= csrf_field() ?>
             <div class="col-md-4">
                 <label class="form-label"><?= lang('Pledges.member') ?></label>
-                <select name="user_id" class="form-select" required>
-                    <option value=""><?= lang('Pledges.selectMember') ?></option>
-                    <?php foreach ($members as $member): ?>
-                        <option value="<?= (int) $member['user_id'] ?>">
-                            <?= esc(trim(($member['first_name'] ?? '') . ' ' . ($member['last_name'] ?? ''))) ?>
-                            <?php if (!empty($member['email'])): ?>
-                                - <?= esc($member['email']) ?>
-                            <?php endif; ?>
-                        </option>
-                    <?php endforeach; ?>
-                </select>
+                <?= view('partials/_member_select_ajax', [
+                    'select_id'   => 'pledgeMemberSelect',
+                    'name'        => 'user_id',
+                    'required'    => true,
+                    'placeholder' => lang('Pledges.selectMember'),
+                ]) ?>
             </div>
             <div class="col-md-2">
                 <label class="form-label"><?= lang('Pledges.year') ?></label>

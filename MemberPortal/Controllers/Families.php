@@ -103,11 +103,10 @@ class Families extends BaseController
             return $redirect;
         }
 
-        $parishId = $this->getOperationalParishId();
-        // membersOnly=false so regular_attender/visitor parents appear as eligible heads of household.
-        $members = $this->getMemberParishAffiliationModel()->getParishMembers((int) $parishId, null, false);
-
-        return view('MemberPortal\Views\Families/create', array_merge($this->getCommonViewData(lang('Families.pageTitleAdd')), ['members' => $members]));
+        return view('MemberPortal\Views\Families/create', array_merge(
+            $this->getCommonViewData(lang('Families.pageTitleAdd')),
+            ['head_option' => $this->resolveHeadOption((int) $this->getOperationalParishId(), (int) old('head_of_household_id'))]
+        ));
     }
 
     /**
@@ -203,12 +202,11 @@ class Families extends BaseController
         }
 
         $parishId = $this->getOperationalParishId();
-        // membersOnly=false so regular_attender/visitor parents appear as eligible heads of household.
-        $members = $this->getMemberParishAffiliationModel()->getParishMembers((int) $parishId, null, false);
+        $headUserId = (int) old('head_of_household_id', (int) ($family['head_of_household_id'] ?? 0));
 
         return view('MemberPortal\Views\Families/edit', array_merge($this->getCommonViewData(lang('Families.pageTitleEdit')), [
             'family' => $family,
-            'members' => $members,
+            'head_option' => $this->resolveHeadOption((int) $parishId, $headUserId),
         ]));
     }
 
@@ -804,5 +802,21 @@ class Families extends BaseController
             ->setStatusCode($status)
             ->setContentType('application/json')
             ->setJSON($payload);
+    }
+
+    /**
+     * Preselect payload for the head-of-household AJAX picker.
+     *
+     * @return array<int,array{id:int,text:string}>
+     */
+    private function resolveHeadOption(int $parishId, int $userId): array
+    {
+        if ($parishId <= 0 || $userId <= 0) {
+            return [];
+        }
+
+        $option = $this->getMemberParishAffiliationModel()->memberOption($parishId, $userId);
+
+        return $option === null ? [] : [$option];
     }
 }

@@ -565,6 +565,10 @@ return [
     'seqFilterShowGlobal'         => 'Afficher les suggestions du système (globales)',
     'seqFilterShowDiocese'        => 'Afficher les suggestions diocésaines',
     'seqFilterUpstreamHint'       => 'Les séquences amont sont des suggestions clonables, pas des flux paroissiaux.',
+    'sequenceRequired'            => 'Veuillez choisir une séquence de suivi.',
+    'sequenceNotFound'            => 'Cette séquence n’est pas disponible pour cette paroisse.',
+    'sequenceAssigned'            => 'Séquence de suivi assignée.',
+    'sequenceHasNoActions'        => 'Cette séquence n’a aucune étape à programmer.',
     'sequenceDefaultSixWeekName'  => 'Parcours de 6 semaines pour les visiteurs de première visite',
     'sequenceDefaultSixWeekDescription' => 'Valeur par défaut du système : une cadence structurée de 6 semaines pour accompagner les visiteurs de première visite, combinant e-mails/textos automatisés, appels personnels de bénévoles et cadeau de bienvenue.',
 

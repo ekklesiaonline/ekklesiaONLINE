@@ -166,12 +166,16 @@ class Events extends BaseController
             return redirect()->to('/events')->with('error', lang('Members.eventNotFound'));
         }
 
-        $members = $this->memberParishAffiliationModel->getParishMembers((int) ($this->getOperationalParishId() ?? 0), 'active');
         $registrations = $this->eventRegistrationModel->getEventRegistrations((int) $id);
+        $parishId = (int) ($this->getOperationalParishId() ?? 0);
+        $registerUserId = (int) old('user_id');
+        $registerOption = $registerUserId > 0
+            ? $this->memberParishAffiliationModel->memberOption($parishId, $registerUserId)
+            : null;
 
         return view('Clergy\Views\Events/view', array_merge($this->getCommonViewData(lang('Events.pageTitleEventDetails')), [
             'event' => $event,
-            'members' => $members,
+            'register_member_option' => $registerOption === null ? [] : [$registerOption],
             'registrations' => $registrations,
             'attachments' => $this->eventAttachmentModel->getEventAttachments((int) $id),
             'can_manage_event' => auth()->user()->can('event.edit') && $this->canManageEvent($event),
@@ -188,14 +192,16 @@ class Events extends BaseController
             return $redirect;
         }
 
+        $inviteeIds = array_map('intval', (array) old('invited_user_ids', []));
+
         return view('Clergy\Views\Events/create', array_merge($this->getCommonViewData(lang('Events.pageTitleCreateEvent')), [
             'calendar_options' => $this->getAssignableCalendars(),
             'can_manage_calendars' => $this->canManageCalendars(),
             'can_assign_diocese_scope' => $this->canAssignDioceseScope(),
-            'audience_members' => $this->getAudienceMembers(),
+            'invitee_options' => $this->memberParishAffiliationModel->memberOptions((int) ($this->getOperationalParishId() ?? 0), $inviteeIds),
             'audience_teams' => $this->getAudienceTeams(),
             'audience_families' => $this->getAudienceFamilies(),
-            'selected_invitee_ids' => [],
+            'selected_invitee_ids' => $inviteeIds,
         ]));
     }
 
@@ -260,16 +266,22 @@ class Events extends BaseController
             return redirect()->to('/events')->with('error', lang('Members.eventNotFound'));
         }
 
+        $inviteeIds = $this->eventInviteeModel->getInviteeUserIdsForEvent((int) $id);
+        $oldInviteeIds = old('invited_user_ids');
+        if (is_array($oldInviteeIds)) {
+            $inviteeIds = array_map('intval', $oldInviteeIds);
+        }
+
         return view('Clergy\Views\Events/edit', array_merge($this->getCommonViewData(lang('Events.pageTitleEditEvent')), [
             'event' => $event,
             'calendar_options' => $this->getAssignableCalendars(),
             'attachments' => $this->eventAttachmentModel->getEventAttachments((int) $id),
             'can_manage_calendars' => $this->canManageCalendars(),
             'can_assign_diocese_scope' => $this->canAssignDioceseScope(),
-            'audience_members' => $this->getAudienceMembers(),
+            'invitee_options' => $this->memberParishAffiliationModel->memberOptions((int) ($this->getOperationalParishId() ?? 0), $inviteeIds),
             'audience_teams' => $this->getAudienceTeams(),
             'audience_families' => $this->getAudienceFamilies(),
-            'selected_invitee_ids' => $this->eventInviteeModel->getInviteeUserIdsForEvent((int) $id),
+            'selected_invitee_ids' => $inviteeIds,
         ]));
     }
 
@@ -522,11 +534,6 @@ class Events extends BaseController
             : [];
 
         $this->eventInviteeModel->syncInvitees($eventId, array_map('intval', $inviteeIds));
-    }
-
-    private function getAudienceMembers(): array
-    {
-        return $this->memberParishAffiliationModel->getParishMembers((int) ($this->getOperationalParishId() ?? 0));
     }
 
     private function getAudienceTeams(): array

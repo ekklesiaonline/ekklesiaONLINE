@@ -239,15 +239,13 @@ $donationMethodLabelMap = [
                 <form method="get" action="<?= base_url('donations/statement') ?>" class="row g-2 align-items-end">
                     <div class="col-md-4">
                         <label for="statement_member_id" class="form-label"><?= lang('Finance.memberLabel') ?></label>
-                        <select name="statement_member_id" id="statement_member_id" class="form-select" required>
-                            <option value=""><?= lang('Finance.selectMember') ?></option>
-                            <?php foreach (($members ?? []) as $member): ?>
-                                <?php $memberName = trim(($member['first_name'] ?? '') . ' ' . ($member['last_name'] ?? '')); ?>
-                                <option value="<?= (int) $member['user_id'] ?>" <?= (int) ($statement_member_id ?? 0) === (int) $member['user_id'] ? 'selected' : '' ?>>
-                                    <?= esc($memberName !== '' ? $memberName : (lang('Finance.memberPrefix') . $member['user_id'])) ?>
-                                </option>
-                            <?php endforeach; ?>
-                        </select>
+                        <?= view('partials/_member_select_ajax', [
+                            'select_id'   => 'statement_member_id',
+                            'name'        => 'statement_member_id',
+                            'required'    => true,
+                            'placeholder' => lang('Finance.selectMember'),
+                            'selected'    => $statement_member_option ?? [],
+                        ]) ?>
                     </div>
                     <div class="col-md-3">
                         <label for="statement_start_date" class="form-label"><?= lang('Finance.startDate') ?></label>

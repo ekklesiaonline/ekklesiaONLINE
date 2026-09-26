@@ -2,10 +2,9 @@
 $eventData = $event ?? [];
 $attachments = $attachments ?? [];
 $calendarOptions = $calendar_options ?? [];
-$audienceMembers = $audience_members ?? [];
+
 $audienceTeams = $audience_teams ?? [];
 $audienceFamilies = $audience_families ?? [];
-$selectedInviteeIds = array_map('intval', (array) ($selected_invitee_ids ?? []));
 $canManageCalendars = !empty($can_manage_calendars);
 $canAssignDioceseScope = !empty($can_assign_diocese_scope);
 $selectedScheduleMode = old('schedule_mode', (string) ($eventData['schedule_mode'] ?? ((int) ($eventData['is_all_day'] ?? 0) === 1 ? 'all_day' : 'one_day')));
@@ -16,10 +15,6 @@ $selectedVisibility = in_array($selectedVisibility, ['members', 'public', 'staff
     : 'members';
 $selectedAudienceTeamId = (int) old('audience_team_id', (string) ($eventData['audience_team_id'] ?? '0'));
 $selectedAudienceFamilyId = (int) old('audience_family_id', (string) ($eventData['audience_family_id'] ?? '0'));
-$oldInviteeIds = old('invited_user_ids');
-if (is_array($oldInviteeIds)) {
-    $selectedInviteeIds = array_map('intval', $oldInviteeIds);
-}
 $selectedCalendarId = (int) old('calendar_id', (string) ($eventData['calendar_id'] ?? '0'));
 $selectedRecurrence = old('recurrence_pattern', (string) ($eventData['recurrence_pattern'] ?? 'none'));
 $selectedStatus = old('status', (string) ($eventData['status'] ?? 'published'));
@@ -158,15 +153,13 @@ $multiStartDateError = $fieldError('multi_start_date');
 
     <div class="col-12 audience-target audience-target-invitees<?= $selectedVisibility === 'invited' ? '' : ' d-none' ?>">
         <label for="invited_user_ids" class="form-label"><?= lang('Events.invitedMembers') ?></label>
-        <select id="invited_user_ids" name="invited_user_ids[]" class="form-select" multiple size="8">
-            <?php foreach ($audienceMembers as $member): ?>
-                <?php $memberId = (int) ($member['user_id'] ?? 0); ?>
-                <?php $memberName = trim((string) (($member['nickname'] ?? $member['first_name'] ?? '') . ' ' . ($member['last_name'] ?? ''))); ?>
-                <option value="<?= $memberId ?>" <?= in_array($memberId, $selectedInviteeIds, true) ? 'selected' : '' ?>>
-                    <?= esc($memberName !== '' ? $memberName : (string) ($member['email'] ?? $memberId)) ?>
-                </option>
-            <?php endforeach; ?>
-        </select>
+        <?= view('partials/_member_select_ajax', [
+            'select_id'   => 'invited_user_ids',
+            'name'        => 'invited_user_ids[]',
+            'multiple'    => true,
+            'placeholder' => lang('Attendance.selectMembersPlaceholder'),
+            'selected'    => $invitee_options ?? [],
+        ]) ?>
         <div class="form-text"><?= lang('Events.invitedMembersHelp') ?></div>
     </div>
 

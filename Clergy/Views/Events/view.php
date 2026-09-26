@@ -218,15 +218,12 @@ $formatLocalizedDateTime = static function (?string $value, string $locale): str
                         <?= csrf_field() ?>
                         <div class="mb-3">
                             <label for="user_id" class="form-label"><?= lang('Events.memberOptional') ?></label>
-                            <select class="form-select" id="user_id" name="user_id">
-                                <option value=""><?= lang('Events.registerAsGuest') ?></option>
-                                <?php foreach (($members ?? []) as $member): ?>
-                                    <?php $memberName = trim((string) (($member['first_name'] ?? '') . ' ' . ($member['last_name'] ?? ''))); ?>
-                                    <option value="<?= (int) $member['user_id'] ?>" <?= (int) old('user_id') === (int) $member['user_id'] ? 'selected' : '' ?>>
-                                        <?= esc($memberName !== '' ? $memberName : ('Member #' . $member['user_id'])) ?>
-                                    </option>
-                                <?php endforeach; ?>
-                            </select>
+                            <?= view('partials/_member_select_ajax', [
+                                'select_id'   => 'user_id',
+                                'name'        => 'user_id',
+                                'placeholder' => lang('Events.registerAsGuest'),
+                                'selected'    => $register_member_option ?? [],
+                            ]) ?>
                             <div class="form-text"><?= lang('Events.formTextMemberGuest') ?></div>
                         </div>
 

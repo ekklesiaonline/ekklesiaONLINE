@@ -142,9 +142,14 @@ class Messages extends BaseController
             return redirect()->to('/messages/view/' . (int) $campaign['id']);
         }
 
+        $recipientModel = model('MessageRecipientModel');
+        $recipients = $this->recipientsFor((int) $campaign['id'], $recipientModel);
+
         return view('Clergy\Views\Messages/preview', array_merge($this->getCommonViewData(lang('Messages.preview')), [
-            'campaign'   => $campaign,
-            'recipients' => $this->recipientsFor((int) $campaign['id']),
+            'campaign'        => $campaign,
+            'recipients'      => $recipients,
+            'pager'           => $recipientModel->pager,
+            'recipientCounts' => $this->recipientCountsFor((int) $campaign['id']),
         ]));
     }
 
@@ -210,9 +215,13 @@ class Messages extends BaseController
             return redirect()->to('/messages')->with('error', lang('Messages.errorNotFound'));
         }
 
+        $recipientModel = model('MessageRecipientModel');
+        $recipients = $this->recipientsFor((int) $campaign['id'], $recipientModel);
+
         return view('Clergy\Views\Messages/view', array_merge($this->getCommonViewData(lang('Messages.viewTitle')), [
             'campaign'   => $campaign,
-            'recipients' => $this->recipientsFor((int) $campaign['id']),
+            'recipients' => $recipients,
+            'pager'      => $recipientModel->pager,
             'canSend'    => auth()->user()->can('messaging.send'),
         ]));
     }
@@ -411,12 +420,43 @@ class Messages extends BaseController
     /**
      * @return array<int, array<string, mixed>>
      */
-    private function recipientsFor(int $campaignId): array
+    private function recipientsFor(int $campaignId, ?\App\Models\MessageRecipientModel $model = null): array
     {
-        return model('MessageRecipientModel')
+        return ($model ?? model('MessageRecipientModel'))
             ->where('campaign_id', $campaignId)
             ->orderBy('name', 'ASC')
+            ->paginate(50);
+    }
+
+    private function recipientCountsFor(int $campaignId): array
+    {
+        $rows = model('MessageRecipientModel')
+            ->select("status, skip_reason, COUNT(*) AS n")
+            ->where('campaign_id', $campaignId)
+            ->groupBy('status')
+            ->groupBy('skip_reason')
             ->findAll();
+
+        $counts = [
+            'deliverable' => 0,
+            'opted_out'   => 0,
+            'no_address'  => 0,
+            'no_user'     => 0,
+        ];
+
+        foreach ($rows as $row) {
+            $n = (int) $row['n'];
+
+            if (($row['status'] ?? '') === 'skipped') {
+                $reason = (string) ($row['skip_reason'] ?? '');
+                $key = $reason === 'opted_out' ? 'opted_out' : ($reason === 'no_user' ? 'no_user' : 'no_address');
+                $counts[$key] += $n;
+            } else {
+                $counts['deliverable'] += $n;
+            }
+        }
+
+        return $counts;
     }
 
     /**

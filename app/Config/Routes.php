@@ -160,6 +160,9 @@ $routes->group('', ['filter' => 'session'], function ($routes) {
         });
     });
 
+    // Shared parish-scoped member search for AJAX pickers (bounded payload).
+    $routes->get('member-search', '\App\Controllers\MemberSearch::index', ['filter' => 'permission:member.view']);
+
     $routes->group('attendance', ['filter' => 'session'], function ($routes) {
         $routes->match(['GET', 'POST'], 'checkin', '\App\Controllers\AttendanceController::checkin');
         $routes->get('manual', '\App\Controllers\AttendanceController::manual');

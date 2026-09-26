@@ -43,6 +43,7 @@ $routes->group('', ['filter' => 'session'], function ($routes) {
     $routes->get('admin/audit-logs/export-pdf', '\\MemberPortal\\Controllers\\AuditLogs::exportPdf');
     $routes->get('admin/audit-logs/actor-autocomplete', '\\MemberPortal\\Controllers\\AuditLogs::actorAutocomplete');
     $routes->get('admin/audit-logs/load-more', '\\MemberPortal\\Controllers\\AuditLogs::loadMore');
+    $routes->get('admin/audit-logs/diff/(:num)', '\\MemberPortal\\Controllers\\AuditLogs::diff/$1');
     $routes->get('admin/audit-logs/statistics', '\\MemberPortal\\Controllers\\AuditLogs::statistics');
     $routes->get('admin/audit-logs/realtime-updates', '\\MemberPortal\\Controllers\\AuditLogs::realtimeUpdates');
 

@@ -41,21 +41,13 @@
             <?= csrf_field() ?>
             <div class="col-md-4">
                 <label class="form-label"><?= lang('Leadership.member') ?></label>
-                <select name="user_id" class="form-select" required>
-                    <option value=""><?= lang('Leadership.selectMember') ?></option>
-                    <?php foreach ($members as $member): ?>
-                        <?php $memberPortalOk = $member_portal_access[(int) ($member['user_id'] ?? 0)] ?? true; ?>
-                        <option value="<?= (int) $member['user_id'] ?>">
-                            <?= esc(trim(($member['first_name'] ?? '') . ' ' . ($member['last_name'] ?? ''))) ?>
-                            <?php if (!empty($member['email'])): ?>
-                                - <?= esc($member['email']) ?>
-                            <?php endif; ?>
-                            <?php if (! $memberPortalOk): ?>
-                                — <?= esc(lang('Leadership.noPortalAccess')) ?>
-                            <?php endif; ?>
-                        </option>
-                    <?php endforeach; ?>
-                </select>
+                <?= view('partials/_member_select_ajax', [
+                    'select_id'      => 'leadershipMemberSelect',
+                    'name'           => 'user_id',
+                    'required'       => true,
+                    'mark_no_portal' => true,
+                    'placeholder'    => lang('Leadership.selectMember'),
+                ]) ?>
             </div>
             <div class="col-md-2">
                 <label class="form-label"><?= lang('Leadership.scope') ?></label>

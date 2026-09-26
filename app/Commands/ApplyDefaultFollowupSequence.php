@@ -11,7 +11,7 @@ class ApplyDefaultFollowupSequence extends BaseCommand
 {
     protected $group       = 'Follow-up';
     protected $name        = 'followup:apply-default';
-    protected $description = 'Clone the best upstream default follow-up sequence (diocesan → provincial → global) into parishes that do not have a default sequence.';
+    protected $description = 'Clone the best upstream default follow-up sequence (diocesan → global) into parishes that do not have a default sequence.';
     protected $usage       = 'followup:apply-default [options]';
 
     protected $options = [
@@ -43,7 +43,7 @@ class ApplyDefaultFollowupSequence extends BaseCommand
 
         $globalSequence = $sequenceService->getGlobalDefaultTemplateSequence();
         if (!$globalSequence) {
-            CLI::write('No global default exists — parishes will use their diocesan/provincial default if one is set.', 'yellow');
+            CLI::write('No global default exists — parishes will use their diocesan default if one is set.', 'yellow');
         }
 
         $processed = 0;
@@ -59,7 +59,7 @@ class ApplyDefaultFollowupSequence extends BaseCommand
 
             $upstream = $sequenceService->resolveUpstreamDefaultForParish($id);
             if (!$upstream) {
-                CLI::write("Parish {$id}: no upstream default (diocesan/provincial/global) — skipped.", 'yellow');
+                CLI::write("Parish {$id}: no upstream default (diocesan/global) — skipped.", 'yellow');
                 $skipped++;
                 continue;
             }

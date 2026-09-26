@@ -293,6 +293,143 @@ class MemberParishAffiliationModel extends BaseTenantModel
         return array_slice($rows, 0, 10);
     }
 
+    /**
+     * Slim member option rows for AJAX pickers — never returns p.* so page
+     * weight stays flat regardless of roster size.
+     *
+     * @return array<int, array{id: int, full_name: string, email: string, user_active: bool, portal_access: ?string, membership_status: string}>
+     */
+    public function searchMemberOptions(int $parishId, string $keyword, bool $membersOnly = true, int $limit = 20): array
+    {
+        $limit = max(1, min($limit, 50));
+        $firstNameExpr = $this->getPreferredProfileNameExpr('p');
+        $portalSelect = $this->profileHasColumn('portal_access') ? 'p.portal_access' : "NULL AS portal_access";
+
+        $builder = $this->db->table('parish_affiliation mca')
+            ->select('mca.linked_user_id AS user_id, ' . $firstNameExpr . ' AS first_name, p.last_name, ai.secret AS email, u.active AS user_active, ' . $portalSelect . ', mca.membership_status', false)
+            ->join('profile p', 'p.user_id = mca.linked_user_id')
+            ->where('p.deleted_at', null)
+            ->join('users u', 'u.id = mca.linked_user_id')
+            ->join('auth_identities ai', 'ai.user_id = u.id AND ai.type = "email_password"', 'left')
+            ->join('auth_groups_users agu', 'agu.user_id = u.id AND agu.group IN ("' . AuthGroups::PROVINCE_ADMIN . '","' . AuthGroups::DIOCESE_ADMIN . '")', 'left')
+            ->where('mca.parish_id', $parishId)
+            ->where('mca.deleted_at', null)
+            ->where('agu.id IS NULL')
+            ->orderBy('p.last_name', 'ASC')
+            ->orderBy('p.first_name', 'ASC')
+            ->limit($limit);
+
+        if ($membersOnly) {
+            $builder->where('mca.is_member', 1);
+        }
+
+        $keyword = trim($keyword);
+        if ($keyword !== '') {
+            $phoneHash = DataEncryption::phoneIndex($keyword);
+            $builder->groupStart()
+                ->like('p.first_name', $keyword)
+                ->orLike('p.last_name', $keyword)
+                ->orLike('ai.secret', $keyword);
+
+            if ($this->hasProfileNicknameColumn()) {
+                $builder->orLike('p.nickname', $keyword);
+            }
+
+            if ($phoneHash !== null) {
+                $builder->orWhere('p.phone_hash', $phoneHash);
+            }
+
+            $builder->groupEnd();
+        }
+
+        $rows = $builder->get()->getResultArray();
+
+        return array_map(static function (array $row): array {
+            return [
+                'id'                => (int) ($row['user_id'] ?? 0),
+                'full_name'         => trim(((string) ($row['first_name'] ?? '')) . ' ' . ((string) ($row['last_name'] ?? ''))),
+                'email'             => (string) ($row['email'] ?? ''),
+                'user_active'       => (int) ($row['user_active'] ?? 0) === 1,
+                'portal_access'     => $row['portal_access'] ?? null,
+                'membership_status' => (string) ($row['membership_status'] ?? ''),
+            ];
+        }, $rows);
+    }
+
+    /**
+     * Slim option row for one affiliated user — used to prefill AJAX pickers
+     * (e.g. head of household) without loading the whole roster.
+     *
+     * @return array{id: int, text: string}|null
+     */
+    public function memberOption(int $parishId, int $userId): ?array
+    {
+        return $this->memberOptions($parishId, [$userId])[0] ?? null;
+    }
+
+    /**
+     * Slim option rows for a set of affiliated users — used to prefill
+     * multi-select AJAX pickers (e.g. event invitees).
+     *
+     * @param array<int,int> $userIds
+     * @return array<int, array{id: int, text: string}>
+     */
+    public function memberOptions(int $parishId, array $userIds): array
+    {
+        $userIds = array_values(array_unique(array_filter(array_map('intval', $userIds), static fn (int $id): bool => $id > 0)));
+        $userIds = array_slice($userIds, 0, 500);
+        if ($userIds === []) {
+            return [];
+        }
+
+        $firstNameExpr = $this->getPreferredProfileNameExpr('p');
+
+        $rows = $this->db->table('parish_affiliation mca')
+            ->select('mca.linked_user_id AS user_id, ' . $firstNameExpr . ' AS first_name, p.last_name, ai.secret AS email', false)
+            ->join('profile p', 'p.user_id = mca.linked_user_id')
+            ->where('p.deleted_at', null)
+            ->join('users u', 'u.id = mca.linked_user_id')
+            ->join('auth_identities ai', 'ai.user_id = u.id AND ai.type = "email_password"', 'left')
+            ->where('mca.parish_id', $parishId)
+            ->whereIn('mca.linked_user_id', $userIds)
+            ->where('mca.deleted_at', null)
+            ->get()
+            ->getResultArray();
+
+        return array_map(static function (array $row): array {
+            $userId = (int) ($row['user_id'] ?? 0);
+            $fullName = trim(((string) ($row['first_name'] ?? '')) . ' ' . ((string) ($row['last_name'] ?? '')));
+            $email = (string) ($row['email'] ?? '');
+            $text = $fullName . ($email !== '' ? ' (' . $email . ')' : '');
+
+            return [
+                'id'   => $userId,
+                'text' => $text !== '' ? $text : ('#' . $userId),
+            ];
+        }, $rows);
+    }
+
+    private function profileHasColumn(string $column): bool
+    {
+        $tables = [
+            $this->db->getPrefix() . 'profile',
+            'profile',
+        ];
+
+        foreach (array_values(array_unique($tables)) as $table) {
+            try {
+                $columns = array_map('strtolower', $this->db->getFieldNames($table));
+                if ($columns !== []) {
+                    return in_array(strtolower($column), $columns, true);
+                }
+            } catch (\Throwable $e) {
+                // Try next table-name variant.
+            }
+        }
+
+        return false;
+    }
+
     private function getPreferredProfileNameExpr(string $alias): string
     {
         if ($this->hasProfileNicknameColumn()) {

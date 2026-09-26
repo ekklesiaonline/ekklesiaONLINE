@@ -19,7 +19,7 @@
             auth()->user()->inGroup('parishadmin')
         ):
         ?>
-            <a href="<?= base_url('attendance/form/' . $service['id']) ?>" class="btn btn-outline-success">
+            <a href="<?= base_url('attendance/manual?service_id=' . $service['id']) ?>" class="btn btn-outline-success">
                 <i class="bi bi-check2-square" aria-hidden="true"></i> <?= lang('Services.markAttendance') ?>
             </a>
         <?php endif; ?>

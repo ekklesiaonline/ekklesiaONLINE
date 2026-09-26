@@ -592,6 +592,10 @@ return [
     'seqFilterShowGlobal'         => 'Show system (global) suggestions',
     'seqFilterShowDiocese'        => 'Show diocesan suggestions',
     'seqFilterUpstreamHint'       => 'Upstream sequences are clonable suggestions, not parish workflows.',
+    'sequenceRequired'            => 'Please choose a follow-up sequence.',
+    'sequenceNotFound'            => 'That sequence is not available for this parish.',
+    'sequenceAssigned'            => 'Follow-up sequence assigned.',
+    'sequenceHasNoActions'        => 'That sequence has no steps to schedule.',
     'sequenceDefaultSixWeekName'  => '6-Week First-Time Visitor Journey',
     'sequenceDefaultSixWeekDescription' => 'System default: a structured 6-week touchpoint cadence for first-time visitors, combining automated emails/texts with personal volunteer calls and a welcome gift.',
 

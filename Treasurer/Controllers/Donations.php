@@ -7,6 +7,9 @@ use App\Services\DonationService;
 
 class Donations extends BaseController
 {
+    private const CSV_EXPORT_MAX_ROWS = 50000;
+    private const PDF_EXPORT_MAX_ROWS = 3000;
+
     protected $donationModel;
     protected $profileModel;
     protected $fundModel;
@@ -65,7 +68,7 @@ class Donations extends BaseController
         // Calculate summary
         $summary = $this->donationModel->getParishSummary($parishId, $startDate, $endDate);
         $funds = $this->getFundModel()->getParishFunds((int) $parishId);
-        $members = $this->getParishProfileRows((int) $parishId, 'active');
+        $statementMemberId = (int) ($this->request->getGet('statement_member_id') ?? 0);
 
         $data = [
             'donations' => $donations,
@@ -76,8 +79,8 @@ class Donations extends BaseController
             'funds' => $funds,
             'start_date' => $startDate,
             'end_date' => $endDate,
-            'members' => $members,
-            'statement_member_id' => (int) ($this->request->getGet('statement_member_id') ?? 0),
+            'statement_member_option' => $this->memberSelectOption((int) $parishId, $statementMemberId),
+            'statement_member_id' => $statementMemberId,
         ];
 
         return view('Treasurer\Views\Donations/index', array_merge($this->getCommonViewData(lang('Finance.donationsTitle')), $data));
@@ -95,11 +98,13 @@ class Donations extends BaseController
 
         $parishId = (int) ($this->getOperationalParishId() ?? 0);
         $filters = $this->getDonationFilters();
-        $donations = $this->buildFilteredDonationsQuery($parishId, $filters)
-            ->orderBy($this->donationTable() . '.date', 'DESC')
-            ->get()
-            ->getResultArray();
 
+        $query = $this->buildFilteredDonationsQuery($parishId, $filters)
+            ->orderBy($this->donationTable() . '.date', 'DESC')
+            ->get();
+
+        // Stream rows unbuffered into php://temp (spills to disk past 2 MB)
+        // so peak memory stays bounded regardless of result size.
         $handle = fopen('php://temp', 'w+');
         fputcsv($handle, [
             lang('Finance.colDate'),
@@ -113,7 +118,8 @@ class Donations extends BaseController
             'Receipt Number',
         ]);
 
-        foreach ($donations as $donation) {
+        $rowCount = 0;
+        while ($rowCount < self::CSV_EXPORT_MAX_ROWS && is_array($donation = $query->getUnbufferedRow('array'))) {
             fputcsv($handle, [
                 (string) ($donation['date'] ?? ''),
                 $this->formatDonorName($donation),
@@ -125,8 +131,10 @@ class Donations extends BaseController
                 (string) ($donation['notes'] ?? ''),
                 (string) ($donation['receipt_number'] ?? ''),
             ]);
+            $rowCount++;
         }
 
+        $query->freeResult();
         rewind($handle);
         $csv = stream_get_contents($handle);
         fclose($handle);
@@ -137,7 +145,8 @@ class Donations extends BaseController
             'meta' => array_merge(
                 $this->buildParishContextMeta($parishId, self::ATTRIBUTION_POLICY_OPERATIONAL_DEFAULT),
                 [
-                    'count' => count($donations),
+                    'count' => $rowCount,
+                    'truncated' => $rowCount >= self::CSV_EXPORT_MAX_ROWS,
                     'category' => (string) ($filters['category'] ?? ''),
                     'fund_id' => (int) ($filters['fund_id'] ?? 0),
                     'start_date' => (string) ($filters['start_date'] ?? ''),
@@ -166,12 +175,19 @@ class Donations extends BaseController
         $filters = $this->getDonationFilters();
         $donations = $this->buildFilteredDonationsQuery($parishId, $filters)
             ->orderBy($this->donationTable() . '.date', 'DESC')
+            ->limit(self::PDF_EXPORT_MAX_ROWS + 1)
             ->get()
             ->getResultArray();
+
+        $pdfTruncated = count($donations) > self::PDF_EXPORT_MAX_ROWS;
+        if ($pdfTruncated) {
+            $donations = array_slice($donations, 0, self::PDF_EXPORT_MAX_ROWS);
+        }
+
         $summary = $this->donationModel->getParishSummary($parishId, $filters['start_date'], $filters['end_date']);
 
         $dompdf = new \Dompdf\Dompdf();
-        $dompdf->loadHtml($this->buildDonationsPdfHtml($parishId, $filters, $donations, $summary));
+        $dompdf->loadHtml($this->buildDonationsPdfHtml($parishId, $filters, $donations, $summary, $pdfTruncated));
         $dompdf->setPaper('A4', 'portrait');
         $dompdf->render();
 
@@ -312,15 +328,13 @@ class Donations extends BaseController
             return $redirect;
         }
 
-        // Get members for dropdown (parish-scoped, excludes provinceadmin users)
-        $members = $this->getParishProfileRows((int) $this->getOperationalParishId(), 'active');
         $chartOfAccountModel = model('ChartOfAccountModel');
         $chartAccounts = $chartOfAccountModel->getActiveByType('income');
         $groupedChartAccounts = $chartOfAccountModel->getGroupedActiveAccountsForType('income');
         $funds = $this->getFundModel()->getParishFunds((int) ($this->getOperationalParishId() ?? 0));
 
         return view('Treasurer\Views\Donations/create', array_merge($this->getCommonViewData('Record Donation'), [
-            'members' => $members,
+            'donor_option' => $this->memberSelectOption((int) $this->getOperationalParishId(), (int) old('user_id')),
             'funds' => $funds,
             'chartAccounts' => $chartAccounts,
             'groupedChartAccounts' => $groupedChartAccounts,
@@ -557,34 +571,22 @@ class Donations extends BaseController
         return is_array($member) ? $member : null;
     }
 
+
+
     /**
-     * @return array<int, array<string, mixed>>
+     * Preselect payload for AJAX member pickers.
+     *
+     * @return array<int,array{id:int,text:string}>
      */
-    private function getParishProfileRows(int $parishId, ?string $status = null): array
+    private function memberSelectOption(int $parishId, int $userId): array
     {
-        $profileTable = $this->resolveExistingProfileTable();
-        if ($profileTable === null) {
+        if ($parishId <= 0 || $userId <= 0) {
             return [];
         }
 
-        $builder = db_connect()->table('parish_affiliation mca')
-            ->select($profileTable . '.*, u.username, u.active, ai.secret as email, ai.force_reset, mca.membership_status as affiliation_status, mca.is_primary')
-            ->join($profileTable, $profileTable . '.user_id = mca.linked_user_id')
-            ->join('users u', 'u.id = mca.linked_user_id')
-            ->join('auth_identities ai', 'ai.user_id = u.id AND ai.type = "email_password"', 'left')
-            ->join('auth_groups_users agu', 'agu.user_id = u.id AND agu.group IN ("provinceadmin","diocesanadmin")', 'left')
-            ->where('mca.parish_id', $parishId)
-            ->where('mca.is_member', 1)
-            ->where('agu.id IS NULL');
+        $option = model('MemberParishAffiliationModel')->memberOption($parishId, $userId);
 
-        if ($status) {
-            $builder->where('mca.membership_status', $status);
-        }
-
-        return $builder
-            ->orderBy($profileTable . '.last_name', 'ASC')
-            ->get()
-            ->getResultArray();
+        return $option === null ? [] : [$option];
     }
 
     private function donationTable(): string
@@ -609,7 +611,7 @@ class Donations extends BaseController
         return null;
     }
 
-    private function buildDonationsPdfHtml(int $parishId, array $filters, array $donations, array $summary): string
+    private function buildDonationsPdfHtml(int $parishId, array $filters, array $donations, array $summary, bool $truncated = false): string
     {
         $rows = '';
 
@@ -664,7 +666,7 @@ class Donations extends BaseController
             <div class="meta">
                 <strong>' . htmlspecialchars(lang('Treasurer.parishLabel')) . ':</strong> ' . htmlspecialchars($this->getParishName($parishId)) . '<br>
                 <strong>' . htmlspecialchars(lang('Treasurer.generatedLabel')) . ':</strong> ' . htmlspecialchars($this->formatLocalizedDateTime(date('Y-m-d H:i:s'))) . '<br>
-                <strong>' . htmlspecialchars(lang('Treasurer.filtersLabel')) . ':</strong> ' . htmlspecialchars($filterParts !== [] ? implode(' | ', $filterParts) : lang('Treasurer.noneLabel')) . '
+                <strong>' . htmlspecialchars(lang('Treasurer.filtersLabel')) . ':</strong> ' . htmlspecialchars($filterParts !== [] ? implode(' | ', $filterParts) : lang('Treasurer.noneLabel')) . ($truncated ? '<br><strong>' . htmlspecialchars(sprintf('Showing first %d records. Narrow the filters or use CSV export for the full set.', self::PDF_EXPORT_MAX_ROWS)) . '</strong>' : '') . '
             </div>
             <div class="summary">
                 <div class="summary-box">

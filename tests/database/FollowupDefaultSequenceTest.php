@@ -32,6 +32,7 @@ final class FollowupDefaultSequenceTest extends CIUnitTestCase
             'person',
             'users',
             'parish',
+            'diocese',
         ] as $table) {
             CanonicalTestSchema::reset($this->db, $table);
         }
@@ -299,5 +300,66 @@ final class FollowupDefaultSequenceTest extends CIUnitTestCase
         foreach ($actions as $action) {
             $this->assertNull($action['assigned_to']);
         }
+    }
+
+    public function testCloningSameSourceIntoParishTwiceReusesClone(): void
+    {
+        $this->seedParish(401);
+        $globalSeq = $this->seedGlobalDefaultWithChannels(['email']);
+
+        $cloneService = new FollowupCloneService();
+        $firstId      = $cloneService->cloneSequenceIntoParish($globalSeq, 401);
+        $secondId     = $cloneService->cloneSequenceIntoParish($globalSeq, 401);
+
+        $this->assertNotNull($firstId);
+        $this->assertSame($firstId, $secondId);
+        $this->assertSame(1, (int) $this->db->table('followup_sequence')
+            ->where('parish_id', 401)
+            ->countAllResults());
+    }
+
+    public function testReusedCloneIsPromotedToDefaultWhenParishHasNone(): void
+    {
+        $this->seedParish(401);
+        $globalSeq = $this->seedGlobalDefaultWithChannels(['email']);
+
+        // An existing default means the first clone is adopted as a
+        // non-default suggestion.
+        $this->seedSequence(401, true);
+        $cloneService = new FollowupCloneService();
+        $cloneId      = $cloneService->cloneSequenceIntoParish($globalSeq, 401);
+
+        $clone = $this->db->table('followup_sequence')->where('id', $cloneId)->get()->getRowArray();
+        $this->assertSame(0, (int) $clone['is_default']);
+
+        // Parish loses its default; re-cloning reuses the row and the
+        // forced default applies to it.
+        $this->db->table('followup_sequence')->where('parish_id', 401)->update(['is_default' => 0]);
+
+        $reusedId = $cloneService->cloneUpstreamDefaultIntoParish(401);
+
+        $this->assertSame($cloneId, $reusedId);
+        $clone = $this->db->table('followup_sequence')->where('id', $cloneId)->get()->getRowArray();
+        $this->assertSame(1, (int) $clone['is_default']);
+    }
+
+    public function testCloningSameSourceIntoDioceseTwiceReusesClone(): void
+    {
+        $this->db->table('diocese')->insert([
+            'id'         => 10,
+            'name'       => 'Test Diocese',
+            'created_at' => date('Y-m-d H:i:s'),
+        ]);
+        $globalSeq = $this->seedGlobalDefaultWithChannels(['email']);
+
+        $cloneService = new FollowupCloneService();
+        $firstId      = $cloneService->cloneSequenceIntoDiocese($globalSeq, 10);
+        $secondId     = $cloneService->cloneSequenceIntoDiocese($globalSeq, 10);
+
+        $this->assertNotNull($firstId);
+        $this->assertSame($firstId, $secondId);
+        $this->assertSame(1, (int) $this->db->table('followup_sequence')
+            ->where('diocese_id', 10)
+            ->countAllResults());
     }
 }
