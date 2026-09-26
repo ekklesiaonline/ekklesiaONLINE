@@ -66,6 +66,8 @@ class ParishDashboardDataService
         // window also hid entries scheduled before the 1st (overdue items).
         $pendingVisitorFollowUps = (new VisitorFollowupService($db))
             ->pendingDistinctPersonsCount($parishId);
+        $defaultFollowupSequenceMissing = !(new \App\Services\FollowupSequenceService())
+            ->hasDefaultForParish($parishId);
 
         // Completed follow-ups this month
         $completedFollowUpsRow = $db->table('call_task ct')
@@ -102,8 +104,9 @@ class ParishDashboardDataService
             'status_counts'                 => $statusCounts,
             'total_families'                => $totalFamilies,
             'birthdays_this_week'           => $birthdaysThisWeek,
-            'pending_visitor_followups'     => $pendingVisitorFollowUps,
-            'done_followups_this_month'     => $doneFollowUpsThisMonth,
+            'pending_visitor_followups'       => $pendingVisitorFollowUps,
+            'done_followups_this_month'       => $doneFollowUpsThisMonth,
+            'default_followup_sequence_missing' => $defaultFollowupSequenceMissing,
             'events_this_month'             => $eventsThisMonth,
             'recent_services'               => $recentServices,
             'recent_visitors'                 => $recentVisitors,

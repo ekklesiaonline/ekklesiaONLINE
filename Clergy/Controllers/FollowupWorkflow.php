@@ -22,14 +22,16 @@ class FollowupWorkflow extends BaseController
     protected $templateModel;
     protected $logModel;
     protected $visitorDirectory;
+    protected $sequenceService;
 
     public function __construct()
     {
-        $this->sequenceModel  = model('FollowupSequenceModel');
-        $this->actionModel    = model('FollowupActionModel');
-        $this->templateModel  = model('FollowupTemplateModel');
-        $this->logModel       = model('FollowupLogModel');
-        $this->visitorDirectory = new \App\Services\VisitorDirectoryService();
+        $this->sequenceModel   = model('FollowupSequenceModel');
+        $this->actionModel     = model('FollowupActionModel');
+        $this->templateModel   = model('FollowupTemplateModel');
+        $this->logModel        = model('FollowupLogModel');
+        $this->visitorDirectory  = new \App\Services\VisitorDirectoryService();
+        $this->sequenceService   = new \App\Services\FollowupSequenceService();
     }
 
     // ------------------------------------------------------------------
@@ -37,8 +39,10 @@ class FollowupWorkflow extends BaseController
     // ------------------------------------------------------------------
 
     /**
-     * List all follow-up sequences available to the operational parish.
-     * Includes global (parish_id = NULL) and parish-specific rows.
+     * List all follow-up sequences available to the operational parish:
+     * parish rows plus upstream suggestions (global and the parish's
+     * diocese) that can be cloned. Suggestions are hidden by default;
+     * ?upstream_global=1 / ?upstream_diocese=1 opt each group in.
      */
     public function sequences()
     {
@@ -50,30 +54,113 @@ class FollowupWorkflow extends BaseController
             return $redirect;
         }
 
-        $parishId = (int) $this->getOperationalParishId();
+        $parishId      = (int) $this->getOperationalParishId();
+        $showGlobal    = $this->request->getGet('upstream_global') === '1';
+        $showDiocese   = $this->request->getGet('upstream_diocese') === '1';
+        $dioceseId     = $this->sequenceModel->parishDioceseId($parishId);
 
         $sequences = $this->sequenceModel
-            ->groupStart()
             ->where('parish_id', $parishId)
-            ->orWhere('parish_id IS NULL', null, false)
-            ->groupEnd()
             ->orderBy('name', 'ASC')
             ->findAll();
+
+        // Upstream sequences available for cloning, per group toggle.
+        $upstream = [];
+        if ($showGlobal) {
+            $upstream = array_merge($upstream, $this->sequenceModel
+                ->where('parish_id IS NULL', null, false)
+                ->where('diocese_id IS NULL', null, false)
+                ->orderBy('name', 'ASC')
+                ->findAll());
+        }
+        if ($showDiocese && $dioceseId > 0) {
+            $upstream = array_merge($upstream, $this->sequenceModel
+                ->where('diocese_id', $dioceseId)
+                ->orderBy('name', 'ASC')
+                ->findAll());
+        }
+        $sequences = array_merge($sequences, $upstream);
+
+        $scopeNames = [];
+        if ($dioceseId > 0) {
+            $row = $this->sequenceModel->db->table('diocese')->select('name')->where('id', $dioceseId)->get()->getRowArray();
+            $scopeNames['diocese'] = (string) ($row['name'] ?? '');
+        }
 
         foreach ($sequences as &$seq) {
             $seq['action_count'] = $this->actionModel
                 ->where('sequence_id', $seq['id'])
                 ->countAllResults();
+            $seq['scope'] = \App\Models\FollowupSequenceModel::scopeOf($seq);
         }
         unset($seq);
 
         return view('Clergy\Views\FollowupWorkflow/sequences', array_merge(
             $this->getCommonViewData(lang('Visitors.pageTitleSequences')),
             [
-                'sequences' => $sequences,
-                'parishId'  => $parishId,
+                'sequences'    => $sequences,
+                'parishId'     => $parishId,
+                'scopeNames'   => $scopeNames,
+                'showGlobal'   => $showGlobal,
+                'showDiocese'  => $showDiocese,
+                'hasDiocese'   => $dioceseId > 0,
             ]
         ));
+    }
+
+    /**
+     * POST followup-workflow/sequences/clone/:id (AJAX)
+     *
+     * Clone an upstream sequence (global or diocesan) into the
+     * operational parish. The clone keeps lineage to its source so upstream
+     * edits propagate until the parish customizes a row.
+     */
+    public function cloneSequence(int $id)
+    {
+        if ($redirect = $this->requirePermission('followup.manage')) {
+            return $redirect;
+        }
+
+        if ($redirect = $this->requireParish()) {
+            return $redirect;
+        }
+
+        $parishId = (int) $this->getOperationalParishId();
+        $sequence = $this->sequenceModel->find($id);
+
+        if (!$sequence || (int) $sequence['is_active'] !== 1) {
+            return $this->jsonResponse(['success' => false, 'message' => 'Not found or inactive.'], 404);
+        }
+
+        // Guard: the source must be an upstream sequence within this
+        // parish's hierarchy — global or its own diocese.
+        $scope     = \App\Models\FollowupSequenceModel::scopeOf($sequence);
+        $dioceseId = $this->sequenceModel->parishDioceseId($parishId);
+
+        $allowed = match ($scope) {
+            'global'  => true,
+            'diocese' => (int) $sequence['diocese_id'] === $dioceseId,
+            default   => false,
+        };
+
+        if (!$allowed) {
+            return $this->jsonResponse(['success' => false, 'message' => 'Forbidden.'], 403);
+        }
+
+        $newId = (new \App\Services\FollowupCloneService())->cloneSequenceIntoParish($id, $parishId);
+
+        if (!$newId) {
+            return $this->jsonResponse(['success' => false, 'message' => 'Clone failed.'], 500);
+        }
+
+        $this->audit()->log('followup_sequence.cloned', [
+            'parish_id'   => $parishId,
+            'entity_type' => 'followup_sequence',
+            'entity_id'   => $newId,
+            'meta'        => ['source_sequence_id' => $id],
+        ]);
+
+        return $this->jsonResponse(['success' => true, 'sequence_id' => $newId]);
     }
 
     // ------------------------------------------------------------------
@@ -158,17 +245,21 @@ class FollowupWorkflow extends BaseController
             'name'        => 'required|min_length[3]|max_length[150]',
             'description' => 'permit_empty',
             'is_active'   => 'permit_empty|in_list[0,1]',
+            'is_default'  => 'permit_empty|in_list[0,1]',
         ];
 
         if (!$this->validate($rules)) {
             return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
         }
 
+        $isDefault = (int) ($this->request->getPost('is_default') ?? 0);
+
         $data = [
             'name'        => $this->request->getPost('name'),
             'description' => $this->request->getPost('description') ?: null,
             'is_active'   => (int) ($this->request->getPost('is_active') ?? 1),
             'parish_id'   => $parishId,
+            'is_default'  => 0, // handled explicitly below
         ];
 
         if ($id > 0) {
@@ -181,11 +272,33 @@ class FollowupWorkflow extends BaseController
                 return redirect()->to('followup-workflow/sequences')
                     ->with('error', 'Not found or forbidden.');
             }
+            // Editing a clone's name/description marks it customized so
+            // upstream propagation no longer overwrites local text.
+            if (!empty($sequence['source_sequence_id'])) {
+                $source = $this->sequenceModel->find((int) $sequence['source_sequence_id']);
+                if (is_array($source)
+                    && ($data['name'] !== $source['name'] . ' (default)'
+                        && $data['name'] !== $source['name']
+                        || ($data['description'] ?? null) !== ($source['description'] ?? null))) {
+                    $data['is_customized'] = 1;
+                }
+            }
             $this->sequenceModel->update($id, $data);
             $event = 'followup_sequence.updated';
         } else {
             $id    = (int) $this->sequenceModel->insert($data);
             $event = 'followup_sequence.created';
+
+            // If this is the parish's first sequence, make it the default
+            // automatically unless the user explicitly left the box unchecked.
+            $hasExistingDefault = $this->sequenceService->hasDefaultForParish($parishId);
+            if (!$hasExistingDefault) {
+                $isDefault = 1;
+            }
+        }
+
+        if ($isDefault && $id > 0) {
+            $this->sequenceService->setDefaultForSequence($id, $parishId);
         }
 
         $this->audit()->log($event, [
@@ -220,7 +333,15 @@ class FollowupWorkflow extends BaseController
         }
 
         $newState = $sequence['is_active'] ? 0 : 1;
-        $this->sequenceModel->update($id, ['is_active' => $newState]);
+        $update = ['is_active' => $newState];
+
+        // Deactivating the default sequence removes the default flag so the
+        // parish does not silently end up with no active default.
+        if ($newState === 0 && !empty($sequence['is_default'])) {
+            $update['is_default'] = 0;
+        }
+
+        $this->sequenceModel->update($id, $update);
 
         $this->audit()->log('followup_sequence.toggled', [
             'parish_id'   => $parishId,
@@ -230,6 +351,46 @@ class FollowupWorkflow extends BaseController
         ]);
 
         return $this->jsonResponse(['success' => true, 'is_active' => $newState]);
+    }
+
+    /**
+     * POST followup-workflow/sequences/set-default/:id (AJAX)
+     * Mark a parish sequence as the default for first-visit scheduling.
+     */
+    public function setDefaultSequence(int $id)
+    {
+        if ($redirect = $this->requirePermission('followup.manage')) {
+            return $redirect;
+        }
+
+        $parishId = (int) $this->getOperationalParishId();
+        $sequence = $this->sequenceModel->find($id);
+
+        if (
+            !$sequence
+            || $sequence['parish_id'] === null
+            || (int) $sequence['parish_id'] !== $parishId
+        ) {
+            return $this->jsonResponse(['success' => false, 'message' => 'Not found or forbidden.'], 404);
+        }
+
+        if (!$sequence['is_active']) {
+            return $this->jsonResponse(['success' => false, 'message' => 'Cannot set an inactive sequence as default.'], 422);
+        }
+
+        $ok = $this->sequenceService->setDefaultForSequence($id, $parishId);
+
+        if (!$ok) {
+            return $this->jsonResponse(['success' => false, 'message' => 'Failed to update default.'], 500);
+        }
+
+        $this->audit()->log('followup_sequence.set_default', [
+            'parish_id'   => $parishId,
+            'entity_type' => 'followup_sequence',
+            'entity_id'   => $id,
+        ]);
+
+        return $this->jsonResponse(['success' => true, 'is_default' => true]);
     }
 
     // ------------------------------------------------------------------
@@ -301,7 +462,6 @@ class FollowupWorkflow extends BaseController
             'day_offset'   => 'required|is_natural|less_than_equal_to[365]',
             'channel'      => 'required|in_list[text,email,call,mail,gift,manual]',
             'template_id'  => 'permit_empty|is_not_unique[followup_template.id]',
-            'is_automated' => 'permit_empty|in_list[0,1]',
         ];
 
         if ($isManual) {
@@ -328,24 +488,44 @@ class FollowupWorkflow extends BaseController
         }
 
         $templateId = $this->request->getPost('template_id');
+        $templateId = ($templateId !== '' && $templateId !== null) ? (int) $templateId : null;
+
+        // Channel-template compatibility guard: an email template cannot be
+        // attached to an SMS action, etc.
+        if ($templateId !== null && !$this->templateModel->channelMatches($templateId, $this->request->getPost('channel'))) {
+            return $this->jsonResponse([
+                'success' => false,
+                'errors'  => ['template_id' => lang('Visitors.seqTemplateChannelMismatch')],
+            ], 422);
+        }
 
         $data = [
             'sequence_id'  => $sequenceId,
             'week_number'  => (int) $this->request->getPost('week_number'),
             'day_offset'   => (int) $this->request->getPost('day_offset'),
             'channel'      => $this->request->getPost('channel'),
-            'template_id'  => ($templateId !== '' && $templateId !== null) ? (int) $templateId : null,
+            'template_id'  => $templateId,
             'assigned_to'  => $assignedTo > 0 ? $assignedTo : null,
             'instructions' => trim((string) $this->request->getPost('instructions')) ?: null,
-            'is_automated' => (int) ($this->request->getPost('is_automated') ?? 0),
         ];
 
         if ($id > 0) {
+            $existing = $this->actionModel->find($id);
+            if (!$existing || (int) $existing['sequence_id'] !== $sequenceId) {
+                return $this->jsonResponse(['success' => false, 'message' => 'Not found.'], 404);
+            }
+            // Parish edits to a cloned step detach it from propagation.
+            if (!empty($existing['source_action_id'])) {
+                $data['is_customized'] = 1;
+            }
             $this->actionModel->update($id, $data);
             $event = 'followup_action.updated';
         } else {
             $id    = (int) $this->actionModel->insert($data);
             $event = 'followup_action.created';
+            // Adding a local step to a cloned sequence diverges its
+            // composition — upstream creates no longer propagate into it.
+            $this->markSequenceCustomized($sequence);
         }
 
         $this->audit()->log($event, [
@@ -358,6 +538,18 @@ class FollowupWorkflow extends BaseController
         $updatedActions = $this->actionModel->getBySequenceWithTemplates($sequenceId);
 
         return $this->jsonResponse(['success' => true, 'actions' => $updatedActions]);
+    }
+
+    /**
+     * Flag a cloned sequence as customized when its composition diverges
+     * (parish adds or removes steps), so upstream creates no longer
+     * propagate into it.
+     */
+    private function markSequenceCustomized(array $sequence): void
+    {
+        if (!empty($sequence['source_sequence_id']) && empty($sequence['is_customized'])) {
+            $this->sequenceModel->update((int) $sequence['id'], ['is_customized' => 1]);
+        }
     }
 
     // ------------------------------------------------------------------
@@ -388,6 +580,8 @@ class FollowupWorkflow extends BaseController
 
         $sequenceId = (int) $action['sequence_id'];
         $this->actionModel->delete($id);
+        // Removing a cloned step diverges the clone's composition.
+        $this->markSequenceCustomized($sequence);
 
         $this->audit()->log('followup_action.deleted', [
             'parish_id'   => $parishId,
@@ -571,12 +765,13 @@ class FollowupWorkflow extends BaseController
 
         $parishId = (int) $this->getOperationalParishId();
 
-        // Global templates (parish_id = NULL) are read-only at parish level
+        // Upstream templates (parish_id = NULL: global/diocesan/provincial)
+        // are read-only at parish level.
         if ($id > 0) {
             $existing = $this->templateModel->find($id);
             if ($existing && $existing['parish_id'] === null) {
                 return $this->jsonResponse(
-                    ['success' => false, 'message' => 'Global templates cannot be edited here.'],
+                    ['success' => false, 'message' => 'Upstream templates cannot be edited here.'],
                     403
                 );
             }
@@ -620,6 +815,10 @@ class FollowupWorkflow extends BaseController
         ];
 
         if ($id > 0) {
+            // Parish edits to a cloned template detach it from propagation.
+            if (!empty($existing['source_template_id'])) {
+                $data['is_customized'] = 1;
+            }
             $this->templateModel->update($id, $data);
             $event = 'followup_template.updated';
         } else {
@@ -873,20 +1072,57 @@ class FollowupWorkflow extends BaseController
 
         $currentUserId = (int) auth()->id();
 
-        // Prefer marking an existing pending row over creating a duplicate
+        // Prefer dispatching an existing pending row over creating a duplicate
         $logEntry = $this->logModel
             ->where('person_id', $visitorId)
             ->where('action_id', $actionId)
             ->where('status', 'pending')
             ->first();
 
-        if ($logEntry) {
-            $this->logModel->markExecuted(
-                (int) $logEntry['id'],
-                ['triggered_by' => $currentUserId, 'manual' => true]
-            );
+        if (!$logEntry) {
+            $logEntry = [
+                'id'             => null,
+                'person_id'      => $visitorId,
+                'parish_id'      => $parishId,
+                'action_id'      => $actionId,
+                'assigned_to'    => $currentUserId,
+                'scheduled_date' => date('Y-m-d'),
+                'status'         => 'pending',
+                'channel'        => $action['channel'],
+                'template_id'    => $action['template_id'] ?? null,
+                'instructions'   => $action['instructions'] ?? null,
+            ];
+        }
+
+        $template = null;
+        if (!empty($logEntry['template_id'])) {
+            $template = $this->templateModel->find((int) $logEntry['template_id']);
+        }
+
+        $result = (new \App\Services\FollowupDispatchService())->dispatch($logEntry, is_array($template) ? $template : null, $visitor);
+
+        if (!$result['success'] && empty($result['metadata']['skipped'])) {
+            return $this->jsonResponse([
+                'success' => false,
+                'message' => 'Dispatch failed: ' . ($result['error'] ?? 'Unknown error'),
+            ], 500);
+        }
+
+        if ($logEntry['id'] !== null) {
             $logId = (int) $logEntry['id'];
+            if (!empty($result['metadata']['skipped'])) {
+                $this->logModel->markSkipped($logId, array_merge(
+                    $result['metadata'],
+                    ['triggered_by' => $currentUserId, 'manual' => true]
+                ));
+            } else {
+                $this->logModel->markExecuted($logId, array_merge(
+                    $result['metadata'],
+                    ['triggered_by' => $currentUserId, 'manual' => true]
+                ));
+            }
         } else {
+            // Create a log row reflecting the manual dispatch.
             $logId = (int) $this->logModel->insert([
                 'person_id'         => $visitorId,
                 'parish_id'         => $parishId,
@@ -894,15 +1130,13 @@ class FollowupWorkflow extends BaseController
                 'assigned_to'       => $currentUserId,
                 'scheduled_date'    => date('Y-m-d'),
                 'executed_at'       => date('Y-m-d H:i:s'),
-                'status'            => 'sent',
-                'response_metadata' => json_encode(['triggered_by' => $currentUserId, 'manual' => true]),
+                'status'            => !empty($result['metadata']['skipped']) ? 'skipped' : 'sent',
+                'response_metadata' => json_encode(array_merge(
+                    $result['metadata'],
+                    ['triggered_by' => $currentUserId, 'manual' => true]
+                )),
             ]);
         }
-
-        // Keep the human-task queue in sync for call/manual actions:
-        // completes the pending task, or records a completed one when the
-        // action was never queued for dispatch.
-        (new \App\Services\CallTaskSyncService())->resolveForLog($logId, 'completed');
 
         $this->audit()->log('followup.manual_trigger', [
             'parish_id'   => $parishId,
@@ -989,13 +1223,22 @@ class FollowupWorkflow extends BaseController
         $task  = $model->find($id);
 
         if (!$task) {
-            return $this->jsonResponse(['success' => false, 'message' => 'Task not found.'], 404);
+            return $this->jsonResponse(['success' => false, 'message' => lang('Visitors.taskNotFound')], 404);
         }
 
-        // Parish scope guard
-        $parishId = $this->getOperationalParishId();
-        if ((int) $task['parish_id'] !== $parishId) {
-            return $this->jsonResponse(['success' => false, 'message' => 'Forbidden.'], 403);
+        // Same scope contract as Visitors::logMarkDone — the task must
+        // belong to the operational parish and its person must still be in
+        // the visitor domain there. person_id falls back to the linked log
+        // for drifted rows; log_id is always set per the follow-up schema.
+        $parishId  = $this->getOperationalParishId();
+        $personId  = (int) ($task['person_id'] ?? 0);
+        if ($personId <= 0 && !empty($task['log_id'])) {
+            $logRow   = $this->logModel->find((int) $task['log_id']);
+            $personId = (int) ($logRow['person_id'] ?? 0);
+        }
+        if ((int) $task['parish_id'] !== $parishId
+            || ! $this->visitorDirectory->visitorAffiliationExists($personId, $parishId)) {
+            return $this->jsonResponse(['success' => false, 'message' => lang('Visitors.visitorNotFound')], 403);
         }
 
         $notes = (string) ($this->request->getPost('notes') ?? '');

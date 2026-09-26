@@ -117,6 +117,11 @@
                     </a>
                 </li>
                 <li class="nav-item">
+                    <a class="nav-link <?= str_starts_with(uri_string(), 'system/followup-workflow') ? 'active' : '' ?>" href="<?= base_url('system/followup-workflow/sequences') ?>">
+                        <i class="bi bi-diagram-3" aria-hidden="true"></i> <?= lang('App.navFollowupWorkflow') ?>
+                    </a>
+                </li>
+                <li class="nav-item">
                     <a class="nav-link <?= (uri_string() === 'system/system-admins') ? 'active' : '' ?>" href="<?= base_url('system/system-admins') ?>">
                         <i class="bi bi-person-lock" aria-hidden="true"></i> <?= lang('App.navSystemAdmins') ?>
                     </a>
@@ -198,6 +203,11 @@
                 <li class="nav-item">
                     <a class="nav-link <?= str_starts_with(uri_string(), 'diocese/email-settings') ? 'active' : '' ?>" href="<?= base_url('diocese/email-settings') ?>">
                         <i class="bi bi-envelope-gear" aria-hidden="true"></i> <?= lang('App.navEmailSettings') ?>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link <?= str_starts_with(uri_string(), 'diocese/followup-workflow') ? 'active' : '' ?>" href="<?= base_url('diocese/followup-workflow/sequences') ?>">
+                        <i class="bi bi-diagram-3" aria-hidden="true"></i> <?= lang('App.navFollowupWorkflow') ?>
                     </a>
                 </li>
             <?php endif; ?>

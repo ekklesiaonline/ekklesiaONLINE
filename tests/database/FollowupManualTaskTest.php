@@ -120,6 +120,7 @@ final class FollowupManualTaskTest extends CIUnitTestCase
             'parish_id'  => $parishId,
             'name'       => 'Manual Sequence',
             'is_active'  => 1,
+            'is_default' => 1,
             'created_at' => date('Y-m-d H:i:s'),
             'updated_at' => date('Y-m-d H:i:s'),
         ]);
@@ -132,7 +133,6 @@ final class FollowupManualTaskTest extends CIUnitTestCase
             'channel'      => 'manual',
             'assigned_to'  => $assignedTo,
             'instructions' => 'Send {first_name} a social media invitation',
-            'is_automated' => 0,
             'created_at'   => date('Y-m-d H:i:s'),
             'updated_at'   => date('Y-m-d H:i:s'),
         ]);
@@ -146,6 +146,7 @@ final class FollowupManualTaskTest extends CIUnitTestCase
             'parish_id'  => $parishId,
             'name'       => 'Call Sequence',
             'is_active'  => 1,
+            'is_default' => 1,
             'created_at' => date('Y-m-d H:i:s'),
             'updated_at' => date('Y-m-d H:i:s'),
         ]);
@@ -157,7 +158,6 @@ final class FollowupManualTaskTest extends CIUnitTestCase
             'day_offset'   => 1,
             'channel'      => 'call',
             'assigned_to'  => $assignedTo,
-            'is_automated' => 1,
             'created_at'   => date('Y-m-d H:i:s'),
             'updated_at'   => date('Y-m-d H:i:s'),
         ]);

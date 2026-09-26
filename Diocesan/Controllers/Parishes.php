@@ -277,6 +277,14 @@ class Parishes extends BaseController
         ]);
 
         if ($parishId) {
+            // Every new parish starts with the best upstream default
+            // follow-up sequence cloned into its own scope (diocesan →
+            // provincial → global cascade).
+            try {
+                (new \App\Services\FollowupCloneService())->cloneUpstreamDefaultIntoParish((int) $parishId);
+            } catch (\Throwable $e) {
+                log_message('error', 'Failed to clone default follow-up sequence for new parish ' . $parishId . ': ' . $e->getMessage());
+            }
             try {
                 $this->audit()->log('diocese.parish.created', [
                     'user_id' => (int) auth()->id(),

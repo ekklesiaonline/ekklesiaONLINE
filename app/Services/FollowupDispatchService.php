@@ -29,16 +29,6 @@ use App\Services\EmailScopeService;
  */
 class FollowupDispatchService
 {
-    /** Tokens replaced in template bodies */
-    private const VARIABLE_MAP = [
-        '{first_name}',
-        '{last_name}',
-        '{parish_name}',
-        '{visit_date}',
-        '{clergy_name}',
-        '{phone}',
-    ];
-
     private SmsService   $sms;
     private CallTaskModel $callTaskModel;
     private SmsQueueModel $smsQueueModel;
@@ -71,7 +61,7 @@ class FollowupDispatchService
         $logId     = (int)    ($logRow['id'] ?? 0);
 
         $parish = $this->loadParish($parishId);
-        $vars   = $this->buildVarMap($visitor, $parish);
+        $vars   = $this->buildTemplateVars($visitor, $parish);
 
         // Opt-out guard: skip silently if visitor has opted out of this channel.
         if ($this->visitorDirectory->isOptedOut($visitor, $channel)) {
@@ -366,17 +356,51 @@ class FollowupDispatchService
 
     /**
      * Build the token-to-value replacement map for a visitor + parish combo.
+     * Uses the same helper as template preview so sends and previews match.
      */
-    private function buildVarMap(array $visitor, ?array $parish): array
+    private function buildTemplateVars(array $visitor, ?array $parish): array
     {
-        return [
-            '{first_name}'  => esc((string) ($visitor['first_name'] ?? '')),
-            '{last_name}'   => esc((string) ($visitor['last_name'] ?? '')),
-            '{parish_name}' => esc((string) ($parish['name'] ?? '')),
-            '{visit_date}'  => esc((string) ($visitor['visit_date'] ?? '')),
-            '{clergy_name}' => '',                // can be populated from parish config in future
-            '{phone}'       => esc((string) $this->decryptField($visitor['phone'] ?? '')),
-        ];
+        helper('followup_template');
+
+        $parishId = (int) ($visitor['parish_id'] ?? 0);
+        $settings = [];
+
+        if ($parishId > 0) {
+            foreach (model('ParishSettingModel')->getParishSettings($parishId) as $row) {
+                $settings[(string) $row['key']] = (string) ($row['value'] ?? '');
+            }
+        }
+
+        $nextEvent = $this->loadNextEvent($parishId);
+
+        $vars = parse_template_vars($visitor, $settings, $parish, $nextEvent);
+
+        // Remove raw email/phone values from tokens; the helper may include
+        // the encrypted blob in some legacy paths. The dispatcher handles
+        // decryption in channel-specific code instead.
+        unset($vars['{email}'], $vars['{phone_raw}']);
+
+        return $vars;
+    }
+
+    /**
+     * Load the next published upcoming event for a parish, if any.
+     */
+    private function loadNextEvent(int $parishId): ?array
+    {
+        if ($parishId <= 0) {
+            return null;
+        }
+
+        return db_connect()
+            ->table('event')
+            ->where('parish_id', $parishId)
+            ->where('status', 'published')
+            ->where('start_at >=', date('Y-m-d H:i:s'))
+            ->orderBy('start_at', 'ASC')
+            ->limit(1)
+            ->get()
+            ->getRowArray() ?: null;
     }
 
     /**

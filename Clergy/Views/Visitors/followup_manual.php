@@ -173,10 +173,10 @@ $canEdit = auth()->user()->can('visitor.edit');
                             $icon        = $channelIcon[$channel] ?? 'bi-circle';
                             $isPending   = $status === 'pending';
                             $isOverdue   = $isPending && !empty($row['scheduled_date']) && $row['scheduled_date'] < $today;
-                            $isAutomated = !$isCallTask && !empty($row['is_automated']);
+                            $isAutomated = !$isCallTask && in_array($channel, ['email', 'text'], true);
                             $weekNum     = !$isCallTask ? ($row['week_number'] ?? null) : null;
                             $meta        = !empty($row['response_metadata']) ? json_decode((string) $row['response_metadata'], true) : [];
-                            $rowElemId   = ($isCallTask ? 'ctRow' : 'logRow') . '-' . (int) $row['id'];
+                            $rowElemId   = ($isCallTask ? 'ctRow' : 'logRow') . '-' . (int) ($isCallTask ? $row['call_task_id'] : $row['id']);
                             $borderClass = $isOverdue ? 'border-danger' : $cfg['border'];
                             $textClass   = $isOverdue ? 'text-danger' : $cfg['text-class'];
                             ?>
@@ -263,7 +263,7 @@ $canEdit = auth()->user()->can('visitor.edit');
                                         <?php if ($isCallTask): ?>
                                             <button type="button"
                                                 class="btn btn-sm btn-outline-success flex-shrink-0"
-                                                data-ct-id="<?= (int) $row['id'] ?>"
+                                                data-ct-id="<?= (int) $row['call_task_id'] ?>"
                                                 aria-label="<?= esc(lang('Visitors.markDoneBtn')) ?>">
                                                 <i class="bi bi-check-circle" aria-hidden="true"></i>
                                             </button>

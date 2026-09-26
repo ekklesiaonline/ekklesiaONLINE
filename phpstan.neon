@@ -6,6 +6,7 @@ parameters:
         - app/Models
     scanFiles:
         - phpstan-stubs.php
+        - app/Helpers/followup_template_helper.php
     excludePaths:
         - app/Database/Migrations/*
     reportUnmatchedIgnoredErrors: false

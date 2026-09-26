@@ -42,6 +42,27 @@ $routes->get('system/email', '\\App\\Controllers\\SystemEmailSettingsController:
 $routes->post('system/email', '\\App\\Controllers\\SystemEmailSettingsController::save', ['filter' => 'permission:system.admin']);
 $routes->post('system/email/test', '\\App\\Controllers\\SystemEmailSettingsController::test', ['filter' => 'permission:system.admin']);
 
+// System-level follow-up workflow management (global sequences/templates).
+$routes->group('system/followup-workflow', ['filter' => 'permission:system.admin'], static function ($routes) {
+    $routes->get('sequences', '\\App\\Controllers\\SystemFollowupWorkflow::sequences');
+    $routes->get('sequences/create', '\\App\\Controllers\\SystemFollowupWorkflow::edit_sequence/0');
+    $routes->get('sequences/edit/(:num)', '\\App\\Controllers\\SystemFollowupWorkflow::edit_sequence/$1');
+    $routes->post('sequences/save', '\\App\\Controllers\\SystemFollowupWorkflow::saveSequence/0');
+    $routes->post('sequences/save/(:num)', '\\App\\Controllers\\SystemFollowupWorkflow::saveSequence/$1');
+    $routes->post('sequences/toggle/(:num)', '\\App\\Controllers\\SystemFollowupWorkflow::toggleSequence/$1');
+    $routes->post('sequences/delete/(:num)', '\\App\\Controllers\\SystemFollowupWorkflow::deleteSequence/$1');
+    $routes->post('sequences/set-default/(:num)', '\\App\\Controllers\\SystemFollowupWorkflow::setUpstreamDefault/$1');
+
+    $routes->post('actions/save', '\\App\\Controllers\\SystemFollowupWorkflow::saveAction/0');
+    $routes->post('actions/save/(:num)', '\\App\\Controllers\\SystemFollowupWorkflow::saveAction/$1');
+    $routes->post('actions/delete/(:num)', '\\App\\Controllers\\SystemFollowupWorkflow::deleteAction/$1');
+
+    $routes->get('templates', '\\App\\Controllers\\SystemFollowupWorkflow::templates');
+    $routes->post('templates/save', '\\App\\Controllers\\SystemFollowupWorkflow::saveTemplate/0');
+    $routes->post('templates/save/(:num)', '\\App\\Controllers\\SystemFollowupWorkflow::saveTemplate/$1');
+    $routes->post('templates/delete/(:num)', '\\App\\Controllers\\SystemFollowupWorkflow::deleteTemplate/$1');
+});
+
 // Load role-based module routes
 if (is_file(ROOTPATH . 'Province/Config/Routes.php')) {
     require ROOTPATH . 'Province/Config/Routes.php';

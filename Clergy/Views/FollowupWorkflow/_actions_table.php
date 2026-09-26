@@ -25,7 +25,6 @@
                     <th scope="col"><?= lang('Visitors.seqColDayOffset') ?></th>
                     <th scope="col"><?= lang('Visitors.seqColChannel') ?></th>
                     <th scope="col"><?= lang('Visitors.seqColTemplate') ?></th>
-                    <th scope="col"><?= lang('Visitors.seqColType') ?></th>
                     <th scope="col" class="text-end"><?= lang('App.colActions') ?></th>
                 </tr>
             </thead>
@@ -63,13 +62,6 @@
                                 <em class="text-muted"><?= lang('Visitors.seqStepNone') ?></em>
                             <?php endif; ?>
                         </td>
-                        <td>
-                            <?php if ($a['is_automated']): ?>
-                                <span class="badge border border-success text-success fw-normal"><?= lang('Visitors.seqTypeAuto') ?></span>
-                            <?php else: ?>
-                                <span class="badge border border-secondary text-body fw-normal"><?= lang('Visitors.seqTypeManual') ?></span>
-                            <?php endif; ?>
-                        </td>
                         <td class="text-end">
                             <button type="button"
                                 class="btn btn-sm btn-outline-secondary me-1 btn-edit-action"
@@ -80,7 +72,7 @@
                                 data-template-id="<?= esc((string) ($a['template_id'] ?? ''), 'attr') ?>"
                                 data-assigned-to="<?= esc((string) ($a['assigned_to'] ?? ''), 'attr') ?>"
                                 data-instructions="<?= esc((string) ($a['instructions'] ?? ''), 'attr') ?>"
-                                data-automated="<?= (int) $a['is_automated'] ?>" aria-label="<?= esc(lang('App.edit')) ?>">
+                                aria-label="<?= esc(lang('App.edit')) ?>">
                                 <i class="bi bi-pencil" aria-hidden="true"></i>
                             </button>
                             <button type="button"

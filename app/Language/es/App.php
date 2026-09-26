@@ -16,6 +16,7 @@ return [
     'navGroups'           => 'Grupos pequeños',
     'navMessages'         => 'Mensajes',
     'navEmailSettings'    => 'Configuración de correo',
+    'navFollowupWorkflow' => 'Flujos de seguimiento',
     'navServices'         => 'Servicios',
     'navAttendance'       => 'Asistencia',
     'navVisitors'           => 'Visitantes',

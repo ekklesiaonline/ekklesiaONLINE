@@ -20,7 +20,8 @@ class FollowupActionModel extends Model
         'template_id',
         'assigned_to',
         'instructions',
-        'is_automated',
+        'source_action_id',
+        'is_customized',
     ];
 
     // Dates
@@ -37,8 +38,9 @@ class FollowupActionModel extends Model
         'channel'      => 'required|in_list[text,email,call,mail,gift,manual]',
         'template_id'  => 'permit_empty|is_not_unique[followup_template.id]',
         'assigned_to'  => 'permit_empty|is_not_unique[users.id]',
-        'instructions' => 'permit_empty|max_length[255]',
-        'is_automated' => 'permit_empty|in_list[0,1]',
+        'instructions'     => 'permit_empty|max_length[255]',
+        'source_action_id' => 'permit_empty|is_not_unique[followup_action.id]',
+        'is_customized'    => 'permit_empty|in_list[0,1]',
     ];
     protected $validationMessages   = [];
     protected $skipValidation       = false;
@@ -71,14 +73,4 @@ class FollowupActionModel extends Model
             ->getResultArray();
     }
 
-    /**
-     * Return automated actions only — used by the cron dispatcher.
-     */
-    public function getAutomatedBySequence(int $sequenceId): array
-    {
-        return $this->where('sequence_id', $sequenceId)
-            ->where('is_automated', 1)
-            ->orderBy('day_offset', 'ASC')
-            ->findAll();
-    }
 }

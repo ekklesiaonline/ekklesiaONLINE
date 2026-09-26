@@ -37,6 +37,24 @@ $formatLocalizedDate = static function (?string $value, string $pattern, string 
 </div>
 <?php endif; ?>
 
+<?php if (!empty($default_followup_sequence_missing)): ?>
+<div class="row g-4 mb-2">
+    <div class="col-12">
+        <div class="alert alert-warning d-flex align-items-center justify-content-between shadow-sm mb-0" role="alert">
+            <div class="d-flex align-items-center">
+                <i class="bi bi-exclamation-triangle-fill me-2 fs-5" aria-hidden="true"></i>
+                <div>
+                    <strong><?= lang('Visitors.noDefaultFollowupSequence') ?></strong>
+                </div>
+            </div>
+            <a href="<?= base_url('followup-workflow/sequences') ?>" class="btn btn-sm btn-warning">
+                <i class="bi bi-gear me-1" aria-hidden="true"></i> <?= lang('Visitors.manageFollowupSequences') ?>
+            </a>
+        </div>
+    </div>
+</div>
+<?php endif; ?>
+
 <div class="row g-4">
     <!-- KPI cards -->
     <div class="col-md-3">

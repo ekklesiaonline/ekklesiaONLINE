@@ -17,6 +17,55 @@
 </div>
 
 <?php
+$showGlobal  = $showGlobal ?? false;
+$showDiocese = $showDiocese ?? false;
+$hasDiocese  = $hasDiocese ?? true;
+$upstreamFiltersActive = $showGlobal || $showDiocese;
+$activeCount = ($showGlobal ? 1 : 0) + ($showDiocese ? 1 : 0);
+?>
+<div class="card mb-3">
+    <div class="card-header d-flex align-items-center justify-content-end filter-panel-header">
+        <button class="btn btn-outline-secondary btn-sm" type="button" data-bs-toggle="collapse" data-bs-target="#upstreamFilterPanel"
+            aria-expanded="<?= $upstreamFiltersActive ? 'true' : 'false' ?>">
+            <i class="bi bi-funnel" aria-hidden="true"></i> <?= lang('App.filter') ?>
+            <?php if ($upstreamFiltersActive): ?>
+                <span class="badge border border-primary text-primary fw-normal ms-1"><?= (int) $activeCount ?></span>
+            <?php endif; ?>
+        </button>
+    </div>
+    <div id="upstreamFilterPanel" class="collapse <?= $upstreamFiltersActive ? 'show' : '' ?>">
+        <div class="card-body border-top">
+            <form method="get" action="<?= base_url('followup-workflow/sequences') ?>" class="row g-2 align-items-end">
+                <div class="col-md-6">
+                    <label class="form-label mb-1"><?= lang('Visitors.seqFilterUpstreamLabel') ?></label>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="filter_upstream_global" name="upstream_global" value="1"
+                            <?= $showGlobal ? 'checked' : '' ?>>
+                        <label class="form-check-label small" for="filter_upstream_global"><?= lang('Visitors.seqFilterShowGlobal') ?></label>
+                    </div>
+                    <?php if ($hasDiocese): ?>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="filter_upstream_diocese" name="upstream_diocese" value="1"
+                                <?= $showDiocese ? 'checked' : '' ?>>
+                            <label class="form-check-label small" for="filter_upstream_diocese">
+                                <?= lang('Visitors.seqFilterShowDiocese') ?><?= !empty($scopeNames['diocese']) ? ' (' . esc($scopeNames['diocese']) . ')' : '' ?>
+                            </label>
+                        </div>
+                    <?php endif; ?>
+                    <div class="form-text"><?= lang('Visitors.seqFilterUpstreamHint') ?></div>
+                </div>
+                <div class="col-md-2 d-flex gap-2">
+                    <button type="submit" class="btn btn-sm btn-primary flex-fill">
+                        <i class="bi bi-funnel" aria-hidden="true"></i> <?= lang('Services.apply') ?>
+                    </button>
+                    <a href="<?= base_url('followup-workflow/sequences') ?>" class="btn btn-sm btn-outline-secondary flex-fill"><?= lang('App.clear') ?></a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<?php
 $translateSequenceName = static function (array $sequence): string {
     $name = (string) ($sequence['name'] ?? '');
 
@@ -71,18 +120,30 @@ $translateSequenceDescription = static function (array $sequence): string {
                     </thead>
                     <tbody>
                         <?php foreach ($sequences as $seq): ?>
-                            <?php $isGlobal = ($seq['parish_id'] === null); ?>
-                            <?php $displayName = $translateSequenceName($seq); ?>
-                            <?php $displayDescription = $translateSequenceDescription($seq); ?>
+                            <?php
+                            $isUpstream  = ($seq['parish_id'] === null);
+                            $seqScope    = $seq['scope'] ?? 'parish';
+                            $displayName = $translateSequenceName($seq);
+                            $displayDescription = $translateSequenceDescription($seq);
+                            ?>
                             <tr data-sequence-id="<?= (int) $seq['id'] ?>">
                                 <td>
-                                    <?php if (!$isGlobal && auth()->user()->can('visitor.edit')): ?>
+                                    <?php if (!$isUpstream && auth()->user()->can('visitor.edit')): ?>
                                         <a href="<?= base_url('followup-workflow/sequences/edit/' . $seq['id']) ?>"
                                             class="fw-semibold text-decoration-none">
                                             <?= esc($displayName) ?>
                                         </a>
                                     <?php else: ?>
                                         <span class="fw-semibold"><?= esc($displayName) ?></span>
+                                    <?php endif; ?>
+                                    <?php if (!$isUpstream && !empty($seq['is_default'])): ?>
+                                        <span class="badge border border-primary text-primary fw-normal ms-1"><?= lang('Visitors.seqDefaultBadge') ?></span>
+                                    <?php endif; ?>
+                                    <?php if (!$isUpstream && !empty($seq['is_customized'])): ?>
+                                        <span class="badge border border-warning text-warning fw-normal ms-1" title="<?= esc(lang('Visitors.seqCustomizedHint'), 'attr') ?>"><?= lang('Visitors.seqCustomizedBadge') ?></span>
+                                    <?php endif; ?>
+                                    <?php if ($isUpstream && !empty($seq['is_global_default'])): ?>
+                                        <span class="badge border border-info text-info fw-normal ms-1"><?= lang('Visitors.seqGlobalDefaultBadge') ?></span>
                                     <?php endif; ?>
                                 </td>
                                 <td class="text-muted small"><?= esc($displayDescription !== '' ? $displayDescription : '—') ?></td>
@@ -97,7 +158,9 @@ $translateSequenceDescription = static function (array $sequence): string {
                                     <?php endif; ?>
                                 </td>
                                 <td>
-                                    <?php if ($isGlobal): ?>
+                                    <?php if ($seqScope === 'diocese'): ?>
+                                        <span class="badge border border-primary text-primary fw-normal"><?= esc($scopeNames['diocese'] ?? '') ?: lang('Visitors.seqScopeDiocese') ?></span>
+                                    <?php elseif ($isUpstream): ?>
                                         <span class="badge border border-info text-info fw-normal"><?= lang('Visitors.seqScopeGlobal') ?></span>
                                     <?php else: ?>
                                         <span class="badge border border-secondary text-body fw-normal"><?= lang('Visitors.seqScopeParish') ?></span>
@@ -105,7 +168,14 @@ $translateSequenceDescription = static function (array $sequence): string {
                                 </td>
                                 <?php if (auth()->user()->can('visitor.edit')): ?>
                                     <td class="text-end">
-                                        <?php if (!$isGlobal): ?>
+                                        <?php if ($isUpstream && !empty($seq['is_active'])): ?>
+                                            <button type="button" class="btn btn-sm btn-outline-primary btn-clone-sequence"
+                                                data-id="<?= (int) $seq['id'] ?>"
+                                                data-name="<?= esc($displayName, 'attr') ?>"
+                                                title="<?= esc(lang('Visitors.seqCloneHint'), 'attr') ?>">
+                                                <i class="bi bi-copy" aria-hidden="true"></i> <?= lang('Visitors.seqCloneBtn') ?>
+                                            </button>
+                                        <?php elseif (!$isUpstream): ?>
                                             <div class="dropdown">
                                                 <button class="btn btn-sm btn-outline-secondary"
                                                     type="button"
@@ -128,6 +198,15 @@ $translateSequenceDescription = static function (array $sequence): string {
                                                             <i class="bi <?= $seq['is_active'] ? 'bi-toggle-on' : 'bi-toggle-off' ?> me-2" aria-hidden="true"></i><?= $seq['is_active'] ? lang('Visitors.seqDeactivateTitle') : lang('Visitors.seqActivateTitle') ?>
                                                         </button>
                                                     </li>
+                                                    <?php if (!empty($seq['is_active']) && empty($seq['is_default'])): ?>
+                                                        <li>
+                                                            <button class="dropdown-item btn-set-default-sequence"
+                                                                type="button"
+                                                                data-id="<?= (int) $seq['id'] ?>">
+                                                                <i class="bi bi-check-circle me-2" aria-hidden="true"></i><?= lang('Visitors.seqSetDefaultTitle') ?>
+                                                            </button>
+                                                        </li>
+                                                    <?php endif; ?>
                                                     <li>
                                                         <hr class="dropdown-divider">
                                                     </li>
@@ -239,6 +318,71 @@ $translateSequenceDescription = static function (array $sequence): string {
                             .catch(() => showAppToast('<?= esc(lang('App.networkError'), 'js') ?>', 'danger'));
                     },
                     '<?= esc(lang('Visitors.seqDeleteBtn'), 'js') ?>'
+                );
+            });
+        });
+
+        // ── Clone upstream sequence into this parish ────────────────────────
+        document.querySelectorAll('.btn-clone-sequence').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                const id = btn.dataset.id;
+                const name = btn.dataset.name;
+
+                showAppConfirm(
+                    '<?= esc(lang('Visitors.seqCloneTitle'), 'js') ?>',
+                    '<?= esc(lang('Visitors.seqCloneConfirm'), 'js') ?>'.replace('{0}', '<strong>' + name + '</strong>'),
+                    function() {
+                        fetch('<?= base_url('followup-workflow/sequences/clone/') ?>' + id, {
+                                method: 'POST',
+                                credentials: 'same-origin',
+                                headers: csrfHeaders(),
+                            })
+                            .then(r => {
+                                refreshCsrf(r);
+                                return r.json();
+                            })
+                            .then(data => {
+                                if (data.success) {
+                                    showAppToast('<?= esc(lang('Visitors.seqCloneSuccess'), 'js') ?>', 'primary');
+                                    setTimeout(() => location.href = '<?= base_url('followup-workflow/sequences/edit/') ?>' + data.sequence_id, 600);
+                                } else {
+                                    showAppToast(data.message ?? '<?= esc(lang('Visitors.seqCloneFailed'), 'js') ?>', 'danger');
+                                }
+                            })
+                            .catch(() => showAppToast('<?= esc(lang('App.networkError'), 'js') ?>', 'danger'));
+                    }
+                );
+            });
+        });
+
+        // ── Set as default ──────────────────────────────────────────────────
+        document.querySelectorAll('.btn-set-default-sequence').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                const id = btn.dataset.id;
+
+                showAppConfirm(
+                    '<?= esc(lang('Visitors.seqSetDefaultConfirmTitle'), 'js') ?>',
+                    '<?= esc(lang('Visitors.seqSetDefaultConfirmBody'), 'js') ?>',
+                    function() {
+                        fetch('<?= base_url('followup-workflow/sequences/set-default/') ?>' + id, {
+                                method: 'POST',
+                                credentials: 'same-origin',
+                                headers: csrfHeaders(),
+                            })
+                            .then(r => {
+                                refreshCsrf(r);
+                                return r.json();
+                            })
+                            .then(data => {
+                                if (data.success) {
+                                    showAppToast('<?= esc(lang('Visitors.seqSetDefaultSuccess'), 'js') ?>', 'primary');
+                                    setTimeout(() => location.reload(), 600);
+                                } else {
+                                    showAppToast(data.message ?? '<?= esc(lang('Visitors.seqSetDefaultFailed'), 'js') ?>', 'danger');
+                                }
+                            })
+                            .catch(() => showAppToast('<?= esc(lang('App.networkError'), 'js') ?>', 'danger'));
+                    }
                 );
             });
         });

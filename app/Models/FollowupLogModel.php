@@ -63,7 +63,7 @@ class FollowupLogModel extends Model
         $today   = $this->db->escape($asOfDate);
 
         return $this->db->table('followup_log gfl')
-            ->select('gfl.*, fa.channel, fa.is_automated, fa.template_id, fa.instructions, p.first_name, p.last_name, p.email, p.phone, p.opted_out_channels, p.preferred_timezone, p.interests, gfl.parish_id')
+            ->select('gfl.*, fa.channel, fa.template_id, fa.instructions, p.first_name, p.last_name, p.email, p.phone, p.opted_out_channels, p.preferred_timezone, p.interests, gfl.parish_id')
             ->join('person p',          'p.id = gfl.person_id', 'left')
             ->join('followup_action fa', 'fa.id = gfl.action_id', 'left')
             ->where('gfl.status', 'pending')
@@ -92,7 +92,7 @@ class FollowupLogModel extends Model
         $today   = $this->db->escape($asOfDate);
 
         return $this->db->table('followup_log gfl')
-            ->select('gfl.*, fa.channel, fa.is_automated, fa.template_id, fa.instructions, p.first_name, p.last_name, p.email, p.phone, p.opted_out_channels, p.preferred_timezone, p.interests')
+            ->select('gfl.*, fa.channel, fa.template_id, fa.instructions, p.first_name, p.last_name, p.email, p.phone, p.opted_out_channels, p.preferred_timezone, p.interests')
             ->join('person p',           'p.id = gfl.person_id', 'left')
             ->join('followup_action fa', 'fa.id = gfl.action_id', 'left')
             ->where('gfl.parish_id', $parishId)
@@ -169,11 +169,14 @@ class FollowupLogModel extends Model
     }
 
     /**
-     * Mark a log entry as failed.
+     * Mark a log entry as skipped (e.g. channel opt-out).
      */
-    public function markFailed(int $logId, array $responseMetadata = []): bool
+    public function markSkipped(int $logId, array $responseMetadata = []): bool
     {
-        $data = ['status' => 'failed'];
+        $data = [
+            'status'      => 'skipped',
+            'executed_at' => date('Y-m-d H:i:s'),
+        ];
 
         if ($responseMetadata !== []) {
             $data['response_metadata'] = json_encode($responseMetadata);
@@ -183,14 +186,14 @@ class FollowupLogModel extends Model
     }
 
     /**
-     * Mark a log entry as skipped.
+     * Mark a log entry as failed.
      */
-    public function markSkipped(int $logId, ?string $notes = null): bool
+    public function markFailed(int $logId, array $responseMetadata = []): bool
     {
-        $data = ['status' => 'skipped'];
+        $data = ['status' => 'failed'];
 
-        if ($notes !== null) {
-            $data['notes'] = $notes;
+        if ($responseMetadata !== []) {
+            $data['response_metadata'] = json_encode($responseMetadata);
         }
 
         return $this->update($logId, $data);
@@ -245,19 +248,35 @@ class FollowupLogModel extends Model
 
         $tz = $this->resolveTimezone($visitorTimezone);
         $now = date('Y-m-d H:i:s');
-        $rows = [];
 
+        $existing = $this->db->table('followup_log')
+            ->select('action_id')
+            ->where('person_id', $personId)
+            ->where('action_id !=', null)
+            ->get()
+            ->getResultArray();
+        $existingActionIds = array_flip(array_map('intval', array_column($existing, 'action_id')));
+
+        $rows = [];
         foreach ($actions as $action) {
+            $actionId = (int) $action['id'];
+            if (isset($existingActionIds[$actionId])) {
+                continue;
+            }
             $rows[] = [
                 'person_id'      => $personId,
                 'parish_id'      => $parishId,
-                'action_id'      => (int) $action['id'],
+                'action_id'      => $actionId,
                 'assigned_to'    => (int) ($action['assigned_to'] ?? 0) ?: null,
                 'scheduled_date' => $this->computeScheduledDate($visitDate, (int) $action['day_offset'], $tz),
                 'status'         => 'pending',
                 'created_at'     => $now,
                 'updated_at'     => $now,
             ];
+        }
+
+        if ($rows === []) {
+            return 0;
         }
 
         $inserted = $this->db->table('followup_log')->insertBatch($rows);
@@ -285,73 +304,19 @@ class FollowupLogModel extends Model
      */
     public function scheduleActiveSequencesForPerson(int $personId, int $parishId, string $visitDate, string $visitorTimezone = ''): int
     {
-        $sequences = $this->db->table('followup_sequence')
-            ->groupStart()
-                ->where('parish_id', $parishId)
-                ->orWhere('parish_id IS NULL', null, false)
-            ->groupEnd()
-            ->where('is_active', 1)
-            ->get()
-            ->getResultArray();
+        $sequence = model('FollowupSequenceModel')->findDefaultForParish($parishId);
 
-        if (empty($sequences)) {
+        if (!$sequence) {
             return 0;
         }
 
-        $existingRows = $this->db->table('followup_log')
-            ->select('action_id')
-            ->where('person_id', $personId)
-            ->where('action_id !=', null)
-            ->get()
-            ->getResultArray();
-
-        $scheduledActionIds = array_flip(array_map('intval', array_column($existingRows, 'action_id')));
-
-        $tz  = $this->resolveTimezone($visitorTimezone);
-        $now = date('Y-m-d H:i:s');
-        $toInsert = [];
-
-        foreach ($sequences as $sequence) {
-            $actions = $this->db->table('followup_action')
-                ->where('sequence_id', (int) $sequence['id'])
-                ->orderBy('day_offset', 'ASC')
-                ->get()
-                ->getResultArray();
-
-            foreach ($actions as $action) {
-                $actionId = (int) $action['id'];
-
-                if (isset($scheduledActionIds[$actionId])) {
-                    continue;
-                }
-
-                $toInsert[] = [
-                    'person_id'      => $personId,
-                    'parish_id'      => $parishId,
-                    'action_id'      => $actionId,
-                    'assigned_to'    => (int) ($action['assigned_to'] ?? 0) ?: null,
-                    'scheduled_date' => $this->computeScheduledDate($visitDate, (int) $action['day_offset'], $tz),
-                    'status'         => 'pending',
-                    'created_at'     => $now,
-                    'updated_at'     => $now,
-                ];
-
-                $scheduledActionIds[$actionId] = true;
-            }
-        }
-
-        if (empty($toInsert)) {
-            return 0;
-        }
-
-        $inserted = $this->db->table('followup_log')->insertBatch($toInsert);
-        if ($inserted === false) {
-            return 0;
-        }
-
-        $this->materializeHumanTasks($personId, $parishId);
-
-        return count($toInsert);
+        return $this->scheduleSequenceForPerson(
+            $personId,
+            $parishId,
+            (int) $sequence['id'],
+            $visitDate,
+            $visitorTimezone
+        );
     }
 
     /**

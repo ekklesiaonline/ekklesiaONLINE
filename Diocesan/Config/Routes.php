@@ -47,6 +47,28 @@ $routes->group('', ['filter' => 'session'], function ($routes) {
             $routes->post('reactivate/(:num)', '\\App\\Controllers\\DioceseParishAdmins::reactivate/$1');
         });
 
+        // Diocese-scoped follow-up sequences/templates (clone cascade source)
+        $routes->group('followup-workflow', function ($routes) {
+            $routes->get('sequences', '\\Diocesan\\Controllers\\FollowupWorkflow::sequences');
+            $routes->get('sequences/create', '\\Diocesan\\Controllers\\FollowupWorkflow::edit_sequence/0');
+            $routes->get('sequences/edit/(:num)', '\\Diocesan\\Controllers\\FollowupWorkflow::edit_sequence/$1');
+            $routes->post('sequences/save', '\\Diocesan\\Controllers\\FollowupWorkflow::saveSequence/0');
+            $routes->post('sequences/save/(:num)', '\\Diocesan\\Controllers\\FollowupWorkflow::saveSequence/$1');
+            $routes->post('sequences/toggle/(:num)', '\\Diocesan\\Controllers\\FollowupWorkflow::toggleSequence/$1');
+            $routes->post('sequences/delete/(:num)', '\\Diocesan\\Controllers\\FollowupWorkflow::deleteSequence/$1');
+            $routes->post('sequences/set-default/(:num)', '\\Diocesan\\Controllers\\FollowupWorkflow::setUpstreamDefault/$1');
+            $routes->post('sequences/clone/(:num)', '\\Diocesan\\Controllers\\FollowupWorkflow::cloneSequence/$1');
+
+            $routes->post('actions/save', '\\Diocesan\\Controllers\\FollowupWorkflow::saveAction/0');
+            $routes->post('actions/save/(:num)', '\\Diocesan\\Controllers\\FollowupWorkflow::saveAction/$1');
+            $routes->post('actions/delete/(:num)', '\\Diocesan\\Controllers\\FollowupWorkflow::deleteAction/$1');
+
+            $routes->get('templates', '\\Diocesan\\Controllers\\FollowupWorkflow::templates');
+            $routes->post('templates/save', '\\Diocesan\\Controllers\\FollowupWorkflow::saveTemplate/0');
+            $routes->post('templates/save/(:num)', '\\Diocesan\\Controllers\\FollowupWorkflow::saveTemplate/$1');
+            $routes->post('templates/delete/(:num)', '\\Diocesan\\Controllers\\FollowupWorkflow::deleteTemplate/$1');
+        });
+
         // Email settings
         $routes->get('email-settings', '\\App\\Controllers\\Diocesan\\EmailSettingsController::index');
         $routes->post('email-settings', '\\App\\Controllers\\Diocesan\\EmailSettingsController::save');

@@ -194,6 +194,8 @@ return [
     'settingsCategorySecurity' => 'Securite',
     'settingsCategorySystem' => 'Systeme',
     'settingsCategoryVisitors' => 'Visiteurs',
+    'settingsFollowupSequences' => 'Gerer les sequences de suivi',
+    'settingsFollowupTemplates' => 'Gerer les modeles de messages',
     'setting_password_policy_min_length' => 'Longueur Minimale du Mot de Passe',
     'setting_password_policy_require_uppercase' => 'Exiger une Majuscule',
     'setting_password_policy_require_lowercase' => 'Exiger une Minuscule',

@@ -62,6 +62,23 @@ Seeds:
 - **10 provinces** - US Episcopal Church provinces I-X
 - **2 sample dioceses** - Sample data in the first province
 
+
+## Follow-up workflow migrations
+
+The default-sequence work added four migrations:
+
+| Migration | Purpose |
+| --- | --- |
+| `AddFollowupSequenceDefaultFlags` | Adds `is_default` and `is_global_default` to `followup_sequence`. |
+| `FixFollowupActionChannelEnum` | Adds `manual` to the MySQL `followup_action.channel` enum. |
+| `SeedGlobalDefaultFollowupSequence` | Creates the system/global "6-Week First-Time Visitor Journey" sequence, its templates, and actions. |
+| `BackfillFollowupSequenceDefaults` | Marks the oldest active sequence in each parish as the default. |
+
+Run them with `php spark migrate`.
+
+After the migrations, use `php spark followup:apply-default` to clone the
+system default into parishes that still have no default sequence.
+
 ## Usage
 
 ### Fresh Setup

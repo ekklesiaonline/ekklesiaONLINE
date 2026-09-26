@@ -201,6 +201,8 @@ return [
     'settingsCategorySecurity' => 'Security',
     'settingsCategorySystem' => 'System',
     'settingsCategoryVisitors' => 'Visitors',
+    'settingsFollowupSequences' => 'Manage follow-up sequences',
+    'settingsFollowupTemplates' => 'Manage message templates',
     'setting_password_policy_min_length' => 'Minimum Password Length',
     'setting_password_policy_require_uppercase' => 'Require Uppercase Letter',
     'setting_password_policy_require_lowercase' => 'Require Lowercase Letter',

@@ -29,6 +29,8 @@ This table defines the baseline least-privilege policy used by the canonical sid
 | Visitor deletion | `visitor.delete` | `parishadmin`, `pastor` |
 | Follow-up sequences, tasks, dispatch | `followup.manage` | `parishadmin`, `pastor` |
 | Follow-up read-only (queue, timeline) | `followup.view` | `parishadmin`, `pastor` |
+| Follow-up global sequences/templates (`/system/followup-workflow/*`) | `system.admin` | `systemadmin` |
+| Follow-up diocesan sequences/templates (`/diocese/followup-workflow/*`) | `diocese.admin` | `diocesanadmin` |
 | Finance section visibility | `donation.view` OR `expense.view` OR `finance.view` OR `finance.manage` | `diocesanadmin`, `parishadmin`, `treasurer` |
 | Pledges (inside Finance) | `finance.manage` | `diocesanadmin`, `parishadmin`, `treasurer` |
 | Volunteers | `volunteer.manage` | `parishadmin`, `volunteer_coordinator` |

@@ -215,9 +215,11 @@ $routes->group('', ['filter' => 'session'], function ($routes) {
         $routes->post('sequences/save', '\\Clergy\\Controllers\\FollowupWorkflow::saveSequence/0', ['filter' => 'permission:followup.manage']);
         $routes->post('sequences/save/(:num)', '\\Clergy\\Controllers\\FollowupWorkflow::saveSequence/$1', ['filter' => 'permission:followup.manage']);
 
-        // Sequences – AJAX toggle / delete
+        // Sequences – AJAX toggle / delete / clone-from-upstream
         $routes->post('sequences/toggle/(:num)', '\\Clergy\\Controllers\\FollowupWorkflow::toggleSequence/$1', ['filter' => 'permission:followup.manage']);
+        $routes->post('sequences/set-default/(:num)', '\\Clergy\\Controllers\\FollowupWorkflow::setDefaultSequence/$1', ['filter' => 'permission:followup.manage']);
         $routes->post('sequences/delete/(:num)', '\\Clergy\\Controllers\\FollowupWorkflow::deleteSequence/$1', ['filter' => 'permission:followup.manage']);
+        $routes->post('sequences/clone/(:num)', '\\Clergy\\Controllers\\FollowupWorkflow::cloneSequence/$1', ['filter' => 'permission:followup.manage']);
 
         // Actions – AJAX save (create = id 0, update = id > 0) and delete
         $routes->post('actions/save', '\\Clergy\\Controllers\\FollowupWorkflow::saveAction/0', ['filter' => 'permission:followup.manage']);

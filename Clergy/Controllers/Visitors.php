@@ -263,7 +263,14 @@ class Visitors extends BaseController
                 ],
             ]);
 
-            return redirect()->to('/visitors/view/' . $personId)->with('success', lang('Visitors.visitorCreateSuccess'));
+            $session = session();
+            $session->setFlashdata('success', lang('Visitors.visitorCreateSuccess'));
+
+            if (!(new \App\Services\FollowupSequenceService())->hasDefaultForParish($parishId)) {
+                $session->setFlashdata('warning', lang('Visitors.noDefaultFollowupSequence'));
+            }
+
+            return redirect()->to('/visitors/view/' . $personId);
         }
 
         return redirect()->back()->withInput()->with('error', lang('Visitors.visitorCreateFailed'));
@@ -518,26 +525,49 @@ class Visitors extends BaseController
             ], 422);
         }
 
-        $notes = $this->request->getPost('notes');
-        $ok    = $this->followupLogModel->markExecuted((int) $logId, [
-            'triggered_by' => (int) auth()->id(),
-            'triggered_at' => date('Y-m-d H:i:s'),
-            'notes'        => $notes,
-        ]);
-
-        if ($ok) {
-            $this->audit()->log('visitor.followup.trigger', [
-                'parish_id'   => (int) ($this->getOperationalParishId() ?? 0),
-                'entity_type' => 'followup_log',
-                'entity_id'   => $logId,
-                'new_values'  => ['status' => 'sent', 'triggered_by' => (int) auth()->id()],
-                'meta'        => ['visitor_id' => (int) $log['person_id']],
-            ]);
-
-            return $this->jsonResponse(['success' => true, 'message' => lang('Visitors.followupTriggered')]);
+        $template = null;
+        if (!empty($log['template_id'])) {
+            $template = model('FollowupTemplateModel')->find((int) $log['template_id']);
         }
 
-        return $this->jsonResponse(['success' => false, 'message' => lang('Visitors.followupTriggerFailed')], 500);
+        $visitor = $this->visitorDirectory->findByPerson((int) $log['person_id'], (int) $log['parish_id']);
+        if (!$visitor) {
+            return $this->jsonResponse(['success' => false, 'message' => lang('Visitors.visitorNotFound')], 404);
+        }
+
+        $result = (new \App\Services\FollowupDispatchService())->dispatch($log, is_array($template) ? $template : null, $visitor);
+
+        if (!$result['success'] && empty($result['metadata']['skipped'])) {
+            return $this->jsonResponse([
+                'success' => false,
+                'message' => lang('Visitors.followupTriggerFailed'),
+                'error'   => $result['error'] ?? '',
+            ], 500);
+        }
+
+        $notes = $this->request->getPost('notes');
+
+        if (!empty($result['metadata']['skipped'])) {
+            $this->followupLogModel->markSkipped((int) $logId, array_merge(
+                $result['metadata'],
+                ['triggered_by' => (int) auth()->id(), 'notes' => $notes]
+            ));
+        } else {
+            $this->followupLogModel->markExecuted((int) $logId, array_merge(
+                $result['metadata'],
+                ['triggered_by' => (int) auth()->id(), 'triggered_at' => date('Y-m-d H:i:s'), 'notes' => $notes]
+            ));
+        }
+
+        $this->audit()->log('visitor.followup.trigger', [
+            'parish_id'   => (int) ($this->getOperationalParishId() ?? 0),
+            'entity_type' => 'followup_log',
+            'entity_id'   => $logId,
+            'new_values'  => ['status' => 'sent', 'triggered_by' => (int) auth()->id()],
+            'meta'        => ['visitor_id' => (int) $log['person_id'], 'channel' => $log['channel'] ?? ''],
+        ]);
+
+        return $this->jsonResponse(['success' => true, 'message' => lang('Visitors.followupTriggered')]);
     }
 
     /**

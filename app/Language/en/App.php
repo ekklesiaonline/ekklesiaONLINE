@@ -18,6 +18,7 @@ return [
     'navGroups'           => 'Small Groups',
     'navMessages'         => 'Messages',
     'navEmailSettings'    => 'Email Settings',
+    'navFollowupWorkflow' => 'Follow-up Workflows',
     'navServices'         => 'Services',
     'navAttendance'       => 'Attendance',
     'navVisitors'           => 'Visitors',

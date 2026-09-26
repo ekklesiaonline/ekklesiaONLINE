@@ -121,7 +121,7 @@ class VisitorFollowupService
     public function timelineForPerson(int $personId): array
     {
         $rows = $this->db->table('followup_log gfl')
-            ->select('gfl.*, fa.channel, fa.week_number, fa.day_offset, fa.is_automated,
+            ->select('gfl.*, fa.channel, fa.week_number, fa.day_offset,
                       ft.name AS template_name, fs.name AS sequence_name,
                       ct.id AS call_task_id, ct.task_type AS call_task_type, ct.title AS call_task_title,
                       ct.notes AS call_task_notes')

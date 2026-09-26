@@ -108,6 +108,16 @@ HTML;
                                 <?php endif; ?>
                             </div>
                         <?php endforeach; ?>
+                        <?php if (!empty($categoryLinks[$category])): ?>
+                            <hr>
+                            <div class="d-flex flex-wrap gap-2">
+                                <?php foreach ($categoryLinks[$category] as $link): ?>
+                                    <a href="<?= base_url($link['url']) ?>" class="btn btn-sm btn-outline-secondary">
+                                        <i class="bi <?= esc($link['icon'] ?? 'bi-box-arrow-up-right', 'attr') ?> me-1" aria-hidden="true"></i><?= esc($link['label']) ?>
+                                    </a>
+                                <?php endforeach; ?>
+                            </div>
+                        <?php endif; ?>
                     </div>
                 </div>
             </div>

@@ -33,6 +33,14 @@ class SystemSettings extends BaseController
             [
                 'settings' => $settings,
                 'categories' => $this->getCategoryLabels(),
+                // Management links rendered at the bottom of the matching
+                // settings card. Keyed by category slug.
+                'categoryLinks' => [
+                    'visitors' => [
+                        ['url' => 'system/followup-workflow/sequences', 'label' => lang('System.settingsFollowupSequences'), 'icon' => 'bi-diagram-3'],
+                        ['url' => 'system/followup-workflow/templates', 'label' => lang('System.settingsFollowupTemplates'), 'icon' => 'bi-file-text'],
+                    ],
+                ],
             ]
         ));
     }

@@ -135,6 +135,24 @@ class SendFollowups extends BaseCommand
                         'visitor_name'     => $name,
                     ],
                 ]);
+            } elseif (!empty($result['metadata']['skipped'])) {
+                // Opt-outs are intentional skips, not infrastructure failures.
+                $logModel->markSkipped($logId, $result['metadata']);
+                $counters['skipped']++;
+                $tableRows[] = [$channel, $name, 'skipped — ' . ($result['metadata']['reason'] ?? 'opted_out'), $row['scheduled_date'] ?? ''];
+
+                $audit->log('followup.cron_dispatch_skipped', [
+                    'parish_id'   => (int) ($row['parish_id'] ?? 0),
+                    'entity_type' => 'person',
+                    'entity_id'   => (int) ($row['person_id'] ?? 0),
+                    'meta'        => [
+                        'log_id'         => $logId,
+                        'channel'        => $channel,
+                        'scheduled_date' => $row['scheduled_date'] ?? '',
+                        'visitor_name'     => $name,
+                        'reason'         => $result['metadata']['reason'] ?? 'opted_out',
+                    ],
+                ]);
             } else {
                 $logModel->markFailed($logId, ['error' => $result['error']]);
                 $counters['failed']++;
