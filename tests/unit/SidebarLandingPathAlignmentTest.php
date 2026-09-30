@@ -82,15 +82,30 @@ final class SidebarLandingPathAlignmentTest extends CIUnitTestCase
                 ['member.view', 'service.view', 'attendance.view'],
                 '/parish/worship',
             ],
-            'treasurer' => [
-                ['treasurer'],
+            'finance officer' => [
+                ['finance'],
                 ['finance.view', 'donation.view', 'expense.view'],
                 '/parish/finance',
+            ],
+            'vestry secretary' => [
+                ['vestry_secretary'],
+                ['governance.vestry.view', 'report.view'],
+                '/parish/secretary',
             ],
             'volunteer coordinator' => [
                 ['volunteer_coordinator'],
                 ['volunteer.manage', 'volunteer.schedule', 'volunteer.view'],
                 '/parish/volunteers',
+            ],
+            'followup coordinator' => [
+                ['followup_coordinator'],
+                ['visitor.view', 'followup.view', 'followup.manage'],
+                '/parish/followup',
+            ],
+            'worship coordinator' => [
+                ['worship_coordinator'],
+                ['worship.view', 'worship.manage', 'service.view'],
+                '/parish/worship',
             ],
             'member' => [
                 ['member'],

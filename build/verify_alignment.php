@@ -51,7 +51,7 @@ $SCAN_DIRS = [
     'app/Helpers',
     'app/Views',
     'Pastor',
-    'Diocesan',
+    'Diocese',
     'MemberPortal',
     'Treasurer',
     'Volunteer',

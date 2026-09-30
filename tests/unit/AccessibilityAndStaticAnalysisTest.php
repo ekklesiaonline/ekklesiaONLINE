@@ -246,7 +246,7 @@ final class AccessibilityAndStaticAnalysisTest extends CIUnitTestCase
     {
         $output = [];
         $exitCode = 0;
-        exec(ROOTPATH . 'vendor/bin/phpstan analyse --no-progress 2>&1', $output, $exitCode);
+        exec(ROOTPATH . 'vendor/bin/phpstan analyse --no-progress --debug --memory-limit=512M 2>&1', $output, $exitCode);
 
         $combined = implode("\n", $output);
 

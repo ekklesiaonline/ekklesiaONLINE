@@ -19,7 +19,7 @@ class ApiRateLimitFilter implements FilterInterface
      */
     private array $pathLimits = [
         '#^attendance/(mark|bulk-mark)$#' => 40,
-        '#^diocesan/registrations/#' => 20,
+        '#^(diocese/registrations|registrations)/#' => 20,
         '#^members/(store|update|delete|transfer|reassign|attach-parish|detach-parish|set-home-parish)#' => 30,
         '#^members/province-staff/(store|update|delete)#' => 20,
         '#^guests/(store|update|delete)#' => 30,

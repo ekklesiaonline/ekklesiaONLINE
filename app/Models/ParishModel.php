@@ -241,7 +241,7 @@ class ParishModel extends Model
      */
     public function getParishStaff(int $parishId): array
     {
-        $staffRoles = ['parishadmin', 'clergy', 'treasurer', 'volunteer_coordinator'];
+        $staffRoles = ['parishadmin', 'clergy', 'finance', 'vestry_secretary', 'volunteer_coordinator', 'followup_coordinator', 'worship_coordinator'];
 
         $rows = $this->db->table('profile p')
             ->select('p.user_id, COALESCE(p.nickname, p.first_name) AS first_name, p.last_name, p.phone, ai.secret as email, agu.group as role')

@@ -60,10 +60,11 @@ class Banking extends BaseController
             return $redirect;
         }
 
-        $parishId = (int) ($this->getOperationalParishId() ?? 0);
-        if ($parishId <= 0) {
-            return redirect()->to('/dashboard')->with('error', lang('Treasurer.noParishForBudgeting'));
+        if ($redirect = $this->requireParish()) {
+            return $redirect;
         }
+
+        $parishId = (int) ($this->getOperationalParishId() ?? 0);
 
         $rules = [
             'name'                  => 'required|max_length[150]',
@@ -146,6 +147,10 @@ class Banking extends BaseController
             return $redirect;
         }
 
+        if ($redirect = $this->requireParish()) {
+            return $redirect;
+        }
+
         $parishId = (int) ($this->getOperationalParishId() ?? 0);
         $account = $this->banking->accountForParish((int) $accountId, $parishId);
 
@@ -191,6 +196,10 @@ class Banking extends BaseController
     public function startReconciliation($accountId)
     {
         if ($redirect = $this->requirePermission('finance.manage')) {
+            return $redirect;
+        }
+
+        if ($redirect = $this->requireParish()) {
             return $redirect;
         }
 
@@ -274,6 +283,10 @@ class Banking extends BaseController
             return $redirect;
         }
 
+        if ($redirect = $this->requireParish()) {
+            return $redirect;
+        }
+
         $parishId = (int) ($this->getOperationalParishId() ?? 0);
         $recon = $this->banking->reconciliationForParish((int) $id, $parishId);
 
@@ -301,6 +314,10 @@ class Banking extends BaseController
     public function closeReconciliation($id)
     {
         if ($redirect = $this->requirePermission('finance.manage')) {
+            return $redirect;
+        }
+
+        if ($redirect = $this->requireParish()) {
             return $redirect;
         }
 

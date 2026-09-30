@@ -138,11 +138,16 @@ class Members extends BaseController
                 'dioceses_in_province' => $diocesesInProvince,
                 'staff_roles' => [
                     'provinceadmin'        => 'Province Admin',
-                    'diocesanadmin'        => 'Diocesan Admin',
+                    'dioceseadmin'         => 'Diocesan Admin',
                     'parishadmin'          => 'Parish Admin',
                     'clergy'               => 'Clergy',
-                    'treasurer'            => 'Treasurer',
+                    'finance'              => 'Finance Officer',
+                    'vestry_secretary'     => 'Vestry Secretary',
                     'volunteer_coordinator' => 'Volunteer Coordinator',
+                    'followup_coordinator' => 'Follow-up Coordinator',
+                    'followup_volunteer'   => 'Follow-up Volunteer',
+                    'worship_coordinator'  => 'Worship Coordinator',
+                    'worship_volunteer'    => 'Worship Volunteer',
                     'member'               => 'Member',
                 ],
                 'isProvinceAdmin'  => true,
@@ -434,9 +439,9 @@ class Members extends BaseController
         if ($this->isProvinceAdmin()) {
             $roles = ['clergy'];
         } elseif ($this->isDioceseAdmin()) {
-            $roles = ['clergy', 'treasurer', 'volunteer_coordinator', 'member'];
+            $roles = ['clergy', 'finance', 'vestry_secretary', 'volunteer_coordinator', 'followup_coordinator', 'worship_coordinator', 'member'];
         } elseif ($this->user && $this->user->inGroup('parishadmin')) {
-            $roles = ['clergy', 'treasurer', 'volunteer_coordinator', 'member'];
+            $roles = ['clergy', 'finance', 'vestry_secretary', 'volunteer_coordinator', 'followup_coordinator', 'followup_volunteer', 'worship_coordinator', 'worship_volunteer', 'member'];
         }
 
         if (isset($cacheKey)) {

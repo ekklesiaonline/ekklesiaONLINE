@@ -45,12 +45,14 @@ class AuthGroups extends ShieldAuthGroups
     public const DIOCESE_ADMIN = 'dioceseadmin';
     public const PARISH_ADMIN = 'parishadmin';
     public const CLERGY = 'clergy';
-    public const TREASURER = 'treasurer';
+    public const FINANCE = 'finance';
     public const VOLUNTEER_COORDINATOR = 'volunteer_coordinator';
     public const VESTRY_MEMBER = 'vestry_member';
     public const WARDEN = 'warden';
-    public const CLERK = 'clerk';
-    public const SECRETARY = 'secretary';
+    public const VESTRY_SECRETARY = 'vestry_secretary';
+    public const FOLLOWUP_COORDINATOR = 'followup_coordinator';
+    public const WORSHIP_COORDINATOR = 'worship_coordinator';
+    public const WORSHIP_VOLUNTEER = 'worship_volunteer';
     public const MEMBER = 'member';
 
     public array $groups = [
@@ -74,9 +76,9 @@ class AuthGroups extends ShieldAuthGroups
             'title'       => 'Clergy',
             'description' => 'View members, mark attendance, view financial summaries.',
         ],
-        'treasurer' => [
-            'title'       => 'Treasurer',
-            'description' => 'Manage parish finances (donations, expenses, reports).',
+        'finance' => [
+            'title'       => 'Finance Officer',
+            'description' => 'Parish finance management (donations, expenses, budget, reports).',
         ],
         'volunteer_coordinator' => [
             'title'       => 'Volunteer Coordinator',
@@ -90,17 +92,25 @@ class AuthGroups extends ShieldAuthGroups
             'title'       => 'Warden',
             'description' => 'Vestry governance with report approval authority.',
         ],
-        'clerk' => [
-            'title'       => 'Clerk',
-            'description' => 'Vestry governance with report certification authority.',
+        'vestry_secretary' => [
+            'title'       => 'Vestry Secretary',
+            'description' => 'Manage vestry governance records, meetings, motions, and certify reports.',
         ],
-        'secretary' => [
-            'title'       => 'Secretary',
-            'description' => 'Manage vestry governance records, view and export reports.',
+        'followup_coordinator' => [
+            'title'       => 'Follow-up Coordinator',
+            'description' => 'Manage follow-up workflows, assign sequences, and lead the follow-up volunteer team.',
         ],
         'followup_volunteer' => [
             'title'       => 'Follow-up Volunteer',
             'description' => 'Read-only access to follow-up workflow and call queue.',
+        ],
+        'worship_coordinator' => [
+            'title'       => 'Worship Coordinator',
+            'description' => 'Manage worship plans, song library, services, and lead the worship volunteer team.',
+        ],
+        'worship_volunteer' => [
+            'title'       => 'Worship Volunteer',
+            'description' => 'View worship plans and service schedules.',
         ],
         'member' => [
             'title'       => 'Member',
@@ -169,6 +179,7 @@ class AuthGroups extends ShieldAuthGroups
         'visitor.manage'        => 'Create and manage visitors',
         'followup.view'        => 'View follow-up workflows',
         'followup.manage'      => 'Manage follow-up workflows',
+        'followup.team.manage' => 'Assign users to the follow-up volunteer team',
 
         // Finance
         'finance.view'          => 'View financial reports',
@@ -212,6 +223,7 @@ class AuthGroups extends ShieldAuthGroups
         'worship.song'          => 'Manage worship songs',
         'worship.plan'          => 'Plan worship services',
         'worship.report'        => 'View worship reports',
+        'worship.team.manage'   => 'Assign users to the worship volunteer team',
 
         // Reporting & Dashboard
         'report.view'          => 'View reports',
@@ -443,7 +455,7 @@ class AuthGroups extends ShieldAuthGroups
             'governance.vestry.view',
             'governance.report.finalize_clergy',
         ],
-        'treasurer' => [
+        'finance' => [
             'member.view',
             'finance.view',
             'finance.manage',
@@ -483,19 +495,10 @@ class AuthGroups extends ShieldAuthGroups
             'member.view',
             'dashboard.view',
         ],
-        'clerk' => [
-            'governance.vestry.view',
-            'governance.report.certify_clerk',
-            'vestry.meeting.view',
-            'vestry.motion.view',
-            'vestry.motion.vote',
-            'member.view',
-            'dashboard.view',
-            'report.view',
-        ],
-        'secretary' => [
+        'vestry_secretary' => [
             'governance.vestry.view',
             'governance.vestry.manage',
+            'governance.report.certify_clerk',
             'vestry.meeting.view',
             'vestry.meeting.create',
             'vestry.meeting.edit',
@@ -508,9 +511,40 @@ class AuthGroups extends ShieldAuthGroups
             'report.view',
             'report.export',
         ],
+        'followup_coordinator' => [
+            'visitor.view',
+            'visitor.create',
+            'visitor.edit',
+            'followup.view',
+            'followup.manage',
+            'followup.team.manage',
+            'dashboard.view',
+        ],
         'followup_volunteer' => [
             'visitor.view',
             'followup.view',
+            'dashboard.view',
+        ],
+        'worship_coordinator' => [
+            'worship.view',
+            'worship.manage',
+            'worship.song',
+            'worship.plan',
+            'worship.report',
+            'worship.team.manage',
+            'service.view',
+            'service.create',
+            'service.edit',
+            'attendance.view',
+            'event.view',
+            'event.register',
+            'member.view',
+            'dashboard.view',
+        ],
+        'worship_volunteer' => [
+            'worship.view',
+            'service.view',
+            'attendance.view',
             'dashboard.view',
         ],
         'member' => [

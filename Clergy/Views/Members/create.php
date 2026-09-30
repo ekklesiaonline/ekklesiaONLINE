@@ -69,11 +69,17 @@
                             $roleLabels = [
                                 'provinceadmin' => lang('Dashboard.roleProvinceAdmin'),
                                 'diocesanadmin' => lang('Dashboard.roleDiocesanAdmin'),
-                                'parishadmin' => lang('Dashboard.roleParishAdmin'),
-                                'clergy' => lang('Dashboard.rolePastor'),
-                                'treasurer' => lang('Dashboard.roleTreasurer'),
+                                'dioceseadmin'  => lang('Dashboard.roleDioceseAdmin'),
+                                'parishadmin'   => lang('Dashboard.roleParishAdmin'),
+                                'clergy'        => lang('Dashboard.rolePastor'),
+                                'finance'       => lang('Dashboard.roleFinance'),
+                                'vestry_secretary' => lang('Dashboard.roleVestrySecretary'),
                                 'volunteer_coordinator' => lang('Dashboard.roleVolunteerCoordinator'),
-                                'member' => lang('Dashboard.roleMember'),
+                                'followup_coordinator' => lang('Dashboard.roleFollowupCoordinator'),
+                                'followup_volunteer'   => lang('Dashboard.roleFollowupVolunteer'),
+                                'worship_coordinator'  => lang('Dashboard.roleWorshipCoordinator'),
+                                'worship_volunteer'    => lang('Dashboard.roleWorshipVolunteer'),
+                                'member'        => lang('Dashboard.roleMember'),
                             ];
                             ?>
                             <?php foreach (($allowedRoles ?? []) as $role): ?>

@@ -50,7 +50,7 @@ final class PermissionRoleSyncSeederTest extends CIUnitTestCase
     public function testSeederGrantsExpectedPermissionToRoleUsers(): void
     {
         $this->db->table('users')->insert([
-            'username' => 'treasurer.user',
+            'username' => 'finance.user',
             'active' => 1,
             'created_at' => date('Y-m-d H:i:s'),
             'updated_at' => date('Y-m-d H:i:s'),
@@ -59,7 +59,7 @@ final class PermissionRoleSyncSeederTest extends CIUnitTestCase
 
         $this->db->table('auth_groups_users')->insert([
             'user_id' => $userId,
-            'group' => 'treasurer',
+            'group' => 'finance',
             'created_at' => date('Y-m-d H:i:s'),
         ]);
 
@@ -75,7 +75,7 @@ final class PermissionRoleSyncSeederTest extends CIUnitTestCase
         // and user-role source rows exist for grant calculation.
         $roleRows = (int) $this->db->table('auth_groups_users')
             ->where('user_id', $userId)
-            ->where('group', 'treasurer')
+            ->where('group', 'finance')
             ->countAllResults();
 
         $this->assertGreaterThan(0, $roleRows);

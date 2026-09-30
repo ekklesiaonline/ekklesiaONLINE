@@ -62,14 +62,14 @@ final class DashboardScopeResolverTest extends CIUnitTestCase
                 'parish',
                 '/parish/dashboard',
             ],
-            'treasurer' => [
-                ['treasurer'],
+            'finance officer' => [
+                ['finance'],
                 ['finance.view'],
                 'parish',
                 '/parish/finance',
             ],
-            'secretary' => [
-                ['secretary'],
+            'vestry secretary' => [
+                ['vestry_secretary'],
                 ['report.view'],
                 'parish',
                 '/parish/secretary',
@@ -86,12 +86,6 @@ final class DashboardScopeResolverTest extends CIUnitTestCase
                 'parish',
                 '/parish/governance',
             ],
-            'clerk' => [
-                ['clerk'],
-                ['governance.vestry.view'],
-                'parish',
-                '/parish/governance',
-            ],
             'clergy' => [
                 ['clergy'],
                 ['service.view'],
@@ -103,6 +97,18 @@ final class DashboardScopeResolverTest extends CIUnitTestCase
                 ['volunteer.view'],
                 'parish',
                 '/parish/volunteers',
+            ],
+            'followup coordinator' => [
+                ['followup_coordinator'],
+                ['followup.manage'],
+                'parish',
+                '/parish/followup',
+            ],
+            'worship coordinator' => [
+                ['worship_coordinator'],
+                ['worship.view'],
+                'parish',
+                '/parish/worship',
             ],
             'member' => [
                 ['member'],

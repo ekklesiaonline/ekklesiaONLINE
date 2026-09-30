@@ -50,7 +50,7 @@ class DioceseParishAdmins extends BaseController
             ->get()
             ->getResultArray();
 
-        return view('Diocesan\Views\parish_admins', array_merge(
+        return view('Diocese\Views\parish_admins', array_merge(
             $this->getCommonViewData(lang('System.sectionParishAdmins')),
             [
                 'admins' => $admins,

@@ -62,7 +62,7 @@ $currentPeriodLabel = $periodLabels[$current_period] ?? $current_period;
     </div>
     <div id="financeFilterPanel" class="collapse <?= $current_period === 'custom' ? 'show' : '' ?>">
         <div class="card-body border-top filter-panel-body">
-            <form method="GET" action="<?= base_url('diocesan/finance') ?>" class="row g-3">
+            <form method="GET" action="<?= base_url('diocese/finance') ?>" class="row g-3">
                 <div class="col-md-3">
                     <label class="form-label"><?= lang('Dashboard.timePeriod') ?></label>
                     <select name="period" class="form-select" id="periodSelect">

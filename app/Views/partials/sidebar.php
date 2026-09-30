@@ -14,13 +14,15 @@
         ?>
         <?php
         $isParishAdminSidebar = auth()->user()->inGroup('parishadmin');
-        $isTreasurerSidebar = auth()->user()->inGroup('treasurer');
+        $isFinanceSidebar = auth()->user()->inGroup('finance');
         $isClergySidebar = auth()->user()->inGroup('clergy');
         $isVolunteerCoordSidebar = auth()->user()->inGroup('volunteer_coordinator');
-        $isSecretarySidebar = auth()->user()->inGroup('secretary');
-        $isVestrySidebar = auth()->user()->inGroup('vestry_member', 'warden', 'clerk');
+        $isVestrySecretarySidebar = auth()->user()->inGroup('vestry_secretary');
+        $isVestrySidebar = auth()->user()->inGroup('vestry_member', 'warden');
+        $isFollowupCoordSidebar = auth()->user()->inGroup('followup_coordinator');
+        $isWorshipCoordSidebar = auth()->user()->inGroup('worship_coordinator');
         $isParishTier = !$isSystemAdminSidebar && !$isProvinceAdminSidebar && !$isDioceseAdminSidebar
-            && ($isParishAdminSidebar || $isTreasurerSidebar || $isClergySidebar || $isVolunteerCoordSidebar || $isSecretarySidebar || $isVestrySidebar);
+            && ($isParishAdminSidebar || $isFinanceSidebar || $isClergySidebar || $isVolunteerCoordSidebar || $isVestrySecretarySidebar || $isVestrySidebar || $isFollowupCoordSidebar || $isWorshipCoordSidebar);
 
         $dashboardHref = 'me';
         $dashboardActive = (uri_string() == 'me');
@@ -36,10 +38,10 @@
         } elseif ($isParishAdminSidebar) {
             $dashboardHref = 'parish/dashboard';
             $dashboardActive = (uri_string() == 'parish/dashboard');
-        } elseif ($isTreasurerSidebar) {
+        } elseif ($isFinanceSidebar) {
             $dashboardHref = 'parish/finance';
             $dashboardActive = (uri_string() == 'parish/finance');
-        } elseif ($isSecretarySidebar) {
+        } elseif ($isVestrySecretarySidebar) {
             $dashboardHref = 'parish/secretary';
             $dashboardActive = (uri_string() == 'parish/secretary');
         } elseif ($isVestrySidebar) {
@@ -48,6 +50,12 @@
         } elseif ($isClergySidebar) {
             $dashboardHref = 'parish/worship';
             $dashboardActive = (uri_string() == 'parish/worship');
+        } elseif ($isWorshipCoordSidebar) {
+            $dashboardHref = 'parish/worship';
+            $dashboardActive = (uri_string() == 'parish/worship');
+        } elseif ($isFollowupCoordSidebar) {
+            $dashboardHref = 'parish/followup';
+            $dashboardActive = (uri_string() == 'parish/followup');
         } elseif ($isVolunteerCoordSidebar) {
             $dashboardHref = 'parish/volunteers';
             $dashboardActive = (uri_string() == 'parish/volunteers');
@@ -68,7 +76,7 @@
                 </li>
             <?php endif; ?>
 
-            <?php if ($isParishTier && $isParishAdminSidebar && !$isTreasurerSidebar && !$isClergySidebar): ?>
+            <?php if ($isParishTier && $isParishAdminSidebar && !$isFinanceSidebar && !$isClergySidebar): ?>
                 <li class="nav-item">
                     <a class="nav-link <?= (uri_string() == 'parish/finance') ? 'active' : '' ?>" href="<?= base_url('parish/finance') ?>">
                         <i class="bi bi-cash-coin" aria-hidden="true"></i> <?= lang('Dashboard.parishFinanceDashboard') ?>
@@ -198,6 +206,11 @@
                 <li class="nav-item">
                     <a class="nav-link <?= (str_starts_with(uri_string(), 'chart-accounts')) ? 'active' : '' ?>" href="<?= base_url('chart-accounts') ?>">
                         <i class="bi bi-diagram-3" aria-hidden="true"></i> <?= lang('App.navChartOfAccounts') ?>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link <?= (str_starts_with(uri_string(), 'diocese/finance')) ? 'active' : '' ?>" href="<?= base_url('diocese/finance') ?>">
+                        <i class="bi bi-cash-coin" aria-hidden="true"></i> <?= lang('App.navFinance') ?>
                     </a>
                 </li>
                 <li class="nav-item">

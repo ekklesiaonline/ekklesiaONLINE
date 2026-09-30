@@ -52,7 +52,7 @@ class DioceseAdminUsers extends BaseController
         $primaryModel = model('DioceseAdminPrimaryModel');
         $primary = $primaryModel->getByDiocese($scope['diocese_id']);
 
-        return view('Diocesan\Views\admin_users', array_merge(
+        return view('Diocese\Views\admin_users', array_merge(
             $this->getCommonViewData(lang('System.sectionDioceseAdmins')),
             [
                 'admins' => $admins,

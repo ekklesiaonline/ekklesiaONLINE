@@ -34,8 +34,8 @@ class SendFollowups extends BaseCommand
 
     public function run(array $params): void
     {
-        $parishOption = CLI::getOption('parish');
-        $isDryRun     = CLI::getOption('dry-run') !== null;
+        $parishOption = $params['parish'] ?? CLI::getOption('parish');
+        $isDryRun     = array_key_exists('dry-run', $params) || CLI::getOption('dry-run') !== null;
         $parishId     = ($parishOption !== null && $parishOption !== false)
             ? (int) $parishOption
             : null;

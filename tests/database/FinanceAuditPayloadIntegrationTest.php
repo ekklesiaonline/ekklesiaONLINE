@@ -238,7 +238,7 @@ final class FinanceAuditPayloadIntegrationTest extends CIUnitTestCase
 
             public function inGroup(string ...$groups): bool
             {
-                return in_array('treasurer', $groups, true);
+                return in_array('finance', $groups, true);
             }
         };
 

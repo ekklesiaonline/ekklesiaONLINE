@@ -277,7 +277,7 @@ $mailingDiffersOffUrl = base_url('parish_list?' . http_build_query($chipParams))
                                         </button>
                                         <ul class="dropdown-menu dropdown-menu-end shadow-sm">
                                             <li>
-                                                <a class="dropdown-item" href="<?= base_url('dashboard/switch/' . $parish['id']) ?>">
+                                                <a class="dropdown-item" href="<?= base_url('diocese/dashboard/switch/' . $parish['id']) ?>">
                                                     <i class="bi bi-arrow-repeat me-2" aria-hidden="true"></i><?= lang('Parishes.btn_switch') ?>
                                                 </a>
                                             </li>

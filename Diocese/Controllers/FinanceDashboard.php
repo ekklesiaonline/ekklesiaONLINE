@@ -58,7 +58,7 @@ class FinanceDashboard extends BaseController
         // Use centralized resolution with fallback to operational parish diocese.
         $scopeDioceseId = $this->resolveDiocesanScopeId();
         if ($scopeDioceseId <= 0) {
-            return redirect()->to('/dashboard')->with('error', lang('Diocesan.accountDiocesanScopeFailed'));
+            return redirect()->to('/diocese/dashboard')->with('error', lang('Diocesan.accountDiocesanScopeFailed'));
         }
 
         $allParishes = $parishModel->where('diocese_id', $scopeDioceseId)->orderBy('name', 'ASC')->findAll();

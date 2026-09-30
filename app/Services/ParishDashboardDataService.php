@@ -15,6 +15,9 @@ class ParishDashboardDataService
     /**
      * Assemble all parish-level dashboard data for a given parish.
      *
+     * @param int       $parishId                  Operational parish ID.
+     * @param int|null  $userId                    Optional user ID (reserved for future user-scoped widgets).
+     * @param bool      $canModerateRegistrations  Whether to include pending registrations count.
      * @return array{
      *   people_metrics: array<string, mixed>,
      *   status_counts: array<int, array<string, mixed>>,

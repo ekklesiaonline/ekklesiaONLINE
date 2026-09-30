@@ -83,38 +83,56 @@ final class SidebarRoleVisibilityTest extends CIUnitTestCase
             'diocesan admin' => [
                 ['dioceseadmin'],
                 ['diocese.admin', 'member.view', 'service.view', 'parishes.edit'],
-                ['diocese/dashboard', 'chart-accounts', 'liturgical-source', 'admin/audit-logs', 'parish_list'],
-                ['province/dashboard', 'diocesan/dashboard', 'dioceses', 'volunteers', 'worship-planning', 'diocesan/finance', 'members', 'donations', 'expenses', 'budgets', 'pledges', 'reports'],
+                ['diocese/dashboard', 'diocese/finance', 'chart-accounts', 'liturgical-source', 'admin/audit-logs', 'parish_list'],
+                ['province/dashboard', 'dioceses', 'volunteers', 'worship-planning', 'members', 'donations', 'expenses', 'budgets', 'pledges', 'reports'],
             ],
             'parish admin' => [
                 ['parishadmin'],
                 ['member.view', 'family.view', 'service.view', 'attendance.view', 'visitor.view', 'visitor.edit', 'member.edit', 'followup.manage', 'finance.view', 'volunteer.manage', 'volunteer.schedule', 'event.view', 'worship.view', 'report.view', 'dashboard.view'],
                 ['parish/dashboard', 'me', 'members', 'families', 'services', 'attendance/reports', 'visitors/dashboard', 'leadership', 'standing', 'donations', 'expenses', 'budgets', 'volunteers', 'volunteers/schedules', 'events', 'worship-planning', 'reports', 'admin/audit-logs'],
-                ['province/dashboard', 'diocesan/dashboard', 'dioceses', 'liturgical-source', 'parish_list', 'dashboard'],
+                ['province/dashboard', 'diocese/finance', 'dioceses', 'liturgical-source', 'parish_list', 'dashboard'],
             ],
             'clergy' => [
                 ['clergy'],
                 ['member.view', 'family.view', 'service.view', 'attendance.view', 'visitor.view', 'followup.manage', 'event.view', 'worship.view', 'report.view'],
                 ['parish/worship', 'me', 'members', 'families', 'services', 'attendance/reports', 'visitors/dashboard', 'events', 'worship-planning', 'reports'],
-                ['donations', 'volunteers/schedules', 'admin/audit-logs', 'diocesan/dashboard', 'dioceses', 'province/dashboard', 'dashboard'],
+                ['donations', 'volunteers/schedules', 'admin/audit-logs', 'diocese/finance', 'dioceses', 'province/dashboard', 'dashboard'],
             ],
-            'treasurer' => [
-                ['treasurer'],
+            'finance officer' => [
+                ['finance'],
                 ['member.view', 'finance.view', 'finance.manage', 'donation.view', 'expense.view', 'report.view'],
                 ['parish/finance', 'me', 'members', 'donations', 'expenses', 'budgets', 'pledges', 'reports'],
-                ['followup', 'volunteers/schedules', 'worship-planning', 'diocesan/dashboard', 'dioceses', 'province/dashboard', 'dashboard'],
+                ['followup', 'volunteers/schedules', 'worship-planning', 'diocese/finance', 'dioceses', 'province/dashboard', 'dashboard'],
+            ],
+            'vestry secretary' => [
+                ['vestry_secretary'],
+                ['governance.vestry.view', 'governance.vestry.manage', 'governance.report.certify_clerk', 'report.view', 'report.export'],
+                ['parish/secretary', 'me', 'reports'],
+                ['donations', 'volunteers/schedules', 'diocese/finance', 'dioceses', 'province/dashboard', 'dashboard'],
             ],
             'volunteer coordinator' => [
                 ['volunteer_coordinator'],
                 ['volunteer.manage', 'volunteer.schedule', 'service.view', 'event.view', 'worship.view', 'volunteer.view'],
                 ['parish/volunteers', 'me', 'services', 'volunteers', 'volunteers/schedules', 'events', 'worship-planning'],
-                ['donations', 'admin/audit-logs', 'diocesan/dashboard', 'dioceses', 'province/dashboard', 'dashboard'],
+                ['donations', 'admin/audit-logs', 'diocese/finance', 'dioceses', 'province/dashboard', 'dashboard'],
+            ],
+            'followup coordinator' => [
+                ['followup_coordinator'],
+                ['visitor.view', 'followup.view', 'followup.manage'],
+                ['parish/followup', 'me', 'visitors/dashboard'],
+                ['donations', 'volunteers/schedules', 'diocese/finance', 'dioceses', 'province/dashboard', 'dashboard'],
+            ],
+            'worship coordinator' => [
+                ['worship_coordinator'],
+                ['worship.view', 'worship.manage', 'service.view', 'attendance.view'],
+                ['parish/worship', 'me', 'services', 'worship-planning'],
+                ['donations', 'volunteers/schedules', 'diocese/finance', 'dioceses', 'province/dashboard', 'dashboard'],
             ],
             'member' => [
                 ['member'],
                 ['dashboard.view'],
                 ['me', 'profile', 'logout'],
-                ['members', 'services', 'donations', 'volunteers', 'events', 'admin/audit-logs', 'diocesan/dashboard', 'dioceses', 'province/dashboard', 'dashboard'],
+                ['members', 'services', 'donations', 'volunteers', 'events', 'admin/audit-logs', 'diocese/finance', 'dioceses', 'province/dashboard', 'dashboard'],
             ],
         ];
     }

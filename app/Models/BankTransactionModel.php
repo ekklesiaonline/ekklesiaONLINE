@@ -36,8 +36,8 @@ class BankTransactionModel extends Model
     ];
 
     protected array $casts = [
-        'bank_account_id' => 'int',
-        'amount'          => 'float',
+        'bank_account_id' => '?int',
+        'amount'          => '?float',
     ];
 
     /**

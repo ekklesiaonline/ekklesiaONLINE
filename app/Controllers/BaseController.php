@@ -193,14 +193,16 @@ abstract class BaseController extends Controller
             'provinceadmin',
             'dioceseadmin',
             'parishadmin',
-            'treasurer',
-            'secretary',
+            'finance',
+            'vestry_secretary',
             'warden',
-            'clerk',
             'vestry_member',
             'clergy',
             'volunteer_coordinator',
+            'followup_coordinator',
+            'worship_coordinator',
             'followup_volunteer',
+            'worship_volunteer',
             'member',
         ];
 
@@ -1009,19 +1011,19 @@ abstract class BaseController extends Controller
             return ['tier' => 'parish', 'scope_id' => $this->getOperationalParishId() ?: null, 'role' => 'parishadmin', 'route' => '/parish/dashboard'];
         }
 
-        // Tier 4: Parish — treasurer (finance-focused)
-        if ($user->inGroup('treasurer')) {
-            return ['tier' => 'parish', 'scope_id' => $this->getOperationalParishId() ?: null, 'role' => 'treasurer', 'route' => '/parish/finance'];
+        // Tier 4: Parish — finance officer
+        if ($user->inGroup('finance')) {
+            return ['tier' => 'parish', 'scope_id' => $this->getOperationalParishId() ?: null, 'role' => 'finance', 'route' => '/parish/finance'];
         }
 
-        // Tier 4: Parish — secretary
-        if ($user->inGroup('secretary')) {
-            return ['tier' => 'parish', 'scope_id' => $this->getOperationalParishId() ?: null, 'role' => 'secretary', 'route' => '/parish/secretary'];
+        // Tier 4: Parish — vestry secretary
+        if ($user->inGroup('vestry_secretary')) {
+            return ['tier' => 'parish', 'scope_id' => $this->getOperationalParishId() ?: null, 'role' => 'vestry_secretary', 'route' => '/parish/secretary'];
         }
 
         // Tier 4: Parish — vestry governance roles
-        if ($user->inGroup('vestry_member', 'warden', 'clerk')) {
-            $role = $user->inGroup('warden') ? 'warden' : ($user->inGroup('clerk') ? 'clerk' : 'vestry_member');
+        if ($user->inGroup('vestry_member', 'warden')) {
+            $role = $user->inGroup('warden') ? 'warden' : 'vestry_member';
             return ['tier' => 'parish', 'scope_id' => $this->getOperationalParishId() ?: null, 'role' => $role, 'route' => '/parish/governance'];
         }
 
@@ -1035,8 +1037,18 @@ abstract class BaseController extends Controller
             return ['tier' => 'parish', 'scope_id' => $this->getOperationalParishId() ?: null, 'role' => 'volunteer_coordinator', 'route' => '/parish/volunteers'];
         }
 
-        // Tier 5: Personal — plain member or legacy group with dashboard access
-        if ($user->inGroup('member') || $user->can('dashboard.view')) {
+        // Tier 4: Parish — followup coordinator
+        if ($user->inGroup('followup_coordinator')) {
+            return ['tier' => 'parish', 'scope_id' => $this->getOperationalParishId() ?: null, 'role' => 'followup_coordinator', 'route' => '/parish/followup'];
+        }
+
+        // Tier 4: Parish — worship coordinator
+        if ($user->inGroup('worship_coordinator')) {
+            return ['tier' => 'parish', 'scope_id' => $this->getOperationalParishId() ?: null, 'role' => 'worship_coordinator', 'route' => '/parish/worship'];
+        }
+
+        // Tier 5: Personal — followup/worship volunteers and plain members
+        if ($user->inGroup('followup_volunteer', 'worship_volunteer', 'member') || $user->can('dashboard.view')) {
             return ['tier' => 'personal', 'scope_id' => null, 'role' => 'member', 'route' => '/me'];
         }
 
@@ -1060,12 +1072,15 @@ abstract class BaseController extends Controller
         if ($user->inGroup(
             'parishadmin',
             'clergy',
-            'treasurer',
-            'secretary',
+            'finance',
+            'vestry_secretary',
             'vestry_member',
             'warden',
-            'clerk',
             'volunteer_coordinator',
+            'followup_coordinator',
+            'followup_volunteer',
+            'worship_coordinator',
+            'worship_volunteer',
             'member'
         )) {
             return true;
@@ -1106,12 +1121,15 @@ abstract class BaseController extends Controller
             'dioceseadmin',
             'parishadmin',
             'clergy',
-            'treasurer',
-            'secretary',
+            'finance',
+            'vestry_secretary',
             'vestry_member',
             'warden',
-            'clerk',
             'volunteer_coordinator',
+            'followup_coordinator',
+            'followup_volunteer',
+            'worship_coordinator',
+            'worship_volunteer',
             'member'
         );
     }
@@ -1123,11 +1141,12 @@ abstract class BaseController extends Controller
             '/diocese/dashboard'    => $user->can('diocese.admin') || $user->inGroup('dioceseadmin'),
             '/system/dashboard'     => $user->can('system.admin') || $user->can('admin.system') || $user->inGroup('systemadmin'),
             '/parish/dashboard'     => $user->inGroup('parishadmin', 'clergy') || $user->can('dashboard.view'),
-            '/parish/finance'       => $user->inGroup('treasurer') || $user->can('finance.view'),
-            '/parish/governance'    => $user->inGroup('vestry_member', 'warden', 'clerk', 'secretary') || $user->can('governance.vestry.view'),
-            '/parish/secretary'     => $user->inGroup('secretary') || $user->can('report.view'),
-            '/parish/worship'       => $user->inGroup('clergy') || $user->can('service.view'),
+            '/parish/finance'       => $user->inGroup('finance') || $user->can('finance.view'),
+            '/parish/governance'    => $user->inGroup('vestry_member', 'warden', 'vestry_secretary') || $user->can('governance.vestry.view'),
+            '/parish/secretary'     => $user->inGroup('vestry_secretary') || $user->can('report.view'),
+            '/parish/worship'       => $user->inGroup('clergy', 'worship_coordinator') || $user->can('service.view'),
             '/parish/volunteers'    => $user->inGroup('volunteer_coordinator') || $user->can('volunteer.view'),
+            '/parish/followup'      => $user->inGroup('followup_coordinator') || $user->can('followup.manage'),
             '/me'                   => $this->canAccessMyDashboard($user),
             '/dashboard'            => $this->canLandOnDashboard($user),
             default                 => false,

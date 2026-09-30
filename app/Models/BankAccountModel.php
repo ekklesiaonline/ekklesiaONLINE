@@ -47,10 +47,12 @@ class BankAccountModel extends BaseTenantModel
      */
     public function accountsWithBalances(int $parishId): array
     {
+        $txnTable = $this->db->prefixTable('bank_transaction');
+
         return $this->db->table('bank_account ba')
             ->select('ba.*, COALESCE(tx.txn_sum, 0) AS txn_sum, COALESCE(tx.txn_count, 0) AS txn_count')
             ->join(
-                '(SELECT bank_account_id, SUM(amount) AS txn_sum, COUNT(*) AS txn_count FROM bank_transaction GROUP BY bank_account_id) tx',
+                "(SELECT bank_account_id, SUM(amount) AS txn_sum, COUNT(*) AS txn_count FROM {$txnTable} GROUP BY bank_account_id) tx",
                 'tx.bank_account_id = ba.id',
                 'left'
             )

@@ -29,14 +29,12 @@ use App\Services\EmailScopeService;
  */
 class FollowupDispatchService
 {
-    private SmsService   $sms;
     private CallTaskModel $callTaskModel;
     private SmsQueueModel $smsQueueModel;
     private VisitorDirectoryService $visitorDirectory;
 
     public function __construct()
     {
-        $this->sms            = new SmsService();
         $this->callTaskModel  = model('CallTaskModel');
         $this->smsQueueModel  = model('SmsQueueModel');
         $this->visitorDirectory = new VisitorDirectoryService();

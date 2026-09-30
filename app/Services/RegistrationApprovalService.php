@@ -29,16 +29,24 @@ class RegistrationApprovalService
         'member',
         'clergy',
         'parishadmin',
-        'treasurer',
+        'finance',
+        'vestry_secretary',
         'volunteer_coordinator',
+        'followup_coordinator',
+        'worship_coordinator',
+        'worship_volunteer',
     ];
 
     private const ALLOWED_ROLES = [
         'member',
         'clergy',
         'parishadmin',
-        'treasurer',
+        'finance',
+        'vestry_secretary',
         'volunteer_coordinator',
+        'followup_coordinator',
+        'worship_coordinator',
+        'worship_volunteer',
     ];
 
     private BaseConnection $db;

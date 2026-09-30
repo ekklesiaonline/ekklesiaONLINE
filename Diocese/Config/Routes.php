@@ -26,6 +26,7 @@ $routes->group('', ['filter' => 'session'], function ($routes) {
         $routes->get('dashboard/recent-activity', '\\Diocese\\Controllers\\Dashboard::recentActivity');
         $routes->get('dashboard/switch/(:num)', '\\Diocese\\Controllers\\Dashboard::switchParish/$1');
         $routes->get('attendance-period-breakdown', '\\Diocese\\Controllers\\Dashboard::attendancePeriodBreakdown');
+        $routes->get('finance', '\\Diocese\\Controllers\\FinanceDashboard::index');
 
         $routes->group('admins', ['filter' => 'permission:diocese.primary'], function ($routes) {
             $routes->get('/', '\\App\\Controllers\\DioceseAdminUsers::index');

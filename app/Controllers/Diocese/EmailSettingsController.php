@@ -28,7 +28,7 @@ class EmailSettingsController extends BaseController
 
         $canEditSmtp = $this->canEditSmtp();
 
-        return $this->emailSettingsIndex('diocese', $dioceseId, 'diocese.admin', $canEditSmtp, base_url('diocesan/dashboard'), lang('Email.dioceseSettingsTitle'));
+        return $this->emailSettingsIndex('diocese', $dioceseId, 'diocese.admin', $canEditSmtp, base_url('diocese/dashboard'), lang('Email.dioceseSettingsTitle'));
     }
 
     public function save(int $dioceseId = 0)
@@ -43,7 +43,7 @@ class EmailSettingsController extends BaseController
 
         $canEditSmtp = $this->canEditSmtp();
 
-        return $this->emailSettingsSave('diocese', $dioceseId, 'diocese.admin', $canEditSmtp, base_url('diocesan/dashboard'), lang('Email.dioceseSettingsTitle'));
+        return $this->emailSettingsSave('diocese', $dioceseId, 'diocese.admin', $canEditSmtp, base_url('diocese/dashboard'), lang('Email.dioceseSettingsTitle'));
     }
 
     public function test(int $dioceseId = 0)
