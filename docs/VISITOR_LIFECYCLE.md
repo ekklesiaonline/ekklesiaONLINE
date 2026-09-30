@@ -31,13 +31,13 @@ visitor → regular_attender → member
 
 ## 2. Intake paths (all land at `visitor`)
 
-| Path | Entry point | Flow |
-| --- | --- | --- |
-| Staff form | `GET/POST /visitors/create | store` | `VisitorDirectoryService::create()` |
-| CSV import | `POST /visitors/import/process` | `Import::processConnectionCards()` |
-| Public card | `POST /connect/{token}` | `Import::digitalCard()` |
-| Registration approval | admin action | `RegistrationApprovalService` |
-| Non-portal creation | `POST /members/store` (unchecked) | `NonPortalMemberProvisioningService` |
+| Path                  | Entry point                          | Flow                                     |
+| --------------------- | ------------------------------------ | ---------------------------------------- |
+| Staff form            | `GET/POST /visitors/create | store`  | `VisitorDirectoryService::create()`      |
+| CSV import            | `POST /visitors/import/process`      | `Import::processConnectionCards()`       |
+| Public card           | `POST /connect/{token}`              | `Import::digitalCard()`                  |
+| Registration approval | admin action                         | `RegistrationApprovalService`            |
+| Non-portal creation   | `POST /members/store` (unchecked)    | `NonPortalMemberProvisioningService`     |
 
 All non-registration paths funnel through `VisitorIntakeService::record()`,
 which deduplicates by `email_hash`/`phone_hash` within the parish, provisions

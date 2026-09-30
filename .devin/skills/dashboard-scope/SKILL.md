@@ -22,18 +22,18 @@ Use this hierarchy: System → Province → Diocese → Parish → Personal.
 
 Role-to-route mapping (first match wins, highest tier first):
 
-| Group | Dashboard route |
-| --- | --- |
-| `systemadmin` | `/system/dashboard` |
-| `provinceadmin` | `/province/dashboard` |
-| `dioceseadmin` | `/diocese/dashboard` |
-| `parishadmin` | `/parish/dashboard` |
-| `treasurer` | `/parish/finance` |
-| `secretary` | `/parish/secretary` |
-| `warden`, `clerk`, `vestry_member` | `/parish/governance` |
-| `clergy` | `/parish/worship` |
-| `volunteer_coordinator` | `/parish/volunteers` |
-| `member` or `dashboard.view` | `/me` |
+| Group                               | Dashboard route       |
+| ----------------------------------- | ---------------       |
+| `systemadmin`                       | `/system/dashboard`   |
+| `provinceadmin`                     | `/province/dashboard` |
+| `dioceseadmin`                      | `/diocese/dashboard`  |
+| `parishadmin`                       | `/parish/dashboard`   |
+| `treasurer`                         | `/parish/finance`     |
+| `secretary`                         | `/parish/secretary`   |
+| `warden`, `clerk`, `vestry_member`  | `/parish/governance`  |
+| `clergy`                            | `/parish/worship`     |
+| `volunteer_coordinator`             | `/parish/volunteers`  |
+| `member` or `dashboard.view`        | `/me`                 |
 
 Old `/dashboard` and `/treasurer/dashboard` are deprecated redirect shims.
 
