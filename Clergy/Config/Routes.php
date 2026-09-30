@@ -39,12 +39,12 @@ $routes->group('', ['filter' => 'session'], function ($routes) {
         $routes->post('attach-parish', '\\Clergy\\Controllers\\Members::attachParish', ['filter' => 'permission:member.edit']);
         $routes->post('detach-parish', '\\Clergy\\Controllers\\Members::detachParish', ['filter' => 'permission:member.edit']);
         $routes->post('set-home-parish', '\\Clergy\\Controllers\\Members::setHomeParish', ['filter' => 'permission:member.edit']);
-        $routes->post('registrations/approve/(:num)', '\\Diocesan\\Controllers\\RegistrationRequests::approve/$1', ['filter' => 'permission:member.edit']);
-        $routes->post('registrations/bulk-action', '\\Diocesan\\Controllers\\RegistrationRequests::bulkAction', ['filter' => 'permission:member.edit']);
-        $routes->post('registrations/dismiss/(:num)', '\\Diocesan\\Controllers\\RegistrationRequests::dismiss/$1', ['filter' => 'permission:member.edit']);
-        $routes->post('registrations/ban/(:num)', '\\Diocesan\\Controllers\\RegistrationRequests::ban/$1', ['filter' => 'permission:member.edit']);
-        $routes->post('registrations/delete/(:num)', '\\Diocesan\\Controllers\\RegistrationRequests::delete/$1', ['filter' => 'permission:member.delete']);
-        $routes->post('registrations/escalate/(:num)', '\\Diocesan\\Controllers\\RegistrationRequests::escalate/$1', ['filter' => 'permission:member.edit']);
+        $routes->post('registrations/approve/(:num)', '\\Diocese\\Controllers\\RegistrationRequests::approve/$1', ['filter' => 'permission:member.edit']);
+        $routes->post('registrations/bulk-action', '\\Diocese\\Controllers\\RegistrationRequests::bulkAction', ['filter' => 'permission:member.edit']);
+        $routes->post('registrations/dismiss/(:num)', '\\Diocese\\Controllers\\RegistrationRequests::dismiss/$1', ['filter' => 'permission:member.edit']);
+        $routes->post('registrations/ban/(:num)', '\\Diocese\\Controllers\\RegistrationRequests::ban/$1', ['filter' => 'permission:member.edit']);
+        $routes->post('registrations/delete/(:num)', '\\Diocese\\Controllers\\RegistrationRequests::delete/$1', ['filter' => 'permission:member.delete']);
+        $routes->post('registrations/escalate/(:num)', '\\Diocese\\Controllers\\RegistrationRequests::escalate/$1', ['filter' => 'permission:member.edit']);
         $routes->get('search', '\\Clergy\\Controllers\\Members::search');
     });
 

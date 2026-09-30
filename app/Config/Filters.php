@@ -10,7 +10,7 @@ use App\Filters\RegistrationGateFilter;
 use App\Filters\DeviceVerificationFilter;
 use App\Filters\SessionTrackingFilter;
 use App\Filters\ProvinceScopeFilter;
-use App\Filters\DiocesanScopeFilter;
+use App\Filters\DioceseScopeFilter;
 use App\Filters\ParishScopeFilter;
 use App\Filters\DiocesanOperationalBoundaryFilter;
 use App\Filters\AdminFinanceBoundaryFilter;
@@ -51,7 +51,7 @@ class Filters extends BaseFilters
         'localeSet'        => LocaleFilter::class,
         'registrationGate' => RegistrationGateFilter::class,
         'provinceScope'    => ProvinceScopeFilter::class,
-        'diocesanScope'    => DiocesanScopeFilter::class,
+        'dioceseScope'     => DioceseScopeFilter::class,
         'parishScope'      => ParishScopeFilter::class,
         'diocesanOperationalBoundary' => DiocesanOperationalBoundaryFilter::class,
         'adminFinanceBoundary' => AdminFinanceBoundaryFilter::class,
@@ -262,7 +262,7 @@ class Filters extends BaseFilters
         ],
         // Enforce strict diocesan boundary checks for diocesan-admin workflows,
         // including shared routes used across modules.
-        'diocesanScope' => [
+        'dioceseScope' => [
             'before' => [
                 'parish_list',
                 'parish_list/*',

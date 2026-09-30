@@ -21,7 +21,7 @@ final class LayoutFlashEscapingTest extends CIUnitTestCase
         return [
             'app main'      => [$root . 'app/Views/layouts/main.php'],
             'clergy main'   => [$root . 'Clergy/Views/layouts/main.php'],
-            'diocesan main' => [$root . 'Diocesan/Views/layouts/main.php'],
+            'diocesan main' => [$root . 'Diocese/Views/layouts/main.php'],
             'province main' => [$root . 'Province/Views/layouts/main.php'],
             'treasurer main'=> [$root . 'Treasurer/Views/layouts/main.php'],
             'volunteer main'=> [$root . 'Volunteer/Views/layouts/main.php'],

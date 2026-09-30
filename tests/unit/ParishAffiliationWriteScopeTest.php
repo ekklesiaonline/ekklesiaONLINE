@@ -184,7 +184,7 @@ final class ParishAffiliationWriteScopeTest extends CIUnitTestCase
             APPPATH,
             ROOTPATH . 'MemberPortal',
             ROOTPATH . 'Clergy',
-            ROOTPATH . 'Diocesan',
+            ROOTPATH . 'Diocese',
             ROOTPATH . 'Province',
             ROOTPATH . 'Parish',
             ROOTPATH . 'Worship',

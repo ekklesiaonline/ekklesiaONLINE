@@ -67,8 +67,8 @@ $routes->group('system/followup-workflow', ['filter' => 'permission:system.admin
 if (is_file(ROOTPATH . 'Province/Config/Routes.php')) {
     require ROOTPATH . 'Province/Config/Routes.php';
 }
-if (is_file(ROOTPATH . 'Diocesan/Config/Routes.php')) {
-    require ROOTPATH . 'Diocesan/Config/Routes.php';
+if (is_file(ROOTPATH . 'Diocese/Config/Routes.php')) {
+    require ROOTPATH . 'Diocese/Config/Routes.php';
 }
 if (is_file(ROOTPATH . 'Clergy/Config/Routes.php')) {
     require ROOTPATH . 'Clergy/Config/Routes.php';
@@ -88,19 +88,19 @@ if (is_file(ROOTPATH . 'MemberPortal/Config/Routes.php')) {
 
 $routes->group('', ['filter' => 'session'], function ($routes) {
     $routes->group('parish_list', function ($routes) {
-        $routes->get('/', '\\Diocesan\\Controllers\\Parishes::index');
-        $routes->get('create', '\\Diocesan\\Controllers\\Parishes::create');
-        $routes->post('store', '\\Diocesan\\Controllers\\Parishes::store');
-        $routes->get('edit/(:num)', '\\Diocesan\\Controllers\\Parishes::edit/$1');
-        $routes->post('update/(:num)', '\\Diocesan\\Controllers\\Parishes::update/$1');
-        $routes->get('delete-impact/(:num)', '\\Diocesan\\Controllers\\Parishes::deleteImpact/$1');
-        $routes->post('delete/(:num)', '\\Diocesan\\Controllers\\Parishes::delete/$1');
-        $routes->post('bulk-delete', '\\Diocesan\\Controllers\\Parishes::bulkDelete');
-        $routes->get('(:num)/staff', '\\Diocesan\\Controllers\\Parishes::staff/$1');
-        $routes->post('(:num)/staff/add', '\\Diocesan\\Controllers\\Parishes::addStaff/$1');
-        $routes->post('(:num)/staff/promote', '\\Diocesan\\Controllers\\Parishes::promoteMember/$1');
-        $routes->post('(:num)/staff/remove-role', '\\Diocesan\\Controllers\\Parishes::removeStaffRole/$1');
-        $routes->post('(:num)/staff/demote', '\\Diocesan\\Controllers\\Parishes::demoteStaff/$1');
+        $routes->get('/', '\\Diocese\\Controllers\\Parishes::index');
+        $routes->get('create', '\\Diocese\\Controllers\\Parishes::create');
+        $routes->post('store', '\\Diocese\\Controllers\\Parishes::store');
+        $routes->get('edit/(:num)', '\\Diocese\\Controllers\\Parishes::edit/$1');
+        $routes->post('update/(:num)', '\\Diocese\\Controllers\\Parishes::update/$1');
+        $routes->get('delete-impact/(:num)', '\\Diocese\\Controllers\\Parishes::deleteImpact/$1');
+        $routes->post('delete/(:num)', '\\Diocese\\Controllers\\Parishes::delete/$1');
+        $routes->post('bulk-delete', '\\Diocese\\Controllers\\Parishes::bulkDelete');
+        $routes->get('(:num)/staff', '\\Diocese\\Controllers\\Parishes::staff/$1');
+        $routes->post('(:num)/staff/add', '\\Diocese\\Controllers\\Parishes::addStaff/$1');
+        $routes->post('(:num)/staff/promote', '\\Diocese\\Controllers\\Parishes::promoteMember/$1');
+        $routes->post('(:num)/staff/remove-role', '\\Diocese\\Controllers\\Parishes::removeStaffRole/$1');
+        $routes->post('(:num)/staff/demote', '\\Diocese\\Controllers\\Parishes::demoteStaff/$1');
     });
 
     $routes->group('system', ['filter' => 'permission:system.admin'], function ($routes) {
@@ -108,11 +108,11 @@ $routes->group('', ['filter' => 'session'], function ($routes) {
 
         $routes->get('overview', '\\App\\Controllers\\SystemOverview::index');
         $routes->get('mission-outcomes', '\\App\\Controllers\\SystemMissionOutcomes::index');
-        $routes->get('liturgical-source', '\\Diocesan\\Controllers\\LiturgicalCalendar::index');
-        $routes->post('liturgical-source/store', '\\Diocesan\\Controllers\\LiturgicalCalendar::store');
-        $routes->get('liturgical-source/edit/(:num)', '\\Diocesan\\Controllers\\LiturgicalCalendar::edit/$1');
-        $routes->post('liturgical-source/update/(:num)', '\\Diocesan\\Controllers\\LiturgicalCalendar::update/$1');
-        $routes->post('liturgical-source/delete/(:num)', '\\Diocesan\\Controllers\\LiturgicalCalendar::delete/$1');
+        $routes->get('liturgical-source', '\\Diocese\\Controllers\\LiturgicalCalendar::index');
+        $routes->post('liturgical-source/store', '\\Diocese\\Controllers\\LiturgicalCalendar::store');
+        $routes->get('liturgical-source/edit/(:num)', '\\Diocese\\Controllers\\LiturgicalCalendar::edit/$1');
+        $routes->post('liturgical-source/update/(:num)', '\\Diocese\\Controllers\\LiturgicalCalendar::update/$1');
+        $routes->post('liturgical-source/delete/(:num)', '\\Diocese\\Controllers\\LiturgicalCalendar::delete/$1');
         $routes->post('provinces/store', '\\App\\Controllers\\SystemProvinces::storeProvince');
         $routes->post('provinces/update/(:num)', '\\App\\Controllers\\SystemProvinces::updateProvince/$1');
         $routes->post('provinces/delete/(:num)', '\\App\\Controllers\\SystemProvinces::deleteProvince/$1');

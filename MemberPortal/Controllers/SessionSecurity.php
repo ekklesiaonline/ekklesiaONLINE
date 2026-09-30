@@ -46,7 +46,7 @@ class SessionSecurity extends BaseController
         }
 
         if (!session()->get('device_verification_required')) {
-            return redirect()->to(base_url('dashboard'));
+            return redirect()->to($this->resolveDashboardUrl());
         }
 
         $expiresAt = (int) (session()->get('device_verification_expires_at') ?? 0);
@@ -69,7 +69,7 @@ class SessionSecurity extends BaseController
         }
 
         if (!session()->get('device_verification_required')) {
-            return redirect()->to(base_url('dashboard'));
+            return redirect()->to($this->resolveDashboardUrl());
         }
 
         $code = preg_replace('/\D+/', '', (string) $this->request->getPost('code'));
@@ -134,7 +134,7 @@ class SessionSecurity extends BaseController
         // Return to the page the user originally requested, when recorded.
         $returnUrl = (string) (session()->get('device_verify_return_url') ?? '');
         session()->remove('device_verify_return_url');
-        $target = $this->safeReturnUrl($returnUrl) ?? base_url('dashboard');
+        $target = $this->safeReturnUrl($returnUrl) ?? $this->resolveDashboardUrl($user);
 
         // withCookies() carries the trusted-device cookie (set on the shared
         // response) onto this RedirectResponse so it actually reaches the browser.
@@ -171,7 +171,7 @@ class SessionSecurity extends BaseController
         }
 
         if (!session()->get('device_verification_required')) {
-            return redirect()->to(base_url('dashboard'));
+            return redirect()->to($this->resolveDashboardUrl());
         }
 
         $lastSentAt = (int) (session()->get('device_verification_sent_at') ?? 0);
@@ -328,5 +328,16 @@ class SessionSecurity extends BaseController
         } catch (\Throwable $e) {
             log_message('warning', '[SessionSecurity] Resend audit failed: ' . $e->getMessage());
         }
+    }
+
+    private function resolveDashboardUrl($user = null): string
+    {
+        $u = $user ?? $this->user ?? auth()->user();
+        if ($u !== null) {
+            $landingPath = $this->resolveAuthenticatedLandingPath($u);
+            return base_url(ltrim($landingPath, '/'));
+        }
+
+        return base_url('/');
     }
 }

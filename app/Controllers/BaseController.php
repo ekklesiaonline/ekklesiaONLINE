@@ -137,7 +137,7 @@ abstract class BaseController extends Controller
             $this->profile = $profileModel->where('user_id', $this->user->id)->first();
 
             if ($this->profile) {
-                $this->parishId = (int) ($this->profile['parish_id'] ?? $this->profile['parish_id'] ?? 0);
+                $this->parishId = (int) ($this->profile['parish_id'] ?? 0);
 
                 // profile.membership_status was dropped; the canonical status
                 // lives on parish_affiliation. Decorate the row so views keep

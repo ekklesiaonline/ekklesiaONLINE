@@ -2,7 +2,7 @@
 
 ## Architecture
 
-- CodeIgniter 4.7+ with Shield 1.2 for auth.
+- CodeIgniter 4.7+ with Shield 1.4+ (v1.4.1) for auth.
 - Dependency management via Composer.
 - Backend: PHP 8.2+, MySQL 8.0. Frontend: Bootstrap 5, jQuery/vanilla JS, Chart.js.
 - Hierarchy: System → Province → Diocese → Parish → Personal.

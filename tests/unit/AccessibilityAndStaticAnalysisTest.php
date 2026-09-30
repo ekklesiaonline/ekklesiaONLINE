@@ -52,7 +52,7 @@ final class AccessibilityAndStaticAnalysisTest extends CIUnitTestCase
     private const VIEW_DIRS = [
         'Clergy/Views',
         'MemberPortal/Views',
-        'Diocesan/Views',
+        'Diocese/Views',
         'Treasurer/Views',
         'Worship/Views',
         'Parish/Views',

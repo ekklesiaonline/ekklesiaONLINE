@@ -1,6 +1,6 @@
 <?php
 
-use Diocesan\Controllers\Parishes;
+use Diocese\Controllers\Parishes;
 use CodeIgniter\Config\Factories;
 use CodeIgniter\Shield\Auth;
 use CodeIgniter\Shield\Entities\User;

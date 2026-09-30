@@ -66,7 +66,7 @@ final class LayoutAndAssetExtractionTest extends CIUnitTestCase
     {
         $layouts = [
             'Clergy/Views/layouts/main.php',
-            'Diocesan/Views/layouts/main.php',
+            'Diocese/Views/layouts/main.php',
             'Province/Views/layouts/main.php',
             'Treasurer/Views/layouts/main.php',
             'Volunteer/Views/layouts/main.php',
@@ -89,7 +89,7 @@ final class LayoutAndAssetExtractionTest extends CIUnitTestCase
     {
         $layouts = [
             'Clergy/Views/layouts/main.php',
-            'Diocesan/Views/layouts/main.php',
+            'Diocese/Views/layouts/main.php',
             'Province/Views/layouts/main.php',
             'Treasurer/Views/layouts/main.php',
             'Volunteer/Views/layouts/main.php',

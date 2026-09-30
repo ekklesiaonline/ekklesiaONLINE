@@ -26,7 +26,7 @@
 			"App\\": "app/",
 			"Config\\": "app/Config/",
 			"Province\\": "Province/",
-			"Diocesan\\": "Diocesan/",
+			"Diocese\\": "Diocese/",
 			"Clergy\\": "Clergy/",
 			"Parish\\": "Parish/",
 			"Worship\\": "Worship/",

@@ -45,8 +45,8 @@ final class ModuleRoutesSmokeTest extends CIUnitTestCase
                     'Volunteer::schedules',
                 ],
             ],
-            'diocesan routes' => [
-                ROOTPATH . 'Diocesan/Config/Routes.php',
+            'diocese routes' => [
+                ROOTPATH . 'Diocese/Config/Routes.php',
                 [
                     'ChartOfAccounts::index',
                     'LiturgicalCalendar::index',
@@ -82,7 +82,7 @@ final class ModuleRoutesSmokeTest extends CIUnitTestCase
             "require ROOTPATH . 'Treasurer/Config/Routes.php';",
             "require ROOTPATH . 'Volunteer/Config/Routes.php';",
             "require ROOTPATH . 'Province/Config/Routes.php';",
-            "require ROOTPATH . 'Diocesan/Config/Routes.php';",
+            "require ROOTPATH . 'Diocese/Config/Routes.php';",
         ];
 
         foreach ($expectedRequires as $snippet) {
@@ -97,8 +97,8 @@ final class ModuleRoutesSmokeTest extends CIUnitTestCase
 
     public function testDiocesanRoutesDoNotExposeSystemOverview(): void
     {
-        $content = file_get_contents(ROOTPATH . 'Diocesan/Config/Routes.php');
-        $this->assertNotFalse($content, 'Unable to read diocesan route file.');
+        $content = file_get_contents(ROOTPATH . 'Diocese/Config/Routes.php');
+        $this->assertNotFalse($content, 'Unable to read diocese route file.');
 
         $this->assertStringNotContainsString('SystemOverview::index', $content);
         $this->assertStringNotContainsString("diocesan/system-overview", $content);
@@ -107,8 +107,8 @@ final class ModuleRoutesSmokeTest extends CIUnitTestCase
 
     public function testDiocesanLiturgicalRoutesAreReadOnly(): void
     {
-        $content = file_get_contents(ROOTPATH . 'Diocesan/Config/Routes.php');
-        $this->assertNotFalse($content, 'Unable to read diocesan route file.');
+        $content = file_get_contents(ROOTPATH . 'Diocese/Config/Routes.php');
+        $this->assertNotFalse($content, 'Unable to read diocese route file.');
 
         $this->assertStringContainsString("liturgical-source', function", $content);
         $this->assertStringContainsString('LiturgicalCalendar::index', $content);
@@ -150,13 +150,13 @@ final class ModuleRoutesSmokeTest extends CIUnitTestCase
 
     public function testDioceseRoutesAreGatedByDioceseAdminPermission(): void
     {
-        $content = file_get_contents(ROOTPATH . 'Diocesan/Config/Routes.php');
-        $this->assertNotFalse($content, 'Unable to read diocesan route file.');
+        $content = file_get_contents(ROOTPATH . 'Diocese/Config/Routes.php');
+        $this->assertNotFalse($content, 'Unable to read diocese route file.');
 
         $this->assertStringContainsString("'diocese', ['filter' => 'permission:diocese.admin']", $content, 'Diocese dashboard route group must be gated by diocese.admin permission.');
-        $this->assertStringContainsString('Dashboard::index', $content, 'Diocese dashboard index must be present in diocesan routes.');
-        $this->assertStringContainsString('Dashboard::recentActivity', $content, 'Diocese recentActivity must be present in diocesan routes.');
-        $this->assertStringNotContainsString("'dashboard/recent-activity'", file_get_contents(ROOTPATH . 'MemberPortal/Config/Routes.php') ?: '', 'dashboard/recent-activity must not exist in MemberPortal routes; it has moved to Diocesan module.');
+        $this->assertStringContainsString('Dashboard::index', $content, 'Diocese dashboard index must be present in diocese routes.');
+        $this->assertStringContainsString('Dashboard::recentActivity', $content, 'Diocese recentActivity must be present in diocese routes.');
+        $this->assertStringNotContainsString("'dashboard/recent-activity'", file_get_contents(ROOTPATH . 'MemberPortal/Config/Routes.php') ?: '', 'dashboard/recent-activity must not exist in MemberPortal routes; it has moved to Diocese module.');
     }
 
     public function testRegistrationModerationRoutesBelongToMembersModule(): void
@@ -164,8 +164,8 @@ final class ModuleRoutesSmokeTest extends CIUnitTestCase
         $clergyContent = file_get_contents(ROOTPATH . 'Clergy/Config/Routes.php');
         $this->assertNotFalse($clergyContent, 'Unable to read clergy route file.');
 
-        $diocesanContent = file_get_contents(ROOTPATH . 'Diocesan/Config/Routes.php');
-        $this->assertNotFalse($diocesanContent, 'Unable to read diocesan route file.');
+        $diocesanContent = file_get_contents(ROOTPATH . 'Diocese/Config/Routes.php');
+        $this->assertNotFalse($diocesanContent, 'Unable to read diocese route file.');
 
         $this->assertStringContainsString("'members', ['filter' => 'permission:member.view']", $clergyContent);
         $this->assertStringContainsString("registrations/approve", $clergyContent);

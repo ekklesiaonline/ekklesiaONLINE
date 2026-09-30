@@ -102,7 +102,7 @@ final class SettingsScopeAndCastTest extends CIUnitTestCase
         $modelDirs = [
             APPPATH . 'Models',
             ROOTPATH . 'Clergy/Models',
-            ROOTPATH . 'Diocesan/Models',
+            ROOTPATH . 'Diocese/Models',
             ROOTPATH . 'MemberPortal/Models',
             ROOTPATH . 'Parish/Models',
             ROOTPATH . 'Province/Models',

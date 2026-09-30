@@ -1,6 +1,6 @@
 # EkklesiaRD - Multi-Parish Management System
 
-EkklesiaRD is a Parish Management System (PMS) for province, diocese, and local parish operations, built on CodeIgniter 4.7 with Shield 1.2 authentication.
+EkklesiaRD is a Parish Management System (PMS) for province, diocese, and local parish operations, built on CodeIgniter 4.7 with Shield 1.4+ (v1.4.1) authentication.
 
 ## Core Capabilities
 
@@ -15,7 +15,7 @@ EkklesiaRD is a Parish Management System (PMS) for province, diocese, and local 
 
 - PHP 8.2+
 - CodeIgniter 4.7
-- CodeIgniter Shield 1.2
+- CodeIgniter Shield 1.4+ (v1.4.1)
 - MySQL 8.0+
 - Bootstrap 5
 
@@ -68,7 +68,7 @@ Create deployment accounts through the approved seeding or administrative bootst
 - Seeders: `app/Database/Seeds/`
 - Models: `app/Models/`
 - Shared app routes/config: `app/Config/`
-- Role modules: `Province/`, `Diocesan/`, `Pastor/`, `Treasurer/`, `Volunteer/`, `MemberPortal/`
+- Role modules: `Province/`, `Diocese/`, `Clergy/`, `Treasurer/`, `Volunteer/`, `MemberPortal/`
 
 ## Notes for Deployment and Runtime
 

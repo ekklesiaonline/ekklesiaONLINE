@@ -46,7 +46,7 @@ final class OldEscapingGuardTest extends CIUnitTestCase
         $viewDirs = [
             ROOTPATH . 'app/Views',
             ROOTPATH . 'Clergy/Views',
-            ROOTPATH . 'Diocesan/Views',
+            ROOTPATH . 'Diocese/Views',
             ROOTPATH . 'MemberPortal/Views',
             ROOTPATH . 'Parish/Views',
             ROOTPATH . 'Province/Views',

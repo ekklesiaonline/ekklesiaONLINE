@@ -12,7 +12,7 @@ final class DormantSchemaRouteGuardTest extends CIUnitTestCase
         $routeFiles = [
             ROOTPATH . 'app/Config/Routes.php',
             ROOTPATH . 'Clergy/Config/Routes.php',
-            ROOTPATH . 'Diocesan/Config/Routes.php',
+            ROOTPATH . 'Diocese/Config/Routes.php',
             ROOTPATH . 'MemberPortal/Config/Routes.php',
             ROOTPATH . 'Treasurer/Config/Routes.php',
             ROOTPATH . 'Volunteer/Config/Routes.php',

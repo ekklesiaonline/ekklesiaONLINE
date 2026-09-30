@@ -159,15 +159,15 @@ final class CriticalWorkflowContractCoverageTest extends CIUnitTestCase
         );
     }
 
-    public function testDiocesanDashboardControllerExposesRequiredPublicMethods(): void
+    public function testDioceseDashboardControllerExposesRequiredPublicMethods(): void
     {
-        $content = file_get_contents(ROOTPATH . 'Diocesan/Controllers/Dashboard.php');
-        $this->assertNotFalse($content, 'Unable to read Diocesan\\Controllers\\Dashboard.');
+        $content = file_get_contents(ROOTPATH . 'Diocese/Controllers/Dashboard.php');
+        $this->assertNotFalse($content, 'Unable to read Diocese\\Controllers\\Dashboard.');
 
-        $this->assertStringContainsString('public function index()', $content, 'Diocesan\\Controllers\\Dashboard must have an index() method.');
-        $this->assertStringContainsString('public function recentActivity()', $content, 'Diocesan\\Controllers\\Dashboard must have a recentActivity() method.');
-        $this->assertStringContainsString('public function switchParish(', $content, 'Diocesan\\Controllers\\Dashboard must have a switchParish() method.');
-        $this->assertStringContainsString('isDioceseAdmin()', $content, 'Diocesan\\Controllers\\Dashboard::index() must guard with isDioceseAdmin().');
-        $this->assertStringContainsString('/diocese/dashboard', $content, 'Diocesan\\Controllers\\Dashboard redirects must reference /diocese/dashboard.');
+        $this->assertStringContainsString('public function index()', $content, 'Diocese\\Controllers\\Dashboard must have an index() method.');
+        $this->assertStringContainsString('public function recentActivity()', $content, 'Diocese\\Controllers\\Dashboard must have a recentActivity() method.');
+        $this->assertStringContainsString('public function switchParish(', $content, 'Diocese\\Controllers\\Dashboard must have a switchParish() method.');
+        $this->assertStringContainsString('isDioceseAdmin()', $content, 'Diocese\\Controllers\\Dashboard::index() must guard with isDioceseAdmin().');
+        $this->assertStringContainsString('/diocese/dashboard', $content, 'Diocese\\Controllers\\Dashboard redirects must reference /diocese/dashboard.');
     }
 }
