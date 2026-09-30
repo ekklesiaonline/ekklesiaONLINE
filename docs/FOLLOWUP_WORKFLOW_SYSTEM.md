@@ -85,13 +85,13 @@ FollowupDispatchService::dispatch()
 legacy variants (`followup_sequences`, `followup_actions`, `followup_date`,
 `active` vs `is_active`).
 
-| Table | Key columns |
-| --- | --- |
-| `followup_sequence` | `parish_id` (null = global), `name`, `is_active`, `is_default`, `is_global_default` |
-| `followup_action` | `sequence_id`, `week_number`, `day_offset`, `channel`, `template_id`, `assigned_to`, `instructions` |
-| `followup_template` | `parish_id`, `channel`, `name`, `subject`, `body_text`, `body_html`, `variables` |
-| `followup_log` | `person_id`, `parish_id`, `action_id`, `assigned_to`, `scheduled_date`, `executed_at`, `status`, `notes`, `response_metadata` |
-| `call_task` | `person_id`, `log_id` (always set), `assigned_to`, `task_type` (`call`\|`manual`), `title`, `phone`, `status`, `scheduled_date`, `completed_at` |
+| Table                       | Key columns                                                                                                                                     |
+| --------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| `followup_sequence`         | `parish_id` (null = global), `name`, `is_active`, `is_default`, `is_global_default`                                                             |
+| `followup_action`           | `sequence_id`, `week_number`, `day_offset`, `channel`, `template_id`, `assigned_to`, `instructions`                                             |
+| `followup_template`         | `parish_id`, `channel`, `name`, `subject`, `body_text`, `body_html`, `variables`                                                                |
+| `followup_log`              | `person_id`, `parish_id`, `action_id`, `assigned_to`, `scheduled_date`, `executed_at`, `status`, `notes`, `response_metadata`                   |
+| `call_task`                 | `person_id`, `log_id` (always set), `assigned_to`, `task_type` (`call`\|`manual`), `title`, `phone`, `status`, `scheduled_date`, `completed_at` |
 
 `followup_log.scheduled_date` is the only schedule column — the legacy
 `followup_date` dual-write column was dropped
@@ -129,14 +129,14 @@ invitation".
 
 ## 4. Models & services
 
-| Class | Role |
-| --- | --- |
-| `FollowupLogModel` | Log CRUD, `getPendingDue*`, `scheduleActiveSequencesForPerson`, `scheduleSequenceForPerson`, status transitions |
-| `FollowupSequenceModel` / `FollowupActionModel` / `FollowupTemplateModel` | Sequence/action/template CRUD |
-| `PersonVisitModel` | Visit recording; `afterInsert` schedules first-visit follow-ups |
-| `CallTaskModel` | Manual call-task queue |
-| `VisitorFollowupService` | Read-side: progress badges, next pending, timeline, dashboard aggregates |
-| `FollowupDispatchService` | Channel dispatch for a single log row |
+| Class                                                                       | Role                                                                                                            |
+| --------------------------------------------------------------------------- | --------------------------------------------------------------------                                            |
+| `FollowupLogModel`                                                          | Log CRUD, `getPendingDue*`, `scheduleActiveSequencesForPerson`, `scheduleSequenceForPerson`, status transitions |
+| `FollowupSequenceModel` / `FollowupActionModel` / `FollowupTemplateModel`   | Sequence/action/template CRUD                                                                                   |
+| `PersonVisitModel`                                                          | Visit recording; `afterInsert` schedules first-visit follow-ups                                                 |
+| `CallTaskModel`                                                             | Manual call-task queue                                                                                          |
+| `VisitorFollowupService`                                                    | Read-side: progress badges, next pending, timeline, dashboard aggregates                                        |
+| `FollowupDispatchService`                                                   | Channel dispatch for a single log row                                                                           |
 
 ## 5. Default-sequence resolution
 

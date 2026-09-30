@@ -61,12 +61,12 @@ which deduplicates by `email_hash`/`phone_hash` within the parish, provisions
 
 ### Badge states (derived, evaluated in order)
 
-| State | Condition |
-| --- | --- |
-| Converted | `converted_to_member_at IS NOT NULL` |
-| Followed Up | `followed_up = 1` (manual staff assertion; auto-set on conversion) |
-| In Progress | ≥1 sent/skipped log AND ≥1 pending log |
-| Pending Follow-up | otherwise |
+| State             | Condition                                                              |
+|-------------------|------------------------------------------------------------------------|
+| Converted         | `converted_to_member_at IS NOT NULL`                                   |
+| Followed Up       | `followed_up = 1` (manual staff assertion; auto-set on conversation)   |
+| In Progress       | ≥1 sent/skipped log AND ≥1 pending log                                 |
+| Pending Follow-up | otherwise                                                              |
 
 `followed_up` is never auto-derived from the log — it is an explicit
 staff-contact assertion.
@@ -86,11 +86,11 @@ staff-contact assertion.
 One endpoint, three modes chosen in the confirmation modal
 (`visitor.edit`; `create_account` additionally requires `member.create`):
 
-| Mode | Call |
-| --- | --- |
-| Mark member | `PersonConversionService::convertToMember($personId, $parishId, null, null, null, $actor)` |
-| Link existing user | `…->convertToMember(…, $userId, null, null, $actor)` — target user must already hold an affiliation in this parish |
-| Create account | `…->convertToMember(…, null, $email, $password, $actor)` — provisions user + `email_password` identity + `member` group + profile |
+| Mode               | Call                                                                                                                              |
+| ------------------ | --------------------------------------------------------------------------------------------------------------------------------- |
+| Mark member        | `PersonConversionService::convertToMember($personId, $parishId, null, null, null, $actor)`                                        |
+| Link existing user | `…->convertToMember(…, $userId, null, null, $actor)` — target user must already hold an affiliation in this parish                |
+| Create account     | `…->convertToMember(…, null, $email, $password, $actor)` — provisions user + `email_password` identity + `member` group + profile |
 
 `convertToMember()` runs in one transaction: pathway transition to `member`
 (writes `person_status_history`, syncs `pathway_stage`), user link/creation,
@@ -111,14 +111,14 @@ Converted/register members are managed from the People directory.
 
 ## 7. Permissions & routes
 
-| Permission | Gates |
-| --- | --- |
-| `visitor.view` | list, detail, dashboard, exports |
-| `visitor.create` | store, CSV import, connection-card admin |
-| `visitor.edit` | update, promote-attender, demote, promote, revert-conversion |
-| `visitor.delete` | delete (with required reason) |
-| `member.create` | promote `create_account` mode only |
-| `followup.view` / `followup.manage` | follow-up reads / mutations |
+| Permission                           | Gates                                                        |
+| ------------------------------------ | ------------------------------------------------------------ |
+| `visitor.view`                       | list, detail, dashboard, exports                             |
+| `visitor.create`                     | store, CSV import, connection-card admin                     |
+| `visitor.edit`                       | update, promote-attender, demote, promote, revert-conversion |
+| `visitor.delete`                     | delete (with required reason)                                |
+| `member.create`                      | promote `create_account` mode only                           |
+| `followup.view` / `followup.manage`  | follow-up reads / mutations                                  |
 
 Canonical routes live under `/visitors/*`. Legacy `/guests/*` GETs redirect;
 legacy POSTs alias to the same actions (one-release compatibility shims).
