@@ -143,6 +143,8 @@ return [
     'colActions'          => 'Acciones',
     'colEdit'             => 'Editar',
     'colNotes'            => 'Notas',
+    'colField'            => 'Campo',
+    'colChange'           => 'Cambio',
     'memberRecord'        => 'Registro de miembro',
     'noRecords'           => 'No se encontraron registros.',
 
@@ -160,6 +162,10 @@ return [
     'statusCancelled'     => 'Cancelado',
     'statusScheduled'     => 'Programado',
     'statusConfirmed'     => 'Confirmado',
+    'statusAdded'         => 'Agregado',
+    'statusRemoved'       => 'Eliminado',
+    'statusChanged'       => 'Modificado',
+    'statusUnchanged'     => 'Sin cambios',
     'yes'                 => 'Sí',
     'no'                  => 'No',
 
@@ -169,6 +175,10 @@ return [
     'pageShowing'         => 'Mostrando {0}–{1} de {2} resultados',
     'pageFirst'           => 'Primero',
     'pageLast'            => 'Último',
+    'oldValues'           => 'Valores Anteriores',
+    'newValues'           => 'Valores Nuevos',
+    'auditDiffModalTitle' => 'Diferencias del Registro de Auditoría',
+    'auditViewDiff'       => 'Ver Diferencias',
 
     // -------------------------------------------------------------------------
     // Flash / toast messages

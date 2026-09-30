@@ -143,6 +143,8 @@ return [
     'colActions'          => 'Actions',
     'colEdit'             => 'Modifier',
     'colNotes'            => 'Notes',
+    'colField'            => 'Champ',
+    'colChange'           => 'Modification',
     'memberRecord'        => 'Fiche membre',
     'noRecords'           => 'Aucun enregistrement trouvé.',
 
@@ -160,6 +162,10 @@ return [
     'statusCancelled'     => 'Annulé',
     'statusScheduled'     => 'Planifié',
     'statusConfirmed'     => 'Confirmé',
+    'statusAdded'         => 'Ajouté',
+    'statusRemoved'       => 'Supprimé',
+    'statusChanged'       => 'Modifié',
+    'statusUnchanged'     => 'Inchangé',
     'yes'                 => 'Oui',
     'no'                  => 'Non',
 
@@ -169,6 +175,10 @@ return [
     'pageShowing'         => 'Affichage de {0}–{1} sur {2} résultats',
     'pageFirst'           => 'Premier',
     'pageLast'            => 'Dernier',
+    'oldValues'           => 'Anciennes valeurs',
+    'newValues'           => 'Nouvelles valeurs',
+    'auditDiffModalTitle' => 'Différences du journal d\'audit',
+    'auditViewDiff'       => 'Voir les différences',
 
     // -------------------------------------------------------------------------
     // Flash / toast messages

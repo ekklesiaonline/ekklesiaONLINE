@@ -186,7 +186,9 @@ $exportFilterParams = array_filter([
                 </div>
             </div>
             <div class="card-body">
-                <canvas id="activityChart" height="100"></canvas>
+                <div style="position: relative; height: 220px;">
+                    <canvas id="activityChart"></canvas>
+                </div>
             </div>
         </div>
     </div>
@@ -352,8 +354,11 @@ $auditFiltersActive = ((int) ($filter_parish_id ?? 0) > 0)
                                     <?php if ($oldValues === null && $newValues === null): ?>
                                         <span class="text-muted">-</span>
                                     <?php else: ?>
-                                        <button type="button" class="btn btn-sm btn-outline-primary audit-diff-btn"
-                                            data-audit-id="<?= (int) ($row['id'] ?? 0) ?>">
+                                        <button type="button" class="btn btn-sm btn-outline-primary"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#auditDiffModal"
+                                            data-bs-audit-id="<?= (int) ($row['id'] ?? 0) ?>"
+                                            title="<?= esc(lang('App.auditViewDiff')) ?>">
                                             <i class="bi bi-eye" aria-hidden="true"></i> <?= lang('App.auditViewDiff') ?>
                                         </button>
                                     <?php endif; ?>
