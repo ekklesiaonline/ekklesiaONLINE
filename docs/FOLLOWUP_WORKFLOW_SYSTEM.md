@@ -266,13 +266,13 @@ php spark followup:apply-default [--parish N] [--dry-run]
 
 ## 8. Permissions
 
-| Permission | Description |
-| --- | --- |
-| `followup.manage` | Sequence/action/template CRUD, trigger actions, complete call tasks |
-| `followup.view` | Read-only: sequences, templates, call queue, timeline |
-| `followup.manage` | Sequence/action/template CRUD, trigger actions, complete call tasks |
-| `system.admin` | Manage global (parish_id = NULL) sequences and templates |
-| `visitor.edit` | Promote/demote/member-promotion endpoints |
+| Permission         | Description                                                                   |
+| ------------------ | ----------------------------------------------------------------------------- |
+| `followup.manage`  | Sequence/action/template CRUD, trigger actions, complete call tasks           |
+| `followup.view`    | Read-only: sequences, templates, call queue, timeline                         |
+| `followup.manage`  | Sequence/action/template CRUD, trigger actions, complete call tasks           |
+| `system.admin`     | Manage global (parish_id = NULL) sequences and templates                      |
+| `visitor.edit`     | Promote/demote/member-promotion endpoints                                     |
 
 ## 9. Digital connection card (`/connect/{token}`)
 
@@ -283,16 +283,16 @@ Public unauthenticated intake. `GET /connect/{token}` renders
 
 ## 10. Key files
 
-| File | Purpose |
-| --- | --- |
-| `app/Commands/SendFollowups.php` | `followup:send` dispatcher |
-| `app/Commands/BackfillFollowups.php` | `followup:backfill` reconciliation |
-| `app/Services/FollowupDispatchService.php` | Channel dispatch |
-| `app/Services/VisitorFollowupService.php` | Read-side queries |
-| `app/Models/FollowupLogModel.php` | Log CRUD + scheduling |
-| `app/Models/PersonVisitModel.php` | Visit recording + auto-schedule hook |
-| `Clergy/Controllers/Visitors.php` | Directory + follow-up AJAX endpoints |
-| `Clergy/Controllers/FollowupWorkflow.php` | Parish sequence/action/template admin, call-task queue |
-| `app/Controllers/SystemFollowupWorkflow.php` | System admin UI for global sequences/templates |
-| `Clergy/Config/Routes.php` | `/visitors/*` + `/followup-workflow/*` routes |
-| `app/Config/Routes.php` | `/system/followup-workflow/*` routes |
+| File                                         | Purpose                                                |
+| -------------------------------------------- | ------------------------------------------------------ |
+| `app/Commands/SendFollowups.php`             | `followup:send` dispatcher                             |
+| `app/Commands/BackfillFollowups.php`         | `followup:backfill` reconciliation                     |
+| `app/Services/FollowupDispatchService.php`   | Channel dispatch                                       |
+| `app/Services/VisitorFollowupService.php`    | Read-side queries                                      |
+| `app/Models/FollowupLogModel.php`            | Log CRUD + scheduling                                  |
+| `app/Models/PersonVisitModel.php`            | Visit recording + auto-schedule hook                   |
+| `Clergy/Controllers/Visitors.php`            | Directory + follow-up AJAX endpoints                   |
+| `Clergy/Controllers/FollowupWorkflow.php`    | Parish sequence/action/template admin, call-task queue |
+| `app/Controllers/SystemFollowupWorkflow.php` | System admin UI for global sequences/templates         |
+| `Clergy/Config/Routes.php`                   | `/visitors/*` + `/followup-workflow/*` routes          |
+| `app/Config/Routes.php`                      | `/system/followup-workflow/*` routes                   |
