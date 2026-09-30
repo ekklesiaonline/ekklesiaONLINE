@@ -7,7 +7,7 @@ trigger: always_on
 
 ## Controllers & Auth
 
-- Place Controllers in `app/Controllers/` or module namespaces (`Parish`, `Clergy`, `Diocesan`, `MemberPortal`).
+- Place Controllers in `app/Controllers/` or module namespaces (`Parish`, `Clergy`, `Diocese`, `MemberPortal`).
 - Use Shield’s `auth()->user()` to access the authenticated user.
 - Protect routes with Shield filters (`session`, `permission:*`) and validate permissions inside controllers.
 - Never bypass `pending_review` gating except via `BaseController::canBypassPendingReviewGate()`.

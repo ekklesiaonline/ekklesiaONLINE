@@ -40,7 +40,6 @@ trigger: always_on
 - `/people/view/{id}` route `id` is `profile_id`; downstream services must use `profile.person_id`.
 
 ## Sacramental Records
-
 - `sacramental_record` is the canonical source of truth for baptism/confirmation.
 - `person_membership_details.is_baptized` / `is_confirmed` and `profile.baptism_date` / `confirmation_date` / `is_confirmed` are derived.
 - After every sacrament CRUD operation, call `SacramentFlagSyncService`.

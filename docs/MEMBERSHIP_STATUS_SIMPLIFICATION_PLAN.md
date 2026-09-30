@@ -10,14 +10,14 @@ The "guest → leader" progression is modeled across overlapping dimensions that
 individually defensible but over-denormalized in storage. `parish_affiliation`
 carries **six** overlapping status fields:
 
-| Column | Role | Redundant with |
-| --- | --- | --- |
-| `membership_status` | Canonical lifecycle (visitor / regular_attender / member / inactive / transferred / deceased) | — source of truth |
-| `affiliation_type` | High-level bucket (guest / attendee / member / clergy / staff) | Derivable from `membership_status` for 3 of 5 values |
-| `canonical_status` | Copy of `membership_status`; only ever SELECTed, never read for logic | `membership_status` |
-| `is_member` | Stored flag meant to equal `membership_status='member'` | `membership_status` |
-| `is_good_standing` | Selected in `PeopleDirectoryService`; nothing writes it | `member_standing_summary.is_good_standing` |
-| `pathway_stage` | Denormalized 1–3 pathway stage, single writer (`PathwayStageService`) | Partially derivable; kept as a cache |
+| Column             | Role                                                                                                                   | Redundant with                                                     |
+| ------------------ | ---------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------ |
+| `membership_status`| Canonical lifecycle (visitor / regular_attender / member / inactive / transferred / deceased)                          | — source of truth                                                  |
+| `affiliation_type` | High-level bucket (guest / attendee / member / clergy / staff)                                                         | Derivable from `membership_status` for 3 of 5 values               |
+| `canonical_status` | Copy of `membership_status`; only ever SELECTed, never read for logic                                                  | `membership_status`                                                |
+| `is_member`        | Stored flag meant to equal `membership_status='member'`                                                                | `membership_status`                                                |
+| `is_good_standing` | Selected in `PeopleDirectoryService`; nothing writes it                                                                | `member_standing_summary.is_good_standing`                         |
+| `pathway_stage`    | Denormalized 1–3 pathway stage, single writer (`PathwayStageService`)                                                  | Partially derivable; kept as a cache                               |
 
 Plus `profile.membership_status` — a second source of truth with a *different*
 enum (`non_active` exists there, `pending` was removed) mirrored by ~8 writers
