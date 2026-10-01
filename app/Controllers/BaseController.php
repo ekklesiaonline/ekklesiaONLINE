@@ -699,25 +699,15 @@ abstract class BaseController extends Controller
     protected function requirePermission(string $permission)
     {
         if (!$this->checkPermission($permission)) {
-            // Rate limit permission denied logging to max 10 per hour per user
-            $userId = auth()->id();
-            $rateLimitKey = "permission_denied_{$userId}";
-            $cache = cache();
-            $deniedCount = (int) $cache->get($rateLimitKey);
-            
-            if ($deniedCount < 10) {
-                $this->audit()->log('permission.denied', [
+            $this->audit()->logAuthorizationDenial(
+                'permission.denied',
+                'PERMISSION_DENIED',
+                [
+                    'permission' => $permission,
                     'parish_id' => $this->getOperationalparishId(),
-                    'entity_type' => 'route',
-                    'meta' => [
-                        'permission' => $permission,
-                        'path' => '/' . trim((string) $this->request->getUri()->getPath(), '/'),
-                        'method' => strtoupper((string) $this->request->getMethod()),
-                    ],
-                ]);
-                $cache->save($rateLimitKey, $deniedCount + 1, 3600); // 1 hour TTL
-            }
-            
+                ]
+            );
+
             // return redirect()->to('/dashboard')->with('error', lang('App.errorForbidden'));
             return redirect()->to('/')->with('error', lang('App.errorForbidden'));
         }
@@ -730,16 +720,14 @@ abstract class BaseController extends Controller
      */
     protected function requireParish()
     {
-        $parishId = (int) ($this->getOperationalParishId() ?? 0);
+        $parishId = (int) ($this->getOperationalparishId() ?? 0);
 
         if ($parishId <= 0 && !$this->isProvinceAdmin() && !$this->isDioceseAdmin()) {
-            $this->audit()->log('scope.denied', [
-                'entity_type' => 'parish_scope',
-                'meta' => [
-                    'path' => '/' . trim((string) $this->request->getUri()->getPath(), '/'),
-                    'method' => strtoupper((string) $this->request->getMethod()),
-                ],
-            ]);
+            $this->audit()->logAuthorizationDenial(
+                'scope.denied',
+                'PARISH_SCOPE_REQUIRED',
+                ['scope' => 'parish']
+            );
             return redirect()->to('/dashboard')->with('error', lang('App.errorNoParishScope'));
         }
 

@@ -31,6 +31,12 @@ class AdminFinanceBoundaryFilter implements FilterInterface
             return null;
         }
 
+        service('audit')->logAuthorizationDenial(
+            'scope.denied',
+            'ADMIN_FINANCE_ACCESS_DENIED',
+            ['filter' => self::class, 'scope' => 'finance']
+        );
+
         if ($incoming->isAJAX() || str_contains((string) $incoming->getHeaderLine('Accept'), 'application/json')) {
             return service('response')
                 ->setStatusCode(403)

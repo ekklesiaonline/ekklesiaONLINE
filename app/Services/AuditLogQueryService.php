@@ -127,6 +127,7 @@ class AuditLogQueryService
                 ->orWhereIn('audit_log.action', [
                     'permission.denied',
                     'scope.denied',
+                    'security.hierarchy_block',
                     'member.hard_delete',
                     'member.merge',
                     'parish.bulk_delete',
@@ -154,6 +155,7 @@ class AuditLogQueryService
                 ->orWhereIn('audit_log.action', [
                     'permission.denied',
                     'scope.denied',
+                    'security.hierarchy_block',
                     'donation.create',
                     'donation.delete',
                     'expense.create',
@@ -179,6 +181,7 @@ class AuditLogQueryService
                 ->orWhereIn('audit_log.action', [
                     'permission.denied',
                     'scope.denied',
+                    'security.hierarchy_block',
                     'service.create',
                     'service.update',
                     'service.delete',
@@ -241,7 +244,11 @@ class AuditLogQueryService
                 $builder->like('audit_log.action', 'system.', 'after');
                 break;
             case 'security_events':
-                $builder->whereIn('audit_log.action', ['permission.denied', 'scope.denied']);
+                $builder->whereIn('audit_log.action', [
+                    'permission.denied',
+                    'scope.denied',
+                    'security.hierarchy_block',
+                ]);
                 break;
             case 'data_changes':
                 $builder->groupStart()
@@ -288,7 +295,11 @@ class AuditLogQueryService
 
         $securityBuilder = $this->db->table('audit_log');
         $this->applyScopeFilter($securityBuilder, $role, $scopeParishIds, $drillParishId);
-        $securityBuilder->whereIn('audit_log.action', ['permission.denied', 'scope.denied']);
+        $securityBuilder->whereIn('audit_log.action', [
+            'permission.denied',
+            'scope.denied',
+            'security.hierarchy_block',
+        ]);
         if ($timeConditions !== []) {
             $securityBuilder->where($timeConditions);
         }

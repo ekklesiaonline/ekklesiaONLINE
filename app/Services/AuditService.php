@@ -7,6 +7,9 @@ use CodeIgniter\HTTP\IncomingRequest;
 
 class AuditService
 {
+    private const AUTHORIZATION_DENIAL_LIMIT = 10;
+    private const AUTHORIZATION_DENIAL_TTL = 3600;
+
     private AuditLogModel $auditLogModel;
     private MonitoringService $monitoring;
 
@@ -76,6 +79,60 @@ class AuditService
         if ($writeFileLog !== false) {
             $this->monitoring->log('audit.log', $monitorPayload, 'info');
         }
+    }
+
+    /**
+     * Log a route or scope authorization denial with one consistent contract.
+     *
+     * Denials are rate-limited per authenticated actor across authorization
+     * actions to avoid turning repeated probes into an audit-log flood.
+     *
+     * @param array<string, mixed> $context
+     */
+    public function logAuthorizationDenial(
+        string $action,
+        string $code,
+        array $context = []
+    ): void {
+        $userId = function_exists('auth') && auth()->loggedIn()
+            ? (int) (auth()->id() ?? 0)
+            : 0;
+        $rateLimitKey = 'authorization_denied_' . $userId;
+        $cache = cache();
+        $deniedCount = (int) $cache->get($rateLimitKey);
+
+        if ($deniedCount >= self::AUTHORIZATION_DENIAL_LIMIT) {
+            return;
+        }
+
+        $request = service('request');
+        $meta = [
+            'code' => $code,
+            'path' => '/' . trim((string) $request->getUri()->getPath(), '/'),
+            'method' => strtoupper((string) $request->getMethod()),
+        ];
+        foreach ($context as $key => $value) {
+            if ($key !== 'parish_id') {
+                $meta[$key] = $value;
+            }
+        }
+
+        $parishId = isset($context['parish_id'])
+            ? (int) $context['parish_id']
+            : null;
+
+        $this->log($action, [
+            'user_id' => $userId > 0 ? $userId : null,
+            'parish_id' => $parishId > 0 ? $parishId : null,
+            'entity_type' => 'route',
+            'meta' => $meta,
+        ]);
+
+        $cache->save(
+            $rateLimitKey,
+            $deniedCount + 1,
+            self::AUTHORIZATION_DENIAL_TTL
+        );
     }
 
     private function sanitizeAuditValues(mixed $value): mixed

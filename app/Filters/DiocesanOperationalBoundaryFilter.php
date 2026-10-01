@@ -24,6 +24,12 @@ class DiocesanOperationalBoundaryFilter implements FilterInterface
             return null;
         }
 
+        service('audit')->logAuthorizationDenial(
+            'scope.denied',
+            'DIOCESAN_OPERATIONAL_ACCESS_DENIED',
+            ['filter' => self::class, 'scope' => 'diocesan_operational']
+        );
+
         if ($incoming->isAJAX() || str_contains((string) $incoming->getHeaderLine('Accept'), 'application/json')) {
             return service('response')
                 ->setStatusCode(403)

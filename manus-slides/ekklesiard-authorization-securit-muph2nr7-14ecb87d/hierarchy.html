@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500&family=IBM+Plex+Mono&display=swap">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'IBM Plex Sans', sans-serif; color: #161616; background-color: #F4F5F6; }
+    .slide-container { width: 1280px; min-height: 720px; background: #F4F5F6; display: flex; flex-direction: column; padding: 48px; position: relative; }
+    .motif-tr { position: absolute; top: 24px; right: 24px; color: #C6C6C6; font-family: 'IBM Plex Mono'; font-size: 24px; }
+    .motif-bl { position: absolute; bottom: 24px; left: 24px; color: #C6C6C6; font-family: 'IBM Plex Mono'; font-size: 24px; }
+    .header { border-bottom: 1px solid #C6C6C6; padding-bottom: 16px; margin-bottom: 48px; }
+    .slide-title { font-size: 36px; font-weight: 500; }
+    .content { flex: 1; display: grid; grid-template-columns: 1fr 1fr; gap: 48px; }
+    .rules-column { background: #E0E3E5; border: 1px solid #C6C6C6; padding: 24px; }
+    .code-block { font-family: 'IBM Plex Mono'; font-size: 18px; line-height: 1.6; }
+    .code-comment { color: #525252; }
+    .priority-list { list-style: none; margin-top: 24px; font-family: 'IBM Plex Mono'; }
+    .priority-item { margin-bottom: 12px; display: flex; }
+    .priority-label { width: 180px; color: #D94E18; }
+    .expl-column { display: flex; flex-direction: column; justify-content: center; }
+    .expl-item { margin-bottom: 32px; }
+    .expl-title { font-size: 22px; font-weight: 500; margin-bottom: 12px; color: #D94E18; }
+    .expl-text { font-size: 20px; line-height: 1.5; color: #525252; }
+    .footer { position: absolute; bottom: 48px; right: 48px; font-family: 'IBM Plex Mono'; font-size: 14px; color: #525252; }
+  </style>
+</head>
+<body>
+  <div class="slide-container">
+    <div class="motif-tr">+</div>
+    <div class="motif-bl">+</div>
+    <div class="header"><h2 class="slide-title">AdminHierarchyGuard: Exact Rules</h2></div>
+    <div class="content">
+      <div class="rules-column">
+        <div class="code-block">
+          <p class="code-comment">// Priority Hierarchy</p>
+          <ul class="priority-list">
+            <li class="priority-item"><span class="priority-label">systemadmin</span> <span>= 4</span></li>
+            <li class="priority-item"><span class="priority-label">provinceadmin</span> <span>= 3</span></li>
+            <li class="priority-item"><span class="priority-label">dioceseadmin</span> <span>= 2</span></li>
+            <li class="priority-item"><span class="priority-label">parishadmin</span> <span>= 1</span></li>
+            <li class="priority-item"><span class="priority-label">others</span> <span>= 0</span></li>
+          </ul>
+          <br>
+          <p class="code-comment">// Comparison Code</p>
+          <p>if (targetPriority > actorPriority) {</p>
+          <p>&nbsp;&nbsp;return 'HIERARCHY';</p>
+          <p>}</p>
+        </div>
+      </div>
+      <div class="expl-column">
+        <div class="expl-item">
+          <h3 class="expl-title">Outranking Protection</h3>
+          <p class="expl-text">Prevents lower-tier admins from modifying, deactivating, or deleting accounts of higher-tier administrators.</p>
+        </div>
+        <div class="expl-item">
+          <h3 class="expl-title">Multi-Group Resolution</h3>
+          <p class="expl-text">Uses the highest priority among all assigned groups for an actor or target.</p>
+        </div>
+        <div class="expl-item">
+          <h3 class="expl-title">Self-Targeting Gate</h3>
+          <p class="expl-text">Independent of hierarchy; destructive operations against one's own account are explicitly blocked.</p>
+        </div>
+      </div>
+    </div>
+    <div class="footer">PAGE 03</div>
+  </div>
+</body>
+</html>

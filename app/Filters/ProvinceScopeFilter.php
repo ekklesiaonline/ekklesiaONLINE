@@ -176,6 +176,16 @@ class ProvinceScopeFilter implements FilterInterface
 
     private function deny($request, string $message)
     {
+        service('audit')->logAuthorizationDenial(
+            'scope.denied',
+            'PROVINCE_SCOPE_DENIED',
+            [
+                'filter' => self::class,
+                'scope' => 'province',
+                'message' => $message,
+            ]
+        );
+
         if ($request->isAJAX() || str_contains((string) $request->getHeaderLine('Accept'), 'application/json')) {
             return service('response')
                 ->setStatusCode(403)

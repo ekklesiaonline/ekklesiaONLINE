@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500&family=IBM+Plex+Mono&display=swap">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'IBM Plex Sans', sans-serif; color: #161616; background-color: #F4F5F6; }
+    .slide-container { width: 1280px; min-height: 720px; background: #F4F5F6; display: flex; flex-direction: column; padding: 48px; position: relative; }
+    .motif-tr { position: absolute; top: 24px; right: 24px; color: #C6C6C6; font-family: 'IBM Plex Mono'; font-size: 24px; }
+    .motif-bl { position: absolute; bottom: 24px; left: 24px; color: #C6C6C6; font-family: 'IBM Plex Mono'; font-size: 24px; }
+    .header { border-bottom: 1px solid #C6C6C6; padding-bottom: 16px; margin-bottom: 48px; }
+    .slide-title { font-size: 36px; font-weight: 500; }
+    .content { flex: 1; display: grid; grid-template-columns: 1fr 1fr; gap: 32px; }
+    .rec-card { border: 1px solid #C6C6C6; padding: 32px; background: #FFFFFF; }
+    .rec-title { font-family: 'IBM Plex Mono'; font-size: 18px; font-weight: 500; margin-bottom: 20px; color: #D94E18; }
+    .rec-list { list-style: none; }
+    .rec-item { font-size: 18px; line-height: 1.6; margin-bottom: 16px; position: relative; padding-left: 24px; }
+    .rec-item::before { content: '→'; position: absolute; left: 0; color: #D94E18; }
+    .footer { position: absolute; bottom: 48px; right: 48px; font-family: 'IBM Plex Mono'; font-size: 14px; color: #525252; }
+  </style>
+</head>
+<body>
+  <div class="slide-container">
+    <div class="motif-tr">+</div>
+    <div class="motif-bl">+</div>
+    <div class="header"><h2 class="slide-title">Security Audit Recommendations</h2></div>
+    <div class="content">
+      <div class="rec-card">
+        <div class="rec-title">Short-Term Observability</div>
+        <ul class="rec-list">
+          <li class="rec-item">Monitor security-event dashboard for spikes in PROVINCE_SCOPE_DENIED.</li>
+          <li class="rec-item">Review rate-limited audit logs to identify potential automated traversal attempts.</li>
+          <li class="rec-item">Configure alerts for hierarchy violations targeting system-admin accounts.</li>
+        </ul>
+      </div>
+      <div class="rec-card">
+        <div class="rec-title">Long-Term Enforcement</div>
+        <ul class="rec-list">
+          <li class="rec-item">Extend ParishScopeFilter to validate session parish against authorized profile scope.</li>
+          <li class="rec-item">Centralize all geographic boundary logic into a singleton ParishScopeValidator.</li>
+          <li class="rec-item">Standardize audit event "old_values" capturing for all protected mutations.</li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer">PAGE 07</div>
+  </div>
+</body>
+</html>

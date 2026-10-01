@@ -2,10 +2,32 @@
 
 namespace App\Filters;
 
+use CodeIgniter\HTTP\RequestInterface;
 use CodeIgniter\Shield\Filters\PermissionFilter as ShieldPermissionFilter;
 
 class PermissionFilter extends ShieldPermissionFilter
 {
+    public function before(RequestInterface $request, $arguments = null)
+    {
+        $response = parent::before($request, $arguments);
+
+        if (
+            $response !== null
+            && auth()->loggedIn()
+            && is_array($arguments)
+            && $arguments !== []
+            && !$this->isAuthorized($arguments)
+        ) {
+            service('audit')->logAuthorizationDenial(
+                'permission.denied',
+                'PERMISSION_DENIED',
+                ['permissions' => array_values($arguments)]
+            );
+        }
+
+        return $response;
+    }
+
     protected function isAuthorized(array $arguments): bool
     {
         $user = auth()->user();

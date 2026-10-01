@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500&family=IBM+Plex+Mono&display=swap">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'IBM Plex Sans', sans-serif; color: #161616; background-color: #F4F5F6; }
+    .slide-container { width: 1280px; min-height: 720px; background: #F4F5F6; display: flex; flex-direction: column; padding: 48px; position: relative; }
+    .motif-tr { position: absolute; top: 24px; right: 24px; color: #C6C6C6; font-family: 'IBM Plex Mono'; font-size: 24px; }
+    .motif-bl { position: absolute; bottom: 24px; left: 24px; color: #C6C6C6; font-family: 'IBM Plex Mono'; font-size: 24px; }
+    .header { border-bottom: 1px solid #C6C6C6; padding-bottom: 16px; margin-bottom: 48px; }
+    .slide-title { font-size: 36px; font-weight: 500; }
+    .content { flex: 1; display: flex; }
+    .seq-container { width: 100%; display: flex; flex-direction: column; }
+    .seq-step { display: flex; align-items: flex-start; margin-bottom: 24px; }
+    .seq-marker { width: 4px; height: 4px; background: #D94E18; margin-top: 10px; margin-right: 24px; }
+    .seq-content { border-left: 1px solid #C6C6C6; padding-left: 24px; }
+    .seq-title { font-family: 'IBM Plex Mono'; font-size: 18px; font-weight: 500; margin-bottom: 8px; color: #161616; }
+    .seq-text { font-size: 20px; line-height: 1.4; color: #525252; }
+    .footer { position: absolute; bottom: 48px; right: 48px; font-family: 'IBM Plex Mono'; font-size: 14px; color: #525252; }
+  </style>
+</head>
+<body>
+  <div class="slide-container">
+    <div class="motif-tr">+</div>
+    <div class="motif-bl">+</div>
+    <div class="header"><h2 class="slide-title">Uniform Security Auditing</h2></div>
+    <div class="content">
+      <div class="seq-container">
+        <div class="seq-step">
+          <div class="seq-marker"></div>
+          <div class="seq-content">
+            <h3 class="seq-title">Centralized logAuthorizationDenial()</h3>
+            <p class="seq-text">New AuditService API provides a uniform contract for all security rejections across filters and controllers.</p>
+          </div>
+        </div>
+        <div class="seq-step">
+          <div class="seq-marker"></div>
+          <div class="seq-content">
+            <h3 class="seq-title">Automatic Rate Limiting</h3>
+            <p class="seq-text">Restricts authorization-denied logging to 10 events per hour per user, preventing audit-log flooding during probes.</p>
+          </div>
+        </div>
+        <div class="seq-step">
+          <div class="seq-marker"></div>
+          <div class="seq-content">
+            <h3 class="seq-title">Rich Security Metadata</h3>
+            <p class="seq-text">Records actor, target, path, method, and specific denial codes (e.g., PROVINCE_SCOPE_DENIED) for forensic analysis.</p>
+          </div>
+        </div>
+        <div class="seq-step">
+          <div class="seq-marker"></div>
+          <div class="seq-content">
+            <h3 class="seq-title">Hierarchy Block Visibility</h3>
+            <p class="seq-text">Integrated security.hierarchy_block into standard security-event dashboards and statistics queries.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="footer">PAGE 05</div>
+  </div>
+</body>
+</html>

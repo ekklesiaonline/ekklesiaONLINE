@@ -35,6 +35,11 @@ class DioceseScopeFilter implements FilterInterface
         // Resolve diocesan scope from user profile
         $dioceseId = $this->resolveDiocesanScopeId((int) auth()->id());
         if ($dioceseId <= 0) {
+            service('audit')->logAuthorizationDenial(
+                'scope.denied',
+                'DIOCESAN_SCOPE_UNRESOLVED',
+                ['filter' => self::class, 'scope' => 'diocese']
+            );
             auth()->logout();
 
             return redirect()->to('/login')->with('error', 'Unable to resolve your diocesan scope. Please contact support.');
@@ -146,6 +151,16 @@ class DioceseScopeFilter implements FilterInterface
      */
     private function deny(RequestInterface $request, string $message)
     {
+        service('audit')->logAuthorizationDenial(
+            'scope.denied',
+            'DIOCESAN_SCOPE_DENIED',
+            [
+                'filter' => self::class,
+                'scope' => 'diocese',
+                'message' => $message,
+            ]
+        );
+
         if (
             strtolower((string) $request->getHeaderLine('X-Requested-With')) === 'xmlhttprequest'
             || str_contains((string) $request->getHeaderLine('Accept'), 'application/json')

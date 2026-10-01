@@ -48,6 +48,12 @@ class ParishScopeFilter implements FilterInterface
             return null;
         }
 
+        service('audit')->logAuthorizationDenial(
+            'scope.denied',
+            'PARISH_SCOPE_REQUIRED',
+            ['filter' => self::class, 'scope' => 'parish']
+        );
+
         if ($incoming->isAJAX() || str_contains((string) $incoming->getHeaderLine('Accept'), 'application/json')) {
             return service('response')
                 ->setStatusCode(403)
