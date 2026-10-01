@@ -349,8 +349,6 @@ class Filters extends BaseFilters
                 'banking/*',
                 'pledges',
                 'pledges/*',
-                'diocese/finance',
-                'diocese/finance/*',
                 'treasurer',
                 'treasurer/*',
             ],

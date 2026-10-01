@@ -108,6 +108,29 @@ final class ReportsFinanceBoundaryIntegrationTest extends CIUnitTestCase
         ]);
     }
 
+    public function testDiocesanAdminCanAccessDioceseFinance(): void
+    {
+        $userId = $this->insertUser('diocesan.finance.boundary.user');
+        $this->insertProfileScope($userId, null, 1);
+        $this->injectDioceseAdminAuth($userId);
+
+        $response = $this->get('diocese/finance');
+
+        $response->assertOK();
+        $response->assertSee(lang('App.navFinanceDashboard'));
+    }
+
+    public function testProvinceAdminIsRedirectedFromDioceseFinance(): void
+    {
+        $userId = $this->insertUser('province.finance.boundary.user');
+        $this->insertProfileScope($userId, 1, null);
+        $this->injectProvinceAdminAuth($userId);
+
+        $response = $this->get('diocese/finance');
+
+        $this->assertTrue($response->isRedirect() || $response->getStatusCode() === 403);
+    }
+
     private function insertProfileScope(int $userId, ?int $provinceId, ?int $dioceseId): void
     {
         $parishId = $this->profileScopeParishId();
@@ -127,9 +150,15 @@ final class ReportsFinanceBoundaryIntegrationTest extends CIUnitTestCase
             $payload['locale'] = 'en';
         }
 
+        if ($provinceId !== null && in_array('province_id', $profileColumns, true)) {
+            $payload['province_id'] = $provinceId;
+        }
+
+        if ($dioceseId !== null && in_array('diocese_id', $profileColumns, true)) {
+            $payload['diocese_id'] = $dioceseId;
+        }
+
         if (in_array('parish_id', $profileColumns, true)) {
-            $payload['parish_id'] = $parishId;
-        } elseif (in_array('parish_id', $profileColumns, true)) {
             $payload['parish_id'] = $parishId;
         }
 
@@ -302,6 +331,121 @@ final class ReportsFinanceBoundaryIntegrationTest extends CIUnitTestCase
             public function inGroup(string ...$groups): bool
             {
                 return in_array('diocesanadmin', $groups, true);
+            }
+        };
+
+        $auth = new class(config('Auth'), $fakeUser, $userId) extends Auth {
+            public function __construct($config, private User $fakeUser, private int $userId)
+            {
+                parent::__construct($config);
+            }
+
+            public function getAuthenticator(): AuthenticatorInterface
+            {
+                return new class($this->fakeUser) implements AuthenticatorInterface {
+                    public function __construct(private User $fakeUser) {}
+
+                    public function attempt(array $credentials): Result
+                    {
+                        return new Result(['success' => false, 'reason' => 'not-used-in-test']);
+                    }
+
+                    public function check(array $credentials): Result
+                    {
+                        return new Result(['success' => false, 'reason' => 'not-used-in-test']);
+                    }
+
+                    public function loggedIn(): bool
+                    {
+                        return true;
+                    }
+
+                    public function login(User $user): void {}
+
+                    public function loginById($userId): void {}
+
+                    public function logout(): void {}
+
+                    public function getUser(): ?User
+                    {
+                        return $this->fakeUser;
+                    }
+
+                    public function recordActiveDate(): void {}
+
+                    public function isPending(): bool
+                    {
+                        return false;
+                    }
+
+                    public function getPendingMessage(): string
+                    {
+                        return '';
+                    }
+
+                    public function startUpAction(string $type, User $user): bool
+                    {
+                        return false;
+                    }
+                };
+            }
+
+            public function setAuthenticator(?string $alias = null): self
+            {
+                return $this;
+            }
+
+            public function loggedIn(): bool
+            {
+                return true;
+            }
+
+            public function id(): ?int
+            {
+                return $this->userId;
+            }
+
+            public function user(): ?User
+            {
+                return $this->fakeUser;
+            }
+        };
+
+        Services::injectMock('auth', $auth);
+    }
+
+    private function injectDioceseAdminAuth(int $userId): void
+    {
+        $fakeUser = new class($userId) extends User {
+            public function __construct(private int $idForTest)
+            {
+                parent::__construct([
+                    'id' => $idForTest,
+                    'username' => 'diocese.reports.boundary.user.' . $idForTest,
+                    'email' => 'diocese.reports.boundary.' . $idForTest . '@example.org',
+                ]);
+            }
+
+            public function can(string ...$permissions): bool
+            {
+                $granted = [
+                    'diocese.admin',
+                    'dashboard.view',
+                    'report.view',
+                ];
+
+                foreach ($permissions as $permission) {
+                    if (! in_array($permission, $granted, true)) {
+                        return false;
+                    }
+                }
+
+                return true;
+            }
+
+            public function inGroup(string ...$groups): bool
+            {
+                return in_array('dioceseadmin', $groups, true);
             }
         };
 

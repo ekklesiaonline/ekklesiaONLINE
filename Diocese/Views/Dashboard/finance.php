@@ -35,7 +35,7 @@ $currentPeriodLabel = $periodLabels[$current_period] ?? $current_period;
                     <option value="all" selected><?= lang('App.scopeAllParishes') ?></option>
                     <?php foreach ($all_parishes as $parish): ?>
                         <?php $parishUeid = trim((string) ($parish['parish_ueid'] ?? '')); ?>
-                        <option value="<?= (int) $parish['id'] ?>\"><?= esc($parish['name'] . ($parishUeid !== '' ? ' (' . $parishUeid . ')' : '')) ?></option>
+                        <option value="<?= (int) $parish['id'] ?>"><?= esc($parish['name'] . ($parishUeid !== '' ? ' (' . $parishUeid . ')' : '')) ?></option>
                     <?php endforeach; ?>
                 </select>
             </div>
