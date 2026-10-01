@@ -130,6 +130,10 @@ Events::on('register', static function (User $user): void {
     }
 
     if ($provinceId <= 0) {
+        log_message('error', 'Registration onboarding skipped: parish ID {parish_id} lacks resolved province hierarchy for user {user_id}.', [
+            'parish_id' => $parishId,
+            'user_id'   => $user->id,
+        ]);
         return;
     }
 
@@ -140,6 +144,10 @@ Events::on('register', static function (User $user): void {
         ->countAllResults() > 0;
 
     if (!$provinceExists) {
+        log_message('error', 'Registration onboarding skipped: resolved province ID {province_id} does not exist for user {user_id}.', [
+            'province_id' => $provinceId,
+            'user_id'     => $user->id,
+        ]);
         return;
     }
 

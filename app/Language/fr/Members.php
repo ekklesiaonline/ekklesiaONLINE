@@ -150,6 +150,8 @@ return [
     'revokePortalAccess'        => 'Révoquer l\'accès au portail',
     'prefilledFromVisitor'        => 'Ce formulaire a été pré-rempli depuis une fiche d\'invité. L\'enregistrement crée le compte membre et marque l\'invité comme converti.',
     'pendingRegistrationsTitle' => 'Inscriptions paroissiales en attente',
+    'incompleteProfilesTitle'   => 'Configurations de profil incomplètes',
+    'registeredAt'              => 'Inscrit',
     'registrationApplicant'     => 'Candidat',
     'registrationEmail'         => 'Courriel',
     'registrationSubmitted'     => 'Soumis',

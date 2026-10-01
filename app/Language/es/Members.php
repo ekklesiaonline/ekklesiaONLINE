@@ -138,6 +138,8 @@ return [
     'createPortalMember'        => 'Agregar miembro con portal',
     'createFirstPortalMember'   => 'Agregar primer miembro con portal',
     'pendingRegistrationsTitle' => 'Registros parroquiales pendientes',
+    'incompleteProfilesTitle'   => 'Configuraciones de perfil incompletas',
+    'registeredAt'              => 'Registrado',
     'registrationApplicant'     => 'Solicitante',
     'createStandaloneNonPortal' => 'Crear miembro independiente sin portal',
     'createStandaloneNonPortalSubmit' => 'Crear miembro sin portal',

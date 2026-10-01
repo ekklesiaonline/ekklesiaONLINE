@@ -426,7 +426,7 @@ class RegistrationApprovalService
     public function escalate(int $actorUserId, int $requestId, ?array $actorScope = null, ?string $notes = null): ?string
     {
         $request = $this->getRequest($requestId);
-        if ($request === null || !in_array($request['status'], ['pending_profile', 'pending_review'], true)) {
+        if ($request === null || $request['status'] !== 'pending_review') {
             return lang('Diocesan.registrationRequestMissingOrReviewed');
         }
 

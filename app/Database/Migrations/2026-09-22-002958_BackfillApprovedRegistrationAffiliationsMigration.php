@@ -26,12 +26,23 @@ class BackfillApprovedRegistrationAffiliationsMigration extends Migration
             return;
         }
 
+        $parishCol = null;
+        if ($this->db->fieldExists('requested_parish_id', 'user_registration_requests')) {
+            $parishCol = 'requested_parish_id';
+        } elseif ($this->db->fieldExists('parish_id', 'user_registration_requests')) {
+            $parishCol = 'parish_id';
+        }
+
+        if ($parishCol === null) {
+            return;
+        }
+
         $requests = $this->db->table('user_registration_requests urr')
-            ->select('urr.user_id, urr.parish_id, p.person_id')
+            ->select('urr.user_id, urr.' . $parishCol . ' AS parish_id, p.person_id')
             ->join('profile p', 'p.user_id = urr.user_id', 'left')
             ->where('urr.status', 'approved')
-            ->where('urr.parish_id IS NOT NULL', null, false)
-            ->where('urr.parish_id >', 0)
+            ->where('urr.' . $parishCol . ' IS NOT NULL', null, false)
+            ->where('urr.' . $parishCol . ' >', 0)
             ->get()
             ->getResultArray();
 

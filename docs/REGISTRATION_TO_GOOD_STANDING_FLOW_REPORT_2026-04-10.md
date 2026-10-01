@@ -30,32 +30,36 @@ sequenceDiagram
     participant S as Shield Auth
     participant E as Register Event Hook
     participant P as Profile Controller
-    participant R as RegistrationRequests Controller
+    participant R as RegistrationApprovalService / People Controller
     participant DB as Database
 
-    U->>S: Register account
+    U->>S: Register account (with validated parish hierarchy)
     S->>DB: INSERT users, auth_identities
     S->>E: Trigger register event
-    E->>DB: UPSERT profile (membership_status=pending)
-    E->>DB: UPSERT user_registration_requests (status=pending_profile)
+    E->>DB: INSERT profile (sparse contact/locale)
+    E->>DB: INSERT user_registration_requests (status=pending_profile, requested_parish_id)
 
-    U->>P: Submit profile completion
-    P->>DB: UPDATE profile
-    P->>DB: UPDATE user_registration_requests (status=pending_review, profile_completed_at)
-    P->>DB: INSERT parish_role_audit_logs (submission/notification)
+    Note over U,P: User activates email via ScopedEmailActivator
+    U->>P: Submit profile completion (completeSubmit / joinParishSubmit)
+    P->>DB: Atomic transaction: UPDATE profile, UPDATE user_registration_requests (status=pending_review, profile_completed_at)
+    P->>DB: Post-commit audit and notification
 
-    R->>DB: Read pending_review request in scope
-    alt Approve
-        R->>DB: UPDATE auth_groups_users
-        R->>DB: UPDATE profile (membership_status=active, parish scope)
+    Note over R: Parish Clergy / People Moderation Queue (tabs: Pending Review vs Incomplete)
+    alt Approve (pending_review only)
+        R->>DB: UPDATE auth_groups_users (assign role)
+        R->>DB: UPDATE profile (parish scope)
+        R->>DB: INSERT/UPDATE parish_affiliation (membership_status=visitor)
         R->>DB: UPDATE user_registration_requests (status=approved, reviewed_by, reviewed_at)
-        R->>DB: INSERT parish_role_audit_logs (registration_approved)
-    else Dismiss/Ban
+        R->>DB: INSERT parish_role_audit_log (registration_approved)
+    else Dismiss / Ban (pending_profile or pending_review)
         R->>DB: UPDATE user_registration_requests (dismissed or banned)
         opt Ban
-            R->>DB: UPDATE users.active=0
+            R->>DB: UPDATE users.active=0, revoke trusted devices & sessions
         end
-        R->>DB: INSERT parish_role_audit_logs
+        R->>DB: INSERT parish_role_audit_log
+    else Escalate (pending_review only)
+        R->>DB: UPDATE user_registration_requests (review_notes, reviewed_by, reviewed_at)
+        R->>DB: INSERT parish_role_audit_log (registration_escalated)
     end
 ```
 
@@ -107,13 +111,15 @@ Primary tables touched:
 
 Primary implementation:
 
+- app/Controllers/Auth/RegisterController.php (validates complete parish → diocese → province hierarchy before account creation)
 - app/Config/Events.php (Events::on('register', ...))
 
 Behavior:
 
-- Resolves province/diocese from selected parish when available.
-- Ensures a profile row exists with membership_status set to pending.
-- Creates or updates one user_registration_requests row with status pending_profile.
+- Resolves province and diocese from selected parish.
+- Ensures a sparse initial profile row exists (demographics are completed in Step 3). Note: `profile.membership_status` was canonicalized into `parish_affiliation.membership_status` and removed from `profile`.
+- Creates one `user_registration_requests` row with status `pending_profile` and `requested_parish_id`.
+- User account activation remains separate under Shield (`users.active`, `ScopedEmailActivator`).
 
 Primary tables written:
 
@@ -123,62 +129,79 @@ Primary tables written:
 Primary status after this step:
 
 - user_registration_requests.status = pending_profile
-- profile.membership_status = pending
+- user_registration_requests.requested_parish_id = selected parish
 
 ### Step 3: Profile completion and submission for review
 
 Primary implementation:
 
-- MemberPortal/Controllers/Profile.php (complete and completeSubmit)
+- MemberPortal/Controllers/Profile.php (completeSubmit and joinParishSubmit)
 
 Behavior:
 
-- Validates province, diocese, and parish hierarchy integrity.
-- Updates profile demographics and geo context.
-- Promotes registration request from pending_profile to pending_review.
-- Sets profile_completed_at timestamp.
-- Logs registration audit and notifies parish admins.
+- Validates required profile fields (first name, last name, phone) and parish selection.
+- In an atomic DB transaction, updates profile demographics and sets `user_registration_requests.status = 'pending_review'` along with `profile_completed_at = date(...)`.
+- Deferred side effects: logs registration submission audit and sends review notification only after successful commit.
+- Top-tier admins (systemadmin, provinceadmin, dioceseadmin) auto-approve their own parish join.
 
 Primary tables written:
 
 - profile
 - user_registration_requests
-- parish_role_audit_logs
+- parish_role_audit_log
 
 Primary status after this step:
 
 - user_registration_requests.status = pending_review
+- user_registration_requests.profile_completed_at = populated timestamp
 
 ### Step 4: Moderation by parish admin
 
 Primary implementation:
 
-- Diocesan/Controllers/RegistrationRequests.php
+- Clergy/Controllers/People.php (moderation hub with distinct "Ready for Review" vs "Incomplete Profiles" tabs)
+- app/Services/RegistrationApprovalService.php (centralized transition rules)
+- Diocesan/Controllers/RegistrationRequests.php (diocesan queue)
+
+Allowed actions by request stage:
+
+| Stage | Allowed Actions | Disallowed Actions |
+|-------|-----------------|-------------------|
+| `pending_profile` | Dismiss, Ban, Delete (with permission) | **Approve** (blocked), **Escalate** (blocked) |
+| `pending_review` | Approve, Dismiss, Ban, Escalate, Delete | None |
 
 Approval path behavior:
 
-- Confirms request is still pending_review and in moderator scope.
-- Assigns group role in auth_groups_users.
-- Updates profile membership_status to active and sets province/diocese/parish scope.
-- Marks request approved with reviewer metadata.
+- Strictly requires `user_registration_requests.status === 'pending_review'`.
+- Assigns group role in `auth_groups_users`.
+- Updates `profile` with province/diocese/parish scope.
+- Creates primary `parish_affiliation` with `membership_status = 'visitor'` (canonical membership is verified and promoted later via visitor pathway).
+- Marks request `approved` with `reviewed_by` and `reviewed_at`.
 
 Dismiss/Ban behavior:
 
-- Updates request status to dismissed or banned.
-- Ban path deactivates users.active to 0.
+- Handles both `pending_profile` and `pending_review`.
+- Updates request status to `dismissed` or `banned`.
+- Ban path deactivates `users.active` to 0 and immediately revokes all tracked sessions and trusted devices.
+
+Escalate behavior:
+
+- Strictly accepts only `pending_review` (incomplete profiles must not be escalated).
+- Logs `registration_escalated` audit with notes for higher-level review.
 
 Primary tables written:
 
 - auth_groups_users
 - profile
+- parish_affiliation
 - user_registration_requests
 - users (ban path active toggle)
-- parish_role_audit_logs
+- parish_role_audit_log
 
 Primary status after approval:
 
 - user_registration_requests.status = approved
-- profile.membership_status = active
+- parish_affiliation.membership_status = visitor
 
 ## Good Standing Data Inputs
 

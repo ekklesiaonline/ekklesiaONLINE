@@ -1174,6 +1174,16 @@ abstract class BaseController extends Controller
             $data['parish'] = $parishModel->findWithHierarchy((int) $parishId) ?? $parishModel->find($parishId);
         }
 
+        $pendingRegistrationsSidebarCount = 0;
+        if ($this->user && $parishId && $this->user->inGroup('parishadmin') && $this->user->can('member.edit')) {
+            try {
+                $pendingRegistrationsSidebarCount = model('UserRegistrationRequestModel')->countPendingByParish((int) $parishId);
+            } catch (\Throwable $e) {
+                $pendingRegistrationsSidebarCount = 0;
+            }
+        }
+        $data['pending_registrations_sidebar_count'] = $pendingRegistrationsSidebarCount;
+
         if ($this->isSystemAdmin()) {
             $data['scope_label'] = lang('App.scopeSystem');
             $data['scope_icon'] = 'bi-shield-lock';

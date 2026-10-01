@@ -82,8 +82,28 @@ final class RegisterParishHardStopIntegrationTest extends CIUnitTestCase
 
     public function testRegisterProceedsWhenParishIsValidAndCreatesUser(): void
     {
+        $this->ensureHierarchyTables();
+
+        $this->db->table('parish')->where('id', 42)->delete();
+        $this->db->table('diocese')->where('id', 10)->delete();
+        $this->db->table('province')->where('id', 1)->delete();
+
+        $this->db->table('province')->insert([
+            'id'         => 1,
+            'name'       => 'Valid Province',
+            'created_at' => date('Y-m-d H:i:s'),
+            'updated_at' => date('Y-m-d H:i:s'),
+        ]);
+        $this->db->table('diocese')->insert([
+            'id'          => 10,
+            'province_id' => 1,
+            'name'        => 'Valid Diocese',
+            'created_at'  => date('Y-m-d H:i:s'),
+            'updated_at'  => date('Y-m-d H:i:s'),
+        ]);
         $this->db->table('parish')->insert([
             'id'         => 42,
+            'diocese_id' => 10,
             'name'       => 'Valid Test Parish',
             'created_at' => date('Y-m-d H:i:s'),
             'updated_at' => date('Y-m-d H:i:s'),
@@ -111,6 +131,42 @@ final class RegisterParishHardStopIntegrationTest extends CIUnitTestCase
 
         $this->assertInstanceOf(RedirectResponse::class, $result);
         $this->assertSame($before + 1, $after);
+    }
+
+    public function testRegisterRejectsWhenParishLacksHierarchyAndDoesNotCreateUser(): void
+    {
+        $this->ensureHierarchyTables();
+
+        $this->db->table('parish')->insert([
+            'id'         => 99,
+            'diocese_id' => null,
+            'name'       => 'Orphan Parish',
+            'created_at' => date('Y-m-d H:i:s'),
+            'updated_at' => date('Y-m-d H:i:s'),
+        ]);
+
+        $before = $this->db->table($this->resolveTableName('users'))->countAllResults();
+
+        $request = service('request');
+        $request->setMethod('post');
+        $postData = [
+            'username'         => 'orphan.parish',
+            'email'            => 'orphan.parish@example.org',
+            'password'         => 'T7vL!pQz9$rWk2mX',
+            'password_confirm' => 'T7vL!pQz9$rWk2mX',
+            'parish_id'        => 99,
+        ];
+        $request->setGlobal('post', $postData);
+        $request->setGlobal('request', $postData);
+
+        $controller = new \App\Controllers\Auth\RegisterController();
+        $controller->initController($request, service('response'), service('logger'));
+        $result = $controller->registerAction();
+
+        $after = $this->db->table($this->resolveTableName('users'))->countAllResults();
+
+        $this->assertInstanceOf(RedirectResponse::class, $result);
+        $this->assertSame($before, $after);
     }
 
     private function ensureUsersTable(): void
@@ -163,6 +219,30 @@ final class RegisterParishHardStopIntegrationTest extends CIUnitTestCase
                 created_at TEXT NULL,
                 updated_at TEXT NULL,
                 deleted_at TEXT NULL
+            )');
+        }
+    }
+
+    private function ensureHierarchyTables(): void
+    {
+        if (! $this->tableExists('province')) {
+            $table = $this->createTableName('province');
+            $this->db->query('CREATE TABLE IF NOT EXISTS ' . $table . ' (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT NOT NULL,
+                province_number INTEGER DEFAULT 1,
+                created_at TEXT NULL,
+                updated_at TEXT NULL
+            )');
+        }
+        if (! $this->tableExists('diocese')) {
+            $table = $this->createTableName('diocese');
+            $this->db->query('CREATE TABLE IF NOT EXISTS ' . $table . ' (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                province_id INTEGER NOT NULL,
+                name TEXT NOT NULL,
+                created_at TEXT NULL,
+                updated_at TEXT NULL
             )');
         }
     }

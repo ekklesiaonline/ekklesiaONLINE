@@ -36,8 +36,10 @@ visitor → regular_attender → member
 | Staff form            | `GET/POST /visitors/create | store`  | `VisitorDirectoryService::create()`      |
 | CSV import            | `POST /visitors/import/process`      | `Import::processConnectionCards()`       |
 | Public card           | `POST /connect/{token}`              | `Import::digitalCard()`                  |
-| Registration approval | admin action                         | `RegistrationApprovalService`            |
+| Registration approval | admin action (`/people`)             | `RegistrationApprovalService` (from `pending_review`) |
 | Non-portal creation   | `POST /members/store` (unchecked)    | `NonPortalMemberProvisioningService`     |
+
+- **Registration onboarding lifecycle**: Self-registration begins in `user_registration_requests.status = 'pending_profile'`. Email activation via `ScopedEmailActivator` allows portal access to complete profile demographics. Submitting profile completion transitions the request to `pending_review`. Only review-ready requests (`pending_review`) can be approved or escalated by parish admins. Incomplete profiles (`pending_profile`) appear in a separate tab in `/people` and can only be dismissed or banned. Upon approval, `RegistrationApprovalService` provisions `parish_affiliation(visitor)`.
 
 All non-registration paths funnel through `VisitorIntakeService::record()`,
 which deduplicates by `email_hash`/`phone_hash` within the parish, provisions

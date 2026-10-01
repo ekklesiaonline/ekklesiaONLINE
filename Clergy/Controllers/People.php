@@ -141,10 +141,13 @@ class People extends BaseController
 
         $canModerateRegistrations = auth()->user()->inGroup('parishadmin') && auth()->user()->can('member.edit');
         $pendingRegistrations = [];
+        $incompleteRegistrations = [];
         if ($canModerateRegistrations) {
             $pendingRegistrations = model('UserRegistrationRequestModel')->getPendingByParish($parishId, 50);
+            $incompleteRegistrations = model('UserRegistrationRequestModel')->getIncompleteByParish($parishId, 50);
         }
         $pendingRegistrationsCount = count($pendingRegistrations);
+        $incompleteRegistrationsCount = count($incompleteRegistrations);
         $showProfilePendingIndicator = auth()->user()->can('member.edit')
             || auth()->user()->inGroup('parishadmin')
             || $this->isProvinceAdmin()
@@ -167,6 +170,8 @@ class People extends BaseController
                 'can_moderate_registrations' => $canModerateRegistrations,
                 'pending_registrations_count' => $pendingRegistrationsCount,
                 'pending_registrations' => $pendingRegistrations,
+                'incomplete_registrations_count' => $incompleteRegistrationsCount,
+                'incomplete_registrations' => $incompleteRegistrations,
                 'show_profile_pending_indicator' => $showProfilePendingIndicator,
             ]
         ));

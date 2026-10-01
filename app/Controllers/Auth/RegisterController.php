@@ -48,7 +48,7 @@ class RegisterController extends ShieldRegisterController
     {
         $parishId = (int) ($this->request->getPost('parish_id') ?? 0);
 
-        if ($parishId <= 0 || !$this->parishExists($parishId)) {
+        if ($parishId <= 0 || !$this->parishHierarchyValid($parishId)) {
             return redirect()->back()->withInput()->with('errors', [
                 'parish_id' => lang('Auth.parishSelectionRequired'),
             ]);
@@ -100,6 +100,32 @@ class RegisterController extends ShieldRegisterController
         }
 
         return $items;
+    }
+
+    private function parishHierarchyValid(int $parishId): bool
+    {
+        if ($parishId <= 0) {
+            return false;
+        }
+
+        $db = db_connect();
+
+        // If hierarchy tables do not exist in the current environment (e.g. minimal test fixtures),
+        // fallback to checking whether the parish exists.
+        if (! $db->tableExists('diocese') || ! $db->tableExists('province')) {
+            return $this->parishExists($parishId);
+        }
+
+        $row = $db->table('parish p')
+            ->select('p.id, d.id AS diocese_id, pr.id AS province_id')
+            ->join('diocese d', 'd.id = p.diocese_id', 'inner')
+            ->join('province pr', 'pr.id = d.province_id', 'inner')
+            ->where('p.id', $parishId)
+            ->limit(1)
+            ->get()
+            ->getRow();
+
+        return $row !== null;
     }
 
     private function parishExists(int $parishId): bool

@@ -650,6 +650,9 @@ class Profile extends BaseController
             }
         }
 
+        $db = db_connect();
+        $db->transStart();
+
         $profile = $this->getProfileModel()->where('user_id', $user->id)->first();
         if (!$profile) {
             $profileInsertData = [
@@ -705,28 +708,34 @@ class Profile extends BaseController
             }
         }
 
+        if (!$legacyCompletionMode && $registrationRequest) {
+            $registrationRequestUpdate = $this->filterPayloadByTableColumns('user_registration_requests', [
+                'province_id'          => $provinceId,
+                'diocese_id'           => $dioceseId,
+                'parish_id'            => $parishId,
+                'requested_parish_id'  => $parishId,
+                'status'               => 'pending_review',
+                'profile_completed_at' => date('Y-m-d H:i:s'),
+            ]);
+
+            $registrationRequestModel->update($registrationRequest['id'], $registrationRequestUpdate);
+        }
+
+        $db->transComplete();
+
+        if ($db->transStatus() === false) {
+            return redirect()->back()->withInput()->with('error', lang('Profile.completeError') ?? 'Unable to complete profile.');
+        }
+
         if ($legacyCompletionMode) {
             return redirect()->to('/profile')->with('success', lang('Profile.completeSuccess'));
         }
-
-        $registrationRequestUpdate = $this->filterPayloadByTableColumns('user_registration_request', [
-            'province_id' => $provinceId,
-            'diocese_id' => $dioceseId,
-            'parish_id' => $parishId,
-            'requested_parish_id' => $parishId,
-            'requested_parish_id' => $parishId,
-            'parish_id' => $parishId,
-            'status' => 'pending_review',
-            'profile_completed_at' => date('Y-m-d H:i:s'),
-        ]);
-
-        $registrationRequestModel->update($registrationRequest['id'], $registrationRequestUpdate);
 
         // Top-tier admins who already hold an elevated role are auto-approved so they
         // cannot be locked out by a lower-tier parish admin review queue.
         $isElevatedAdmin = $this->isElevatedAdmin($user);
 
-        if ($isElevatedAdmin) {
+        if ($isElevatedAdmin && $registrationRequest) {
             $approvalService = new \App\Services\RegistrationApprovalService();
             $error = $approvalService->autoApproveForElevatedAdmin(
                 (int) $user->id,
@@ -882,6 +891,9 @@ class Profile extends BaseController
         $lastName = (string) $this->request->getPost('last_name');
         $phone = $this->request->getPost('phone') ?: null;
 
+        $db = db_connect();
+        $db->transStart();
+
         if (!$profile) {
             $insert = $this->filterPayloadByTableColumns('profile', [
                 'user_id' => (int) $user->id,
@@ -913,7 +925,7 @@ class Profile extends BaseController
         }
 
         $registrationRequestModel = model('UserRegistrationRequestModel');
-        $requestPayload = $this->filterPayloadByTableColumns('user_registration_request', [
+        $requestPayload = $this->filterPayloadByTableColumns('user_registration_requests', [
             'user_id' => (int) $user->id,
             'province_id' => $provinceId,
             'diocese_id' => $dioceseId,
@@ -927,6 +939,12 @@ class Profile extends BaseController
             $registrationRequestModel->update($registrationRequest['id'], $requestPayload);
         } else {
             $registrationRequestModel->insert($requestPayload);
+        }
+
+        $db->transComplete();
+
+        if ($db->transStatus() === false) {
+            return redirect()->back()->withInput()->with('error', lang('Profile.joinParishError') ?? 'Unable to process join request.');
         }
 
         $registrationRequest = $this->getCurrentRegistrationRequest();

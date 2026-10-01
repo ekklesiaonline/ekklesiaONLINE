@@ -241,8 +241,11 @@
             <?php if (!$isSystemAdminSidebar && !$isProvinceAdminSidebar && !$isDioceseAdminSidebar && auth()->user()->can('member.view')): ?>
                 <?php if (!$isProvinceAdminSidebar): ?>
                     <li class="nav-item">
-                        <a class="nav-link <?= (str_starts_with(uri_string(), 'people')) ? 'active' : '' ?>" href="<?= base_url('people') ?>">
-                            <i class="bi bi-people-fill" aria-hidden="true"></i> <?= lang('App.navPeople') ?>
+                        <a class="nav-link <?= (str_starts_with(uri_string(), 'people')) ? 'active' : '' ?> d-flex align-items-center justify-content-between" href="<?= base_url('people') ?>">
+                            <span><i class="bi bi-people-fill" aria-hidden="true"></i> <?= lang('App.navPeople') ?></span>
+                            <?php if (!empty($pending_registrations_sidebar_count) && (int) $pending_registrations_sidebar_count > 0): ?>
+                                <span class="badge border border-warning text-warning fw-normal"><?= (int) $pending_registrations_sidebar_count ?></span>
+                            <?php endif; ?>
                         </a>
                     </li>
                 <?php endif; ?>

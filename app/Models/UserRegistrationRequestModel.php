@@ -6,7 +6,7 @@ use CodeIgniter\Model;
 
 class UserRegistrationRequestModel extends Model
 {
-    protected $table = 'user_registration_request';
+    protected $table = 'user_registration_requests';
     protected $primaryKey = 'id';
     protected $useAutoIncrement = true;
     protected $returnType = 'array';
@@ -39,6 +39,7 @@ class UserRegistrationRequestModel extends Model
         'requested_parish_id' => 'permit_empty|is_not_unique[parish.id]',
         'status' => 'required|in_list[pending_profile,pending_review,approved,dismissed,banned]',
     ];
+    protected $cleanValidationRules = true;
 
     private ?string $resolvedRequestedParishColumn = null;
     private ?string $resolvedProfileTable = null;
@@ -56,24 +57,13 @@ class UserRegistrationRequestModel extends Model
     private function resolveExistingTable(): ?string
     {
         $candidates = [
-            $this->db->getPrefix() . 'user_registration_request',
-            'user_registration_request',
-            $this->db->getPrefix() . 'user_registration_requests',
             'user_registration_requests',
+            'user_registration_request',
         ];
 
-        foreach (array_values(array_unique($candidates)) as $table) {
-            if (! $this->db->tableExists($table)) {
-                continue;
-            }
-
-            try {
-                $columns = $this->db->getFieldNames($table);
-                if ($columns !== []) {
-                    return $table;
-                }
-            } catch (\Throwable $e) {
-                // Try next table-name variant.
+        foreach ($candidates as $unprefixed) {
+            if ($this->db->tableExists($unprefixed)) {
+                return $unprefixed;
             }
         }
 
@@ -100,7 +90,7 @@ class UserRegistrationRequestModel extends Model
             // Fall through to default.
         }
 
-        $this->resolvedRequestedParishColumn = 'parish_id';
+        $this->resolvedRequestedParishColumn = 'requested_parish_id';
 
         return $this->resolvedRequestedParishColumn;
     }
@@ -112,21 +102,14 @@ class UserRegistrationRequestModel extends Model
         }
 
         $candidates = [
-            $this->db->getPrefix() . 'profile',
             'profile',
-            $this->db->getPrefix() . 'profiles',
             'profiles',
         ];
 
-        foreach (array_values(array_unique($candidates)) as $table) {
-            try {
-                $columns = $this->db->getFieldNames($table);
-                if ($columns !== []) {
-                    $this->resolvedProfileTable = $table;
-                    return $this->resolvedProfileTable;
-                }
-            } catch (\Throwable $e) {
-                // Try next table-name variant.
+        foreach ($candidates as $table) {
+            if ($this->db->tableExists($table)) {
+                $this->resolvedProfileTable = $table;
+                return $this->resolvedProfileTable;
             }
         }
 
@@ -183,6 +166,17 @@ class UserRegistrationRequestModel extends Model
         return $builder->get()->getResultArray();
     }
 
+    public function countPendingByParish(int $parishId): int
+    {
+        $requestedParishColumn = $this->requestedParishColumn();
+
+        return (int) $this->db->table($this->table . ' urr')
+            ->where('urr.' . $requestedParishColumn, $parishId)
+            ->where('urr.status', 'pending_review')
+            ->where($this->excludeTopTierAdminSql(), null, false)
+            ->countAllResults();
+    }
+
     public function countPendingByDiocese(int $dioceseId): int
     {
         return (int) $this->db->table($this->table . ' urr')
@@ -192,10 +186,83 @@ class UserRegistrationRequestModel extends Model
             ->countAllResults();
     }
 
+    public function getIncompleteByParish(int $parishId, int $limit = 50): array
+    {
+        $requestedParishColumn = $this->requestedParishColumn();
+        $profileTable = $this->resolveExistingProfileTable();
+
+        $builder = $this->db->table($this->table . ' urr')
+            ->select('urr.*, urr.' . $requestedParishColumn . ' AS requested_parish_id, u.username, ai.secret as email, c.name as requested_parish_name')
+            ->join('users u', 'u.id = urr.user_id', 'left')
+            ->join('auth_identities ai', 'ai.user_id = urr.user_id AND ai.type = "email_password"', 'left')
+            ->join('parish c', 'c.id = urr.' . $requestedParishColumn, 'left')
+            ->where('urr.' . $requestedParishColumn, $parishId)
+            ->where('urr.status', 'pending_profile')
+            ->where($this->excludeTopTierAdminSql(), null, false)
+            ->orderBy('urr.created_at', 'DESC')
+            ->orderBy('urr.id', 'DESC')
+            ->limit($limit);
+
+        if ($profileTable !== null) {
+            $builder
+                ->select('p.first_name, p.last_name, p.phone')
+                ->join($profileTable . ' p', 'p.user_id = urr.user_id', 'left');
+        }
+
+        return $builder->get()->getResultArray();
+    }
+
+    public function countIncompleteByParish(int $parishId): int
+    {
+        $requestedParishColumn = $this->requestedParishColumn();
+
+        return (int) $this->db->table($this->table . ' urr')
+            ->where('urr.' . $requestedParishColumn, $parishId)
+            ->where('urr.status', 'pending_profile')
+            ->where($this->excludeTopTierAdminSql(), null, false)
+            ->countAllResults();
+    }
+
+    public function getIncompleteByDiocese(int $dioceseId, int $limit = 50): array
+    {
+        $requestedParishColumn = $this->requestedParishColumn();
+        $profileTable = $this->resolveExistingProfileTable();
+
+        $builder = $this->db->table($this->table . ' urr')
+            ->select('urr.*, urr.' . $requestedParishColumn . ' AS requested_parish_id, u.username, ai.secret as email, c.name as requested_parish_name')
+            ->join('users u', 'u.id = urr.user_id', 'left')
+            ->join('auth_identities ai', 'ai.user_id = urr.user_id AND ai.type = "email_password"', 'left')
+            ->join('parish c', 'c.id = urr.' . $requestedParishColumn, 'left')
+            ->where('urr.diocese_id', $dioceseId)
+            ->where('urr.status', 'pending_profile')
+            ->where($this->excludeTopTierAdminSql(), null, false)
+            ->orderBy('urr.created_at', 'DESC')
+            ->orderBy('urr.id', 'DESC')
+            ->limit($limit);
+
+        if ($profileTable !== null) {
+            $builder
+                ->select('p.first_name, p.last_name, p.phone')
+                ->join($profileTable . ' p', 'p.user_id = urr.user_id', 'left');
+        }
+
+        return $builder->get()->getResultArray();
+    }
+
+    public function countIncompleteByDiocese(int $dioceseId): int
+    {
+        return (int) $this->db->table($this->table . ' urr')
+            ->where('urr.diocese_id', $dioceseId)
+            ->where('urr.status', 'pending_profile')
+            ->where($this->excludeTopTierAdminSql(), null, false)
+            ->countAllResults();
+    }
+
     private function excludeTopTierAdminSql(): string
     {
         $authGroupsTable = $this->db->protectIdentifiers('auth_groups_users', true, false);
+        $groupCol = $this->db->protectIdentifiers('group', false, true);
 
-        return "NOT EXISTS (SELECT 1 FROM {$authGroupsTable} agu WHERE agu.user_id = urr.user_id AND agu.group IN ('systemadmin', 'provinceadmin', 'dioceseadmin'))";
+        return "NOT EXISTS (SELECT 1 FROM {$authGroupsTable} agu WHERE agu.user_id = urr.user_id AND agu.{$groupCol} IN ('systemadmin', 'provinceadmin', 'dioceseadmin'))";
     }
 }
