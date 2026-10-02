@@ -69,9 +69,12 @@ FollowupDispatchService::dispatch()
   dispatch never creates a second row (it returns `existing => true`).
 - **Manual resolutions** — `logMarkDone` → task `completed`; `logSkip` /
   conversion / visitor-delete → task `cancelled`; `logReschedule` moves
-  `scheduled_date` on a still-pending task; `manual_trigger` resolves to
-  `completed`. When a log was resolved before a task existed, a terminal
-  task is created so completed/skipped calls appear in queue history.
+  `scheduled_date` on a still-pending task. An immediate `manual_trigger` for
+  a `call` or `manual` action creates or reuses a linked pending log/task; the
+  volunteer completes the task through the queue. Other channels are marked
+  executed when dispatch succeeds. When a log was resolved before a task
+  existed, a terminal task is created so completed/skipped calls appear in
+  queue history.
 - **Task completion** — completing a task via
   `POST /followup-workflow/tasks/complete/{id}` also executes a still
   `pending` or `failed` linked log (early completion / retry).

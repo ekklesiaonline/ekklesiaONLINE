@@ -83,7 +83,7 @@ class PersonConversionService
                     'updated_at'     => $now,
                 ]);
 
-            self::markPendingFollowupsSkipped($personId, $now);
+            self::markPendingFollowupsSkipped($personId, $parishId, $now);
             self::markVisitorConverted($affiliationId, $userId, $convertedByUserId, $now);
 
             $db->transCommit();
@@ -205,15 +205,13 @@ class PersonConversionService
         return $base . '_' . bin2hex(random_bytes(3));
     }
 
-    private static function markPendingFollowupsSkipped(int $personId, string $now): void
+    private static function markPendingFollowupsSkipped(int $personId, int $parishId, string $now): void
     {
         $db = db_connect();
 
-        $sync   = new CallTaskSyncService($db);
-        $logIds = $sync->pendingLogIdsForPerson($personId);
-
         $db->table('followup_log')
             ->where('person_id', $personId)
+            ->where('parish_id', $parishId)
             ->where('status', 'pending')
             ->update([
                 'status'     => 'skipped',
@@ -221,9 +219,9 @@ class PersonConversionService
                 'updated_at' => $now,
             ]);
 
-        // Queued call/manual tasks for the skipped logs must not linger —
-        // the visitor converted, there is no follow-up work left.
-        $sync->cancelForLogs($logIds);
+        // Human tasks remain actionable even after their dispatch log is
+        // marked sent, so resolve by person and parish rather than log status.
+        (new CallTaskSyncService($db))->cancelPendingForPerson($personId, $parishId);
     }
 
     private static function markVisitorConverted(int $affiliationId, ?int $userId, ?int $convertedByUserId, string $now): void

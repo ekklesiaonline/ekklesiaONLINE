@@ -7,9 +7,13 @@ use App\Services\CallTaskSyncService;
 use App\Services\FollowupDispatchService;
 use App\Services\VisitorDirectoryService;
 use App\Services\VisitorFollowupService;
+use CodeIgniter\Shield\Auth;
+use CodeIgniter\Shield\Entities\User;
 use CodeIgniter\Test\CIUnitTestCase;
 use CodeIgniter\Test\DatabaseTestTrait;
+use CodeIgniter\Test\FeatureTestTrait;
 use Tests\Support\Database\CanonicalTestSchema;
+use Config\Services;
 
 /**
  * Manual follow-up task channel coverage.
@@ -27,10 +31,13 @@ use Tests\Support\Database\CanonicalTestSchema;
 final class FollowupManualTaskTest extends CIUnitTestCase
 {
     use DatabaseTestTrait;
+    use FeatureTestTrait;
 
     protected function setUp(): void
     {
         parent::setUp();
+        helper(['auth', 'form']);
+        Services::reset(true);
         CanonicalTestSchema::ensure($this->db);
         foreach ([
             'followup_log',
@@ -50,6 +57,17 @@ final class FollowupManualTaskTest extends CIUnitTestCase
         }
         session()->set('selected_parish_id', 301);
         $this->seedParish(301);
+        $this->withRoutes([
+            ['POST', 'followup-workflow/manual-trigger/(:num)/(:num)', '\\Clergy\\Controllers\\FollowupWorkflow::manual_trigger/$1/$2'],
+            ['POST', 'followup-workflow/tasks/complete/(:num)', '\\Clergy\\Controllers\\FollowupWorkflow::completeCallTask/$1'],
+        ]);
+    }
+
+    protected function tearDown(): void
+    {
+        Services::reset(true);
+
+        parent::tearDown();
     }
 
     // ------------------------------------------------------------------
@@ -379,6 +397,60 @@ final class FollowupManualTaskTest extends CIUnitTestCase
         $this->assertCount(1, $tasks);
     }
 
+    public function testImmediateManualTriggerCreatesLinkedPendingTaskThatCanBeCompleted(): void
+    {
+        $adminId = $this->seedUser('followup.trigger.admin');
+        $leaderId = $this->seedUser('followup.trigger.leader');
+        $this->db->table('profile')->insert([
+            'user_id'    => $adminId,
+            'parish_id'  => 301,
+            'first_name' => 'Parish',
+            'last_name'  => 'Admin',
+            'created_at' => date('Y-m-d H:i:s'),
+            'updated_at' => date('Y-m-d H:i:s'),
+        ]);
+        $this->seedLeader($leaderId, 301);
+        $this->injectFollowupAuth($adminId);
+
+        $personId = $this->seedPerson();
+        $actionId = $this->seedManualAction(301, $leaderId);
+
+        $response = $this->withHeaders($this->csrfHeaders())
+            ->post('followup-workflow/manual-trigger/' . $personId . '/' . $actionId);
+        $response->assertOK();
+
+        $log = $this->db->table('followup_log')
+            ->where('person_id', $personId)
+            ->where('action_id', $actionId)
+            ->get()
+            ->getRowArray();
+        $task = $this->db->table('call_task')
+            ->where('log_id', (int) $log['id'])
+            ->get()
+            ->getRowArray();
+
+        $this->assertSame('pending', $log['status']);
+        $this->assertNotNull($task);
+        $this->assertSame('pending', $task['status']);
+        $this->assertSame('manual', $task['task_type']);
+        $this->assertSame($leaderId, (int) $task['assigned_to']);
+        $this->assertSame((int) $log['id'], (int) $task['log_id']);
+
+        $timeline = (new VisitorFollowupService($this->db))->timelineForPerson($personId);
+        $this->assertCount(1, $timeline);
+        $this->assertSame((int) $task['id'], (int) $timeline[0]['call_task_id']);
+
+        $completion = $this->withHeaders($this->csrfHeaders(['X-Requested-With' => 'XMLHttpRequest']))
+            ->withBodyFormat('form')
+            ->post('followup-workflow/tasks/complete/' . (int) $task['id']);
+        $completion->assertOK();
+
+        $completedTask = $this->db->table('call_task')->where('id', (int) $task['id'])->get()->getRowArray();
+        $completedLog = $this->db->table('followup_log')->where('id', (int) $log['id'])->get()->getRowArray();
+        $this->assertSame('completed', $completedTask['status']);
+        $this->assertSame('sent', $completedLog['status']);
+    }
+
     public function testResolveForLogTransitionsPendingTask(): void
     {
         $actionId = $this->seedCallAction(301);
@@ -613,5 +685,60 @@ final class FollowupManualTaskTest extends CIUnitTestCase
         $this->assertSame('call_task', $timeline[0]['_source'] ?? null);
         $this->assertSame('manual', $timeline[0]['call_task_type']);
         $this->assertSame('Send Manual a social media invitation', $timeline[0]['call_task_title']);
+    }
+
+    private function injectFollowupAuth(int $userId): void
+    {
+        $fakeUser = new class($userId) extends User {
+            public function __construct(private int $testUserId)
+            {
+                parent::__construct([
+                    'id'       => $testUserId,
+                    'username' => 'followup.test.' . $testUserId,
+                    'email'    => 'followup.test.' . $testUserId . '@example.org',
+                ]);
+            }
+
+            public function can(string ...$permissions): bool
+            {
+                return in_array('followup.manage', $permissions, true);
+            }
+
+            public function inGroup(string ...$groups): bool
+            {
+                return in_array('parishadmin', $groups, true);
+            }
+        };
+
+        $auth = new class(config('Auth'), $fakeUser, $userId) extends Auth {
+            public function __construct($config, private User $fakeUser, private int $testUserId)
+            {
+                parent::__construct($config);
+            }
+
+            public function loggedIn(): bool
+            {
+                return true;
+            }
+
+            public function id(): ?int
+            {
+                return $this->testUserId;
+            }
+
+            public function user(): ?User
+            {
+                return $this->fakeUser;
+            }
+        };
+
+        Services::injectMock('auth', $auth);
+    }
+
+    private function csrfHeaders(array $headers = []): array
+    {
+        $headers[csrf_header()] = csrf_hash();
+
+        return $headers;
     }
 }

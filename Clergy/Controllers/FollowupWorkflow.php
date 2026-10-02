@@ -1072,27 +1072,41 @@ class FollowupWorkflow extends BaseController
 
         $currentUserId = (int) auth()->id();
 
-        // Prefer dispatching an existing pending row over creating a duplicate
+        // Prefer dispatching an existing pending row over creating a duplicate.
         $logEntry = $this->logModel
             ->where('person_id', $visitorId)
+            ->where('parish_id', $parishId)
             ->where('action_id', $actionId)
             ->where('status', 'pending')
             ->first();
 
+        $humanChannel = in_array((string) $action['channel'], \App\Services\CallTaskSyncService::HUMAN_CHANNELS, true);
         if (!$logEntry) {
             $logEntry = [
-                'id'             => null,
                 'person_id'      => $visitorId,
                 'parish_id'      => $parishId,
                 'action_id'      => $actionId,
-                'assigned_to'    => $currentUserId,
+                'assigned_to'    => (int) ($action['assigned_to'] ?? 0) ?: $currentUserId,
                 'scheduled_date' => date('Y-m-d'),
                 'status'         => 'pending',
-                'channel'        => $action['channel'],
-                'template_id'    => $action['template_id'] ?? null,
-                'instructions'   => $action['instructions'] ?? null,
             ];
+
+            if ($humanChannel) {
+                $logId = $this->logModel->insert($logEntry, true);
+                if (!is_int($logId) || $logId <= 0) {
+                    return $this->jsonResponse(['success' => false, 'message' => 'Failed to create follow-up task.'], 500);
+                }
+                $logEntry['id'] = $logId;
+            } else {
+                $logEntry['id']           = null;
+                $logEntry['channel']      = $action['channel'];
+                $logEntry['template_id']  = $action['template_id'] ?? null;
+                $logEntry['instructions'] = $action['instructions'] ?? null;
+            }
         }
+        $logEntry['channel']      = $action['channel'];
+        $logEntry['template_id']  = $action['template_id'] ?? null;
+        $logEntry['instructions'] = $action['instructions'] ?? null;
 
         $template = null;
         if (!empty($logEntry['template_id'])) {
@@ -1115,6 +1129,13 @@ class FollowupWorkflow extends BaseController
                     $result['metadata'],
                     ['triggered_by' => $currentUserId, 'manual' => true]
                 ));
+            } elseif ($humanChannel) {
+                $this->logModel->update($logId, [
+                    'response_metadata' => json_encode(array_merge(
+                        $result['metadata'],
+                        ['triggered_by' => $currentUserId, 'manual' => true]
+                    )),
+                ]);
             } else {
                 $this->logModel->markExecuted($logId, array_merge(
                     $result['metadata'],

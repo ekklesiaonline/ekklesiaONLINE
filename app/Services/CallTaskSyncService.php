@@ -115,6 +115,23 @@ class CallTaskSyncService
     }
 
     /**
+     * Cancel all pending human tasks for a person in a parish, including
+     * tasks whose follow-up log has already been marked sent.
+     */
+    public function cancelPendingForPerson(int $personId, int $parishId): void
+    {
+        if ($personId <= 0 || $parishId <= 0) {
+            return;
+        }
+
+        $this->db->table('call_task')
+            ->where('person_id', $personId)
+            ->where('parish_id', $parishId)
+            ->where('status', 'pending')
+            ->update(['status' => 'cancelled', 'updated_at' => date('Y-m-d H:i:s')]);
+    }
+
+    /**
      * Collect the ids of a person's still-pending followup_log entries so a
      * mass-skip path can cancel their tasks before/after marking the logs.
      *

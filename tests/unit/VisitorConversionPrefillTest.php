@@ -33,6 +33,7 @@ final class VisitorConversionPrefillTest extends CIUnitTestCase
             'person',
             'person_visit',
             'followup_log',
+            'call_task',
             'user_person',
             'profile',
             'users',
@@ -93,6 +94,40 @@ final class VisitorConversionPrefillTest extends CIUnitTestCase
         $this->assertSame('skipped', $pending['status']);
         $this->assertSame('sent', $done['status']);
         $this->assertSame('pending', $other['status']);
+    }
+
+    public function testConvertToMemberCancelsAllPendingTasksOnlyInParish(): void
+    {
+        $personId = $this->insertVisitorPerson(301);
+        $sentLogId = $this->insertFollowup($personId, 'sent');
+        $now = date('Y-m-d H:i:s');
+
+        $taskIds = [];
+        foreach ([
+            ['log_id' => $sentLogId, 'parish_id' => 301, 'status' => 'pending'],
+            ['log_id' => null, 'parish_id' => 301, 'status' => 'pending'],
+            ['log_id' => $sentLogId, 'parish_id' => 302, 'status' => 'pending'],
+            ['log_id' => $sentLogId, 'parish_id' => 301, 'status' => 'completed'],
+        ] as $task) {
+            $this->db->table('call_task')->insert(array_merge([
+                'person_id'      => $personId,
+                'task_type'      => 'call',
+                'scheduled_date' => date('Y-m-d'),
+                'created_at'     => $now,
+                'updated_at'     => $now,
+            ], $task));
+            $taskIds[] = (int) $this->db->insertID();
+        }
+
+        $this->assertTrue(PersonConversionService::convertToMember($personId, 301, null, null, null, 7));
+
+        $statuses = [];
+        foreach ($taskIds as $taskId) {
+            $statuses[] = $this->db->table('call_task')->where('id', $taskId)->get()->getRowArray()['status'];
+        }
+
+        $this->assertSame(['cancelled', 'cancelled', 'pending', 'completed'], $statuses);
+        $this->assertSame('sent', $this->db->table('followup_log')->where('id', $sentLogId)->get()->getRowArray()['status']);
     }
 
     public function testConvertToMemberRecordsPathwayHistory(): void
