@@ -8,7 +8,6 @@ use CodeIgniter\Events\Events;
 use CodeIgniter\Exceptions\FrameworkException;
 use CodeIgniter\HotReloader\HotReloader;
 use CodeIgniter\Shield\Entities\User;
-use App\Services\PersonOnboardingService;
 
 /*
  * --------------------------------------------------------------------
@@ -220,12 +219,6 @@ Events::on('register', static function (User $user): void {
             'diocese_id' => $dioceseId > 0 ? $dioceseId : null,
             'locale' => $preferredLocale !== '' ? $preferredLocale : null,
         ]);
-
-        $personId = (int) $db->insertID();
-        if ($personId > 0) {
-            $onboarding = new PersonOnboardingService();
-            $onboarding->start($personId, null);
-        }
     } else {
         $profileUpdate = [];
 

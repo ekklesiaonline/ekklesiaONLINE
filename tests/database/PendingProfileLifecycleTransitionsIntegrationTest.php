@@ -312,6 +312,7 @@ final class PendingProfileLifecycleTransitionsIntegrationTest extends CIUnitTest
                     'id' => $userIdForTest,
                     'username' => 'auth.user.' . $userIdForTest,
                     'email' => 'auth.user.' . $userIdForTest . '@example.org',
+                    'active' => 1,
                 ]);
             }
 

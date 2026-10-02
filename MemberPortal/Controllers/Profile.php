@@ -536,6 +536,21 @@ class Profile extends BaseController
         }
 
         $user = auth()->user();
+        if ($user !== null && isset($user->active) && $user->active === false) {
+            $userId = (int) auth()->id();
+            auth()->logout();
+            session()->destroy();
+
+            service('audit')->log('auth.blocked.inactive', [
+                'user_id'     => $userId,
+                'entity_type' => 'user',
+                'entity_id'   => $userId,
+                'meta'        => ['reason' => 'inactive', 'path' => uri_string()],
+            ]);
+
+            return redirect()->to('/login')->with('error', lang('Auth.accountInactive'));
+        }
+
         $registrationRequest = $this->getCurrentRegistrationRequest();
         $profile = $this->getProfileModel()->where('user_id', $user->id)->first();
 
@@ -588,21 +603,39 @@ class Profile extends BaseController
             return redirect()->to('login');
         }
 
-        // Backward compatibility for older clients posting parish_id.
-        if ($this->request->getPost('parish_id') === null) {
-            $legacyParishId = (int) ($this->request->getPost('parish_id') ?? 0);
-            if ($legacyParishId > 0) {
-                $post = (array) $this->request->getPost();
-                $post['parish_id'] = $legacyParishId;
-                $this->request->setGlobal('post', $post);
-            }
+        $user = auth()->user();
+        if ($user !== null && isset($user->active) && $user->active === false) {
+            $userId = (int) auth()->id();
+            auth()->logout();
+            session()->destroy();
+
+            service('audit')->log('auth.blocked.inactive', [
+                'user_id'     => $userId,
+                'entity_type' => 'user',
+                'entity_id'   => $userId,
+                'meta'        => ['reason' => 'inactive', 'path' => uri_string()],
+            ]);
+
+            return redirect()->to('/login')->with('error', lang('Auth.accountInactive'));
         }
 
-        $user = auth()->user();
         $registrationRequestModel = model('UserRegistrationRequestModel');
         $registrationRequest = $this->getCurrentRegistrationRequest();
 
         $legacyCompletionMode = $registrationRequest === null;
+
+        // Lock hierarchy fields to the registered request to reject/ignore client-tampered POST values.
+        if (!$legacyCompletionMode && $registrationRequest !== null) {
+            $post = (array) $this->request->getPost();
+            $post['province_id'] = (int) ($registrationRequest['province_id'] ?? ($post['province_id'] ?? 0));
+            $post['diocese_id']  = (int) ($registrationRequest['diocese_id'] ?? ($post['diocese_id'] ?? 0));
+            $post['parish_id']   = (int) (
+                $registrationRequest['requested_parish_id']
+                ?? $registrationRequest['parish_id']
+                ?? ($post['parish_id'] ?? 0)
+            );
+            $this->request->setGlobal('post', $post);
+        }
 
         $status = $this->getRegistrationStatus($registrationRequest);
         if ($this->shouldLogoutForRegistrationStatus($registrationRequest)) {
@@ -637,9 +670,13 @@ class Profile extends BaseController
         $parishId = 0;
 
         if (!$legacyCompletionMode) {
-            $provinceId = (int) $this->request->getPost('province_id');
-            $dioceseId = (int) $this->request->getPost('diocese_id');
-            $parishId = (int) $this->request->getPost('parish_id');
+            $provinceId = (int) ($registrationRequest['province_id'] ?? $this->request->getPost('province_id'));
+            $dioceseId  = (int) ($registrationRequest['diocese_id'] ?? $this->request->getPost('diocese_id'));
+            $parishId   = (int) (
+                $registrationRequest['requested_parish_id']
+                ?? $registrationRequest['parish_id']
+                ?? $this->request->getPost('parish_id')
+            );
 
             if (!$this->hierarchyService->dioceseInProvince($dioceseId, $provinceId)) {
                 return redirect()->back()->withInput()->with('error', lang('Profile.dioceseMismatch'));
@@ -689,19 +726,21 @@ class Profile extends BaseController
         $this->getProfileModel()->update($profile['id'], $profileUpdate);
 
         $completedProfile = $this->getProfileModel()->where('user_id', $user->id)->first();
+        $personId = null;
         if ($completedProfile) {
             // Sync the canonical person record with the completed profile data.
-            (new \App\Services\PersonProfileSyncService())->syncFromProfile((int) $completedProfile['id']);
+            $personId = (new \App\Services\PersonProfileSyncService())->syncFromProfile((int) $completedProfile['id'])
+                ?? ((int) ($completedProfile['person_id'] ?? 0) ?: null);
 
             (new \App\Services\MemberAffiliationService())->ensurePrimaryAffiliationForUser(
                 (int) $user->id,
                 (int) ($completedProfile['parish_id'] ?? 0),
-                (int) ($completedProfile['person_id'] ?? 0) ?: null
+                $personId
             );
 
-            if (!$legacyCompletionMode && $parishId > 0) {
+            if (!$legacyCompletionMode && $parishId > 0 && $personId !== null) {
                 (new PersonOnboardingService())->start(
-                    (int) $completedProfile['id'],
+                    $personId,
                     $parishId,
                     (int) (auth()->id() ?? 0) ?: null
                 );
@@ -747,9 +786,9 @@ class Profile extends BaseController
                 return redirect()->to('/dashboard')->with('error', $error);
             }
 
-            if ($completedProfile && $parishId > 0) {
+            if ($completedProfile && $parishId > 0 && $personId !== null) {
                 (new PersonOnboardingService())->advance(
-                    (int) $completedProfile['id'],
+                    $personId,
                     'completed',
                     $parishId,
                     (int) $user->id,
@@ -762,7 +801,7 @@ class Profile extends BaseController
                 (new \App\Services\MemberAffiliationService())->ensurePrimaryAffiliationForUser(
                     (int) $user->id,
                     (int) ($completedProfile['parish_id'] ?? 0),
-                    (int) ($completedProfile['person_id'] ?? 0) ?: null
+                    (int) ($completedProfile['person_id'] ?? 0) ?: $personId
                 );
             }
 
@@ -916,12 +955,18 @@ class Profile extends BaseController
             $this->getProfileModel()->update($profile['id'], $update);
         }
 
-        if ($profile && $parishId > 0) {
-            (new PersonOnboardingService())->start(
-                (int) $profile['id'],
-                $parishId,
-                (int) (auth()->id() ?? 0) ?: null
-            );
+        $personId = null;
+        if ($profile) {
+            $personId = (new \App\Services\PersonProfileSyncService())->syncFromProfile((int) $profile['id'])
+                ?? ((int) ($profile['person_id'] ?? 0) ?: null);
+
+            if ($parishId > 0 && $personId !== null) {
+                (new PersonOnboardingService())->start(
+                    $personId,
+                    $parishId,
+                    (int) (auth()->id() ?? 0) ?: null
+                );
+            }
         }
 
         $registrationRequestModel = model('UserRegistrationRequestModel');
@@ -965,9 +1010,9 @@ class Profile extends BaseController
                 return redirect()->to('/profile')->with('error', $error);
             }
 
-            if ($profile && $parishId > 0) {
+            if ($profile && $parishId > 0 && $personId !== null) {
                 (new PersonOnboardingService())->advance(
-                    (int) $profile['id'],
+                    $personId,
                     'completed',
                     $parishId,
                     (int) $user->id,
@@ -980,7 +1025,7 @@ class Profile extends BaseController
                 (new \App\Services\MemberAffiliationService())->ensurePrimaryAffiliationForUser(
                     (int) $user->id,
                     (int) ($profile['parish_id'] ?? 0),
-                    (int) ($profile['person_id'] ?? 0) ?: null
+                    (int) ($profile['person_id'] ?? 0) ?: $personId
                 );
             }
 

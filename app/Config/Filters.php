@@ -155,6 +155,7 @@ class Filters extends BaseFilters
                     'reset-password',
                     'auth/*',
                     'profile/complete',
+                    'locale/set/*',
                     'uploads/*',
                     'health',
                 ],

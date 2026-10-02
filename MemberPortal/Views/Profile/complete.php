@@ -14,8 +14,6 @@ $selectedParish = old(
     'parish_id',
     $registration_request['requested_parish_id']
         ?? $registration_request['parish_id']
-        ?? $registration_request['requested_parish_id']
-        ?? $registration_request['parish_id']
         ?? $profile['parish_id']
         ?? null
 );

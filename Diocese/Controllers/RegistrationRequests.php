@@ -11,7 +11,7 @@ class RegistrationRequests extends BaseController
     {
         $scope = $this->resolveParishModerationScope();
         if ($scope === null) {
-            return redirect()->to('/diocese/dashboard')->with('error', lang('Diocesan.accessDeniedDiocesanAdmin'));
+            return $this->redirectModeration('error', lang('Diocesan.accessDeniedDiocesanAdmin'));
         }
 
         $role = (string) ($this->request->getPost('role') ?? '');
@@ -21,7 +21,7 @@ class RegistrationRequests extends BaseController
         $error = $service->approve($actorUserId, $requestId, $role !== '' ? $role : null, $scope);
 
         if ($error !== null) {
-            return redirect()->to('/diocese/dashboard')->with('error', $error);
+            return $this->redirectModeration('error', $error);
         }
 
         // Rebuild the parish snapshot so the approved member appears immediately.
@@ -29,36 +29,33 @@ class RegistrationRequests extends BaseController
         $approvedParishId = (int) (
             $request['requested_parish_id']
             ?? $request['parish_id']
-            ?? $request['requested_parish_id']
-            ?? $request['parish_id']
             ?? 0
         );
 
-
-        return redirect()->to('/diocese/dashboard')->with('success', lang('Diocesan.registrationApproved'));
+        return $this->redirectModeration('success', lang('Diocesan.registrationApproved'));
     }
 
     public function bulkAction()
     {
         $scope = $this->resolveParishModerationScope();
         if ($scope === null) {
-            return redirect()->to('/diocese/dashboard')->with('error', lang('Diocesan.accessDeniedDiocesanAdmin'));
+            return $this->redirectModeration('error', lang('Diocesan.accessDeniedDiocesanAdmin'));
         }
 
         $requestIds = array_map('intval', (array) ($this->request->getPost('request_ids') ?? []));
         if ($requestIds === []) {
-            return redirect()->to('/diocese/dashboard')->with('error', lang('Diocesan.noPendingRegistrations'));
+            return $this->redirectModeration('error', lang('Diocesan.noPendingRegistrations'));
         }
 
         $action = (string) ($this->request->getPost('bulk_action') ?? 'approve');
         $validActions = ['approve', 'dismiss', 'ban', 'delete', 'escalate'];
         if (!in_array($action, $validActions, true)) {
-            return redirect()->to('/diocese/dashboard')->with('error', lang('Diocesan.invalidBulkAction'));
+            return $this->redirectModeration('error', lang('Diocesan.invalidBulkAction'));
         }
 
         $user = auth()->user();
         if ($action === 'delete' && ($user === null || !$user->can('member.delete'))) {
-            return redirect()->to('/diocese/dashboard')->with('error', lang('App.errorForbidden'));
+            return $this->redirectModeration('error', lang('App.errorForbidden'));
         }
 
         $actorUserId = (int) (auth()->id() ?? 0);
@@ -100,21 +97,21 @@ class RegistrationRequests extends BaseController
         };
 
         if ($successCount === $total) {
-            return redirect()->to('/diocese/dashboard')->with('success', lang($successKey, [$successCount]));
+            return $this->redirectModeration('success', lang($successKey, [$successCount]));
         }
 
         if ($successCount > 0) {
-            return redirect()->to('/diocese/dashboard')->with('warning', lang($partialKey, [$successCount, $total - $successCount]));
+            return $this->redirectModeration('warning', lang($partialKey, [$successCount, $total - $successCount]));
         }
 
-        return redirect()->to('/diocese/dashboard')->with('error', $firstError ?? lang('Diocesan.bulkActionFailed'));
+        return $this->redirectModeration('error', $firstError ?? lang('Diocesan.bulkActionFailed'));
     }
 
     public function escalate(int $requestId)
     {
         $scope = $this->resolveParishModerationScope();
         if ($scope === null) {
-            return redirect()->to('/diocese/dashboard')->with('error', lang('Diocesan.accessDeniedDiocesanAdmin'));
+            return $this->redirectModeration('error', lang('Diocesan.accessDeniedDiocesanAdmin'));
         }
 
         $actorUserId = (int) (auth()->id() ?? 0);
@@ -123,17 +120,17 @@ class RegistrationRequests extends BaseController
         $error = $service->escalate($actorUserId, $requestId, $scope, $notes !== '' ? $notes : null);
 
         if ($error !== null) {
-            return redirect()->to('/diocese/dashboard')->with('error', $error);
+            return $this->redirectModeration('error', $error);
         }
 
-        return redirect()->to('/diocese/dashboard')->with('success', lang('Diocesan.registrationEscalated'));
+        return $this->redirectModeration('success', lang('Diocesan.registrationEscalated'));
     }
 
     public function dismiss(int $requestId)
     {
         $scope = $this->resolveParishModerationScope();
         if ($scope === null) {
-            return redirect()->to('/diocese/dashboard')->with('error', lang('Diocesan.accessDeniedDiocesanAdmin'));
+            return $this->redirectModeration('error', lang('Diocesan.accessDeniedDiocesanAdmin'));
         }
 
         $actorUserId = (int) (auth()->id() ?? 0);
@@ -141,17 +138,17 @@ class RegistrationRequests extends BaseController
         $error = $service->dismiss($actorUserId, $requestId, $scope);
 
         if ($error !== null) {
-            return redirect()->to('/diocese/dashboard')->with('error', $error);
+            return $this->redirectModeration('error', $error);
         }
 
-        return redirect()->to('/diocese/dashboard')->with('success', lang('Diocesan.registrationUpdated'));
+        return $this->redirectModeration('success', lang('Diocesan.registrationUpdated'));
     }
 
     public function ban(int $requestId)
     {
         $scope = $this->resolveParishModerationScope();
         if ($scope === null) {
-            return redirect()->to('/diocese/dashboard')->with('error', lang('Diocesan.accessDeniedDiocesanAdmin'));
+            return $this->redirectModeration('error', lang('Diocesan.accessDeniedDiocesanAdmin'));
         }
 
         $actorUserId = (int) (auth()->id() ?? 0);
@@ -159,17 +156,17 @@ class RegistrationRequests extends BaseController
         $error = $service->ban($actorUserId, $requestId, $scope);
 
         if ($error !== null) {
-            return redirect()->to('/diocese/dashboard')->with('error', $error);
+            return $this->redirectModeration('error', $error);
         }
 
-        return redirect()->to('/diocese/dashboard')->with('success', lang('Diocesan.registrationUpdated'));
+        return $this->redirectModeration('success', lang('Diocesan.registrationUpdated'));
     }
 
     public function delete(int $requestId)
     {
         $scope = $this->resolveParishModerationScope();
         if ($scope === null) {
-            return redirect()->to('/diocese/dashboard')->with('error', lang('Diocesan.accessDeniedDiocesanAdmin'));
+            return $this->redirectModeration('error', lang('Diocesan.accessDeniedDiocesanAdmin'));
         }
 
         $actorUserId = (int) (auth()->id() ?? 0);
@@ -177,10 +174,22 @@ class RegistrationRequests extends BaseController
         $error = $service->delete($actorUserId, $requestId, $scope);
 
         if ($error !== null) {
-            return redirect()->to('/diocese/dashboard')->with('error', $error);
+            return $this->redirectModeration('error', $error);
         }
 
-        return redirect()->to('/diocese/dashboard')->with('success', lang('Diocesan.registrationDeleted'));
+        return $this->redirectModeration('success', lang('Diocesan.registrationDeleted'));
+    }
+
+    private function redirectModeration(string $type, string $message): \CodeIgniter\HTTP\RedirectResponse
+    {
+        $fallback = '/people#pendingRegistrationsCard';
+        $previous = previous_url();
+        $isRoot = ($previous === site_url('/') || $previous === base_url() || $previous === rtrim(base_url(), '/'));
+        if ($previous !== null && $previous !== '' && !$isRoot && !str_contains($previous, '/diocese/dashboard')) {
+            return redirect()->back()->with($type, $message);
+        }
+
+        return redirect()->to($fallback)->with($type, $message);
     }
 
     private function resolveParishModerationScope(): ?array

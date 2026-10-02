@@ -36,7 +36,7 @@ class RegistrationGateFilter implements FilterInterface
 
         // Deactivated accounts should not be able to reach any authenticated page.
         $user = auth()->user();
-        if ($user !== null && $user->active === false) {
+        if ($user !== null && isset($user->active) && $user->active === false) {
             $userId = (int) auth()->id();
             auth()->logout();
             session()->destroy();
@@ -54,6 +54,7 @@ class RegistrationGateFilter implements FilterInterface
         try {
             $registrationRequest = model('UserRegistrationRequestModel')
                 ->where('user_id', (int) auth()->id())
+                ->orderBy('id', 'DESC')
                 ->first();
         } catch (\Throwable $e) {
             // If the onboarding table does not exist yet, seeded/admin users
