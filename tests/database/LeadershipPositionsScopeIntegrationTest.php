@@ -39,6 +39,116 @@ final class LeadershipPositionsScopeIntegrationTest extends CIUnitTestCase
         parent::tearDown();
     }
 
+    public function testDioceseAdminCanOpenDiocesanLeadershipWithoutSelectedParish(): void
+    {
+        $dioceseId = $this->insertDiocese('Leadership Admin Diocese');
+        $adminId = $this->insertUser('leadership.diocese.admin');
+        $this->upsertProfile($adminId, 0, $dioceseId);
+        $this->injectLeadershipAuth($adminId, 'dioceseadmin');
+
+        $response = $this->get('leadership?scope=diocese');
+
+        $response->assertOK();
+        $response->assertSee(lang('Leadership.positionsTitle'));
+    }
+
+    public function testDioceseAdminListingExcludesAnotherDioceseAndRejectsForeignSelectedParish(): void
+    {
+        $ownDiocese = $this->insertDiocese('Leadership Own Diocese');
+        $otherDiocese = $this->insertDiocese('Leadership Other Diocese');
+        $ownParish = $this->insertParish($ownDiocese, 'Leadership Own Parish');
+        $otherParish = $this->insertParish($otherDiocese, 'Leadership Other Parish');
+        $adminId = $this->insertUser('leadership.scoped.diocese.admin');
+        $this->upsertProfile($adminId, $ownParish, $ownDiocese);
+        $this->injectLeadershipAuth($adminId, 'dioceseadmin');
+
+        foreach ([[$ownDiocese, 'Own Diocesan Office'], [$otherDiocese, 'Foreign Diocesan Office']] as [$diocese, $title]) {
+            $subject = $this->insertUser('subject.' . strtolower(str_replace(' ', '.', $title)));
+            $this->upsertProfile($subject, 0, $diocese);
+            $this->db->table('leadership_position')->insert([
+                'user_id' => $subject, 'scope_type' => 'diocese',
+                'diocese_id' => $diocese, 'title' => $title, 'active' => 1,
+            ]);
+        }
+
+        $response = $this->get('leadership?scope=diocese');
+        $response->assertOK();
+        $response->assertSee('Own Diocesan Office');
+        $response->assertDontSee('Foreign Diocesan Office');
+
+        $foreignParishResponse = $this->withSession(['selected_parish_id' => $otherParish])
+            ->get('leadership?scope=parish');
+        $foreignParishResponse->assertStatus(403);
+    }
+
+    public function testOtherParishOperatorRoutesRemainClosedToDiocesanAdmin(): void
+    {
+        $dioceseId = $this->insertDiocese('Boundary Diocese');
+        $adminId = $this->insertUser('leadership.boundary.diocese.admin');
+        $this->upsertProfile($adminId, 0, $dioceseId);
+        $this->injectLeadershipAuth($adminId, 'dioceseadmin');
+
+        $response = $this->get('members');
+        self::assertSame('/dashboard', parse_url((string) $response->getRedirectUrl(), PHP_URL_PATH));
+    }
+
+    public function testDioceseAdminWithoutAnAssignedDioceseCannotUseSelectedParishAsJurisdiction(): void
+    {
+        $dioceseId = $this->insertDiocese('Unassigned Diocese');
+        $parishId = $this->insertParish($dioceseId, 'Unassigned Parish');
+        $adminId = $this->insertUser('leadership.unassigned.diocese.admin');
+        $this->upsertProfile($adminId, 0, 0);
+        $this->injectLeadershipAuth($adminId, 'dioceseadmin');
+
+        $response = $this->withSession(['selected_parish_id' => $parishId])
+            ->get('leadership?scope=diocese');
+
+        $response->assertStatus(403);
+    }
+
+    public function testDioceseAdminCanCreateOwnParishPositionButNotForeignParishPosition(): void
+    {
+        $dioceseId = $this->insertDiocese('Appointment Diocese');
+        $otherDioceseId = $this->insertDiocese('Foreign Appointment Diocese');
+        $parishId = $this->insertParish($dioceseId, 'Appointment Parish');
+        $otherParishId = $this->insertParish($otherDioceseId, 'Foreign Appointment Parish');
+        $adminId = $this->insertUser('appointment.diocese.admin');
+        $this->upsertProfile($adminId, $parishId, $dioceseId);
+        $this->injectLeadershipAuth($adminId, 'dioceseadmin');
+
+        $memberId = $this->insertUser('appointment.warden.member');
+        $this->upsertProfile($memberId, $parishId, $dioceseId);
+        $this->db->table('person')->insert(['first_name' => 'Lay', 'last_name' => 'Warden']);
+        $personId = (int) $this->db->insertID();
+        $this->db->table('user_person')->insert([
+            'user_id' => $memberId, 'person_id' => $personId, 'is_primary' => 1,
+        ]);
+        $this->db->table('profile')->where('user_id', $memberId)->update(['person_id' => $personId]);
+        $this->db->table('person_membership_details')->insert([
+            'person_id' => $personId, 'parish_id' => $parishId,
+            'is_baptized' => 1, 'good_standing_override' => 1,
+        ]);
+
+        $payload = [
+            'user_id' => $memberId, 'scope_type' => 'parish', 'title' => 'Parish Warden',
+            'role_category' => 'lay_staff', 'role_code' => 'warden', 'active' => 1,
+        ];
+        $allowed = $this->withSession(['selected_parish_id' => $parishId])
+            ->withHeaders($this->withCsrfHeaders([]))->withBodyFormat('form')
+            ->post('leadership/store', $payload);
+        self::assertSame('/leadership', parse_url((string) $allowed->getRedirectUrl(), PHP_URL_PATH));
+        self::assertNull(session('error'));
+
+        $denied = $this->withSession(['selected_parish_id' => $otherParishId])
+            ->withHeaders($this->withCsrfHeaders([]))->withBodyFormat('form')
+            ->post('leadership/store', $payload);
+        self::assertNotNull(session('error'), (string) $denied->getRedirectUrl());
+
+        $positions = $this->db->table('leadership_position')->where('user_id', $memberId)->get()->getResultArray();
+        self::assertCount(1, $positions);
+        self::assertSame($parishId, (int) $positions[0]['parish_id']);
+    }
+
     public function testStoringParishScopeLeadershipPositionSucceeds(): void
     {
         $dioceseId = $this->insertDiocese('Leadership Test Diocese');
@@ -50,6 +160,16 @@ final class LeadershipPositionsScopeIntegrationTest extends CIUnitTestCase
 
         $memberId = $this->insertUser('leadership.scope.member');
         $this->upsertProfile($memberId, $parishId, $dioceseId);
+        $this->db->table('person')->insert(['first_name' => 'Warden', 'last_name' => 'Test']);
+        $personId = (int) $this->db->insertID();
+        $this->db->table('user_person')->insert([
+            'user_id' => $memberId, 'person_id' => $personId, 'is_primary' => 1,
+        ]);
+        $this->db->table('profile')->where('user_id', $memberId)->update(['person_id' => $personId]);
+        $this->db->table('person_membership_details')->insert([
+            'person_id' => $personId, 'parish_id' => $parishId,
+            'is_baptized' => 1, 'good_standing_override' => 1,
+        ]);
 
         $response = $this->withHeaders($this->withCsrfHeaders([
             'X-Requested-With' => 'XMLHttpRequest',
@@ -57,7 +177,8 @@ final class LeadershipPositionsScopeIntegrationTest extends CIUnitTestCase
             'user_id' => $memberId,
             'scope_type' => 'parish',
             'title' => 'Parish Warden',
-            'role_category' => 'clergy',
+            'role_category' => 'lay_staff',
+            'role_code' => 'warden',
             'active' => 1,
         ]);
 
@@ -179,10 +300,10 @@ final class LeadershipPositionsScopeIntegrationTest extends CIUnitTestCase
         return $headers;
     }
 
-    private function injectLeadershipAuth(int $userId): void
+    private function injectLeadershipAuth(int $userId, string $group = 'parishadmin'): void
     {
-        $fakeUser = new class($userId) extends User {
-            public function __construct(private int $idForTest)
+        $fakeUser = new class($userId, $group) extends User {
+            public function __construct(private int $idForTest, private string $groupForTest)
             {
                 parent::__construct([
                     'id' => $idForTest,
@@ -194,7 +315,7 @@ final class LeadershipPositionsScopeIntegrationTest extends CIUnitTestCase
             public function can(string ...$permissions): bool
             {
                 foreach ($permissions as $permission) {
-                    if ($permission !== 'member.edit') {
+                    if (! in_array($permission, ['member.edit', 'leadership_position.manage'], true)) {
                         return false;
                     }
                 }
@@ -204,7 +325,7 @@ final class LeadershipPositionsScopeIntegrationTest extends CIUnitTestCase
 
             public function inGroup(string ...$groups): bool
             {
-                return in_array('parishadmin', $groups, true);
+                return in_array($this->groupForTest, $groups, true);
             }
         };
 

@@ -43,6 +43,8 @@ This file is the single source of truth for which documentation should be retain
   Canonical visitor follow-up engine: sequences, scheduling, dispatch, call tasks, and cron.
 - `docs/ROLE_MENU_PERMISSION_POLICY.md`
   Canonical role-to-menu permission policy enforced by `PermissionRoleSyncSeeder`.
+- `docs/CLERGY_DEANERY_AUTHORIZATION.md`
+  Canonical clergy/deanery authorization policy, scoped endpoints, report-signature workflow and migration/activation runbook.
 
 ## Removed as Redundant or Historical
 

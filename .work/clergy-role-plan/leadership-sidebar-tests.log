@@ -1,0 +1,10 @@
+PHPUnit 10.5.65 by Sebastian Bergmann and contributors.
+
+Runtime:       PHP 8.5.11
+Configuration: /Users/juanrosariodelacruz/Sites/ekklesiaRD/phpunit.xml.dist
+
+.............................                                     29 / 29 (100%)
+
+Time: 00:02.957, Memory: 26.00 MB
+
+OK (29 tests, 212 assertions)

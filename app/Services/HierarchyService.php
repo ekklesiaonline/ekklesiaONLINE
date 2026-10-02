@@ -138,12 +138,65 @@ class HierarchyService
             ->countAllResults() > 0;
     }
 
+    /** @return list<array<string, mixed>> */
+    public function deaneriesInDiocese(int $dioceseId): array
+    {
+        if ($dioceseId <= 0 || ! $this->db->tableExists('deanery')) {
+            return [];
+        }
+
+        return $this->db->table('deanery')
+            ->where('diocese_id', $dioceseId)
+            ->where('active', 1)
+            ->orderBy('name', 'ASC')
+            ->get()->getResultArray();
+    }
+
+    public function deaneryInDiocese(int $deaneryId, int $dioceseId): bool
+    {
+        return $deaneryId > 0 && $dioceseId > 0 && $this->db->tableExists('deanery')
+            && $this->db->table('deanery')->where('id', $deaneryId)
+                ->where('diocese_id', $dioceseId)->where('active', 1)->countAllResults() > 0;
+    }
+
+    /** @return list<array<string, mixed>> */
+    public function parishesInDeanery(int $deaneryId, ?string $onDate = null): array
+    {
+        if ($deaneryId <= 0 || ! $this->db->tableExists('deanery_parish_membership')) {
+            return [];
+        }
+        $onDate ??= date('Y-m-d');
+
+        return $this->db->table('deanery_parish_membership m')
+            ->select('p.id, p.name, p.diocese_id, m.id as membership_id, m.started_at, m.ended_at')
+            ->join('parish p', 'p.id = m.parish_id')
+            ->join('deanery d', 'd.id = m.deanery_id AND d.diocese_id = p.diocese_id')
+            ->where('m.deanery_id', $deaneryId)
+            ->where('d.active', 1)
+            ->where('m.started_at <=', $onDate)
+            ->groupStart()->where('m.ended_at', null)->orWhere('m.ended_at >=', $onDate)->groupEnd()
+            ->orderBy('p.name', 'ASC')->get()->getResultArray();
+    }
+
+    public function parishInDeanery(int $parishId, int $deaneryId, ?string $onDate = null): bool
+    {
+        if ($parishId <= 0) {
+            return false;
+        }
+        foreach ($this->parishesInDeanery($deaneryId, $onDate) as $parish) {
+            if ((int) $parish['id'] === $parishId) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     /**
      * Display name for a hierarchy entity (province|diocese|parish).
      */
     public function nameFor(string $scope, int $id): string
     {
-        if ($id <= 0 || ! in_array($scope, ['province', 'diocese', 'parish'], true)) {
+        if ($id <= 0 || ! in_array($scope, ['province', 'diocese', 'deanery', 'parish'], true)) {
             return '';
         }
 

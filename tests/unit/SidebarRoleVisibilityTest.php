@@ -65,6 +65,32 @@ final class SidebarRoleVisibilityTest extends CIUnitTestCase
         );
     }
 
+    public function testDiocesanSidebarShowsScopedLeadershipButNotBlockedParishReports(): void
+    {
+        $this->injectAuthUser(['dioceseadmin', 'clergy'], [
+            'diocese.admin', 'deanery.view', 'leadership_position.manage', 'report.view',
+        ]);
+
+        $html = (string) view('partials/sidebar');
+        $this->assertContainsHref($html, 'diocese/deaneries/manage');
+        $this->assertContainsHref($html, 'leadership?scope=diocese');
+        $this->assertNotContainsHref($html, 'reports');
+        $this->assertNotContainsHref($html, 'leadership');
+    }
+
+    public function testLeadershipSidebarRequiresMatchingRoutePermissionAndDiocesanGroup(): void
+    {
+        $this->injectAuthUser(['parishadmin'], ['member.edit']);
+        $html = (string) view('partials/sidebar');
+        $this->assertNotContainsHref($html, 'leadership');
+        $this->assertContainsHref($html, 'standing');
+
+        $this->injectAuthUser(['member'], ['diocese.admin', 'leadership_position.manage', 'deanery.view']);
+        $html = (string) view('partials/sidebar');
+        $this->assertNotContainsHref($html, 'leadership?scope=diocese');
+        $this->assertNotContainsHref($html, 'diocese/deaneries/manage');
+    }
+
     public static function roleVisibilityProvider(): array
     {
         return [
@@ -88,7 +114,7 @@ final class SidebarRoleVisibilityTest extends CIUnitTestCase
             ],
             'parish admin' => [
                 ['parishadmin'],
-                ['member.view', 'family.view', 'service.view', 'attendance.view', 'visitor.view', 'visitor.edit', 'member.edit', 'followup.manage', 'finance.view', 'volunteer.manage', 'volunteer.schedule', 'event.view', 'worship.view', 'report.view', 'dashboard.view'],
+                ['member.view', 'family.view', 'service.view', 'attendance.view', 'visitor.view', 'visitor.edit', 'member.edit', 'leadership_position.manage', 'followup.manage', 'finance.view', 'volunteer.manage', 'volunteer.schedule', 'event.view', 'worship.view', 'report.view', 'dashboard.view'],
                 ['parish/dashboard', 'me', 'members', 'families', 'services', 'attendance/reports', 'visitors/dashboard', 'leadership', 'standing', 'donations', 'expenses', 'budgets', 'volunteers', 'volunteers/schedules', 'events', 'worship-planning', 'reports', 'admin/audit-logs'],
                 ['province/dashboard', 'diocese/finance', 'dioceses', 'liturgical-source', 'parish_list', 'dashboard'],
             ],

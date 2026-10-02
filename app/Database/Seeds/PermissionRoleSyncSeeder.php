@@ -24,6 +24,8 @@ class PermissionRoleSyncSeeder extends Seeder
             ->getResultArray();
 
         $now = date('Y-m-d H:i:s');
+        $hasProvenance = $this->db->tableExists('permission_role_sync_managed');
+        $activeSources = [];
 
         foreach ($groupRows as $row) {
             $userId = (int) ($row['user_id'] ?? 0);
@@ -37,20 +39,65 @@ class PermissionRoleSyncSeeder extends Seeder
                     continue;
                 }
 
-                $exists = (int) $this->db->table('auth_permissions_users')
+                $activeSources[$userId . '|' . $permission . '|' . $group] = true;
+                $existing = $this->db->table('auth_permissions_users')
+                    ->select('id')
                     ->where('user_id', $userId)
                     ->where('permission', $permission)
-                    ->countAllResults();
+                    ->get()->getRowArray();
 
-                if ($exists > 0) {
-                    continue;
+                if ($existing === null) {
+                    $this->db->table('auth_permissions_users')->insert([
+                        'user_id'    => $userId,
+                        'permission' => $permission,
+                        'created_at' => $now,
+                    ]);
+                    $permissionUserId = (int) $this->db->insertID();
+                } else {
+                    $permissionUserId = (int) $existing['id'];
                 }
 
-                $this->db->table('auth_permissions_users')->insert([
-                    'user_id'    => $userId,
-                    'permission' => $permission,
-                    'created_at' => $now,
-                ]);
+                if (! $hasProvenance) {
+                    continue;
+                }
+                // Preexisting rows may be custom or from the old additive
+                // seeder: never claim or remove them without evidence.
+                $managed = $this->db->table('permission_role_sync_managed')
+                    ->where('user_id', $userId)->where('permission', $permission)
+                    ->where('permission_user_id', $permissionUserId)->countAllResults() > 0;
+                if (($existing === null || $managed)
+                    && $this->db->table('permission_role_sync_managed')
+                        ->where('user_id', $userId)->where('permission', $permission)
+                        ->where('source_type', 'role_sync')->where('source_key', $group)
+                        ->countAllResults() === 0) {
+                    $this->db->table('permission_role_sync_managed')->insert([
+                        'user_id' => $userId, 'permission' => $permission,
+                        'permission_user_id' => $permissionUserId,
+                        'source_type' => 'role_sync', 'source_key' => $group,
+                        'created_at' => $now,
+                    ]);
+                }
+            }
+        }
+
+        if (! $hasProvenance) {
+            return;
+        }
+        $sources = $this->db->table('permission_role_sync_managed')
+            ->where('source_type', 'role_sync')->get()->getResultArray();
+        foreach ($sources as $source) {
+            $key = $source['user_id'] . '|' . $source['permission'] . '|' . $source['source_key'];
+            if (isset($activeSources[$key])) {
+                continue;
+            }
+            $this->db->table('permission_role_sync_managed')->where('id', $source['id'])->delete();
+            if ($this->db->table('permission_role_sync_managed')
+                ->where('user_id', $source['user_id'])->where('permission', $source['permission'])
+                ->where('permission_user_id', $source['permission_user_id'])->countAllResults() === 0) {
+                $this->db->table('auth_permissions_users')
+                    ->where('id', $source['permission_user_id'])
+                    ->where('user_id', $source['user_id'])
+                    ->where('permission', $source['permission'])->delete();
             }
         }
     }

@@ -1,0 +1,156 @@
+PHPUnit 10.5.65 by Sebastian Bergmann and contributors.
+
+Runtime:       PHP 8.5.11
+Configuration: /Users/juanrosariodelacruz/Sites/ekklesiaRD/phpunit.xml.dist
+
+...............................................................  63 / 828 (  7%)
+..................F...................................F........ 126 / 828 ( 15%)
+..............................................................
+[0;36mfollowup:send starting — as of 2026-10-02[0m
+[0;36mScoped to parish_id = 301[0m
+[0;36mFound 1 pending entries.[0m
++---------+---------------+--------+------------+
+| Channel | Visitor       | Status | Scheduled  |
++---------+---------------+--------+------------+
+| email   | Alice Visitor | sent   | 2026-10-02 |
++---------+---------------+--------+------------+
+
+
+[0;32mComplete — sent: 1 | failed: 0 | skipped: 0[0m
+. 189 / 828 ( 22%)
+[0;36mfollowup:send starting — as of 2026-10-02[0m
+[0;36mScoped to parish_id = 301[0m
+[0;36mFound 1 pending entries.[0m
++---------+-------------+--------+------------+
+| Channel | Visitor     | Status | Scheduled  |
++---------+-------------+--------+------------+
+| text    | Bob Visitor | sent   | 2026-10-02 |
++---------+-------------+--------+------------+
+
+
+[0;32mComplete — sent: 1 | failed: 0 | skipped: 0[0m
+.[0;36mfollowup:send starting — as of 2026-10-02[0m
+[0;36mScoped to parish_id = 301[0m
+[0;36mFound 1 pending entries.[0m
++---------+------------------+---------------------+------------+
+| Channel | Visitor          | Status              | Scheduled  |
++---------+------------------+---------------------+------------+
+| email   | OptedOut Visitor | skipped — opted_out | 2026-10-02 |
++---------+------------------+---------------------+------------+
+
+
+[0;32mComplete — sent: 0 | failed: 0 | skipped: 1[0m
+.[0;36mfollowup:send starting — as of 2026-10-02[0m
+[0;36mScoped to parish_id = 301[0m
+[0;36mFound 1 pending entries.[0m
++---------+-----------------+----------------------------------------+------------+
+| Channel | Visitor         | Status                                 | Scheduled  |
++---------+-----------------+----------------------------------------+------------+
+| email   | NoEmail Visitor | failed — Visitor has no email address. | 2026-10-02 |
++---------+-----------------+----------------------------------------+------------+
+
+
+[0;31mComplete — sent: 0 | failed: 1 | skipped: 0[0m
+.[0;36mfollowup:send starting — as of 2026-10-02[0m
+[0;36mScoped to parish_id = 301[0m
+[0;36mFound 1 pending entries.[0m
++---------+--------------+--------+------------+
+| Channel | Visitor      | Status | Scheduled  |
++---------+--------------+--------+------------+
+| email   | Test Visitor | sent   | 2026-10-02 |
++---------+--------------+--------+------------+
+
+
+[0;32mComplete — sent: 1 | failed: 0 | skipped: 0[0m
+[0;36mfollowup:send starting — as of 2026-10-02[0m
+[0;36mScoped to parish_id = 301[0m
+[0;32mNo pending entries due today or earlier.[0m
+.[0;36mfollowup:send starting — as of 2026-10-02[0m
+[0;36mScoped to parish_id = 301[0m
+[0;36mFound 1 pending entries.[0m
++---------+--------------+--------+------------+
+| Channel | Visitor      | Status | Scheduled  |
++---------+--------------+--------+------------+
+| email   | Test Visitor | sent   | 2026-10-02 |
++---------+--------------+--------+------------+
+
+
+[0;32mComplete — sent: 1 | failed: 0 | skipped: 0[0m
+.[0;36mfollowup:send starting — as of 2026-10-02[0m
+[0;33m[DRY-RUN] No records will be written.[0m
+[0;36mScoped to parish_id = 301[0m
+[0;36mFound 1 pending entries.[0m
++---------+--------------+---------+------------+
+| Channel | Visitor      | Status  | Scheduled  |
++---------+--------------+---------+------------+
+| email   | Test Visitor | dry-run | 2026-10-02 |
++---------+--------------+---------+------------+
+
+
+[0;32mComplete — sent: 0 | failed: 0 | skipped: 1[0m
+................................................SSSSS..... 252 / 828 ( 30%)
+............................................................... 315 / 828 ( 38%)
+......S........................................................ 378 / 828 ( 45%)
+.................................F............................. 441 / 828 ( 53%)
+............................................................... 504 / 828 ( 60%)
+............................................................... 567 / 828 ( 68%)
+............................................................... 630 / 828 ( 76%)
+............................................................... 693 / 828 ( 83%)
+............................................................... 756 / 828 ( 91%)
+............................................................... 819 / 828 ( 98%)
+.........                                                       828 / 828 (100%)
+
+Time: 00:24.739, Memory: 122.52 MB
+
+There were 3 failures:
+
+1) PersonCleanupServiceTest::testCleanupForUserDeletesOrphanPerson
+Failed asserting that Array &0 [
+    'id' => 1,
+    'first_name' => 'Orphan',
+    'last_name' => 'Person',
+    'email' => null,
+    'email_hash' => null,
+    'phone' => null,
+    'phone_hash' => null,
+    'birthdate' => null,
+    'gender' => null,
+    'address' => null,
+    'preferred_contact_method' => 'email',
+    'preferred_timezone' => null,
+    'opted_out_channels' => null,
+    'source' => 'system',
+    'is_active' => 1,
+    'created_at' => '2026-10-02 19:04:44',
+    'updated_at' => '2026-10-02 19:04:44',
+    'deleted_at' => null,
+    'interests' => null,
+] is null.
+
+/Users/juanrosariodelacruz/Sites/ekklesiaRD/tests/app/Services/PersonCleanupServiceTest.php:53
+
+2) CleanupOrphanedPersonRowsMigrationTest::testMigrationRemovesOrphanedPersonRowsButKeepsReferencedOnes
+Failed asserting that an array does not contain 2.
+
+/Users/juanrosariodelacruz/Sites/ekklesiaRD/tests/database/CleanupOrphanedPersonRowsMigrationTest.php:74
+
+3) AuthGroupsGovernanceBoundaryTest::testProvinceAndDiocesanGroupsAreStrictlyNonGovernanceAndNonFinance
+diocesanadmin matrix must remain strict/read-only.
+Failed asserting that two arrays are identical.
+--- Expected
++++ Actual
+@@ @@
+     20 => 'report.export',
+     21 => 'report.parochial',
+     22 => 'governance.vestry.view',
+-    23 => 'governance.diocese.approve',
++    23 => 'leadership_position.manage',
++    24 => 'clergy.directory.view',
++    25 => 'deanery.view',
++    26 => 'deanery.manage',
+ ]
+
+/Users/juanrosariodelacruz/Sites/ekklesiaRD/tests/unit/AuthGroupsGovernanceBoundaryTest.php:43
+
+FAILURES!
+Tests: 828, Assertions: 3573, Failures: 3, Skipped: 6.

@@ -8,6 +8,20 @@ use CodeIgniter\Router\RouteCollection;
  * @var RouteCollection $routes
  */
 $routes->group('', ['filter' => 'session'], function ($routes) {
+    $routes->group('diocese/clergy-review', function ($routes) {
+        $routes->get('candidates/(:num)', '\\App\\Controllers\\Diocese\\ClergyReview::candidates/$1', ['filter' => 'permission:clergy.appointment.manage']);
+        $routes->post('candidates/(:num)/review/(:num)', '\\App\\Controllers\\Diocese\\ClergyReview::reviewCandidate/$1/$2', ['filter' => 'permission:clergy.ordination.verify']);
+        $routes->post('ordination/(:num)', '\\App\\Controllers\\Diocese\\ClergyReview::verifyOrdination/$1', ['filter' => 'permission:clergy.ordination.verify']);
+        $routes->post('standing/(:num)', '\\App\\Controllers\\Diocese\\ClergyReview::standing/$1', ['filter' => 'permission:clergy.ordination.verify']);
+        $routes->post('office/(:num)/approve', '\\App\\Controllers\\Diocese\\ClergyReview::approveOffice/$1', ['filter' => 'permission:clergy.appointment.manage']);
+        $routes->post('office/(:num)/revoke', '\\App\\Controllers\\Diocese\\ClergyReview::revokeOffice/$1', ['filter' => 'permission:clergy.appointment.manage']);
+        $routes->post('mission-office/(:num)/approve', '\\App\\Controllers\\Diocese\\ClergyReview::approveMissionOffice/$1', ['filter' => 'permission:clergy.appointment.manage']);
+        $routes->post('delegation/(:num)', '\\App\\Controllers\\Diocese\\ClergyReview::delegate/$1', ['filter' => 'permission:governance.diocese.approve']);
+        $routes->post('parish-vacancy/(:num)', '\\App\\Controllers\\Diocese\\ClergyReview::delegateVacancy/$1', ['filter' => 'permission:governance.diocese.approve']);
+        $routes->post('report-policy/(:num)', '\\App\\Controllers\\Diocese\\ClergyReview::reportPolicy/$1', ['filter' => 'permission:governance.diocese.approve']);
+        $routes->post('delegation/revoke/(:num)', '\\App\\Controllers\\Diocese\\ClergyReview::revokeDelegation/$1', ['filter' => 'permission:governance.diocese.approve']);
+    });
+
     $routes->group('chart-accounts', ['filter' => 'permission:diocese.admin'], function ($routes) {
         $routes->get('/', '\\Diocese\\Controllers\\ChartOfAccounts::index');
         $routes->get('create', '\\Diocese\\Controllers\\ChartOfAccounts::create');
@@ -27,6 +41,15 @@ $routes->group('', ['filter' => 'session'], function ($routes) {
         $routes->get('dashboard/switch/(:num)', '\\Diocese\\Controllers\\Dashboard::switchParish/$1');
         $routes->get('attendance-period-breakdown', '\\Diocese\\Controllers\\Dashboard::attendancePeriodBreakdown');
         $routes->get('finance', '\\Diocese\\Controllers\\FinanceDashboard::index');
+
+        $routes->group('deaneries', ['filter' => 'permission:deanery.view'], function ($routes) {
+            $routes->get('/', '\\App\\Controllers\\Diocese\\Deaneries::index');
+            $routes->get('manage', '\\App\\Controllers\\Diocese\\Deaneries::manage');
+            $routes->post('store', '\\App\\Controllers\\Diocese\\Deaneries::store', ['filter' => 'permission:deanery.manage']);
+            $routes->post('assign/(:num)', '\\App\\Controllers\\Diocese\\Deaneries::assign/$1', ['filter' => 'permission:deanery.manage']);
+            $routes->post('end/(:num)', '\\App\\Controllers\\Diocese\\Deaneries::end/$1', ['filter' => 'permission:deanery.manage']);
+        });
+        $routes->post('congregations/(:num)/type', '\\App\\Controllers\\Diocese\\Deaneries::setCongregationType/$1', ['filter' => 'permission:parishes.edit']);
 
         $routes->group('admins', ['filter' => 'permission:diocese.primary'], function ($routes) {
             $routes->get('/', '\\App\\Controllers\\DioceseAdminUsers::index');

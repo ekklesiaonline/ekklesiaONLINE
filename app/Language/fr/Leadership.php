@@ -5,6 +5,12 @@
  */
 return [
     'scope' => 'Portee',
+    'scopeDeanery' => 'Doyenné',
+    'deaneryRequired' => 'Doyenné (requis pour le doyen régional)',
+    'selectDeanery' => 'Sélectionnez le doyenné exact',
+    'orderEvidenceNote' => 'L’ordination nécessite une vérification documentaire distincte; la fonction n’accorde aucun privilège avant approbation.',
+    'awaitingReview' => 'Nomination en attente de vérification',
+    'cathedralCharge' => 'Prêtre responsable de la cathédrale (approbation diocésaine distincte requise)',
     'perPage' => 'Par page',
     'applyScope' => 'Appliquer la portee',
     'addLeadershipPosition' => 'Ajouter un poste de leadership',
@@ -57,5 +63,6 @@ return [
     'reqConfirmed' => 'une confirmation enregistree',
     'reqPledged' => 'une promesse d offrande pour l annee en cours',
     'reqGoodStanding' => 'le statut de communiant en regle (ou une derogation de bonne conduite)',
+    'reqVerifiedOrder' => 'une ordination vérifiée, une charge compatible et un statut diocésain en vigueur',
     'noPortalAccess' => 'pas d acces au portail',
 ];

@@ -313,6 +313,8 @@ class Filters extends BaseFilters
             ],
         ],
         // Diocesan admins are restricted from parish-operator modules.
+        // Leadership is shared with diocesan admins; its permission route and
+        // controller enforce an explicitly assigned diocese and target scope.
         'diocesanOperationalBoundary' => [
             'before' => [
                 'members',
@@ -329,8 +331,6 @@ class Filters extends BaseFilters
                 'visitor-conversions',
                 'standing',
                 'standing/*',
-                'leadership',
-                'leadership/*',
                 'followup',
                 'followup/*',
             ],

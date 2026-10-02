@@ -4,6 +4,7 @@ namespace MemberPortal\Controllers;
 
 use App\Controllers\AdminHierarchyGuard;
 use App\Controllers\BaseController;
+use App\Services\HierarchyService;
 use App\Services\LeadershipPositionService;
 
 class LeadershipPositions extends BaseController
@@ -19,31 +20,43 @@ class LeadershipPositions extends BaseController
 
     public function index()
     {
-        if ($redirect = $this->requirePermission('member.edit')) {
+        if ($redirect = $this->requirePermission('leadership_position.manage')) {
             return $redirect;
         }
 
-        if ($redirect = $this->requireParish()) {
+        if (! $this->isDioceseAdmin() && ($redirect = $this->requireParish())) {
             return $redirect;
         }
 
         $parishId = (int) ($this->getOperationalParishId() ?? 0);
-        $scope = trim((string) ($this->request->getGet('scope') ?? 'parish'));
+        $dioceseId = $this->isDioceseAdmin() ? $this->assignedDioceseId() : 0;
+        $scope = trim((string) ($this->request->getGet('scope') ?? ($parishId > 0 ? 'parish' : 'diocese')));
         $page = max(1, (int) ($this->request->getGet('page') ?? 1));
         $perPage = (int) ($this->request->getGet('per_page') ?? 25);
         if ($perPage < 10 || $perPage > 100) {
             $perPage = 25;
         }
-        if (!in_array($scope, ['parish', 'diocese', 'province'], true)) {
+        if (!in_array($scope, ['parish', 'deanery', 'diocese'], true)) {
             $scope = 'parish';
+        }
+        if (in_array($scope, ['deanery', 'diocese'], true) && ! $this->isDioceseAdmin()) {
+            return $this->forbiddenResponse();
         }
 
         $db = db_connect();
+        if ($this->isDioceseAdmin() && ($dioceseId <= 0 || ($scope === 'parish'
+            && ! (new HierarchyService($db))->parishInDiocese($parishId, $dioceseId)))) {
+            return $this->forbiddenResponse();
+        }
+        $deaneries = $dioceseId > 0 && $db->tableExists('deanery')
+            ? (new HierarchyService($db))->deaneriesInDiocese($dioceseId) : [];
         $profileTable = $this->resolveExistingProfileTable($db);
         if ($profileTable === null) {
             return view('MemberPortal\\Views\\Leadership/index', array_merge($this->getCommonViewData('Leadership Positions'), [
                 'positions' => [],
                 'selected_scope' => $scope,
+                'deaneries' => $deaneries,
+                'is_diocese_admin' => $this->isDioceseAdmin(),
                 'profile_data' => $this->getProfile(),
                 'page' => 1,
                 'per_page' => $perPage,
@@ -63,27 +76,30 @@ class LeadershipPositions extends BaseController
             ->orderBy('lp.active', 'DESC')
             ->orderBy('lp.scope_type', 'ASC')
             ->orderBy('lp.title', 'ASC');
+        if ($db->tableExists('deanery')) {
+            $builder->select('dn.name as deanery_name')
+                ->join('deanery dn', 'dn.id = lp.deanery_id', 'left');
+        }
 
         if ($scope === 'parish') {
             $builder->where('lp.scope_type', 'parish')->where('lp.parish_id', $parishId);
+        } elseif ($scope === 'deanery') {
+            if ($dioceseId > 0 && $db->tableExists('deanery')) {
+                $builder->where('lp.scope_type', 'deanery')->where('dn.diocese_id', $dioceseId);
+            } else {
+                $builder->where('1 = 0', null, false);
+            }
         } elseif ($scope === 'diocese') {
-            $dioceseId = (int) $this->resolveDiocesanScopeId();
             if ($dioceseId > 0) {
                 $builder->where('lp.scope_type', 'diocese')->where('lp.diocese_id', $dioceseId);
             } else {
                 $builder->where('1 = 0', null, false);
             }
-        } else {
-            $provinceId = (int) (($this->getProfile()['province_id'] ?? 0) ?: $this->resolveAdminProvinceId());
-            if ($provinceId > 0) {
-                $builder->where('lp.scope_type', 'province')->where('lp.province_id', $provinceId);
-            } else {
-                $builder->where('1 = 0', null, false);
-            }
         }
 
-        $countBuilder = clone $builder;
-        $totalRows = (int) $countBuilder->countAllResults();
+        // Resetting a cloned builder clears CI4's connection-wide alias map.
+        // With a DB prefix the subsequent SELECT then treats "lp" as a table.
+        $totalRows = (int) $builder->countAllResults(false);
         $totalPages = max(1, (int) ceil($totalRows / $perPage));
         if ($page > $totalPages) {
             $page = $totalPages;
@@ -98,6 +114,8 @@ class LeadershipPositions extends BaseController
         return view('MemberPortal\Views\Leadership/index', array_merge($this->getCommonViewData('Leadership Positions'), [
             'positions' => $positions,
             'selected_scope' => $scope,
+            'deaneries' => $deaneries,
+            'is_diocese_admin' => $this->isDioceseAdmin(),
             'profile_data' => $this->getProfile(),
             'page' => $page,
             'per_page' => $perPage,
@@ -108,11 +126,11 @@ class LeadershipPositions extends BaseController
 
     public function store()
     {
-        if ($redirect = $this->requirePermission('member.edit')) {
+        if ($redirect = $this->requirePermission('leadership_position.manage')) {
             return $redirect;
         }
 
-        if ($redirect = $this->requireParish()) {
+        if (! $this->isDioceseAdmin() && ($redirect = $this->requireParish())) {
             return $redirect;
         }
 
@@ -120,16 +138,13 @@ class LeadershipPositions extends BaseController
             return redirect()->back()->withInput()->with('error', lang('App.errorUnauthorized'));
         }
 
-        $rules = [
-            'user_id' => 'required|is_not_unique[users.id]',
-            'scope_type' => 'required|in_list[parish,diocese,province]',
-            'title' => 'required|min_length[2]|max_length[150]',
-            'role_category' => 'permit_empty|in_list[clergy,lay_staff]',
-            'clergy_order' => 'permit_empty|in_list[bishop,priest,deacon]',
-            'employment_type' => 'permit_empty|in_list[full_time,part_time,non_stipendiary,unpaid]',
-            'started_at' => 'permit_empty|valid_date',
-            'ended_at' => 'permit_empty|valid_date',
-        ];
+        $dioceseId = $this->isDioceseAdmin() ? $this->assignedDioceseId() : null;
+        if ($this->isDioceseAdmin() && ! $dioceseId) {
+            return redirect()->back()->withInput()->with('error', lang('App.errorUnauthorized'));
+        }
+
+        $rules = ['user_id' => 'required|is_not_unique[users.id]']
+            + $this->leadershipPositionService->validationRules(true);
 
         if (!$this->validate($rules)) {
             return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
@@ -141,44 +156,43 @@ class LeadershipPositions extends BaseController
         }
 
         $scopeType = (string) $this->request->getPost('scope_type');
-        $profile = $this->getProfile() ?? [];
+        if ($scopeType === 'province' || ($scopeType !== 'parish' && ! $this->isDioceseAdmin())) {
+            return redirect()->back()->withInput()->with('error', lang('App.errorUnauthorized'));
+        }
+        $scopeIds = $this->leadershipPositionService->resolveScopeIds(
+            $scopeType, (int) ($this->getOperationalParishId() ?? 0),
+            $dioceseId,
+            null, (int) ($this->request->getPost('deanery_id') ?? 0)
+        );
+        if ($scopeIds === null || ! $this->leadershipPositionService->canManage(
+            array_merge(['scope_type' => $scopeType], $scopeIds),
+            (int) ($this->getOperationalParishId() ?? 0),
+            $dioceseId,
+            null
+        )) {
+            return redirect()->back()->withInput()->with('error', lang('App.errorUnauthorized'));
+        }
 
-        $payload = [
+        $payload = array_merge($scopeIds, [
             'user_id' => $targetUserId,
             'scope_type' => $scopeType,
-            'parish_id' => null,
-            'diocese_id' => null,
-            'province_id' => null,
             'title' => trim((string) $this->request->getPost('title')),
             'role_code' => trim((string) ($this->request->getPost('role_code') ?? '')),
             'role_category' => (string) ($this->request->getPost('role_category') ?? ''),
             'clergy_order' => (string) ($this->request->getPost('clergy_order') ?? ''),
+            'pastoral_in_charge' => $this->request->getPost('pastoral_in_charge') ? 1 : 0,
             'employment_type' => (string) ($this->request->getPost('employment_type') ?? ''),
             'active' => $this->request->getPost('active') ? 1 : 0,
             'started_at' => $this->request->getPost('started_at') ?: null,
             'ended_at' => $this->request->getPost('ended_at') ?: null,
             'notes' => trim((string) ($this->request->getPost('notes') ?? '')),
             'appointed_by_user_id' => (int) auth()->id(),
-        ];
+        ]);
 
         // Populate person_id — positions created here used to write NULL,
         // which breaks person-scoped leadership lookups.
         $personId = (int) ($this->leadershipPositionService->resolvePersonIdForUser($targetUserId) ?? 0);
         $payload['person_id'] = $personId > 0 ? $personId : null;
-
-        if ($scopeType === 'parish') {
-            $payload['parish_id'] = (int) ($this->getOperationalParishId() ?? 0);
-        } elseif ($scopeType === 'diocese') {
-            $payload['diocese_id'] = (int) $this->resolveDiocesanScopeId();
-            if ($payload['diocese_id'] <= 0) {
-                return redirect()->back()->withInput()->with('error', lang('App.errorNoParishScope'));
-            }
-        } else {
-            $payload['province_id'] = (int) (($profile['province_id'] ?? 0) ?: $this->resolveAdminProvinceId());
-            if ($payload['province_id'] <= 0) {
-                return redirect()->back()->withInput()->with('error', lang('App.errorNoParishScope'));
-            }
-        }
 
         $eligibility = $this->leadershipPositionService->eligibilityFor(
             $targetUserId,
@@ -193,27 +207,36 @@ class LeadershipPositions extends BaseController
             );
         }
 
-        $model = model('LeadershipPositionModel');
-        if ($model->insert($payload) === false) {
-            $errors = $model->errors();
+        $positionId = $this->leadershipPositionService->create($payload);
+        if ($positionId === null) {
+            $errors = $this->leadershipPositionService->errors();
             $errorMessage = $errors !== [] ? implode(' ', array_values($errors)) : lang('Leadership.saveFailed');
             return redirect()->back()->withInput()->with('error', $errorMessage);
         }
+        $this->audit()->log('leadership_position.create', [
+            'entity_type' => 'leadership_position', 'entity_id' => $positionId,
+            'parish_id' => $payload['parish_id'],
+        ]);
 
         return redirect()->to('/leadership')->with('success', lang('Leadership.saveSuccess'));
     }
 
     public function update($id)
     {
-        if ($redirect = $this->requirePermission('member.edit')) {
+        if ($redirect = $this->requirePermission('leadership_position.manage')) {
             return $redirect;
         }
 
-        if ($redirect = $this->requireParish()) {
+        if (! $this->isDioceseAdmin() && ($redirect = $this->requireParish())) {
             return $redirect;
         }
 
         if ($this->isProvinceAdmin()) {
+            return redirect()->back()->withInput()->with('error', lang('App.errorUnauthorized'));
+        }
+
+        $dioceseId = $this->isDioceseAdmin() ? $this->assignedDioceseId() : null;
+        if ($this->isDioceseAdmin() && ! $dioceseId) {
             return redirect()->back()->withInput()->with('error', lang('App.errorUnauthorized'));
         }
 
@@ -227,7 +250,7 @@ class LeadershipPositions extends BaseController
         if (! $this->leadershipPositionService->canManage(
             $position,
             $parishId,
-            $this->resolveDiocesanScopeId(),
+            $dioceseId,
             $this->resolveAdminProvinceId()
         )) {
             return redirect()->to('/leadership')->with('error', lang('App.errorUnauthorized'));
@@ -237,16 +260,7 @@ class LeadershipPositions extends BaseController
             return redirect()->back()->withInput()->with('error', $this->hierarchyGuardMessage($code));
         }
 
-        $rules = [
-            'title' => 'required|min_length[2]|max_length[150]',
-            'role_category' => 'permit_empty|in_list[clergy,lay_staff]',
-            'clergy_order' => 'permit_empty|in_list[bishop,priest,deacon]',
-            'employment_type' => 'permit_empty|in_list[full_time,part_time,non_stipendiary,unpaid]',
-            'started_at' => 'permit_empty|valid_date',
-            'ended_at' => 'permit_empty|valid_date',
-        ];
-
-        if (!$this->validate($rules)) {
+        if (!$this->validate($this->leadershipPositionService->validationRules(false))) {
             return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
         }
 
@@ -255,6 +269,7 @@ class LeadershipPositions extends BaseController
             'role_code' => trim((string) ($this->request->getPost('role_code') ?? '')),
             'role_category' => (string) ($this->request->getPost('role_category') ?? ''),
             'clergy_order' => (string) ($this->request->getPost('clergy_order') ?? ''),
+            'pastoral_in_charge' => $this->request->getPost('pastoral_in_charge') ? 1 : 0,
             'employment_type' => (string) ($this->request->getPost('employment_type') ?? ''),
             'active' => $this->request->getPost('active') ? 1 : 0,
             'started_at' => $this->request->getPost('started_at') ?: null,
@@ -289,26 +304,35 @@ class LeadershipPositions extends BaseController
             }
         }
 
-        if (!$model->update((int) $id, $payload)) {
-            $errors = $model->errors();
+        if (!$this->leadershipPositionService->update((int) $id, $payload)) {
+            $errors = $this->leadershipPositionService->errors();
             $errorMessage = $errors !== [] ? implode(' ', array_values($errors)) : lang('Leadership.updateFailed');
             return redirect()->back()->withInput()->with('error', $errorMessage);
         }
+        $this->audit()->log('leadership_position.update', [
+            'entity_type' => 'leadership_position', 'entity_id' => (int) $id,
+            'parish_id' => $position['parish_id'] ?? null,
+        ]);
 
         return redirect()->to('/leadership')->with('success', lang('Leadership.updateSuccess'));
     }
 
     public function delete($id)
     {
-        if ($redirect = $this->requirePermission('member.edit')) {
+        if ($redirect = $this->requirePermission('leadership_position.manage')) {
             return $redirect;
         }
 
-        if ($redirect = $this->requireParish()) {
+        if (! $this->isDioceseAdmin() && ($redirect = $this->requireParish())) {
             return $redirect;
         }
 
         if ($this->isProvinceAdmin()) {
+            return redirect()->to('/leadership')->with('error', lang('App.errorUnauthorized'));
+        }
+
+        $dioceseId = $this->isDioceseAdmin() ? $this->assignedDioceseId() : null;
+        if ($this->isDioceseAdmin() && ! $dioceseId) {
             return redirect()->to('/leadership')->with('error', lang('App.errorUnauthorized'));
         }
 
@@ -321,7 +345,7 @@ class LeadershipPositions extends BaseController
         if (! $this->leadershipPositionService->canManage(
             $position,
             (int) ($this->getOperationalParishId() ?? 0),
-            $this->resolveDiocesanScopeId(),
+            $dioceseId,
             $this->resolveAdminProvinceId()
         )) {
             return redirect()->to('/leadership')->with('error', lang('App.errorUnauthorized'));
@@ -331,11 +355,32 @@ class LeadershipPositions extends BaseController
             return redirect()->to('/leadership')->with('error', $this->hierarchyGuardMessage($code));
         }
 
-        if (! $model->delete((int) $id)) {
+        if (! $this->leadershipPositionService->delete((int) $id)) {
             return redirect()->to('/leadership')->with('error', lang('Leadership.deleteFailed'));
         }
+        $this->audit()->log('leadership_position.retire', [
+            'entity_type' => 'leadership_position', 'entity_id' => (int) $id,
+            'parish_id' => $position['parish_id'] ?? null,
+        ]);
 
         return redirect()->to('/leadership')->with('success', lang('Leadership.deleteSuccess'));
+    }
+
+    /** A selected or home parish alone is not proof of diocesan admin jurisdiction. */
+    private function assignedDioceseId(): int
+    {
+        if (! $this->isDioceseAdmin() || (int) (auth()->id() ?? 0) <= 0) {
+            return 0;
+        }
+        try {
+            $primary = model('DioceseAdminPrimaryModel')->getByUser((int) auth()->id());
+            if ((int) ($primary['diocese_id'] ?? 0) > 0) {
+                return (int) $primary['diocese_id'];
+            }
+        } catch (\Throwable $e) {
+            // A non-primary admin may instead have a verified profile scope.
+        }
+        return max(0, (int) ($this->getProfile()['diocese_id'] ?? 0));
     }
 
     private function resolveExistingProfileTable($db): ?string

@@ -680,7 +680,7 @@ class People extends BaseController
      */
     public function leadershipEligibility(int $profileId): \CodeIgniter\HTTP\ResponseInterface
     {
-        if ($redirect = $this->requirePermission('member.edit')) {
+        if ($redirect = $this->requirePermission('leadership_position.manage')) {
             return $this->jsonResponse($this->apiErrorPayload(lang('App.errorUnauthorized'), 403, 'FORBIDDEN'), 403);
         }
 
@@ -696,12 +696,28 @@ class People extends BaseController
         $userId = (int) ($profile['user_id'] ?? 0);
         $personId = (int) ($profile['person_id'] ?? 0);
         $parishId = (int) ($this->getOperationalParishId() ?? 0);
+        $scopeType = (string) ($this->request->getGet('scope_type') ?: 'parish');
+        $scopeIds = $this->leadershipPositionService->resolveScopeIds(
+            $scopeType, $parishId, $this->isDioceseAdmin() ? $this->resolveDiocesanScopeId() : null,
+            null, (int) ($this->request->getGet('deanery_id') ?? 0)
+        );
+        if ($scopeIds === null || ! $this->leadershipPositionService->canManage(
+            array_merge(['scope_type' => $scopeType], $scopeIds), $parishId,
+            $this->isDioceseAdmin() ? $this->resolveDiocesanScopeId() : null, null
+        )) {
+            return $this->jsonResponse($this->apiErrorPayload(lang('App.errorUnauthorized'), 403, 'POSITION_OUT_OF_SCOPE'), 403);
+        }
 
         $eligibility = $this->leadershipPositionService->eligibilityFor(
             $userId,
             $personId,
             $this->leadershipPositionService->resolveEligibilityParishId($personId, $parishId, $userId),
-            ['role_category' => (string) $this->request->getGet('role_category')]
+            array_merge($scopeIds, [
+                'scope_type' => $scopeType,
+                'role_category' => (string) $this->request->getGet('role_category'),
+                'role_code' => (string) $this->request->getGet('role_code'),
+                'clergy_order' => (string) $this->request->getGet('clergy_order'),
+            ])
         );
 
         return $this->jsonResponse([
@@ -719,7 +735,7 @@ class People extends BaseController
      */
     public function addLeadershipPosition(int $profileId): \CodeIgniter\HTTP\ResponseInterface
     {
-        if ($redirect = $this->requirePermission('member.edit')) {
+        if ($redirect = $this->requirePermission('leadership_position.manage')) {
             return $this->jsonResponse($this->apiErrorPayload(lang('App.errorUnauthorized'), 403, 'FORBIDDEN'), 403);
         }
 
@@ -747,25 +763,30 @@ class People extends BaseController
         }
 
         if (!$this->validate($this->leadershipPositionService->validationRules(true))) {
-            return $this->jsonResponse([
-                'success' => false,
-                'code' => 'VALIDATION_FAILED',
-                'message' => 'Validation failed.',
-                'errors' => $this->validator->getErrors(),
-            ], 422);
+            return $this->jsonResponse($this->apiErrorPayload('Validation failed.', 422, 'VALIDATION_FAILED', $this->validator->getErrors()), 422);
         }
 
         $scopeType = (string) $this->request->getPost('scope_type');
         $parishId = (int) ($this->getOperationalParishId() ?? 0);
+        if ($scopeType === 'province' || ($scopeType !== 'parish' && ! $this->isDioceseAdmin())) {
+            return $this->jsonResponse($this->apiErrorPayload(lang('App.errorUnauthorized'), 403, 'POSITION_OUT_OF_SCOPE'), 403);
+        }
 
         $scopeIds = $this->leadershipPositionService->resolveScopeIds(
             $scopeType,
             $parishId,
-            $this->resolveDiocesanScopeId(),
-            $this->resolveAdminProvinceId()
+            $this->isDioceseAdmin() ? $this->resolveDiocesanScopeId() : null,
+            null,
+            (int) ($this->request->getPost('deanery_id') ?? 0)
         );
         if ($scopeIds === null) {
             return $this->jsonResponse($this->apiErrorPayload(lang('App.errorNoParishScope'), 400, 'SCOPE_NOT_FOUND'), 400);
+        }
+        if (! $this->leadershipPositionService->canManage(
+            array_merge(['scope_type' => $scopeType], $scopeIds), $parishId,
+            $this->isDioceseAdmin() ? $this->resolveDiocesanScopeId() : null, null
+        )) {
+            return $this->jsonResponse($this->apiErrorPayload(lang('App.errorUnauthorized'), 403, 'POSITION_OUT_OF_SCOPE'), 403);
         }
 
         $payload = [
@@ -773,12 +794,14 @@ class People extends BaseController
             'person_id' => $personId,
             'scope_type' => $scopeType,
             'parish_id' => $scopeIds['parish_id'],
+            'deanery_id' => $scopeIds['deanery_id'],
             'diocese_id' => $scopeIds['diocese_id'],
             'province_id' => $scopeIds['province_id'],
             'title' => trim((string) $this->request->getPost('title')),
             'role_code' => trim((string) ($this->request->getPost('role_code') ?? '')),
             'role_category' => (string) ($this->request->getPost('role_category') ?? ''),
             'clergy_order' => (string) ($this->request->getPost('clergy_order') ?? ''),
+            'pastoral_in_charge' => $this->request->getPost('pastoral_in_charge') ? 1 : 0,
             'employment_type' => (string) ($this->request->getPost('employment_type') ?? ''),
             'active' => (int) ($this->request->getPost('active') === '1'),
             'started_at' => (string) ($this->request->getPost('started_at') ?? '') ?: null,
@@ -804,17 +827,14 @@ class People extends BaseController
 
         $positionId = $this->leadershipPositionService->create($payload);
         if ($positionId === null) {
-            return $this->jsonResponse([
-                'success' => false,
-                'message' => implode(' ', array_values($this->leadershipPositionService->errors() ?: [lang('Leadership.saveFailed')])),
-            ], 500);
+            return $this->jsonResponse($this->apiErrorPayload(lang('Leadership.saveFailed'), 422, 'APPOINTMENT_INVALID'), 422);
         }
 
         $this->audit()->log('leadership_position.create', [
             'parish_id' => $parishId,
             'entity_type' => 'leadership_position',
             'entity_id' => $positionId,
-            'new_values' => $payload,
+            'new_values' => ['scope_type' => $scopeType, 'role_code' => $payload['role_code']],
         ]);
 
         return $this->jsonResponse([
@@ -829,7 +849,7 @@ class People extends BaseController
      */
     public function updateLeadershipPosition(int $positionId): \CodeIgniter\HTTP\ResponseInterface
     {
-        if ($redirect = $this->requirePermission('member.edit')) {
+        if ($redirect = $this->requirePermission('leadership_position.manage')) {
             return $this->jsonResponse($this->apiErrorPayload(lang('App.errorUnauthorized'), 403, 'FORBIDDEN'), 403);
         }
 
@@ -860,12 +880,7 @@ class People extends BaseController
         }
 
         if (!$this->validate($this->leadershipPositionService->validationRules(false))) {
-            return $this->jsonResponse([
-                'success' => false,
-                'code' => 'VALIDATION_FAILED',
-                'message' => 'Validation failed.',
-                'errors' => $this->validator->getErrors(),
-            ], 422);
+            return $this->jsonResponse($this->apiErrorPayload('Validation failed.', 422, 'VALIDATION_FAILED', $this->validator->getErrors()), 422);
         }
 
         $payload = [
@@ -879,6 +894,9 @@ class People extends BaseController
             'ended_at' => (string) ($this->request->getPost('ended_at') ?? '') ?: null,
             'notes' => trim((string) ($this->request->getPost('notes') ?? '')),
         ];
+        if ($this->request->getPost('pastoral_in_charge') !== null) {
+            $payload['pastoral_in_charge'] = $this->request->getPost('pastoral_in_charge') ? 1 : 0;
+        }
 
         // Reactivating a position (active 0→1) must clear the same
         // eligibility gate as a new appointment.
@@ -911,18 +929,14 @@ class People extends BaseController
         }
 
         if (!$this->leadershipPositionService->update($positionId, $payload)) {
-            return $this->jsonResponse([
-                'success' => false,
-                'message' => implode(' ', array_values($this->leadershipPositionService->errors() ?: [lang('Leadership.updateFailed')])),
-            ], 500);
+            return $this->jsonResponse($this->apiErrorPayload(lang('Leadership.updateFailed'), 422, 'APPOINTMENT_INVALID'), 422);
         }
 
         $this->audit()->log('leadership_position.update', [
             'parish_id' => $parishId,
             'entity_type' => 'leadership_position',
             'entity_id' => $positionId,
-            'old_values' => $position,
-            'new_values' => $payload,
+            'new_values' => ['role_code' => $payload['role_code'], 'active' => $payload['active']],
         ]);
 
         return $this->jsonResponse([
@@ -936,7 +950,7 @@ class People extends BaseController
      */
     public function deleteLeadershipPosition(int $positionId): \CodeIgniter\HTTP\ResponseInterface
     {
-        if ($redirect = $this->requirePermission('member.edit')) {
+        if ($redirect = $this->requirePermission('leadership_position.manage')) {
             return $this->jsonResponse($this->apiErrorPayload(lang('App.errorUnauthorized'), 403, 'FORBIDDEN'), 403);
         }
 
@@ -967,17 +981,13 @@ class People extends BaseController
         }
 
         if (!$this->leadershipPositionService->delete($positionId)) {
-            return $this->jsonResponse([
-                'success' => false,
-                'message' => lang('Leadership.deleteFailed'),
-            ], 500);
+            return $this->jsonResponse($this->apiErrorPayload(lang('Leadership.deleteFailed'), 500, 'APPOINTMENT_DELETE_FAILED'), 500);
         }
 
         $this->audit()->log('leadership_position.delete', [
             'parish_id' => $parishId,
             'entity_type' => 'leadership_position',
             'entity_id' => $positionId,
-            'old_values' => $position,
         ]);
 
         return $this->jsonResponse([

@@ -9,8 +9,10 @@
                 <label for="scope" class="form-label"><?= lang('Leadership.scope') ?></label>
                 <select class="form-select" id="scope" name="scope">
                     <option value="parish" <?= ($selected_scope ?? 'parish') === 'parish' ? 'selected' : '' ?>><?= lang('App.scopeParish') ?></option>
-                    <option value="diocese" <?= ($selected_scope ?? '') === 'diocese' ? 'selected' : '' ?>><?= lang('App.scopeDiocese') ?></option>
-                    <option value="province" <?= ($selected_scope ?? '') === 'province' ? 'selected' : '' ?>><?= lang('App.scopeProvince') ?></option>
+                    <?php if (!empty($is_diocese_admin)): ?>
+                        <option value="deanery" <?= ($selected_scope ?? '') === 'deanery' ? 'selected' : '' ?>><?= lang('Leadership.scopeDeanery') ?></option>
+                        <option value="diocese" <?= ($selected_scope ?? '') === 'diocese' ? 'selected' : '' ?>><?= lang('App.scopeDiocese') ?></option>
+                    <?php endif; ?>
                 </select>
             </div>
             <div class="col-md-3">
@@ -53,17 +55,35 @@
                 <label class="form-label"><?= lang('Leadership.scope') ?></label>
                 <select name="scope_type" class="form-select" required>
                     <option value="parish"><?= lang('App.scopeParish') ?></option>
-                    <option value="diocese"><?= lang('App.scopeDiocese') ?></option>
-                    <option value="province"><?= lang('App.scopeProvince') ?></option>
+                    <?php if (!empty($is_diocese_admin)): ?>
+                        <option value="deanery" <?= ($selected_scope ?? '') === 'deanery' ? 'selected' : '' ?>><?= lang('Leadership.scopeDeanery') ?></option>
+                        <option value="diocese" <?= ($selected_scope ?? '') === 'diocese' ? 'selected' : '' ?>><?= lang('App.scopeDiocese') ?></option>
+                    <?php endif; ?>
                 </select>
             </div>
+            <?php if (!empty($is_diocese_admin) && !empty($deaneries)): ?>
+                <div class="col-md-3">
+                    <label for="leadershipDeanery" class="form-label"><?= lang('Leadership.deaneryRequired') ?></label>
+                    <select id="leadershipDeanery" name="deanery_id" class="form-select">
+                        <option value=""><?= lang('Leadership.selectDeanery') ?></option>
+                        <?php foreach ($deaneries as $deanery): ?>
+                            <option value="<?= (int) $deanery['id'] ?>"><?= esc($deanery['name']) ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+            <?php endif; ?>
             <div class="col-md-3">
                 <label class="form-label"><?= lang('Leadership.title') ?></label>
                 <input type="text" name="title" class="form-control" required placeholder="<?= lang('Leadership.titlePlaceholder') ?>">
             </div>
             <div class="col-md-3">
                 <label class="form-label"><?= lang('Leadership.roleCode') ?></label>
-                <input type="text" name="role_code" class="form-control" placeholder="<?= lang('Leadership.roleCodePlaceholder') ?>">
+                <input type="text" name="role_code" class="form-control" list="leadershipRoleCodes" placeholder="<?= lang('Leadership.roleCodePlaceholder') ?>">
+                <datalist id="leadershipRoleCodes">
+                    <?php foreach (['diocesan_bishop', 'coadjutor_bishop', 'suffragan_bishop', 'assisting_bishop', 'rector', 'priest_in_charge', 'interim_rector', 'vicar', 'cathedral_dean', 'curate', 'associate_priest', 'parish_deacon', 'regional_dean', 'deanery_dean', 'archdeacon', 'vestry_secretary', 'vestry_clerk', 'warden', 'mission_governance_signer', 'mission_approver'] as $roleCode): ?>
+                        <option value="<?= esc($roleCode) ?>"></option>
+                    <?php endforeach; ?>
+                </datalist>
             </div>
             <div class="col-md-3">
                 <label class="form-label"><?= lang('Leadership.roleCategory') ?></label>
@@ -81,6 +101,13 @@
                     <option value="priest"><?= lang('Leadership.clergyOrderPriest') ?></option>
                     <option value="deacon"><?= lang('Leadership.clergyOrderDeacon') ?></option>
                 </select>
+                <div class="form-text"><?= lang('Leadership.orderEvidenceNote') ?></div>
+            </div>
+            <div class="col-md-3 d-flex align-items-center">
+                <div class="form-check">
+                    <input id="cathedralChargeNew" type="checkbox" name="pastoral_in_charge" value="1" class="form-check-input">
+                    <label for="cathedralChargeNew" class="form-check-label"><?= lang('Leadership.cathedralCharge') ?></label>
+                </div>
             </div>
             <div class="col-md-3">
                 <label class="form-label"><?= lang('Leadership.employmentType') ?></label>
@@ -156,9 +183,12 @@
                                     $scopeType = (string) ($position['scope_type'] ?? 'parish');
                                     $scopeLabel = $scopeType === 'province'
                                         ? lang('App.scopeProvince')
-                                        : ($scopeType === 'diocese' ? lang('App.scopeDiocese') : lang('App.scopeParish'));
+                                        : ($scopeType === 'deanery' ? lang('Leadership.scopeDeanery') : ($scopeType === 'diocese' ? lang('App.scopeDiocese') : lang('App.scopeParish')));
                                     ?>
                                     <span class="badge border border-info text-info fw-normal"><?= esc($scopeLabel) ?></span>
+                                    <?php if ($scopeType === 'deanery'): ?>
+                                        <small class="d-block text-muted"><?= esc($position['deanery_name'] ?? '-') ?></small>
+                                    <?php endif; ?>
                                 </td>
                                 <td>
                                     <?= !empty($position['started_at']) ? esc($position['started_at']) : '-' ?>
@@ -169,6 +199,9 @@
                                     <span class="badge border border-<?= !empty($position['active']) ? 'success' : 'secondary' ?> text-<?= !empty($position['active']) ? 'success' : 'secondary' ?> fw-normal">
                                         <?= !empty($position['active']) ? lang('App.statusActive') : lang('App.statusInactive') ?>
                                     </span>
+                                    <?php if (empty($position['approved_at']) && in_array($position['role_category'] ?? '', ['clergy', 'lay_staff'], true)): ?>
+                                        <span class="badge border border-warning text-warning fw-normal"><?= lang('Leadership.awaitingReview') ?></span>
+                                    <?php endif; ?>
                                 </td>
                                 <td>
                                     <details>
@@ -196,6 +229,10 @@
                                                         <option value="priest" <?= ($position['clergy_order'] ?? '') === 'priest' ? 'selected' : '' ?>><?= lang('Leadership.clergyOrderPriest') ?></option>
                                                         <option value="deacon" <?= ($position['clergy_order'] ?? '') === 'deacon' ? 'selected' : '' ?>><?= lang('Leadership.clergyOrderDeacon') ?></option>
                                                     </select>
+                                                </div>
+                                                <div class="col-12 form-check ms-1">
+                                                    <input id="cathedralCharge<?= (int) $position['id'] ?>" type="checkbox" name="pastoral_in_charge" value="1" class="form-check-input" <?= !empty($position['pastoral_in_charge']) ? 'checked' : '' ?>>
+                                                    <label for="cathedralCharge<?= (int) $position['id'] ?>" class="form-check-label"><?= lang('Leadership.cathedralCharge') ?></label>
                                                 </div>
                                                 <div class="col-12">
                                                     <select name="employment_type" class="form-select form-select-sm">

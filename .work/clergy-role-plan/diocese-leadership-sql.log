@@ -1,0 +1,30 @@
+PHPUnit 10.5.65 by Sebastian Bergmann and contributors.
+
+Runtime:       PHP 8.5.11
+Configuration: /Users/juanrosariodelacruz/Sites/ekklesiaRD/phpunit.xml.dist
+
+F                                                                   1 / 1 (100%)
+
+Time: 00:00.245, Memory: 20.00 MB
+
+There was 1 failure:
+
+1) LeadershipPositionsScopeIntegrationTest::testDioceseAdminCanOpenDiocesanLeadershipWithoutSelectedParish
+Unable to prepare statement: no such table: db_lp; SQL: SELECT `db_lp`.*, `db_p`.`first_name`, `db_p`.`last_name`, `db_ai`.`secret` as `email`, `db_c`.`name` as `parish_name`, `db_d`.`name` as `diocese_name`, `db_pz`.`name` as `province_name`, `db_dn`.`name` as `deanery_name`
+FROM `db_leadership_position` `lp`
+LEFT JOIN `db_profile` `p` ON `p`.`user_id` = `lp`.`user_id`
+LEFT JOIN `db_users` `u` ON `u`.`id` = `lp`.`user_id`
+LEFT JOIN `db_auth_identities` `ai` ON `ai`.`user_id` = `u`.`id` AND `ai`.`type` = "email_password"
+LEFT JOIN `db_parish` `c` ON `c`.`id` = `lp`.`parish_id`
+LEFT JOIN `db_diocese` `d` ON `d`.`id` = `lp`.`diocese_id`
+LEFT JOIN `db_province` `pz` ON `pz`.`id` = `lp`.`province_id`
+LEFT JOIN `db_deanery` `dn` ON `dn`.`id` = `lp`.`deanery_id`
+WHERE `db_lp`.`scope_type` = 'diocese'
+AND `db_lp`.`diocese_id` = 1
+ORDER BY `db_lp`.`active` DESC, `db_lp`.`scope_type` ASC, `db_lp`.`title` ASC
+ LIMIT 25
+
+/Users/juanrosariodelacruz/Sites/ekklesiaRD/tests/database/LeadershipPositionsScopeIntegrationTest.php:52
+
+FAILURES!
+Tests: 1, Assertions: 1, Failures: 1.

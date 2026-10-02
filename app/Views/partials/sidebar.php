@@ -203,6 +203,20 @@
             <?php endif; ?>
 
             <?php if ($isDioceseAdminSidebar && !$isSystemAdminSidebar): ?>
+                <?php if (auth()->user()->inGroup('dioceseadmin') && auth()->user()->can('deanery.view')): ?>
+                    <li class="nav-item">
+                        <a class="nav-link <?= str_starts_with(uri_string(), 'diocese/deaneries') ? 'active' : '' ?>" href="<?= base_url('diocese/deaneries/manage') ?>">
+                            <i class="bi bi-diagram-3" aria-hidden="true"></i> <?= lang('Leadership.scopeDeanery') ?>
+                        </a>
+                    </li>
+                <?php endif; ?>
+                <?php if (auth()->user()->inGroup('dioceseadmin') && auth()->user()->can('leadership_position.manage')): ?>
+                    <li class="nav-item">
+                        <a class="nav-link <?= str_starts_with(uri_string(), 'leadership') ? 'active' : '' ?>" href="<?= base_url('leadership?scope=diocese') ?>">
+                            <i class="bi bi-person-badge" aria-hidden="true"></i> <?= lang('App.navLeadership') ?>
+                        </a>
+                    </li>
+                <?php endif; ?>
                 <li class="nav-item">
                     <a class="nav-link <?= (str_starts_with(uri_string(), 'chart-accounts')) ? 'active' : '' ?>" href="<?= base_url('chart-accounts') ?>">
                         <i class="bi bi-diagram-3" aria-hidden="true"></i> <?= lang('App.navChartOfAccounts') ?>
@@ -319,12 +333,15 @@
                 </li>
             <?php endif; ?>
 
-            <?php if (!$isSystemAdminSidebar && !$isProvinceAdminSidebar && !$isDioceseAdminSidebar && auth()->user()->can('member.edit')): ?>
+            <?php if (!$isSystemAdminSidebar && !$isProvinceAdminSidebar && !$isDioceseAdminSidebar && auth()->user()->can('leadership_position.manage')): ?>
                 <li class="nav-item">
                     <a class="nav-link <?= (str_starts_with(uri_string(), 'leadership')) ? 'active' : '' ?>" href="<?= base_url('leadership') ?>">
                         <i class="bi bi-person-badge" aria-hidden="true"></i> <?= lang('App.navLeadership') ?>
                     </a>
                 </li>
+            <?php endif; ?>
+
+            <?php if (!$isSystemAdminSidebar && !$isProvinceAdminSidebar && !$isDioceseAdminSidebar && auth()->user()->can('member.edit')): ?>
                 <li class="nav-item">
                     <a class="nav-link <?= (str_starts_with(uri_string(), 'standing')) ? 'active' : '' ?>" href="<?= base_url('standing') ?>">
                         <i class="bi bi-award" aria-hidden="true"></i> <?= lang('App.navGoodStanding') ?>
@@ -383,7 +400,7 @@
                 </li>
             <?php endif; ?>
 
-            <?php if (!$isSystemAdminSidebar && auth()->user()->can('report.view')): ?>
+            <?php if (!$isSystemAdminSidebar && !$isProvinceAdminSidebar && !$isDioceseAdminSidebar && auth()->user()->can('report.view')): ?>
                 <li class="nav-item">
                     <a class="nav-link <?= (str_starts_with(uri_string(), 'reports')) ? 'active' : '' ?>" href="<?= base_url('reports') ?>">
                         <i class="bi bi-bar-chart" aria-hidden="true"></i> <?= lang('App.navReports') ?>

@@ -74,7 +74,7 @@ class AuthGroups extends ShieldAuthGroups
         ],
         'clergy' => [
             'title'       => 'Clergy',
-            'description' => 'View members, mark attendance, view financial summaries.',
+            'description' => 'Legacy portal group; verified order and scoped office are recorded separately.',
         ],
         'finance' => [
             'title'       => 'Finance Officer',
@@ -95,6 +95,14 @@ class AuthGroups extends ShieldAuthGroups
         'vestry_secretary' => [
             'title'       => 'Vestry Secretary',
             'description' => 'Manage vestry governance records, meetings, motions, and certify reports.',
+        ],
+        'mission_governance_signer' => [
+            'title' => 'Mission Governance Signer',
+            'description' => 'Bishop-designated local mission certification; the exact approved mission office is still required.',
+        ],
+        'mission_approver' => [
+            'title' => 'Mission Approver',
+            'description' => 'Bishop-designated local mission approval; the exact approved mission office is still required.',
         ],
         'followup_coordinator' => [
             'title'       => 'Follow-up Coordinator',
@@ -236,6 +244,16 @@ class AuthGroups extends ShieldAuthGroups
         'leadership_position.manage' => 'Manage leadership positions',
         'standing.refresh'          => 'Refresh member standing',
 
+        // Ecclesial actions require an approved office and exact scope in addition to Shield.
+        'clergy.directory.view'     => 'View the scoped clergy directory',
+        'clergy.ordination.verify'  => 'Verify documented ordination',
+        'clergy.appointment.manage' => 'Review ecclesial appointments',
+        'pastoral.parish.view'      => 'View assigned parish pastoral information',
+        'pastoral.parish.manage'    => 'Manage assigned parish pastoral activities',
+        'deanery.view'             => 'View deaneries within the authorized diocese or office scope',
+        'deanery.coordinate'       => 'Coordinate the assigned deanery',
+        'deanery.manage'           => 'Manage deanery boundaries within an authorized diocese',
+
         // Diocesan operations
         'diocese.coa'          => 'Manage diocesan chart of accounts',
         'diocese.calendar'     => 'Manage diocesan liturgical calendar',
@@ -318,10 +336,6 @@ class AuthGroups extends ShieldAuthGroups
             'report.parochial',
             'governance.vestry.view',
             'governance.vestry.manage',
-            'governance.report.certify_clerk',
-            'governance.report.approve_warden',
-            'governance.report.finalize_clergy',
-            'governance.diocese.approve',
             'national.event.manage',
             'national.calendar.manage',
             'parishes.manage.official',
@@ -371,7 +385,10 @@ class AuthGroups extends ShieldAuthGroups
             'report.export',
             'report.parochial',
             'governance.vestry.view',
-            'governance.diocese.approve',
+            'leadership_position.manage',
+            'clergy.directory.view',
+            'deanery.view',
+            'deanery.manage',
         ],
         'parishadmin' => [
             'parish.edit',
@@ -414,8 +431,6 @@ class AuthGroups extends ShieldAuthGroups
             'standing.refresh',
             'governance.vestry.view',
             'governance.vestry.manage',
-            'governance.report.certify_clerk',
-            'governance.report.approve_warden',
         ],
         'clergy' => [
             'member.view',
@@ -442,8 +457,6 @@ class AuthGroups extends ShieldAuthGroups
             'event.checkin',
             'worship.view',
             'worship.manage',
-            'finance.view',
-            'donation.view',
             'dashboard.view',
             'report.view',
             'worship.song',
@@ -453,7 +466,6 @@ class AuthGroups extends ShieldAuthGroups
             'report.parochial',
             'standing.refresh',
             'governance.vestry.view',
-            'governance.report.finalize_clergy',
         ],
         'finance' => [
             'member.view',
@@ -510,6 +522,14 @@ class AuthGroups extends ShieldAuthGroups
             'dashboard.view',
             'report.view',
             'report.export',
+        ],
+        'mission_governance_signer' => [
+            'governance.report.certify_clerk',
+            'governance.vestry.view',
+        ],
+        'mission_approver' => [
+            'governance.report.approve_warden',
+            'governance.vestry.view',
         ],
         'followup_coordinator' => [
             'visitor.view',

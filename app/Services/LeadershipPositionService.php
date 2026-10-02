@@ -20,6 +20,25 @@ class LeadershipPositionService
     public const CHECK_CONFIRMED     = 'confirmed';
     public const CHECK_PLEDGED       = 'pledged';
     public const CHECK_GOOD_STANDING = 'good_standing';
+    public const CHECK_VERIFIED_ORDER = 'verified_order';
+
+    private const CLERGY_OFFICES = [
+        'diocesan_bishop' => ['diocese', 'bishop'],
+        'coadjutor_bishop' => ['diocese', 'bishop'],
+        'suffragan_bishop' => ['diocese', 'bishop'],
+        'assisting_bishop' => ['diocese', 'bishop'],
+        'rector' => ['parish', 'priest'],
+        'priest_in_charge' => ['parish', 'priest'],
+        'interim_rector' => ['parish', 'priest'],
+        'vicar' => ['parish', 'priest'],
+        'cathedral_dean' => ['parish', 'priest'],
+        'curate' => ['parish', 'priest'],
+        'associate_priest' => ['parish', 'priest'],
+        'parish_deacon' => ['parish', 'deacon'],
+        'regional_dean' => ['deanery', 'priest'],
+        'deanery_dean' => ['deanery', 'priest'],
+        'archdeacon' => ['diocese', 'deacon'],
+    ];
 
     private LeadershipPositionModel $model;
 
@@ -43,11 +62,12 @@ class LeadershipPositionService
             'employment_type' => 'permit_empty|in_list[full_time,part_time,non_stipendiary,unpaid]',
             'started_at'      => 'permit_empty|valid_date',
             'ended_at'        => 'permit_empty|valid_date',
-            'role_code'       => 'permit_empty|max_length[100]',
+            'role_code'       => 'permit_empty|alpha_dash|max_length[100]',
+            'pastoral_in_charge' => 'permit_empty|in_list[0,1]',
         ];
 
         if ($includeScopeType) {
-            $rules['scope_type'] = 'required|in_list[parish,diocese,province]';
+            $rules['scope_type'] = 'required|in_list[parish,deanery,diocese,province]';
         }
 
         return $rules;
@@ -67,15 +87,25 @@ class LeadershipPositionService
      * Resolve the concrete parish/diocese/province IDs for a scope type.
      * The caller supplies the actor's scope IDs for non-parish scopes.
      *
-     * @return array{parish_id: ?int, diocese_id: ?int, province_id: ?int}|null
+     * @return array{parish_id: ?int, deanery_id: ?int, diocese_id: ?int, province_id: ?int}|null
      */
-    public function resolveScopeIds(string $scopeType, int $parishId, ?int $dioceseScopeId, ?int $provinceScopeId): ?array
+    public function resolveScopeIds(string $scopeType, int $parishId, ?int $dioceseScopeId, ?int $provinceScopeId, ?int $deaneryId = null): ?array
     {
-        $result = ['parish_id' => null, 'diocese_id' => null, 'province_id' => null];
+        $result = ['parish_id' => null, 'deanery_id' => null, 'diocese_id' => null, 'province_id' => null];
 
         switch ($scopeType) {
             case 'parish':
+                if ($parishId <= 0) {
+                    return null;
+                }
                 $result['parish_id'] = $parishId;
+                return $result;
+            case 'deanery':
+                if ($deaneryId === null || $deaneryId <= 0 || $dioceseScopeId === null
+                    || ! (new HierarchyService())->deaneryInDiocese($deaneryId, $dioceseScopeId)) {
+                    return null;
+                }
+                $result['deanery_id'] = $deaneryId;
                 return $result;
             case 'diocese':
                 if ($dioceseScopeId === null || $dioceseScopeId <= 0) {
@@ -99,23 +129,26 @@ class LeadershipPositionService
      */
     public function canManage(array $position, int $parishId, ?int $dioceseScopeId, ?int $provinceScopeId): bool
     {
+        $actor = auth()->user();
+        if ($actor === null || ! $actor->can('leadership_position.manage')) {
+            return false;
+        }
         $scopeType = (string) ($position['scope_type'] ?? '');
-
-        if ($scopeType === 'parish') {
-            return (int) ($position['parish_id'] ?? 0) === $parishId;
+        $scopeId = (int) ($position[$scopeType . '_id'] ?? 0);
+        if ($scopeId <= 0) {
+            return false;
         }
-
-        if ($scopeType === 'diocese') {
-            return $dioceseScopeId !== null && $dioceseScopeId > 0
-                && (int) ($position['diocese_id'] ?? 0) === $dioceseScopeId;
+        if ($actor->inGroup('dioceseadmin') && $dioceseScopeId !== null && $dioceseScopeId > 0) {
+            $hierarchy = new HierarchyService();
+            return match ($scopeType) {
+                'parish' => $hierarchy->parishInDiocese($scopeId, $dioceseScopeId),
+                'deanery' => $hierarchy->deaneryInDiocese($scopeId, $dioceseScopeId),
+                'diocese' => $scopeId === $dioceseScopeId,
+                default => false,
+            };
         }
-
-        if ($scopeType === 'province') {
-            return $provinceScopeId !== null && $provinceScopeId > 0
-                && (int) ($position['province_id'] ?? 0) === $provinceScopeId;
-        }
-
-        return false;
+        return $actor->inGroup('parishadmin') && $scopeType === 'parish'
+            && $parishId > 0 && $scopeId === $parishId;
     }
 
     /**
@@ -333,6 +366,7 @@ class LeadershipPositionService
             $checks[self::CHECK_CONFIRMED]     = null;
             $checks[self::CHECK_PLEDGED]       = null;
             $checks[self::CHECK_GOOD_STANDING] = null;
+            $checks[self::CHECK_VERIFIED_ORDER] = $this->officeEvidenceValid($userId, $personId, $payload);
         }
 
         $failed = array_keys(array_filter($checks, static fn ($value) => $value === false));
@@ -357,6 +391,7 @@ class LeadershipPositionService
             self::CHECK_CONFIRMED     => lang('Leadership.reqConfirmed'),
             self::CHECK_PLEDGED       => lang('Leadership.reqPledged'),
             self::CHECK_GOOD_STANDING => lang('Leadership.reqGoodStanding'),
+            self::CHECK_VERIFIED_ORDER => lang('Leadership.reqVerifiedOrder'),
         ];
 
         $failedLabels = [];
@@ -371,6 +406,96 @@ class LeadershipPositionService
         return lang('Leadership.eligibilityMissing', [implode('; ', $failedLabels)]);
     }
 
+    /** Validate the full merged appointment, including scope exclusive-or. */
+    public function validPositionPayload(array $payload): bool
+    {
+        $scope = (string) ($payload['scope_type'] ?? '');
+        if (! in_array($scope, ['parish', 'deanery', 'diocese', 'province'], true)) {
+            return false;
+        }
+        $count = 0;
+        foreach (['parish', 'deanery', 'diocese', 'province'] as $candidate) {
+            $id = (int) ($payload[$candidate . '_id'] ?? 0);
+            if ($id > 0) {
+                $count++;
+                if ($candidate !== $scope) {
+                    return false;
+                }
+            }
+        }
+        if ($count !== 1 || (int) ($payload[$scope . '_id'] ?? 0) <= 0) {
+            return false;
+        }
+        $start = $payload['started_at'] ?? null;
+        $end = $payload['ended_at'] ?? null;
+        if ($start !== null && $end !== null && $start > $end) {
+            return false;
+        }
+        $category = (string) ($payload['role_category'] ?? '');
+        if (! empty($payload['pastoral_in_charge'])
+            && ($category !== 'clergy' || (string) ($payload['role_code'] ?? '') !== 'cathedral_dean')) {
+            return false;
+        }
+        if ($category === 'clergy') {
+            return $this->officeEvidenceValid((int) ($payload['user_id'] ?? 0),
+                (int) ($payload['person_id'] ?? 0), $payload);
+        }
+        // A lay or unspecified category cannot claim an ordained order/office.
+        return ! isset(self::CLERGY_OFFICES[(string) ($payload['role_code'] ?? '')])
+            && trim((string) ($payload['clergy_order'] ?? '')) === '';
+    }
+
+    public function officeEvidenceValid(int $userId, int $personId, array $payload): bool
+    {
+        $code = (string) ($payload['role_code'] ?? '');
+        $office = self::CLERGY_OFFICES[$code] ?? null;
+        $scope = (string) ($payload['scope_type'] ?? '');
+        if ($userId <= 0 || $personId <= 0 || $office === null || $scope !== $office[0]
+            || (string) ($payload['role_category'] ?? '') !== 'clergy'
+            || (string) ($payload['clergy_order'] ?? '') !== $office[1]
+            || $this->resolvePersonIdForUser($userId) !== $personId) {
+            return false;
+        }
+        $db = db_connect();
+        if (! $this->tableExists($db, 'clergy_ordination')
+            || ! $this->tableExists($db, 'clergy_canonical_status')
+            || $db->table('clergy_ordination')->where('person_id', $personId)
+                ->where('order_code', $office[1])->where('verification_status', 'verified')
+                ->where('verified_at IS NOT NULL', null, false)->countAllResults() === 0) {
+            return false;
+        }
+        $scopeId = (int) ($payload[$scope . '_id'] ?? 0);
+        if ($scopeId <= 0) {
+            return false;
+        }
+        $dioceseId = $scope === 'diocese' ? $scopeId : (int) (($db->table($scope)
+            ->select('diocese_id')->where('id', $scopeId)->get()->getRowArray())['diocese_id'] ?? 0);
+        if ($dioceseId <= 0 || $db->table('diocese')->where('id', $dioceseId)->countAllResults() === 0) {
+            return false;
+        }
+        if ($scope === 'deanery' && ! (new HierarchyService($db))->deaneryInDiocese($scopeId, $dioceseId)) {
+            return false;
+        }
+        if ($code === 'cathedral_dean' && ($db->table('parish')->select('congregation_type')
+            ->where('id', $scopeId)->get()->getRowArray()['congregation_type'] ?? '') !== 'cathedral') {
+            return false;
+        }
+        $today = date('Y-m-d');
+        $standing = $db->table('clergy_canonical_status')
+            ->select('status_code')->where('person_id', $personId)->where('diocese_id', $dioceseId)
+            ->where('effective_from <=', $today)
+            ->groupStart()->where('effective_to', null)->orWhere('effective_to >=', $today)->groupEnd()
+            ->get()->getResultArray();
+        $licensed = false;
+        foreach ($standing as $row) {
+            if (in_array($row['status_code'], ['suspended', 'inhibited', 'transferred', 'retired'], true)) {
+                return false;
+            }
+            $licensed = $licensed || in_array($row['status_code'], ['resident', 'licensed'], true);
+        }
+        return $licensed;
+    }
+
     /**
      * Canonical person for a user: user_person (primary link first), then
      * profile.person_id as fallback.
@@ -382,33 +507,37 @@ class LeadershipPositionService
             return null;
         }
 
+        $linkedPersonId = null;
         if ($this->tableExists($db, 'user_person')) {
-            $row = $db->table('user_person')
-                ->select('person_id')
+            $rows = $db->table('user_person')
+                ->select('person_id, is_primary')
                 ->where('user_id', $userId)
                 ->orderBy('is_primary', 'DESC')
                 ->orderBy('id', 'ASC')
                 ->get()
-                ->getRowArray();
-            if ($row !== null && (int) ($row['person_id'] ?? 0) > 0) {
-                return (int) $row['person_id'];
+                ->getResultArray();
+            $primary = array_values(array_filter($rows, static fn (array $r): bool => (int) $r['is_primary'] === 1));
+            if (count($primary) > 1 || (count($primary) === 0 && count($rows) > 1)) {
+                return null;
             }
+            $linkedPersonId = (int) ($primary[0]['person_id'] ?? $rows[0]['person_id'] ?? 0);
         }
 
         if ($this->tableExists($db, 'profile') && $this->columnExistsSafe($db, 'profile', 'person_id')) {
-            $row = $db->table('profile')
+            $rows = $db->table('profile')
                 ->select('person_id')
                 ->where('user_id', $userId)
                 ->where('person_id IS NOT NULL', null, false)
-                ->orderBy('id', 'ASC')
                 ->get()
-                ->getRowArray();
-            if ($row !== null && (int) ($row['person_id'] ?? 0) > 0) {
-                return (int) $row['person_id'];
+                ->getResultArray();
+            $profileIds = array_unique(array_map(static fn (array $r): int => (int) $r['person_id'], $rows));
+            if (count($profileIds) > 1 || ($profileIds !== [] && $linkedPersonId > 0 && $profileIds[0] !== $linkedPersonId)) {
+                return null;
             }
+            $linkedPersonId = $linkedPersonId ?: ($profileIds[0] ?? 0);
         }
 
-        return null;
+        return $linkedPersonId > 0 ? $linkedPersonId : null;
     }
 
     /**
@@ -563,6 +692,17 @@ class LeadershipPositionService
      */
     public function create(array $payload): ?int
     {
+        unset($payload['approved_by_user_id'], $payload['approved_at'],
+            $payload['approval_evidence_reference'], $payload['revoked_at']);
+        if (! $this->validPositionPayload($payload)) {
+            return null;
+        }
+        if (! db_connect()->fieldExists('deanery_id', 'leadership_position')) {
+            unset($payload['deanery_id']);
+        }
+        if (! db_connect()->fieldExists('pastoral_in_charge', 'leadership_position')) {
+            unset($payload['pastoral_in_charge']);
+        }
         if ($this->model->insert($payload) === false) {
             return null;
         }
@@ -572,11 +712,70 @@ class LeadershipPositionService
 
     public function update(int $positionId, array $payload): bool
     {
-        return (bool) $this->model->update($positionId, $payload);
+        $existing = $this->find($positionId);
+        if ($existing === null) {
+            return false;
+        }
+        unset($payload['user_id'], $payload['person_id'], $payload['scope_type'],
+            $payload['parish_id'], $payload['deanery_id'], $payload['diocese_id'], $payload['province_id'],
+            $payload['approved_by_user_id'], $payload['approved_at'],
+            $payload['approval_evidence_reference'], $payload['revoked_at']);
+        if (! $this->validPositionPayload(array_merge($existing, $payload))) {
+            return false;
+        }
+        $material = false;
+        foreach (['role_code', 'role_category', 'clergy_order', 'pastoral_in_charge', 'active', 'started_at', 'ended_at'] as $field) {
+            $material = $material || (string) ($payload[$field] ?? $existing[$field] ?? '') !== (string) ($existing[$field] ?? '');
+        }
+        $db = db_connect();
+        $db->transBegin();
+        try {
+            if ($material && ! empty($existing['approved_at'])) {
+                $payload['approved_by_user_id'] = null;
+                $payload['approved_at'] = null;
+                $payload['revoked_at'] = date('Y-m-d H:i:s');
+                if ($db->tableExists('clergy_access_grant')) {
+                    $db->table('clergy_access_grant')->where('source_position_id', $positionId)
+                        ->where('revoked_at', null)->update(['revoked_at' => date('Y-m-d H:i:s')]);
+                }
+            }
+            $ok = (bool) $this->model->update($positionId, $payload);
+            if (! $ok || $db->transStatus() === false) {
+                $db->transRollback();
+                return false;
+            }
+            $db->transCommit();
+            return true;
+        } catch (\Throwable $e) {
+            $db->transRollback();
+            return false;
+        }
     }
 
     public function delete(int $positionId): bool
     {
+        $position = $this->find($positionId);
+        if ($position === null) {
+            return false;
+        }
+        $db = db_connect();
+        if (! empty($position['approved_at']) || ($db->tableExists('clergy_access_grant')
+            && $db->table('clergy_access_grant')->where('source_position_id', $positionId)->countAllResults() > 0)) {
+            // Preserve authorization provenance and history: never hard-delete a signed office.
+            $db->transBegin();
+            $now = date('Y-m-d H:i:s');
+            $ok = (bool) $this->model->update($positionId, [
+                'active' => 0, 'ended_at' => date('Y-m-d'), 'revoked_at' => $now,
+            ]);
+            $db->table('clergy_access_grant')->where('source_position_id', $positionId)
+                ->where('revoked_at', null)->update(['revoked_at' => $now]);
+            if (! $ok || $db->transStatus() === false) {
+                $db->transRollback();
+                return false;
+            }
+            $db->transCommit();
+            return true;
+        }
         return (bool) $this->model->delete($positionId);
     }
 

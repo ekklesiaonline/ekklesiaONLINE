@@ -1,0 +1,152 @@
+PHPUnit 10.5.65 by Sebastian Bergmann and contributors.
+
+Runtime:       PHP 8.5.11
+Configuration: /Users/juanrosariodelacruz/Sites/ekklesiaRD/phpunit.xml.dist
+
+...............................................................  63 / 846 (  7%)
+............................................................... 126 / 846 ( 14%)
+............................................................... 189 / 846 ( 22%)
+..........
+[0;36mfollowup:send starting — as of 2026-10-02[0m
+[0;36mScoped to parish_id = 301[0m
+[0;36mFound 1 pending entries.[0m
++---------+---------------+--------+------------+
+| Channel | Visitor       | Status | Scheduled  |
++---------+---------------+--------+------------+
+| email   | Alice Visitor | sent   | 2026-10-02 |
++---------+---------------+--------+------------+
+
+
+[0;32mComplete — sent: 1 | failed: 0 | skipped: 0[0m
+.[0;36mfollowup:send starting — as of 2026-10-02[0m
+[0;36mScoped to parish_id = 301[0m
+[0;36mFound 1 pending entries.[0m
++---------+-------------+--------+------------+
+| Channel | Visitor     | Status | Scheduled  |
++---------+-------------+--------+------------+
+| text    | Bob Visitor | sent   | 2026-10-02 |
++---------+-------------+--------+------------+
+
+
+[0;32mComplete — sent: 1 | failed: 0 | skipped: 0[0m
+.[0;36mfollowup:send starting — as of 2026-10-02[0m
+[0;36mScoped to parish_id = 301[0m
+[0;36mFound 1 pending entries.[0m
++---------+------------------+---------------------+------------+
+| Channel | Visitor          | Status              | Scheduled  |
++---------+------------------+---------------------+------------+
+| email   | OptedOut Visitor | skipped — opted_out | 2026-10-02 |
++---------+------------------+---------------------+------------+
+
+
+[0;32mComplete — sent: 0 | failed: 0 | skipped: 1[0m
+.[0;36mfollowup:send starting — as of 2026-10-02[0m
+[0;36mScoped to parish_id = 301[0m
+[0;36mFound 1 pending entries.[0m
++---------+-----------------+----------------------------------------+------------+
+| Channel | Visitor         | Status                                 | Scheduled  |
++---------+-----------------+----------------------------------------+------------+
+| email   | NoEmail Visitor | failed — Visitor has no email address. | 2026-10-02 |
++---------+-----------------+----------------------------------------+------------+
+
+
+[0;31mComplete — sent: 0 | failed: 1 | skipped: 0[0m
+.[0;36mfollowup:send starting — as of 2026-10-02[0m
+[0;36mScoped to parish_id = 301[0m
+[0;36mFound 1 pending entries.[0m
++---------+--------------+--------+------------+
+| Channel | Visitor      | Status | Scheduled  |
++---------+--------------+--------+------------+
+| email   | Test Visitor | sent   | 2026-10-02 |
++---------+--------------+--------+------------+
+
+
+[0;32mComplete — sent: 1 | failed: 0 | skipped: 0[0m
+[0;36mfollowup:send starting — as of 2026-10-02[0m
+[0;36mScoped to parish_id = 301[0m
+[0;32mNo pending entries due today or earlier.[0m
+.[0;36mfollowup:send starting — as of 2026-10-02[0m
+[0;36mScoped to parish_id = 301[0m
+[0;36mFound 1 pending entries.[0m
++---------+--------------+--------+------------+
+| Channel | Visitor      | Status | Scheduled  |
++---------+--------------+--------+------------+
+| email   | Test Visitor | sent   | 2026-10-02 |
++---------+--------------+--------+------------+
+
+
+[0;32mComplete — sent: 1 | failed: 0 | skipped: 0[0m
+.[0;36mfollowup:send starting — as of 2026-10-02[0m
+[0;33m[DRY-RUN] No records will be written.[0m
+[0;36mScoped to parish_id = 301[0m
+[0;36mFound 1 pending entries.[0m
++---------+--------------+---------+------------+
+| Channel | Visitor      | Status  | Scheduled  |
++---------+--------------+---------+------------+
+| email   | Test Visitor | dry-run | 2026-10-02 |
++---------+--------------+---------+------------+
+
+
+[0;32mComplete — sent: 0 | failed: 0 | skipped: 1[0m
+............................................... 252 / 846 ( 29%)
+......SSSSS.................................................... 315 / 846 ( 37%)
+......................S........................................ 378 / 846 ( 44%)
+............................................................... 441 / 846 ( 52%)
+............................................................... 504 / 846 ( 59%)
+............................................................... 567 / 846 ( 67%)
+............................................................... 630 / 846 ( 74%)
+............................................................... 693 / 846 ( 81%)
+............................................................... 756 / 846 ( 89%)
+............................................................... 819 / 846 ( 96%)
+...........................                                     846 / 846 (100%)PHP Fatal error:  Allowed memory size of 134217728 bytes exhausted (tried to allocate 110592 bytes) in /Users/juanrosariodelacruz/Sites/ekklesiaRD/vendor/phpunit/phpunit/src/Runner/ResultCache/DefaultResultCache.php on line 162
+Stack trace:
+#0 /Users/juanrosariodelacruz/Sites/ekklesiaRD/vendor/phpunit/phpunit/src/Runner/ResultCache/DefaultResultCache.php(162): json_encode(Array)
+#1 /Users/juanrosariodelacruz/Sites/ekklesiaRD/vendor/phpunit/phpunit/src/Runner/ResultCache/ResultCacheHandler.php(60): PHPUnit\Runner\ResultCache\DefaultResultCache->persist()
+#2 /Users/juanrosariodelacruz/Sites/ekklesiaRD/vendor/phpunit/phpunit/src/Runner/ResultCache/Subscriber/TestSuiteFinishedSubscriber.php(24): PHPUnit\Runner\ResultCache\ResultCacheHandler->testSuiteFinished()
+#3 /Users/juanrosariodelacruz/Sites/ekklesiaRD/vendor/phpunit/phpunit/src/Event/Dispatcher/DirectDispatcher.php(105): PHPUnit\Runner\ResultCache\TestSuiteFinishedSubscriber->notify(Object(PHPUnit\Event\TestSuite\Finished))
+#4 /Users/juanrosariodelacruz/Sites/ekklesiaRD/vendor/phpunit/phpunit/src/Event/Dispatcher/DeferringDispatcher.php(47): PHPUnit\Event\DirectDispatcher->dispatch(Object(PHPUnit\Event\TestSuite\Finished))
+#5 /Users/juanrosariodelacruz/Sites/ekklesiaRD/vendor/phpunit/phpunit/src/Event/Emitter/DispatchingEmitter.php(1207): PHPUnit\Event\DeferringDispatcher->dispatch(Object(PHPUnit\Event\TestSuite\Finished))
+#6 /Users/juanrosariodelacruz/Sites/ekklesiaRD/vendor/phpunit/phpunit/src/Framework/TestSuite.php(379): PHPUnit\Event\DispatchingEmitter->testSuiteFinished(Object(PHPUnit\Event\TestSuite\TestSuiteWithName))
+#7 /Users/juanrosariodelacruz/Sites/ekklesiaRD/vendor/phpunit/phpunit/src/TextUI/TestRunner.php(64): PHPUnit\Framework\TestSuite->run()
+#8 /Users/juanrosariodelacruz/Sites/ekklesiaRD/vendor/phpunit/phpunit/src/TextUI/Application.php(204): PHPUnit\TextUI\TestRunner->run(Object(PHPUnit\TextUI\Configuration\Configuration), Object(PHPUnit\Runner\ResultCache\DefaultResultCache), Object(PHPUnit\Framework\TestSuite))
+#9 /Users/juanrosariodelacruz/Sites/ekklesiaRD/vendor/phpunit/phpunit/phpunit(104): PHPUnit\TextUI\Application->run(Array)
+#10 /Users/juanrosariodelacruz/Sites/ekklesiaRD/vendor/bin/phpunit(122): include('/Users/juanrosa...')
+#11 {main}
+
+Fatal error: Allowed memory size of 134217728 bytes exhausted (tried to allocate 110592 bytes) in /Users/juanrosariodelacruz/Sites/ekklesiaRD/vendor/phpunit/phpunit/src/Runner/ResultCache/DefaultResultCache.php on line 162
+Stack trace:
+#0 /Users/juanrosariodelacruz/Sites/ekklesiaRD/vendor/phpunit/phpunit/src/Runner/ResultCache/DefaultResultCache.php(162): json_encode(Array)
+#1 /Users/juanrosariodelacruz/Sites/ekklesiaRD/vendor/phpunit/phpunit/src/Runner/ResultCache/ResultCacheHandler.php(60): PHPUnit\Runner\ResultCache\DefaultResultCache->persist()
+#2 /Users/juanrosariodelacruz/Sites/ekklesiaRD/vendor/phpunit/phpunit/src/Runner/ResultCache/Subscriber/TestSuiteFinishedSubscriber.php(24): PHPUnit\Runner\ResultCache\ResultCacheHandler->testSuiteFinished()
+#3 /Users/juanrosariodelacruz/Sites/ekklesiaRD/vendor/phpunit/phpunit/src/Event/Dispatcher/DirectDispatcher.php(105): PHPUnit\Runner\ResultCache\TestSuiteFinishedSubscriber->notify(Object(PHPUnit\Event\TestSuite\Finished))
+#4 /Users/juanrosariodelacruz/Sites/ekklesiaRD/vendor/phpunit/phpunit/src/Event/Dispatcher/DeferringDispatcher.php(47): PHPUnit\Event\DirectDispatcher->dispatch(Object(PHPUnit\Event\TestSuite\Finished))
+#5 /Users/juanrosariodelacruz/Sites/ekklesiaRD/vendor/phpunit/phpunit/src/Event/Emitter/DispatchingEmitter.php(1207): PHPUnit\Event\DeferringDispatcher->dispatch(Object(PHPUnit\Event\TestSuite\Finished))
+#6 /Users/juanrosariodelacruz/Sites/ekklesiaRD/vendor/phpunit/phpunit/src/Framework/TestSuite.php(379): PHPUnit\Event\DispatchingEmitter->testSuiteFinished(Object(PHPUnit\Event\TestSuite\TestSuiteWithName))
+#7 /Users/juanrosariodelacruz/Sites/ekklesiaRD/vendor/phpunit/phpunit/src/TextUI/TestRunner.php(64): PHPUnit\Framework\TestSuite->run()
+#8 /Users/juanrosariodelacruz/Sites/ekklesiaRD/vendor/phpunit/phpunit/src/TextUI/Application.php(204): PHPUnit\TextUI\TestRunner->run(Object(PHPUnit\TextUI\Configuration\Configuration), Object(PHPUnit\Runner\ResultCache\DefaultResultCache), Object(PHPUnit\Framework\TestSuite))
+#9 /Users/juanrosariodelacruz/Sites/ekklesiaRD/vendor/phpunit/phpunit/phpunit(104): PHPUnit\TextUI\Application->run(Array)
+#10 /Users/juanrosariodelacruz/Sites/ekklesiaRD/vendor/bin/phpunit(122): include('/Users/juanrosa...')
+#11 {main}
+PHP Fatal error:  Allowed memory size of 134217728 bytes exhausted (tried to allocate 32768 bytes) in /Users/juanrosariodelacruz/Sites/ekklesiaRD/vendor/codeigniter4/framework/system/Debug/BaseExceptionHandler.php on line 243
+Stack trace:
+#0 /Users/juanrosariodelacruz/Sites/ekklesiaRD/vendor/composer/ClassLoader.php(427): {closure:Composer\Autoload\ClassLoader::initializeIncludeClosure():575}('/Users/juanrosa...')
+#1 /Users/juanrosariodelacruz/Sites/ekklesiaRD/vendor/codeigniter4/framework/system/Debug/ExceptionHandler.php(30): Composer\Autoload\ClassLoader->loadClass('CodeIgniter\\Deb...')
+#2 /Users/juanrosariodelacruz/Sites/ekklesiaRD/vendor/composer/ClassLoader.php(576): include('/Users/juanrosa...')
+#3 /Users/juanrosariodelacruz/Sites/ekklesiaRD/vendor/composer/ClassLoader.php(427): {closure:Composer\Autoload\ClassLoader::initializeIncludeClosure():575}('/Users/juanrosa...')
+#4 /Users/juanrosariodelacruz/Sites/ekklesiaRD/app/Config/Exceptions.php(104): Composer\Autoload\ClassLoader->loadClass('CodeIgniter\\Deb...')
+#5 /Users/juanrosariodelacruz/Sites/ekklesiaRD/vendor/codeigniter4/framework/system/Debug/Exceptions.php(150): Config\Exceptions->handler(500, Object(ErrorException))
+#6 /Users/juanrosariodelacruz/Sites/ekklesiaRD/vendor/codeigniter4/framework/system/Debug/Exceptions.php(270): CodeIgniter\Debug\Exceptions->exceptionHandler(Object(ErrorException))
+#7 [internal function]: CodeIgniter\Debug\Exceptions->shutdownHandler()
+#8 {main}
+
+Fatal error: Allowed memory size of 134217728 bytes exhausted (tried to allocate 32768 bytes) in /Users/juanrosariodelacruz/Sites/ekklesiaRD/vendor/codeigniter4/framework/system/Debug/BaseExceptionHandler.php on line 243
+Stack trace:
+#0 /Users/juanrosariodelacruz/Sites/ekklesiaRD/vendor/composer/ClassLoader.php(427): {closure:Composer\Autoload\ClassLoader::initializeIncludeClosure():575}('/Users/juanrosa...')
+#1 /Users/juanrosariodelacruz/Sites/ekklesiaRD/vendor/codeigniter4/framework/system/Debug/ExceptionHandler.php(30): Composer\Autoload\ClassLoader->loadClass('CodeIgniter\\Deb...')
+#2 /Users/juanrosariodelacruz/Sites/ekklesiaRD/vendor/composer/ClassLoader.php(576): include('/Users/juanrosa...')
+#3 /Users/juanrosariodelacruz/Sites/ekklesiaRD/vendor/composer/ClassLoader.php(427): {closure:Composer\Autoload\ClassLoader::initializeIncludeClosure():575}('/Users/juanrosa...')
+#4 /Users/juanrosariodelacruz/Sites/ekklesiaRD/app/Config/Exceptions.php(104): Composer\Autoload\ClassLoader->loadClass('CodeIgniter\\Deb...')
+#5 /Users/juanrosariodelacruz/Sites/ekklesiaRD/vendor/codeigniter4/framework/system/Debug/Exceptions.php(150): Config\Exceptions->handler(500, Object(ErrorException))
+#6 /Users/juanrosariodelacruz/Sites/ekklesiaRD/vendor/codeigniter4/framework/system/Debug/Exceptions.php(270): CodeIgniter\Debug\Exceptions->exceptionHandler(Object(ErrorException))
+#7 [internal function]: CodeIgniter\Debug\Exceptions->shutdownHandler()
+#8 {main}

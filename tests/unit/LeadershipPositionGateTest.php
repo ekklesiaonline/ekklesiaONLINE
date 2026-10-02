@@ -89,19 +89,19 @@ final class LeadershipPositionGateTest extends CIUnitTestCase
         $this->assertTrue($this->service->isInGoodStanding(105, 205, null));
     }
 
-    public function testClergyEligibilityRequiresPortalAccessOnly(): void
+    public function testClergyEligibilityRejectsUnverifiedOrderDespitePortalAccess(): void
     {
         $userId = $this->insertPortalUser('enabled');
 
         $result = $this->service->eligibilityFor($userId, 0, 301, ['role_category' => 'clergy']);
 
-        $this->assertTrue($result['eligible'], json_encode($result));
+        $this->assertFalse($result['eligible'], json_encode($result));
         $this->assertTrue($result['checks']['portal_access']);
         $this->assertNull($result['checks']['baptized']);
         $this->assertNull($result['checks']['confirmed']);
         $this->assertNull($result['checks']['pledged']);
         $this->assertNull($result['checks']['good_standing']);
-        $this->assertSame([], $result['failed']);
+        $this->assertContains('verified_order', $result['failed']);
     }
 
     public function testUsersRowWithoutPortalIdentityIsRejected(): void
@@ -111,7 +111,8 @@ final class LeadershipPositionGateTest extends CIUnitTestCase
         $result = $this->service->eligibilityFor($userId, 0, 301, ['role_category' => 'clergy']);
 
         $this->assertFalse($result['eligible']);
-        $this->assertSame(['portal_access'], $result['failed']);
+        $this->assertContains('portal_access', $result['failed']);
+        $this->assertContains('verified_order', $result['failed']);
     }
 
     public function testInvitedPortalAccessIsRejected(): void

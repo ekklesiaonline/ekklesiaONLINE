@@ -83,7 +83,7 @@ $routes->group('', ['filter' => 'session'], function ($routes) {
         $routes->post('delete/(:num)', '\\MemberPortal\\Controllers\\AnnualPledges::delete/$1');
     });
 
-    $routes->group('leadership', ['filter' => 'permission:member.edit'], function ($routes) {
+    $routes->group('leadership', ['filter' => 'permission:leadership_position.manage'], function ($routes) {
         $routes->get('/', '\\MemberPortal\\Controllers\\LeadershipPositions::index');
         $routes->post('store', '\\MemberPortal\\Controllers\\LeadershipPositions::store');
         $routes->post('update/(:num)', '\\MemberPortal\\Controllers\\LeadershipPositions::update/$1');

@@ -1,0 +1,106 @@
+PHPUnit 10.5.65 by Sebastian Bergmann and contributors.
+
+Runtime:       PHP 8.5.11
+Configuration: /Users/juanrosariodelacruz/Sites/ekklesiaRD/phpunit.xml.dist
+
+...............................................................  63 / 823 (  7%)
+............................................................... 126 / 823 ( 15%)
+.........................................................
+[0;36mfollowup:send starting — as of 2026-10-02[0m
+[0;36mScoped to parish_id = 301[0m
+[0;36mFound 1 pending entries.[0m
++---------+---------------+--------+------------+
+| Channel | Visitor       | Status | Scheduled  |
++---------+---------------+--------+------------+
+| email   | Alice Visitor | sent   | 2026-10-02 |
++---------+---------------+--------+------------+
+
+
+[0;32mComplete — sent: 1 | failed: 0 | skipped: 0[0m
+.[0;36mfollowup:send starting — as of 2026-10-02[0m
+[0;36mScoped to parish_id = 301[0m
+[0;36mFound 1 pending entries.[0m
++---------+-------------+--------+------------+
+| Channel | Visitor     | Status | Scheduled  |
++---------+-------------+--------+------------+
+| text    | Bob Visitor | sent   | 2026-10-02 |
++---------+-------------+--------+------------+
+
+
+[0;32mComplete — sent: 1 | failed: 0 | skipped: 0[0m
+.[0;36mfollowup:send starting — as of 2026-10-02[0m
+[0;36mScoped to parish_id = 301[0m
+[0;36mFound 1 pending entries.[0m
++---------+------------------+---------------------+------------+
+| Channel | Visitor          | Status              | Scheduled  |
++---------+------------------+---------------------+------------+
+| email   | OptedOut Visitor | skipped — opted_out | 2026-10-02 |
++---------+------------------+---------------------+------------+
+
+
+[0;32mComplete — sent: 0 | failed: 0 | skipped: 1[0m
+.[0;36mfollowup:send starting — as of 2026-10-02[0m
+[0;36mScoped to parish_id = 301[0m
+[0;36mFound 1 pending entries.[0m
++---------+-----------------+----------------------------------------+------------+
+| Channel | Visitor         | Status                                 | Scheduled  |
++---------+-----------------+----------------------------------------+------------+
+| email   | NoEmail Visitor | failed — Visitor has no email address. | 2026-10-02 |
++---------+-----------------+----------------------------------------+------------+
+
+
+[0;31mComplete — sent: 0 | failed: 1 | skipped: 0[0m
+.[0;36mfollowup:send starting — as of 2026-10-02[0m
+[0;36mScoped to parish_id = 301[0m
+[0;36mFound 1 pending entries.[0m
++---------+--------------+--------+------------+
+| Channel | Visitor      | Status | Scheduled  |
++---------+--------------+--------+------------+
+| email   | Test Visitor | sent   | 2026-10-02 |
++---------+--------------+--------+------------+
+
+
+[0;32mComplete — sent: 1 | failed: 0 | skipped: 0[0m
+[0;36mfollowup:send starting — as of 2026-10-02[0m
+[0;36mScoped to parish_id = 301[0m
+[0;32mNo pending entries due today or earlier.[0m
+.[0;36mfollowup:send starting — as of 2026-10-02[0m
+[0;36mScoped to parish_id = 301[0m
+[0;36mFound 1 pending entries.[0m
++---------+--------------+--------+------------+
+| Channel | Visitor      | Status | Scheduled  |
++---------+--------------+--------+------------+
+| email   | Test Visitor | sent   | 2026-10-02 |
++---------+--------------+--------+------------+
+
+
+[0;32mComplete — sent: 1 | failed: 0 | skipped: 0[0m
+. 189 / 823 ( 22%)
+[0;36mfollowup:send starting — as of 2026-10-02[0m
+[0;33m[DRY-RUN] No records will be written.[0m
+[0;36mScoped to parish_id = 301[0m
+[0;36mFound 1 pending entries.[0m
++---------+--------------+---------+------------+
+| Channel | Visitor      | Status  | Scheduled  |
++---------+--------------+---------+------------+
+| email   | Test Visitor | dry-run | 2026-10-02 |
++---------+--------------+---------+------------+
+
+
+[0;32mComplete — sent: 0 | failed: 0 | skipped: 1[0m
+................................................SSSSS.......... 252 / 823 ( 30%)
+............................................................... 315 / 823 ( 38%)
+.S............................................................. 378 / 823 ( 45%)
+............................................................... 441 / 823 ( 53%)
+............................................................... 504 / 823 ( 61%)
+............................................................... 567 / 823 ( 68%)
+............................................................... 630 / 823 ( 76%)
+............................................................... 693 / 823 ( 84%)
+............................................................... 756 / 823 ( 91%)
+............................................................... 819 / 823 ( 99%)
+....                                                            823 / 823 (100%)
+
+Time: 00:23.716, Memory: 114.52 MB
+
+OK, but some tests were skipped!
+Tests: 823, Assertions: 3556, Skipped: 6.

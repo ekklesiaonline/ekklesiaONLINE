@@ -5,6 +5,12 @@
  */
 return [
     'scope' => 'Alcance',
+    'scopeDeanery' => 'Decanato',
+    'deaneryRequired' => 'Decanato (obligatorio para el decano regional)',
+    'selectDeanery' => 'Seleccione el decanato exacto',
+    'orderEvidenceNote' => 'La ordenación requiere verificación documental independiente; el cargo no otorga privilegios antes de su aprobación.',
+    'awaitingReview' => 'Pendiente de revisión del nombramiento',
+    'cathedralCharge' => 'Presbítero a cargo de la catedral (requiere aprobación diocesana separada)',
     'perPage' => 'Por pagina',
     'applyScope' => 'Aplicar alcance',
     'addLeadershipPosition' => 'Agregar cargo de liderazgo',
@@ -57,5 +63,6 @@ return [
     'reqConfirmed' => 'una confirmacion registrada',
     'reqPledged' => 'una promesa de ofrenda del ano en curso',
     'reqGoodStanding' => 'estar en buen estado como comulgante (o una excepcion de buen estado)',
+    'reqVerifiedOrder' => 'una ordenación verificada, un cargo compatible y autorización vigente en la diócesis',
     'noPortalAccess' => 'sin acceso al portal',
 ];

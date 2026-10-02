@@ -1,0 +1,571 @@
+{
+    "observed_at_utc": "2026-10-02T21:06:13Z",
+    "database_driver": "MySQLi",
+    "migration_rows": 158,
+    "migration_target_history": [],
+    "tables_present": {
+        "person": true,
+        "users": true,
+        "diocese": true,
+        "parish": true,
+        "leadership_position": true,
+        "parish_report": true,
+        "parish_report_storage": true,
+        "auth_permissions_users": true,
+        "deanery": false,
+        "deanery_parish_membership": false,
+        "clergy_ordination": false,
+        "clergy_canonical_status": false,
+        "clergy_transition_candidate": false,
+        "clergy_access_grant": false,
+        "permission_role_sync_managed": false,
+        "parish_report_revision": false,
+        "parish_report_signature": false,
+        "auth_groups_users": true,
+        "migrations": true,
+        "diocese_admin_primary": true,
+        "profile": true,
+        "user_person": true
+    },
+    "critical_columns": {
+        "person.id": {
+            "type": "int unsigned",
+            "nullable": "NO",
+            "extra": "auto_increment"
+        },
+        "users.id": {
+            "type": "int unsigned",
+            "nullable": "NO",
+            "extra": "auto_increment"
+        },
+        "users.active": {
+            "type": "tinyint(1)",
+            "nullable": "NO",
+            "extra": ""
+        },
+        "diocese.id": {
+            "type": "int unsigned",
+            "nullable": "NO",
+            "extra": "auto_increment"
+        },
+        "parish.id": {
+            "type": "int unsigned",
+            "nullable": "NO",
+            "extra": "auto_increment"
+        },
+        "parish.diocese_id": {
+            "type": "int unsigned",
+            "nullable": "YES",
+            "extra": ""
+        },
+        "parish.congregation_type": null,
+        "leadership_position.id": {
+            "type": "int unsigned",
+            "nullable": "NO",
+            "extra": "auto_increment"
+        },
+        "leadership_position.user_id": {
+            "type": "int unsigned",
+            "nullable": "NO",
+            "extra": ""
+        },
+        "leadership_position.person_id": {
+            "type": "int unsigned",
+            "nullable": "YES",
+            "extra": ""
+        },
+        "leadership_position.role_category": {
+            "type": "enum('clergy','lay_staff')",
+            "nullable": "YES",
+            "extra": ""
+        },
+        "leadership_position.role_code": {
+            "type": "varchar(100)",
+            "nullable": "YES",
+            "extra": ""
+        },
+        "leadership_position.clergy_order": {
+            "type": "enum('bishop','priest','deacon')",
+            "nullable": "YES",
+            "extra": ""
+        },
+        "leadership_position.scope_type": {
+            "type": "enum('parish','diocese','province')",
+            "nullable": "NO",
+            "extra": ""
+        },
+        "leadership_position.deanery_id": null,
+        "leadership_position.approved_at": null,
+        "parish_report.id": {
+            "type": "int unsigned",
+            "nullable": "NO",
+            "extra": "auto_increment"
+        },
+        "parish_report.parish_id": {
+            "type": "int unsigned",
+            "nullable": "NO",
+            "extra": ""
+        },
+        "parish_report.report_year": {
+            "type": "smallint unsigned",
+            "nullable": "NO",
+            "extra": ""
+        },
+        "parish_report.report_status": {
+            "type": "varchar(20)",
+            "nullable": "NO",
+            "extra": ""
+        },
+        "parish_report.frozen_snapshot_json": {
+            "type": "longtext",
+            "nullable": "YES",
+            "extra": ""
+        },
+        "parish_report.finalized_by": {
+            "type": "int unsigned",
+            "nullable": "YES",
+            "extra": ""
+        },
+        "parish_report.finalized_at": {
+            "type": "datetime",
+            "nullable": "YES",
+            "extra": ""
+        },
+        "parish_report.snapshot_sha256": null,
+        "auth_groups_users.id": {
+            "type": "int unsigned",
+            "nullable": "NO",
+            "extra": "auto_increment"
+        },
+        "auth_groups_users.user_id": {
+            "type": "int unsigned",
+            "nullable": "NO",
+            "extra": ""
+        },
+        "auth_groups_users.group": {
+            "type": "varchar(255)",
+            "nullable": "NO",
+            "extra": ""
+        },
+        "auth_permissions_users.id": {
+            "type": "int unsigned",
+            "nullable": "NO",
+            "extra": "auto_increment"
+        },
+        "auth_permissions_users.user_id": {
+            "type": "int unsigned",
+            "nullable": "NO",
+            "extra": ""
+        },
+        "auth_permissions_users.permission": {
+            "type": "varchar(255)",
+            "nullable": "NO",
+            "extra": ""
+        }
+    },
+    "unexpected_new_columns": [],
+    "total_users": 26,
+    "active_users": 26,
+    "assigned_users": 23,
+    "unassigned_user_statuses": {
+        "42": "no_registration_row",
+        "63": "no_registration_row",
+        "65": "no_registration_row"
+    },
+    "unassigned_user_details": {
+        "42": {
+            "registration_status": "no_registration_row",
+            "identity_types": [],
+            "profile_rows": 1,
+            "direct_permissions": []
+        },
+        "63": {
+            "registration_status": "no_registration_row",
+            "identity_types": [],
+            "profile_rows": 1,
+            "direct_permissions": []
+        },
+        "65": {
+            "registration_status": "no_registration_row",
+            "identity_types": [],
+            "profile_rows": 1,
+            "direct_permissions": []
+        }
+    },
+    "membership_rows": 24,
+    "group_counts": {
+        "dioceseadmin": {
+            "membership_rows": 3,
+            "active_memberships": 3
+        },
+        "member": {
+            "membership_rows": 10,
+            "active_memberships": 10
+        },
+        "parishadmin": {
+            "membership_rows": 3,
+            "active_memberships": 3
+        },
+        "provinceadmin": {
+            "membership_rows": 3,
+            "active_memberships": 3
+        },
+        "systemadmin": {
+            "membership_rows": 5,
+            "active_memberships": 5
+        }
+    },
+    "role_member_ids": {
+        "dioceseadmin": [
+            23,
+            30,
+            33
+        ],
+        "member": [
+            4,
+            56,
+            57,
+            58,
+            60,
+            62,
+            64,
+            67,
+            68,
+            69
+        ],
+        "parishadmin": [
+            5,
+            41,
+            70
+        ],
+        "provinceadmin": [
+            24,
+            32,
+            34
+        ],
+        "systemadmin": [
+            4,
+            26,
+            27,
+            35,
+            37
+        ]
+    },
+    "unknown_groups": [],
+    "duplicate_memberships": [],
+    "orphan_memberships": [],
+    "multi_group_users": {
+        "4": [
+            "member",
+            "systemadmin"
+        ]
+    },
+    "multi_tier_admins": [],
+    "admin_and_clergy_assignments": {
+        "4": {
+            "groups": [
+                "member",
+                "systemadmin"
+            ],
+            "active": true
+        },
+        "5": {
+            "groups": [
+                "parishadmin"
+            ],
+            "active": true
+        },
+        "23": {
+            "groups": [
+                "dioceseadmin"
+            ],
+            "active": true
+        },
+        "24": {
+            "groups": [
+                "provinceadmin"
+            ],
+            "active": true
+        },
+        "26": {
+            "groups": [
+                "systemadmin"
+            ],
+            "active": true
+        },
+        "27": {
+            "groups": [
+                "systemadmin"
+            ],
+            "active": true
+        },
+        "30": {
+            "groups": [
+                "dioceseadmin"
+            ],
+            "active": true
+        },
+        "32": {
+            "groups": [
+                "provinceadmin"
+            ],
+            "active": true
+        },
+        "33": {
+            "groups": [
+                "dioceseadmin"
+            ],
+            "active": true
+        },
+        "34": {
+            "groups": [
+                "provinceadmin"
+            ],
+            "active": true
+        },
+        "35": {
+            "groups": [
+                "systemadmin"
+            ],
+            "active": true
+        },
+        "37": {
+            "groups": [
+                "systemadmin"
+            ],
+            "active": true
+        },
+        "41": {
+            "groups": [
+                "parishadmin"
+            ],
+            "active": true
+        },
+        "70": {
+            "groups": [
+                "parishadmin"
+            ],
+            "active": true
+        }
+    },
+    "diocese_admin_scopes": {
+        "23": {
+            "profile_dioceses": [
+                104
+            ],
+            "primary_dioceses": [
+                104
+            ],
+            "profile_rows": 1,
+            "active": true,
+            "scope_missing": false,
+            "scope_conflict": false
+        },
+        "30": {
+            "profile_dioceses": [
+                107
+            ],
+            "primary_dioceses": [
+                107
+            ],
+            "profile_rows": 1,
+            "active": true,
+            "scope_missing": false,
+            "scope_conflict": false
+        },
+        "33": {
+            "profile_dioceses": [
+                1
+            ],
+            "primary_dioceses": [
+                1
+            ],
+            "profile_rows": 1,
+            "active": true,
+            "scope_missing": false,
+            "scope_conflict": false
+        }
+    },
+    "direct_permission_rows": 239,
+    "direct_important": {
+        "governance.diocese.approve": [
+            {
+                "user_id": 23,
+                "groups": [
+                    "dioceseadmin"
+                ],
+                "active": true
+            },
+            {
+                "user_id": 4,
+                "groups": [
+                    "member",
+                    "systemadmin"
+                ],
+                "active": true
+            },
+            {
+                "user_id": 26,
+                "groups": [
+                    "systemadmin"
+                ],
+                "active": true
+            },
+            {
+                "user_id": 27,
+                "groups": [
+                    "systemadmin"
+                ],
+                "active": true
+            },
+            {
+                "user_id": 30,
+                "groups": [
+                    "dioceseadmin"
+                ],
+                "active": true
+            },
+            {
+                "user_id": 33,
+                "groups": [
+                    "dioceseadmin"
+                ],
+                "active": true
+            }
+        ],
+        "governance.report.approve_warden": [
+            {
+                "user_id": 4,
+                "groups": [
+                    "member",
+                    "systemadmin"
+                ],
+                "active": true
+            },
+            {
+                "user_id": 5,
+                "groups": [
+                    "parishadmin"
+                ],
+                "active": true
+            },
+            {
+                "user_id": 26,
+                "groups": [
+                    "systemadmin"
+                ],
+                "active": true
+            },
+            {
+                "user_id": 27,
+                "groups": [
+                    "systemadmin"
+                ],
+                "active": true
+            }
+        ],
+        "governance.report.certify_clerk": [
+            {
+                "user_id": 4,
+                "groups": [
+                    "member",
+                    "systemadmin"
+                ],
+                "active": true
+            },
+            {
+                "user_id": 5,
+                "groups": [
+                    "parishadmin"
+                ],
+                "active": true
+            },
+            {
+                "user_id": 26,
+                "groups": [
+                    "systemadmin"
+                ],
+                "active": true
+            },
+            {
+                "user_id": 27,
+                "groups": [
+                    "systemadmin"
+                ],
+                "active": true
+            }
+        ],
+        "governance.report.finalize_clergy": [
+            {
+                "user_id": 4,
+                "groups": [
+                    "member",
+                    "systemadmin"
+                ],
+                "active": true
+            },
+            {
+                "user_id": 26,
+                "groups": [
+                    "systemadmin"
+                ],
+                "active": true
+            },
+            {
+                "user_id": 27,
+                "groups": [
+                    "systemadmin"
+                ],
+                "active": true
+            }
+        ],
+        "leadership_position.manage": [
+            {
+                "user_id": 5,
+                "groups": [
+                    "parishadmin"
+                ],
+                "active": true
+            }
+        ]
+    },
+    "unknown_direct_permissions": {
+        "budget.manage": 1,
+        "member.import": 1,
+        "member.tag.update": 1,
+        "volunteer.remind": 1
+    },
+    "duplicate_direct_permissions": [],
+    "orphan_direct_permissions": [],
+    "legacy_clergy_candidate_sources": {
+        "group_rows": 0,
+        "leadership_rows": 1,
+        "legacy_positions": [
+            {
+                "id": "5",
+                "user_id": "64",
+                "person_id": "17",
+                "role_code": "",
+                "clergy_order": "priest",
+                "scope_type": "parish",
+                "parish_id": "1415",
+                "diocese_id": null,
+                "province_id": null,
+                "active": "1"
+            }
+        ],
+        "legacy_link_checks": {
+            "5": {
+                "user_groups": [
+                    "member"
+                ],
+                "primary_person_ids": [
+                    17
+                ],
+                "position_person_exists": true,
+                "primary_person_matches_position": true,
+                "parish_exists": true
+            }
+        }
+    }
+}

@@ -1,0 +1,91 @@
+# Clergy and deanery: database and permission specification
+
+**Status (implementation update):** This is the **pre-implementation design** and its companion [CI4 migration draft](./DraftClergyDeaneryTransition.php) is not deployable. For the implemented, generated migrations, current role-permission mapping and actual deployment gates, see the [canonical operational runbook](../docs/CLERGY_DEANERY_AUTHORIZATION.md). No live MySQL migration has been executed. Applies to any configured diocese of The Episcopal Church; each diocese must confirm its local signatory/delegation policy before enabling approvals. The baseline observations and projected "later" changes below describe the design point in time, not today's source tree.
+
+## 1. Baseline and invariants
+
+- Current account-mutation priority is `systemadmin=4`, `provinceadmin=3`, `dioceseadmin=2`, `parishadmin=1`, other groups `0` (`app/Controllers/AdminHierarchyGuard.php`). **Deanery adds no admin tier**. A Shield permission or highest numeric rank alone does not establish geographic jurisdiction.
+- `leadership_position` already stores scoped offices and `clergy_order`, but the latter is submitted through current forms and is **not verified ordination** (`app/Models/LeadershipPositionModel.php`, `app/Services/LeadershipPositionService.php`). `report_clergy` is a snapshot, not the registry. `user_scope_assignment` was dropped and must not be revived as a competing authority source.
+- `AuthGroups` currently grants `governance.report.finalize_clergy` to all `clergy`, `governance.diocese.approve` to all `dioceseadmin`, and both to `systemadmin`; these must be narrowed by resource-level office checks before removing grants. `PermissionRoleSyncSeeder` adds direct user permissions but does **not** remove old ones, notwithstanding the prose in `docs/ROLE_MENU_PERMISSION_POLICY.md`.
+- `ParishReportModel` and the canonical `parish_report` SQL snapshot disagree on columns/statuses; reconcile the *live migrated schema* first. Do not deploy signatory gates against an assumed report table.
+
+For every action, require **authenticated/approved user + Shield route permission + active person-linked verified order (when an ordained function) + currently approved compatible office/delegation + exact target scope + current canonical standing**. Use `AdminHierarchyGuard` *in addition* when mutating a user account. With no matching grant, deny. An office in Deanery A never reaches Deanery B, another diocese, or the province. A regional dean does not inherit rector or diocesan-bishop functions.
+
+## 2. MySQL 8 schema changes
+
+The [draft CI4 migration](./DraftClergyDeaneryTransition.php) creates the first five schema elements below and extends `leadership_position`. It **does not** implement the later account/grant cutover. Its SQL is intentionally MySQL-specific and has not been run on production; inspect live migrations before applying.
+
+| Table/change | Required columns (MySQL 8 types) | Keys, relation, and behavior |
+| --- | --- | --- |
+| `deanery` (new) | `id INT UNSIGNED PK`, `diocese_id INT UNSIGNED NOT NULL`, `code VARCHAR(64)`, `name VARCHAR(150)`, `active TINYINT(1)`, timestamps | `FK diocese_id → diocese.id` RESTRICT, `UNIQUE(diocese_id,code)`, index `(diocese_id,active)`. Diocese is the **only** parent; no independent province access. Diocese without deaneries remains valid. |
+| `deanery_parish_membership` (new) | `id`, `deanery_id`, `parish_id`, `started_at DATE`, `ended_at DATE NULL`, `appointed_by_user_id NULL`, timestamps | FKs to `deanery` and `parish`, `UNIQUE(parish_id,started_at)`, indexes for deanery/date and parish/date. Require `parish.diocese_id = deanery.diocese_id`, `started_at <= ended_at`, and **at most one effective membership per parish at a time** via a locked CI4 domain-service transaction. Preserve history. A current read uses current membership; a historic report may show its historic deanery but must **not** resurrect a former dean's access. |
+| `clergy_ordination` (new) | `id`, `person_id`, `order_code ENUM(deacon,priest,bishop)`, `deacon_track ENUM(vocational,transitional) NULL`, `ordained_on DATE NULL`, `verification_status ENUM(pending,verified,rejected)`, `verified_by_user_id NULL`, `verified_at NULL`, timestamps | FK to `person`; index `(person_id,verification_status,order_code)`. Multiple historic order events per person allowed. Only independently verified records count; transition candidates do **not** create verified rows. Verify actual order before office assignment. |
+| `clergy_canonical_status` (new) | `id`, `person_id`, `diocese_id`, `status_code ENUM(resident,licensed,transferred,retired,suspended,inhibited)`, `effective_from`, `effective_to NULL`, verifier, timestamps | FKs to `person` and `diocese`, `(person_id,diocese_id,effective_from,effective_to)` index. Keep canonical residence/licensing and discipline distinct from ordination. Suspended/inhibited blocks functions irrespective of old office rows. Determine acceptable status per diocese. |
+| `clergy_transition_candidate` (new) | `id BIGINT`, `source_type ENUM(legacy_group,legacy_position)`, `source_id`, `user_id`, `person_id NULL`, `proposed_order NULL`, `proposed_office NULL`, `scope_type NULL`, `scope_id NULL`, `review_status ENUM(pending,approved,rejected)`, reviewer/date | `UNIQUE(source_type,source_id)`, `(user_id,review_status)` index. **Untrusted work queue**, not entitlement. Missing/ambiguous person or scope stays unresolved for human review. |
+| `leadership_position` (existing) | Add `deanery_id INT UNSIGNED NULL`; expand MySQL `scope_type` enum to `(parish,deanery,diocese,province)`; keep legacy fields | FK `deanery_id → deanery.id`, index `(deanery_id,active)`. Exactly one scope ID must be populated according to `scope_type` in the authorized write service; approve/revoke offices with verifier/date and controlled `role_code`. Do not put a regional dean in the `diocese` scope merely because a deanery belongs to that diocese. |
+| `parish` (later, separate compatibility migration) | `congregation_type ENUM(parish,cathedral,mission)` or a reviewed equivalent | For first-release cathedral/vicar eligibility; preserve original `parish.id` and existing `diocese_id` and scope code; do **not** infer from names. Cathedral may also belong to a deanery. |
+| `clergy_access_grant` (later cutover, **not created by draft**) | `id`, `user_id`, `permission VARCHAR(100)`, `scope_type ENUM(parish,deanery,diocese,province)`, `scope_id`, `source_position_id NULL`, `grant_type ENUM(office,delegation)`, `granted_by_user_id`, `starts_at`, `ends_at NULL`, `revoked_at NULL`, timestamps | FKs to user and optionally position; indexes `(user_id,permission,scope_type,scope_id,revoked_at)` and `(source_position_id,permission)`. Record provenance before synchronizing Shield direct permissions. Revocation removes only permissions whose **managed** sources are all gone, never an unrelated manual grant. System-wide admin is a separate existing platform concern. |
+
+**Follow-on identity change:** `leadership_position.user_id` is currently `NOT NULL`. Supporting offices held by people without accounts requires a *separate compatibility rollout*: repair/backfill `person_id` against `user_person` and `profile`, update all model/controller joins, then permit nullable `user_id` and require `person_id` on new office rows. The draft migration deliberately does not loosen it early; the new `clergy_ordination` and `clergy_canonical_status` registry **already support persons without logins**.
+
+**Hardening before live use:** Add `approved_by_user_id`, `approved_at`, `revoked_at` to `leadership_position` in a reviewed migration; new sensitive offices default unapproved. Enforce one *effective* diocesan ordinary per diocese, one designated priest-in-charge per congregation for the same report interval, date-order/overlap, and no self-approval in a transactional service. The draft's deanery membership FKs prove the referenced rows exist but **do not** by themselves prove both rows share a diocese or prevent interval overlaps: add composite FKs or database triggers after auditing legacy nullable `parish.diocese_id`, in addition to service checks. A stored `clergy_order` remains display/report data until independently verified.
+
+### Phase-2 scoped-grant DDL sketch (not in draft)
+
+```sql
+CREATE TABLE clergy_access_grant (
+  id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  user_id INT UNSIGNED NOT NULL,
+  permission VARCHAR(100) NOT NULL,
+  scope_type ENUM('parish','deanery','diocese','province') NOT NULL,
+  scope_id INT UNSIGNED NOT NULL,
+  source_position_id INT UNSIGNED NULL,
+  grant_type ENUM('office','delegation') NOT NULL,
+  granted_by_user_id INT UNSIGNED NOT NULL,
+  starts_at DATETIME NOT NULL, ends_at DATETIME NULL,
+  revoked_at DATETIME NULL,
+  created_at DATETIME NULL, updated_at DATETIME NULL,
+  KEY idx_scope_grant_check (user_id, permission, scope_type, scope_id, revoked_at),
+  KEY idx_scope_grant_source (source_position_id, permission),
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE RESTRICT,
+  FOREIGN KEY (source_position_id) REFERENCES leadership_position(id) ON DELETE RESTRICT,
+  FOREIGN KEY (granted_by_user_id) REFERENCES users(id) ON DELETE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+```
+
+A polymorphic `(scope_type,scope_id)` cannot have a normal single FK; validate via allowlisted tables and a transaction. Route filters use Shield for coarse access; a service must also match this grant **and** the current office/deanery/diocese lineage for the target. A review candidate never provisions a grant.
+
+## 3. Concrete office-to-permission mapping
+
+**Legend:** `O` = office-bound grant only when approved, current, account-linked, and target-scoped. `D` = individually recorded bishop/authorized delegation with term and scope. `A` = existing admin group capability **with** its normal scope checks. `—` = not implied. Multiple offices can coexist; their scopes never merge into a global privilege.
+
+| Action / Shield key | Diocesan ordinary | Rector / PIC / vicar | Cathedral dean | Regional/deanery dean | Deacon / curate | Diocesan app admin | Parish app admin |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| `clergy.directory.view` | O: diocese | O: parish | O: cathedral | O: deanery | O: appointed scope, if pastoral need | A: diocese | A: parish only |
+| `clergy.ordination.verify` | D: diocese | — | — | — | — | D: designated verifier in diocese | — |
+| `clergy.appointment.manage` | D: diocese | — | — | — | — | D: designated appointer in diocese | — |
+| `deanery.view` | O: diocese | O: own deanery, if separately granted | O: own deanery, if separately granted | O: assigned deanery | — | A: diocese | — |
+| `deanery.coordinate` | D: assigned deanery | — | — | O: assigned deanery | — | D: assigned deanery | — |
+| `deanery.manage` (structure/memberships) | D: diocese | — | — | — | — | D: designated diocesan officer | — |
+| `pastoral.parish.view` / `.manage` | D: explicit parish remit | O: own parish | O: cathedral | **View only** for assigned deanery, no manage | O: own appointed scope, limited | A: scoped operational access | A: own parish |
+| `governance.report.finalize_clergy` | — unless separately parish PIC | O: own parish | O: own cathedral | — | — | — | — |
+| `governance.diocese.approve` | O: own diocese | — | — | — | — | — unless recorded canonical delegation | — |
+| `member.edit`, finance CRUD, account administration | — | — | — | — | — | A: separately authorized scope | A: own parish for existing app operations |
+
+**Compatibility/narrowing:** Keep `systemadmin`, `provinceadmin`, `dioceseadmin`, `parishadmin`, `clergy`, and lay groups as Shield group keys; **do not create `bishop`, `priest`, `deacon`, `rector`, `cathedral_dean`, or `regional_dean` groups**. Target `clergy` is a narrow portal-compatibility group, not ordination proof. First insert scoped checks for all existing sensitive actions; then remove blanket `finance.view`, `donation.view`, `governance.report.finalize_clergy`, broad `member.edit`/messaging/follow-up if not justified from the `clergy` matrix and managed direct grants only after a usage audit and phased replacement. Remove blanket `governance.diocese.approve` from `dioceseadmin` only once ordinary/delegate grants are live. A platform `systemadmin` may perform a reason-coded technical correction but must **not** be recorded as an ecclesial signatory. Keep `BaseController::isElevatedAdmin()`, onboarding review, and existing admin-rank checks unchanged. Update `docs/ROLE_MENU_PERMISSION_POLICY.md`, `AuthGroups.php`, `PermissionRoleSyncSeeder`, routes, menus, and tests together.
+
+## 4. Transition existing accounts without privilege escalation
+
+1. **Inventory:** Record table schemas, migration status, group/direct permission counts, `user_person` conflicts, profile/person mismatches, current `leadership_position` role codes, deanery data availability, and report schema. Back up a MySQL clone; do not use `app/Database/canonical_schema_tables.sql` as a guarantee of live shape.
+2. **Draft schema expansion:** `DraftClergyDeaneryTransition::up()` checks prerequisites, creates deanery/ordination/review tables, adds deanery scope to `leadership_position`, then stages one `legacy_group` candidate per existing Shield `clergy` membership and one `legacy_position` candidate per clergy-coded leadership row. Source uniqueness makes reruns non-duplicating in normal conditions. `user_person` primary link is preferred, then profile link; conflicts remain `person_id=NULL` for human review. No deaneries/parish memberships are invented from province or profile fields.
+3. **Manual evidence review:** Compare order certificates and diocesan records. Approve actual ordination and canonical status; map each deanery and its member parishes with an authorized diocesan reviewer; resolve ambiguous persons, mistaken clergy-coded wardens, suspended clergy, and overlapping offices. Keep an audit of who verified what and when. A *candidate marked approved* still does not automatically create an office or permission.
+4. **Compatibility bridge:** Deploy revised authorization services and per-target scope checks first. After approving specific ordination + office, optionally create a narrowly scoped `clergy_access_grant` and synchronize only its needed Shield permission with provenance. Review onboarding state and active user identity; no login means registry-only. Do not automatically promote/demote `auth_groups_users` or carry forward legacy per-user `auth_permissions_users` grants as canonical sign-off.
+5. **Cutover and cleanup:** Report stale grants; dry-run changes; retain custom grants unless separately reviewed. Invalidate access on appointment expiry, inhibition, deanery parish transfer, or account deactivation. Reconcile report signatory schema/states and prevent old group-only paths. Log grants/revocations with redacted audit metadata. Keep a backup and forward-fix procedure: the draft `down()` intentionally refuses destructive rollback.
+
+**Acceptance tests:** Same-province Diocese A vs B; Deanery A vs B in one diocese; parish with no deanery; a parish moved between deaneries; ordinary vs suffragan; rector vs regional dean; suspended/expired office; unlinked person; ambiguous `user_person`; stale direct grants; current vs historic containment; same-user conflicting sign-offs; migration rerun; `vendor/bin/phpunit --no-coverage`; a MySQL 8 clone migration/rollback rehearsal. The prior unmodified application baseline was 823 tests, 3,556 assertions, 6 skipped; that is **not** validation of this draft.
+
+## Sources
+
+**Codebase:** `app/Controllers/AdminHierarchyGuard.php`; `app/Config/AuthGroups.php`; `app/Database/canonical_schema_tables.sql`; `app/Database/Seeds/PermissionRoleSyncSeeder.php`; `app/Models/LeadershipPositionModel.php`; `app/Services/LeadershipPositionService.php`; `app/Database/Migrations/2026-07-28-221941_DropUserScopeAssignmentTable.php`; `app/Database/Migrations/2026-08-01-180558_AlignLeadershipPositionToPersonId.php`; `Clergy/Controllers/People.php`; `MemberPortal/Controllers/LeadershipPositions.php`; `docs/ROLE_MENU_PERMISSION_POLICY.md`.
+
+**Episcopal polity:** [Rector](https://www.episcopalchurch.org/glossary/rector/), [Ordinary of a diocese](https://www.episcopalchurch.org/glossary/ordinary-of-a-diocese/), [Deacon](https://www.episcopalchurch.org/glossary/deacon/), [Episcopal titles](https://www.episcopalchurch.org/the-undercroft-2/communications-and-branding-resources/writing-style-guide/titles/), [Diocese of Massachusetts deaneries](https://www.diomass.org/about-us/deaneries-and-regions), [Diocese of Virginia regional deans](https://episcopalvirginia.org/who-we-are/governance/regions-deans-presidents/). These examples inform defaults; they do not replace local diocesan canons.

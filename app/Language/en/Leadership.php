@@ -5,6 +5,12 @@
  */
 return [
     'scope' => 'Scope',
+    'scopeDeanery' => 'Deanery',
+    'deaneryRequired' => 'Deanery (required for regional dean)',
+    'selectDeanery' => 'Select the exact deanery',
+    'orderEvidenceNote' => 'Ordination requires separate documentary verification; an office cannot confer privileges before approval.',
+    'awaitingReview' => 'Awaiting appointment review',
+    'cathedralCharge' => 'Designated cathedral priest-in-charge (requires separate diocesan approval)',
     'perPage' => 'Per page',
     'applyScope' => 'Apply Scope',
     'addLeadershipPosition' => 'Add Leadership Position',
@@ -60,5 +66,6 @@ return [
     'reqConfirmed' => 'a recorded confirmation',
     'reqPledged' => 'a current-year pledge',
     'reqGoodStanding' => 'communicant-in-good-standing status (or a good-standing override)',
+    'reqVerifiedOrder' => 'a verified ordination, matching office and current standing in the appointment diocese',
     'noPortalAccess' => 'no portal access',
 ];

@@ -17,6 +17,7 @@ class LeadershipPositionModel extends Model
         'person_id',
         'scope_type',
         'parish_id',
+        'deanery_id',
         'diocese_id',
         'province_id',
         'title',
@@ -24,11 +25,23 @@ class LeadershipPositionModel extends Model
         'employment_type',
         'role_category',
         'clergy_order',
+        'pastoral_in_charge',
         'active',
         'started_at',
         'ended_at',
         'notes',
         'appointed_by_user_id',
+        'approved_by_user_id',
+        'approved_at',
+        'approval_evidence_reference',
+        'revoked_at',
+    ];
+
+    protected array $casts = [
+        'user_id' => '?int', 'person_id' => '?int', 'parish_id' => '?int',
+        'deanery_id' => '?int', 'diocese_id' => '?int', 'province_id' => '?int',
+        'approved_by_user_id' => '?int',
+        'pastoral_in_charge' => '?bool',
     ];
 
     protected $useTimestamps = true;
@@ -38,8 +51,9 @@ class LeadershipPositionModel extends Model
 
     protected $validationRules = [
         'user_id'       => 'required|is_not_unique[users.id]',
-        'scope_type'    => 'required|in_list[parish,diocese,province]',
+        'scope_type'    => 'required|in_list[parish,deanery,diocese,province]',
         'parish_id'     => 'permit_empty|is_not_unique[parish.id]',
+        'deanery_id'    => 'permit_empty|is_not_unique[deanery.id]',
         'diocese_id'    => 'permit_empty|is_not_unique[diocese.id]',
         'province_id'   => 'permit_empty|is_not_unique[province.id]',
         'title'         => 'required|max_length[150]',
@@ -50,6 +64,9 @@ class LeadershipPositionModel extends Model
         'employment_type' => 'permit_empty|in_list[full_time,part_time,non_stipendiary,unpaid]',
         'role_category'   => 'permit_empty|in_list[clergy,lay_staff]',
         'clergy_order'    => 'permit_empty|in_list[bishop,priest,deacon]',
+        'pastoral_in_charge' => 'permit_empty|in_list[0,1]',
+        'approved_by_user_id' => 'permit_empty|is_not_unique[users.id]',
+        'approval_evidence_reference' => 'permit_empty|max_length[255]',
     ];
 
     public function getActivePositionsForUser(int $userId): array
@@ -93,6 +110,8 @@ class LeadershipPositionModel extends Model
 
         if ($scopeType === 'parish') {
             $builder->where('lp.parish_id', $scopeId);
+        } elseif ($scopeType === 'deanery') {
+            $builder->where('lp.deanery_id', $scopeId);
         } elseif ($scopeType === 'diocese') {
             $builder->where('lp.diocese_id', $scopeId);
         } else {

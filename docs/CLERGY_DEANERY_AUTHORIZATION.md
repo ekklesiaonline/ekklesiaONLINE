@@ -1,0 +1,74 @@
+# Clergy, deanery and ecclesial authorization
+
+**Status:** clergy/deanery schema **installed on live MySQL** in migration batch 94; ecclesial office authorization is **not yet provisioned**. The [post-migration audit](../outputs/post-migration-role-audit-2026-10-02.md) confirmed all expected tables/columns, one pending legacy candidate and no verified orders, approved offices or managed grants. Preserve the earlier [pre-migration snapshot](../outputs/live-migration-role-audit-2026-10-02.md) for historical comparison. MySQL-clone testing and backups remain essential for future forward migrations.
+
+## Boundaries
+
+Technical admin rank is unchanged: `systemadmin=4`, `provinceadmin=3`, `dioceseadmin=2`, `parishadmin=1`, all other groups `0`. These are account-target administration priorities, **not** ecclesial orders. A bishop is not an automatic diocesan app admin; a cathedral dean is not a diocesan admin; a regional dean has only their recorded deanery's current member congregations. No grant expands to Province IX, another province, or all of The Episcopal Church by implication. See [the implementation plan](../outputs/clergy-ordination-office-authorization-plan.md) and the [canonical group policy](ROLE_MENU_PERMISSION_POLICY.md).
+
+| Source | Purpose | Deny-by-default rule |
+| --- | --- | --- |
+| `clergy_ordination` | Person-linked deacon/priest/bishop order and documentary verification. | Legacy `clergy` group and free-text `clergy_order` are not proof. Account-less ordained persons have no Shield powers. |
+| `clergy_canonical_status` | Dated standing in one diocese. | Suspension, inhibition, transfer, retirement and expiry block office authorization. |
+| `leadership_position` | Dated office in exactly one parish, deanery or diocese; separate approval/revocation and evidence reference. | Unapproved or legacy offices grant nothing; only the documented diocesan ordinary/delegate can approve clergy appointments. |
+| `deanery` / `deanery_parish_membership` | Diocesan subregion and effective-dated congregation membership. | A deanery never acts as an admin rank or a whole-diocese shortcut. |
+| `clergy_access_grant` | The issued office/delegation capability, exact target, issuer, start, end and revocation. | Shield `can()` **and** active user **and** verified order/standing **and** current approved office/delegation **and** exact containment must all pass. |
+| `permission_role_sync_managed` | Exact direct Shield permission row and its `role_sync`/`office`/`delegation` origin. | Reconciliation may remove only traced rows; existing untraced manual direct grants are preserved for separate audit. |
+| `clergy_transition_candidate` | Snapshot of untrusted legacy group/office evidence and manual review decision. | Even an accepted candidate does not create ordination, an approved office, a new group or an application grant. |
+| `parish_report` + `parish_report_revision` + `parish_report_signature` | Frozen annual report snapshot/hash, ordered signatures, actor office/grant, diocese and signed revision history. | `parish_report_storage` is the working source, **not** an ecclesial signature; changed storage requires a new archived revision. |
+
+The migration adds `parish.congregation_type` (`parish`, `cathedral`, `mission`), `leadership_position.deanery_id`, `pastoral_in_charge`, `approved_by_user_id`, `approved_at`, `approval_evidence_reference`, `revoked_at`, and report-stage columns. Existing cathedral appointments default to **not** designated priest-in-charge. A cathedral dean requires both an explicit cathedral classification and a reviewed `pastoral_in_charge=1` to finalize that cathedral's report. A regional dean never finalizes on the strength of a deanery appointment alone. The generated migration is additive and performs preflight checks **before MySQL DDL**; rollback refuses to discard reviewed clergy or signed-report history.
+
+## Episcopal office/permission matrix
+
+| Approved office or appointment | Shield coarse key(s) | Effective target / limitations |
+| --- | --- | --- |
+| Diocesan bishop (current ordinary) | `governance.diocese.approve`, `clergy.ordination.verify`, `clergy.appointment.manage` | Exactly their approved diocese; separate technical group assignment is required for app-admin tasks. |
+| Suffragan, coadjutor or assisting bishop | None of the ordinary's approval keys by office alone | Only an ordinary-issued, dated and revocable delegation for the exact diocese can confer a listed governance/review key. Succession requires a separate ordinary office transition. |
+| Rector, priest-in-charge, interim rector, vicar | `pastoral.parish.view`, `pastoral.parish.manage`, `governance.report.finalize_clergy` | Their exact congregation and effective term; verified priest and current standing. |
+| Cathedral dean | Parish pastoral keys; report key **only when pastoral-in-charge** | That specifically classified cathedral, not its entire diocese. |
+| Regional/deanery dean | `deanery.view`, `deanery.coordinate`, `pastoral.parish.view` | Their deanery and its **current** member congregations only. No finance, account management, or report sign-off. |
+| Parish vacancy priest delegate | `governance.report.finalize_clergy` | A named verified licensed priest, exact vacant parish, time limit, ordinary's documentary appointment; stops if an incumbent assumes charge. |
+| Reviewed vestry clerk / secretary and warden | `governance.report.certify_clerk` / `.approve_warden` | Two distinct actors with reviewed lay parish offices and their own role permissions. |
+| Bishop-designated mission governance signer / approver | Same two stage keys via `mission_governance_signer` / `mission_approver` groups | Explicit mission type and **separately** bishop-approved matching lay offices; never silently omit governance signatures. |
+
+The `clergy` Shield group remains a baseline operational label, not proof of ordination or a fourth admin tier. The two mission groups provide coarse keys only: the checked appointment, mission, review and identity still govern signing. A diocesan app admin may configure deanery membership in their assigned diocese; this does not let them verify orders or sign as bishop.
+
+## Application surfaces
+
+Routes use Shield `session` and action-specific `permission:*` filters, validate POST inputs with CI4 Validation, return the project's [API/AJAX contract](API_AJAX_ERROR_CONTRACT.md), and record redacted audit events. GET `/diocese/deaneries/manage` provides a Bootstrap page for authorized diocesan admins; `/leadership?scope=deanery` lists diocese-scoped regional appointments with a controlled office-code guide. Clergy evidence, approvals, policy and report sign-off currently have **JSON endpoints rather than a complete clerical review/signing screen**.
+
+| Action | Route | Essential fields |
+| --- | --- | --- |
+| Create deanery / assign or end dated membership | `POST /diocese/deaneries/store`, `/assign/{deaneryId}`, `/end/{membershipId}` | `code,name`; `parish_id,started_at`; `ended_at`. Diocese is taken from the admin's authoritative scope. |
+| Classify congregation | `POST /diocese/congregations/{parishId}/type` | `congregation_type=parish|cathedral|mission`; refuses a change during an in-progress report. |
+| Stage office | `POST /leadership/store` | Person-linked user, exact `scope_type` + optional `deanery_id`, controlled `role_code`/order, date; cathedral `pastoral_in_charge=1` only if designated. Creation does **not** approve clergy office. |
+| Review legacy candidates | `GET /diocese/clergy-review/candidates/{dioceseId}`, `POST /diocese/clergy-review/candidates/{candidateId}/review/{dioceseId}` | `decision=approved|rejected`, `confirmed_order` for approval / `reason_code` for rejection. Conflicting person/diocese links fail closed. |
+| Verify order or standing | `POST /diocese/clergy-review/ordination/{dioceseId}`, `/standing/{dioceseId}` | `person_id,order_code,evidence_reference` or `person_id,status_code,effective_from,evidence_reference`. |
+| Approve or revoke clergy office | `POST /diocese/clergy-review/office/{positionId}/approve|revoke` | Approval requires `evidence_reference`, a distinct bishop/delegate and current verifiable standing. |
+| Approve local signatory | `POST /parish/report-signatures/lay-office/{positionId}/approve` | `evidence_reference`; scoped vestry reviewer separate from signer. |
+| Approve bishop-designated mission signatory | `POST /diocese/clergy-review/mission-office/{positionId}/approve` | `evidence_reference`; current ordinary/delegate approves a mission appointment. |
+| Bishop delegation | `POST /diocese/clergy-review/delegation/{dioceseId}` or `/parish-vacancy/{parishId}`; `/delegation/revoke/{grantId}` | Named user, expiry, documentary reference; the vacancy path is limited to a verified priest and vacant parish. |
+| Enable local report policy | `POST /diocese/clergy-review/report-policy/{dioceseId}` | `enabled=0|1`, `evidence_reference`; only the current verified ordinary. Default is **off** until each diocese confirms its lay/mission policy. |
+| Report submission and ordered sign-off | `POST /parish/report-signatures/submit/{parishId}`, `/{reportId}/clerk`, `/warden`, `/clergy`, `/diocese` | Submission: `report_year`. Signatures require four distinct actors in order, same frozen source/hash, stage-specific permission and office/delegation. |
+| Correct signed report | `POST /parish/report-signatures/{reportId}/new-revision` | Authorized in-parish reporter archives the previous snapshot and signatures; increments revision and clears only current-stage sign-offs. |
+
+Every action re-evaluates order, date, identity, scope and status. Enabling the diocesan flag alone does not appoint signers; assigning a technical admin group alone does not approve an office. If editable storage changes after submission, signatures stop until a new revision archives the previous version. Report consumers must use `ParishReportModel::signedSnapshot()` for an approved version, never the mutable storage row.
+
+## Controlled rollout
+
+1. **Inspect the installed schema and preserve a backup.** All three formerly pending migrations were recorded in batch 94; the [post-migration read-only audit](../outputs/post-migration-role-audit-2026-10-02.md) confirms nine tables, 17 columns and one pending candidate. Do not re-run applied migration classes or execute the old draft in `outputs/`.
+2. For future FK hardening or other forward migrations, rehearse against a **MySQL clone** and verify deletion/rollback behavior. The disposable SQLite rehearsal `tests/ClergyMigrationRehearsalTest.php` does not certify MySQL constraints. The installed schema lacks a database FK on `leadership_position.deanery_id`; use a new migration if enforcing that relationship in MySQL.
+3. **Review the 17 untracked legacy direct signing grants before any permission sync or cleanup.** `permission_role_sync_managed` contains no rows and cannot assign origin to historic direct grants. Do not mass-delete them or assume `php spark db:seed PermissionRoleSyncSeeder` will remove them. This agent did not run that seeder.
+4. For **each** diocese, independently confirm person identity, ordination documents, standing, current ordinary and appointment. **Bootstrap gap:** the first ordinary cannot digitally self-verify or self-approve; an authorized, audited two-person diocesan record review/controlled import must establish the first verified bishop and approved office. No account is auto-promoted from a title, legacy group or candidate. Do not bypass `pending_review` onboarding.
+5. Review legacy candidates; appoint the exact deanery/parish offices and lay signers; document cathedral type and explicit pastoral charge. Have the verified ordinary enable reporting policy with the local evidence reference only after confirming the diocese's vestry/mission signatory policy.
+6. Run `php spark clergy:reconcile-grants` to inspect expired/revoked **managed** grant sources. After backup/review, `php spark clergy:reconcile-grants --apply` removes only provenance-linked stale direct permissions. Operational scheduling for this command is **not configured**; until scheduled, revoke explicitly on personnel changes and run it as part of routine operations.
+7. Re-run `vendor/bin/phpunit --no-coverage --do-not-cache-result` (the 128 MB CLI default needs result caching disabled for the full suite), permission-role sync regression tests, and a staged end-to-end sign-off for two unrelated dioceses (including dioceses in the same and different provinces). Validate profile onboarding gates and negative cross-scope/expired-role cases before enabling each diocese.
+
+**The user applied the migrations; this agent only verified their effects read-only.** The staging migration created one pending candidate but no verified order or automatic permission. This agent performed no live role/permission edit, data backfill, seeding, or policy enablement. No Git commit, push, or deployment was created by this agent.
+
+## References
+
+- The Episcopal Church: [Rector](https://www.episcopalchurch.org/glossary/rector/), [ordinary of a diocese](https://www.episcopalchurch.org/glossary/ordinary-of-a-diocese/), [deacon](https://www.episcopalchurch.org/glossary/deacon/) and [clergy titles](https://www.episcopalchurch.org/the-undercroft-2/communications-and-branding-resources/writing-style-guide/titles/).
+- Episcopal Diocese of Massachusetts, [deaneries and bishop-appointed priest deans](https://www.diomass.org/about-us/deaneries-and-regions); Episcopal Diocese of Virginia, [regional deans](https://episcopalvirginia.org/who-we-are/governance/regions-deans-presidents/).
+- Repository: `docs/ROLE_MENU_PERMISSION_POLICY.md`, `docs/API_AJAX_ERROR_CONTRACT.md`, `app/Config/AuthGroups.php`, `app/Services/ClergyAuthorizationService.php`, `app/Services/ParishReportApprovalService.php`, and the two generated CI4 migrations named above.
