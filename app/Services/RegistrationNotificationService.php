@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Libraries\EmailFailureClassifier;
 use App\Models\ParishRoleAuditModel;
 use CodeIgniter\Database\BaseConnection;
+use Config\AuthGroups;
 
 /**
  * RegistrationNotificationService
@@ -75,20 +76,11 @@ class RegistrationNotificationService
             $dashboardUrl,
         ]);
 
-        try {
-            $email = $this->emailScope->mailer(['parish_id' => $parishId]);
-        } catch (\Throwable $e) {
-            log_message('error', 'Failed to build scoped mailer for pending review notification: {class}', [
-                'class' => $e::class,
-            ]);
-            return;
-        }
-
         $delivered = 0;
 
         foreach ($recipients as $recipient) {
             try {
-                $email->clear(true);
+                $email = $this->emailScope->mailer(['parish_id' => $parishId]);
                 $email->setTo($recipient);
                 $email->setSubject($subject);
                 $email->setMessage($message);
@@ -136,15 +128,18 @@ class RegistrationNotificationService
         $parish = $this->hierarchy->parishRow($parishId);
         $dioceseId = (int) ($parish['diocese_id'] ?? 0);
         $provinceId = (int) ($parish['province_id'] ?? 0);
+        if ($provinceId <= 0 && $dioceseId > 0) {
+            $provinceId = (int) ($this->hierarchy->provinceIdForDiocese($dioceseId) ?? 0);
+        }
 
-        $emails = $this->adminEmailsForScope($profileTable, 'parish_id', 'parishadmin', $parishId);
+        $emails = $this->adminEmailsForScope($profileTable, 'parish_id', AuthGroups::PARISH_ADMIN, $parishId);
 
         if ($dioceseId > 0 && $hasDioceseId) {
-            $emails = array_merge($emails, $this->adminEmailsForScope($profileTable, 'diocese_id', 'diocesanadmin', $dioceseId));
+            $emails = array_merge($emails, $this->adminEmailsForScope($profileTable, 'diocese_id', AuthGroups::DIOCESE_ADMIN, $dioceseId));
         }
 
         if ($provinceId > 0 && $hasProvinceId) {
-            $emails = array_merge($emails, $this->adminEmailsForScope($profileTable, 'province_id', 'provinceadmin', $provinceId));
+            $emails = array_merge($emails, $this->adminEmailsForScope($profileTable, 'province_id', AuthGroups::PROVINCE_ADMIN, $provinceId));
         }
 
         return array_values(array_unique($emails));

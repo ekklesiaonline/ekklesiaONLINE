@@ -207,6 +207,45 @@ final class VisitorConversionPrefillTest extends CIUnitTestCase
             ->countAllResults());
     }
 
+    public function testLinkToUserUpdatesExistingProfileWithoutViolatingUniqueConstraint(): void
+    {
+        $personId = $this->insertVisitorPerson(301);
+
+        // Pre-create user and existing profile without person_id
+        $this->db->table('users')->insert([
+            'username'   => 'unlinked_user',
+            'active'     => 1,
+            'created_at' => date('Y-m-d H:i:s'),
+            'updated_at' => date('Y-m-d H:i:s'),
+        ]);
+        $userId = (int) $this->db->insertID();
+
+        $this->db->table('profile')->insert([
+            'user_id'       => $userId,
+            'person_id'     => null,
+            'parish_id'     => 301,
+            'first_name'    => 'Unlinked',
+            'last_name'     => 'User',
+            'portal_access' => 'disabled',
+            'created_at'    => date('Y-m-d H:i:s'),
+            'updated_at'    => date('Y-m-d H:i:s'),
+        ]);
+
+        $service = new PersonConversionService();
+        $ref = new \ReflectionClass($service);
+        $method = $ref->getMethod('linkToUser');
+        $method->setAccessible(true);
+
+        $person = $this->db->table('person')->where('id', $personId)->get()->getRowArray();
+        $method->invoke(null, $userId, $personId, 301, $person, date('Y-m-d H:i:s'));
+
+        // Verify profile was updated in place, person_id linked, portal_access enabled, and no duplicate profiles created
+        $profiles = $this->db->table('profile')->where('user_id', $userId)->get()->getResultArray();
+        $this->assertCount(1, $profiles);
+        $this->assertSame($personId, (int) $profiles[0]['person_id']);
+        $this->assertSame('enabled', $profiles[0]['portal_access']);
+    }
+
     /**
      * Wiring contract: the consolidated POST promote/revert endpoints exist,
      * and the retired GET mutation + flashdata handoff are gone.

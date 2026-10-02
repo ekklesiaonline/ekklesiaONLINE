@@ -7,7 +7,7 @@ use App\Models\DonationModel;
 
 class Reports extends BaseController
 {
-    private const ADMIN_EXCLUDED_GROUPS = ['provinceadmin', 'diocesanadmin'];
+    private const ADMIN_EXCLUDED_GROUPS = ['provinceadmin', 'diocesanadmin', 'dioceseadmin'];
 
     public function index()
     {
@@ -501,7 +501,7 @@ class Reports extends BaseController
             ->select('COUNT(DISTINCT mca.person_id) as count', false)
             ->join('person pe', 'pe.id = mca.person_id AND pe.deleted_at IS NULL', 'inner')
             ->join('users u', 'u.id = mca.linked_user_id', 'left')
-            ->join('auth_groups_users agu', 'agu.user_id = u.id AND agu.group IN ("provinceadmin","diocesanadmin")', 'left')
+            ->join('auth_groups_users agu', 'agu.user_id = u.id AND agu.group IN ("provinceadmin","diocesanadmin","dioceseadmin")', 'left')
             ->whereIn('mca.parish_id', $parishIds)
             ->where('mca.is_member', 1)
             ->where('mca.deleted_at IS NULL', null, false)
@@ -513,7 +513,7 @@ class Reports extends BaseController
             ->select('COUNT(DISTINCT mca.person_id) as count', false)
             ->join('person pe', 'pe.id = mca.person_id AND pe.deleted_at IS NULL', 'inner')
             ->join('users u', 'u.id = mca.linked_user_id', 'left')
-            ->join('auth_groups_users agu', 'agu.user_id = u.id AND agu.group IN ("provinceadmin","diocesanadmin")', 'left')
+            ->join('auth_groups_users agu', 'agu.user_id = u.id AND agu.group IN ("provinceadmin","diocesanadmin","dioceseadmin")', 'left')
             ->whereIn('mca.parish_id', $parishIds)
             ->where('mca.membership_status', 'member')
             ->where('mca.deleted_at IS NULL', null, false)
@@ -536,7 +536,7 @@ class Reports extends BaseController
             ->select('COUNT(DISTINCT mss.user_id) AS count', false)
             ->join('parish_affiliation mca', 'mca.linked_user_id = mss.user_id', 'inner')
             ->join('users u', 'u.id = mss.user_id', 'inner')
-            ->join('auth_groups_users agu', 'agu.user_id = u.id AND agu.group IN ("provinceadmin","diocesanadmin")', 'left')
+            ->join('auth_groups_users agu', 'agu.user_id = u.id AND agu.group IN ("provinceadmin","diocesanadmin","dioceseadmin")', 'left')
             ->whereIn('mca.parish_id', $parishIds)
             ->where('mca.is_member', 1)
             ->where('mca.membership_status', 'member')
@@ -646,7 +646,7 @@ class Reports extends BaseController
                 ->select('COUNT(DISTINCT mca.person_id) as count', false)
                 ->join('person pe', 'pe.id = mca.person_id AND pe.deleted_at IS NULL', 'inner')
                 ->join('users u', 'u.id = mca.linked_user_id', 'left')
-                ->join('auth_groups_users agu', 'agu.user_id = u.id AND agu.group IN ("provinceadmin","diocesanadmin")', 'left')
+                ->join('auth_groups_users agu', 'agu.user_id = u.id AND agu.group IN ("provinceadmin","diocesanadmin","dioceseadmin")', 'left')
                 ->whereIn('mca.parish_id', $parishIds)
                 ->where('mca.is_member', 1)
                 ->where('mca.deleted_at IS NULL', null, false)
@@ -658,7 +658,7 @@ class Reports extends BaseController
                 ->select('COUNT(DISTINCT mca.person_id) as count', false)
                 ->join('person pe', 'pe.id = mca.person_id AND pe.deleted_at IS NULL', 'inner')
                 ->join('users u', 'u.id = mca.linked_user_id', 'left')
-                ->join('auth_groups_users agu', 'agu.user_id = u.id AND agu.group IN ("provinceadmin","diocesanadmin")', 'left')
+                ->join('auth_groups_users agu', 'agu.user_id = u.id AND agu.group IN ("provinceadmin","diocesanadmin","dioceseadmin")', 'left')
                 ->whereIn('mca.parish_id', $parishIds)
                 ->where('mca.membership_status', 'member')
                 ->where('mca.deleted_at IS NULL', null, false)
@@ -681,7 +681,7 @@ class Reports extends BaseController
                 ->select('COUNT(DISTINCT mss.user_id) AS count', false)
                 ->join('parish_affiliation mca', 'mca.linked_user_id = mss.user_id', 'inner')
                 ->join('users u', 'u.id = mss.user_id', 'inner')
-                ->join('auth_groups_users agu', 'agu.user_id = u.id AND agu.group IN ("provinceadmin","diocesanadmin")', 'left')
+                ->join('auth_groups_users agu', 'agu.user_id = u.id AND agu.group IN ("provinceadmin","diocesanadmin","dioceseadmin")', 'left')
                 ->whereIn('mca.parish_id', $parishIds)
                 ->where('mca.is_member', 1)
                 ->where('mca.membership_status', 'member')

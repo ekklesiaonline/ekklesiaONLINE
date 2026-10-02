@@ -92,11 +92,14 @@ class SystemPrimary extends BaseController
                 ]);
 
                 try {
-                    $emailService = (new \App\Services\EmailScopeService())->systemMailer();
+                    $emailService = (new \App\Services\EmailScopeService())->credentialMailer();
                     $emailService->setTo($email);
                     $emailService->setSubject(lang('System.transferOtpEmailSubject'));
                     $emailService->setMessage($this->buildPrimaryTransferOtpEmailBody($challengeCode, $userId));
-                    $emailService->send(false);
+                    if (!$emailService->send(false)) {
+                        $this->clearPrimaryTransferOtpChallenge();
+                        return $this->safeRedirectError(lang('System.otpSendFailed'));
+                    }
                 } catch (\Throwable $e) {
                     $this->clearPrimaryTransferOtpChallenge();
                     return $this->safeRedirectError(lang('System.otpSendFailed'), $e);

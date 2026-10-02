@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use CodeIgniter\Database\BaseConnection;
+use Config\AuthGroups;
 
 /**
  * ProvinceStaffDirectoryService
@@ -57,7 +58,7 @@ class ProvinceStaffDirectoryService
             ->join('auth_groups_users agu', 'agu.user_id = p.user_id')
             ->join('parish c', 'c.id = p.parish_id', 'left')
             ->join('diocese d', 'd.id = COALESCE(p.diocese_id, c.diocese_id)', 'left')
-            ->whereIn('agu.group', ['diocesanadmin', 'parishadmin', 'clergy'])
+            ->whereIn('agu.group', [AuthGroups::DIOCESE_ADMIN, 'diocesanadmin', AuthGroups::PARISH_ADMIN, AuthGroups::CLERGY])
             ->where('d.province_id', $provinceId);
 
         if ($dioceseId !== null) {

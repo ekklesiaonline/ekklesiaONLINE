@@ -143,7 +143,7 @@ class ParishDashboardDataService
             ->select('1')
             ->join($profileTable . ' p', 'p.user_id = mca.linked_user_id')
             ->join('users u', 'u.id = mca.linked_user_id')
-            ->join('auth_groups_users agu', 'agu.user_id = u.id AND agu.group IN ("provinceadmin","diocesanadmin")', 'left')
+            ->join('auth_groups_users agu', 'agu.user_id = u.id AND agu.group IN ("provinceadmin","diocesanadmin","dioceseadmin")', 'left')
             ->where('mca.parish_id', $parishId)
             ->where('mca.is_member', 1)
             ->where('p.birth_date IS NOT NULL')

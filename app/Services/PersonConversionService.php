@@ -116,13 +116,28 @@ class PersonConversionService
             }
         }
 
-        $existingProfile = model(ProfileModel::class)
+        $profileModel = model(ProfileModel::class);
+        $existingProfile = $profileModel
             ->where('user_id', $userId)
-            ->where('person_id', $personId)
             ->first();
 
-        if (! is_array($existingProfile)) {
-            $profileId = model(ProfileModel::class)->insert([
+        if (is_array($existingProfile)) {
+            $profileId = (int) $existingProfile['id'];
+            $updateData = [
+                'person_id'     => $personId,
+                'portal_access' => 'enabled',
+                'updated_at'    => $now,
+            ];
+            if (empty($existingProfile['parish_id']) && $parishId > 0) {
+                $updateData['parish_id'] = $parishId;
+            }
+            $profileModel->update($profileId, $updateData);
+
+            if ($profileId > 0) {
+                (new PersonProfileSyncService())->syncFromProfile($profileId);
+            }
+        } else {
+            $profileId = $profileModel->insert([
                 'user_id'           => $userId,
                 'person_id'         => $personId,
                 'parish_id'         => $parishId,
