@@ -20,6 +20,8 @@ $routes->group('', ['filter' => 'session'], function ($routes) {
         $routes->get('receipt/(:num)', '\\Treasurer\\Controllers\\Donation::receipt/$1', ['filter' => 'permission:donation.view']);
         $routes->get('create', '\\Treasurer\\Controllers\\Donation::create', ['filter' => 'permission:donation.create']);
         $routes->post('store', '\\Treasurer\\Controllers\\Donation::store', ['filter' => 'permission:donation.create']);
+        $routes->get('edit/(:num)', '\\Treasurer\\Controllers\\Donation::edit/$1', ['filter' => 'permission:donation.edit']);
+        $routes->post('update/(:num)', '\\Treasurer\\Controllers\\Donation::update/$1', ['filter' => 'permission:donation.edit']);
         $routes->post('delete/(:num)', '\\Treasurer\\Controllers\\Donation::delete/$1', ['filter' => 'permission:donation.delete']);
     });
 
@@ -49,6 +51,20 @@ $routes->group('', ['filter' => 'session'], function ($routes) {
         $routes->get('(:num)', '\\Treasurer\\Controllers\\Banking::view/$1');
         $routes->post('(:num)/transactions', '\\Treasurer\\Controllers\\Banking::storeTransaction/$1', ['filter' => 'permission:finance.manage']);
         $routes->post('(:num)/reconciliations', '\\Treasurer\\Controllers\\Banking::startReconciliation/$1', ['filter' => 'permission:finance.manage']);
+    });
+
+    $routes->group('funds', ['filter' => 'permission:finance.view'], function ($routes) {
+        $routes->get('/', '\\Treasurer\\Controllers\\Funds::index');
+        $routes->get('export', '\\Treasurer\\Controllers\\Funds::export');
+        $routes->get('create', '\\Treasurer\\Controllers\\Funds::create', ['filter' => 'permission:finance.manage']);
+        $routes->post('store', '\\Treasurer\\Controllers\\Funds::store', ['filter' => 'permission:finance.manage']);
+        $routes->get('edit/(:num)', '\\Treasurer\\Controllers\\Funds::edit/$1', ['filter' => 'permission:finance.manage']);
+        $routes->post('update/(:num)', '\\Treasurer\\Controllers\\Funds::update/$1', ['filter' => 'permission:finance.manage']);
+        $routes->post('lock/(:num)', '\\Treasurer\\Controllers\\Funds::lock/$1', ['filter' => 'permission:finance.manage']);
+        $routes->post('unlock/(:num)', '\\Treasurer\\Controllers\\Funds::unlock/$1', ['filter' => 'permission:finance.manage']);
+        $routes->post('activate/(:num)', '\\Treasurer\\Controllers\\Funds::activate/$1', ['filter' => 'permission:finance.manage']);
+        $routes->post('deactivate/(:num)', '\\Treasurer\\Controllers\\Funds::deactivate/$1', ['filter' => 'permission:finance.manage']);
+        $routes->get('(:num)', '\\Treasurer\\Controllers\\Funds::view/$1');
     });
 
     $routes->group('reports', ['filter' => 'permission:report.view'], function ($routes) {

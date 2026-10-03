@@ -9,7 +9,7 @@ use CodeIgniter\Router\RouteCollection;
  */
 $routes->get('/', '\\MemberPortal\\Controllers\\PublicHome::index');
 $routes->get('locale/set/(:segment)', '\\MemberPortal\\Controllers\\PublicLocale::set/$1');
-$routes->get('uploads/(:any)', '\\MemberPortal\\Controllers\\PublicHome::serveUpload/$1');
+$routes->get('uploads/(:any)', '\\MemberPortal\\Controllers\\PublicAssets::serveUpload/$1');
 $routes->get('session/keepalive', '\\MemberPortal\\Controllers\\SessionSecurity::keepalive');
 
 // JSON contract endpoints: controller enforces auth/scope and always returns JSON.
@@ -17,11 +17,11 @@ $routes->post('families/addMemberNonPortal', '\\MemberPortal\\Controllers\\Famil
 $routes->post('families/enablePortal/(:num)', '\\MemberPortal\\Controllers\\Family::enablePortal/$1');
 
 $routes->group('', ['filter' => 'session'], function ($routes) {
-    $routes->get('media/profile-picture/(:num)', '\\MemberPortal\\Controllers\\PublicHome::profilePicture/$1');
-    $routes->get('media/parish-logo/(:num)', '\\MemberPortal\\Controllers\\PublicHome::parishLogo/$1');
-    $routes->get('media/parish-banner/(:num)', '\\MemberPortal\\Controllers\\PublicHome::parishBanner/$1');
-    $routes->get('media/event-cover/(:num)', '\\MemberPortal\\Controllers\\PublicHome::eventCover/$1');
-    $routes->get('media/event-attachment/(:num)', '\\MemberPortal\\Controllers\\PublicHome::eventAttachment/$1');
+    $routes->get('media/profile-picture/(:num)', '\\MemberPortal\\Controllers\\PublicAssets::profilePicture/$1');
+    $routes->get('media/parish-logo/(:num)', '\\MemberPortal\\Controllers\\PublicAssets::parishLogo/$1');
+    $routes->get('media/parish-banner/(:num)', '\\MemberPortal\\Controllers\\PublicAssets::parishBanner/$1');
+    $routes->get('media/event-cover/(:num)', '\\MemberPortal\\Controllers\\PublicAssets::eventCover/$1');
+    $routes->get('media/event-attachment/(:num)', '\\MemberPortal\\Controllers\\PublicAssets::eventAttachment/$1');
 
     $routes->get('session/device-verify', '\\MemberPortal\\Controllers\\SessionSecurity::deviceVerifyForm');
     $routes->post('session/device-verify', '\\MemberPortal\\Controllers\\SessionSecurity::deviceVerifySubmit');
@@ -37,10 +37,12 @@ $routes->group('', ['filter' => 'session'], function ($routes) {
     $routes->get('dashboard/followup-stats', '\\MemberPortal\\Controllers\\Dashboard::followupStats');
     $routes->get('dashboard/switch/(:num)', '\\MemberPortal\\Controllers\\Dashboard::switchParish/$1');
     $routes->get('me', '\\MemberPortal\\Controllers\\MyDashboard::index');
+    $routes->get('me/statement', '\\MemberPortal\\Controllers\\MyDashboard::statement');
+    $routes->get('me/receipt/(:num)', '\\MemberPortal\\Controllers\\MyDashboard::receipt/$1');
     $routes->get('admin/audit-logs', '\\MemberPortal\\Controllers\\AuditLogs::index');
-    $routes->get('admin/audit-logs/export-csv', '\\MemberPortal\\Controllers\\AuditLogs::exportCsv');
-    $routes->get('admin/audit-logs/export-json', '\\MemberPortal\\Controllers\\AuditLogs::exportJson');
-    $routes->get('admin/audit-logs/export-pdf', '\\MemberPortal\\Controllers\\AuditLogs::exportPdf');
+    $routes->get('admin/audit-logs/export-csv', '\\MemberPortal\\Controllers\\AuditLogExports::exportCsv');
+    $routes->get('admin/audit-logs/export-json', '\\MemberPortal\\Controllers\\AuditLogExports::exportJson');
+    $routes->get('admin/audit-logs/export-pdf', '\\MemberPortal\\Controllers\\AuditLogExports::exportPdf');
     $routes->get('admin/audit-logs/actor-autocomplete', '\\MemberPortal\\Controllers\\AuditLogs::actorAutocomplete');
     $routes->get('admin/audit-logs/load-more', '\\MemberPortal\\Controllers\\AuditLogs::loadMore');
     $routes->get('admin/audit-logs/diff/(:num)', '\\MemberPortal\\Controllers\\AuditLogs::diff/$1');
@@ -56,10 +58,10 @@ $routes->group('', ['filter' => 'session'], function ($routes) {
         $routes->get('edit', '\\MemberPortal\\Controllers\\Profile::edit', ['filter' => 'permission:profile.edit']);
         $routes->post('update', '\\MemberPortal\\Controllers\\Profile::update', ['filter' => 'permission:profile.edit']);
         $routes->post('delete-picture', '\\MemberPortal\\Controllers\\Profile::deletePicture');
-        $routes->get('complete', '\\MemberPortal\\Controllers\\Profile::complete');
-        $routes->post('complete', '\\MemberPortal\\Controllers\\Profile::completeSubmit');
-        $routes->get('join-parish', '\\MemberPortal\\Controllers\\Profile::joinParish');
-        $routes->post('join-parish', '\\MemberPortal\\Controllers\\Profile::joinParishSubmit');
+        $routes->get('complete', '\\MemberPortal\\Controllers\\ProfileOnboarding::complete');
+        $routes->post('complete', '\\MemberPortal\\Controllers\\ProfileOnboarding::completeSubmit');
+        $routes->get('join-parish', '\\MemberPortal\\Controllers\\ProfileOnboarding::joinParish');
+        $routes->post('join-parish', '\\MemberPortal\\Controllers\\ProfileOnboarding::joinParishSubmit');
     });
 
     $routes->group('families', ['filter' => 'permission:family.view'], function ($routes) {

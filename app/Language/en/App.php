@@ -27,6 +27,7 @@ return [
     'navDonations'        => 'Donations',
     'navExpenses'         => 'Expenses',
     'navBanking'          => 'Banking',
+    'navFunds' => 'Funds',
     'navBudgets'          => 'Budgets',
     'navReports'          => 'Reports',
     'navVolunteers'       => 'Volunteers',

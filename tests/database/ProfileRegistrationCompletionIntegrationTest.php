@@ -55,7 +55,7 @@ final class ProfileRegistrationCompletionIntegrationTest extends CIUnitTestCase
         $request->setGlobal('post', $postData);
         $request->setGlobal('request', $postData);
 
-        $controller = new \MemberPortal\Controllers\Profile();
+        $controller = new \MemberPortal\Controllers\ProfileOnboarding();
         $controller->initController($request, service('response'), service('logger'));
         $result = $controller->completeSubmit();
 
@@ -114,7 +114,7 @@ final class ProfileRegistrationCompletionIntegrationTest extends CIUnitTestCase
         $request->setGlobal('post', $postData);
         $request->setGlobal('request', $postData);
 
-        $controller = new \MemberPortal\Controllers\Profile();
+        $controller = new \MemberPortal\Controllers\ProfileOnboarding();
         $controller->initController($request, service('response'), service('logger'));
         $result = $controller->completeSubmit();
 

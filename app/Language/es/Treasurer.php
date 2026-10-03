@@ -19,6 +19,8 @@ return [
     'donationDeleteFailed' => 'No se pudo eliminar la donacion',
     'donationUpdated' => 'Donacion actualizada exitosamente',
     'donationUpdateFailed' => 'No se pudo actualizar la donacion',
+    'editDonationTitle' => 'Editar donación',
+    'updateDonation' => 'Actualizar donación',
     'donationExportsRespectFilters' => 'Las exportaciones respetan los filtros actuales de donaciones.',
     'donationsExportTitle' => 'Exportacion de donaciones',
     'noDonationsForFilters' => 'No se encontraron donaciones para los filtros seleccionados.',

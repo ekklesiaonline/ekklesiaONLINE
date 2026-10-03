@@ -3,6 +3,7 @@
 namespace Worship\Controllers;
 
 use App\Controllers\BaseController;
+use App\Services\WorshipServiceDataService;
 
 class Services extends BaseController
 {
@@ -11,6 +12,7 @@ class Services extends BaseController
     protected $serviceMetricsModel;
     protected $servicePeopleModel;
     protected $liturgicalCalendarEntryModel;
+    private WorshipServiceDataService $serviceData;
 
     public function __construct()
     {
@@ -19,6 +21,7 @@ class Services extends BaseController
         $this->serviceMetricsModel = model('ServiceMetricsModel');
         $this->servicePeopleModel = model('ServicePeopleModel');
         $this->liturgicalCalendarEntryModel = model('LiturgicalCalendarEntryModel');
+        $this->serviceData = new WorshipServiceDataService();
     }
 
     /**
@@ -81,11 +84,11 @@ class Services extends BaseController
         $attendance = $this->attendanceModel->getServiceAttendance($id);
 
         $data = array_merge($this->getCommonViewData(lang('Services.serviceDetails')), [
-            'service' => $this->decodeServiceField($service),
+            'service' => $this->serviceData->decodeServiceField($service),
             'attendance' => $attendance,
             'attendance_count' => count($attendance),
-            'metrics' => $this->decodeMetricJsonFields($this->safeFindMetrics((int) $id)),
-            'service_people' => $this->safeGetServicePeople((int) $id),
+            'metrics' => $this->serviceData->decodeMetricJsonFields($this->serviceData->safeFindMetrics((int) $id)),
+            'service_people' => $this->serviceData->safeGetServicePeople((int) $id),
         ]);
 
         return view('Worship\Views\Services/view', $data);
@@ -105,7 +108,7 @@ class Services extends BaseController
         }
 
         $parishId = $this->getOperationalParishId();
-        $liturgicalSeasons = $this->safeGetLiturgicalSeasons($parishId);
+        $liturgicalSeasons = $this->serviceData->safeGetLiturgicalSeasons($parishId);
 
         $selectedLiturgicalSeason = (string) old('liturgical_season', '');
         if ($selectedLiturgicalSeason === '' && !empty($liturgicalSeasons)) {
@@ -113,7 +116,7 @@ class Services extends BaseController
         }
 
         $liturgicalDays = $selectedLiturgicalSeason !== ''
-            ? $this->safeGetLiturgicalDays($parishId, $selectedLiturgicalSeason)
+            ? $this->serviceData->safeGetLiturgicalDays($parishId, $selectedLiturgicalSeason)
             : [];
 
         return view('Worship\Views\Services/create', array_merge($this->getCommonViewData(lang('Services.pageTitleAdd')), [
@@ -136,16 +139,16 @@ class Services extends BaseController
             return $redirect;
         }
 
-        $rules = $this->getServiceValidationRules();
+        $rules = $this->serviceData->getServiceValidationRules();
         $isBaseValidationValid = $this->validate($rules);
         $errors = $isBaseValidationValid ? [] : $this->validator->getErrors();
-        $errors = array_merge($errors, $this->getServiceBusinessRuleErrors());
+        $errors = array_merge($errors, $this->serviceData->getServiceBusinessRuleErrors());
 
         if (!empty($errors)) {
             return redirect()->back()->withInput()->with('errors', $errors);
         }
 
-        $data = $this->getCoreServiceData(true);
+        $data = $this->serviceData->getCoreServiceData(true, $this->getOperationalParishId());
 
         $db = db_connect();
         $db->transStart();
@@ -154,7 +157,7 @@ class Services extends BaseController
         $serviceId = $inserted ? (int) $this->serviceModel->getInsertID() : 0;
 
         if ($serviceId > 0) {
-            $this->upsertRelatedServiceData($serviceId);
+            $this->serviceData->upsertRelatedServiceData($serviceId);
         }
 
         $db->transComplete();
@@ -193,11 +196,11 @@ class Services extends BaseController
         }
 
         $parishId = $this->getOperationalParishId();
-        $liturgicalSeasons = $this->safeGetLiturgicalSeasons($parishId);
+        $liturgicalSeasons = $this->serviceData->safeGetLiturgicalSeasons($parishId);
         $selectedLiturgicalSeason = (string) old('liturgical_season', '');
 
         if ($selectedLiturgicalSeason === '' && !empty($service['liturgical_day'])) {
-            $entry = $this->safeFindLiturgicalEntryByName($parishId, (string) $service['liturgical_day']);
+            $entry = $this->serviceData->safeFindLiturgicalEntryByName($parishId, (string) $service['liturgical_day']);
             $selectedLiturgicalSeason = (string) ($entry['season'] ?? '');
         }
 
@@ -206,13 +209,13 @@ class Services extends BaseController
         }
 
         $liturgicalDays = $selectedLiturgicalSeason !== ''
-            ? $this->safeGetLiturgicalDays($parishId, $selectedLiturgicalSeason)
+            ? $this->serviceData->safeGetLiturgicalDays($parishId, $selectedLiturgicalSeason)
             : [];
 
         $data = array_merge($this->getCommonViewData(lang('Services.pageTitleEdit')), [
-            'service' => $this->decodeServiceField($service),
-            'metrics' => $this->decodeMetricJsonFields($this->safeFindMetrics((int) $id)),
-            'service_people' => $this->safeGetServicePeople((int) $id),
+            'service' => $this->serviceData->decodeServiceField($service),
+            'metrics' => $this->serviceData->decodeMetricJsonFields($this->serviceData->safeFindMetrics((int) $id)),
+            'service_people' => $this->serviceData->safeGetServicePeople((int) $id),
             'liturgical_seasons' => $liturgicalSeasons,
             'liturgical_days' => $liturgicalDays,
             'selected_liturgical_season' => $selectedLiturgicalSeason,
@@ -240,23 +243,23 @@ class Services extends BaseController
             return redirect()->to('/services')->with('error', lang('Services.serviceNotFound'));
         }
 
-        $rules = $this->getServiceValidationRules();
+        $rules = $this->serviceData->getServiceValidationRules();
         $isBaseValidationValid = $this->validate($rules);
         $errors = $isBaseValidationValid ? [] : $this->validator->getErrors();
-        $errors = array_merge($errors, $this->getServiceBusinessRuleErrors());
+        $errors = array_merge($errors, $this->serviceData->getServiceBusinessRuleErrors());
 
         if (!empty($errors)) {
             return redirect()->back()->withInput()->with('errors', $errors);
         }
 
-        $data = $this->getCoreServiceData(false);
+        $data = $this->serviceData->getCoreServiceData(false, $this->getOperationalParishId());
 
         $db = db_connect();
         $db->transStart();
 
         $updated = $this->serviceModel->update($id, $data);
         if ($updated) {
-            $this->upsertRelatedServiceData((int) $id);
+            $this->serviceData->upsertRelatedServiceData((int) $id);
         }
 
         $db->transComplete();
@@ -345,7 +348,7 @@ class Services extends BaseController
             return $this->jsonResponse(['success' => true, 'items' => []]);
         }
 
-        $items = $this->safeGetLiturgicalDays($this->getOperationalParishId(), $season);
+        $items = $this->serviceData->safeGetLiturgicalDays($this->getOperationalParishId(), $season);
 
         foreach ($items as &$item) {
             $dayName = (string) ($item['name'] ?? '');
@@ -354,286 +357,5 @@ class Services extends BaseController
         unset($item);
 
         return $this->jsonResponse(['success' => true, 'items' => $items]);
-    }
-
-    private function getServiceValidationRules(): array
-    {
-        return [
-            'date' => 'required|valid_date[Y-m-d]',
-            'service' => 'permit_empty',
-            'time' => 'permit_empty|regex_match[/^([01]\d|2[0-3]):([0-5]\d)(:[0-5]\d)?$/]',
-            'liturgical_day' => 'permit_empty|max_length[255]',
-            'liturgical_season' => 'permit_empty|max_length[80]',
-            'place' => 'permit_empty|max_length[255]',
-            'preacher' => 'permit_empty|max_length[255]',
-            'celebrant' => 'permit_empty|max_length[255]',
-            'notes' => 'permit_empty|max_length[5000]',
-
-            'format_of_service' => 'permit_empty|in_list[In-Person,Hybrid,Online]',
-            'attendance_classification' => 'permit_empty|in_list[Regular,Special]',
-            'service_family' => 'permit_empty|in_list[holy_communion,daily_office,other]',
-            'service_schedule' => 'permit_empty|in_list[sunday,weekday,private]',
-            'reported_present_count' => 'permit_empty|integer|greater_than_equal_to[0]',
-            'reported_communion_count' => 'permit_empty|integer|greater_than_equal_to[0]',
-            'online_live_views' => 'permit_empty|integer|greater_than_equal_to[0]',
-            'online_recorded_views_7d' => 'permit_empty|integer|greater_than_equal_to[0]',
-            'online_peak_viewers' => 'permit_empty|integer|greater_than_equal_to[0]',
-            'languages_csv' => 'permit_empty|max_length[2000]',
-
-            'baptism_adult' => 'permit_empty|integer|greater_than_equal_to[0]',
-            'baptism_child' => 'permit_empty|integer|greater_than_equal_to[0]',
-            'confirmation_adult' => 'permit_empty|integer|greater_than_equal_to[0]',
-            'confirmation_teen' => 'permit_empty|integer|greater_than_equal_to[0]',
-            'reception_count' => 'permit_empty|integer|greater_than_equal_to[0]',
-            'marriage_count' => 'permit_empty|integer|greater_than_equal_to[0]',
-            'burial_count' => 'permit_empty|integer|greater_than_equal_to[0]',
-            'eucharist_count' => 'permit_empty|integer|greater_than_equal_to[0]',
-            'daily_office_count' => 'permit_empty|integer|greater_than_equal_to[0]',
-            'online_live_viewers' => 'permit_empty|integer|greater_than_equal_to[0]',
-            'online_recorded_views' => 'permit_empty|integer|greater_than_equal_to[0]',
-
-            'people_name.*' => 'permit_empty|max_length[255]',
-            'people_role.*' => 'permit_empty|max_length[255]',
-        ];
-    }
-
-    private function getServiceBusinessRuleErrors(): array
-    {
-        $errors = [];
-
-        $format = $this->request->getPost('format_of_service');
-        $liveViews = $this->request->getPost('online_live_views');
-        if (in_array($format, ['Hybrid', 'Online'], true) && ($liveViews === null || $liveViews === '')) {
-            $errors['online_live_views'] = lang('Services.validationLiveViewsRequired');
-        }
-
-        $present = $this->request->getPost('reported_present_count');
-        $communion = $this->request->getPost('reported_communion_count');
-        if ($present !== null && $present !== '' && $communion !== null && $communion !== '' && (int) $communion > (int) $present) {
-            $errors['reported_communion_count'] = lang('Services.validationCommunionExceedsPresent');
-        }
-
-        $serviceFamily = $this->request->getPost('service_family');
-        $serviceSchedule = $this->request->getPost('service_schedule');
-        if ($serviceSchedule === 'private' && $serviceFamily !== 'holy_communion') {
-            $errors['service_schedule'] = lang('Services.validationPrivateOnlyHolyCommunion');
-        }
-
-        $peak = $this->request->getPost('online_peak_viewers');
-        if ($peak !== null && $peak !== '' && $liveViews !== null && $liveViews !== '' && (int) $peak > (int) $liveViews) {
-            $errors['online_peak_viewers'] = lang('Services.validationPeakExceedsLive');
-        }
-
-        return $errors;
-    }
-
-    private function getCoreServiceData(bool $includeParishId): array
-    {
-        $serviceArray = $this->request->getPost('service');
-        $serviceJson = null;
-        if (!empty($serviceArray) && is_array($serviceArray)) {
-            $serviceJson = json_encode(array_values($serviceArray));
-        }
-
-        $data = [
-            'service_date' => $this->request->getPost('date'),
-            'service' => $serviceJson,
-            'liturgical_day' => $this->request->getPost('liturgical_day') ?: null,
-            'place' => $this->request->getPost('place') ?: null,
-            'service_time' => trim($this->request->getPost('time') ?? '') ?: null,
-            'preacher' => $this->request->getPost('preacher') ?: null,
-            'celebrant' => $this->request->getPost('celebrant') ?: null,
-            'notes' => $this->request->getPost('notes') ?: null,
-        ];
-
-        if ($includeParishId) {
-            $data['parish_id'] = $this->getOperationalParishId();
-        }
-
-        return $data;
-    }
-
-    private function upsertRelatedServiceData(int $serviceId): void
-    {
-        $db = db_connect();
-
-        if ($db->tableExists('service_metric')) {
-            $metricsData = [
-                'service_id' => $serviceId,
-                'format_of_service' => $this->request->getPost('format_of_service') ?: null,
-                'attendance_classification' => $this->request->getPost('attendance_classification') ?: null,
-                'service_family' => $this->request->getPost('service_family') ?: null,
-                'service_schedule' => $this->request->getPost('service_schedule') ?: null,
-                'reported_present_count' => $this->toNullableInt('reported_present_count'),
-                'reported_communion_count' => $this->toNullableInt('reported_communion_count'),
-                'online_live_views' => $this->toNullableInt('online_live_views'),
-                'online_recorded_views_7d' => $this->toNullableInt('online_recorded_views_7d'),
-                'online_peak_viewers' => $this->toNullableInt('online_peak_viewers'),
-                'languages_json' => $this->csvToJson($this->request->getPost('languages_csv')),
-                // Sacramental counts (merged from service_sacramental_counts)
-                'baptism_adult' => $this->toNullableInt('baptism_adult'),
-                'baptism_child' => $this->toNullableInt('baptism_child'),
-                'confirmation_adult' => $this->toNullableInt('confirmation_adult'),
-                'confirmation_teen' => $this->toNullableInt('confirmation_teen'),
-                'reception_count' => $this->toNullableInt('reception_count'),
-                'marriage_count' => $this->toNullableInt('marriage_count'),
-                'burial_count' => $this->toNullableInt('burial_count'),
-                'eucharist_count' => $this->toNullableInt('eucharist_count'),
-                'daily_office_count' => $this->toNullableInt('daily_office_count'),
-                // Parochial Report online viewer counts
-                'online_live_viewers' => $this->toNullableInt('online_live_viewers'),
-                'online_recorded_views' => $this->toNullableInt('online_recorded_views'),
-            ];
-
-            $existing = $this->serviceMetricsModel->find($serviceId);
-            if ($existing) {
-                // Always update — never delete an existing metrics row on edit,
-                // because previously-saved parochial report fields (eucharist_count,
-                // online_live_viewers, etc.) must not be silently wiped if the user
-                // submits the form with blank counts.
-                $this->serviceMetricsModel->update($serviceId, $metricsData);
-            } elseif ($this->hasNonNullPayload($metricsData, ['service_id'])) {
-                // Only insert a new row when at least one field has data.
-                $this->serviceMetricsModel->insert($metricsData);
-            }
-        }
-
-        if ($db->tableExists('service_people')) {
-            $this->servicePeopleModel->where('service_id', $serviceId)->delete();
-
-            $peopleNames = (array) ($this->request->getPost('people_name') ?? []);
-            $peopleRoles = (array) ($this->request->getPost('people_role') ?? []);
-            $maxRows = max(count($peopleNames), count($peopleRoles));
-
-            for ($i = 0; $i < $maxRows; $i++) {
-                $name = trim((string) ($peopleNames[$i] ?? ''));
-                $role = trim((string) ($peopleRoles[$i] ?? ''));
-
-                if ($name === '') {
-                    continue;
-                }
-
-                $this->servicePeopleModel->insert([
-                    'service_id' => $serviceId,
-                    'person_name' => $name,
-                    'role_name' => $role !== '' ? $role : null,
-                    'sort_order' => $i,
-                ]);
-            }
-        }
-    }
-
-    private function hasNonNullPayload(array $data, array $excludeKeys = []): bool
-    {
-        foreach ($data as $key => $value) {
-            if (in_array($key, $excludeKeys, true)) {
-                continue;
-            }
-
-            if ($value !== null && $value !== '') {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    private function csvToJson(?string $csv): ?string
-    {
-        if ($csv === null) {
-            return null;
-        }
-
-        $values = array_values(array_unique(array_filter(array_map('trim', explode(',', $csv)), static fn($v) => $v !== '')));
-        return empty($values) ? null : json_encode($values);
-    }
-
-    private function toNullableInt(string $field): ?int
-    {
-        $raw = $this->request->getPost($field);
-        if ($raw === null || $raw === '') {
-            return null;
-        }
-
-        return (int) $raw;
-    }
-
-    private function decodeMetricJsonFields(array $metrics): array
-    {
-        if (empty($metrics)) {
-            return [];
-        }
-
-        foreach (['languages_json', 'place_labels_json'] as $field) {
-            $decoded = !empty($metrics[$field]) ? json_decode((string) $metrics[$field], true) : [];
-            $metrics[$field] = is_array($decoded) ? $decoded : [];
-        }
-
-        return $metrics;
-    }
-
-    private function decodeServiceField(array $service): array
-    {
-        if (isset($service['service']) && !empty($service['service'])) {
-            $decoded = json_decode((string) $service['service'], true);
-            $service['service'] = is_array($decoded) ? $decoded : [];
-        } else {
-            $service['service'] = [];
-        }
-
-        return $service;
-    }
-
-    private function safeFindMetrics(int $serviceId): array
-    {
-        $db = db_connect();
-        if (!$db->tableExists('service_metric')) {
-            return [];
-        }
-
-        return $this->serviceMetricsModel->find($serviceId) ?? [];
-    }
-
-    private function safeGetServicePeople(int $serviceId): array
-    {
-        $db = db_connect();
-        if (!$db->tableExists('service_people')) {
-            return [];
-        }
-
-        return $this->servicePeopleModel
-            ->where('service_id', $serviceId)
-            ->orderBy('sort_order', 'ASC')
-            ->findAll();
-    }
-
-    private function safeGetLiturgicalSeasons($parishId): array
-    {
-        $db = db_connect();
-        if (!$db->tableExists('liturgical_calendar_entry')) {
-            return [];
-        }
-
-        return $this->liturgicalCalendarEntryModel->getSeasonsForDropdown($parishId);
-    }
-
-    private function safeGetLiturgicalDays($parishId, string $season): array
-    {
-        $db = db_connect();
-        if (!$db->tableExists('liturgical_calendar_entry')) {
-            return [];
-        }
-
-        return $this->liturgicalCalendarEntryModel->getDaysBySeason($parishId, $season);
-    }
-
-    private function safeFindLiturgicalEntryByName($parishId, string $name): ?array
-    {
-        $db = db_connect();
-        if (!$db->tableExists('liturgical_calendar_entry')) {
-            return null;
-        }
-
-        return $this->liturgicalCalendarEntryModel->findByName($parishId, $name);
     }
 }

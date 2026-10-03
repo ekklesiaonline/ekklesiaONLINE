@@ -15,11 +15,11 @@ $routes->group('', ['filter' => 'session'], function ($routes) {
         $routes->get('health', '\\Province\\Controllers\\ProvinceOversight::health');
         $routes->get('directory', '\\Province\\Controllers\\ProvinceOversight::directory');
         $routes->get('events/calendar', '\\Province\\Controllers\\Events::calendar');
-        $routes->get('events/create', '\\Province\\Controllers\\Events::create', ['filter' => 'permission:province.event.create']);
-        $routes->post('events/store', '\\Province\\Controllers\\Events::store', ['filter' => 'permission:province.event.create']);
-        $routes->get('events/edit/(:num)', '\\Province\\Controllers\\Events::edit/$1', ['filter' => 'permission:province.event.edit']);
-        $routes->post('events/update/(:num)', '\\Province\\Controllers\\Events::update/$1', ['filter' => 'permission:province.event.edit']);
-        $routes->post('events/delete/(:num)', '\\Province\\Controllers\\Events::delete/$1', ['filter' => 'permission:province.event.delete']);
+        $routes->get('events/create', '\\Province\\Controllers\\ProvinceEventsManage::create', ['filter' => 'permission:province.event.create']);
+        $routes->post('events/store', '\\Province\\Controllers\\ProvinceEventsManage::store', ['filter' => 'permission:province.event.create']);
+        $routes->get('events/edit/(:num)', '\\Province\\Controllers\\ProvinceEventsManage::edit/$1', ['filter' => 'permission:province.event.edit']);
+        $routes->post('events/update/(:num)', '\\Province\\Controllers\\ProvinceEventsManage::update/$1', ['filter' => 'permission:province.event.edit']);
+        $routes->post('events/delete/(:num)', '\\Province\\Controllers\\ProvinceEventsManage::delete/$1', ['filter' => 'permission:province.event.delete']);
         $routes->get('event-calendars', '\\Province\\Controllers\\EventCalendars::index', ['filter' => 'permission:province.calendar.manage']);
         $routes->get('event-calendars/create', '\\Province\\Controllers\\EventCalendars::create', ['filter' => 'permission:province.calendar.manage']);
         $routes->post('event-calendars/store', '\\Province\\Controllers\\EventCalendars::store', ['filter' => 'permission:province.calendar.manage']);
@@ -30,10 +30,10 @@ $routes->group('', ['filter' => 'session'], function ($routes) {
         // Legacy redirects/mappings (old /province/calendar/* URLs)
         $routes->get('calendar', static fn() => redirect()->to(base_url('province/events/calendar')));
         $routes->get('calendar/create', static fn() => redirect()->to(base_url('province/events/create')));
-        $routes->post('calendar/create', '\\Province\\Controllers\\Events::store');
+        $routes->post('calendar/create', '\\Province\\Controllers\\ProvinceEventsManage::store');
         $routes->get('calendar/edit/(:num)', static fn($id) => redirect()->to(base_url('province/events/edit/' . $id)));
-        $routes->post('calendar/edit/(:num)', '\\Province\\Controllers\\Events::update/$1');
-        $routes->post('calendar/delete/(:num)', '\\Province\\Controllers\\Events::delete/$1');
+        $routes->post('calendar/edit/(:num)', '\\Province\\Controllers\\ProvinceEventsManage::update/$1');
+        $routes->post('calendar/delete/(:num)', '\\Province\\Controllers\\ProvinceEventsManage::delete/$1');
         $routes->get('attendance-period-breakdown', '\\Province\\Controllers\\Dashboard::attendancePeriodBreakdown');
         $routes->get('report-export', '\\Province\\Controllers\\Dashboard::exportReport', ['filter' => 'permission:report.export']);
         // Diocese admins are read-only for province admins; creation is centralized under system admins.

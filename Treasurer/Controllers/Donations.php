@@ -429,6 +429,132 @@ class Donations extends BaseController
     }
 
     /**
+     * Show edit donation form
+     */
+    public function edit($id)
+    {
+        if ($redirect = $this->requirePermission('donation.edit')) {
+            return $redirect;
+        }
+
+        if ($redirect = $this->requireParish()) {
+            return $redirect;
+        }
+
+        $parishId = (int) ($this->getOperationalParishId() ?? 0);
+        $donation = $this->donationModel->find($id);
+
+        if (!$donation || (int) ($donation['parish_id'] ?? 0) !== $parishId) {
+            return redirect()->to('/donations')->with('error', lang('Treasurer.donationNotFound'));
+        }
+
+        $chartOfAccountModel  = model('ChartOfAccountModel');
+        $chartAccounts        = $chartOfAccountModel->getActiveByType('income');
+        $groupedChartAccounts = $chartOfAccountModel->getGroupedActiveAccountsForType('income');
+        $funds                = $this->getFundModel()->getParishFunds($parishId);
+
+        $donorUserId = (int) old('user_id', $donation['user_id'] ?? 0);
+
+        return view('Treasurer\Views\Donations/edit', array_merge($this->getCommonViewData(lang('Treasurer.editDonationTitle')), [
+            'donation'             => $donation,
+            'donor_option'         => $this->memberSelectOption($parishId, $donorUserId),
+            'funds'                => $funds,
+            'chartAccounts'        => $chartAccounts,
+            'groupedChartAccounts' => $groupedChartAccounts,
+        ]));
+    }
+
+    /**
+     * Update donation
+     */
+    public function update($id)
+    {
+        if ($redirect = $this->requirePermission('donation.edit')) {
+            return $redirect;
+        }
+
+        if ($redirect = $this->requireParish()) {
+            return $redirect;
+        }
+
+        $parishId = (int) ($this->getOperationalParishId() ?? 0);
+        $donation = $this->donationModel->find($id);
+
+        if (!$donation || (int) ($donation['parish_id'] ?? 0) !== $parishId) {
+            return redirect()->to('/donations')->with('error', lang('Treasurer.donationNotFound'));
+        }
+
+        $rules = [
+            'date'             => 'required|valid_date',
+            'amount'           => 'required|decimal|greater_than[0]',
+            'fund_id'          => 'required|is_not_unique[fund.id]',
+            'category'         => 'permit_empty|max_length[100]',
+            'chart_account_id' => 'required|is_not_unique[chart_of_accounts.id]',
+        ];
+
+        if (!$this->validate($rules)) {
+            return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
+        }
+
+        $chartAccount = $this->donationService->findIncomeAccount((int) $this->request->getPost('chart_account_id'));
+        if ($chartAccount === null) {
+            return redirect()->back()->withInput()->with('error', lang('Treasurer.validIncomeAccountRequired'));
+        }
+
+        $fundId = (int) $this->request->getPost('fund_id');
+        $fund   = $this->getFundModel()->find($fundId);
+        if (!$fund || (int) ($fund['parish_id'] ?? 0) !== $parishId) {
+            return redirect()->back()->withInput()->with('error', lang('Treasurer.validFundRequired'));
+        }
+
+        if ((int) ($fund['is_locked'] ?? 0) === 1 && (int) ($donation['fund_id'] ?? 0) !== $fundId) {
+            return redirect()->back()->withInput()->with('error', lang('Treasurer.fundLocked'));
+        }
+
+        $data = [
+            'fund_id'             => $fundId,
+            'user_id'             => $this->request->getPost('user_id') ?: null,
+            'date'                => (string) $this->request->getPost('date'),
+            'amount'              => (string) $this->request->getPost('amount'),
+            'category'            => (string) ($chartAccount['category'] ?? ($this->request->getPost('category') ?: 'other')),
+            'chart_account_id'    => (int) $chartAccount['id'],
+            'payment_method'      => $this->request->getPost('payment_method') ?: null,
+            'notes'               => $this->request->getPost('notes') ?: null,
+            'is_restricted'       => $this->request->getPost('is_restricted') ? 1 : 0,
+            'restriction_purpose' => $this->request->getPost('is_restricted') ? ($this->request->getPost('restriction_purpose') ?: null) : null,
+        ];
+
+        if ($this->donationModel->update($id, $data)) {
+            $this->audit()->log('donation.update', [
+                'parish_id'   => $parishId,
+                'entity_type' => 'donation',
+                'entity_id'   => (int) $id,
+                'old_values'  => [
+                    'fund_id'          => (int) ($donation['fund_id'] ?? 0),
+                    'user_id'          => isset($donation['user_id']) ? (int) $donation['user_id'] : null,
+                    'date'             => (string) ($donation['date'] ?? ''),
+                    'amount'           => (string) ($donation['amount'] ?? ''),
+                    'category'         => (string) ($donation['category'] ?? ''),
+                    'chart_account_id' => isset($donation['chart_account_id']) ? (int) $donation['chart_account_id'] : null,
+                ],
+                'new_values'  => [
+                    'fund_id'          => (int) ($data['fund_id'] ?? 0),
+                    'user_id'          => $data['user_id'] !== null ? (int) $data['user_id'] : null,
+                    'date'             => (string) ($data['date'] ?? ''),
+                    'amount'           => (string) ($data['amount'] ?? ''),
+                    'category'         => (string) ($data['category'] ?? ''),
+                    'chart_account_id' => (int) ($data['chart_account_id'] ?? 0),
+                ],
+                'meta'        => $this->buildParishContextMeta($parishId, self::ATTRIBUTION_POLICY_OPERATIONAL_DEFAULT),
+            ]);
+
+            return redirect()->to('/donations')->with('success', lang('Treasurer.donationUpdated'));
+        }
+
+        return redirect()->back()->withInput()->with('error', lang('Treasurer.donationUpdateFailed'));
+    }
+
+    /**
      * Delete donation
      */
     public function delete($id)

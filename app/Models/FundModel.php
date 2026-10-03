@@ -39,21 +39,31 @@ class FundModel extends Model
 
     public function getParishFunds(int $parishId, bool $activeOnly = true): array
     {
-        $builder = $this->where('parish_id', $parishId);
+        $builder = $this->db->table('fund f')
+            ->select('f.*, coa.code as chart_account_code, coa.name as chart_account_name')
+            ->join('chart_of_accounts coa', 'coa.id = f.chart_account_id', 'left')
+            ->where('f.parish_id', $parishId);
 
         if ($activeOnly) {
-            $builder->where('is_active', 1);
+            $builder->where('f.is_active', 1);
         }
 
         return $builder
-            ->orderBy('fund_type', 'ASC')
-            ->orderBy('name', 'ASC')
-            ->findAll();
+            ->orderBy('f.fund_type', 'ASC')
+            ->orderBy('f.name', 'ASC')
+            ->get()
+            ->getResultArray();
     }
 
     public function getFundWithBalance(int $fundId): ?array
     {
-        $fund = $this->find($fundId);
+        $fund = $this->db->table('fund f')
+            ->select('f.*, coa.code as chart_account_code, coa.name as chart_account_name')
+            ->join('chart_of_accounts coa', 'coa.id = f.chart_account_id', 'left')
+            ->where('f.id', $fundId)
+            ->get()
+            ->getRowArray();
+
         if (!$fund) {
             return null;
         }
@@ -61,6 +71,7 @@ class FundModel extends Model
         $donationRows = $this->db->table('donation')
             ->select('amount')
             ->where('fund_id', $fundId)
+            ->where('deleted_at', null)
             ->get()
             ->getResultArray();
 
@@ -77,26 +88,46 @@ class FundModel extends Model
         return $fund;
     }
 
-    public function getParishFundsWithBalances(int $parishId): array
+    /**
+     * Parish funds with income/expense totals, balance and transaction counts.
+     * Donation amounts are encrypted, so income is summed in PHP; all donation
+     * and expense rows for the parish are fetched once rather than per fund.
+     */
+    public function getParishFundsWithBalances(int $parishId, bool $activeOnly = true): array
     {
-        $funds = $this->getParishFunds($parishId, true);
+        $funds = $this->getParishFunds($parishId, $activeOnly);
 
-        return array_map(function (array $fund): array {
-            $incomeRows = $this->db->table('donation')
-                ->select('amount')
-                ->where('fund_id', (int) $fund['id'])
-                ->get()
-                ->getResultArray();
+        $incomeByFund = [];
+        $donationRows = $this->db->table('donation')
+            ->select('fund_id, amount')
+            ->where('parish_id', $parishId)
+            ->where('deleted_at', null)
+            ->get()
+            ->getResultArray();
+        foreach ($donationRows as $row) {
+            $incomeByFund[(int) $row['fund_id']][] = $row;
+        }
 
-            $expenses = $this->db->table('expense')
-                ->selectSum('amount', 'total')
-                ->where('fund_id', (int) $fund['id'])
-                ->get()
-                ->getRowArray();
+        $expenseByFund = [];
+        $expenseRows = $this->db->table('expense')
+            ->select('fund_id, SUM(amount) AS total, COUNT(*) AS cnt')
+            ->where('parish_id', $parishId)
+            ->groupBy('fund_id')
+            ->get()
+            ->getResultArray();
+        foreach ($expenseRows as $row) {
+            $expenseByFund[(int) $row['fund_id']] = $row;
+        }
 
-            $fund['total_income'] = $this->sumEncryptedAmounts($incomeRows);
-            $fund['total_expenses'] = (float) ($expenses['total'] ?? 0);
-            $fund['balance'] = $fund['total_income'] - $fund['total_expenses'];
+        return array_map(function (array $fund) use ($incomeByFund, $expenseByFund): array {
+            $fundId = (int) $fund['id'];
+            $rows   = $incomeByFund[$fundId] ?? [];
+
+            $fund['total_income']    = $this->sumEncryptedAmounts($rows);
+            $fund['total_expenses']  = (float) ($expenseByFund[$fundId]['total'] ?? 0);
+            $fund['balance']         = $fund['total_income'] - $fund['total_expenses'];
+            $fund['donation_count']  = count($rows);
+            $fund['expense_count']   = (int) ($expenseByFund[$fundId]['cnt'] ?? 0);
 
             return $fund;
         }, $funds);

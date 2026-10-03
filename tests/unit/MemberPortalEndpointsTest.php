@@ -52,9 +52,9 @@ final class MemberPortalEndpointsTest extends CIUnitTestCase
 
         $expectedAuditRoutes = [
             'AuditLogs::index',
-            'AuditLogs::exportCsv',
-            'AuditLogs::exportJson',
-            'AuditLogs::exportPdf',
+            'AuditLogExports::exportCsv',
+            'AuditLogExports::exportJson',
+            'AuditLogExports::exportPdf',
             'AuditLogs::actorAutocomplete',
             'AuditLogs::loadMore',
             'AuditLogs::diff',

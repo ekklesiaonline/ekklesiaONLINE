@@ -99,11 +99,11 @@ $routes->group('', ['filter' => 'session'], function ($routes) {
         $routes->get('delete-impact/(:num)', '\\Diocese\\Controllers\\Parishes::deleteImpact/$1');
         $routes->post('delete/(:num)', '\\Diocese\\Controllers\\Parishes::delete/$1');
         $routes->post('bulk-delete', '\\Diocese\\Controllers\\Parishes::bulkDelete');
-        $routes->get('(:num)/staff', '\\Diocese\\Controllers\\Parishes::staff/$1');
-        $routes->post('(:num)/staff/add', '\\Diocese\\Controllers\\Parishes::addStaff/$1');
-        $routes->post('(:num)/staff/promote', '\\Diocese\\Controllers\\Parishes::promoteMember/$1');
-        $routes->post('(:num)/staff/remove-role', '\\Diocese\\Controllers\\Parishes::removeStaffRole/$1');
-        $routes->post('(:num)/staff/demote', '\\Diocese\\Controllers\\Parishes::demoteStaff/$1');
+        $routes->get('(:num)/staff', '\\Diocese\\Controllers\\ParishStaff::staff/$1');
+        $routes->post('(:num)/staff/add', '\\Diocese\\Controllers\\ParishStaff::addStaff/$1');
+        $routes->post('(:num)/staff/promote', '\\Diocese\\Controllers\\ParishStaff::promoteMember/$1');
+        $routes->post('(:num)/staff/remove-role', '\\Diocese\\Controllers\\ParishStaff::removeStaffRole/$1');
+        $routes->post('(:num)/staff/demote', '\\Diocese\\Controllers\\ParishStaff::demoteStaff/$1');
     });
 
     $routes->group('system', ['filter' => 'permission:system.admin'], function ($routes) {

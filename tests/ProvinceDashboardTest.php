@@ -9,16 +9,20 @@ class ProvinceDashboardTest extends CIUnitTestCase
     public function testDashboardUsesCanonicalProvinceScopeAndValidatesReportFilters(): void
     {
         $controller = file_get_contents(ROOTPATH . 'Province/Controllers/Dashboard.php');
+        $dataService = file_get_contents(ROOTPATH . 'app/Services/ProvinceDashboardDataService.php');
 
         $this->assertIsString($controller);
+        $this->assertIsString($dataService);
         $this->assertStringContainsString("db_connect()->table('province')->where('id', \$provinceId)", $controller);
         $this->assertStringContainsString("['today', 'week', 'month', 'year', 'custom']", $controller);
         $this->assertStringContainsString("return ['valid' => false, 'error' => lang('Dashboard.invalidDateRange')]", $controller);
-        $this->assertStringContainsString("province_dashboard.reporting_overdue_days", $controller);
+        $this->assertStringContainsString("province_dashboard.reporting_overdue_days", $dataService);
         $this->assertStringContainsString('getPreviousDateRange', $controller);
         $this->assertStringNotContainsString('FROM dioceses WHERE province_id', $controller);
-        $this->assertStringContainsString("s.id, s.service_date, s.service_type, c.name as parish_name", $controller);
+        $this->assertStringNotContainsString('FROM dioceses WHERE province_id', $dataService);
+        $this->assertStringContainsString("s.id, s.service_date, s.service_type, c.name as parish_name", $dataService);
         $this->assertStringNotContainsString("s.service, s.liturgical_day", $controller);
+        $this->assertStringNotContainsString("s.service, s.liturgical_day", $dataService);
     }
 
     public function testProvinceOversightRoutesUseDedicatedReadOnlyControllers(): void

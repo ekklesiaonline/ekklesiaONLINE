@@ -393,8 +393,45 @@ if (!empty($attendance_summary['total_services']) && $attendance_summary['total_
     <!-- My Giving History -->
     <div class="col-md-6">
         <div class="card h-100">
-            <div class="card-header">
+            <div class="card-header d-flex justify-content-between align-items-center">
                 <h5 class="mb-0"><i class="bi bi-receipt" aria-hidden="true"></i> <?= lang('Dashboard.myGiving') ?></h5>
+                <?php if (!empty($donations)): ?>
+                    <?php
+                    $givingYears = [];
+                    foreach ($donations as $d) {
+                        if (!empty($d['date'])) {
+                            $yr = (int) date('Y', strtotime($d['date']));
+                            if ($yr > 0) {
+                                $givingYears[$yr] = $yr;
+                            }
+                        }
+                    }
+                    rsort($givingYears);
+                    if (!in_array((int) date('Y'), $givingYears, true)) {
+                        array_unshift($givingYears, (int) date('Y'));
+                    }
+                    ?>
+                    <?php if (count($givingYears) > 1): ?>
+                        <div class="dropdown">
+                            <button class="btn btn-outline-primary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="bi bi-download" aria-hidden="true"></i> <?= lang('Dashboard.downloadStatement') ?>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end shadow-sm">
+                                <?php foreach ($givingYears as $yr): ?>
+                                    <li>
+                                        <a class="dropdown-item" href="<?= base_url('me/statement?year=' . $yr) ?>">
+                                            <?= esc($yr) ?> <?= lang('Dashboard.annualStatement') ?>
+                                        </a>
+                                    </li>
+                                <?php endforeach; ?>
+                            </ul>
+                        </div>
+                    <?php else: ?>
+                        <a href="<?= base_url('me/statement') ?>" class="btn btn-outline-primary btn-sm">
+                            <i class="bi bi-download" aria-hidden="true"></i> <?= lang('Dashboard.downloadStatement') ?>
+                        </a>
+                    <?php endif; ?>
+                <?php endif; ?>
             </div>
             <div class="card-body">
                 <?php if (!empty($donations)): ?>
@@ -405,6 +442,7 @@ if (!empty($attendance_summary['total_services']) && $attendance_summary['total_
                                     <th scope="col"><?= lang('App.colDate') ?></th>
                                     <th scope="col" class="text-end"><?= lang('Dashboard.colAmount') ?></th>
                                     <th scope="col"><?= lang('Dashboard.colFund') ?></th>
+                                    <th scope="col" class="text-end"><?= lang('Dashboard.colReceipt') ?></th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -413,6 +451,15 @@ if (!empty($attendance_summary['total_services']) && $attendance_summary['total_
                                         <td><?= esc($formatLocalizedDate($donation['date'] ?? '', 'MMM d, y', $locale)) ?></td>
                                         <td class="text-end"><?= esc($formatCurrency($donation['amount'] ?? 0)) ?></td>
                                         <td><?= esc($donation['fund_name'] ?? '-') ?></td>
+                                        <td class="text-end">
+                                            <?php if (!empty($donation['receipt_number'])): ?>
+                                                <a href="<?= base_url('me/receipt/' . (int) $donation['id']) ?>" class="badge border border-primary text-primary fw-normal text-decoration-none" title="<?= esc($donation['receipt_number']) ?>">
+                                                    <i class="bi bi-receipt" aria-hidden="true"></i> <?= esc($donation['receipt_number']) ?>
+                                                </a>
+                                            <?php else: ?>
+                                                <span class="text-muted small">-</span>
+                                            <?php endif; ?>
+                                        </td>
                                     </tr>
                                 <?php endforeach; ?>
                             </tbody>

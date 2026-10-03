@@ -41,7 +41,7 @@ final class ProfilePicturePrivateDeliveryIntegrationTest extends CIUnitTestCase
 
         $this->injectAuthUser($viewerId, ['member'], false);
 
-        $controller = new \MemberPortal\Controllers\PublicHome();
+        $controller = new \MemberPortal\Controllers\PublicAssets();
         $controller->initController(service('request'), service('response'), service('logger'));
 
         $this->expectException(\CodeIgniter\Exceptions\PageNotFoundException::class);
@@ -64,7 +64,7 @@ final class ProfilePicturePrivateDeliveryIntegrationTest extends CIUnitTestCase
 
         $this->injectAuthUser($viewerId, ['systemadmin'], false);
 
-        $controller = new \MemberPortal\Controllers\PublicHome();
+        $controller = new \MemberPortal\Controllers\PublicAssets();
         $controller->initController(service('request'), service('response'), service('logger'));
 
         $response = $controller->profilePicture($targetId);
@@ -83,7 +83,7 @@ final class ProfilePicturePrivateDeliveryIntegrationTest extends CIUnitTestCase
 
         $this->injectAuthUser($viewerId, ['member'], true);
 
-        $firstController = new \MemberPortal\Controllers\PublicHome();
+        $firstController = new \MemberPortal\Controllers\PublicAssets();
         $firstController->initController(service('request'), service('response'), service('logger'));
         $firstResponse = $firstController->profilePicture($viewerId);
 
@@ -93,7 +93,7 @@ final class ProfilePicturePrivateDeliveryIntegrationTest extends CIUnitTestCase
         $request = service('request');
         $request->setHeader('If-None-Match', $etag);
 
-        $secondController = new \MemberPortal\Controllers\PublicHome();
+        $secondController = new \MemberPortal\Controllers\PublicAssets();
         $secondController->initController($request, service('response'), service('logger'));
         $secondResponse = $secondController->profilePicture($viewerId);
 

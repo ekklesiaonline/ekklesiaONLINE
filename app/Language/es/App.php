@@ -25,6 +25,7 @@ return [
     'navDonations'        => 'Donaciones',
     'navExpenses'         => 'Gastos',
     'navBanking'          => 'Banca',
+    'navFunds' => 'Fondos',
     'navBudgets'          => 'Presupuestos',
     'navReports'          => 'Informes',
     'navVolunteers'       => 'Voluntarios',

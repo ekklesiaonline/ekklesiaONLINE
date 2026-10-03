@@ -68,7 +68,7 @@ class FinanceAuditPayloadDonationsTestController extends \Treasurer\Controllers\
     }
 }
 
-class FinanceAuditPayloadExpensesTestController extends \Treasurer\Controllers\Expenses
+class FinanceAuditPayloadExpensesTestController extends \Treasurer\Controllers\ExpenseExports
 {
     private int $forcedParishId = 0;
     private array $auditEvents = [];

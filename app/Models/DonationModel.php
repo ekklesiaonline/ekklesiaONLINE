@@ -176,13 +176,22 @@ class DonationModel extends BaseTenantModel
      */
     public function getMemberDonationsForParish(int $userId, int $parishId, int $limit = 25): array
     {
-        $rows = $this->db->table('donation d')
+        $builder = $this->db->table('donation d')
             ->select('d.*, f.name as fund_name, f.fund_type')
             ->join('fund f', 'f.id = d.fund_id', 'left')
             ->where('d.user_id', $userId)
             ->where('d.parish_id', $parishId)
-            ->where('d.deleted_at', null)
-            ->orderBy('d.date', 'DESC')
+            ->where('d.deleted_at', null);
+
+        $prefix = $this->db->getPrefix();
+        if ($this->db->tableExists($prefix . 'donation_receipts') || $this->db->tableExists('donation_receipts')) {
+            $builder->select('r.receipt_number, r.id as receipt_id')
+                ->join($prefix . 'donation_receipts r', 'r.donation_id = d.id AND r.deleted_at IS NULL', 'left', false);
+        } else {
+            $builder->select('NULL as receipt_number, NULL as receipt_id');
+        }
+
+        $rows = $builder->orderBy('d.date', 'DESC')
             ->limit($limit)
             ->get()
             ->getResultArray();
@@ -477,7 +486,7 @@ class DonationModel extends BaseTenantModel
         return $payload;
     }
 
-    private function decryptDonationRow(array $row): array
+    public function decryptDonationRow(array $row): array
     {
         if (array_key_exists('amount', $row)) {
             $row['amount'] = DataEncryption::decrypt($row['amount'] !== null ? (string) $row['amount'] : null);
@@ -486,7 +495,7 @@ class DonationModel extends BaseTenantModel
         return $row;
     }
 
-    private function normalizeAmount(mixed $value): float
+    public function normalizeAmount(mixed $value): float
     {
         if ($value === null) {
             return 0.0;

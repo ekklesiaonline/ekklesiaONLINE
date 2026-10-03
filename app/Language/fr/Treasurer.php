@@ -19,6 +19,8 @@ return [
     'donationDeleteFailed' => 'Impossible de supprimer le don',
     'donationUpdated' => 'Don mis a jour avec succes',
     'donationUpdateFailed' => 'Impossible de mettre a jour le don',
+    'editDonationTitle' => 'Modifier le don',
+    'updateDonation' => 'Mettre à jour le don',
     'donationExportsRespectFilters' => 'Les exports respectent les filtres de dons actuels.',
     'donationsExportTitle' => 'Export des dons',
     'noDonationsForFilters' => 'Aucun don trouve pour les filtres selectionnes.',

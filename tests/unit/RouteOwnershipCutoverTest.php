@@ -38,7 +38,7 @@ final class RouteOwnershipCutoverTest extends CIUnitTestCase
         $this->assertStringContainsString("'/'", $memberPortalRoutes);
         $this->assertStringContainsString('uploads/(:any)', $memberPortalRoutes);
         $this->assertStringContainsString('PublicHome::index', $memberPortalRoutes);
-        $this->assertStringContainsString('PublicHome::serveUpload', $memberPortalRoutes);
+        $this->assertStringContainsString('PublicAssets::serveUpload', $memberPortalRoutes);
     }
 
     public function testLocaleRouteIsOwnedByMemberPortalModule(): void

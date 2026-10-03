@@ -66,18 +66,22 @@ final class FinanceAuditParishContextContractTest extends CIUnitTestCase
     {
         return [
             ['Treasurer/Controllers/Donations.php', 'donation.create'],
+            ['Treasurer/Controllers/Donations.php', 'donation.update'],
             ['Treasurer/Controllers/Donations.php', 'donation.delete'],
             ['Treasurer/Controllers/Donations.php', 'donation.export_csv'],
             ['Treasurer/Controllers/Donations.php', 'donation.export_pdf'],
             ['Treasurer/Controllers/Donations.php', 'donation.statement_pdf'],
+            ['Treasurer/Controllers/Funds.php', 'fund.export_csv'],
             ['Treasurer/Controllers/Expenses.php', 'expense.create'],
             ['Treasurer/Controllers/Expenses.php', 'expense.update'],
             ['Treasurer/Controllers/Expenses.php', 'expense.delete'],
-            ['Treasurer/Controllers/Expenses.php', 'expense.export_csv'],
-            ['Treasurer/Controllers/Expenses.php', 'expense.export_pdf'],
+            ['Treasurer/Controllers/ExpenseExports.php', 'expense.export_csv'],
+            ['Treasurer/Controllers/ExpenseExports.php', 'expense.export_pdf'],
             ['MemberPortal/Controllers/AnnualPledges.php', 'annual_pledge.create'],
             ['MemberPortal/Controllers/AnnualPledges.php', 'annual_pledge.update'],
             ['MemberPortal/Controllers/AnnualPledges.php', 'annual_pledge.delete'],
+            ['MemberPortal/Controllers/MyDashboard.php', 'donation.statement_pdf'],
+            ['MemberPortal/Controllers/MyDashboard.php', 'donation.view_receipt'],
         ];
     }
 }

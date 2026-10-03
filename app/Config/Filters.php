@@ -348,6 +348,8 @@ class Filters extends BaseFilters
                 'budgets/*',
                 'banking',
                 'banking/*',
+                'funds',
+                'funds/*',
                 'pledges',
                 'pledges/*',
                 'treasurer',

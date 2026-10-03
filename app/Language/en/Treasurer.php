@@ -19,6 +19,8 @@ return [
     'donationDeleteFailed' => 'Failed to delete donation',
     'donationUpdated' => 'Donation updated successfully',
     'donationUpdateFailed' => 'Failed to update donation',
+    'editDonationTitle' => 'Edit Donation',
+    'updateDonation' => 'Update Donation',
     'donationExportsRespectFilters' => 'Exports respect the current donation filters.',
     'donationsExportTitle' => 'Donations Export',
     'noDonationsForFilters' => 'No donations found for the selected filters.',

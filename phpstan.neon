@@ -7,6 +7,7 @@ parameters:
     scanFiles:
         - phpstan-stubs.php
         - app/Helpers/followup_template_helper.php
+        - app/Helpers/liturgy_i18n_helper.php
     excludePaths:
         - app/Database/Migrations/*
     reportUnmatchedIgnoredErrors: false

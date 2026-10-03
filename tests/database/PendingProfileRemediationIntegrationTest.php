@@ -7,7 +7,7 @@ use CodeIgniter\Test\CIUnitTestCase;
 use CodeIgniter\Test\DatabaseTestTrait;
 use Config\Services;
 use Diocese\Controllers\RegistrationRequests;
-use MemberPortal\Controllers\Profile;
+use MemberPortal\Controllers\ProfileOnboarding;
 
 /**
  * Verification of Pending Profile lifecycle remediation:
@@ -162,7 +162,7 @@ final class PendingProfileRemediationIntegrationTest extends CIUnitTestCase
         $request->setGlobal('post', $postData);
         $request->setGlobal('request', $postData);
 
-        $controller = new Profile();
+        $controller = new ProfileOnboarding();
         $controller->initController($request, service('response'), service('logger'));
         $result = $controller->completeSubmit();
 
@@ -214,7 +214,7 @@ final class PendingProfileRemediationIntegrationTest extends CIUnitTestCase
         $request->setGlobal('post', $postData);
         $request->setGlobal('request', $postData);
 
-        $controller = new Profile();
+        $controller = new ProfileOnboarding();
         $controller->initController($request, service('response'), service('logger'));
         $result = $controller->completeSubmit();
 
@@ -240,7 +240,7 @@ final class PendingProfileRemediationIntegrationTest extends CIUnitTestCase
         $this->injectAuthUser($userId, false);
 
         $request = service('request');
-        $controller = new Profile();
+        $controller = new ProfileOnboarding();
         $controller->initController($request, service('response'), service('logger'));
 
         // 1. GET /profile/complete

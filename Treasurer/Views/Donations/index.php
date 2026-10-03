@@ -311,8 +311,13 @@ $donationMethodLabelMap = [
                                 </td>
                                 <td>
                                     <div class="d-inline-flex flex-nowrap gap-1 align-items-center">
+                                        <?php if (auth()->user()->can('donation.edit')): ?>
+                                            <a href="<?= base_url('donations/edit/' . (int) $donation['id']) ?>" class="btn btn-sm btn-outline-secondary" aria-label="<?= esc(lang('App.edit')) ?>">
+                                                <i class="bi bi-pencil" aria-hidden="true"></i>
+                                            </a>
+                                        <?php endif; ?>
                                         <?php if (auth()->user()->can('donation.delete')): ?>
-                                            <button class="btn btn-sm btn-danger" onclick="deleteDonation(<?= $donation['id'] ?>)" aria-label="<?= esc(lang('App.delete')) ?>">
+                                            <button class="btn btn-sm btn-outline-danger" onclick="deleteDonation(<?= $donation['id'] ?>)" aria-label="<?= esc(lang('App.delete')) ?>">
                                                 <i class="bi bi-trash" aria-hidden="true"></i>
                                             </button>
                                         <?php endif; ?>
