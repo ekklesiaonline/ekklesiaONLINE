@@ -8,6 +8,7 @@
 - Hierarchy: System → Province → Diocese → Parish → Personal.
 - `BaseController::resolveDashboardScope()` is the single source of truth for landing-path resolution.
 - `BaseController::isElevatedAdmin()` is the single source of truth for top-tier admins.
+- Deanery is a geographic scope (`diocese → deanery → parish`), not an administrative tier; never create Shield groups for holy orders or ecclesiastical offices (`bishop`, `priest`, `deacon`, `rector`, `dean`).
 - New parish-tier dashboards live in the `Parish/` namespace under `/parish/*`.
 - Old `/dashboard` and `/treasurer/dashboard` URLs are deprecated redirect shims.
 
@@ -43,6 +44,7 @@
 - For permission/scope issues, use `/parish-permissions` or `/permission-denied`.
 - For audit, observability, and localization questions, use `/audit-logging` or `/localization`.
 - For Sunday attendance chart rules, use `/sunday-attendance-charts`.
+- For clergy ordination, canonical status, deaneries, and scoped authorization planning, use `/episcopal-clergy-authz-planning`.
 
 ## Security & Onboarding Conventions
 

@@ -13,6 +13,9 @@ trigger: always_on
 - **User Discovery**: Use `auth()->getProvider()` to fetch/manipulate user instances rather than instantiating raw DB models directly.
 - **Config & Actions**: Do not modify `Config/Auth.php` or `Config/AuthGroups.php` without ensuring the `Actions` array handles 2FA and email activation cleanly.
 - Never bypass `pending_review` gating except via `BaseController::canBypassPendingReviewGate()`.
+- **Shield Groups vs. Ecclesial Orders/Offices**: Never create Shield groups for `bishop`, `priest`, `deacon`, `rector`, `cathedral_dean`, or `regional_dean`. Shield groups represent coarse app account tiers (`systemadmin`, `provinceadmin`, `dioceseadmin`, `parishadmin`, `clergy`, and lay). The `clergy` group is a portal-compatibility role, not ordination proof.
+- **Scoped Authorization Formula**: Sensitive pastoral and governance actions require: authenticated user + Shield route permission + active person-linked verified order (when an ordained function) + currently approved compatible office/delegation + exact target scope + current canonical standing (uninhibited/unsuspended). Account mutations additionally enforce `AdminHierarchyGuard`.
+- **Managed Access Grants (`clergy_access_grant`)**: Permissions scoped to entities must track provenance (`grant_type`: `office` vs `delegation`, `source_position_id`, `granted_by_user_id`, term limits). Revocation removes only managed permissions whose backing sources are terminated; never wipe unmanaged/manual direct grants blindly.
 
 ## Validation & Forms
 - Use CI4’s `Validation` class or `$this->validate()` for every form/POST endpoint.

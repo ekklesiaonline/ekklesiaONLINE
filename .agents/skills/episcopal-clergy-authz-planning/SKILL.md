@@ -1,0 +1,38 @@
+---
+name: episcopal-clergy-authz-planning
+description: Analyze and plan Episcopal clergy ordination, office, deanery, and territorial authorization for CodeIgniter 4 and Shield applications. Use when reconciling church offices with admin groups, designing scoped role-permission matrices, reviewing migrations, or planning safe transitions of existing clergy accounts.
+---
+
+# Episcopal Clergy Authorization Planning
+
+## Purpose
+
+Turn a proposed clergy/group hierarchy into an evidence-backed, least-privilege schema and migration plan. Keep ecclesial identity, canonical office, territorial jurisdiction, and software administration separate. Do not treat this skill as proof of any individual diocese's canon law; verify local variations before implementing approvals.
+
+## Workflow
+
+1. **Read the current instructions and proposed change.** Check workspace rules and nested `AGENTS.md`, inspect user attachments, then trace the real auth, account-target hierarchy, route filters, group permission matrix, person/profile link, office model, diocesan/parish hierarchy, report workflow, migrations, and tests. Prefer code and the *live migrated schema* to old prose or a schema snapshot. Check that `user_scope_assignment`-like tables are not obsolete before proposing reuse.
+2. **Separate four axes.** Write down (a) ordained order and canonical status; (b) approved, dated office; (c) admin group/rank for account mutation and landing; (d) app capability with exact entity scope. A bishop may also be an admin, but bishop order cannot silently add an admin group. A rector and a regional dean may be the same person with separate assignments. A region/deanery is a scope, not automatically a new admin tier.
+3. **Verify polity with primary sources.** Fetch current Episcopal Church definitions for rector, ordinary, deacon, and titles; use diocesan sources for deanery/regional-dean variation. Cite factual claims and distinguish a modeling default from binding local policy. Ask a narrow question only when the missing answer materially changes approval/signature semantics; otherwise document the adjustable default.
+4. **Model geography by IDs, not ranks.** Check configured `province → diocese → parish`, and `diocese → deanery → parish` where deanery memberships exist. A parish may have no deanery. Use effective-dated deanery membership, diocese-equality and no-overlap validation; check the target's **current** affiliation for present access, with history used only for attribution. A diocesan grant does not imply another diocese or province rights. A deanery grant covers only member congregations and specifically permitted operations. Keep the app's existing admin-rank/account-target guard separate.
+5. **Inventory dangerous current grants.** Compare Shield groups, direct `auth_permissions_users` rows, the sync seeder's actual add/remove behavior, controller-specific guards, and menu policy. Find mismatches: e.g., generic clergy groups granting report finalization, app admins receiving ecclesial approval, free-form office codes or submitted `clergy_order` treated as verified, `member.edit` used to appoint clergy, and report model/schema drift. State these as findings, not universal facts; they depend on the repository version.
+6. **Produce a concrete design.** Define person-linked ordination evidence/status, canonical residence/licence, time-bound office assignments, deanery and congregation membership, reviewed user-to-person links, narrowly scoped managed permissions with grant provenance, audit and revoke paths, role-to-order eligibility, and active/expired/inhibited behavior. Specify MySQL types, FKs, indexes, unique and temporal invariants; call out which cross-table/interval constraints need service transactions or triggers. Retain multiple concurrent offices. Avoid creating global Shield groups for bishop/priest/deacon/rector/dean.
+7. **Map action → actor → scope → exception.** Separate bishop's limited diocesan report powers, priest-in-charge parish finalization, cathedral dean parish office, regional dean's pastoral coordination, and technical admin roles. A delegated signatory needs issuer, local-canon eligibility, territory, term, revocation and recorded on-behalf-of identity. Do not equate a technical correction with an ecclesial signature. Require the route-level Shield gate **and** a per-target scoped service check; apply user-mutation hierarchy guards additionally.
+8. **Draft safe migration, not automatic authority.** Generate CI4 migration/test boilerplate with `php spark` when working in a CI4 project. Stage existing clergy group memberships and leadership rows as **unverified review candidates**, never as verified ordinations or deanery placements. Prefer primary `user_person` links, audit profile/position conflicts, preserve unmatched people, do not invent deanery membership, and do not auto-add/revoke Shield permissions. Include a dry-run inventory, MySQL clone rehearsal, backup/forward-fix, and staged entitlement reconciliation with provenance. Do not run a draft against production.
+9. **Validate and deliver.** Test same-province cross-diocese denial, deanery A/B containment, no-deanery parish, membership transfer, suspended bishop, rector versus regional dean, stale direct grants, login-less clergy, report-signature segregation, and account-target ranks. Run project tests before declaring code complete. Deliver a phased plan, schema specification, explicit permission matrix, and migration draft when requested. Mark assumptions and unresolved local-canon approvals plainly; cite sources.
+
+## Decision checklist
+
+| Question                       | Default when no local policy is supplied                                                                                  |
+| ------------------------------ | ------------------------------------------------------------------------------------------------------------------------  |
+| Geographic coverage            | Any *configured* Episcopal diocese; no automatic province or TEC rights.                                                  |
+| Diocesan bishop                | Active, verified ordinary: narrow diocese-scoped pastoral/report approval only; separate app admin delegation.            |
+| Parish signatory               | Current designated priest-in-charge of that congregation; ordinary or explicitly eligible delegate for diocesan approval. |
+| Cathedral versus regional dean | Two separate offices: cathedral-parish scope versus bishop-appointed deanery scope; neither is a diocesan admin group.    |
+| Unlinked clergy                | Person-level history allowed without portal login; no app permissions until an approved, linked account exists.           |
+
+## Useful references
+
+- Episcopal Church: [rector](https://www.episcopalchurch.org/glossary/rector/), [ordinary](https://www.episcopalchurch.org/glossary/ordinary-of-a-diocese/), [deacon](https://www.episcopalchurch.org/glossary/deacon/), [clergy titles](https://www.episcopalchurch.org/the-undercroft-2/communications-and-branding-resources/writing-style-guide/titles/).
+- Regional variation: [Massachusetts deaneries](https://www.diomass.org/about-us/deaneries-and-regions) and [Virginia regional deans](https://episcopalvirginia.org/who-we-are/governance/regions-deans-presidents/).
+- In ekklesiaRD specifically, first inspect `AGENTS.md`, `app/Controllers/AdminHierarchyGuard.php`, `app/Config/AuthGroups.php`, `app/Models/LeadershipPositionModel.php`, `app/Services/LeadershipPositionService.php`, `app/Database/Seeds/PermissionRoleSyncSeeder.php`, `docs/ROLE_MENU_PERMISSION_POLICY.md`, and the current migrations. These paths are examples, not a substitute for repository discovery.
