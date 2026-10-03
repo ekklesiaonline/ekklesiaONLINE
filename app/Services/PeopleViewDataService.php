@@ -11,6 +11,8 @@ use CodeIgniter\Database\BaseConnection;
  * Handles:
  * - Profile-person link repair (ensureProfilePersonLink)
  * - Status history actor name enrichment (enrichStatusHistory)
+ * - Parish-scoped profile lookup for person-management endpoints
+ *   (profileForPersonManagement — shared by the People* split controllers)
  */
 class PeopleViewDataService
 {
@@ -128,5 +130,21 @@ class PeopleViewDataService
         unset($entry);
 
         return $history;
+    }
+
+    /**
+     * Load a profile scoped to the current parish for person-management
+     * endpoints. Matches on the canonical person_id with linked_user_id as
+     * a bridge for profiles whose person_id is unset/dangling.
+     */
+    public function profileForPersonManagement(int $profileId, int $parishId): ?array
+    {
+        return $this->db->table('profile p')
+            ->select('p.*')
+            ->join('parish_affiliation pa', '(pa.person_id = p.person_id OR pa.linked_user_id = p.user_id) AND pa.deleted_at IS NULL', 'inner')
+            ->where('p.id', $profileId)
+            ->where('pa.parish_id', $parishId)
+            ->get()
+            ->getRowArray();
     }
 }

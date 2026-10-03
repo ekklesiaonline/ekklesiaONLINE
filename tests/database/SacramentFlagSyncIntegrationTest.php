@@ -10,7 +10,7 @@ use CodeIgniter\Test\DatabaseTestTrait;
 
 /**
  * Integration test for the sacrament -> membership flag + profile date sync
- * flow that {@see \Clergy\Controllers\People::addSacrament()} triggers via
+ * flow that {@see \Clergy\Controllers\PeopleSacraments::addSacrament()} triggers via
  * {@see SacramentFlagSyncService::applyForPerson()}.
  *
  * Verifies the end-to-end behavior including person_status_history recording.
