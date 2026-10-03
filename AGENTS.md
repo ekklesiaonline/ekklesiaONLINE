@@ -4,7 +4,7 @@
 
 - CodeIgniter 4.7+ with Shield 1.4+ (v1.4.1) for auth.
 - Dependency management via Composer.
-- Backend: PHP 8.2+, MySQL 8.0. Frontend: Bootstrap 5, jQuery/vanilla JS, Chart.js.
+- Backend: PHP 8.5+, MySQL 8.0. Frontend: Bootstrap 5, jQuery/vanilla JS, Chart.js.
 - Hierarchy: System → Province → Diocese → Parish → Personal.
 - `BaseController::resolveDashboardScope()` is the single source of truth for landing-path resolution.
 - `BaseController::isElevatedAdmin()` is the single source of truth for top-tier admins.
