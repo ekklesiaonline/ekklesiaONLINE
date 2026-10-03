@@ -58,8 +58,8 @@ final class FollowupManualTaskTest extends CIUnitTestCase
         session()->set('selected_parish_id', 301);
         $this->seedParish(301);
         $this->withRoutes([
-            ['POST', 'followup-workflow/manual-trigger/(:num)/(:num)', '\\Clergy\\Controllers\\FollowupWorkflow::manual_trigger/$1/$2'],
-            ['POST', 'followup-workflow/tasks/complete/(:num)', '\\Clergy\\Controllers\\FollowupWorkflow::completeCallTask/$1'],
+            ['POST', 'followup-workflow/manual-trigger/(:num)/(:num)', '\\Clergy\\Controllers\\FollowupTasks::manual_trigger/$1/$2'],
+            ['POST', 'followup-workflow/tasks/complete/(:num)', '\\Clergy\\Controllers\\FollowupTasks::completeCallTask/$1'],
         ]);
     }
 

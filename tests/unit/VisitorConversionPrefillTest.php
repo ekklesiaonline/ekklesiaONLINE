@@ -287,7 +287,7 @@ final class VisitorConversionPrefillTest extends CIUnitTestCase
      */
     public function testPromoteEndpointContract(): void
     {
-        $visitors = (string) file_get_contents(ROOTPATH . 'Clergy/Controllers/Visitors.php');
+        $visitors = (string) file_get_contents(ROOTPATH . 'Clergy/Controllers/VisitorLifecycle.php');
         $members  = (string) file_get_contents(ROOTPATH . 'Clergy/Controllers/Members.php');
         $view     = (string) file_get_contents(ROOTPATH . 'Clergy/Views/Members/create.php');
         $routes   = (string) file_get_contents(ROOTPATH . 'Clergy/Config/Routes.php');

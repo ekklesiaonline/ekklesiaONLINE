@@ -4,7 +4,6 @@ namespace Clergy\Controllers;
 
 use App\Controllers\AdminHierarchyGuard;
 use App\Controllers\BaseController;
-use App\Libraries\AddressHelper;
 use App\Libraries\DataEncryption;
 use App\Libraries\PhoneHelper;
 use App\Libraries\SchemaResolver;
@@ -23,7 +22,7 @@ class Members extends BaseController
     protected $parishModel;
     protected $memberParishAffiliationModel;
     protected $nonPortalProvisioningService;
-    private MemberAffiliationService $memberAffiliations;
+    protected MemberAffiliationService $memberAffiliations;
     private ProvinceStaffDirectoryService $provinceStaffDirectory;
     private HierarchyService $hierarchyService;
 
@@ -672,14 +671,6 @@ class Members extends BaseController
     }
 
     /**
-     * Bulk transfer members to another parish with reason logging
-     */
-    public function transfer()
-    {
-        return redirect()->to('/members')->with('error', lang('App.errorUnauthorized'));
-    }
-
-    /**
      * Delete member
      */
     public function delete($id)
@@ -836,208 +827,6 @@ class Members extends BaseController
         return $this->jsonResponse($members);
     }
 
-    public function attachParish()
-    {
-        if ($redirect = $this->requirePermission('member.edit')) {
-            return $redirect;
-        }
-
-        $profileId = (int) $this->request->getPost('profile_id');
-        $parishId = (int) $this->request->getPost('parish_id');
-        $allowedStatuses = ['visitor', 'regular_attender', 'member', 'inactive', 'transferred', 'deceased'];
-        $status = MembershipStatusService::normalizeAffiliationStatus((string) ($this->request->getPost('membership_status') ?? 'visitor'));
-        if (!in_array($status, $allowedStatuses, true)) {
-            $status = 'visitor';
-        }
-        $isHome = (int) ($this->request->getPost('is_primary') ?? 0) === 1;
-
-        $operationalParishId = (int) ($this->getOperationalParishId() ?? 0);
-        $profile = service('profileLookup')->findProfileInParishScope($profileId, $operationalParishId);
-        if (!$profile) {
-            return $this->jsonResponse($this->apiErrorPayload(lang('Clergy.memberNotFoundInScope'), 404, 'MEMBER_NOT_FOUND_IN_SCOPE'), 404);
-        }
-
-        if ($code = $this->guardTargetUserMutation((int) ($profile['user_id'] ?? 0))) {
-            return $this->jsonResponse($this->apiErrorPayload($this->hierarchyGuardMessage($code), 403, 'TARGET_OUTRANKS_ACTOR'), 403);
-        }
-
-        $targetParish = $this->parishModel->findWithHierarchy($parishId);
-        if (!$targetParish || !$this->isParishWithinCurrentDioceseScope((int) ($targetParish['diocese_id'] ?? 0))) {
-            return $this->jsonResponse($this->apiErrorPayload(lang('Clergy.targetParishOutsideDiocesan'), 403, 'PARISH_OUTSIDE_DIOCESAN_SCOPE'), 403);
-        }
-
-        if (!service('parishScopeValidator')->canActorAccessParish(auth()->user(), $parishId)) {
-            return $this->jsonResponse($this->apiErrorPayload(lang('Clergy.targetParishOutsideScope'), 403, 'PARISH_OUTSIDE_SCOPE'), 403);
-        }
-
-        $failure = $this->memberAffiliations->attachToParish(
-            (int) $profile['user_id'],
-            $parishId,
-            $status,
-            $isHome,
-            (int) $profile['id'],
-            isset($profile['province_id']) ? (int) $profile['province_id'] : null,
-            isset($profile['diocese_id']) ? (int) $profile['diocese_id'] : null
-        );
-
-        if ($failure !== null) {
-            return match ($failure) {
-                'attach' => $this->jsonResponse($this->apiErrorPayload(lang('Clergy.unableAttachParish'), 500, 'PARISH_ATTACH_FAILED'), 500),
-                'home' => $this->jsonResponse($this->apiErrorPayload(lang('Clergy.unableSetHomeParish'), 500, 'HOME_PARISH_UPDATE_FAILED'), 500),
-                'sync' => $this->jsonResponse($this->apiErrorPayload(lang('Clergy.unableSyncProfileCompat'), 500, 'PROFILE_COMPAT_SYNC_FAILED'), 500),
-                default => $this->jsonResponse($this->apiErrorPayload(lang('Clergy.attachTransactionFailed'), 500, 'PARISH_ATTACH_TRANSACTION_FAILED'), 500),
-            };
-        }
-
-        $this->audit()->log('member.parish_attached', [
-            'parish_id' => $parishId,
-            'entity_type' => 'parish_affiliation',
-            'entity_id' => (int) $profile['user_id'],
-            'new_values' => [
-                'profile_id' => $profileId,
-                'parish_id' => $parishId,
-                'membership_status' => $status,
-                'is_primary' => $isHome,
-            ],
-        ]);
-
-        return $this->jsonResponse(['success' => true, 'message' => lang('Clergy.parishAttachedSuccess')]);
-    }
-
-    public function detachParish()
-    {
-        if ($redirect = $this->requirePermission('member.edit')) {
-            return $redirect;
-        }
-
-        $profileId = (int) $this->request->getPost('profile_id');
-        $parishId = (int) $this->request->getPost('parish_id');
-
-        $operationalParishId = (int) ($this->getOperationalParishId() ?? 0);
-        $profile = service('profileLookup')->findProfileInParishScope($profileId, $operationalParishId);
-        if (!$profile) {
-            return $this->jsonResponse($this->apiErrorPayload(lang('Clergy.memberNotFoundInScope'), 404, 'MEMBER_NOT_FOUND_IN_SCOPE'), 404);
-        }
-
-        if ($code = $this->guardTargetUserMutation((int) ($profile['user_id'] ?? 0))) {
-            return $this->jsonResponse($this->apiErrorPayload($this->hierarchyGuardMessage($code), 403, 'TARGET_OUTRANKS_ACTOR'), 403);
-        }
-
-        $affiliations = $this->getMemberParishAffiliationModel()->getUserAffiliations((int) $profile['user_id']);
-        if (count($affiliations) <= 1) {
-            return $this->jsonResponse($this->apiErrorPayload(lang('Clergy.memberMustRemainAttached'), 400, 'MEMBER_LAST_PARISH_CONSTRAINT'), 400);
-        }
-
-        $targetParish = $this->parishModel->findWithHierarchy($parishId);
-        if (!$targetParish || !$this->isParishWithinCurrentDioceseScope((int) ($targetParish['diocese_id'] ?? 0))) {
-            return $this->jsonResponse($this->apiErrorPayload(lang('Clergy.targetParishOutsideDiocesan'), 403, 'PARISH_OUTSIDE_DIOCESAN_SCOPE'), 403);
-        }
-
-        if (!service('parishScopeValidator')->canActorAccessParish(auth()->user(), $parishId)) {
-            return $this->jsonResponse($this->apiErrorPayload(lang('Clergy.targetParishOutsideScope'), 403, 'PARISH_OUTSIDE_SCOPE'), 403);
-        }
-
-        $failure = $this->memberAffiliations->detachFromParish(
-            (int) $profile['user_id'],
-            $parishId,
-            (int) $profile['id'],
-            isset($profile['province_id']) ? (int) $profile['province_id'] : null,
-            isset($profile['diocese_id']) ? (int) $profile['diocese_id'] : null
-        );
-
-        if ($failure !== null) {
-            return match ($failure) {
-                'detach' => $this->jsonResponse($this->apiErrorPayload(lang('Clergy.unableDetachParish'), 500, 'PARISH_DETACH_FAILED'), 500),
-                'sync' => $this->jsonResponse($this->apiErrorPayload(lang('Clergy.unableSyncProfileCompat'), 500, 'PROFILE_COMPAT_SYNC_FAILED'), 500),
-                default => $this->jsonResponse($this->apiErrorPayload(lang('Clergy.detachTransactionFailed'), 500, 'PARISH_DETACH_TRANSACTION_FAILED'), 500),
-            };
-        }
-
-        $this->audit()->log('member.parish_detached', [
-            'parish_id' => $parishId,
-            'entity_type' => 'parish_affiliation',
-            'entity_id' => (int) $profile['user_id'],
-            'old_values' => [
-                'profile_id' => $profileId,
-                'parish_id' => $parishId,
-            ],
-        ]);
-
-        return $this->jsonResponse(['success' => true, 'message' => lang('Clergy.parishDetachedSuccess')]);
-    }
-
-    public function setHomeParish()
-    {
-        if ($redirect = $this->requirePermission('member.edit')) {
-            return $redirect;
-        }
-
-        $profileId = (int) $this->request->getPost('profile_id');
-        $parishId = (int) $this->request->getPost('parish_id');
-
-        $operationalParishId = (int) ($this->getOperationalParishId() ?? 0);
-        $profile = service('profileLookup')->findProfileInParishScope($profileId, $operationalParishId);
-        if (!$profile) {
-            return $this->jsonResponse($this->apiErrorPayload(lang('Clergy.memberNotFoundInScope'), 404, 'MEMBER_NOT_FOUND_IN_SCOPE'), 404);
-        }
-
-        if ($code = $this->guardTargetUserMutation((int) ($profile['user_id'] ?? 0))) {
-            return $this->jsonResponse($this->apiErrorPayload($this->hierarchyGuardMessage($code), 403, 'TARGET_OUTRANKS_ACTOR'), 403);
-        }
-
-        $affiliated = $this->getMemberParishAffiliationModel()->isUserAffiliatedWithParish((int) $profile['user_id'], $parishId, true);
-        if (!$affiliated) {
-            return $this->jsonResponse($this->apiErrorPayload(lang('Clergy.memberNotAffiliatedParish'), 400, 'PARISH_AFFILIATION_REQUIRED'), 400);
-        }
-
-        $targetParish = $this->parishModel->findWithHierarchy($parishId);
-        if (!$targetParish || !$this->isParishWithinCurrentDioceseScope((int) ($targetParish['diocese_id'] ?? 0))) {
-            return $this->jsonResponse($this->apiErrorPayload(lang('Clergy.targetParishOutsideDiocesan'), 403, 'PARISH_OUTSIDE_DIOCESAN_SCOPE'), 403);
-        }
-
-        if (!service('parishScopeValidator')->canActorAccessParish(auth()->user(), $parishId)) {
-            return $this->jsonResponse($this->apiErrorPayload(lang('Clergy.targetParishOutsideScope'), 403, 'PARISH_OUTSIDE_SCOPE'), 403);
-        }
-
-        $failure = $this->memberAffiliations->setHomeParish(
-            (int) $profile['user_id'],
-            $parishId,
-            (int) $profile['id'],
-            isset($profile['province_id']) ? (int) $profile['province_id'] : null,
-            isset($profile['diocese_id']) ? (int) $profile['diocese_id'] : null
-        );
-
-        if ($failure !== null) {
-            return match ($failure) {
-                'home' => $this->jsonResponse($this->apiErrorPayload(lang('Clergy.unableSetHomeParish'), 500, 'HOME_PARISH_UPDATE_FAILED'), 500),
-                'sync' => $this->jsonResponse($this->apiErrorPayload(lang('Clergy.unableSyncProfileCompat'), 500, 'PROFILE_COMPAT_SYNC_FAILED'), 500),
-                default => $this->jsonResponse($this->apiErrorPayload(lang('Clergy.setHomeTransactionFailed'), 500, 'HOME_PARISH_TRANSACTION_FAILED'), 500),
-            };
-        }
-
-        $this->audit()->log('member.home_parish_changed', [
-            'parish_id' => $parishId,
-            'entity_type' => 'parish_affiliation',
-            'entity_id' => (int) $profile['user_id'],
-            'new_values' => [
-                'profile_id' => $profileId,
-                'parish_id' => $parishId,
-            ],
-        ]);
-
-        return $this->jsonResponse(['success' => true, 'message' => lang('Clergy.homeParishUpdatedSuccess')]);
-    }
-
-    /**
-     * Reassign diocesan staff to another parish (ProvinceAdmin only, AJAX).
-     * Province admins may only reassign provinceadmin-role users within their province.
-     * Diocesan/parish staff (diocesanadmin, parishadmin, clergy) are managed by their diocese.
-     */
-    public function reassign()
-    {
-        return $this->jsonResponse($this->apiErrorPayload(lang('App.errorUnauthorized'), 403, 'PROVINCE_WRITE_DISABLED'), 403);
-    }
-
     protected function resolveProvinceScopeForStaffManagement(): array
     {
         $profile = $this->getProfile();
@@ -1060,31 +849,6 @@ class Members extends BaseController
         return ['province_id' => $provinceId];
     }
 
-    /**
-     * @deprecated Scoped lookups are now performed at the query level via
-     * ProfileModel::getProfileWithUser($id, $parishId). Keep helper removed to
-     * prevent accidental post-fetch scope checks that could leak data.
-     */
-
-    protected function getAttachableParishesForCurrentScope(int $userId): array
-    {
-        $currentParishId = (int) ($this->getOperationalParishId() ?? 0);
-        if ($currentParishId <= 0) {
-            return [];
-        }
-
-        $currentParish = $this->parishModel->findWithHierarchy($currentParishId);
-        $dioceseId = (int) ($currentParish['diocese_id'] ?? 0);
-        if ($dioceseId <= 0) {
-            return [];
-        }
-
-        $existingAffiliations = $this->getMemberParishAffiliationModel()->getUserAffiliations($userId);
-        $existingParishIds = array_map(static fn(array $row): int => (int) ($row['parish_id'] ?? 0), $existingAffiliations);
-
-        return $this->memberAffiliations->attachableParishes($dioceseId, $existingParishIds);
-    }
-
     protected function isParishWithinCurrentDioceseScope(int $targetDioceseId): bool
     {
         if ($targetDioceseId <= 0) {
@@ -1104,11 +868,6 @@ class Members extends BaseController
         }
 
         return false;
-    }
-
-    protected function syncProfileParishMirror(int $profileId, int $userId, ?int $fallbackProvinceId = null, ?int $fallbackDioceseId = null): bool
-    {
-        return $this->memberAffiliations->syncProfileParishMirror($profileId, $userId, $fallbackProvinceId, $fallbackDioceseId);
     }
 
     protected function resolveSelectedDioceseForProvince(int $provinceId): ?int
@@ -1210,42 +969,5 @@ class Members extends BaseController
     private function resolveExistingProfileTable($db): ?string
     {
         return (new SchemaResolver($db))->resolveExistingProfileTable();
-    }
-
-    // -------------------------------------------------------------------------
-    // Province Staff CRUD  (province admin only — manages provinceadmin accounts
-    // that are scoped to the same province; cannot touch diocesan/parish staff)
-    // -------------------------------------------------------------------------
-
-    /**
-     * AJAX: Return province staff profile data for edit-modal pre-population.
-     */
-    public function getProvinceStaff(int $profileId)
-    {
-        return $this->jsonResponse($this->apiErrorPayload(lang('App.errorUnauthorized'), 403, 'PROVINCE_WRITE_DISABLED'), 403);
-    }
-
-    /**
-     * AJAX: Create a new province-level staff member (assigns provinceadmin role).
-     */
-    public function storeProvinceStaff()
-    {
-        return $this->jsonResponse($this->apiErrorPayload(lang('App.errorUnauthorized'), 403, 'PROVINCE_WRITE_DISABLED'), 403);
-    }
-
-    /**
-     * AJAX: Update a province staff profile (name / phone only).
-     */
-    public function updateProvinceStaff(int $profileId)
-    {
-        return $this->jsonResponse($this->apiErrorPayload(lang('App.errorUnauthorized'), 403, 'PROVINCE_WRITE_DISABLED'), 403);
-    }
-
-    /**
-     * AJAX: Delete a province staff member.
-     */
-    public function deleteProvinceStaff(int $profileId)
-    {
-        return $this->jsonResponse($this->apiErrorPayload(lang('App.errorUnauthorized'), 403, 'PROVINCE_WRITE_DISABLED'), 403);
     }
 }

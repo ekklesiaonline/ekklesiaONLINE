@@ -9,7 +9,7 @@ use CodeIgniter\Router\RouteCollection;
  */
 $routes->group('', ['filter' => 'session'], function ($routes) {
     // Navbar badge poller – returns pending call-task count as JSON.
-    $routes->get('api/followup/pending-calls', '\\Clergy\\Controllers\\Visitors::pendingCallsApi', ['filter' => 'permission:followup.view']);
+    $routes->get('api/followup/pending-calls', '\\Clergy\\Controllers\\VisitorFollowup::pendingCallsApi', ['filter' => 'permission:followup.view']);
 
     $routes->group('clergy', ['filter' => 'permission:member.view'], function ($routes) {
         $routes->get('dashboard', '\\Clergy\\Controllers\\Dashboard::index');
@@ -36,9 +36,9 @@ $routes->group('', ['filter' => 'session'], function ($routes) {
             $routes->post('hard-delete/(:num)', '\\Clergy\\Controllers\\MemberMerge::hardDelete/$1');
         });
 
-        $routes->post('attach-parish', '\\Clergy\\Controllers\\Members::attachParish', ['filter' => 'permission:member.edit']);
-        $routes->post('detach-parish', '\\Clergy\\Controllers\\Members::detachParish', ['filter' => 'permission:member.edit']);
-        $routes->post('set-home-parish', '\\Clergy\\Controllers\\Members::setHomeParish', ['filter' => 'permission:member.edit']);
+        $routes->post('attach-parish', '\\Clergy\\Controllers\\MembersAffiliation::attachParish', ['filter' => 'permission:member.edit']);
+        $routes->post('detach-parish', '\\Clergy\\Controllers\\MembersAffiliation::detachParish', ['filter' => 'permission:member.edit']);
+        $routes->post('set-home-parish', '\\Clergy\\Controllers\\MembersAffiliation::setHomeParish', ['filter' => 'permission:member.edit']);
         $routes->post('registrations/approve/(:num)', '\\Diocese\\Controllers\\RegistrationRequests::approve/$1', ['filter' => 'permission:member.edit']);
         $routes->post('registrations/bulk-action', '\\Diocese\\Controllers\\RegistrationRequests::bulkAction', ['filter' => 'permission:member.edit']);
         $routes->post('registrations/dismiss/(:num)', '\\Diocese\\Controllers\\RegistrationRequests::dismiss/$1', ['filter' => 'permission:member.edit']);
@@ -124,21 +124,21 @@ $routes->group('', ['filter' => 'session'], function ($routes) {
         $routes->get('edit/(:num)', '\\Clergy\\Controllers\\Visitors::edit/$1', ['filter' => 'permission:visitor.edit']);
         $routes->post('update/(:num)', '\\Clergy\\Controllers\\Visitors::update/$1', ['filter' => 'permission:visitor.edit']);
         $routes->post('delete/(:num)', '\\Clergy\\Controllers\\Visitors::delete/$1', ['filter' => 'permission:visitor.delete']);
-        $routes->post('promote/(:num)', '\\Clergy\\Controllers\\Visitors::promote/$1', ['filter' => 'permission:visitor.edit']);
-        $routes->post('revert-conversion/(:num)', '\\Clergy\\Controllers\\Visitors::revertConversion/$1', ['filter' => 'permission:visitor.edit']);
-        $routes->post('promote-attender/(:num)', '\\Clergy\\Controllers\\Visitors::promoteAttender/$1', ['filter' => 'permission:visitor.edit']);
-        $routes->post('demote/(:num)', '\\Clergy\\Controllers\\Visitors::demoteToVisitor/$1', ['filter' => 'permission:visitor.edit']);
+        $routes->post('promote/(:num)', '\\Clergy\\Controllers\\VisitorLifecycle::promote/$1', ['filter' => 'permission:visitor.edit']);
+        $routes->post('revert-conversion/(:num)', '\\Clergy\\Controllers\\VisitorLifecycle::revertConversion/$1', ['filter' => 'permission:visitor.edit']);
+        $routes->post('promote-attender/(:num)', '\\Clergy\\Controllers\\VisitorLifecycle::promoteAttender/$1', ['filter' => 'permission:visitor.edit']);
+        $routes->post('demote/(:num)', '\\Clergy\\Controllers\\VisitorLifecycle::demoteToVisitor/$1', ['filter' => 'permission:visitor.edit']);
         // AJAX endpoints
-        $routes->get('followup-status/(:num)', '\\Clergy\\Controllers\\Visitors::getFollowupStatus/$1', ['filter' => 'permission:followup.view']);
-        $routes->post('followup-trigger/(:num)', '\\Clergy\\Controllers\\Visitors::triggerFollowupAction/$1', ['filter' => 'permission:followup.manage']);
-        $routes->post('assign-sequence/(:num)', '\\Clergy\\Controllers\\Visitors::assignSequence/$1', ['filter' => 'permission:followup.manage']);
-        $routes->get('followup-timeline/(:num)', '\\Clergy\\Controllers\\Visitors::followupTimeline/$1', ['filter' => 'permission:followup.view']);
+        $routes->get('followup-status/(:num)', '\\Clergy\\Controllers\\VisitorFollowup::getFollowupStatus/$1', ['filter' => 'permission:followup.view']);
+        $routes->post('followup-trigger/(:num)', '\\Clergy\\Controllers\\VisitorFollowup::triggerFollowupAction/$1', ['filter' => 'permission:followup.manage']);
+        $routes->post('assign-sequence/(:num)', '\\Clergy\\Controllers\\VisitorFollowup::assignSequence/$1', ['filter' => 'permission:followup.manage']);
+        $routes->get('followup-timeline/(:num)', '\\Clergy\\Controllers\\VisitorFollowup::followupTimeline/$1', ['filter' => 'permission:followup.view']);
         // Legacy /visitors/followup-manual/:id — retired name for the same page.
         $routes->get('followup-manual/(:num)', static fn(int $id) => redirect()->to(base_url('visitors/followup-timeline/' . $id)));
-        $routes->post('followup-log/mark-done/(:num)',   '\Clergy\Controllers\Visitors::logMarkDone/$1',   ['filter' => 'permission:followup.manage']);
-        $routes->post('followup-log/reschedule/(:num)',  '\Clergy\Controllers\Visitors::logReschedule/$1', ['filter' => 'permission:followup.manage']);
-        $routes->post('followup-log/skip/(:num)',        '\Clergy\Controllers\Visitors::logSkip/$1',        ['filter' => 'permission:followup.manage']);
-        $routes->post('followup-log/mark-failed/(:num)', '\Clergy\Controllers\Visitors::logMarkFailed/$1',  ['filter' => 'permission:followup.manage']);
+        $routes->post('followup-log/mark-done/(:num)',   '\Clergy\Controllers\VisitorFollowup::logMarkDone/$1',   ['filter' => 'permission:followup.manage']);
+        $routes->post('followup-log/reschedule/(:num)',  '\Clergy\Controllers\VisitorFollowup::logReschedule/$1', ['filter' => 'permission:followup.manage']);
+        $routes->post('followup-log/skip/(:num)',        '\Clergy\Controllers\VisitorFollowup::logSkip/$1',        ['filter' => 'permission:followup.manage']);
+        $routes->post('followup-log/mark-failed/(:num)', '\Clergy\Controllers\VisitorFollowup::logMarkFailed/$1',  ['filter' => 'permission:followup.manage']);
         $routes->post('notes/add/(:num)', '\Clergy\Controllers\Visitors::addNote/$1', ['filter' => 'permission:visitor.edit']);
     });
 
@@ -170,12 +170,12 @@ $routes->group('', ['filter' => 'session'], function ($routes) {
     $routes->post('guests/update/(:num)', '\\Clergy\\Controllers\\Visitors::update/$1', ['filter' => 'permission:visitor.edit']);
     $routes->post('guests/delete/(:num)', '\\Clergy\\Controllers\\Visitors::delete/$1', ['filter' => 'permission:visitor.delete']);
     $routes->post('guests/import/process', '\\Clergy\\Controllers\\Import::processConnectionCards', ['filter' => 'permission:visitor.create']);
-    $routes->post('guests/followup-trigger/(:num)', '\\Clergy\\Controllers\\Visitors::triggerFollowupAction/$1', ['filter' => 'permission:followup.manage']);
-    $routes->post('guests/assign-sequence/(:num)', '\\Clergy\\Controllers\\Visitors::assignSequence/$1', ['filter' => 'permission:followup.manage']);
-    $routes->post('guests/followup-log/mark-done/(:num)',   '\Clergy\Controllers\Visitors::logMarkDone/$1',   ['filter' => 'permission:followup.manage']);
-    $routes->post('guests/followup-log/reschedule/(:num)',  '\Clergy\Controllers\Visitors::logReschedule/$1', ['filter' => 'permission:followup.manage']);
-    $routes->post('guests/followup-log/skip/(:num)',        '\Clergy\Controllers\Visitors::logSkip/$1',        ['filter' => 'permission:followup.manage']);
-    $routes->post('guests/followup-log/mark-failed/(:num)', '\Clergy\Controllers\Visitors::logMarkFailed/$1',  ['filter' => 'permission:followup.manage']);
+    $routes->post('guests/followup-trigger/(:num)', '\\Clergy\\Controllers\\VisitorFollowup::triggerFollowupAction/$1', ['filter' => 'permission:followup.manage']);
+    $routes->post('guests/assign-sequence/(:num)', '\\Clergy\\Controllers\\VisitorFollowup::assignSequence/$1', ['filter' => 'permission:followup.manage']);
+    $routes->post('guests/followup-log/mark-done/(:num)',   '\Clergy\Controllers\VisitorFollowup::logMarkDone/$1',   ['filter' => 'permission:followup.manage']);
+    $routes->post('guests/followup-log/reschedule/(:num)',  '\Clergy\Controllers\VisitorFollowup::logReschedule/$1', ['filter' => 'permission:followup.manage']);
+    $routes->post('guests/followup-log/skip/(:num)',        '\Clergy\Controllers\VisitorFollowup::logSkip/$1',        ['filter' => 'permission:followup.manage']);
+    $routes->post('guests/followup-log/mark-failed/(:num)', '\Clergy\Controllers\VisitorFollowup::logMarkFailed/$1',  ['filter' => 'permission:followup.manage']);
 
     // Legacy followup/* routes retired — redirected to new workflow system.
     $routes->get('followup', static fn() => redirect()->to(base_url('followup-workflow/tasks')));
@@ -191,8 +191,8 @@ $routes->group('', ['filter' => 'session'], function ($routes) {
         $routes->get('edit/(:num)', '\\Clergy\\Controllers\\Events::edit/$1', ['filter' => 'permission:event.edit']);
         $routes->post('update/(:num)', '\\Clergy\\Controllers\\Events::update/$1', ['filter' => 'permission:event.edit']);
         $routes->post('delete/(:num)', '\\Clergy\\Controllers\\Events::delete/$1', ['filter' => 'permission:event.delete']);
-        $routes->post('register/(:num)', '\\Clergy\\Controllers\\Events::register/$1', ['filter' => 'permission:event.register']);
-        $routes->post('registrations/(:num)/status', '\\Clergy\\Controllers\\Events::updateRegistrationStatus/$1', ['filter' => 'permission:event.checkin']);
+        $routes->post('register/(:num)', '\\Clergy\\Controllers\\EventsRegistrations::register/$1', ['filter' => 'permission:event.register']);
+        $routes->post('registrations/(:num)/status', '\\Clergy\\Controllers\\EventsRegistrations::updateRegistrationStatus/$1', ['filter' => 'permission:event.checkin']);
     });
 
     $routes->group('event-calendars', ['filter' => 'permission:event.edit'], function ($routes) {
@@ -205,47 +205,47 @@ $routes->group('', ['filter' => 'session'], function ($routes) {
     // -------------------------------------------------------------------------
     $routes->group('followup-workflow', ['filter' => 'permission:followup.view'], function ($routes) {
         // Sequences – list
-        $routes->get('sequences', '\\Clergy\\Controllers\\FollowupWorkflow::sequences');
+        $routes->get('sequences', '\\Clergy\\Controllers\\FollowupSequences::sequences');
 
         // Sequences – create / edit form
-        $routes->get('sequences/create', '\\Clergy\\Controllers\\FollowupWorkflow::edit_sequence/0', ['filter' => 'permission:followup.manage']);
-        $routes->get('sequences/edit/(:num)', '\\Clergy\\Controllers\\FollowupWorkflow::edit_sequence/$1', ['filter' => 'permission:followup.manage']);
+        $routes->get('sequences/create', '\\Clergy\\Controllers\\FollowupSequences::edit_sequence/0', ['filter' => 'permission:followup.manage']);
+        $routes->get('sequences/edit/(:num)', '\\Clergy\\Controllers\\FollowupSequences::edit_sequence/$1', ['filter' => 'permission:followup.manage']);
 
         // Sequences – save (create = id 0, update = id > 0)
-        $routes->post('sequences/save', '\\Clergy\\Controllers\\FollowupWorkflow::saveSequence/0', ['filter' => 'permission:followup.manage']);
-        $routes->post('sequences/save/(:num)', '\\Clergy\\Controllers\\FollowupWorkflow::saveSequence/$1', ['filter' => 'permission:followup.manage']);
+        $routes->post('sequences/save', '\\Clergy\\Controllers\\FollowupSequences::saveSequence/0', ['filter' => 'permission:followup.manage']);
+        $routes->post('sequences/save/(:num)', '\\Clergy\\Controllers\\FollowupSequences::saveSequence/$1', ['filter' => 'permission:followup.manage']);
 
         // Sequences – AJAX toggle / delete / clone-from-upstream
-        $routes->post('sequences/toggle/(:num)', '\\Clergy\\Controllers\\FollowupWorkflow::toggleSequence/$1', ['filter' => 'permission:followup.manage']);
-        $routes->post('sequences/set-default/(:num)', '\\Clergy\\Controllers\\FollowupWorkflow::setDefaultSequence/$1', ['filter' => 'permission:followup.manage']);
-        $routes->post('sequences/delete/(:num)', '\\Clergy\\Controllers\\FollowupWorkflow::deleteSequence/$1', ['filter' => 'permission:followup.manage']);
-        $routes->post('sequences/clone/(:num)', '\\Clergy\\Controllers\\FollowupWorkflow::cloneSequence/$1', ['filter' => 'permission:followup.manage']);
+        $routes->post('sequences/toggle/(:num)', '\\Clergy\\Controllers\\FollowupSequences::toggleSequence/$1', ['filter' => 'permission:followup.manage']);
+        $routes->post('sequences/set-default/(:num)', '\\Clergy\\Controllers\\FollowupSequences::setDefaultSequence/$1', ['filter' => 'permission:followup.manage']);
+        $routes->post('sequences/delete/(:num)', '\\Clergy\\Controllers\\FollowupSequences::deleteSequence/$1', ['filter' => 'permission:followup.manage']);
+        $routes->post('sequences/clone/(:num)', '\\Clergy\\Controllers\\FollowupSequences::cloneSequence/$1', ['filter' => 'permission:followup.manage']);
 
         // Actions – AJAX save (create = id 0, update = id > 0) and delete
-        $routes->post('actions/save', '\\Clergy\\Controllers\\FollowupWorkflow::saveAction/0', ['filter' => 'permission:followup.manage']);
-        $routes->post('actions/save/(:num)', '\\Clergy\\Controllers\\FollowupWorkflow::saveAction/$1', ['filter' => 'permission:followup.manage']);
-        $routes->post('actions/delete/(:num)', '\\Clergy\\Controllers\\FollowupWorkflow::deleteAction/$1', ['filter' => 'permission:followup.manage']);
+        $routes->post('actions/save', '\\Clergy\\Controllers\\FollowupSequences::saveAction/0', ['filter' => 'permission:followup.manage']);
+        $routes->post('actions/save/(:num)', '\\Clergy\\Controllers\\FollowupSequences::saveAction/$1', ['filter' => 'permission:followup.manage']);
+        $routes->post('actions/delete/(:num)', '\\Clergy\\Controllers\\FollowupSequences::deleteAction/$1', ['filter' => 'permission:followup.manage']);
 
         // Templates – list
-        $routes->get('templates', '\\Clergy\\Controllers\\FollowupWorkflow::templates');
+        $routes->get('templates', '\\Clergy\\Controllers\\FollowupTemplates::templates');
 
         // Templates – AJAX save (create = id 0, update = id > 0) and delete
-        $routes->post('templates/save', '\\Clergy\\Controllers\\FollowupWorkflow::saveTemplate/0', ['filter' => 'permission:followup.manage']);
-        $routes->post('templates/save/(:num)', '\\Clergy\\Controllers\\FollowupWorkflow::saveTemplate/$1', ['filter' => 'permission:followup.manage']);
-        $routes->post('templates/delete/(:num)', '\\Clergy\\Controllers\\FollowupWorkflow::deleteTemplate/$1', ['filter' => 'permission:followup.manage']);
+        $routes->post('templates/save', '\\Clergy\\Controllers\\FollowupTemplates::saveTemplate/0', ['filter' => 'permission:followup.manage']);
+        $routes->post('templates/save/(:num)', '\\Clergy\\Controllers\\FollowupTemplates::saveTemplate/$1', ['filter' => 'permission:followup.manage']);
+        $routes->post('templates/delete/(:num)', '\\Clergy\\Controllers\\FollowupTemplates::deleteTemplate/$1', ['filter' => 'permission:followup.manage']);
 
         // Templates – preview
-        $routes->get('templates/preview/(:num)', '\\Clergy\\Controllers\\FollowupWorkflow::preview_template/$1');
+        $routes->get('templates/preview/(:num)', '\\Clergy\\Controllers\\FollowupTemplates::preview_template/$1');
 
         // Templates – live parsed preview (AJAX, uses real visitor data + parse_template helper)
-        $routes->post('templates/preview-parsed', '\\Clergy\\Controllers\\FollowupWorkflow::previewParsed');
+        $routes->post('templates/preview-parsed', '\\Clergy\\Controllers\\FollowupTemplates::previewParsed');
 
         // Manual trigger (bypasses scheduling)
-        $routes->post('manual-trigger/(:num)/(:num)', '\\Clergy\\Controllers\\FollowupWorkflow::manual_trigger/$1/$2', ['filter' => 'permission:followup.manage']);
+        $routes->post('manual-trigger/(:num)/(:num)', '\\Clergy\\Controllers\\FollowupTasks::manual_trigger/$1/$2', ['filter' => 'permission:followup.manage']);
 
         // Human-task queue (call + manual task types)
-        $routes->get('tasks', '\\Clergy\\Controllers\\FollowupWorkflow::callTasks');
-        $routes->post('tasks/complete/(:num)', '\\Clergy\\Controllers\\FollowupWorkflow::completeCallTask/$1', ['filter' => 'permission:followup.manage']);
+        $routes->get('tasks', '\\Clergy\\Controllers\\FollowupTasks::callTasks');
+        $routes->post('tasks/complete/(:num)', '\\Clergy\\Controllers\\FollowupTasks::completeCallTask/$1', ['filter' => 'permission:followup.manage']);
 
         // Legacy /followup-workflow/call-tasks — retired slug. GETs redirect
         // preserving status/type filters; POSTs alias (bodies can't redirect).
@@ -253,7 +253,7 @@ $routes->group('', ['filter' => 'session'], function ($routes) {
             $qs = (string) service('request')->getServer('QUERY_STRING');
             return redirect()->to(base_url('followup-workflow/tasks') . ($qs !== '' ? '?' . $qs : ''));
         });
-        $routes->post('call-tasks/complete/(:num)', '\\Clergy\\Controllers\\FollowupWorkflow::completeCallTask/$1', ['filter' => 'permission:followup.manage']);
+        $routes->post('call-tasks/complete/(:num)', '\\Clergy\\Controllers\\FollowupTasks::completeCallTask/$1', ['filter' => 'permission:followup.manage']);
     });
 
     // -------------------------------------------------------------------------

@@ -71,7 +71,7 @@ final class RouteOwnershipCutoverTest extends CIUnitTestCase
         // POST aliases to the same action.
         $this->assertStringContainsString("get('call-tasks', static function ()", $clergyRoutes);
         $this->assertStringContainsString("post('call-tasks/complete/(:num)'", $clergyRoutes);
-        $this->assertStringContainsString("get('tasks', '\\\\Clergy\\\\Controllers\\\\FollowupWorkflow::callTasks')", $clergyRoutes);
+        $this->assertStringContainsString("get('tasks', '\\\\Clergy\\\\Controllers\\\\FollowupTasks::callTasks')", $clergyRoutes);
 
         $this->assertStringNotContainsString("addRedirect('attendance/bulkMark'", $worshipRoutes);
         $this->assertStringContainsString("post('attendance/bulkMark'", $worshipRoutes);

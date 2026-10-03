@@ -37,7 +37,7 @@ final class CriticalWorkflowContractCoverageTest extends CIUnitTestCase
 
     public function testMembersControllerExposesExplicitErrorCodesForParishActions(): void
     {
-        $content = file_get_contents(ROOTPATH . 'Clergy/Controllers/Members.php');
+        $content = file_get_contents(ROOTPATH . 'Clergy/Controllers/MembersAffiliation.php');
         $this->assertNotFalse($content);
 
         $expectedCodes = [
@@ -85,7 +85,7 @@ final class CriticalWorkflowContractCoverageTest extends CIUnitTestCase
 
     public function testFollowupWorkflowControllerExposesExplicitErrorCodesForAjaxActions(): void
     {
-        $content = file_get_contents(ROOTPATH . 'Clergy/Controllers/FollowupWorkflow.php');
+        $content = file_get_contents(ROOTPATH . 'Clergy/Controllers/FollowupSequences.php');
         $this->assertNotFalse($content);
 
         $this->assertStringContainsString("'Not found or forbidden.'", $content);
@@ -100,7 +100,7 @@ final class CriticalWorkflowContractCoverageTest extends CIUnitTestCase
         $this->assertNotFalse($membersContent);
         $familiesContent = file_get_contents(ROOTPATH . 'MemberPortal/Controllers/Families.php');
         $this->assertNotFalse($familiesContent);
-        $followUpContent = file_get_contents(ROOTPATH . 'Clergy/Controllers/FollowupWorkflow.php');
+        $followUpContent = file_get_contents(ROOTPATH . 'Clergy/Controllers/FollowupSequences.php');
         $this->assertNotFalse($followUpContent);
 
         $this->assertStringContainsString("'PARISH_SCOPE_REQUIRED'", $membersContent);

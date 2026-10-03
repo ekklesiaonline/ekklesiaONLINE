@@ -294,8 +294,12 @@ Public unauthenticated intake. `GET /connect/{token}` renders
 | `app/Services/VisitorFollowupService.php`    | Read-side queries                                      |
 | `app/Models/FollowupLogModel.php`            | Log CRUD + scheduling                                  |
 | `app/Models/PersonVisitModel.php`            | Visit recording + auto-schedule hook                   |
-| `Clergy/Controllers/Visitors.php`            | Directory + follow-up AJAX endpoints                   |
-| `Clergy/Controllers/FollowupWorkflow.php`    | Parish sequence/action/template admin, call-task queue |
+| `Clergy/Controllers/Visitors.php`            | Visitor directory CRUD, notes, dashboard               |
+| `Clergy/Controllers/VisitorLifecycle.php`    | Visitor→member promotion, revert, attender transitions |
+| `Clergy/Controllers/VisitorFollowup.php`     | Visitor follow-up status/timeline AJAX + log mutations |
+| `Clergy/Controllers/FollowupSequences.php`   | Parish sequence + action admin                         |
+| `Clergy/Controllers/FollowupTemplates.php`   | Parish template admin + preview                        |
+| `Clergy/Controllers/FollowupTasks.php`       | Call-task queue + manual dispatch                      |
 | `app/Controllers/SystemFollowupWorkflow.php` | System admin UI for global sequences/templates         |
 | `Clergy/Config/Routes.php`                   | `/visitors/*` + `/followup-workflow/*` routes          |
 | `app/Config/Routes.php`                      | `/system/followup-workflow/*` routes                   |
