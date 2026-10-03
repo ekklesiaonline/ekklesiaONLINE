@@ -23,13 +23,13 @@ Turn a proposed clergy/group hierarchy into an evidence-backed, least-privilege 
 
 ## Decision checklist
 
-| Question | Default when no local policy is supplied |
-| --- | --- |
-| Geographic coverage | Any *configured* Episcopal diocese; no automatic province or TEC rights. |
-| Diocesan bishop | Active, verified ordinary: narrow diocese-scoped pastoral/report approval only; separate app admin delegation. |
-| Parish signatory | Current designated priest-in-charge of that congregation; ordinary or explicitly eligible delegate for diocesan approval. |
-| Cathedral versus regional dean | Two separate offices: cathedral-parish scope versus bishop-appointed deanery scope; neither is a diocesan admin group. |
-| Unlinked clergy | Person-level history allowed without portal login; no app permissions until an approved, linked account exists. |
+| Question                       | Default when no local policy is supplied                                                                                  |
+| ------------------------------ | ------------------------------------------------------------------------------------------------------------------------  |
+| Geographic coverage            | Any *configured* Episcopal diocese; no automatic province or TEC rights.                                                  |
+| Diocesan bishop                | Active, verified ordinary: narrow diocese-scoped pastoral/report approval only; separate app admin delegation.            |
+| Parish signatory               | Current designated priest-in-charge of that congregation; ordinary or explicitly eligible delegate for diocesan approval. |
+| Cathedral versus regional dean | Two separate offices: cathedral-parish scope versus bishop-appointed deanery scope; neither is a diocesan admin group.    |
+| Unlinked clergy                | Person-level history allowed without portal login; no app permissions until an approved, linked account exists.           |
 
 ## Useful references
 
