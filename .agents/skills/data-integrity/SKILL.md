@@ -35,9 +35,10 @@ For a portal person, verify this chain in order:
 2. Identify the exact missing or stale link and the affected parish.
 3. Show the intended changes before manual SQL or use a safe service command.
 4. Use a transaction and prepared/query-builder operations; never log contact data or credentials.
-5. Re-sync derived data after canonical changes:
-   - `php spark parish-people:sync`
-   - `php spark parish-people:integrity --repair --parish=<id>` for a single-parish repair
+5. Audit and reconcile canonical identity links after changes:
+   - `php spark person:diagnose`
+   - `php spark people:audit-affiliation-drift`
+   - `php spark person:link-profiles`
 6. For sacrament changes, treat `sacramental_record` as canonical and call `SacramentFlagSyncService`; compare types with `LOWER()` and remember `is_communicant` is attendance-based.
 7. Run `php build/verify_alignment.php` after schema/table-name changes and inspect warnings instead of hiding them.
 8. Verify targeted tests, then `vendor/bin/phpunit --no-coverage`.
@@ -51,7 +52,6 @@ Use `RegistrationApprovalService` for registration approve/dismiss/ban/delete op
 - `.agents/rules/parish-domain.md`
 - `.agents/skills/debug-no-parish/SKILL.md`
 - `.agents/skills/debug-person-not-found/SKILL.md`
-- `.agents/skills/parish-people-snapshot/SKILL.md`
 - `.agents/skills/sacrament-sync/SKILL.md`
 - `docs/VISITOR_LIFECYCLE.md`
 - `docs/PROFILE_PICTURE_SECURITY_AND_DELIVERY.md`

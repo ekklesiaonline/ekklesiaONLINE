@@ -15,13 +15,12 @@ A request to `/people/view/{id}` returns "Person not found". Investigate:
 1. Read `Clergy\Controllers\People::view()` to confirm the lookup logic.
 2. Confirm whether the route `id` is `profile_id` (it is).
 3. Look up the `profile` row and note `profile.person_id`.
-4. Check the `parish_people` snapshot for the current parish and `profile_id`.
-5. If the snapshot is stale or missing, run:
+4. Check canonical affiliation: verify a `parish_affiliation` row exists for `parish_id` matching `pa.person_id = profile.person_id` or `pa.linked_user_id = profile.user_id` where `deleted_at IS NULL`.
+5. If `profile.person_id` is missing or unlinked, `People::view()` automatically calls `ensureProfilePersonLink()` to repair it on the fly, or you can run:
    ```bash
-   php spark parish-people:sync
-   # or
-   php spark parish-people:integrity --repair --parish=<parish_id>
+   php spark person:link-profiles
+   php spark person:diagnose
    ```
 6. Verify downstream services (`PersonMembershipDetailsService`, `PersonOnboardingService`, `PersonStatusHistoryService`) receive `profile.person_id`, not the route `id`.
 
-Report the root cause (stale snapshot vs. missing `profile.person_id`) and the exact command to repair.
+Report the root cause (missing profile row, missing parish affiliation, or cross-parish access attempt) and the recommended fix.

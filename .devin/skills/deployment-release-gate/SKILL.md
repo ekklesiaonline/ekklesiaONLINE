@@ -20,7 +20,7 @@ composer install --no-dev --optimize-autoloader --dry-run --no-interaction
 vendor/bin/phpstan analyse --no-progress
 vendor/bin/phpunit --testdox
 php spark migrate:status --all
-php spark routes > /tmp/routes_before_deploy.txt
+php spark routes > writable/routes_before_deploy.txt
 sh build/backup_database.sh --check
 sh build/restore_database.sh --check
 ```

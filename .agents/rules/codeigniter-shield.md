@@ -5,9 +5,19 @@ trigger: always_on
 
 # CodeIgniter 4.7+ & Shield 1.4+ Development Standards
 
-## Controllers, Namespaces & Auth
-- Primary application space is strictly locked inside `app/`. Never modify files inside `system/` or `vendor/`.
-- Organize controllers in `app/Controllers/` or module namespaces (`Parish`, `Clergy`, `Diocese`, `MemberPortal`).
+## Application Architecture & Modules
+- Application space comprises shared code under `app/` and 8 root-level PSR-4 feature modules: `Province/`, `Diocese/`, `Clergy/`, `Parish/`, `Worship/`, `Treasurer/`, `Volunteer/`, and `MemberPortal/`. Never modify files inside `system/` or `vendor/`.
+- Organize controllers in `app/Controllers/` or the owning module (`<Module>\Controllers\*`). Views inside modules are referenced via `<Module>\Views\<Subfolder>/<view>` (e.g., `view('Treasurer\Views\Banking/index', $data)`).
+- Route files: module routes live in `<Module>/Config/Routes.php` and are loaded by `app/Config/Routes.php`.
+
+## Boundary Enforcement Filters & Security
+- **Multi-Tier Scope Isolation**: Routes must be gated with appropriate isolation filters defined in `Config\Filters`:
+  - `parishScope`: Scopes request context to operational/home parish.
+  - `dioceseScope` / `provinceScope`: Enforces regional tenancy boundaries.
+  - `diocesanOperationalBoundary`: Blocks diocesan admins from direct parish operational mutations.
+  - `adminFinanceBoundary`: Enforces financial tenant separation.
+  - `deviceVerification`: Enforces browser fingerprint verification challenge in production.
+  - `sessionTracking`: Enforces maximum concurrent session limits (max 3).
 - Utilize class-based routing arrays (`$routes->get()`) and protect routes with Shield filters (`session`, `permission:*`).
 - **Authentication**: Use `auth()->user()`, `auth()->loggedIn()`, `auth()->id()`. Never inspect raw session keys manually.
 - **User Discovery**: Use `auth()->getProvider()` to fetch/manipulate user instances rather than instantiating raw DB models directly.

@@ -73,6 +73,9 @@ if (is_file(ROOTPATH . 'Diocese/Config/Routes.php')) {
 if (is_file(ROOTPATH . 'Clergy/Config/Routes.php')) {
     require ROOTPATH . 'Clergy/Config/Routes.php';
 }
+if (is_file(ROOTPATH . 'Parish/Config/Routes.php')) {
+    require ROOTPATH . 'Parish/Config/Routes.php';
+}
 if (is_file(ROOTPATH . 'Worship/Config/Routes.php')) {
     require ROOTPATH . 'Worship/Config/Routes.php';
 }

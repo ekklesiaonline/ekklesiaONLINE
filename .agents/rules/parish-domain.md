@@ -63,9 +63,9 @@ trigger: always_on
 - Higher-tier groups (`systemadmin`, `provinceadmin`, `dioceseadmin`) are auto-approved and bypass parish `pending_review`.
 - Use `lang('Dashboard.approveLabel')`, `lang('Dashboard.dismissLabel')`, `lang('Dashboard.confirmApproveRegistration')`, `lang('Dashboard.confirmDismissRegistration')`. Do not use `lang('App.approve')` / `lang('App.dismiss')`.
 
-## Parish People Snapshot
+## Canonical Person Diagnostics
 
-- See the `/parish-people-snapshot` skill for re-sync commands after manual changes to `person`, `profile`, `user_person`, or `parish_affiliation`.
+- Use `php spark person:diagnose` and `php spark people:audit-affiliation-drift` to verify canonical identity integrity across `person`, `profile`, `user_person`, and `parish_affiliation`.
 
 ## Sunday Attendance Graphics
 

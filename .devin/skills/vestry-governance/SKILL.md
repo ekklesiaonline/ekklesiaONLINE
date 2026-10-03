@@ -13,7 +13,7 @@ allowed-tools:
 Help with vestry governance features.
 
 Key facts:
-- Shield groups: `vestry_member`, `warden`, `clerk`, `secretary`.
+- Shield groups: `vestry_member`, `warden`, `vestry_secretary` (the clerk certification role is granted via the `governance.report.certify_clerk` permission to `vestry_secretary`).
 - Tables: `vestry_meeting`, `vestry_motion`, `vestry_vote` (migration `2026_08_24_000100_CreateVestryTables`).
 - Controller: `Clergy\Controllers\Vestry` handles CRUD + voting at `/vestry/*`.
 - Dashboard: `/parish/governance`.

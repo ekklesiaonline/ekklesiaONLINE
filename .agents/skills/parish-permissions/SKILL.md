@@ -23,6 +23,6 @@ Key rules from `docs/CHURCH_MANAGEMENT_PERMISSIONS_2026-04-23.md`:
 
 When asked:
 1. Identify the user's role and the target parish scope.
-2. Reference `Diocesan/Controllers/Parishes.php` and `Diocesan/Views/Parishes/edit.php`.
+2. Reference `Diocese/Controllers/Parishes.php` and `Diocese/Views/Parishes/edit.php`.
 3. Explain whether the action is allowed and which flag drives it (`$canEditTaxId`, `$isProvinceAdmin`, etc.).
 4. Cite specific files and line ranges.

@@ -12,7 +12,7 @@ allowed-tools:
 
 A user sees "No parish assigned". Follow this checklist from `AGENTS.md`:
 
-1. Identify the user (by id or email). Read `users`, `auth_identities`, and `profiles`.
+1. Identify the user (by id or email). Read `users`, `auth_identities`, and `profile`.
 2. Check for a `person` row for that user.
 3. Check for a `user_person` mapping.
 4. Check `profile.parish_id` (and `diocese_id` / `province_id`).
@@ -24,9 +24,10 @@ A user sees "No parish assigned". Follow this checklist from `AGENTS.md`:
    - update `profile` (`person_id`, `parish_id`)
    - insert `parish_affiliation`
    - insert `parish_admin_primary` if applicable
-8. After fixing, recommend running:
+8. After fixing, verify data integrity:
    ```bash
-   php spark parish-people:sync
+   php spark person:diagnose
+   php spark people:audit-affiliation-drift
    ```
 
 Cite the actual rows/status you found. Do not write changes without explicit user confirmation.

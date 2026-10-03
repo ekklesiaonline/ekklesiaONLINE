@@ -13,10 +13,10 @@ allowed-tools:
 Help with the liturgical calendar and service metadata.
 
 Key sources:
-- `Diocesan/Controllers/LiturgicalCalendar.php`
+- `Diocese/Controllers/LiturgicalCalendar.php`
 - System routes under `/system/liturgical-source/*`
 - Service migration lineage: `docs/SERVICE_MIGRATIONS.md`
-- Liturgical day/season fields on `services` table
+- Liturgical day/season fields on `service` table
 
 When asked:
 1. Explain how liturgical days/seasons are sourced and stored.

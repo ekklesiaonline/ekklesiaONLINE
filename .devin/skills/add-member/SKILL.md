@@ -18,9 +18,9 @@ Add a new person and wire them up correctly to profile, parish, and user.
 4. Update `profile` with `person_id` and `parish_id` (plus `diocese_id`/`province_id` if known).
 5. Insert `parish_affiliation` with `linked_user_id`, `parish_id`, and `person_id`.
 6. If the user is the primary parish admin, insert `parish_admin_primary`.
-7. Re-sync the parish people snapshot:
+7. Verify canonical integrity:
    ```bash
-   php spark parish-people:sync
+   php spark person:diagnose
    ```
 
 Before writing, show the planned INSERT/UPDATE statements and ask for confirmation. Use transactions where possible.

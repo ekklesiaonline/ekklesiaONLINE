@@ -22,18 +22,19 @@ Use this hierarchy: System → Province → Diocese → Parish → Personal.
 
 Role-to-route mapping (first match wins, highest tier first):
 
-| Group                               | Dashboard route       |
-| ----------------------------------- | ---------------       |
-| `systemadmin`                       | `/system/dashboard`   |
-| `provinceadmin`                     | `/province/dashboard` |
-| `dioceseadmin`                      | `/diocese/dashboard`  |
-| `parishadmin`                       | `/parish/dashboard`   |
-| `treasurer`                         | `/parish/finance`     |
-| `secretary`                         | `/parish/secretary`   |
-| `warden`, `clerk`, `vestry_member`  | `/parish/governance`  |
-| `clergy`                            | `/parish/worship`     |
-| `volunteer_coordinator`             | `/parish/volunteers`  |
-| `member` or `dashboard.view`        | `/me`                 |
+| Group                                                                | Dashboard route       |
+| -------------------------------------------------------------------- | --------------------- |
+| `systemadmin`                                                        | `/system/dashboard`   |
+| `provinceadmin`                                                      | `/province/dashboard` |
+| `dioceseadmin`                                                       | `/diocese/dashboard`  |
+| `parishadmin`                                                        | `/parish/dashboard`   |
+| `finance`                                                            | `/parish/finance`     |
+| `vestry_secretary`                                                   | `/parish/secretary`   |
+| `warden`, `vestry_member`                                            | `/parish/governance`  |
+| `clergy`, `worship_coordinator`                                      | `/parish/worship`     |
+| `volunteer_coordinator`                                              | `/parish/volunteers`  |
+| `followup_coordinator`                                               | `/parish/followup`    |
+| `followup_volunteer`, `worship_volunteer`, `member`, `dashboard.view` | `/me`                 |
 
 Old `/dashboard` and `/treasurer/dashboard` are deprecated redirect shims.
 

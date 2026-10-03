@@ -14,7 +14,7 @@ Help with parish staff management.
 
 Key rules:
 - Staff routes live under `/parish_list/{id}/staff/*` in `app/Config/Routes.php`.
-- Controller: `Diocesan/Controllers/Parishes.php` (`staff`, `addStaff`, `promoteMember`, `removeStaffRole`, `demoteStaff`).
+- Controller: `Diocese/Controllers/Parishes.php` (`staff`, `addStaff`, `promoteMember`, `removeStaffRole`, `demoteStaff`).
 - Province admins are blocked from all staff management operations.
 - `parish_admin_primary` tracks the primary admin for each parish.
 - `BaseController::getPrimaryParishAdminId()` and `isPrimaryParishAdmin()` resolve primary admin status.

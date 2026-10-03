@@ -5,12 +5,27 @@ trigger: always_on
 
 # CI4 / Shield Conventions
 
-## Controllers & Auth
+## Application Architecture & Modules
 
-- Place Controllers in `app/Controllers/` or module namespaces (`Parish`, `Clergy`, `Diocese`, `MemberPortal`).
+- Application space comprises shared code under `app/` and 8 root-level PSR-4 feature modules: `Province/`, `Diocese/`, `Clergy/`, `Parish/`, `Worship/`, `Treasurer/`, `Volunteer/`, and `MemberPortal/`. Never modify files inside `system/` or `vendor/`.
+- Organize controllers in `app/Controllers/` or the owning module (`<Module>\Controllers\*`). Views inside modules are referenced via `<Module>\Views\<Subfolder>/<view>` (e.g., `view('Treasurer\Views\Banking/index', $data)`).
+- Route files: module routes live in `<Module>/Config/Routes.php` and are loaded by `app/Config/Routes.php`.
+
+## Boundary Enforcement Filters & Security
+
+- **Multi-Tier Scope Isolation**: Routes must be gated with appropriate isolation filters defined in `Config\Filters`:
+  - `parishScope`: Scopes request context to operational/home parish.
+  - `dioceseScope` / `provinceScope`: Enforces regional tenancy boundaries.
+  - `diocesanOperationalBoundary`: Blocks diocesan admins from direct parish operational mutations.
+  - `adminFinanceBoundary`: Enforces financial tenant separation.
+  - `deviceVerification`: Enforces browser fingerprint verification challenge in production.
+  - `sessionTracking`: Enforces maximum concurrent session limits (max 3).
 - Use Shield’s `auth()->user()` to access the authenticated user.
 - Protect routes with Shield filters (`session`, `permission:*`) and validate permissions inside controllers.
 - Never bypass `pending_review` gating except via `BaseController::canBypassPendingReviewGate()`.
+- **Shield Groups vs. Ecclesial Orders/Offices**: Never create Shield groups for `bishop`, `priest`, `deacon`, `rector`, `cathedral_dean`, or `regional_dean`. Shield groups represent coarse app account tiers (`systemadmin`, `provinceadmin`, `dioceseadmin`, `parishadmin`, `clergy`, and lay). The `clergy` group is a portal-compatibility role, not ordination proof.
+- **Scoped Authorization Formula**: Sensitive pastoral and governance actions require: authenticated user + Shield route permission + active person-linked verified order (when an ordained function) + currently approved compatible office/delegation + exact target scope + current canonical standing (uninhibited/unsuspended). Account mutations additionally enforce `AdminHierarchyGuard`.
+- **Managed Access Grants (`clergy_access_grant`)**: Permissions scoped to entities must track provenance (`grant_type`: `office` vs `delegation`, `source_position_id`, `granted_by_user_id`, term limits). Revocation removes only managed permissions whose backing sources are terminated; never wipe unmanaged/manual direct grants blindly.
 
 ## Validation
 

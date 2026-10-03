@@ -19,7 +19,7 @@ Use this skill before changing a cross-module feature or explaining where a new 
 - Framework: CodeIgniter 4.7+, PHP 8.2+, Shield 1.2, MySQL 8, Bootstrap 5.
 - Organizational hierarchy: **System → Province → Diocese → Parish → Personal**.
 - Shared application code lives under `app/`.
-- Role modules use PSR-4 roots: `Province/`, `Diocesan/`, `Clergy/`, `Parish/`, `Worship/`, `Treasurer/`, `Volunteer/`, and `MemberPortal/`.
+- Role modules use PSR-4 roots: `Province/`, `Diocese/`, `Clergy/`, `Parish/`, `Worship/`, `Treasurer/`, `Volunteer/`, and `MemberPortal/`.
 - Module routes are loaded from each module's `Config/Routes.php` by `app/Config/Routes.php`.
 - Domain operations belong in services/models; controllers should coordinate authorization, validation, scope, and response rendering.
 
