@@ -35,9 +35,9 @@
 
 ## When In Doubt
 
-- For view/HTML rules, see `.devin/rules/views.md`.
-- For CI4/Shield coding rules, see `.devin/rules/codeigniter.md`.
-- For parish-domain data integrity rules, see `.devin/rules/parish-domain.md`.
+- For view/HTML rules, see `.agents/rules/views.md` (or `.devin/rules/views.md`).
+- For CI4/Shield coding rules, see `.agents/rules/codeigniter-shield.md` (or `.devin/rules/codeigniter.md`).
+- For parish-domain data integrity rules, see `.agents/rules/parish-domain.md` (or `.devin/rules/parish-domain.md`).
 - For diagnostic playbooks, invoke the relevant skill (`/debug-no-parish`, `/debug-person-not-found`, `/sacrament-sync`, `/parish-people-snapshot`, `/email-deliverability`, etc.).
 - For the visitor → regular_attender → member lifecycle and promotion flow, see `docs/VISITOR_LIFECYCLE.md` or `/visitor-lifecycle`; for follow-up sequences/dispatch, see `docs/FOLLOWUP_WORKFLOW_SYSTEM.md` or `/visitor-followup`.
 - For permission/scope issues, use `/parish-permissions` or `/permission-denied`.
