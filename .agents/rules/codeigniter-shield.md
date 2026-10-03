@@ -1,3 +1,7 @@
+---
+trigger: always_on
+---
+
 # CodeIgniter 4.7+ & Shield 1.4+ Development Standards
 
 ## CodeIgniter 4.7 Framework Rules
