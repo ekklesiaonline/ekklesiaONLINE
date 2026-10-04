@@ -10,7 +10,7 @@ use CodeIgniter\Test\DatabaseTestTrait;
 use Config\Services;
 use Tests\Support\Database\CanonicalTestSchema;
 use Tests\Support\Database\SystemSettingsTestHelper;
-use Treasurer\Controllers\Funds;
+use Treasurer\Controllers\FundFlags as Funds;
 
 /**
  * Fund management controller: parish isolation, validation, balances,

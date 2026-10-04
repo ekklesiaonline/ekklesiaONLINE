@@ -263,4 +263,55 @@ class ExpenseExports extends Expenses
 
         return date('Y-m-d H:i', $timestamp);
     }
+
+
+    /**
+     * View or download an expense receipt/invoice document.
+     *
+     * @param int|string $id Expense ID
+     */
+    public function receipt($id)
+    {
+        if ($redirect = $this->requirePermission('expense.view')) {
+            return $redirect;
+        }
+
+        if ($redirect = $this->requireParish()) {
+            return $redirect;
+        }
+
+        $expense = $this->expenseModel->find($id);
+        if (!$expense || (int) $expense['parish_id'] !== (int) $this->getOperationalParishId()) {
+            return redirect()->to('/expenses')->with('error', lang('Treasurer.expenseNotFound'));
+        }
+
+        $storedPath = (string) ($expense['receipt_path'] ?? '');
+        if ($storedPath === '') {
+            return redirect()->to('/expenses')->with('error', lang('Treasurer.receiptNotFound'));
+        }
+
+        $absolutePath = \App\Services\ExpenseReceiptUploadService::resolveAbsolutePath($storedPath, (int) $expense['parish_id']);
+        if ($absolutePath === null || !is_file($absolutePath)) {
+            return redirect()->to('/expenses')->with('error', lang('Treasurer.receiptFileNotFound'));
+        }
+
+        $mimeType = (string) ($expense['receipt_mime_type'] ?? (mime_content_type($absolutePath) ?: 'application/octet-stream'));
+        $filename = (string) ($expense['receipt_original_name'] ?? basename($absolutePath));
+
+        $this->audit()->log('expense.receipt_view', [
+            'parish_id'   => (int) $expense['parish_id'],
+            'entity_type' => 'expense',
+            'entity_id'   => (int) $id,
+            'meta'        => [
+                'filename' => $filename,
+            ],
+        ]);
+
+        $disposition = $this->request->getGet('download') === '1' ? 'attachment' : 'inline';
+
+        return $this->response
+            ->setHeader('Content-Type', $mimeType)
+            ->setHeader('Content-Disposition', $disposition . '; filename="' . addslashes($filename) . '"')
+            ->setBody((string) file_get_contents($absolutePath));
+    }
 }

@@ -71,7 +71,7 @@ class TestExpenseUploadFile extends UploadedFile
     }
 }
 
-class TestableExpensesController extends \Treasurer\Controllers\Expenses
+class TestableExpensesController extends \Treasurer\Controllers\ExpenseExports
 {
     private int $forcedParishId = 0;
     private array $auditEvents = [];

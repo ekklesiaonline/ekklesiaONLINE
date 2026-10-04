@@ -19,7 +19,7 @@ use CodeIgniter\Test\DatabaseTestTrait;
 use Config\Services;
 use Tests\Support\Database\CanonicalTestSchema;
 use Tests\Support\Database\SystemSettingsTestHelper;
-use Treasurer\Controllers\Banking;
+use Treasurer\Controllers\BankingImport as Banking;
 
 class TestBankUploadFile extends UploadedFile
 {

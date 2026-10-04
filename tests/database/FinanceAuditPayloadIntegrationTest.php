@@ -7,7 +7,7 @@ use CodeIgniter\Test\CIUnitTestCase;
 use CodeIgniter\Test\DatabaseTestTrait;
 use Config\Services;
 
-class FinanceAuditPayloadDonationsTestController extends \Treasurer\Controllers\Donations
+class FinanceAuditPayloadDonationsTestController extends \Treasurer\Controllers\DonationStatements
 {
     private int $forcedParishId = 0;
     private array $auditEvents = [];

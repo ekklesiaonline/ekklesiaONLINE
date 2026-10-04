@@ -11,7 +11,7 @@ use CodeIgniter\Test\DatabaseTestTrait;
 use Config\Services;
 use Tests\Support\Database\CanonicalTestSchema;
 use Tests\Support\Database\SystemSettingsTestHelper;
-use Treasurer\Controllers\Reports;
+use Treasurer\Controllers\ReportExports as Reports;
 
 /**
  * Parish detailed reports integration tests:
