@@ -360,18 +360,16 @@ final class DonationEditControllerIntegrationTest extends CIUnitTestCase
 
     private function insertChartAccount(string $code, string $name, string $type = 'income', ?string $category = null): int
     {
-        $this->db->table('chart_of_accounts')->insert([
+        // Insert through the model so its cache invalidation clears any
+        // coa_* entries cached by earlier tests sharing the file cache.
+        return (int) model('ChartOfAccountModel')->insert([
             'code'         => $code,
             'name'         => $name,
             'account_type' => $type,
             'category'     => $category,
             'is_active'    => 1,
             'allow_budget' => 1,
-            'created_at'   => date('Y-m-d H:i:s'),
-            'updated_at'   => date('Y-m-d H:i:s'),
         ]);
-
-        return (int) $this->db->insertID();
     }
 
     private function insertDonation(int $parishId, int $fundId, string $amount, ?int $chartAccountId = null): int
