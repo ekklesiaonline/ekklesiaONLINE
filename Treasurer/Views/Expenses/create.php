@@ -10,7 +10,7 @@
 
 <div class="card">
     <div class="card-body">
-        <form action="<?= base_url('expenses/store') ?>" method="post">
+        <form action="<?= base_url('expenses/store') ?>" method="post" enctype="multipart/form-data">
             <?= csrf_field() ?>
 
             <div class="row">
@@ -90,7 +90,7 @@
                                     <?php $accountName = (string) ($account['name'] ?? $accountCode); ?>
                                     <?php $accountNameLabel = coa_name_label($accountCode, $accountName); ?>
                                     <option value="<?= (int) $account['id'] ?>" data-category="<?= esc((string) ($account['category'] ?? '')) ?>" <?= old('chart_account_id') == $account['id'] ? 'selected' : '' ?>>
-                                        <?= esc($accountCode . ' - ' . $accountNameLabel) ?>
+                                                <?= esc($accountCode . ' - ' . $accountNameLabel) ?>
                                     </option>
                                 <?php endforeach; ?>
                             <?php endif; ?>
@@ -126,6 +126,14 @@
                     </div>
 
                     <div class="mb-3">
+                        <label for="receipt" class="form-label">
+                            <i class="bi bi-paperclip me-1" aria-hidden="true"></i><?= lang('Treasurer.receiptDocument') ?>
+                        </label>
+                        <input type="file" class="form-control" id="receipt" name="receipt" accept=".pdf,.jpg,.jpeg,.png,.webp">
+                        <div class="form-text"><?= lang('Treasurer.receiptHelpText') ?></div>
+                    </div>
+
+                    <div class="mb-3">
                         <label for="notes" class="form-label"><?= lang('Finance.notes') ?></label>
                         <textarea class="form-control" id="notes" name="notes" rows="3"><?= old('notes') ?></textarea>
                     </div>
@@ -137,8 +145,15 @@
                             <div class="form-text"><?= lang('Finance.capitalExpenseHelp') ?></div>
                         </div>
                     </div>
-                    </button>
                 </div>
+            </div>
+
+            <div class="d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
+                <a href="<?= base_url('expenses') ?>" class="btn btn-outline-secondary"><?= lang('App.cancel') ?></a>
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-save me-1" aria-hidden="true"></i><?= lang('App.save') ?>
+                </button>
+            </div>
         </form>
     </div>
 </div>

@@ -142,6 +142,18 @@ class Expenses extends BaseController
             return redirect()->back()->withInput()->with('error', lang('Treasurer.fundLocked'));
         }
 
+        $receiptData = null;
+        try {
+            $receiptData = \App\Services\ExpenseReceiptUploadService::handleUpload(
+                $attributionParishId,
+                null,
+                $this->request->getFile('receipt'),
+                false
+            );
+        } catch (\RuntimeException $e) {
+            return redirect()->back()->withInput()->with('error', $e->getMessage());
+        }
+
         $data = [
             'parish_id' => $attributionParishId,
             'fund_id' => $fundId,
@@ -154,6 +166,13 @@ class Expenses extends BaseController
             'notes' => $this->request->getPost('notes'),
             'approved_by' => auth()->id(),
         ];
+
+        if ($receiptData !== null) {
+            $data['receipt_path']          = $receiptData['receipt_path'];
+            $data['receipt_original_name'] = $receiptData['receipt_original_name'];
+            $data['receipt_mime_type']     = $receiptData['receipt_mime_type'];
+            $data['receipt_file_size']     = $receiptData['receipt_file_size'];
+        }
 
         $expenseId = (int) $this->expenseModel->insert($data, true);
 
@@ -169,6 +188,7 @@ class Expenses extends BaseController
                     'category' => (string) ($data['category'] ?? ''),
                     'chart_account_id' => (int) ($data['chart_account_id'] ?? 0),
                     'approved_by' => isset($data['approved_by']) ? (int) $data['approved_by'] : null,
+                    'has_receipt' => !empty($data['receipt_path']),
                 ],
                 'meta' => $this->buildParishContextMeta($attributionParishId, $attributionPolicy),
             ]);
@@ -261,6 +281,21 @@ class Expenses extends BaseController
             return redirect()->back()->withInput()->with('error', lang('Treasurer.fundLocked'));
         }
 
+        $attributionParishId = (int) ($expense['parish_id'] ?? 0);
+        $removeReceipt = (string) ($this->request->getPost('remove_receipt') ?? '') === '1';
+
+        $receiptData = null;
+        try {
+            $receiptData = \App\Services\ExpenseReceiptUploadService::handleUpload(
+                $attributionParishId,
+                (string) ($expense['receipt_path'] ?? ''),
+                $this->request->getFile('receipt'),
+                $removeReceipt
+            );
+        } catch (\RuntimeException $e) {
+            return redirect()->back()->withInput()->with('error', $e->getMessage());
+        }
+
         $data = [
             'fund_id' => $fundId,
             'date' => $this->request->getPost('date'),
@@ -271,8 +306,14 @@ class Expenses extends BaseController
             'notes' => $this->request->getPost('notes'),
         ];
 
+        if ($receiptData !== null) {
+            $data['receipt_path']          = $receiptData['receipt_path'];
+            $data['receipt_original_name'] = $receiptData['receipt_original_name'];
+            $data['receipt_mime_type']     = $receiptData['receipt_mime_type'];
+            $data['receipt_file_size']     = $receiptData['receipt_file_size'];
+        }
+
         if ($this->expenseModel->update($id, $data)) {
-            $attributionParishId = (int) ($expense['parish_id'] ?? 0);
             $this->audit()->log('expense.update', [
                 'parish_id' => $attributionParishId,
                 'entity_type' => 'expense',
@@ -284,6 +325,7 @@ class Expenses extends BaseController
                     'category' => (string) ($expense['category'] ?? ''),
                     'chart_account_id' => isset($expense['chart_account_id']) ? (int) $expense['chart_account_id'] : null,
                     'description' => (string) ($expense['description'] ?? ''),
+                    'has_receipt' => !empty($expense['receipt_path']),
                 ],
                 'new_values' => [
                     'fund_id' => (int) ($data['fund_id'] ?? 0),
@@ -292,6 +334,7 @@ class Expenses extends BaseController
                     'category' => (string) ($data['category'] ?? ''),
                     'chart_account_id' => (int) ($data['chart_account_id'] ?? 0),
                     'description' => (string) ($data['description'] ?? ''),
+                    'has_receipt' => array_key_exists('receipt_path', $data) ? !empty($data['receipt_path']) : !empty($expense['receipt_path']),
                 ],
                 'meta' => $this->buildParishContextMeta($attributionParishId, self::ATTRIBUTION_POLICY_OPERATIONAL_DEFAULT),
             ]);
@@ -300,6 +343,56 @@ class Expenses extends BaseController
         }
 
         return redirect()->back()->withInput()->with('error', lang('Treasurer.expenseUpdateFailed'));
+    }
+
+    /**
+     * View or download an expense receipt/invoice document.
+     *
+     * @param int|string $id Expense ID
+     */
+    public function receipt($id)
+    {
+        if ($redirect = $this->requirePermission('expense.view')) {
+            return $redirect;
+        }
+
+        if ($redirect = $this->requireParish()) {
+            return $redirect;
+        }
+
+        $expense = $this->expenseModel->find($id);
+        if (!$expense || (int) $expense['parish_id'] !== (int) $this->getOperationalParishId()) {
+            return redirect()->to('/expenses')->with('error', lang('Treasurer.expenseNotFound'));
+        }
+
+        $storedPath = (string) ($expense['receipt_path'] ?? '');
+        if ($storedPath === '') {
+            return redirect()->to('/expenses')->with('error', lang('Treasurer.receiptNotFound'));
+        }
+
+        $absolutePath = \App\Services\ExpenseReceiptUploadService::resolveAbsolutePath($storedPath, (int) $expense['parish_id']);
+        if ($absolutePath === null || !is_file($absolutePath)) {
+            return redirect()->to('/expenses')->with('error', lang('Treasurer.receiptFileNotFound'));
+        }
+
+        $mimeType = (string) ($expense['receipt_mime_type'] ?? (mime_content_type($absolutePath) ?: 'application/octet-stream'));
+        $filename = (string) ($expense['receipt_original_name'] ?? basename($absolutePath));
+
+        $this->audit()->log('expense.receipt_view', [
+            'parish_id'   => (int) $expense['parish_id'],
+            'entity_type' => 'expense',
+            'entity_id'   => (int) $id,
+            'meta'        => [
+                'filename' => $filename,
+            ],
+        ]);
+
+        $disposition = $this->request->getGet('download') === '1' ? 'attachment' : 'inline';
+
+        return $this->response
+            ->setHeader('Content-Type', $mimeType)
+            ->setHeader('Content-Disposition', $disposition . '; filename="' . addslashes($filename) . '"')
+            ->setBody((string) file_get_contents($absolutePath));
     }
 
     /**
@@ -322,6 +415,13 @@ class Expenses extends BaseController
         }
 
         if ($this->expenseModel->delete($id)) {
+            if (!empty($expense['receipt_path'])) {
+                \App\Services\ExpenseReceiptUploadService::removeReceiptFile(
+                    (string) $expense['receipt_path'],
+                    (int) ($expense['parish_id'] ?? 0)
+                );
+            }
+
             $attributionParishId = (int) ($expense['parish_id'] ?? 0);
             $this->audit()->log('expense.delete', [
                 'parish_id' => $attributionParishId,

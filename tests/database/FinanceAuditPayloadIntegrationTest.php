@@ -433,6 +433,10 @@ final class FinanceAuditPayloadIntegrationTest extends CIUnitTestCase
             date TEXT NOT NULL,
             approved_by INTEGER NULL,
             notes TEXT NULL,
+            receipt_path TEXT NULL,
+            receipt_original_name TEXT NULL,
+            receipt_mime_type TEXT NULL,
+            receipt_file_size INTEGER NULL,
             created_at TEXT NULL,
             updated_at TEXT NULL
         )');

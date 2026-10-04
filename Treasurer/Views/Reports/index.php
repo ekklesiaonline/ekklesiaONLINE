@@ -165,6 +165,241 @@
             </div>
         </div>
     </div>
+<?php else: ?>
+    <!-- Fund Breakdown Section -->
+    <div class="card mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">
+                <i class="bi bi-wallet2 me-2" aria-hidden="true"></i><?= lang('Treasurer.reportFundBreakdown') ?>
+            </h5>
+            <?php if (!empty($report_fund_breakdown['funds'])): ?>
+                <span class="badge border border-primary text-primary fw-normal">
+                    <?= count($report_fund_breakdown['funds']) ?> <?= count($report_fund_breakdown['funds']) === 1 ? lang('Treasurer.reportFund') : (lang('Treasurer.reportFunds') ?? lang('Treasurer.reportFund')) ?>
+                </span>
+            <?php endif; ?>
+        </div>
+        <div class="card-body p-0">
+            <?php if (empty($report_fund_breakdown['funds'])): ?>
+                <div class="p-4 text-center text-muted">
+                    <i class="bi bi-inbox fs-3 d-block mb-2" aria-hidden="true"></i>
+                    <?= lang('Treasurer.reportNoFundData') ?>
+                </div>
+            <?php else: ?>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th scope="col"><?= lang('Treasurer.reportFund') ?></th>
+                                <th scope="col" class="text-center"><?= lang('Treasurer.reportFundType') ?></th>
+                                <th scope="col" class="text-end"><?= lang('Treasurer.reportDonations') ?></th>
+                                <th scope="col" class="text-end"><?= lang('Treasurer.reportExpenses') ?></th>
+                                <th scope="col" class="text-end"><?= lang('Treasurer.reportNetBalance') ?></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php foreach ($report_fund_breakdown['funds'] as $fund): ?>
+                                <?php
+                                $typeColor = ($fund['fund_type'] ?? '') === 'restricted' ? 'warning' : 'info';
+                                $fundNet = (float) ($fund['net_balance'] ?? 0.0);
+                                ?>
+                                <tr>
+                                    <td>
+                                        <span class="fw-medium"><?= esc($fund['fund_name']) ?></span>
+                                        <?php if (empty($fund['is_active'])): ?>
+                                            <span class="badge border border-secondary text-secondary fw-normal ms-1"><?= esc(lang('App.inactive')) ?></span>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td class="text-center">
+                                        <span class="badge border border-<?= $typeColor ?> text-<?= $typeColor ?> fw-normal">
+                                            <?= esc(ucfirst((string) ($fund['fund_type'] ?? 'unrestricted'))) ?>
+                                        </span>
+                                    </td>
+                                    <td class="text-end">
+                                        <span class="text-success fw-medium">$<?= number_format((float) ($fund['donations_total'] ?? 0), 2) ?></span>
+                                        <div class="small text-muted"><?= number_format((int) ($fund['donation_count'] ?? 0)) ?> <?= strtolower(lang('Treasurer.reportTransactions')) ?></div>
+                                    </td>
+                                    <td class="text-end">
+                                        <span class="text-danger fw-medium">$<?= number_format((float) ($fund['expenses_total'] ?? 0), 2) ?></span>
+                                        <div class="small text-muted"><?= number_format((int) ($fund['expense_count'] ?? 0)) ?> <?= strtolower(lang('Treasurer.reportTransactions')) ?></div>
+                                    </td>
+                                    <td class="text-end">
+                                        <span class="<?= $fundNet >= 0 ? 'text-primary' : 'text-danger' ?> fw-semibold">
+                                            $<?= number_format($fundNet, 2) ?>
+                                        </span>
+                                    </td>
+                                </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                        <tfoot>
+                            <tr class="fw-bold border-top">
+                                <td><?= lang('Treasurer.reportTotal') ?></td>
+                                <td></td>
+                                <td class="text-end text-success">
+                                    $<?= number_format((float) ($report_fund_breakdown['totals']['donations_total'] ?? 0), 2) ?>
+                                </td>
+                                <td class="text-end text-danger">
+                                    $<?= number_format((float) ($report_fund_breakdown['totals']['expenses_total'] ?? 0), 2) ?>
+                                </td>
+                                <td class="text-end <?= ((float) ($report_fund_breakdown['totals']['net_balance'] ?? 0)) >= 0 ? 'text-primary' : 'text-danger' ?>">
+                                    $<?= number_format((float) ($report_fund_breakdown['totals']['net_balance'] ?? 0), 2) ?>
+                                </td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            <?php endif; ?>
+        </div>
+    </div>
+
+    <!-- Account & Category Breakdown Section -->
+    <div class="card mb-4">
+        <div class="card-header border-bottom-0 pb-0">
+            <h5 class="mb-3">
+                <i class="bi bi-diagram-3 me-2" aria-hidden="true"></i><?= lang('Treasurer.reportAccountCategoryBreakdown') ?>
+            </h5>
+            <ul class="nav nav-tabs card-header-tabs" id="accountBreakdownTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="income-tab" data-bs-toggle="tab" data-bs-target="#income-panel" type="button" role="tab" aria-controls="income-panel" aria-selected="true">
+                        <i class="bi bi-arrow-down-left text-success me-1" aria-hidden="true"></i><?= lang('Treasurer.reportIncomeAccounts') ?>
+                        <span class="badge border border-success text-success fw-normal ms-1"><?= count($report_account_breakdown['income'] ?? []) ?></span>
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="expense-tab" data-bs-toggle="tab" data-bs-target="#expense-panel" type="button" role="tab" aria-controls="expense-panel" aria-selected="false">
+                        <i class="bi bi-arrow-up-right text-danger me-1" aria-hidden="true"></i><?= lang('Treasurer.reportExpenseAccounts') ?>
+                        <span class="badge border border-danger text-danger fw-normal ms-1"><?= count($report_account_breakdown['expenses'] ?? []) ?></span>
+                    </button>
+                </li>
+            </ul>
+        </div>
+        <div class="card-body p-0">
+            <div class="tab-content" id="accountBreakdownTabContent">
+                <!-- Income Tab Pane -->
+                <div class="tab-pane fade show active" id="income-panel" role="tabpanel" aria-labelledby="income-tab">
+                    <?php if (empty($report_account_breakdown['income'])): ?>
+                        <div class="p-4 text-center text-muted">
+                            <i class="bi bi-inbox fs-3 d-block mb-2" aria-hidden="true"></i>
+                            <?= lang('Treasurer.reportNoAccountData') ?>
+                        </div>
+                    <?php else: ?>
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0">
+                                <thead>
+                                    <tr>
+                                        <th scope="col"><?= lang('Treasurer.reportAccountCode') ?></th>
+                                        <th scope="col"><?= lang('Treasurer.reportAccount') ?></th>
+                                        <th scope="col"><?= lang('Treasurer.reportCategory') ?></th>
+                                        <th scope="col" class="text-center"><?= lang('Treasurer.reportTransactions') ?></th>
+                                        <th scope="col" class="text-end"><?= lang('Treasurer.reportAmount') ?></th>
+                                        <th scope="col" class="text-end" style="width: 140px;"><?= lang('Treasurer.reportPercentOfTotal') ?></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php foreach ($report_account_breakdown['income'] as $item): ?>
+                                        <tr>
+                                            <td>
+                                                <code class="text-dark fw-bold"><?= esc($item['account_code']) ?></code>
+                                            </td>
+                                            <td class="fw-medium"><?= esc($item['account_name']) ?></td>
+                                            <td>
+                                                <span class="badge border border-secondary text-secondary fw-normal">
+                                                    <?= esc($item['category_label']) ?>
+                                                </span>
+                                            </td>
+                                            <td class="text-center"><?= number_format((int) ($item['transaction_count'] ?? 0)) ?></td>
+                                            <td class="text-end text-success fw-medium">
+                                                $<?= number_format((float) ($item['total_amount'] ?? 0), 2) ?>
+                                            </td>
+                                            <td class="text-end">
+                                                <div class="d-flex align-items-center justify-content-end gap-2">
+                                                    <span><?= number_format((float) ($item['percentage'] ?? 0), 1) ?>%</span>
+                                                    <div class="progress flex-grow-1" style="height: 5px; max-width: 50px;">
+                                                        <div class="progress-bar bg-success" role="progressbar" style="width: <?= min(100, (float) ($item['percentage'] ?? 0)) ?>%" aria-valuenow="<?= (float) ($item['percentage'] ?? 0) ?>" aria-valuemin="0" aria-valuemax="100"></div>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    <?php endforeach; ?>
+                                </tbody>
+                                <tfoot>
+                                    <tr class="fw-bold border-top">
+                                        <td colspan="3"><?= lang('Treasurer.reportTotal') ?></td>
+                                        <td class="text-center"><?= number_format((int) ($report_account_breakdown['totals']['income_count'] ?? 0)) ?></td>
+                                        <td class="text-end text-success">
+                                            $<?= number_format((float) ($report_account_breakdown['totals']['income_total'] ?? 0), 2) ?>
+                                        </td>
+                                        <td class="text-end">100.0%</td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    <?php endif; ?>
+                </div>
+
+                <!-- Expense Tab Pane -->
+                <div class="tab-pane fade" id="expense-panel" role="tabpanel" aria-labelledby="expense-tab">
+                    <?php if (empty($report_account_breakdown['expenses'])): ?>
+                        <div class="p-4 text-center text-muted">
+                            <i class="bi bi-inbox fs-3 d-block mb-2" aria-hidden="true"></i>
+                            <?= lang('Treasurer.reportNoAccountData') ?>
+                        </div>
+                    <?php else: ?>
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0">
+                                <thead>
+                                    <tr>
+                                        <th scope="col"><?= lang('Treasurer.reportAccountCode') ?></th>
+                                        <th scope="col"><?= lang('Treasurer.reportAccount') ?></th>
+                                        <th scope="col"><?= lang('Treasurer.reportCategory') ?></th>
+                                        <th scope="col" class="text-center"><?= lang('Treasurer.reportTransactions') ?></th>
+                                        <th scope="col" class="text-end"><?= lang('Treasurer.reportAmount') ?></th>
+                                        <th scope="col" class="text-end" style="width: 140px;"><?= lang('Treasurer.reportPercentOfTotal') ?></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php foreach ($report_account_breakdown['expenses'] as $item): ?>
+                                        <tr>
+                                            <td>
+                                                <code class="text-dark fw-bold"><?= esc($item['account_code']) ?></code>
+                                            </td>
+                                            <td class="fw-medium"><?= esc($item['account_name']) ?></td>
+                                            <td>
+                                                <span class="badge border border-secondary text-secondary fw-normal">
+                                                    <?= esc($item['category_label']) ?>
+                                                </span>
+                                            </td>
+                                            <td class="text-center"><?= number_format((int) ($item['transaction_count'] ?? 0)) ?></td>
+                                            <td class="text-end text-danger fw-medium">
+                                                $<?= number_format((float) ($item['total_amount'] ?? 0), 2) ?>
+                                            </td>
+                                            <td class="text-end">
+                                                <div class="d-flex align-items-center justify-content-end gap-2">
+                                                    <span><?= number_format((float) ($item['percentage'] ?? 0), 1) ?>%</span>
+                                                    <div class="progress flex-grow-1" style="height: 5px; max-width: 50px;">
+                                                        <div class="progress-bar bg-danger" role="progressbar" style="width: <?= min(100, (float) ($item['percentage'] ?? 0)) ?>%" aria-valuenow="<?= (float) ($item['percentage'] ?? 0) ?>" aria-valuemin="0" aria-valuemax="100"></div>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    <?php endforeach; ?>
+                                </tbody>
+                                <tfoot>
+                                    <tr class="fw-bold border-top">
+                                        <td colspan="3"><?= lang('Treasurer.reportTotal') ?></td>
+                                        <td class="text-center"><?= number_format((int) ($report_account_breakdown['totals']['expenses_count'] ?? 0)) ?></td>
+                                        <td class="text-end text-danger">
+                                            $<?= number_format((float) ($report_account_breakdown['totals']['expenses_total'] ?? 0), 2) ?>
+                                        </td>
+                                        <td class="text-end">100.0%</td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    <?php endif; ?>
+                </div>
+            </div>
+        </div>
+    </div>
 <?php endif; ?>
 
 <style>

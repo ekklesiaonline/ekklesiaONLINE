@@ -272,6 +272,10 @@ final class ParishFinanceDashboardIntegrationTest extends CIUnitTestCase
                 approved_by INTEGER NULL,
                 notes TEXT NULL,
                 is_capital INTEGER NULL,
+                receipt_path TEXT NULL,
+                receipt_original_name TEXT NULL,
+                receipt_mime_type TEXT NULL,
+                receipt_file_size INTEGER NULL,
                 created_at TEXT NULL,
                 updated_at TEXT NULL
             )',

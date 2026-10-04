@@ -188,9 +188,9 @@ $formatLocalizedDate = static function (?string $value, string $pattern, string 
                     $chipParams = array_filter($chipParams, static fn($v) => $v !== null && $v !== '');
                     ?>
                     <a href="<?= base_url('expenses' . (!empty($chipParams) ? '?' . http_build_query($chipParams) : '')) ?>"
-                        class="badge rounded-pill text-bg-light border text-decoration-none">
+                        class="badge border border-secondary text-secondary fw-normal text-decoration-none">
                         <?= esc($filterMeta['label']) ?>
-                        <span class="ms-1">x</span>
+                        <span class="ms-1">&times;</span>
                     </a>
                 <?php endforeach; ?>
                 <a href="<?= base_url('expenses') ?>" class="btn btn-sm btn-outline-secondary"><?= lang('Finance.clearAll') ?></a>
@@ -216,7 +216,14 @@ $formatLocalizedDate = static function (?string $value, string $pattern, string 
                         <?php foreach ($expenses as $expense): ?>
                             <tr>
                                 <td><?= esc($formatLocalizedDate((string) ($expense['date'] ?? ''), 'MMM d, y', $locale)) ?></td>
-                                <td><strong><?= esc(expense_description_label((string) ($expense['description'] ?? ''))) ?></strong></td>
+                                <td>
+                                    <strong><?= esc(expense_description_label((string) ($expense['description'] ?? ''))) ?></strong>
+                                    <?php if (!empty($expense['receipt_path'])): ?>
+                                        <a href="<?= base_url('expenses/receipt/' . $expense['id']) ?>" target="_blank" class="badge border border-info text-info fw-normal text-decoration-none ms-1" title="<?= esc(lang('Treasurer.viewReceipt')) ?>">
+                                            <i class="bi bi-paperclip" aria-hidden="true"></i> <?= esc(lang('Treasurer.receiptDocument')) ?>
+                                        </a>
+                                    <?php endif; ?>
+                                </td>
                                 <td><?= esc(fund_name_label((string) ($expense['fund_name'] ?? lang('Finance.unassigned')))) ?></td>
                                 <td>
                                     <?php $fundType = (string) ($expense['fund_type'] ?? 'unrestricted'); ?>
@@ -235,13 +242,18 @@ $formatLocalizedDate = static function (?string $value, string $pattern, string 
                                 <td><strong>$<?= number_format($expense['amount'], 2) ?></strong></td>
                                 <td>
                                     <div class="d-inline-flex flex-nowrap gap-1 align-items-center">
+                                        <?php if (!empty($expense['receipt_path'])): ?>
+                                            <a href="<?= base_url('expenses/receipt/' . $expense['id']) ?>" target="_blank" class="btn btn-sm btn-outline-info" aria-label="<?= esc(lang('Treasurer.viewReceipt')) ?>" title="<?= esc(lang('Treasurer.viewReceipt')) ?>">
+                                                <i class="bi bi-paperclip" aria-hidden="true"></i>
+                                            </a>
+                                        <?php endif; ?>
                                         <?php if (auth()->user()->can('expense.edit')): ?>
-                                            <a href="<?= base_url('expenses/edit/' . $expense['id']) ?>" class="btn btn-sm btn-warning" aria-label="<?= esc(lang('App.edit')) ?>">
+                                            <a href="<?= base_url('expenses/edit/' . $expense['id']) ?>" class="btn btn-sm btn-outline-warning" aria-label="<?= esc(lang('App.edit')) ?>">
                                                 <i class="bi bi-pencil" aria-hidden="true"></i>
                                             </a>
                                         <?php endif; ?>
                                         <?php if (auth()->user()->can('expense.delete')): ?>
-                                            <button class="btn btn-sm btn-danger" onclick="deleteExpense(<?= $expense['id'] ?>)" aria-label="<?= esc(lang('App.delete')) ?>">
+                                            <button class="btn btn-sm btn-outline-danger" onclick="deleteExpense(<?= $expense['id'] ?>)" aria-label="<?= esc(lang('App.delete')) ?>">
                                                 <i class="bi bi-trash" aria-hidden="true"></i>
                                             </button>
                                         <?php endif; ?>

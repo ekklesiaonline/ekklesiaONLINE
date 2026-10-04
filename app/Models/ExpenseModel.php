@@ -23,6 +23,24 @@ class ExpenseModel extends Model
         'approved_by',
         'notes',
         'is_capital',
+        'receipt_path',
+        'receipt_original_name',
+        'receipt_mime_type',
+        'receipt_file_size',
+    ];
+
+    /**
+     * @var array<string, string>
+     */
+    protected array $casts = [
+        'id'                => '?int',
+        'parish_id'         => '?int',
+        'fund_id'           => '?int',
+        'chart_account_id'  => '?int',
+        'approved_by'       => '?int',
+        'amount'            => '?float',
+        'is_capital'        => '?int',
+        'receipt_file_size' => '?int',
     ];
 
     // Dates
@@ -33,14 +51,18 @@ class ExpenseModel extends Model
 
     // Validation
     protected $validationRules      = [
-        'parish_id'   => 'required|is_not_unique[parish.id]',
-        'fund_id'     => 'permit_empty|is_not_unique[fund.id]',
-        'description' => 'required|min_length[3]',
-        'amount'      => 'required|decimal|greater_than[0]',
-        'date'        => 'required|valid_date',
-        'category'    => 'required',
-        'chart_account_id' => 'permit_empty|is_not_unique[chart_of_accounts.id]',
-        'is_capital'  => 'permit_empty|in_list[0,1]',
+        'parish_id'             => 'required|is_not_unique[parish.id]',
+        'fund_id'               => 'permit_empty|is_not_unique[fund.id]',
+        'description'           => 'required|min_length[3]',
+        'amount'                => 'required|decimal|greater_than[0]',
+        'date'                  => 'required|valid_date',
+        'category'              => 'required',
+        'chart_account_id'      => 'permit_empty|is_not_unique[chart_of_accounts.id]',
+        'is_capital'            => 'permit_empty|in_list[0,1]',
+        'receipt_path'          => 'permit_empty|max_length[255]',
+        'receipt_original_name' => 'permit_empty|max_length[255]',
+        'receipt_mime_type'     => 'permit_empty|max_length[100]',
+        'receipt_file_size'     => 'permit_empty|integer',
     ];
     protected $validationMessages   = [];
     protected $skipValidation       = false;

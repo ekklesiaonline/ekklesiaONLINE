@@ -3,14 +3,14 @@
 <?= $this->section('content') ?>
 
 <div class="d-flex justify-content-start align-items-center mb-3">
-    <a href="<?= base_url('expenses') ?>" class="btn btn-secondary">
+    <a href="<?= base_url('expenses') ?>" class="btn btn-outline-secondary">
         <i class="bi bi-arrow-left" aria-hidden="true"></i> <?= lang('App.back') ?>
     </a>
 </div>
 
 <div class="card">
     <div class="card-body">
-        <form action="<?= base_url('expenses/update/' . $expense['id']) ?>" method="post">
+        <form action="<?= base_url('expenses/update/' . $expense['id']) ?>" method="post" enctype="multipart/form-data">
             <?= csrf_field() ?>
 
             <div class="row">
@@ -126,6 +126,41 @@
                     </div>
 
                     <div class="mb-3">
+                        <label for="receipt" class="form-label">
+                            <i class="bi bi-paperclip me-1" aria-hidden="true"></i><?= lang('Treasurer.receiptDocument') ?>
+                        </label>
+                        <?php if (!empty($expense['receipt_path'])): ?>
+                            <div class="card bg-body-tertiary border mb-2">
+                                <div class="card-body p-2 d-flex align-items-center justify-content-between">
+                                    <div class="d-flex align-items-center gap-2 overflow-hidden">
+                                        <i class="bi bi-file-earmark-check text-success fs-5 flex-shrink-0" aria-hidden="true"></i>
+                                        <div class="small text-truncate">
+                                            <div class="fw-semibold text-truncate"><?= esc($expense['receipt_original_name'] ?? basename($expense['receipt_path'])) ?></div>
+                                            <div class="text-body-secondary">
+                                                <?= !empty($expense['receipt_file_size']) ? esc(number_format($expense['receipt_file_size'] / 1024, 1)) . ' KB' : '' ?>
+                                                <?= !empty($expense['receipt_mime_type']) ? ' &bull; ' . esc($expense['receipt_mime_type']) : '' ?>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="d-flex gap-1 flex-shrink-0">
+                                        <a href="<?= base_url('expenses/receipt/' . $expense['id']) ?>" target="_blank" class="btn btn-sm btn-outline-primary" title="<?= esc(lang('Treasurer.viewReceipt')) ?>">
+                                            <i class="bi bi-eye" aria-hidden="true"></i>
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="checkbox" id="remove_receipt" name="remove_receipt" value="1">
+                                <label class="form-check-label text-danger small" for="remove_receipt">
+                                    <i class="bi bi-trash me-1" aria-hidden="true"></i><?= lang('Treasurer.removeReceipt') ?>
+                                </label>
+                            </div>
+                        <?php endif; ?>
+                        <input type="file" class="form-control" id="receipt" name="receipt" accept=".pdf,.jpg,.jpeg,.png,.webp">
+                        <div class="form-text"><?= !empty($expense['receipt_path']) ? lang('Treasurer.replaceReceipt') . ' &bull; ' . lang('Treasurer.receiptHelpText') : lang('Treasurer.receiptHelpText') ?></div>
+                    </div>
+
+                    <div class="mb-3">
                         <label for="notes" class="form-label"><?= lang('Finance.notes') ?></label>
                         <textarea class="form-control" id="notes" name="notes" rows="3"><?= esc($expense['notes']) ?></textarea>
                     </div>
@@ -137,8 +172,15 @@
                             <div class="form-text"><?= lang('Finance.capitalExpenseHelp') ?></div>
                         </div>
                     </div>
-                    </button>
                 </div>
+            </div>
+
+            <div class="d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
+                <a href="<?= base_url('expenses') ?>" class="btn btn-outline-secondary"><?= lang('App.cancel') ?></a>
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-save me-1" aria-hidden="true"></i><?= lang('App.save') ?>
+                </button>
+            </div>
         </form>
     </div>
 </div>

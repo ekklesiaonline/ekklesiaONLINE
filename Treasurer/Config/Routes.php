@@ -35,6 +35,7 @@ $routes->group('', ['filter' => 'session'], function ($routes) {
         $routes->get('/', '\\Treasurer\\Controllers\\Expense::index');
         $routes->get('export', '\\Treasurer\\Controllers\\Expense::export');
         $routes->get('export-pdf', '\\Treasurer\\Controllers\\Expense::exportPdf');
+        $routes->get('receipt/(:num)', '\\Treasurer\\Controllers\\Expense::receipt/$1');
         $routes->get('create', '\\Treasurer\\Controllers\\Expense::create', ['filter' => 'permission:expense.create']);
         $routes->post('store', '\\Treasurer\\Controllers\\Expense::store', ['filter' => 'permission:expense.create']);
         $routes->get('edit/(:num)', '\\Treasurer\\Controllers\\Expense::edit/$1', ['filter' => 'permission:expense.edit']);
