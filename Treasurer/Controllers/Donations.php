@@ -4,6 +4,7 @@ namespace Treasurer\Controllers;
 
 use App\Controllers\BaseController;
 use App\Services\DonationService;
+use App\Services\GivingStatementService;
 
 class Donations extends BaseController
 {
@@ -14,11 +15,25 @@ class Donations extends BaseController
     protected $profileModel;
     protected $fundModel;
     protected DonationService $donationService;
+    protected ?GivingStatementService $statementService = null;
 
     public function __construct()
     {
         $this->donationModel = model('DonationModel');
         $this->donationService = new DonationService($this->donationModel);
+    }
+
+    protected function getStatementService(): GivingStatementService
+    {
+        if ($this->statementService === null) {
+            $this->statementService = new GivingStatementService(
+                $this->donationModel,
+                model('ParishModel'),
+                $this->getProfileModel()
+            );
+        }
+
+        return $this->statementService;
     }
 
     protected function getProfileModel()
@@ -68,19 +83,23 @@ class Donations extends BaseController
         // Calculate summary
         $summary = $this->donationModel->getParishSummary($parishId, $startDate, $endDate);
         $funds = $this->getFundModel()->getParishFunds((int) $parishId);
-        $statementMemberId = (int) ($this->request->getGet('statement_member_id') ?? 0);
+        $statementService = $this->getStatementService();
+        $availableYears = $statementService->getAvailableYears((int) $parishId);
+        $selectedYear = (int) ($this->request->getGet('statement_year') ?? ($availableYears[0] ?? date('Y')));
 
         $data = [
-            'donations' => $donations,
-            'pager' => $this->donationModel->pager,
-            'summary' => $summary,
-            'category' => $category,
-            'fund_id' => $fundId,
-            'funds' => $funds,
-            'start_date' => $startDate,
-            'end_date' => $endDate,
+            'donations'               => $donations,
+            'pager'                   => $this->donationModel->pager,
+            'summary'                 => $summary,
+            'category'                => $category,
+            'fund_id'                 => $fundId,
+            'funds'                   => $funds,
+            'start_date'              => $startDate,
+            'end_date'                => $endDate,
             'statement_member_option' => $this->memberSelectOption((int) $parishId, $statementMemberId),
-            'statement_member_id' => $statementMemberId,
+            'statement_member_id'     => $statementMemberId,
+            'available_years'         => $availableYears,
+            'selected_year'           => $selectedYear,
         ];
 
         return view('Treasurer\Views\Donations/index', array_merge($this->getCommonViewData(lang('Finance.donationsTitle')), $data));
@@ -236,47 +255,105 @@ class Donations extends BaseController
             return redirect()->to('/donations')->with('error', lang('Treasurer.memberOutsideParishScope'));
         }
 
-        $donations = $this->buildFilteredDonationsQuery($parishId, [
-            'category' => '',
-            'fund_id' => 0,
-            'start_date' => $startDate,
-            'end_date' => $endDate,
-        ])
-            ->where($this->donationTable() . '.user_id', $memberUserId)
-            ->orderBy($this->donationTable() . '.date', 'ASC')
-            ->get()
-            ->getResultArray();
+        $result = $this->getStatementService()->generateSingleStatementPdf($parishId, $memberUserId, $startDate, $endDate);
+        if ($result === null) {
+            return redirect()->to('/donations')->with('error', lang('Treasurer.noContributionsForPeriod'));
+        }
 
-        $totalAmount = array_reduce($donations, static function (float $carry, array $donation): float {
-            return $carry + (float) ($donation['amount'] ?? 0);
-        }, 0.0);
-
-        $dompdf = new \Dompdf\Dompdf();
-        $dompdf->loadHtml($this->buildContributionStatementPdfHtml($parishId, $member, $startDate, $endDate, $donations, $totalAmount));
-        $dompdf->setPaper('A4', 'portrait');
-        $dompdf->render();
+        $statementAudit = [
+            'count'        => $result['count'],
+            'start_date'   => $startDate,
+            'end_date'     => $endDate,
+            'total_amount' => number_format((float) $result['total_amount'], 2, '.', ''),
+        ];
 
         $this->audit()->log('donation.statement_pdf', [
-            'parish_id' => $parishId,
+            'parish_id'   => $parishId,
             'entity_type' => 'member_statement',
-            'entity_id' => $memberUserId,
-            'meta' => array_merge(
+            'entity_id'   => $memberUserId,
+            'new_values'  => $statementAudit,
+            'meta'        => array_merge(
                 $this->buildParishContextMeta($parishId, self::ATTRIBUTION_POLICY_OPERATIONAL_DEFAULT),
-                [
-                    'count' => count($donations),
-                    'start_date' => $startDate,
-                    'end_date' => $endDate,
-                    'total_amount' => number_format($totalAmount, 2, '.', ''),
-                ]
+                $statementAudit
             ),
         ]);
 
-        $filename = 'contribution_statement_' . $memberUserId . '_' . date('Ymd_His') . '.pdf';
-
         return $this->response
             ->setHeader('Content-Type', 'application/pdf')
-            ->setHeader('Content-Disposition', 'attachment; filename="' . $filename . '"')
-            ->setBody($dompdf->output());
+            ->setHeader('Content-Disposition', 'attachment; filename="' . $result['filename'] . '"')
+            ->setBody($result['content']);
+    }
+
+    /**
+     * Batch export annual member giving statements for a fiscal year
+     * as a single combined PDF or ZIP archive.
+     */
+    public function batchStatements()
+    {
+        if ($redirect = $this->requirePermission('donation.view')) {
+            return $redirect;
+        }
+
+        if ($redirect = $this->requireParish()) {
+            return $redirect;
+        }
+
+        $parishId = (int) ($this->getOperationalParishId() ?? 0);
+        $rawYear = $this->request->getGet('year') ?? $this->request->getPost('year');
+        $year = $rawYear !== null && $rawYear !== '' ? (int) $rawYear : (int) date('Y');
+        if ($year < 2000 || $year > 2100) {
+            $year = (int) date('Y');
+        }
+
+        $rawFormat = $this->request->getGet('format') ?? $this->request->getPost('format') ?? 'pdf';
+        $format = strtolower(trim((string) $rawFormat));
+        if (! in_array($format, ['pdf', 'zip'], true)) {
+            $format = 'pdf';
+        }
+
+        $rawMin = $this->request->getGet('min_amount') ?? $this->request->getPost('min_amount');
+        $minAmount = $rawMin !== null && $rawMin !== '' ? (float) $rawMin : 0.01;
+        if ($minAmount < 0) {
+            $minAmount = 0.0;
+        }
+
+        $service = $this->getStatementService();
+
+        if ($format === 'zip') {
+            $result = $service->generateZipArchive($parishId, $year, $minAmount);
+            $contentType = 'application/zip';
+        } else {
+            $result = $service->generateCombinedPdf($parishId, $year, $minAmount);
+            $contentType = 'application/pdf';
+        }
+
+        if ($result === null || $result['count'] === 0) {
+            return redirect()->to('/donations')->with('error', lang('Finance.noDonorsFoundForYear', [$year]));
+        }
+
+        $batchAudit = [
+            'year'         => $year,
+            'format'       => $format,
+            'donor_count'  => $result['count'],
+            'min_amount'   => $minAmount,
+            'total_amount' => number_format((float) $result['total_amount'], 2, '.', ''),
+        ];
+
+        $this->audit()->log('donation.batch_statements', [
+            'parish_id'   => $parishId,
+            'entity_type' => 'batch_giving_statements',
+            'entity_id'   => $year,
+            'new_values'  => $batchAudit,
+            'meta'        => array_merge(
+                $this->buildParishContextMeta($parishId, self::ATTRIBUTION_POLICY_OPERATIONAL_DEFAULT),
+                $batchAudit
+            ),
+        ]);
+
+        return $this->response
+            ->setHeader('Content-Type', $contentType)
+            ->setHeader('Content-Disposition', 'attachment; filename="' . $result['filename'] . '"')
+            ->setBody($result['content']);
     }
 
     /**
@@ -816,69 +893,6 @@ class Donations extends BaseController
                         <th>' . htmlspecialchars(lang('Finance.colFund')) . '</th>
                         <th>' . htmlspecialchars(lang('Finance.colFundType')) . '</th>
                         <th>' . htmlspecialchars(lang('Finance.colCategory')) . '</th>
-                        <th style="text-align: right;">' . htmlspecialchars(lang('Finance.colAmount')) . '</th>
-                    </tr>
-                </thead>
-                <tbody>' . $rows . '</tbody>
-            </table>
-        </body>
-        </html>';
-    }
-
-    private function buildContributionStatementPdfHtml(int $parishId, array $member, string $startDate, string $endDate, array $donations, float $totalAmount): string
-    {
-        $memberName = trim((string) (($member['first_name'] ?? '') . ' ' . ($member['last_name'] ?? '')));
-        $rows = '';
-
-        foreach ($donations as $donation) {
-            $rows .= '<tr>'
-                . '<td style="padding: 8px; border: 1px solid #ddd;">' . htmlspecialchars((string) ($donation['date'] ?? '')) . '</td>'
-                . '<td style="padding: 8px; border: 1px solid #ddd;">' . htmlspecialchars((string) ($donation['fund_name'] ?? lang('Finance.unassigned'))) . '</td>'
-                . '<td style="padding: 8px; border: 1px solid #ddd;">' . htmlspecialchars($this->mapDonationCategoryLabel((string) ($donation['category'] ?? 'other'))) . '</td>'
-                . '<td style="padding: 8px; border: 1px solid #ddd;">' . htmlspecialchars((string) ($donation['payment_method'] ?? '-')) . '</td>'
-                . '<td style="padding: 8px; border: 1px solid #ddd; text-align: right;">$' . number_format((float) ($donation['amount'] ?? 0), 2) . '</td>'
-                . '</tr>';
-        }
-
-        if ($rows === '') {
-            $rows = '<tr><td colspan="5" style="padding: 12px; border: 1px solid #ddd; text-align: center; color: #666;">' . htmlspecialchars(lang('Treasurer.noContributionsForPeriod')) . '</td></tr>';
-        }
-
-        return '<!DOCTYPE html>
-        <html>
-        <head>
-            <meta charset="UTF-8">
-            <title>' . htmlspecialchars(lang('Treasurer.contributionStatementTitle')) . '</title>
-            <style>
-                body { font-family: Arial, sans-serif; color: #333; font-size: 12px; }
-                h1 { color: #1f4b8f; margin-bottom: 4px; }
-                h2 { color: #444; font-size: 16px; margin-top: 0; }
-                .meta { margin-bottom: 18px; color: #555; }
-                .totals { margin: 18px 0; padding: 14px; border: 1px solid #ddd; background: #fafafa; }
-                .totals strong { color: #1f4b8f; font-size: 18px; }
-                table { width: 100%; border-collapse: collapse; }
-                th { background: #f4f6f8; text-align: left; padding: 8px; border: 1px solid #ddd; }
-            </style>
-        </head>
-        <body>
-            <h1>' . htmlspecialchars(lang('Treasurer.contributionStatementTitle')) . '</h1>
-            <h2>' . htmlspecialchars($this->getParishName($parishId)) . '</h2>
-            <div class="meta">
-                <strong>' . htmlspecialchars(lang('Finance.memberLabel')) . ':</strong> ' . htmlspecialchars($memberName !== '' ? $memberName : (lang('Finance.memberPrefix') . (int) ($member['user_id'] ?? 0))) . '<br>
-                <strong>' . htmlspecialchars(lang('App.colEmail')) . ':</strong> ' . htmlspecialchars((string) ($member['email'] ?? '-')) . '<br>
-                <strong>' . htmlspecialchars(lang('Treasurer.statementPeriodLabel')) . ':</strong> ' . htmlspecialchars($startDate) . ' ' . htmlspecialchars(lang('Treasurer.reportTo')) . ' ' . htmlspecialchars($endDate) . '<br>
-                <strong>' . htmlspecialchars(lang('Treasurer.generatedLabel')) . ':</strong> ' . htmlspecialchars($this->formatLocalizedDateTime(date('Y-m-d H:i:s'))) . '
-            </div>
-            <div class="totals">
-                ' . htmlspecialchars(lang('Treasurer.totalContributionsLabel')) . ': <strong>$' . number_format($totalAmount, 2) . '</strong>
-            </div>
-            <table>
-                <thead>
-                    <tr>
-                        <th>' . htmlspecialchars(lang('Finance.colDate')) . '</th>
-                        <th>' . htmlspecialchars(lang('Finance.colFund')) . '</th>
-                        <th>' . htmlspecialchars(lang('Finance.colCategory')) . '</th>
-                        <th>' . htmlspecialchars(lang('Finance.colPaymentMethod')) . '</th>
                         <th style="text-align: right;">' . htmlspecialchars(lang('Finance.colAmount')) . '</th>
                     </tr>
                 </thead>

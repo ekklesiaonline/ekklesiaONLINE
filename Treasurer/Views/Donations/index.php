@@ -208,6 +208,9 @@ $donationMethodLabelMap = [
                 <a href="<?= base_url('donations/export-pdf' . (!empty($exportFilterParams) ? '?' . http_build_query($exportFilterParams) : '')) ?>" class="btn btn-outline-secondary btn-sm" target="_blank" rel="noopener noreferrer">
                     <i class="bi bi-file-earmark-pdf" aria-hidden="true"></i> <?= lang('Finance.exportPdf') ?>
                 </a>
+                <button type="button" class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#bulkStatementsModal">
+                    <i class="bi bi-collection" aria-hidden="true"></i> <?= lang('Finance.batchStatements') ?>
+                </button>
             </div>
             <span class="text-muted small"><?= lang('Treasurer.donationExportsRespectFilters') ?></span>
         </div>
@@ -222,9 +225,9 @@ $donationMethodLabelMap = [
                     $chipParams = array_filter($chipParams, static fn($v) => $v !== null && $v !== '');
                     ?>
                     <a href="<?= base_url('donations' . (!empty($chipParams) ? '?' . http_build_query($chipParams) : '')) ?>"
-                        class="badge rounded-pill text-bg-light border text-decoration-none">
+                        class="badge rounded-pill border border-secondary text-secondary text-decoration-none">
                         <?= esc($filterMeta['label']) ?>
-                        <span class="ms-1">x</span>
+                        <span class="ms-1">&times;</span>
                     </a>
                 <?php endforeach; ?>
                 <a href="<?= base_url('donations') ?>" class="btn btn-sm btn-outline-secondary"><?= lang('Finance.clearAll') ?></a>
@@ -232,35 +235,89 @@ $donationMethodLabelMap = [
         <?php endif; ?>
 
         <div class="card border mb-3">
-            <div class="card-header bg-light">
-                <strong><?= lang('Finance.contributionStatement') ?></strong>
+            <div class="card-header border-bottom bg-transparent pb-0">
+                <ul class="nav nav-tabs card-header-tabs" id="statementTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="single-statement-tab" data-bs-toggle="tab" data-bs-target="#singleStatementPane" type="button" role="tab" aria-controls="singleStatementPane" aria-selected="true">
+                            <i class="bi bi-person-badge" aria-hidden="true"></i> <?= lang('Finance.individualStatement') ?>
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="bulk-statement-tab" data-bs-toggle="tab" data-bs-target="#bulkStatementPane" type="button" role="tab" aria-controls="bulkStatementPane" aria-selected="false">
+                            <i class="bi bi-collection" aria-hidden="true"></i> <?= lang('Finance.bulkAnnualStatements') ?>
+                        </button>
+                    </li>
+                </ul>
             </div>
             <div class="card-body">
-                <form method="get" action="<?= base_url('donations/statement') ?>" class="row g-2 align-items-end">
-                    <div class="col-md-4">
-                        <label for="statement_member_id" class="form-label"><?= lang('Finance.memberLabel') ?></label>
-                        <?= view('partials/_member_select_ajax', [
-                            'select_id'   => 'statement_member_id',
-                            'name'        => 'statement_member_id',
-                            'required'    => true,
-                            'placeholder' => lang('Finance.selectMember'),
-                            'selected'    => $statement_member_option ?? [],
-                        ]) ?>
+                <div class="tab-content" id="statementTabContent">
+                    <!-- Single Member Tab -->
+                    <div class="tab-pane fade show active" id="singleStatementPane" role="tabpanel" aria-labelledby="single-statement-tab">
+                        <form method="get" action="<?= base_url('donations/statement') ?>" class="row g-2 align-items-end">
+                            <div class="col-md-4">
+                                <label for="statement_member_id" class="form-label"><?= lang('Finance.memberLabel') ?></label>
+                                <?= view('partials/_member_select_ajax', [
+                                    'select_id'   => 'statement_member_id',
+                                    'name'        => 'statement_member_id',
+                                    'required'    => true,
+                                    'placeholder' => lang('Finance.selectMember'),
+                                    'selected'    => $statement_member_option ?? [],
+                                ]) ?>
+                            </div>
+                            <div class="col-md-3">
+                                <label for="statement_start_date" class="form-label"><?= lang('Finance.startDate') ?></label>
+                                <input type="date" name="start_date" id="statement_start_date" class="form-control" value="<?= esc($start_date ?: date('Y-01-01')) ?>">
+                            </div>
+                            <div class="col-md-3">
+                                <label for="statement_end_date" class="form-label"><?= lang('Finance.endDate') ?></label>
+                                <input type="date" name="end_date" id="statement_end_date" class="form-control" value="<?= esc($end_date ?: date('Y-m-d')) ?>">
+                            </div>
+                            <div class="col-md-2">
+                                <button type="submit" class="btn btn-outline-primary w-100">
+                                    <i class="bi bi-receipt" aria-hidden="true"></i> <?= lang('Finance.generatePdf') ?>
+                                </button>
+                            </div>
+                        </form>
                     </div>
-                    <div class="col-md-3">
-                        <label for="statement_start_date" class="form-label"><?= lang('Finance.startDate') ?></label>
-                        <input type="date" name="start_date" id="statement_start_date" class="form-control" value="<?= esc($start_date ?: date('Y-01-01')) ?>">
+
+                    <!-- Bulk Statements Tab -->
+                    <div class="tab-pane fade" id="bulkStatementPane" role="tabpanel" aria-labelledby="bulk-statement-tab">
+                        <form method="get" action="<?= base_url('donations/batch-statements') ?>" class="row g-2 align-items-end">
+                            <div class="col-md-3">
+                                <label for="bulk_year" class="form-label"><?= lang('Finance.fiscalYear') ?></label>
+                                <select name="year" id="bulk_year" class="form-select">
+                                    <?php foreach (($available_years ?? [(int) date('Y')]) as $yr): ?>
+                                        <option value="<?= (int) $yr ?>" <?= (int) ($selected_year ?? date('Y')) === (int) $yr ? 'selected' : '' ?>>
+                                            <?= (int) $yr ?>
+                                        </option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label for="bulk_format" class="form-label"><?= lang('Finance.exportFormat') ?></label>
+                                <select name="format" id="bulk_format" class="form-select">
+                                    <option value="pdf"><?= lang('Finance.formatCombinedPdf') ?></option>
+                                    <option value="zip"><?= lang('Finance.formatZipArchive') ?></option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label for="bulk_min_amount" class="form-label"><?= lang('Finance.minAmount') ?></label>
+                                <div class="input-group">
+                                    <span class="input-group-text">$</span>
+                                    <input type="number" step="0.01" min="0" name="min_amount" id="bulk_min_amount" class="form-control" value="0.01" placeholder="0.01">
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <button type="submit" class="btn btn-primary w-100">
+                                    <i class="bi bi-file-earmark-arrow-down" aria-hidden="true"></i> <?= lang('Finance.generateBulkStatements') ?>
+                                </button>
+                            </div>
+                        </form>
+                        <div class="form-text mt-2 text-muted small">
+                            <i class="bi bi-info-circle me-1"></i> <?= lang('Finance.bulkStatementsModalHelp') ?>
+                        </div>
                     </div>
-                    <div class="col-md-3">
-                        <label for="statement_end_date" class="form-label"><?= lang('Finance.endDate') ?></label>
-                        <input type="date" name="end_date" id="statement_end_date" class="form-control" value="<?= esc($end_date ?: date('Y-m-d')) ?>">
-                    </div>
-                    <div class="col-md-2">
-                        <button type="submit" class="btn btn-outline-primary w-100">
-                            <i class="bi bi-receipt" aria-hidden="true"></i> <?= lang('Finance.generatePdf') ?>
-                        </button>
-                    </div>
-                </form>
+                </div>
             </div>
         </div>
 
@@ -337,6 +394,56 @@ $donationMethodLabelMap = [
         <?php if (isset($pager)): ?>
             <div class="mt-3"><?= $pager->links() ?></div>
         <?php endif; ?>
+    </div>
+</div>
+
+<!-- Bulk Statements Modal -->
+<div class="modal fade" id="bulkStatementsModal" tabindex="-1" aria-labelledby="bulkStatementsModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <form method="get" action="<?= base_url('donations/batch-statements') ?>" class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="bulkStatementsModalLabel">
+                    <i class="bi bi-collection me-2"></i><?= lang('Finance.bulkStatementsModalTitle') ?>
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="<?= lang('App.close') ?>"></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-muted small mb-3">
+                    <?= lang('Finance.bulkStatementsModalHelp') ?>
+                </p>
+                <div class="mb-3">
+                    <label for="modal_bulk_year" class="form-label"><?= lang('Finance.fiscalYear') ?></label>
+                    <select name="year" id="modal_bulk_year" class="form-select">
+                        <?php foreach (($available_years ?? [(int) date('Y')]) as $yr): ?>
+                            <option value="<?= (int) $yr ?>" <?= (int) ($selected_year ?? date('Y')) === (int) $yr ? 'selected' : '' ?>>
+                                <?= (int) $yr ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label for="modal_bulk_format" class="form-label"><?= lang('Finance.exportFormat') ?></label>
+                    <select name="format" id="modal_bulk_format" class="form-select">
+                        <option value="pdf"><?= lang('Finance.formatCombinedPdf') ?></option>
+                        <option value="zip"><?= lang('Finance.formatZipArchive') ?></option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label for="modal_bulk_min_amount" class="form-label"><?= lang('Finance.minAmount') ?></label>
+                    <div class="input-group">
+                        <span class="input-group-text">$</span>
+                        <input type="number" step="0.01" min="0" name="min_amount" id="modal_bulk_min_amount" class="form-control" value="0.01" placeholder="0.01">
+                    </div>
+                    <div class="form-text"><?= lang('Finance.allContributingDonors') ?> (&ge; $0.01)</div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal"><?= lang('App.cancel') ?></button>
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-file-earmark-arrow-down me-1"></i><?= lang('Finance.generateBulkStatements') ?>
+                </button>
+            </div>
+        </form>
     </div>
 </div>
 

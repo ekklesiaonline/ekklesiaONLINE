@@ -17,6 +17,7 @@ $routes->group('', ['filter' => 'session'], function ($routes) {
         $routes->get('export', '\\Treasurer\\Controllers\\Donation::export');
         $routes->get('export-pdf', '\\Treasurer\\Controllers\\Donation::exportPdf');
         $routes->get('statement', '\\Treasurer\\Controllers\\Donation::statement');
+        $routes->match(['get', 'post'], 'batch-statements', '\\Treasurer\\Controllers\\Donation::batchStatements');
         $routes->get('receipt/(:num)', '\\Treasurer\\Controllers\\Donation::receipt/$1', ['filter' => 'permission:donation.view']);
         $routes->get('create', '\\Treasurer\\Controllers\\Donation::create', ['filter' => 'permission:donation.create']);
         $routes->post('store', '\\Treasurer\\Controllers\\Donation::store', ['filter' => 'permission:donation.create']);
