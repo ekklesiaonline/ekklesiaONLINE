@@ -289,4 +289,20 @@ return [
     'officialTaxRecordNotice'        => 'Registro Fiscal Oficial — Conserve esta declaración para sus registros tributarios.',
     'authorizedTreasurerSignature'   => 'Representante / Tesorero Parroquial Autorizado',
     'batchStatements'                => 'Declaraciones Fiscales Masivas',
+
+    // Bank Statement File Import (OFX/CSV)
+    'bankImportStatement'       => 'Importar estado de cuenta',
+    'bankImportStatementHelp'   => 'Cargue un archivo de estado de cuenta bancario OFX, QFX o CSV para registrar transacciones automáticamente y omitir duplicados.',
+    'bankSelectFile'            => 'Archivo de estado de cuenta (OFX o CSV)',
+    'bankSelectAccount'         => 'Cuenta bancaria de destino',
+    'bankFileHelp'              => 'Formatos compatibles: OFX, QFX y CSV con Fecha, Monto y Descripción (hasta 10 MB).',
+    'bankAutoDeduplicateNotice' => 'Las transacciones con fechas, montos y referencias/descripciones coincidentes se detectan automáticamente para evitar duplicados.',
+    'bankImportSubmit'          => 'Importar transacciones',
+    'bankImportSuccess'         => '{0} transacciones importadas exitosamente ({1} duplicadas omitidas).',
+    'bankImportNoTransactions'  => 'No se encontraron transacciones válidas en el archivo cargado.',
+    'bankImportFailed'          => 'Error al importar el estado de cuenta bancario.',
+    'bankInvalidFileType'       => 'Formato de archivo inválido. Por favor cargue un archivo OFX, QFX o CSV.',
+    'bankImportModalTitle'      => 'Importar estado de cuenta bancario',
+    'bankFileRequired'          => 'Por favor seleccione un archivo de estado de cuenta para importar.',
+    'bankAccountRequired'       => 'Por favor seleccione una cuenta bancaria válida.',
 ];

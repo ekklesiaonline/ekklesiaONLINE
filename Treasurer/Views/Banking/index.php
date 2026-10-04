@@ -7,6 +7,11 @@
         <a href="<?= base_url('banking/create') ?>" class="btn btn-outline-primary">
             <i class="bi bi-plus-circle" aria-hidden="true"></i> <?= lang('Finance.bankAccountCreate') ?>
         </a>
+        <?php if (!empty($accounts)): ?>
+            <button type="button" class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#importStatementModal">
+                <i class="bi bi-file-earmark-arrow-up" aria-hidden="true"></i> <?= lang('Finance.bankImportStatement') ?>
+            </button>
+        <?php endif; ?>
     <?php endif; ?>
 </div>
 
@@ -59,5 +64,7 @@
         <?php endif; ?>
     </div>
 </div>
+
+<?= view('Treasurer\Views\Banking/_import_modal', ['accounts' => $accounts ?? [], 'preselectedAccountId' => null]) ?>
 
 <?= $this->endSection() ?>

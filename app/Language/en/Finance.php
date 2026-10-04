@@ -328,4 +328,20 @@ return [
     'officialTaxRecordNotice'        => 'Official Tax Record — Please retain this statement for your tax preparation records.',
     'authorizedTreasurerSignature'   => 'Authorized Parish Representative / Treasurer',
     'batchStatements'                => 'Bulk Tax Statements',
+
+    // Bank Statement File Import (OFX/CSV)
+    'bankImportStatement'       => 'Import Statement',
+    'bankImportStatementHelp'   => 'Upload an OFX, QFX, or CSV bank statement file to automatically populate transactions and skip duplicates.',
+    'bankSelectFile'            => 'Statement file (OFX or CSV)',
+    'bankSelectAccount'         => 'Target bank account',
+    'bankFileHelp'              => 'Supported formats: OFX, QFX, and CSV with Date, Amount, and Description (up to 10 MB).',
+    'bankAutoDeduplicateNotice' => 'Transactions with matching dates, amounts, and references/descriptions are automatically detected to prevent duplicates.',
+    'bankImportSubmit'          => 'Import Transactions',
+    'bankImportSuccess'         => '{0} transactions imported successfully ({1} duplicates skipped).',
+    'bankImportNoTransactions'  => 'No valid transactions found in the uploaded statement.',
+    'bankImportFailed'          => 'Failed to import bank statement.',
+    'bankInvalidFileType'       => 'Invalid file format. Please upload an OFX, QFX, or CSV file.',
+    'bankImportModalTitle'      => 'Import Bank Statement',
+    'bankFileRequired'          => 'Please select a statement file to import.',
+    'bankAccountRequired'       => 'Please select a valid bank account.',
 ];

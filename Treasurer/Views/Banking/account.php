@@ -23,6 +23,11 @@ $txnStatusLabels = [
     <a href="<?= base_url('banking') ?>" class="btn btn-outline-secondary">
         <i class="bi bi-arrow-left" aria-hidden="true"></i> <?= lang('Finance.bankingTitle') ?>
     </a>
+    <?php if (!empty($canManage)): ?>
+        <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#importStatementModal">
+            <i class="bi bi-file-earmark-arrow-up" aria-hidden="true"></i> <?= lang('Finance.bankImportStatement') ?>
+        </button>
+    <?php endif; ?>
 </div>
 
 <div class="row mb-3">
@@ -54,7 +59,12 @@ $txnStatusLabels = [
 
 <?php if (!empty($canManage)): ?>
     <div class="card mb-3">
-        <div class="card-header"><h6 class="mb-0"><?= lang('Finance.bankAddTransaction') ?></h6></div>
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h6 class="mb-0"><?= lang('Finance.bankAddTransaction') ?></h6>
+            <button type="button" class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#importStatementModal">
+                <i class="bi bi-file-earmark-arrow-up me-1" aria-hidden="true"></i> <?= lang('Finance.bankImportStatement') ?>
+            </button>
+        </div>
         <div class="card-body">
             <form method="post" action="<?= base_url('banking/' . (int) $account['id'] . '/transactions') ?>" class="row g-2 align-items-end">
                 <?= csrf_field() ?>
@@ -189,5 +199,7 @@ $txnStatusLabels = [
         <?php endif; ?>
     </div>
 </div>
+
+<?= view('Treasurer\Views\Banking/_import_modal', ['accounts' => [$account], 'preselectedAccountId' => (int) $account['id']]) ?>
 
 <?= $this->endSection() ?>

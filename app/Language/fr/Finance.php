@@ -288,4 +288,20 @@ return [
     'officialTaxRecordNotice'        => 'Document Fiscal Officiel — Veuillez conserver ce relevé pour vos déclarations fiscales.',
     'authorizedTreasurerSignature'   => 'Représentant / Trésorier Paroissial Autorisé',
     'batchStatements'                => 'Relevés Fiscaux en Masse',
+
+    // Bank Statement File Import (OFX/CSV)
+    'bankImportStatement'       => 'Importer un relevé',
+    'bankImportStatementHelp'   => 'Téléversez un relevé bancaire OFX, QFX ou CSV pour enregistrer automatiquement les transactions et ignorer les doublons.',
+    'bankSelectFile'            => 'Fichier de relevé (OFX ou CSV)',
+    'bankSelectAccount'         => 'Compte bancaire cible',
+    'bankFileHelp'              => 'Formats pris en charge : OFX, QFX et CSV avec Date, Montant et Description (jusqu\'à 10 Mo).',
+    'bankAutoDeduplicateNotice' => 'Les transactions correspondant à la date, au montant et à la référence/description sont automatiquement détectées pour éviter les doublons.',
+    'bankImportSubmit'          => 'Importer les transactions',
+    'bankImportSuccess'         => '{0} transactions importées avec succès ({1} doublons ignorés).',
+    'bankImportNoTransactions'  => 'Aucune transaction valide trouvée dans le relevé téléversé.',
+    'bankImportFailed'          => 'Échec de l\'importation du relevé bancaire.',
+    'bankInvalidFileType'       => 'Format de fichier non valide. Veuillez téléverser un fichier OFX, QFX ou CSV.',
+    'bankImportModalTitle'      => 'Importer un relevé bancaire',
+    'bankFileRequired'          => 'Veuillez sélectionner un fichier de relevé à importer.',
+    'bankAccountRequired'       => 'Veuillez sélectionner un compte bancaire valide.',
 ];

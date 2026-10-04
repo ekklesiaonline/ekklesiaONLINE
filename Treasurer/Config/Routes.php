@@ -53,6 +53,8 @@ $routes->group('', ['filter' => 'session'], function ($routes) {
         $routes->get('(:num)', '\\Treasurer\\Controllers\\Banking::view/$1');
         $routes->post('(:num)/transactions', '\\Treasurer\\Controllers\\Banking::storeTransaction/$1', ['filter' => 'permission:finance.manage']);
         $routes->post('(:num)/reconciliations', '\\Treasurer\\Controllers\\Banking::startReconciliation/$1', ['filter' => 'permission:finance.manage']);
+        $routes->post('import', '\\Treasurer\\Controllers\\Banking::importStatement', ['filter' => 'permission:finance.manage']);
+        $routes->post('(:num)/import', '\\Treasurer\\Controllers\\Banking::importStatement/$1', ['filter' => 'permission:finance.manage']);
     });
 
     $routes->group('funds', ['filter' => 'permission:finance.view'], function ($routes) {

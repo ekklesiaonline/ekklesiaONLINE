@@ -62,8 +62,8 @@ class BankReconciliationService
     {
         $id = $this->transactions->insert([
             'bank_account_id'  => $accountId,
-            'transaction_date' => (string) ($data['transaction_date'] ?? ''),
-            'amount'           => $data['amount'] ?? 0,
+            'transaction_date' => (string) $data['transaction_date'],
+            'amount'           => $data['amount'],
             'description'      => $data['description'] ?? null,
             'reference'        => $data['reference'] ?? null,
             'status'           => 'unmatched',
@@ -74,6 +74,72 @@ class BankReconciliationService
         }
 
         return ['ok' => true, 'code' => null, 'id' => (int) $id];
+    }
+
+    /**
+     * Import a batch of bank transactions for an account with duplicate detection.
+     *
+     * Matches on date, amount, and reference (or description) to prevent duplicates.
+     *
+     * @param int $accountId
+     * @param array<int, array{transaction_date: string, amount: float|int|string, description?: ?string, reference?: ?string}> $transactions
+     * @return array{imported: int, skipped: int, errors: array<int, string>}
+     */
+    public function importTransactions(int $accountId, array $transactions): array
+    {
+        $imported = 0;
+        $skipped  = 0;
+        $errors   = [];
+
+        foreach ($transactions as $txn) {
+            $date   = trim((string) $txn['transaction_date']);
+            $amount = (float) $txn['amount'];
+            $desc   = isset($txn['description']) && $txn['description'] !== '' ? (string) $txn['description'] : null;
+            $ref    = isset($txn['reference']) && $txn['reference'] !== '' ? (string) $txn['reference'] : null;
+
+            if ($date === '') {
+                continue;
+            }
+
+            // Fresh builder for each check to avoid builder state carry-over
+            $builder = $this->transactions->builder();
+            $builder->where('bank_account_id', $accountId)
+                ->where('transaction_date', $date)
+                ->where('amount', $amount);
+
+            if ($ref !== null) {
+                $builder->groupStart()
+                    ->where('reference', $ref)
+                    ->orWhere('description', $desc)
+                    ->groupEnd();
+            } elseif ($desc !== null) {
+                $builder->where('description', $desc);
+            }
+
+            if ($builder->countAllResults() > 0) {
+                $skipped++;
+                continue;
+            }
+
+            $res = $this->addTransaction($accountId, [
+                'transaction_date' => $date,
+                'amount'           => $amount,
+                'description'      => $desc,
+                'reference'        => $ref,
+            ]);
+
+            if ($res['ok']) {
+                $imported++;
+            } else {
+                $errors[] = "Failed to import transaction on {$date} for {$amount}";
+            }
+        }
+
+        return [
+            'imported' => $imported,
+            'skipped'  => $skipped,
+            'errors'   => $errors,
+        ];
     }
 
     /**
