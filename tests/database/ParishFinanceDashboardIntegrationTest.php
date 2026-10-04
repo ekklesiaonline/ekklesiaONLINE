@@ -38,7 +38,17 @@ final class ParishFinanceDashboardIntegrationTest extends CIUnitTestCase
         SystemSettingsTestHelper::createSystemSettingsTableAndSeed($this->db);
         SystemSettingsTestHelper::createAuditLogTable($this->db);
 
-        foreach (['parish', 'users', 'profile', 'audit_log'] as $table) {
+        foreach ([
+            'parish',
+            'users',
+            'auth_groups_users',
+            'auth_permissions_users',
+            'profile',
+            'audit_log',
+            'annual_pledge',
+            'bank_account',
+            'bank_transaction',
+        ] as $table) {
             CanonicalTestSchema::reset($this->db, $table);
         }
 
@@ -190,6 +200,10 @@ final class ParishFinanceDashboardIntegrationTest extends CIUnitTestCase
     // Helpers
     // -----------------------------------------------------------------------
 
+    /**
+     * @param array<string, mixed> $post
+     * @param array<string, mixed> $get
+     */
     private function makeController(string $method = 'GET', array $post = [], array $get = []): FinanceDashboard
     {
         $request = service('request');
@@ -261,43 +275,16 @@ final class ParishFinanceDashboardIntegrationTest extends CIUnitTestCase
                 created_at TEXT NULL,
                 updated_at TEXT NULL
             )',
-            'annual_pledge' => '(
+            'chart_of_accounts' => '(
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
-                user_id INTEGER NOT NULL,
-                parish_id INTEGER NOT NULL,
-                pledge_year INTEGER NOT NULL,
-                pledged_amount REAL NOT NULL,
-                fulfilled_amount REAL NOT NULL DEFAULT 0,
-                pledged_at TEXT NULL,
-                fulfillment_status TEXT NOT NULL DEFAULT \'pledged\',
-                notes TEXT NULL,
-                created_at TEXT NULL,
-                updated_at TEXT NULL
-            )',
-            'bank_account' => '(
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                parish_id INTEGER NOT NULL,
-                chart_account_id INTEGER NULL,
+                code TEXT NOT NULL,
                 name TEXT NOT NULL,
-                institution_name TEXT NULL,
-                masked_account_number TEXT NULL,
-                routing_last4 TEXT NULL,
-                currency_code TEXT NOT NULL DEFAULT \'USD\',
-                opening_balance REAL NOT NULL DEFAULT 0,
-                opened_on TEXT NULL,
+                account_type TEXT NOT NULL,
+                category TEXT NULL,
+                description TEXT NULL,
+                allow_budget INTEGER NOT NULL DEFAULT 1,
                 is_active INTEGER NOT NULL DEFAULT 1,
-                created_at TEXT NULL,
-                updated_at TEXT NULL
-            )',
-            'bank_transaction' => '(
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                bank_account_id INTEGER NOT NULL,
-                transaction_date TEXT NOT NULL,
-                amount REAL NOT NULL,
-                description TEXT NOT NULL,
-                reference_number TEXT NULL,
-                reconciliation_id INTEGER NULL,
-                is_cleared INTEGER NOT NULL DEFAULT 0,
+                sort_order INTEGER NOT NULL DEFAULT 0,
                 created_at TEXT NULL,
                 updated_at TEXT NULL
             )',
@@ -440,9 +427,15 @@ final class ParishFinanceDashboardIntegrationTest extends CIUnitTestCase
         return (int) $this->db->insertID();
     }
 
+    /**
+     * @param list<string> $permissions
+     */
     private function injectFinanceAuth(int $userId, array $permissions): void
     {
         $fakeUser = new class ($userId, $permissions) extends User {
+            /**
+             * @param list<string> $perms
+             */
             public function __construct(private int $userIdForTest, private array $perms)
             {
                 $this->attributes['id']       = $userIdForTest;
@@ -482,12 +475,12 @@ final class ParishFinanceDashboardIntegrationTest extends CIUnitTestCase
                 return true;
             }
 
-            public function id(): ?int
+            public function id(): int
             {
                 return $this->userIdForTest;
             }
 
-            public function user(): ?User
+            public function user(): User
             {
                 return $this->fakeUser;
             }
