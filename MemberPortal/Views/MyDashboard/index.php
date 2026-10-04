@@ -345,8 +345,11 @@ if (!empty($attendance_summary['total_services']) && $attendance_summary['total_
     <!-- My Pledges -->
     <div class="col-md-6">
         <div class="card h-100">
-            <div class="card-header">
+            <div class="card-header d-flex justify-content-between align-items-center">
                 <h5 class="mb-0"><i class="bi bi-cash-coin" aria-hidden="true"></i> <?= lang('Dashboard.myPledges') ?></h5>
+                <button type="button" class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#selfPledgeModal">
+                    <i class="bi bi-plus-circle" aria-hidden="true"></i> <?= lang('Pledges.makePledge') ?>
+                </button>
             </div>
             <div class="card-body">
                 <?php if (!empty($pledges)): ?>
@@ -358,6 +361,7 @@ if (!empty($attendance_summary['total_services']) && $attendance_summary['total_
                                     <th scope="col" class="text-end"><?= lang('Dashboard.colPledged') ?></th>
                                     <th scope="col" class="text-end"><?= lang('Dashboard.colFulfilled') ?></th>
                                     <th scope="col"><?= lang('Dashboard.colStatus') ?></th>
+                                    <th scope="col" class="text-end"><?= lang('App.colActions') ?></th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -370,13 +374,26 @@ if (!empty($attendance_summary['total_services']) && $attendance_summary['total_
                                             <?php
                                             $statusColor = match ($pledge['fulfillment_status'] ?? '') {
                                                 'fulfilled' => 'success',
-                                                'partial' => 'warning',
-                                                'pledged' => 'info',
+                                                'partial'   => 'warning',
+                                                'pledged'   => 'info',
                                                 'cancelled' => 'danger',
-                                                default => 'secondary',
+                                                default     => 'secondary',
                                             };
                                             ?>
-                                            <span class="badge bg-<?= $statusColor ?>"><?= esc(ucfirst($pledge['fulfillment_status'] ?? '')) ?></span>
+                                            <span class="badge border border-<?= $statusColor ?> text-<?= $statusColor ?> fw-normal"><?= esc(ucfirst($pledge['fulfillment_status'] ?? '')) ?></span>
+                                        </td>
+                                        <td class="text-end">
+                                            <?php if (($pledge['fulfillment_status'] ?? '') !== 'cancelled' && (int) ($pledge['pledge_year'] ?? 0) >= (int) date('Y')): ?>
+                                                <button type="button" class="btn btn-outline-secondary btn-sm edit-pledge-btn"
+                                                    data-bs-toggle="modal"
+                                                    data-bs-target="#selfPledgeModal"
+                                                    data-year="<?= (int) ($pledge['pledge_year'] ?? 0) ?>"
+                                                    data-amount="<?= esc($pledge['pledged_amount'] ?? '') ?>"
+                                                    data-notes="<?= esc($pledge['notes'] ?? '') ?>"
+                                                    title="<?= esc(lang('Pledges.edit')) ?>">
+                                                    <i class="bi bi-pencil" aria-hidden="true"></i>
+                                                </button>
+                                            <?php endif; ?>
                                         </td>
                                     </tr>
                                 <?php endforeach; ?>
@@ -508,3 +525,72 @@ if (!empty($attendance_summary['total_services']) && $attendance_summary['total_
 </div>
 
 <?= $this->endSection() ?>
+
+<?= $this->section('modals') ?>
+<?= view('MemberPortal\Views\MyDashboard\_pledge_modal') ?>
+<?= $this->endSection() ?>
+
+<?= $this->section('scripts') ?>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const pledgeModal = document.getElementById('selfPledgeModal');
+    if (!pledgeModal) return;
+
+    const modalTitle = document.getElementById('pledgeModalTitleText');
+    const submitBtnText = document.getElementById('selfPledgeSubmitText');
+    const yearSelect = document.getElementById('self_pledge_year');
+    const amountInput = document.getElementById('self_pledged_amount');
+    const notesInput = document.getElementById('self_pledge_notes');
+    const alertBox = document.getElementById('selfPledgeAlert');
+
+    pledgeModal.addEventListener('show.bs.modal', function (event) {
+        const trigger = event.relatedTarget;
+        if (alertBox) {
+            alertBox.classList.add('d-none');
+            alertBox.textContent = '';
+        }
+
+        if (trigger && trigger.classList.contains('edit-pledge-btn')) {
+            const year = trigger.getAttribute('data-year');
+            const amount = trigger.getAttribute('data-amount');
+            const notes = trigger.getAttribute('data-notes') || '';
+
+            if (modalTitle) modalTitle.textContent = <?= json_encode(lang('Pledges.editPledge')) ?>;
+            if (submitBtnText) submitBtnText.textContent = <?= json_encode(lang('Pledges.savePledge')) ?>;
+            if (yearSelect) {
+                if (!yearSelect.querySelector('option[value="' + year + '"]')) {
+                    const opt = document.createElement('option');
+                    opt.value = year;
+                    opt.textContent = year;
+                    yearSelect.appendChild(opt);
+                }
+                yearSelect.value = year;
+                yearSelect.disabled = true;
+                let hiddenYear = document.getElementById('self_pledge_year_hidden');
+                if (!hiddenYear) {
+                    hiddenYear = document.createElement('input');
+                    hiddenYear.type = 'hidden';
+                    hiddenYear.name = 'pledge_year';
+                    hiddenYear.id = 'self_pledge_year_hidden';
+                    yearSelect.parentNode.appendChild(hiddenYear);
+                }
+                hiddenYear.value = year;
+            }
+            if (amountInput) amountInput.value = amount;
+            if (notesInput) notesInput.value = notes;
+        } else {
+            if (modalTitle) modalTitle.textContent = <?= json_encode(lang('Pledges.pledgeModalTitle')) ?>;
+            if (submitBtnText) submitBtnText.textContent = <?= json_encode(lang('Pledges.submitPledge')) ?>;
+            if (yearSelect) {
+                yearSelect.disabled = false;
+                const hiddenYear = document.getElementById('self_pledge_year_hidden');
+                if (hiddenYear) hiddenYear.remove();
+            }
+            if (amountInput) amountInput.value = '';
+            if (notesInput) notesInput.value = '';
+        }
+    });
+});
+</script>
+<?= $this->endSection() ?>
+

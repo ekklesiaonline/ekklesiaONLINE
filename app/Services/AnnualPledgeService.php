@@ -79,6 +79,16 @@ class AnnualPledgeService
     }
 
     /**
+     * Recalculates and updates the pledge fulfillment amount and status based on tithes.
+     *
+     * @return array<string, mixed>|null
+     */
+    public function recalculateFulfillment(int $userId, int $parishId, int $year): ?array
+    {
+        return service('pledgeFulfillment')->recalculatePledge($userId, $parishId, $year);
+    }
+
+    /**
      * @return array<string, string>
      */
     public function errors(): array

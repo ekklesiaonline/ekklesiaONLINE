@@ -348,4 +348,231 @@ class MyDashboard extends BaseController
 
         return date('Y-m-d H:i', $timestamp);
     }
+
+    /**
+     * Submit or update an annual stewardship pledge for the logged-in member.
+     */
+    public function submitPledge()
+    {
+        if (!auth()->loggedIn()) {
+            if ($this->request->isAJAX()) {
+                return $this->contractResponse(false, 401, 'UNAUTHORIZED', lang('App.errorUnauthorized'));
+            }
+            return redirect()->to('/login');
+        }
+
+        $user = auth()->user();
+
+        if (!$this->canAccessMyDashboard($user)) {
+            if ($this->request->isAJAX()) {
+                return $this->contractResponse(false, 403, 'FORBIDDEN', lang('Auth.notEnoughPrivilege'));
+            }
+            return redirect()->to('/profile')->with('error', lang('Auth.notEnoughPrivilege'));
+        }
+
+        $profile = model('ProfileModel')->where('user_id', (int) $user->id)->first();
+        if (!$profile) {
+            if ($this->request->isAJAX()) {
+                return $this->contractResponse(false, 400, 'PROFILE_INCOMPLETE', lang('Profile.pendingProfileRedirectNotice'));
+            }
+            return redirect()->to('/profile/complete')->with('error', lang('Profile.pendingProfileRedirectNotice'));
+        }
+
+        $parishId = (int) ($profile['parish_id'] ?? $this->getOperationalParishId() ?? $this->getHomeparishId() ?? 0);
+        if ($parishId <= 0) {
+            if ($this->request->isAJAX()) {
+                return $this->contractResponse(false, 400, 'NO_PARISH_SCOPE', lang('App.errorNoParishScope'));
+            }
+            return redirect()->back()->withInput()->with('error', lang('App.errorNoParishScope'));
+        }
+
+        $currentYear = (int) date('Y');
+        $minYear     = $currentYear;
+        $maxYear     = $currentYear + 1;
+
+        $rules = [
+            'pledge_year'    => 'required|integer|greater_than_equal_to[' . $minYear . ']|less_than_equal_to[' . $maxYear . ']',
+            'pledged_amount' => 'required|decimal|greater_than[0]',
+            'notes'          => 'permit_empty|max_length[500]',
+        ];
+
+        if (!$this->validate($rules)) {
+            $errors = $this->validator->getErrors();
+            if ($this->request->isAJAX()) {
+                return $this->contractResponse(false, 422, 'VALIDATION_FAILED', lang('App.httpValidation'), $errors, $errors);
+            }
+            return redirect()->back()->withInput()->with('errors', $errors);
+        }
+
+        $pledgeYear    = (int) $this->request->getPost('pledge_year');
+        $pledgedAmount = (float) $this->request->getPost('pledged_amount');
+        $notes         = trim((string) ($this->request->getPost('notes') ?? ''));
+
+        $personId = (int) ($profile['person_id'] ?? 0);
+        if ($personId <= 0) {
+            $personId = $this->ensureProfilePersonLink((int) $profile['id'], (int) $user->id);
+        }
+
+        $pledgeModel = model('AnnualPledgeModel');
+        $existing    = $pledgeModel->getPledgeForYear((int) $user->id, $parishId, $pledgeYear);
+
+        if ($existing) {
+            if (($existing['fulfillment_status'] ?? '') === 'cancelled') {
+                $err = lang('Pledges.pledgeCancelledCannotEdit');
+                if ($this->request->isAJAX()) {
+                    return $this->contractResponse(false, 409, 'PLEDGE_CANCELLED', $err);
+                }
+                return redirect()->back()->withInput()->with('error', $err);
+            }
+
+            $updatePayload = [
+                'pledged_amount'     => $pledgedAmount,
+                'fulfillment_status' => (string) ($existing['fulfillment_status'] ?? 'pledged'),
+                'notes'              => $notes,
+            ];
+
+            if (!$pledgeModel->update((int) $existing['id'], $updatePayload)) {
+                $err = lang('Pledges.updateFailed');
+                if ($this->request->isAJAX()) {
+                    return $this->contractResponse(false, 500, 'UPDATE_FAILED', $err);
+                }
+                return redirect()->back()->withInput()->with('error', $err);
+            }
+
+            $pledgeId = (int) $existing['id'];
+
+            // Recalculate fulfillment (amount & status) with existing donations
+            service('pledgeFulfillment')->recalculatePledge((int) $user->id, $parishId, $pledgeYear);
+
+            $this->audit()->log('annual_pledge.member_update', [
+                'parish_id'   => $parishId,
+                'entity_type' => 'annual_pledge',
+                'entity_id'   => $pledgeId,
+                'old_values'  => [
+                    'pledge_year'        => (int) ($existing['pledge_year'] ?? $pledgeYear),
+                    'fulfillment_status' => (string) ($existing['fulfillment_status'] ?? 'pledged'),
+                ],
+                'new_values'  => [
+                    'pledge_year'        => $pledgeYear,
+                    'fulfillment_status' => (string) ($existing['fulfillment_status'] ?? 'pledged'),
+                ],
+                'meta'        => array_merge(
+                    $this->buildParishContextMeta($parishId, self::ATTRIBUTION_POLICY_OPERATIONAL_DEFAULT),
+                    [
+                        'submitted_by' => 'member',
+                        'pledge_year'  => $pledgeYear,
+                    ]
+                ),
+            ]);
+
+            $successMsg = lang('Pledges.pledgeUpdatedSuccess');
+            if ($this->request->isAJAX()) {
+                return $this->contractResponse(true, 200, 'SUCCESS', $successMsg, [], [], [
+                    'id'             => $pledgeId,
+                    'pledge_year'    => $pledgeYear,
+                    'pledged_amount' => $pledgedAmount,
+                ]);
+            }
+
+            return redirect()->to('/me')->with('success', $successMsg);
+        }
+
+        // New pledge creation
+        $insertPayload = [
+            'user_id'            => (int) $user->id,
+            'person_id'          => $personId > 0 ? $personId : null,
+            'parish_id'          => $parishId,
+            'pledge_year'        => $pledgeYear,
+            'pledged_amount'     => $pledgedAmount,
+            'fulfilled_amount'   => 0.00,
+            'pledged_at'         => date('Y-m-d'),
+            'fulfillment_status' => 'pledged',
+            'notes'              => $notes,
+        ];
+
+        if ($pledgeModel->insert($insertPayload) === false) {
+            $errors = $pledgeModel->errors();
+            $errorMessage = $errors !== [] ? implode(' ', array_values($errors)) : lang('Pledges.saveFailed');
+            if ($this->request->isAJAX()) {
+                return $this->contractResponse(false, 400, 'SAVE_FAILED', $errorMessage, $errors, $errors);
+            }
+            return redirect()->back()->withInput()->with('error', $errorMessage);
+        }
+
+        $pledgeId = (int) $pledgeModel->getInsertID();
+
+        // Recalculate fulfillment (amount & status) with existing donations
+        service('pledgeFulfillment')->recalculatePledge((int) $user->id, $parishId, $pledgeYear);
+
+        $this->audit()->log('annual_pledge.member_submit', [
+            'parish_id'   => $parishId,
+            'entity_type' => 'annual_pledge',
+            'entity_id'   => $pledgeId,
+            'new_values'  => [
+                'pledge_year'        => $pledgeYear,
+                'fulfillment_status' => 'pledged',
+            ],
+            'meta'        => array_merge(
+                $this->buildParishContextMeta($parishId, self::ATTRIBUTION_POLICY_OPERATIONAL_DEFAULT),
+                [
+                    'submitted_by' => 'member',
+                    'pledge_year'  => $pledgeYear,
+                ]
+            ),
+        ]);
+
+        $successMsg = lang('Pledges.pledgeSubmittedSuccess');
+        if ($this->request->isAJAX()) {
+            return $this->contractResponse(true, 200, 'SUCCESS', $successMsg, [], [], [
+                'id'             => $pledgeId,
+                'pledge_year'    => $pledgeYear,
+                'pledged_amount' => $pledgedAmount,
+            ]);
+        }
+
+        return redirect()->to('/me')->with('success', $successMsg);
+    }
+
+    /**
+     * Build an API/AJAX JSON contract response.
+     *
+     * @param array<string, mixed> $details
+     * @param array<string, mixed> $errors
+     * @param array<string, mixed>|null $data
+     */
+    private function contractResponse(
+        bool $success,
+        int $httpStatus,
+        string $code,
+        string $message,
+        array $details = [],
+        array $errors = [],
+        ?array $data = null
+    ) {
+        $payload = [
+            'success' => $success,
+            'status'  => $success ? 'success' : 'error',
+            'message' => $message,
+            'meta'    => [
+                'http_status' => $httpStatus,
+                'ts'          => date('c'),
+            ],
+        ];
+
+        if ($success) {
+            if ($data !== null) {
+                $payload['data'] = $data;
+            }
+        } else {
+            $payload['error'] = [
+                'code'    => $code,
+                'message' => $message,
+                'details' => $details,
+            ];
+            $payload['errors'] = $errors;
+        }
+
+        return $this->response->setStatusCode($httpStatus)->setJSON($payload);
+    }
 }
+

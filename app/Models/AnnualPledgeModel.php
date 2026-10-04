@@ -14,13 +14,29 @@ class AnnualPledgeModel extends Model
     protected $protectFields    = true;
     protected $allowedFields    = [
         'user_id',
+        'person_id',
         'parish_id',
         'pledge_year',
         'pledged_amount',
         'fulfilled_amount',
         'pledged_at',
         'fulfillment_status',
+        'status_id',
         'notes',
+    ];
+
+    /**
+     * @var array<string, string>
+     */
+    protected array $casts = [
+        'id'               => '?int',
+        'user_id'          => '?int',
+        'person_id'        => '?int',
+        'parish_id'        => '?int',
+        'pledge_year'      => '?int',
+        'pledged_amount'   => '?float',
+        'fulfilled_amount' => '?float',
+        'status_id'        => '?int',
     ];
 
     protected $useTimestamps = true;
@@ -45,6 +61,14 @@ class AnnualPledgeModel extends Model
             ->where('pledge_year', $year)
             ->where('fulfillment_status !=', 'cancelled')
             ->countAllResults() > 0;
+    }
+
+    public function getPledgeForYear(int $userId, int $parishId, int $year): ?array
+    {
+        return $this->where('user_id', $userId)
+            ->where('parish_id', $parishId)
+            ->where('pledge_year', $year)
+            ->first();
     }
 
     public function getMemberPledges(int $userId, ?int $parishId = null): array

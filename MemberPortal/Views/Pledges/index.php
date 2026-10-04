@@ -101,7 +101,7 @@ $pledgeFiltersActive = trim((string) ($search ?? '')) !== ''
             </div>
             <div class="col-md-2">
                 <label class="form-label"><?= lang('Pledges.fulfilled') ?></label>
-                <input type="number" step="0.01" min="0" name="fulfilled_amount" class="form-control" value="0.00">
+                <input type="number" step="0.01" min="0" name="fulfilled_amount" class="form-control" value="0.00" title="<?= esc(lang('Pledges.automatedFulfillmentHelp')) ?>">
             </div>
             <div class="col-md-2">
                 <label class="form-label"><?= lang('Pledges.status') ?></label>

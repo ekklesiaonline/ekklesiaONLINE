@@ -48,7 +48,11 @@ class DonationModel extends BaseTenantModel
     protected $cleanValidationRules = true;
 
     protected $beforeInsert = ['encryptSensitiveFields'];
-    protected $beforeUpdate = ['encryptSensitiveFields'];
+    protected $beforeUpdate = ['encryptSensitiveFields', 'captureBeforeUpdate'];
+    protected $beforeDelete = ['captureBeforeDelete'];
+    protected $afterInsert  = ['syncPledgeFulfillmentAfterInsert'];
+    protected $afterUpdate  = ['syncPledgeFulfillmentAfterUpdate'];
+    protected $afterDelete  = ['syncPledgeFulfillmentAfterDelete'];
     protected $afterFind    = ['decryptSensitiveFields'];
 
     /**
@@ -534,5 +538,105 @@ class DonationModel extends BaseTenantModel
         }
 
         return model('DonationReceiptModel')->issueForDonation($donationId, $parishId, $issuedBy);
+    }
+
+    /**
+     * @var array<int|string, array<string, mixed>>
+     */
+    private array $pendingUpdateSnapshots = [];
+
+    /**
+     * @var array<int|string, array<string, mixed>>
+     */
+    private array $pendingDeleteSnapshots = [];
+
+    protected function captureBeforeUpdate(array $data): array
+    {
+        $ids = is_array($data['id'] ?? null) ? $data['id'] : (isset($data['id']) ? [$data['id']] : []);
+        foreach ($ids as $id) {
+            $row = $this->db->table($this->table)->where('id', $id)->get()->getRowArray();
+            if ($row) {
+                $this->pendingUpdateSnapshots[$id] = $row;
+            }
+        }
+
+        return $data;
+    }
+
+    protected function captureBeforeDelete(array $data): array
+    {
+        $ids = is_array($data['id'] ?? null) ? $data['id'] : (isset($data['id']) ? [$data['id']] : []);
+        foreach ($ids as $id) {
+            $row = $this->db->table($this->table)->where('id', $id)->get()->getRowArray();
+            if ($row) {
+                $this->pendingDeleteSnapshots[$id] = $row;
+            }
+        }
+
+        return $data;
+    }
+
+    protected function syncPledgeFulfillmentAfterInsert(array $data): array
+    {
+        if (!empty($data['result']) && !empty($data['id'])) {
+            $id = $data['id'];
+            $inserted = $this->db->table($this->table)->where('id', $id)->get()->getRowArray();
+            if ($inserted) {
+                try {
+                    service('pledgeFulfillment')->syncForDonation($inserted);
+                } catch (\Throwable $e) {
+                    log_message('error', 'Pledge fulfillment sync error on insert: {error}', ['error' => $e->getMessage()]);
+                }
+            }
+        }
+
+        return $data;
+    }
+
+    protected function syncPledgeFulfillmentAfterUpdate(array $data): array
+    {
+        if (!empty($data['result'])) {
+            $ids = is_array($data['id'] ?? null) ? $data['id'] : (isset($data['id']) ? [$data['id']] : []);
+            foreach ($ids as $id) {
+                $previous = $this->pendingUpdateSnapshots[$id] ?? null;
+                unset($this->pendingUpdateSnapshots[$id]);
+                $current = $this->db->table($this->table)->where('id', $id)->get()->getRowArray();
+                if ($current) {
+                    try {
+                        service('pledgeFulfillment')->syncForDonation($current, $previous);
+                    } catch (\Throwable $e) {
+                        log_message('error', 'Pledge fulfillment sync error on update: {error}', ['error' => $e->getMessage()]);
+                    }
+                } elseif ($previous) {
+                    try {
+                        service('pledgeFulfillment')->syncForDonationDeleted($previous);
+                    } catch (\Throwable $e) {
+                        log_message('error', 'Pledge fulfillment sync error on delete: {error}', ['error' => $e->getMessage()]);
+                    }
+                }
+            }
+        }
+
+        return $data;
+    }
+
+    protected function syncPledgeFulfillmentAfterDelete(array $data): array
+    {
+        if (!empty($data['result'])) {
+            $ids = is_array($data['id'] ?? null) ? $data['id'] : (isset($data['id']) ? [$data['id']] : []);
+            foreach ($ids as $id) {
+                $previous = $this->pendingDeleteSnapshots[$id] ?? null;
+                unset($this->pendingDeleteSnapshots[$id]);
+                if ($previous) {
+                    try {
+                        service('pledgeFulfillment')->syncForDonationDeleted($previous);
+                    } catch (\Throwable $e) {
+                        log_message('error', 'Pledge fulfillment sync error on delete: {error}', ['error' => $e->getMessage()]);
+                    }
+                }
+            }
+        }
+
+        return $data;
     }
 }

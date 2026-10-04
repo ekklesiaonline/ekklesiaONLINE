@@ -37,6 +37,7 @@ $routes->group('', ['filter' => 'session'], function ($routes) {
     $routes->get('dashboard/followup-stats', '\\MemberPortal\\Controllers\\Dashboard::followupStats');
     $routes->get('dashboard/switch/(:num)', '\\MemberPortal\\Controllers\\Dashboard::switchParish/$1');
     $routes->get('me', '\\MemberPortal\\Controllers\\MyDashboard::index');
+    $routes->post('me/pledge', '\\MemberPortal\\Controllers\\MyDashboard::submitPledge');
     $routes->get('me/statement', '\\MemberPortal\\Controllers\\MyDashboard::statement');
     $routes->get('me/receipt/(:num)', '\\MemberPortal\\Controllers\\MyDashboard::receipt/$1');
     $routes->get('admin/audit-logs', '\\MemberPortal\\Controllers\\AuditLogs::index');

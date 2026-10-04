@@ -89,6 +89,16 @@ class Services extends BaseService
         return new \App\Services\ProfileLookupService(new \App\Models\ProfileModel());
     }
 
+    public static function pledgeFulfillment(bool $getShared = true): \App\Services\PledgeFulfillmentService
+    {
+        if ($getShared) {
+            /** @var \App\Services\PledgeFulfillmentService */
+            return static::getSharedInstance('pledgeFulfillment');
+        }
+
+        return new \App\Services\PledgeFulfillmentService();
+    }
+
     public static function parishScopeValidator(bool $getShared = true): \App\Services\ParishScopeValidator
     {
         if ($getShared) {

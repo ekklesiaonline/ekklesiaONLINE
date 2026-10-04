@@ -128,6 +128,14 @@ class AnnualPledges extends BaseController
         }
 
         $pledgeId = (int) $model->getInsertID();
+
+        // Recalculate fulfillment from any existing donations for this member and year
+        service('pledgeFulfillment')->recalculatePledge(
+            (int) $payload['user_id'],
+            $attributionParishId,
+            (int) $payload['pledge_year']
+        );
+
         $this->audit()->log('annual_pledge.create', [
             'parish_id' => $attributionParishId,
             'entity_type' => 'annual_pledge',
