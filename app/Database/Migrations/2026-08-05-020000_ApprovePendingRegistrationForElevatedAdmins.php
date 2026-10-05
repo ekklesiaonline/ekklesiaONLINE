@@ -29,6 +29,7 @@ class ApprovePendingRegistrationForElevatedAdmins extends Migration
             $requestTable === null
             || ! $this->db->tableExists('auth_groups_users')
             || ! $this->db->tableExists('profile')
+            || ! $this->db->fieldExists('membership_status', 'profile')
         ) {
             return;
         }

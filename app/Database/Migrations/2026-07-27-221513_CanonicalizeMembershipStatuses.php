@@ -8,6 +8,12 @@ class CanonicalizeMembershipStatuses extends Migration
 {
     public function up()
     {
+        // Fresh-install guard: legacy retirement removed profile.membership_status,
+        // parish_people, and ParishPeopleRegistryService; nothing to canonicalize.
+        if (! $this->db->fieldExists('membership_status', 'profile')) {
+            return;
+        }
+
         // Profile: add temporary superset, backfill, then canonical enum
         $this->db->query("ALTER TABLE `profile` MODIFY COLUMN `membership_status` ENUM('active','inactive','visitor','pending','regular_attender','member','non_active') NOT NULL DEFAULT 'regular_attender'");
         $this->db->query("UPDATE `profile` SET `membership_status` = 'member' WHERE `membership_status` = 'active'");

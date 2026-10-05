@@ -41,6 +41,58 @@ class ClergyReview extends BaseController
         return $this->jsonResponse(['success' => true, 'message' => 'Review candidates loaded.', 'data' => $rows]);
     }
 
+    /**
+     * Parish-initiated appointment requests in this diocese's review queue.
+     * Jurisdiction is read from the row's own diocese_id — the request
+     * body can never move a request across dioceses.
+     */
+    public function appointmentRequests(int $dioceseId): ResponseInterface
+    {
+        if (! $this->authorized('clergy.appointment.manage', $dioceseId)) {
+            return $this->jsonResponse($this->apiErrorPayload('Forbidden', 403, 'SCOPE_FORBIDDEN'), 403);
+        }
+        if (! db_connect()->tableExists('clergy_appointment_request')) {
+            return $this->jsonResponse(['success' => true, 'message' => 'Appointment requests loaded.', 'data' => []]);
+        }
+        $rows = db_connect()->table('clergy_appointment_request r')
+            ->select('r.id, r.person_id, r.parish_id, r.proposed_office, r.review_status, r.created_at, r.reviewed_at,
+                p.first_name, p.last_name, pa.name AS parish_name')
+            ->join('person p', 'p.id = r.person_id', 'left')
+            ->join('parish pa', 'pa.id = r.parish_id', 'left')
+            ->where('r.diocese_id', $dioceseId)
+            ->orderBy('r.id', 'ASC')->get()->getResultArray();
+        return $this->jsonResponse(['success' => true, 'message' => 'Appointment requests loaded.', 'data' => $rows]);
+    }
+
+    public function reviewAppointmentRequest(int $dioceseId, int $requestId): ResponseInterface
+    {
+        if (! $this->authorized('clergy.appointment.manage', $dioceseId)) {
+            return $this->jsonResponse($this->apiErrorPayload('Forbidden', 403, 'SCOPE_FORBIDDEN'), 403);
+        }
+        if (! $this->validate([
+            'decision' => 'required|in_list[approved,rejected]',
+            'reason_code' => 'permit_empty|max_length[32]',
+        ])) {
+            return $this->jsonResponse($this->apiErrorPayload('Invalid appointment decision.', 422, 'VALIDATION_FAILED', $this->validator->getErrors()), 422);
+        }
+        $result = (new ClergyReviewService())->reviewAppointmentRequest(
+            $requestId, $dioceseId, (string) $this->request->getPost('decision'),
+            $this->request->getPost('reason_code') ?: null, (int) auth()->id()
+        );
+        if ($result === null) {
+            return $this->jsonResponse($this->apiErrorPayload('Request is out of scope, already reviewed or ineligible.', 409, 'REQUEST_CONFLICT'), 409);
+        }
+        $this->audit()->log('clergy.appointment_request.review', [
+            'entity_type' => 'clergy_appointment_request', 'entity_id' => $requestId,
+            'diocese_id' => $dioceseId,
+        ]);
+        return $this->jsonResponse([
+            'success' => true,
+            'message' => $result > 0 ? 'Appointment request approved; position activated.' : 'Appointment request rejected.',
+            'data' => $result > 0 ? ['position_id' => $result] : null,
+        ]);
+    }
+
     public function reviewCandidate(int $candidateId, int $dioceseId): ResponseInterface
     {
         if (! $this->authorized('clergy.ordination.verify', $dioceseId)) {

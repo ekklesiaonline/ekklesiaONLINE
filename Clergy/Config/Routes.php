@@ -13,6 +13,11 @@ $routes->group('', ['filter' => 'session'], function ($routes) {
 
     $routes->group('clergy', ['filter' => 'permission:member.view'], function ($routes) {
         $routes->get('dashboard', '\\Clergy\\Controllers\\Dashboard::index');
+
+        // Clergy portal self-service profile (session + clergy group).
+        // Clergy do not use MemberPortal profile pages.
+        $routes->get('profile', '\\Clergy\\Controllers\\Profile::index', ['filter' => 'group:clergy']);
+        $routes->post('profile', '\\Clergy\\Controllers\\Profile::update', ['filter' => 'group:clergy']);
     });
 
     $routes->group('members', ['filter' => 'permission:member.view'], function ($routes) {

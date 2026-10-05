@@ -40,8 +40,10 @@ class AddLeaderFieldsToParishPeopleAndSyncAll extends Migration
             }
         }
 
-        $service = new \App\Services\ParishPeopleRegistryService();
-        $service->syncAll();
+        if (class_exists(\App\Services\ParishPeopleRegistryService::class)) {
+            $service = new \App\Services\ParishPeopleRegistryService();
+            $service->syncAll();
+        }
     }
 
     public function down()
