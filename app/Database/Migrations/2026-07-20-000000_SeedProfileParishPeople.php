@@ -12,6 +12,10 @@ class SeedProfileParishPeople extends Migration
         $profileTable = $db->DBPrefix . 'profile';
         $parishTable  = $db->DBPrefix . 'parish_people';
 
+        if (! $db->tableExists($parishTable)) {
+            return; // legacy table retired; nothing to seed on fresh installs
+        }
+
         $sql = "
             INSERT INTO {$parishTable}
                 (parish_id, user_id, profile_id, first_name, last_name, membership_status, is_member, source, synced_at, created_at, updated_at)
