@@ -195,6 +195,111 @@ final class ClergyReviewService
         }
     }
 
+    /**
+     * Review a parish-initiated appointment request.
+     *
+     * Rejection only flips the request's review_status. Approval runs
+     * eligibilityFor() and, when eligible, activates a parish-scoped
+     * clergy leadership_position — the only writer of approved positions
+     * in this flow; the parish never writes it.
+     *
+     * Returns the created position id on approval, 0 on rejection, null on
+     * any scope/eligibility conflict.
+     */
+    public function reviewAppointmentRequest(int $requestId, int $dioceseId, string $decision,
+        ?string $reasonCode, int $reviewerId): ?int
+    {
+        if (! $this->db->tableExists('clergy_appointment_request')
+            || ! in_array($decision, ['approved', 'rejected'], true)) {
+            return null;
+        }
+
+        $request = $this->db->table('clergy_appointment_request')->where('id', $requestId)->get()->getRowArray();
+        if (! is_array($request)
+            || (int) ($request['diocese_id'] ?? 0) !== $dioceseId
+            || ($request['review_status'] ?? '') !== 'pending'
+            || ! $this->canReview($reviewerId, (int) ($request['person_id'] ?? 0),
+                $dioceseId, 'clergy.appointment.manage')) {
+            return null;
+        }
+
+        $now = date('Y-m-d H:i:s');
+
+        if ($decision === 'rejected') {
+            $ok = $this->db->table('clergy_appointment_request')->where('id', $requestId)
+                ->where('review_status', 'pending')->update([
+                    'review_status' => 'rejected',
+                    'review_reason_code' => $reasonCode !== null && $reasonCode !== '' ? substr($reasonCode, 0, 32) : null,
+                    'reviewed_by_user_id' => $reviewerId,
+                    'reviewed_at' => $now,
+                    'updated_at' => $now,
+                ]);
+
+            return $ok ? 0 : null;
+        }
+
+        $personId = (int) $request['person_id'];
+        $parishId = (int) $request['parish_id'];
+        $office = (string) $request['proposed_office'];
+        if (! isset(self::OFFICE_PERMISSIONS[$office])) {
+            return null;
+        }
+
+        $link = $this->db->table('user_person')->where('person_id', $personId)
+            ->where('is_primary', 1)->get()->getRowArray()
+            ?: $this->db->table('user_person')->where('person_id', $personId)->get()->getRowArray();
+        if (! is_array($link) || (int) ($link['user_id'] ?? 0) <= 0) {
+            return null;
+        }
+        $userId = (int) $link['user_id'];
+
+        $payload = [
+            'user_id' => $userId,
+            'person_id' => $personId,
+            'scope_type' => 'parish',
+            'parish_id' => $parishId,
+            'diocese_id' => $dioceseId,
+            'title' => $office,
+            'role_code' => $office,
+            'role_category' => 'clergy',
+            'active' => 1,
+            'started_at' => date('Y-m-d'),
+            'appointed_by_user_id' => (int) ($request['requested_by_user_id'] ?? $reviewerId),
+        ];
+
+        $eligibility = $this->positions->eligibilityFor($userId, $personId, $parishId, $payload);
+        if (! $eligibility['eligible']) {
+            return null;
+        }
+
+        $this->db->transBegin();
+        try {
+            $positionId = $this->positions->create($payload);
+            if ($positionId === null) {
+                $this->db->transRollback();
+                return null;
+            }
+            $this->db->table('clergy_appointment_request')->where('id', $requestId)
+                ->where('review_status', 'pending')->update([
+                    'review_status' => 'approved',
+                    'review_reason_code' => null,
+                    'reviewed_by_user_id' => $reviewerId,
+                    'reviewed_at' => $now,
+                    'position_id' => $positionId,
+                    'updated_at' => $now,
+                ]);
+            if ($this->db->transStatus() === false) {
+                $this->db->transRollback();
+                return null;
+            }
+            $this->db->transCommit();
+            return $positionId;
+        } catch (\Throwable $e) {
+            $this->db->transRollback();
+            return null;
+        }
+    }
+
     public function revokeOffice(int $positionId, int $reviewerId): bool
     {
         $position = $this->positions->find($positionId);

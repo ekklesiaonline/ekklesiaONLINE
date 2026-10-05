@@ -281,108 +281,78 @@ class Members extends BaseController
             return redirect()->back()->withInput()->with('errors', ['email' => 'Email is already in use.']);
         }
 
-        $db = \Config\Database::connect();
-        $db->transStart();
+        $assignedParishId = (int) ($this->getOperationalParishId() ?? 0);
+        $assignedParish = $assignedParishId > 0 ? $this->parishModel->findWithHierarchy($assignedParishId) : null;
+
+        $callingCode = $this->request->getPost('phone_country_code');
+        $localPhone = $this->request->getPost('phone');
+        $e164Phone = PhoneHelper::toE164($callingCode, $localPhone);
+
+        $profileFields = [
+            'first_name' => $this->request->getPost('first_name'),
+            'middle_name' => $this->request->getPost('middle_name'),
+            'last_name' => $this->request->getPost('last_name'),
+            'nickname' => $this->request->getPost('nickname') ?: null,
+            'phone' => $e164Phone,
+            'phone_country_code' => $callingCode ?: null,
+            'address' => $this->request->getPost('address'),
+            'address_line_2' => $this->request->getPost('address_line_2') ?: null,
+            'city' => $this->request->getPost('city'),
+            'state' => $this->request->getPost('state'),
+            'zip' => $this->request->getPost('zip'),
+            'country' => $this->request->getPost('country') ?: null,
+            'birth_date' => $this->request->getPost('birth_date') ?: null,
+            'baptism_date' => $this->request->getPost('baptism_date') ?: null,
+            'is_confirmed' => $this->request->getPost('is_confirmed') ? 1 : 0,
+            'confirmation_date' => $this->request->getPost('confirmation_date') ?: null,
+            'spiritual_gifts' => $this->request->getPost('spiritual_gifts'),
+        ];
 
         try {
-            // Create user account
-            $users = auth()->getProvider();
-            $user = new \CodeIgniter\Shield\Entities\User([
-                'username' => $email,
+            $created = (new \App\Services\AccountCreationService())->createAccount([
                 'email' => $email,
-                'password' => $this->request->getPost('password'),
-            ]);
-
-            $users->save($user);
-            $user = $users->findById($users->getInsertID());
-            $user->activate();
-
-            // Assign selected privileged group
-            $user->addGroup($this->request->getPost('role'));
-
-            // Create profile
-            $assignedParishId = (int) ($this->getOperationalParishId() ?? 0);
-            $assignedParish = $assignedParishId > 0 ? $this->parishModel->findWithHierarchy($assignedParishId) : null;
-
-            $callingCode = $this->request->getPost('phone_country_code');
-            $localPhone = $this->request->getPost('phone');
-            $e164Phone = PhoneHelper::toE164($callingCode, $localPhone);
-
-            // Ensure the canonical person row exists and link the profile to it.
-            $personId = $assignedParishId > 0
-                ? $this->getMemberParishAffiliationModel()->getOrCreatePersonIdForUser((int) $user->id)
-                : null;
-
-            $profileData = [
-                'user_id' => $user->id,
-                'person_id' => $personId > 0 ? $personId : null,
+                'role' => (string) $this->request->getPost('role'),
+                'password' => (string) $this->request->getPost('password'),
                 'parish_id' => $assignedParishId > 0 ? $assignedParishId : null,
                 'province_id' => isset($assignedParish['province_id']) ? (int) $assignedParish['province_id'] : null,
                 'diocese_id' => isset($assignedParish['diocese_id']) ? (int) $assignedParish['diocese_id'] : null,
-                'first_name' => $this->request->getPost('first_name'),
-                'middle_name' => $this->request->getPost('middle_name'),
-                'last_name' => $this->request->getPost('last_name'),
-                'nickname' => $this->request->getPost('nickname') ?: null,
-                'phone' => $e164Phone,
-                'phone_country_code' => $callingCode ?: null,
-                'address' => $this->request->getPost('address'),
-                'address_line_2' => $this->request->getPost('address_line_2') ?: null,
-                'city' => $this->request->getPost('city'),
-                'state' => $this->request->getPost('state'),
-                'zip' => $this->request->getPost('zip'),
-                'country' => $this->request->getPost('country') ?: null,
-                'birth_date' => $this->request->getPost('birth_date') ?: null,
-                'baptism_date' => $this->request->getPost('baptism_date') ?: null,
-                'is_confirmed' => $this->request->getPost('is_confirmed') ? 1 : 0,
-                'confirmation_date' => $this->request->getPost('confirmation_date') ?: null,
-                'spiritual_gifts' => $this->request->getPost('spiritual_gifts'),
-            ];
-
-            // Handle profile picture upload
-            $file = $this->request->getFile('profile_picture');
-            if ($file && $file->isValid() && !$file->hasMoved()) {
-                $storedPath = $this->storeProfilePictureForUser($file, (int) $user->id);
-                if ($storedPath !== null) {
-                    $profileData['profile_picture'] = $storedPath;
-                }
-            }
-
-            $profileId = (int) $this->getProfileModel()->insert($profileData, true);
-
-            // Sync the canonical person record with the full profile data (the person
-            // may have been auto-created earlier with placeholder names).
-            if ($profileId > 0) {
-                (new \App\Services\PersonProfileSyncService())->syncFromProfile($profileId);
-            }
-
-            if ($assignedParishId > 0 && !$this->getMemberParishAffiliationModel()->attachToParish($user->id, $assignedParishId, true, 'member', $personId > 0 ? $personId : null)) {
-                $db->transRollback();
+                'create_person' => $assignedParishId > 0,
+                'attach_parish_status' => 'member',
+                'profile' => $profileFields,
+            ]);
+        } catch (\RuntimeException $e) {
+            if ($e->getMessage() === 'Failed to attach the account to its parish.') {
                 return redirect()->back()->withInput()->with('error', lang('Members.affiliationFailed'));
             }
-
-            $db->transComplete();
-
-            if ($db->transStatus() === false) {
-                return redirect()->back()->withInput()->with('error', lang('App.errorFailedCreate'));
-            }
-
-            $this->audit()->log('member.create', [
-                'parish_id' => $assignedParishId > 0 ? $assignedParishId : null,
-                'entity_type' => 'member',
-                'entity_id' => $profileId > 0 ? $profileId : $user->id,
-                'new_values' => [
-                    'user_id' => (int) $user->id,
-                    'role' => (string) $this->request->getPost('role'),
-                    'membership_status' => 'member',
-                    'parish_id' => $assignedParishId > 0 ? $assignedParishId : null,
-                ],
-            ]);
-
-            return redirect()->to('/members')->with('success', lang('App.successCreated'));
+            return redirect()->back()->withInput()->with('error', lang('App.errorFailedCreate'));
         } catch (\Exception $e) {
-            $db->transRollback();
             return $this->safeRedirectError('An error occurred while creating the account. Please try again.', $e);
         }
+
+        $userId = (int) $created['user_id'];
+
+        // Handle profile picture upload (post-creation so the user folder exists).
+        $file = $this->request->getFile('profile_picture');
+        if ($file && $file->isValid() && !$file->hasMoved()) {
+            $storedPath = $this->storeProfilePictureForUser($file, $userId);
+            if ($storedPath !== null && (int) $created['profile_id'] > 0) {
+                $this->getProfileModel()->update((int) $created['profile_id'], ['profile_picture' => $storedPath]);
+            }
+        }
+
+        $this->audit()->log('member.create', [
+            'parish_id' => $assignedParishId > 0 ? $assignedParishId : null,
+            'entity_type' => 'member',
+            'entity_id' => (int) $created['profile_id'] > 0 ? (int) $created['profile_id'] : $userId,
+            'new_values' => [
+                'user_id' => $userId,
+                'role' => (string) $this->request->getPost('role'),
+                'membership_status' => 'member',
+                'parish_id' => $assignedParishId > 0 ? $assignedParishId : null,
+            ],
+        ]);
+
+        return redirect()->to('/members')->with('success', lang('App.successCreated'));
     }
 
     public function storeNonPortal()
@@ -412,10 +382,14 @@ class Members extends BaseController
      * accounts are created through the dedicated primary-admin controllers.
      * This endpoint is reserved for non-admin roles.
      *
-     * - ProvinceAdmin can create: clergy
+     * - ProvinceAdmin can create: none (clergy accounts are diocese-owned)
      * - DiocesanAdmin can create: clergy, treasurer, volunteer_coordinator, member
-     * - ParishAdmin can create: clergy, treasurer, volunteer_coordinator, member
+     * - ParishAdmin can create: treasurer, volunteer_coordinator, member
      * - Everyone else: none
+     *
+     * Clergy is a diocese-domain entity: only diocesan admins create clergy
+     * accounts, and only through the invitation flow in
+     * Diocese\Controllers\ClergyAccounts.
      *
      * Keep this matrix aligned with form options and store() validation.
      */
@@ -436,11 +410,11 @@ class Members extends BaseController
 
         $roles = [];
         if ($this->isProvinceAdmin()) {
-            $roles = ['clergy'];
+            $roles = [];
         } elseif ($this->isDioceseAdmin()) {
             $roles = ['clergy', 'finance', 'vestry_secretary', 'volunteer_coordinator', 'followup_coordinator', 'worship_coordinator', 'member'];
         } elseif ($this->user && $this->user->inGroup('parishadmin')) {
-            $roles = ['clergy', 'finance', 'vestry_secretary', 'volunteer_coordinator', 'followup_coordinator', 'followup_volunteer', 'worship_coordinator', 'worship_volunteer', 'member'];
+            $roles = ['finance', 'vestry_secretary', 'volunteer_coordinator', 'followup_coordinator', 'followup_volunteer', 'worship_coordinator', 'worship_volunteer', 'member'];
         }
 
         if (isset($cacheKey)) {

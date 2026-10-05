@@ -41,7 +41,7 @@ final class AuthGroupsGovernanceBoundaryTest extends CIUnitTestCase
         );
 
         $this->assertSame(
-            ['diocese.admin', 'parishes.edit', 'parishes.delete', 'member.create', 'member.edit', 'member.view', 'groups.view', 'messaging.view', 'service.view', 'event.view', 'event.create', 'event.edit', 'event.delete', 'event.register', 'event.checkin', 'dashboard.view', 'profile.edit', 'diocese.coa', 'diocese.calendar', 'diocese.dashboard', 'report.export', 'report.parochial', 'governance.vestry.view', 'leadership_position.manage', 'clergy.directory.view', 'deanery.view', 'deanery.manage'],
+            ['diocese.admin', 'parishes.edit', 'parishes.delete', 'member.create', 'member.edit', 'member.view', 'groups.view', 'messaging.view', 'service.view', 'event.view', 'event.create', 'event.edit', 'event.delete', 'event.register', 'event.checkin', 'dashboard.view', 'profile.edit', 'diocese.coa', 'diocese.calendar', 'diocese.dashboard', 'report.export', 'report.parochial', 'governance.vestry.view', 'leadership_position.manage', 'clergy.directory.view', 'clergy.manage', 'deanery.view', 'deanery.manage'],
             $diocesan,
             'diocesanadmin matrix must remain strict/read-only.'
         );

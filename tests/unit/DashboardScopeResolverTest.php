@@ -86,11 +86,11 @@ final class DashboardScopeResolverTest extends CIUnitTestCase
                 'parish',
                 '/parish/governance',
             ],
-            'clergy' => [
+            'clergy without parish appointment lands on clergy portal dashboard' => [
                 ['clergy'],
                 ['service.view'],
                 'parish',
-                '/parish/worship',
+                '/clergy/dashboard',
             ],
             'volunteer coordinator' => [
                 ['volunteer_coordinator'],
