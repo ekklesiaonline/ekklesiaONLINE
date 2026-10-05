@@ -118,7 +118,7 @@ class ClergyAccounts extends BaseController
 
         return view('Diocese\Views\Clergy/create', array_merge(
             $this->getCommonViewData(lang('Clergy.createTitle')),
-            ['diocese' => model('DioceseModel')->find($dioceseId)]
+            ['diocese' => model('DiocesesModel')->find($dioceseId)]
         ));
     }
 

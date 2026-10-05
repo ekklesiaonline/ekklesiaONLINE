@@ -253,15 +253,20 @@ final class ClergyReviewService
         }
         $userId = (int) $link['user_id'];
 
+        $requiredOrder = $this->positions->requiredOrderForOffice($office);
+        if ($requiredOrder === null) {
+            return null;
+        }
+
         $payload = [
             'user_id' => $userId,
             'person_id' => $personId,
             'scope_type' => 'parish',
             'parish_id' => $parishId,
-            'diocese_id' => $dioceseId,
             'title' => $office,
             'role_code' => $office,
             'role_category' => 'clergy',
+            'clergy_order' => $requiredOrder,
             'active' => 1,
             'started_at' => date('Y-m-d'),
             'appointed_by_user_id' => (int) ($request['requested_by_user_id'] ?? $reviewerId),
