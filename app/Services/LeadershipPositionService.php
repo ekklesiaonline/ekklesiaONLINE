@@ -445,15 +445,6 @@ class LeadershipPositionService
             && trim((string) ($payload['clergy_order'] ?? '')) === '';
     }
 
-    /**
-     * Required ordained order for a clergy office code, or null when the code
-     * is not a clergy office.
-     */
-    public function requiredOrderForOffice(string $roleCode): ?string
-    {
-        return self::CLERGY_OFFICES[$roleCode][1] ?? null;
-    }
-
     public function officeEvidenceValid(int $userId, int $personId, array $payload): bool
     {
         $code = (string) ($payload['role_code'] ?? '');

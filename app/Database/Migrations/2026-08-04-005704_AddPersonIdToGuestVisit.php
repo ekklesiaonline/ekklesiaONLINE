@@ -8,9 +8,6 @@ class AddPersonIdToGuestVisit extends Migration
 {
     public function up()
     {
-        if (! $this->db->tableExists('guest_visit')) {
-            return;
-        }
         $this->forge->addColumn('guest_visit', [
             'person_id' => [
                 'type'       => 'INT',

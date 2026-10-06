@@ -9,10 +9,8 @@ class AddPersonOnboardingAndRemovePendingFromProfile extends Migration
     public function up()
     {
         $this->createPersonOnboardingTable();
-        if ($this->db->fieldExists('membership_status', 'profile')) {
-            $this->backfillOnboardingFromProfile();
-            $this->removePendingFromProfile();
-        }
+        $this->backfillOnboardingFromProfile();
+        $this->removePendingFromProfile();
     }
 
     public function down()

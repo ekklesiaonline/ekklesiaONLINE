@@ -1015,16 +1015,9 @@ abstract class BaseController extends Controller
             return ['tier' => 'parish', 'scope_id' => $this->getOperationalParishId() ?: null, 'role' => $role, 'route' => '/parish/governance'];
         }
 
-        // Tier 4: Parish — clergy (worship-focused). Clergy not yet appointed
-        // to a parish land on the clergy portal dashboard instead.
+        // Tier 4: Parish — clergy (worship-focused)
         if ($user->inGroup('clergy')) {
-            $parishId = $this->getOperationalParishId() ?: null;
-            return [
-                'tier' => 'parish',
-                'scope_id' => $parishId,
-                'role' => 'clergy',
-                'route' => $parishId !== null ? '/parish/worship' : '/clergy/dashboard',
-            ];
+            return ['tier' => 'parish', 'scope_id' => $this->getOperationalParishId() ?: null, 'role' => 'clergy', 'route' => '/parish/worship'];
         }
 
         // Tier 4: Parish — volunteer coordinator
@@ -1142,8 +1135,6 @@ abstract class BaseController extends Controller
             '/parish/worship'       => $user->inGroup('clergy', 'worship_coordinator') || $user->can('service.view'),
             '/parish/volunteers'    => $user->inGroup('volunteer_coordinator') || $user->can('volunteer.view'),
             '/parish/followup'      => $user->inGroup('followup_coordinator') || $user->can('followup.manage'),
-            '/clergy/dashboard'     => $user->inGroup('clergy'),
-            '/clergy/profile'       => $user->inGroup('clergy'),
             '/me'                   => $this->canAccessMyDashboard($user),
             '/dashboard'            => $this->canLandOnDashboard($user),
             default                 => false,

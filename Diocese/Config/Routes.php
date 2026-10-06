@@ -20,24 +20,6 @@ $routes->group('', ['filter' => 'session'], function ($routes) {
         $routes->post('parish-vacancy/(:num)', '\\App\\Controllers\\Diocese\\ClergyReview::delegateVacancy/$1', ['filter' => 'permission:governance.diocese.approve']);
         $routes->post('report-policy/(:num)', '\\App\\Controllers\\Diocese\\ClergyReview::reportPolicy/$1', ['filter' => 'permission:governance.diocese.approve']);
         $routes->post('delegation/revoke/(:num)', '\\App\\Controllers\\Diocese\\ClergyReview::revokeDelegation/$1', ['filter' => 'permission:governance.diocese.approve']);
-        // Parish hire requests flow into the diocesan approval queue.
-        $routes->get('appointment-requests/(:num)', '\\App\\Controllers\\Diocese\\ClergyReview::appointmentRequests/$1', ['filter' => 'permission:clergy.appointment.manage']);
-        $routes->post('appointment-requests/(:num)/review/(:num)', '\\App\\Controllers\\Diocese\\ClergyReview::reviewAppointmentRequest/$1/$2', ['filter' => 'permission:clergy.appointment.manage']);
-    });
-
-    // Diocese-owned clergy accounts — diocesan admins only. Every action
-    // re-resolves the admin's diocese server-side; diocese A can never read
-    // or mutate diocese B's clergy.
-    $routes->group('diocese/clergy', ['filter' => 'permission:clergy.manage'], function ($routes) {
-        $routes->get('/', '\\Diocese\\Controllers\\ClergyAccounts::index');
-        $routes->get('create', '\\Diocese\\Controllers\\ClergyAccounts::create');
-        $routes->post('store', '\\Diocese\\Controllers\\ClergyAccounts::store');
-        $routes->get('person-search', '\\Diocese\\Controllers\\ClergyAccounts::personSearch');
-        $routes->get('(:num)', '\\Diocese\\Controllers\\ClergyAccounts::show/$1');
-        $routes->get('(:num)/edit', '\\Diocese\\Controllers\\ClergyAccounts::edit/$1');
-        $routes->post('(:num)/edit', '\\Diocese\\Controllers\\ClergyAccounts::update/$1');
-        $routes->post('(:num)/deactivate', '\\Diocese\\Controllers\\ClergyAccounts::deactivate/$1');
-        $routes->post('(:num)/resend-invitation', '\\Diocese\\Controllers\\ClergyAccounts::resendInvitation/$1');
     });
 
     $routes->group('chart-accounts', ['filter' => 'permission:diocese.admin'], function ($routes) {

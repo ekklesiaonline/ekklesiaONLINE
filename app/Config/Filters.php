@@ -57,7 +57,6 @@ class Filters extends BaseFilters
         'adminFinanceBoundary' => AdminFinanceBoundaryFilter::class,
         'permission'       => \App\Filters\PermissionFilter::class,
         'session'          => \CodeIgniter\Shield\Filters\SessionAuth::class,
-        'group'            => \CodeIgniter\Shield\Filters\GroupFilter::class,
         'loginRateLimit'    => LoginRateLimitFilter::class,
         'apiRateLimit'      => ApiRateLimitFilter::class,
         'requestMonitoring' => RequestMonitoringFilter::class,

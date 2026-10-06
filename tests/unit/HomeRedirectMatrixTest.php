@@ -28,7 +28,7 @@ final class HomeRedirectMatrixTest extends CIUnitTestCase
             'approved province admin lands on province dashboard' => [['provinceadmin'], ['status' => 'approved'], '/province/dashboard'],
             'approved diocesan admin lands on diocese dashboard' => [['dioceseadmin'], ['status' => 'approved'], '/diocese/dashboard'],
             'parish admin lands on parish dashboard' => [['parishadmin'], ['status' => 'approved'], '/parish/dashboard'],
-            'clergy without parish appointment lands on clergy dashboard' => [['clergy'], ['status' => 'approved'], '/clergy/dashboard'],
+            'clergy lands on worship dashboard' => [['clergy'], ['status' => 'approved'], '/parish/worship'],
             'finance officer lands on finance dashboard' => [['finance'], ['status' => 'approved'], '/parish/finance'],
             'vestry secretary lands on secretary dashboard' => [['vestry_secretary'], ['status' => 'approved'], '/parish/secretary'],
             'volunteer coordinator lands on volunteer dashboard' => [['volunteer_coordinator'], ['status' => 'approved'], '/parish/volunteers'],

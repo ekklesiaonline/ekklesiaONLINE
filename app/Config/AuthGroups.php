@@ -244,9 +244,6 @@ class AuthGroups extends ShieldAuthGroups
         'leadership_position.manage' => 'Manage leadership positions',
         'standing.refresh'          => 'Refresh member standing',
 
-        // Clergy accounts are diocese-owned; only diocesan admins manage them.
-        'clergy.manage'             => 'Create and manage clergy accounts within the admin\'s diocese',
-
         // Ecclesial actions require an approved office and exact scope in addition to Shield.
         'clergy.directory.view'     => 'View the scoped clergy directory',
         'clergy.ordination.verify'  => 'Verify documented ordination',
@@ -390,7 +387,6 @@ class AuthGroups extends ShieldAuthGroups
             'governance.vestry.view',
             'leadership_position.manage',
             'clergy.directory.view',
-            'clergy.manage',
             'deanery.view',
             'deanery.manage',
         ],
@@ -437,7 +433,6 @@ class AuthGroups extends ShieldAuthGroups
             'governance.vestry.manage',
         ],
         'clergy' => [
-            'profile.edit',
             'member.view',
             'family.view',
             'groups.view',

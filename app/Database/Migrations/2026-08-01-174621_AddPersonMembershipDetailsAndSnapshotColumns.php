@@ -12,10 +12,8 @@ class AddPersonMembershipDetailsAndSnapshotColumns extends Migration
         $this->addSnapshotColumns();
         $this->backfillPersonMembershipDetails();
 
-        if (class_exists(\App\Services\ParishPeopleRegistryService::class)) {
-            $service = new \App\Services\ParishPeopleRegistryService();
-            $service->syncAll();
-        }
+        $service = new \App\Services\ParishPeopleRegistryService();
+        $service->syncAll();
     }
 
     public function down()

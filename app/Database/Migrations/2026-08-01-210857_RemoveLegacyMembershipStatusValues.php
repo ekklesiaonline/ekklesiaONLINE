@@ -21,7 +21,7 @@ class RemoveLegacyMembershipStatusValues extends Migration
     private function sanitizeProfileStatusValues(): void
     {
         $profileTable = $this->resolveExistingTable(['profile']);
-        if ($profileTable === null || ! $this->db->fieldExists('membership_status', $profileTable)) {
+        if ($profileTable === null) {
             return;
         }
 
@@ -48,9 +48,6 @@ class RemoveLegacyMembershipStatusValues extends Migration
 
     private function rebuildSnapshot(): void
     {
-        if (! class_exists(\App\Services\ParishPeopleRegistryService::class)) {
-            return;
-        }
         $service = new \App\Services\ParishPeopleRegistryService();
         $service->syncAll();
     }
