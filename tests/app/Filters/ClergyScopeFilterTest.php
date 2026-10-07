@@ -40,6 +40,14 @@ final class ClergyScopeFilterTest extends CIUnitTestCase
             created_at TEXT NULL,
             updated_at TEXT NULL
         )');
+        $this->db->query('CREATE TABLE IF NOT EXISTS db_diocese_admin_primary (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            diocese_id INTEGER NOT NULL,
+            user_id INTEGER NOT NULL,
+            created_by INTEGER NULL,
+            created_at TEXT NULL,
+            updated_at TEXT NULL
+        )');
     }
 
     protected function tearDown(): void
@@ -51,7 +59,8 @@ final class ClergyScopeFilterTest extends CIUnitTestCase
             $this->db->table('deanery')->whereIn('diocese_id', $this->created['diocese'])->delete();
         }
         foreach (['clergy_access_grant', 'clergy_ordination', 'clergy_canonical_status', 'leadership_position',
-            'auth_permissions_users', 'auth_groups_users', 'user_person', 'profile', 'auth_identities',
+            'auth_permissions_users', 'auth_groups_users', 'diocese_admin_primary',
+            'user_person', 'profile', 'auth_identities',
             'users', 'person', 'parish', 'diocese', 'province'] as $table) {
             if (! empty($this->created[$table])) {
                 $this->db->table($table)->whereIn('id', $this->created[$table])->delete();
@@ -65,12 +74,12 @@ final class ClergyScopeFilterTest extends CIUnitTestCase
     public function testGrantMatchingParishScopeAllows(): void
     {
         [$diocese, , $parish] = $this->places();
-        [$user, $person] = $this->personUser();
+        [$user, $person] = $this->personUser($parish);
         $this->order($person, 'priest');
         $this->standing($person, $diocese);
         $position = $this->position($user, $person, 'parish', $parish, 'rector');
         $this->grant($user, $position, 'pastoral.parish.manage', 'parish', $parish);
-        $this->loginWithPermission($user, 'pastoral.parish.manage', $parish);
+        $this->loginWithPermission($user, 'pastoral.parish.manage');
 
         self::assertNull($this->runFilter('pastoral.parish.manage'));
     }
@@ -78,25 +87,65 @@ final class ClergyScopeFilterTest extends CIUnitTestCase
     public function testGrantForDifferentParishDenies(): void
     {
         [$diocese, , $parishA, $parishB] = $this->places();
-        [$user, $person] = $this->personUser();
+        [$user, $person] = $this->personUser($parishA);
         $this->order($person, 'priest');
         $this->standing($person, $diocese);
         $position = $this->position($user, $person, 'parish', $parishB, 'rector');
         $this->grant($user, $position, 'pastoral.parish.manage', 'parish', $parishB);
-        $this->loginWithPermission($user, 'pastoral.parish.manage', $parishA);
+        $this->loginWithPermission($user, 'pastoral.parish.manage');
 
+        self::assertInstanceOf(RedirectResponse::class, $this->runFilter('pastoral.parish.manage'));
+    }
+
+    public function testStaleSessionSelectionDoesNotOverrideHomeParish(): void
+    {
+        // A non-elevated user resolves to their home parish even when the
+        // session holds a different selection (left by an elevated role):
+        // matching getOperationalParishId(), which only honors the session
+        // selection for province/diocesan admins.
+        [$diocese, , $parishA, $parishB] = $this->places();
+        [$user, $person] = $this->personUser($parishA);
+        $this->order($person, 'priest');
+        $this->standing($person, $diocese);
+        $position = $this->position($user, $person, 'parish', $parishA, 'rector');
+        $this->grant($user, $position, 'pastoral.parish.manage', 'parish', $parishA);
+        $this->loginWithPermission($user, 'pastoral.parish.manage');
+        session()->set('selected_parish_id', $parishB);
+
+        self::assertNull($this->runFilter('pastoral.parish.manage'));
+    }
+
+    public function testDiocesanAdminFallsBackToFirstDioceseParish(): void
+    {
+        // Diocesan admin with no selected or home parish defaults to the
+        // first parish of their assigned diocese, like getOperationalParishId().
+        [$diocese, , $parishA, $parishB] = $this->places();
+        [$user, $person] = $this->personUser();
+        $this->order($person, 'priest');
+        $this->standing($person, $diocese);
+        $position = $this->position($user, $person, 'parish', $parishA, 'rector');
+        $grant = $this->grant($user, $position, 'pastoral.parish.manage', 'parish', $parishA);
+        $this->row('auth_groups_users', ['user_id' => $user, 'group' => 'dioceseadmin']);
+        $this->row('diocese_admin_primary', ['user_id' => $user, 'diocese_id' => $diocese]);
+        $this->loginWithPermission($user, 'pastoral.parish.manage');
+
+        self::assertNull($this->runFilter('pastoral.parish.manage'));
+
+        // A grant for a different parish than the resolved default still denies.
+        $this->db->table('clergy_access_grant')->where('id', $grant)
+            ->update(['scope_id' => $parishB]);
         self::assertInstanceOf(RedirectResponse::class, $this->runFilter('pastoral.parish.manage'));
     }
 
     public function testExpiredOrRevokedGrantDenies(): void
     {
         [$diocese, , $parish] = $this->places();
-        [$user, $person] = $this->personUser();
+        [$user, $person] = $this->personUser($parish);
         $this->order($person, 'priest');
         $this->standing($person, $diocese);
         $position = $this->position($user, $person, 'parish', $parish, 'rector');
         $grant = $this->grant($user, $position, 'pastoral.parish.manage', 'parish', $parish);
-        $this->loginWithPermission($user, 'pastoral.parish.manage', $parish);
+        $this->loginWithPermission($user, 'pastoral.parish.manage');
 
         $this->db->table('clergy_access_grant')->where('id', $grant)
             ->update(['ends_at' => date('Y-m-d H:i:s', strtotime('-1 hour'))]);
@@ -110,8 +159,8 @@ final class ClergyScopeFilterTest extends CIUnitTestCase
     public function testNoGrantDeniesEvenWithCoarsePermission(): void
     {
         [, , $parish] = $this->places();
-        [$user] = $this->personUser();
-        $this->loginWithPermission($user, 'pastoral.parish.manage', $parish);
+        [$user] = $this->personUser($parish);
+        $this->loginWithPermission($user, 'pastoral.parish.manage');
 
         self::assertInstanceOf(RedirectResponse::class, $this->runFilter('pastoral.parish.manage'));
     }
@@ -138,7 +187,7 @@ final class ClergyScopeFilterTest extends CIUnitTestCase
         $bishopPosition = $this->position($bishop, $bishopPerson, 'diocese', $diocese, 'diocesan_bishop');
 
         // Verified licensed priest with no office in the (vacant) parish.
-        [$priest, $priestPerson] = $this->personUser();
+        [$priest, $priestPerson] = $this->personUser($parish);
         $this->order($priestPerson, 'priest');
         $this->standing($priestPerson, $diocese);
 
@@ -149,7 +198,7 @@ final class ClergyScopeFilterTest extends CIUnitTestCase
             'grant_type' => 'delegation', 'granted_by_user_id' => $bishop,
             'starts_at' => date('Y-m-d H:i:s', strtotime('-1 day')),
         ]);
-        $this->loginWithPermission($priest, 'governance.report.finalize_clergy', $parish);
+        $this->loginWithPermission($priest, 'governance.report.finalize_clergy');
 
         self::assertNull($this->runFilter('governance.report.finalize_clergy'));
 
@@ -163,16 +212,13 @@ final class ClergyScopeFilterTest extends CIUnitTestCase
         return (new ClergyScopeFilter())->before(service('request'), [$permission, $targetType]);
     }
 
-    private function loginWithPermission(int $userId, string $permission, ?int $parishId = null): void
+    private function loginWithPermission(int $userId, string $permission): void
     {
         $this->row('auth_permissions_users', [
             'user_id' => $userId, 'permission' => $permission,
             'created_at' => date('Y-m-d H:i:s'),
         ]);
         auth()->loginById($userId);
-        if ($parishId !== null) {
-            session()->set('selected_parish_id', $parishId);
-        }
     }
 
     private function places(): array
@@ -185,7 +231,7 @@ final class ClergyScopeFilterTest extends CIUnitTestCase
         return [$dioceseA, $dioceseB, $parishA, $parishB];
     }
 
-    private function personUser(): array
+    private function personUser(?int $homeParishId = null): array
     {
         $person = $this->row('person', ['first_name' => 'Test', 'last_name' => 'Clergy']);
         $user = $this->row('users', ['username' => 'clergy.' . uniqid(), 'active' => 1]);
@@ -193,7 +239,11 @@ final class ClergyScopeFilterTest extends CIUnitTestCase
             'user_id' => $user, 'type' => 'email_password', 'secret' => 'clergy.test@example.invalid',
         ]);
         $this->row('user_person', ['user_id' => $user, 'person_id' => $person, 'is_primary' => 1]);
-        $this->row('profile', ['user_id' => $user, 'person_id' => $person, 'portal_access' => 'enabled']);
+        $profile = ['user_id' => $user, 'person_id' => $person, 'portal_access' => 'enabled'];
+        if ($homeParishId !== null) {
+            $profile['parish_id'] = $homeParishId;
+        }
+        $this->row('profile', $profile);
         return [$user, $person];
     }
 

@@ -102,17 +102,68 @@ class ClergyScopeFilter implements FilterInterface
     }
 
     /**
-     * Same server-side parish resolution as BaseController::getOperationalParishId:
-     * validated session selection first, then primary parish affiliation,
-     * then profile home parish.
+     * Same server-side parish resolution as
+     * BaseController::getOperationalParishId: only province/diocesan
+     * admins use the session selection; everyone else resolves to
+     * their home parish. Diocesan admins fall back to the first
+     * parish of their assigned diocese.
      */
     private function resolveParishId(int $userId): int
     {
-        $selectedParishId = (int) (session()->get('selected_parish_id') ?? 0);
-        if ($selectedParishId > 0 && model('ParishModel')->find($selectedParishId)) {
-            return $selectedParishId;
+        $user = auth()->user();
+        $isDioceseAdmin = $user !== null && $user->inGroup('dioceseadmin');
+        $isElevated = $isDioceseAdmin || ($user !== null && $user->inGroup('provinceadmin'));
+
+        if ($isElevated) {
+            $selectedParishId = (int) (session()->get('selected_parish_id') ?? 0);
+            if ($selectedParishId > 0 && model('ParishModel')->find($selectedParishId)) {
+                return $selectedParishId;
+            }
         }
 
+        $homeParishId = $this->resolveHomeParishId($userId);
+        if (! $isElevated) {
+            return $homeParishId;
+        }
+        if ($homeParishId > 0) {
+            return $homeParishId;
+        }
+
+        // Diocesan admins without a selected or home parish default to the
+        // first parish of their assigned diocese, matching the controller.
+        if (! $isDioceseAdmin) {
+            return 0;
+        }
+
+        $dioceseId = $this->resolveDioceseId($userId);
+        if ($dioceseId <= 0) {
+            return 0;
+        }
+
+        try {
+            $fallback = db_connect()->table('parish')
+                ->select('id')
+                ->where('diocese_id', $dioceseId)
+                ->orderBy('id', 'ASC')
+                ->get()
+                ->getRowArray();
+            $parishId = (int) ($fallback['id'] ?? 0);
+            if ($parishId > 0) {
+                session()->set('selected_parish_id', $parishId);
+            }
+
+            return $parishId;
+        } catch (\Throwable $e) {
+            return 0;
+        }
+    }
+
+    /**
+     * Home parish: primary parish affiliation, then profile parish —
+     * same as BaseController::getHomeparishId.
+     */
+    private function resolveHomeParishId(int $userId): int
+    {
         try {
             $affiliation = db_connect()->table('parish_affiliation')
                 ->select('parish_id')

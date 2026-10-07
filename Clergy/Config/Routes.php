@@ -28,12 +28,12 @@ $routes->group('', ['filter' => 'session'], function ($routes) {
         $routes->post('store-non-portal', '\\Clergy\\Controllers\\Members::storeNonPortal', ['filter' => 'permission:member.create']);
         $routes->get('edit/(:num)', '\\Clergy\\Controllers\\Members::edit/$1', ['filter' => 'permission:member.edit']);
         $routes->post('update/(:num)', '\\Clergy\\Controllers\\Members::update/$1', ['filter' => 'permission:member.edit']);
-        $routes->post('delete/(:num)', '\\Clergy\\Controllers\\Members::delete/$1', ['filter' => 'permission:member.delete']);
+        $routes->post('delete/(:num)', '\\Clergy\\Controllers\\Members::delete/$1', ['filter' => ['permission:member.delete', 'clergyScope:pastoral.parish.manage,parish']]);
         $routes->post('revoke-portal-access/(:num)', '\\Clergy\\Controllers\\Members::revokePortalAccess/$1', ['filter' => ['permission:member.edit', 'clergyScope:pastoral.parish.manage,parish']]);
-        $routes->post('bulk-delete', '\\Clergy\\Controllers\\Members::bulkDelete', ['filter' => 'permission:member.delete']);
+        $routes->post('bulk-delete', '\\Clergy\\Controllers\\Members::bulkDelete', ['filter' => ['permission:member.delete', 'clergyScope:pastoral.parish.manage,parish']]);
 
         // Dedup / merge / hard-delete sub-group
-        $routes->group('dedup', ['filter' => 'permission:member.delete'], function ($routes) {
+        $routes->group('dedup', ['filter' => ['permission:member.delete', 'clergyScope:pastoral.parish.manage,parish']], function ($routes) {
             $routes->get('/', '\\Clergy\\Controllers\\MemberMerge::index');
             $routes->get('preview', '\\Clergy\\Controllers\\MemberMerge::preview');
             $routes->post('merge', '\\Clergy\\Controllers\\MemberMerge::merge');

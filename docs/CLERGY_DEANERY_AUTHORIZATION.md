@@ -36,15 +36,17 @@ The `clergy` Shield group remains a baseline operational label, not proof of ord
 
 ## Clergy module route gating
 
-`Clergy/` module routes are gated by Shield only: the `session` filter plus coarse `permission:*` keys (`member.view`, `member.edit`, `member.delete`, `leadership_position.manage`, etc.). The scoped ecclesial check in `app/Services/ClergyAuthorizationService.php` (`clergy_access_grant` office/delegation matching, verified order, current standing, exact scope containment) is layered on sensitive parish-scoped routes via the `clergyScope:` filter (`app/Filters/ClergyScopeFilter.php`, alias `clergyScope:<permission>,<targetType>`). The filter resolves the parish target server-side from the user's authoritative scope (validated `selected_parish_id`, primary `parish_affiliation`, then `profile.parish_id`) — never from request input — and denies through the shared `logAuthorizationDenial` audit contract. It stacks on top of the coarse `permission:` filter, not instead of it.
+`Clergy/` module routes are gated by Shield only: the `session` filter plus coarse `permission:*` keys (`member.view`, `member.edit`, `member.delete`, `leadership_position.manage`, etc.). The scoped ecclesial check in `app/Services/ClergyAuthorizationService.php` (`clergy_access_grant` office/delegation matching, verified order, current standing, exact scope containment) is layered on sensitive parish-scoped routes via the `clergyScope:` filter (`app/Filters/ClergyScopeFilter.php`, alias `clergyScope:<permission>,<targetType>`). The filter resolves the parish target server-side with the same role-aware logic as `BaseController::getOperationalParishId` (validated `selected_parish_id` for province/diocesan admins only, then primary `parish_affiliation`/`profile.parish_id` home parish, then the diocesan default-parish fallback) — never from request input — and denies through the shared `logAuthorizationDenial` audit contract. It stacks on top of the coarse `permission:` filter, not instead of it.
 
-Routes currently carrying `clergyScope:pastoral.parish.manage,parish` (see `Clergy/Config/Routes.php`):
+Routes currently carrying `clergyScope:pastoral.parish.manage,parish` (see `Clergy/Config/Routes.php` and `MemberPortal/Config/Routes.php`):
 
 - `POST /people/bulk-delete`
 - `POST /people/export`
 - `/people/merge/*` (index, preview, execute)
+- `POST /members/delete/{id}`, `POST /members/bulk-delete`, `/members/dedup/*` (member delete, merge and hard-delete paths)
 - `POST /members/revoke-portal-access/{id}`
 - `POST /people/leadership/{id}`, `/people/leadership/{id}/update`, `/people/leadership/{id}/delete`
+- `POST /leadership/store`, `/leadership/update/{id}`, `/leadership/delete/{id}` (MemberPortal position mutations through the same service)
 
 Clergy accounts (creation, invitation, activation, scope) are administered solely via `Diocese/Controllers/ClergyAccounts.php`; the Clergy module does not manage clergy accounts. Keep that split: `Clergy/` holds parish-level pastoral operations, `Diocese/` holds diocesan clergy administration. Stale `clergy_access_grant` rows are reconciled by `php spark clergy:reconcile-grants` (see below).
 

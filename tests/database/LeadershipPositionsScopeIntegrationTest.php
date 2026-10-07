@@ -157,6 +157,7 @@ final class LeadershipPositionsScopeIntegrationTest extends CIUnitTestCase
         $adminId = $this->insertUser('leadership.scope.admin');
         $this->upsertProfile($adminId, $parishId, $dioceseId);
         $this->injectLeadershipAuth($adminId);
+        $this->grantRectorAuthority($adminId, $parishId, $dioceseId);
 
         $memberId = $this->insertUser('leadership.scope.member');
         $this->upsertProfile($memberId, $parishId, $dioceseId);
@@ -203,6 +204,7 @@ final class LeadershipPositionsScopeIntegrationTest extends CIUnitTestCase
         $adminId = $this->insertUser('leadership.noportal.admin');
         $this->upsertProfile($adminId, $parishId, $dioceseId);
         $this->injectLeadershipAuth($adminId);
+        $this->grantRectorAuthority($adminId, $parishId, $dioceseId);
 
         // Non-portal person shape: a users row exists (so is_not_unique
         // passes) but there is no login identity and no enabled access.
@@ -233,6 +235,7 @@ final class LeadershipPositionsScopeIntegrationTest extends CIUnitTestCase
         $adminId = $this->insertUser('leadership.lay.admin');
         $this->upsertProfile($adminId, $parishId, $dioceseId);
         $this->injectLeadershipAuth($adminId);
+        $this->grantRectorAuthority($adminId, $parishId, $dioceseId);
 
         // Portal-enabled member with no baptism/standing data — a lay
         // appointment must fail the standing block even though portal
@@ -263,6 +266,7 @@ final class LeadershipPositionsScopeIntegrationTest extends CIUnitTestCase
         $adminId = $this->insertUser('leadership.reactivate.admin');
         $this->upsertProfile($adminId, $parishId, $dioceseId);
         $this->injectLeadershipAuth($adminId);
+        $this->grantRectorAuthority($adminId, $parishId, $dioceseId);
 
         $memberId = $this->insertUserRowOnly('leadership.reactivate.member');
         $this->upsertProfile($memberId, $parishId, $dioceseId, 'none');
@@ -315,7 +319,7 @@ final class LeadershipPositionsScopeIntegrationTest extends CIUnitTestCase
             public function can(string ...$permissions): bool
             {
                 foreach ($permissions as $permission) {
-                    if (! in_array($permission, ['member.edit', 'leadership_position.manage'], true)) {
+                    if (! in_array($permission, ['member.edit', 'leadership_position.manage', 'pastoral.parish.manage'], true)) {
                         return false;
                     }
                 }
@@ -493,6 +497,66 @@ final class LeadershipPositionsScopeIntegrationTest extends CIUnitTestCase
             'portal_access' => $portalAccess,
             'created_at' => date('Y-m-d H:i:s'),
             'updated_at' => date('Y-m-d H:i:s'),
+        ]);
+    }
+
+    /**
+     * Give the acting admin a verified rector office + office grant for the
+     * parish so requests pass the clergyScope gate and reach the
+     * service-level eligibility rejections under test.
+     */
+    private function grantRectorAuthority(int $userId, int $parishId, int $dioceseId): void
+    {
+        $this->db->table('person')->insert([
+            'first_name' => 'Leadership',
+            'last_name' => 'Rector',
+            'created_at' => date('Y-m-d H:i:s'),
+            'updated_at' => date('Y-m-d H:i:s'),
+        ]);
+        $personId = (int) $this->db->insertID();
+        $this->db->table('user_person')->insert([
+            'user_id' => $userId,
+            'person_id' => $personId,
+            'is_primary' => 1,
+        ]);
+        $this->db->table('clergy_ordination')->insert([
+            'person_id' => $personId,
+            'order_code' => 'priest',
+            'verification_status' => 'verified',
+            'verified_by_user_id' => 1,
+            'verified_at' => date('Y-m-d H:i:s'),
+        ]);
+        $this->db->table('clergy_canonical_status')->insert([
+            'person_id' => $personId,
+            'diocese_id' => $dioceseId,
+            'status_code' => 'licensed',
+            'effective_from' => date('Y-m-d', strtotime('-1 year')),
+        ]);
+        $this->db->table('leadership_position')->insert([
+            'user_id' => $userId,
+            'person_id' => $personId,
+            'scope_type' => 'parish',
+            'parish_id' => $parishId,
+            'role_code' => 'rector',
+            'title' => 'Rector',
+            'active' => 1,
+            'started_at' => date('Y-m-d', strtotime('-1 month')),
+            'approved_by_user_id' => 1,
+            'approved_at' => date('Y-m-d H:i:s'),
+            'approval_evidence_reference' => 'diocesan-appointment-register',
+            'created_at' => date('Y-m-d H:i:s'),
+            'updated_at' => date('Y-m-d H:i:s'),
+        ]);
+        $positionId = (int) $this->db->insertID();
+        $this->db->table('clergy_access_grant')->insert([
+            'user_id' => $userId,
+            'source_position_id' => $positionId,
+            'permission' => 'pastoral.parish.manage',
+            'scope_type' => 'parish',
+            'scope_id' => $parishId,
+            'grant_type' => 'office',
+            'granted_by_user_id' => 1,
+            'starts_at' => date('Y-m-d H:i:s', strtotime('-1 day')),
         ]);
     }
 
