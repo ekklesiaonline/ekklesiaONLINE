@@ -56,6 +56,7 @@ class Filters extends BaseFilters
         'diocesanOperationalBoundary' => DiocesanOperationalBoundaryFilter::class,
         'adminFinanceBoundary' => AdminFinanceBoundaryFilter::class,
         'permission'       => \App\Filters\PermissionFilter::class,
+        'clergyScope'      => \App\Filters\ClergyScopeFilter::class,
         'session'          => \CodeIgniter\Shield\Filters\SessionAuth::class,
         'group'            => \CodeIgniter\Shield\Filters\GroupFilter::class,
         'loginRateLimit'    => LoginRateLimitFilter::class,

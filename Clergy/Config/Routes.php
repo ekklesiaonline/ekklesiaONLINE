@@ -29,7 +29,7 @@ $routes->group('', ['filter' => 'session'], function ($routes) {
         $routes->get('edit/(:num)', '\\Clergy\\Controllers\\Members::edit/$1', ['filter' => 'permission:member.edit']);
         $routes->post('update/(:num)', '\\Clergy\\Controllers\\Members::update/$1', ['filter' => 'permission:member.edit']);
         $routes->post('delete/(:num)', '\\Clergy\\Controllers\\Members::delete/$1', ['filter' => 'permission:member.delete']);
-        $routes->post('revoke-portal-access/(:num)', '\\Clergy\\Controllers\\Members::revokePortalAccess/$1', ['filter' => 'permission:member.edit']);
+        $routes->post('revoke-portal-access/(:num)', '\\Clergy\\Controllers\\Members::revokePortalAccess/$1', ['filter' => ['permission:member.edit', 'clergyScope:pastoral.parish.manage,parish']]);
         $routes->post('bulk-delete', '\\Clergy\\Controllers\\Members::bulkDelete', ['filter' => 'permission:member.delete']);
 
         // Dedup / merge / hard-delete sub-group
@@ -62,9 +62,9 @@ $routes->group('', ['filter' => 'session'], function ($routes) {
         $routes->post('store-non-portal', '\\Clergy\\Controllers\\People::storeNonPortal', ['filter' => 'permission:member.create']);
         $routes->post('save-membership-details/(:num)', '\\Clergy\\Controllers\\People::saveMembershipDetails/$1', ['filter' => 'permission:member.edit']);
         $routes->get('leadership-eligibility/(:num)', '\\Clergy\\Controllers\\PeopleLeadership::leadershipEligibility/$1', ['filter' => 'permission:leadership_position.manage']);
-        $routes->post('leadership/(:num)', '\\Clergy\\Controllers\\PeopleLeadership::addLeadershipPosition/$1', ['filter' => 'permission:leadership_position.manage']);
-        $routes->post('leadership/(:num)/update', '\\Clergy\\Controllers\\PeopleLeadership::updateLeadershipPosition/$1', ['filter' => 'permission:leadership_position.manage']);
-        $routes->post('leadership/(:num)/delete', '\\Clergy\\Controllers\\PeopleLeadership::deleteLeadershipPosition/$1', ['filter' => 'permission:leadership_position.manage']);
+        $routes->post('leadership/(:num)', '\\Clergy\\Controllers\\PeopleLeadership::addLeadershipPosition/$1', ['filter' => ['permission:leadership_position.manage', 'clergyScope:pastoral.parish.manage,parish']]);
+        $routes->post('leadership/(:num)/update', '\\Clergy\\Controllers\\PeopleLeadership::updateLeadershipPosition/$1', ['filter' => ['permission:leadership_position.manage', 'clergyScope:pastoral.parish.manage,parish']]);
+        $routes->post('leadership/(:num)/delete', '\\Clergy\\Controllers\\PeopleLeadership::deleteLeadershipPosition/$1', ['filter' => ['permission:leadership_position.manage', 'clergyScope:pastoral.parish.manage,parish']]);
         $routes->post('donation/(:num)', '\\Clergy\\Controllers\\PeopleFinance::addDonation/$1', ['filter' => 'permission:donation.create']);
         $routes->post('donation/(:num)/update', '\\Clergy\\Controllers\\PeopleFinance::updateDonation/$1', ['filter' => 'permission:donation.edit']);
         $routes->post('donation/(:num)/delete', '\\Clergy\\Controllers\\PeopleFinance::deleteDonation/$1', ['filter' => 'permission:donation.delete']);
@@ -81,10 +81,10 @@ $routes->group('', ['filter' => 'session'], function ($routes) {
         $routes->post('family/(:num)/join', '\\Clergy\\Controllers\\PeopleFamilies::addPersonToFamily/$1', ['filter' => 'permission:family.manage']);
         $routes->post('family/(:num)/leave', '\\Clergy\\Controllers\\PeopleFamilies::removePersonFromFamily/$1', ['filter' => 'permission:family.manage']);
         $routes->post('family/(:num)/relationship', '\\Clergy\\Controllers\\PeopleFamilies::updateFamilyRelationship/$1', ['filter' => 'permission:family.manage']);
-        $routes->post('export', '\\Clergy\\Controllers\\People::export');
-        $routes->post('bulk-delete', '\\Clergy\\Controllers\\People::bulkDelete', ['filter' => 'permission:member.delete']);
+        $routes->post('export', '\\Clergy\\Controllers\\People::export', ['filter' => 'clergyScope:pastoral.parish.manage,parish']);
+        $routes->post('bulk-delete', '\\Clergy\\Controllers\\People::bulkDelete', ['filter' => ['permission:member.delete', 'clergyScope:pastoral.parish.manage,parish']]);
 
-        $routes->group('merge', ['filter' => 'permission:member.delete'], function ($routes) {
+        $routes->group('merge', ['filter' => ['permission:member.delete', 'clergyScope:pastoral.parish.manage,parish']], function ($routes) {
             $routes->get('/', '\\Clergy\\Controllers\\PersonMerge::index');
             $routes->get('preview', '\\Clergy\\Controllers\\PersonMerge::preview');
             $routes->post('execute', '\\Clergy\\Controllers\\PersonMerge::merge');

@@ -34,6 +34,20 @@ The migration adds `parish.congregation_type` (`parish`, `cathedral`, `mission`)
 
 The `clergy` Shield group remains a baseline operational label, not proof of ordination or a fourth admin tier. The two mission groups provide coarse keys only: the checked appointment, mission, review and identity still govern signing. A diocesan app admin may configure deanery membership in their assigned diocese; this does not let them verify orders or sign as bishop.
 
+## Clergy module route gating
+
+`Clergy/` module routes are gated by Shield only: the `session` filter plus coarse `permission:*` keys (`member.view`, `member.edit`, `member.delete`, `leadership_position.manage`, etc.). The scoped ecclesial check in `app/Services/ClergyAuthorizationService.php` (`clergy_access_grant` office/delegation matching, verified order, current standing, exact scope containment) is layered on sensitive parish-scoped routes via the `clergyScope:` filter (`app/Filters/ClergyScopeFilter.php`, alias `clergyScope:<permission>,<targetType>`). The filter resolves the parish target server-side from the user's authoritative scope (validated `selected_parish_id`, primary `parish_affiliation`, then `profile.parish_id`) — never from request input — and denies through the shared `logAuthorizationDenial` audit contract. It stacks on top of the coarse `permission:` filter, not instead of it.
+
+Routes currently carrying `clergyScope:pastoral.parish.manage,parish` (see `Clergy/Config/Routes.php`):
+
+- `POST /people/bulk-delete`
+- `POST /people/export`
+- `/people/merge/*` (index, preview, execute)
+- `POST /members/revoke-portal-access/{id}`
+- `POST /people/leadership/{id}`, `/people/leadership/{id}/update`, `/people/leadership/{id}/delete`
+
+Clergy accounts (creation, invitation, activation, scope) are administered solely via `Diocese/Controllers/ClergyAccounts.php`; the Clergy module does not manage clergy accounts. Keep that split: `Clergy/` holds parish-level pastoral operations, `Diocese/` holds diocesan clergy administration. Stale `clergy_access_grant` rows are reconciled by `php spark clergy:reconcile-grants` (see below).
+
 ## Application surfaces
 
 Routes use Shield `session` and action-specific `permission:*` filters, validate POST inputs with CI4 Validation, return the project's [API/AJAX contract](API_AJAX_ERROR_CONTRACT.md), and record redacted audit events. GET `/diocese/deaneries/manage` provides a Bootstrap page for authorized diocesan admins; `/leadership?scope=deanery` lists diocese-scoped regional appointments with a controlled office-code guide. Clergy evidence, approvals, policy and report sign-off currently have **JSON endpoints rather than a complete clerical review/signing screen**.
@@ -62,7 +76,7 @@ Every action re-evaluates order, date, identity, scope and status. Enabling the 
 3. **Review the 17 untracked legacy direct signing grants before any permission sync or cleanup.** `permission_role_sync_managed` contains no rows and cannot assign origin to historic direct grants. Do not mass-delete them or assume `php spark db:seed PermissionRoleSyncSeeder` will remove them. This agent did not run that seeder.
 4. For **each** diocese, independently confirm person identity, ordination documents, standing, current ordinary and appointment. **Bootstrap gap:** the first ordinary cannot digitally self-verify or self-approve; an authorized, audited two-person diocesan record review/controlled import must establish the first verified bishop and approved office. No account is auto-promoted from a title, legacy group or candidate. Do not bypass `pending_review` onboarding.
 5. Review legacy candidates; appoint the exact deanery/parish offices and lay signers; document cathedral type and explicit pastoral charge. Have the verified ordinary enable reporting policy with the local evidence reference only after confirming the diocese's vestry/mission signatory policy.
-6. Run `php spark clergy:reconcile-grants` to inspect expired/revoked **managed** grant sources. After backup/review, `php spark clergy:reconcile-grants --apply` removes only provenance-linked stale direct permissions. Operational scheduling for this command is **not configured**; until scheduled, revoke explicitly on personnel changes and run it as part of routine operations.
+6. Run `php spark clergy:reconcile-grants` to inspect expired/revoked **managed** grant sources. After backup/review, `php spark clergy:reconcile-grants --apply` removes only provenance-linked stale direct permissions. Apply mode is scheduled via the cron wrapper `build/clergy_reconcile_grants_cron.sh` (recommended hourly, or at least daily; it appends to `writable/logs/clergy_reconcile_grants_cron.log`), so expired or revoked office and delegation grants stop conferring their synced Shield permissions automatically. Continue to revoke explicitly on personnel changes rather than waiting for the next run.
 7. Re-run `vendor/bin/phpunit --no-coverage --do-not-cache-result` (the 128 MB CLI default needs result caching disabled for the full suite), permission-role sync regression tests, and a staged end-to-end sign-off for two unrelated dioceses (including dioceses in the same and different provinces). Validate profile onboarding gates and negative cross-scope/expired-role cases before enabling each diocese.
 
 **The user applied the migrations; this agent only verified their effects read-only.** The staging migration created one pending candidate but no verified order or automatic permission. This agent performed no live role/permission edit, data backfill, seeding, or policy enablement. No Git commit, push, or deployment was created by this agent.
