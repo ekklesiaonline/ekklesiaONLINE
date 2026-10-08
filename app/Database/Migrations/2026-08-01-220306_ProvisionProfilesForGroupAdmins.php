@@ -25,7 +25,7 @@ class ProvisionProfilesForGroupAdmins extends Migration
         $requestTable = $this->db->tableExists('user_registration_request') ? $this->db->getPrefix() . 'user_registration_request' : null;
 
         $sql = 'INSERT INTO ' . $this->db->getPrefix() . 'profile '
-            . '(user_id, province_id, diocese_id, parish_id, first_name, last_name, membership_status, created_at, updated_at) '
+            . '(user_id, province_id, diocese_id, parish_id, first_name, last_name, created_at, updated_at) '
             . 'SELECT '
             . '  u.id, '
             . '  urr.province_id, '
@@ -33,7 +33,6 @@ class ProvisionProfilesForGroupAdmins extends Migration
             . '  urr.parish_id, '
             . '  MAX(u.username), '
             . '  "Admin", '
-            . '  "visitor", '
             . '  NOW(), '
             . '  NOW() '
             . 'FROM ' . $this->db->getPrefix() . 'users u '
