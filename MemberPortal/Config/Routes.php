@@ -88,9 +88,11 @@ $routes->group('', ['filter' => 'session'], function ($routes) {
 
     $routes->group('leadership', ['filter' => 'permission:leadership_position.manage'], function ($routes) {
         $routes->get('/', '\\MemberPortal\\Controllers\\LeadershipPositions::index');
-        $routes->post('store', '\\MemberPortal\\Controllers\\LeadershipPositions::store', ['filter' => 'clergyScope:pastoral.parish.manage,parish']);
-        $routes->post('update/(:num)', '\\MemberPortal\\Controllers\\LeadershipPositions::update/$1', ['filter' => 'clergyScope:pastoral.parish.manage,parish']);
-        $routes->post('delete/(:num)', '\\MemberPortal\\Controllers\\LeadershipPositions::delete/$1', ['filter' => 'clergyScope:pastoral.parish.manage,parish']);
+        // Scoped ecclesial check is enforced in the controller against the
+        // position's actual scope (parish vs deanery/diocese).
+        $routes->post('store', '\\MemberPortal\\Controllers\\LeadershipPositions::store');
+        $routes->post('update/(:num)', '\\MemberPortal\\Controllers\\LeadershipPositions::update/$1');
+        $routes->post('delete/(:num)', '\\MemberPortal\\Controllers\\LeadershipPositions::delete/$1');
     });
 
     // Retired: the standalone conversions screen folded into the visitor

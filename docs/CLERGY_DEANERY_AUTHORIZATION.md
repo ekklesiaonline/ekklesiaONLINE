@@ -46,7 +46,7 @@ Routes currently carrying `clergyScope:pastoral.parish.manage,parish` (see `Cler
 - `POST /members/delete/{id}`, `POST /members/bulk-delete`, `/members/dedup/*` (member delete, merge and hard-delete paths)
 - `POST /members/revoke-portal-access/{id}`
 - `POST /people/leadership/{id}`, `/people/leadership/{id}/update`, `/people/leadership/{id}/delete`
-- `POST /leadership/store`, `/leadership/update/{id}`, `/leadership/delete/{id}` (MemberPortal position mutations through the same service)
+- `POST /leadership/store`, `/leadership/update/{id}`, `/leadership/delete/{id}` (MemberPortal position mutations) are checked in `MemberPortal/Controllers/LeadershipPositions.php` against the position's actual scope instead of the route filter: parish positions require `pastoral.parish.manage` over that parish; deanery/diocese positions require `clergy.appointment.manage` over the admin's assigned diocese
 
 Clergy accounts (creation, invitation, activation, scope) are administered solely via `Diocese/Controllers/ClergyAccounts.php`; the Clergy module does not manage clergy accounts. Keep that split: `Clergy/` holds parish-level pastoral operations, `Diocese/` holds diocesan clergy administration. Stale `clergy_access_grant` rows are reconciled by `php spark clergy:reconcile-grants` (see below).
 
