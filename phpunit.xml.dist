@@ -47,6 +47,7 @@
     <php>
         <ini name="memory_limit" value="512M"/>
         <server name="app.baseURL" value="http://example.com/"/>
+        <server name="app.indexPage" value=""/>
         <server name="CODEIGNITER_SCREAM_DEPRECATIONS" value="0"/>
         <!-- Directory containing phpunit.xml -->
         <const name="HOMEPATH" value="./"/>

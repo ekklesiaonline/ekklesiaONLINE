@@ -58,7 +58,9 @@ final class ClergyAppointmentRequestTest extends CIUnitTestCase
         $position = $this->db->table('leadership_position')->where('id', $positionId)->get()->getRowArray();
         self::assertSame('parish', $position['scope_type']);
         self::assertSame($parish, (int) $position['parish_id']);
-        self::assertSame($diocese, (int) $position['diocese_id']);
+        // Scope XOR convention: only the active scope's id is populated;
+        // the diocese is derived through the parish.
+        self::assertNull($position['diocese_id']);
         self::assertSame('clergy', $position['role_category']);
         self::assertSame('rector', $position['role_code']);
     }
@@ -187,10 +189,14 @@ final class ClergyAppointmentRequestTest extends CIUnitTestCase
 
     private function request(int $person, int $parish, int $diocese, string $office): int
     {
+        // requested_by_user_id flows into leadership_position.appointed_by_user_id
+        // on approval, so it must reference a real users row.
+        $requester = $this->row('users', ['username' => 'requester.' . uniqid(), 'active' => 1]);
+
         return $this->row('clergy_appointment_request', [
             'person_id' => $person, 'parish_id' => $parish, 'diocese_id' => $diocese,
             'proposed_office' => $office, 'review_status' => 'pending',
-            'requested_by_user_id' => 999,
+            'requested_by_user_id' => $requester,
             'created_at' => date('Y-m-d H:i:s'), 'updated_at' => date('Y-m-d H:i:s'),
         ]);
     }

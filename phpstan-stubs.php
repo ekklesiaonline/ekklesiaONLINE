@@ -85,6 +85,10 @@ namespace {
     function helper(array|string $filename): void
     {
     }
+    function random_string(string $type = 'alnum', int $len = 8): string
+    {
+        return '';
+    }
     function emailer(bool $getShared = true): object
     {
     }

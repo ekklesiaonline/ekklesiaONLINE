@@ -115,6 +115,7 @@ final class LeadershipPositionsScopeIntegrationTest extends CIUnitTestCase
         $adminId = $this->insertUser('appointment.diocese.admin');
         $this->upsertProfile($adminId, $parishId, $dioceseId);
         $this->injectLeadershipAuth($adminId, 'dioceseadmin');
+        $this->grantRectorAuthority($adminId, $parishId, $dioceseId);
 
         $memberId = $this->insertUser('appointment.warden.member');
         $this->upsertProfile($memberId, $parishId, $dioceseId);
