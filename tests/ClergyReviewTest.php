@@ -89,12 +89,15 @@ final class ClergyReviewTest extends CIUnitTestCase
         [$reviewer] = $this->ordinary($diocese);
         $personId = $this->row('person', ['first_name' => 'No', 'last_name' => 'Portal']);
         $review = new ClergyReviewService($this->db, $this->authorization());
+        // The shared test schema may already hold other grants; the invariant
+        // is that documenting ordination + standing alone adds none.
+        $grantsBefore = $this->db->table('clergy_access_grant')->countAllResults();
         $id = $review->verifyOrdination($personId, $diocese, 'deacon', 'vocational',
             date('Y-m-d', strtotime('-1 year')), 'register-1', $reviewer);
         self::assertNotNull($id);
         self::assertNotNull($review->recordStanding($personId, $diocese, 'licensed',
             date('Y-m-d'), null, 'license-1', $reviewer));
-        self::assertSame(3, $this->db->table('clergy_access_grant')->countAllResults());
+        self::assertSame($grantsBefore, $this->db->table('clergy_access_grant')->countAllResults());
         self::assertSame(0, $this->db->table('leadership_position')->where('person_id', $personId)->countAllResults());
     }
 

@@ -48,8 +48,34 @@
             $dashboardHref = 'parish/governance';
             $dashboardActive = (uri_string() == 'parish/governance');
         } elseif ($isClergySidebar) {
-            $dashboardHref = 'parish/worship';
-            $dashboardActive = (uri_string() == 'parish/worship');
+            // Match BaseController::resolveDashboardScope(): clergy without a
+            // home parish land on the clergy portal dashboard instead.
+            $clergyParishId = 0;
+            try {
+                $aff = db_connect()->table('parish_affiliation')
+                    ->select('parish_id')
+                    ->where('linked_user_id', (int) auth()->id())
+                    ->where('deleted_at IS NULL', null, false)
+                    ->orderBy('is_primary', 'DESC')
+                    ->orderBy('updated_at', 'DESC')
+                    ->get()
+                    ->getRowArray();
+                $clergyParishId = (int) ($aff['parish_id'] ?? 0);
+            } catch (\Throwable $e) {
+                $clergyParishId = 0;
+            }
+            // Same fallback as BaseController::getHomeparishId(): accounts
+            // without an affiliation yet use the profile parish.
+            if ($clergyParishId <= 0) {
+                try {
+                    $clergyProfile = model('ProfileModel')->where('user_id', (int) auth()->id())->first();
+                    $clergyParishId = (int) ($clergyProfile['parish_id'] ?? 0);
+                } catch (\Throwable $e) {
+                    $clergyParishId = 0;
+                }
+            }
+            $dashboardHref = $clergyParishId > 0 ? 'parish/worship' : 'clergy/dashboard';
+            $dashboardActive = (uri_string() == 'parish/worship' || uri_string() == 'clergy/dashboard');
         } elseif ($isWorshipCoordSidebar) {
             $dashboardHref = 'parish/worship';
             $dashboardActive = (uri_string() == 'parish/worship');

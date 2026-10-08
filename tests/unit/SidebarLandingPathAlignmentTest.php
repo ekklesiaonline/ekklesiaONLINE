@@ -80,7 +80,7 @@ final class SidebarLandingPathAlignmentTest extends CIUnitTestCase
             'clergy' => [
                 ['clergy'],
                 ['member.view', 'service.view', 'attendance.view'],
-                '/parish/worship',
+                '/clergy/dashboard',
             ],
             'finance officer' => [
                 ['finance'],
