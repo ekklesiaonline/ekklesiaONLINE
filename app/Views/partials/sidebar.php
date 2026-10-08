@@ -71,6 +71,16 @@
             } catch (\Throwable $e) {
                 $clergyParishId = 0;
             }
+            // Same fallback as BaseController::getHomeparishId(): accounts
+            // without an affiliation yet use the profile parish.
+            if ($clergyParishId <= 0) {
+                try {
+                    $clergyProfile = model('ProfileModel')->where('user_id', (int) auth()->id())->first();
+                    $clergyParishId = (int) ($clergyProfile['parish_id'] ?? 0);
+                } catch (\Throwable $e) {
+                    $clergyParishId = 0;
+                }
+            }
             $dashboardHref = $clergyParishId > 0 ? 'parish/worship' : 'clergy/dashboard';
             $dashboardActive = (uri_string() == 'parish/worship' || uri_string() == 'clergy/dashboard');
         } elseif ($isWorshipCoordSidebar) {
