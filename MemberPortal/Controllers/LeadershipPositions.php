@@ -4,6 +4,7 @@ namespace MemberPortal\Controllers;
 
 use App\Controllers\AdminHierarchyGuard;
 use App\Controllers\BaseController;
+use App\Services\ClergyAuthorizationService;
 use App\Services\HierarchyService;
 use App\Services\LeadershipPositionService;
 
@@ -173,6 +174,10 @@ class LeadershipPositions extends BaseController
             return redirect()->back()->withInput()->with('error', lang('App.errorUnauthorized'));
         }
 
+        if ($this->lacksEcclesialAuthority($scopeType, (int) ($scopeIds['parish_id'] ?? 0), (int) ($dioceseId ?? 0))) {
+            return redirect()->back()->withInput()->with('error', lang('App.errorUnauthorized'));
+        }
+
         $payload = array_merge($scopeIds, [
             'user_id' => $targetUserId,
             'scope_type' => $scopeType,
@@ -252,6 +257,14 @@ class LeadershipPositions extends BaseController
             $parishId,
             $dioceseId,
             $this->resolveAdminProvinceId()
+        )) {
+            return redirect()->to('/leadership')->with('error', lang('App.errorUnauthorized'));
+        }
+
+        if ($this->lacksEcclesialAuthority(
+            (string) ($position['scope_type'] ?? ''),
+            (int) ($position['parish_id'] ?? 0),
+            (int) ($dioceseId ?? 0)
         )) {
             return redirect()->to('/leadership')->with('error', lang('App.errorUnauthorized'));
         }
@@ -351,6 +364,14 @@ class LeadershipPositions extends BaseController
             return redirect()->to('/leadership')->with('error', lang('App.errorUnauthorized'));
         }
 
+        if ($this->lacksEcclesialAuthority(
+            (string) ($position['scope_type'] ?? ''),
+            (int) ($position['parish_id'] ?? 0),
+            (int) ($dioceseId ?? 0)
+        )) {
+            return redirect()->to('/leadership')->with('error', lang('App.errorUnauthorized'));
+        }
+
         if ($code = $this->guardTargetUserMutation((int) ($position['user_id'] ?? 0))) {
             return redirect()->to('/leadership')->with('error', $this->hierarchyGuardMessage($code));
         }
@@ -364,6 +385,49 @@ class LeadershipPositions extends BaseController
         ]);
 
         return redirect()->to('/leadership')->with('success', lang('Leadership.deleteSuccess'));
+    }
+
+    /**
+     * Scoped ecclesial check against the mutation's actual target:
+     * parish positions need pastoral.parish.manage over that parish;
+     * deanery/diocese positions need clergy.appointment.manage over the
+     * assigned diocese (canManage() already confined the target to it).
+     * Fails closed and audits through the shared denial contract.
+     */
+    private function lacksEcclesialAuthority(string $scopeType, int $parishId, int $dioceseId): bool
+    {
+        if ($scopeType === 'parish') {
+            $permission = 'pastoral.parish.manage';
+            $targetType = 'parish';
+            $targetId = $parishId;
+        } elseif (in_array($scopeType, ['deanery', 'diocese'], true)) {
+            $permission = 'clergy.appointment.manage';
+            $targetType = 'diocese';
+            $targetId = $dioceseId;
+        } else {
+            $permission = '';
+            $targetType = $scopeType;
+            $targetId = 0;
+        }
+
+        $userId = (int) (auth()->id() ?? 0);
+        if ($permission !== '' && $targetId > 0
+            && (new ClergyAuthorizationService())->allows($userId, $permission, $targetType, $targetId)) {
+            return false;
+        }
+
+        $context = [
+            'controller' => self::class,
+            'permission' => $permission,
+            'scope'      => $targetType,
+            'target_id'  => $targetId,
+        ];
+        if ($targetType === 'parish' && $targetId > 0) {
+            $context['parish_id'] = $targetId;
+        }
+        service('audit')->logAuthorizationDenial('clergy.scope.denied', 'CLERGY_SCOPE_DENIED', $context);
+
+        return true;
     }
 
     /** A selected or home parish alone is not proof of diocesan admin jurisdiction. */

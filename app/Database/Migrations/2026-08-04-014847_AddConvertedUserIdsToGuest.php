@@ -8,6 +8,11 @@ class AddConvertedUserIdsToGuest extends Migration
 {
     public function up()
     {
+        // Fresh-install guard: the guest table was retired; only run on legacy schemas.
+        if (! $this->db->tableExists('guest')) {
+            return;
+        }
+
         if (! $this->db->fieldExists('converted_user_id', 'guest')) {
             $this->forge->addColumn('guest', [
                 'converted_user_id' => [

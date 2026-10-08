@@ -108,7 +108,12 @@ class ReconcileSettingTableSchemas extends Migration
 
         // Before dropping any unique key, add a plain index on the scope
         // column so a foreign key on that column still has an index to use.
+        // Skip when the index already exists so the migration stays rerunnable.
+        $existingIndexNames = array_column($existingKeys, 'Key_name');
         foreach ($scopeColumns as $scopeColumn) {
+            if (in_array("idx_{$table}_{$scopeColumn}", $existingIndexNames, true)) {
+                continue;
+            }
             $this->db->query("ALTER TABLE {$table} ADD INDEX idx_{$table}_{$scopeColumn} ({$scopeColumn})");
         }
 
@@ -117,9 +122,11 @@ class ReconcileSettingTableSchemas extends Migration
             $this->db->query("ALTER TABLE {$table} DROP INDEX {$existingName}");
         }
 
+        // Column names must be quoted: `key` is a reserved word.
+        $quotedColumns = array_map(static fn (string $column): string => '`' . $column . '`', $keyColumns);
         $this->db->query(
             'ALTER TABLE ' . $table . ' ADD UNIQUE KEY ' . $keyName
-            . ' (' . implode(',', $keyColumns) . ')'
+            . ' (' . implode(',', $quotedColumns) . ')'
         );
     }
 }
