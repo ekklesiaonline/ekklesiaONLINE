@@ -61,6 +61,13 @@
                     ->get()
                     ->getRowArray();
                 $clergyParishId = (int) ($aff['parish_id'] ?? 0);
+                if ($clergyParishId === 0) {
+                    $clergyParishId = (int) (db_connect()->table('profile')
+                        ->select('parish_id')
+                        ->where('user_id', (int) auth()->id())
+                        ->get()
+                        ->getRowArray()['parish_id'] ?? 0);
+                }
             } catch (\Throwable $e) {
                 $clergyParishId = 0;
             }
