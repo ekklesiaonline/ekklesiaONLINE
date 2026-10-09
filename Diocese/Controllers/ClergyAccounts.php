@@ -102,11 +102,164 @@ class ClergyAccounts extends BaseController
         }
 
         $clergy = $builder->get()->getResultArray();
+        $roster = $this->enrichRoster($clergy, $dioceseId);
 
         return view('Diocese\Views\Clergy/index', array_merge(
             $this->getCommonViewData(lang('Clergy.manageTitle')),
-            ['clergy' => $clergy, 'q' => $q]
+            [
+                'clergy' => $roster,
+                'q'      => $q,
+                'stats'  => $this->dashboardStats($roster, $dioceseId),
+            ]
         ));
+    }
+
+    /**
+     * Attach office, canonical standing, ordination, and licensed
+     * appointment summaries to each roster row (read-only, batched).
+     *
+     * @param array<int, array<string, mixed>> $clergy
+     * @return array<int, array<string, mixed>>
+     */
+    private function enrichRoster(array $clergy, int $dioceseId): array
+    {
+        if ($clergy === []) {
+            return $clergy;
+        }
+
+        $db      = db_connect();
+        $userIds = array_map(static fn (array $row): int => (int) $row['id'], $clergy);
+
+        $personIds = [];
+        foreach (db_connect()->table('profile')
+            ->select('user_id, person_id')->whereIn('user_id', $userIds)->get()->getResultArray() as $p) {
+            if ((int) ($p['person_id'] ?? 0) > 0) {
+                $personIds[(int) $p['user_id']] = (int) $p['person_id'];
+            }
+        }
+
+        $positions = [];
+        foreach ($db->table('leadership_position lp')
+            ->select('lp.user_id, lp.title, lp.scope_type, lp.pastoral_in_charge, c.name AS parish_name, dn.name AS deanery_name')
+            ->join('parish c', 'c.id = lp.parish_id', 'left')
+            ->join('deanery dn', 'dn.id = lp.deanery_id', 'left')
+            ->where('lp.active', 1)
+            ->whereIn('lp.user_id', $userIds)
+            ->orderBy('lp.scope_type', 'ASC')
+            ->orderBy('lp.title', 'ASC')
+            ->get()->getResultArray() as $pos) {
+            $positions[(int) $pos['user_id']][] = $pos;
+        }
+
+        $standings = $ordination = $appointments = [];
+        $personIdList = array_values($personIds);
+        if ($personIdList !== [] && $db->tableExists('clergy_canonical_status')) {
+            $rows = $db->table('clergy_canonical_status')
+                ->whereIn('person_id', $personIdList)
+                ->where('diocese_id', $dioceseId)
+                ->orderBy('effective_from', 'DESC')
+                ->get()->getResultArray();
+            foreach ($rows as $row) {
+                $standings[(int) $row['person_id']] ??= $row;
+            }
+        }
+        if ($personIdList !== [] && $db->tableExists('clergy_ordination')) {
+            foreach ($db->table('clergy_ordination')
+                ->whereIn('person_id', $personIdList)
+                ->orderBy('ordained_on', 'DESC')
+                ->get()->getResultArray() as $row) {
+                $ordination[(int) $row['person_id']] ??= $row;
+            }
+        }
+        if ($personIdList !== [] && $db->tableExists('clergy_appointment')) {
+            $rows = $db->table('clergy_appointment ca')
+                ->select('ca.person_id, ca.appointment_type, ca.status, ca.licensed_on, c.name AS parish_name')
+                ->join('parish c', 'c.id = ca.parish_id', 'left')
+                ->whereIn('ca.person_id', $personIdList)
+                ->orderBy('ca.started_on', 'DESC')
+                ->get()->getResultArray();
+            foreach ($rows as $row) {
+                $appointments[(int) $row['person_id']] ??= $row;
+            }
+        }
+
+        foreach ($clergy as &$row) {
+            $uid = (int) $row['id'];
+            $pid = $personIds[$uid] ?? 0;
+            $row['positions']    = $positions[$uid] ?? [];
+            $row['standing']     = $pid > 0 ? ($standings[$pid] ?? null) : null;
+            $row['ordination']   = $pid > 0 ? ($ordination[$pid] ?? null) : null;
+            $row['appointment']  = $pid > 0 ? ($appointments[$pid] ?? null) : null;
+        }
+        unset($row);
+
+        return $clergy;
+    }
+
+    /**
+     * Overview-card metrics for the diocesan clergy dashboard.
+     *
+     * @param array<int, array<string, mixed>> $roster enriched roster rows
+     * @return array<string, int>
+     */
+    private function dashboardStats(array $roster, int $dioceseId): array
+    {
+        $db = db_connect();
+
+        $active = $awaiting = $invited = 0;
+        foreach ($roster as $row) {
+            if ((int) ($row['active'] ?? 0) === 1) {
+                $active++;
+            }
+            if (($row['positions'] ?? []) === []) {
+                $awaiting++;
+            }
+            if (($row['portal_access'] ?? '') === 'invited') {
+                $invited++;
+            }
+        }
+
+        $pendingRequests = 0;
+        if ($db->tableExists('clergy_appointment_request')) {
+            $pendingRequests = (int) $db->table('clergy_appointment_request')
+                ->where('diocese_id', $dioceseId)
+                ->where('review_status', 'pending')
+                ->countAllResults();
+        }
+
+        $pendingCandidates = 0;
+        if ($db->tableExists('clergy_transition_candidate')) {
+            $pendingCandidates = (int) $db->table('clergy_transition_candidate tc')
+                ->join('parish c', "c.id = tc.scope_id AND tc.scope_type = 'parish'", 'left')
+                ->groupStart()
+                    ->where("(tc.scope_type = 'diocese' AND tc.scope_id = {$dioceseId})", null, false)
+                    ->orWhere("(tc.scope_type = 'parish' AND c.diocese_id = {$dioceseId})", null, false)
+                ->groupEnd()
+                ->where('tc.review_status', 'pending')
+                ->countAllResults();
+        }
+
+        $expiringGrants = 0;
+        if ($db->tableExists('clergy_access_grant')) {
+            $expiringGrants = (int) $db->table('clergy_access_grant g')
+                ->join('profile p', 'p.user_id = g.user_id', 'inner')
+                ->where('p.diocese_id', $dioceseId)
+                ->where('g.revoked_at IS NULL', null, false)
+                ->where('g.ends_at IS NOT NULL', null, false)
+                ->where('g.ends_at <=', date('Y-m-d H:i:s', strtotime('+30 days')))
+                ->where('g.ends_at >=', date('Y-m-d H:i:s'))
+                ->countAllResults();
+        }
+
+        return [
+            'total'             => count($roster),
+            'active'            => $active,
+            'awaiting'          => $awaiting,
+            'invited'           => $invited,
+            'pending_requests'  => $pendingRequests,
+            'pending_candidates' => $pendingCandidates,
+            'expiring_grants'   => $expiringGrants,
+        ];
     }
 
     public function create()

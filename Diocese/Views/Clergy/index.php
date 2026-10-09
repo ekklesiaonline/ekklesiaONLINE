@@ -6,6 +6,47 @@
     <a href="<?= base_url('diocese/clergy/create') ?>" class="btn btn-primary"><i class="bi bi-plus-circle" aria-hidden="true"></i> <?= lang('Clergy.btnInvite') ?></a>
 </div>
 
+<?php $stats = $stats ?? ['total' => 0, 'active' => 0, 'awaiting' => 0, 'invited' => 0, 'pending_requests' => 0, 'pending_candidates' => 0, 'expiring_grants' => 0]; ?>
+<div class="row g-3 mb-3">
+    <div class="col-6 col-md-4 col-xl-2">
+        <div class="card h-100"><div class="card-body py-3">
+            <div class="text-muted small"><?= lang('Clergy.cardTotal') ?></div>
+            <div class="fs-4"><?= (int) $stats['total'] ?></div>
+            <div class="text-muted small"><?= lang('Clergy.cardTotalHelp') ?>: <?= (int) $stats['active'] ?></div>
+        </div></div>
+    </div>
+    <div class="col-6 col-md-4 col-xl-2">
+        <div class="card h-100"><div class="card-body py-3">
+            <div class="text-muted small"><?= lang('Clergy.cardAwaitingAppointment') ?></div>
+            <div class="fs-4"><?= (int) $stats['awaiting'] ?></div>
+        </div></div>
+    </div>
+    <div class="col-6 col-md-4 col-xl-2">
+        <div class="card h-100"><div class="card-body py-3">
+            <div class="text-muted small"><?= lang('Clergy.cardPendingRequests') ?></div>
+            <div class="fs-4"><?= (int) $stats['pending_requests'] ?></div>
+        </div></div>
+    </div>
+    <div class="col-6 col-md-4 col-xl-2">
+        <div class="card h-100"><div class="card-body py-3">
+            <div class="text-muted small"><?= lang('Clergy.cardPendingCandidates') ?></div>
+            <div class="fs-4"><?= (int) $stats['pending_candidates'] ?></div>
+        </div></div>
+    </div>
+    <div class="col-6 col-md-4 col-xl-2">
+        <div class="card h-100"><div class="card-body py-3">
+            <div class="text-muted small"><?= lang('Clergy.cardPendingInvitations') ?></div>
+            <div class="fs-4"><?= (int) $stats['invited'] ?></div>
+        </div></div>
+    </div>
+    <div class="col-6 col-md-4 col-xl-2">
+        <div class="card h-100"><div class="card-body py-3">
+            <div class="text-muted small"><?= lang('Clergy.cardExpiringGrants') ?></div>
+            <div class="fs-4"><?= (int) $stats['expiring_grants'] ?></div>
+        </div></div>
+    </div>
+</div>
+
 <?php $clergyFiltersActive = trim((string) ($q ?? '')) !== ''; ?>
 <div class="card mb-3">
     <div class="card-header d-flex align-items-center justify-content-end filter-panel-header">
@@ -40,7 +81,10 @@
                 <thead>
                     <tr>
                         <th scope="col"><?= lang('Clergy.colName') ?></th>
-                        <th scope="col"><?= lang('Clergy.colEmail') ?></th>
+                        <th scope="col"><?= lang('Clergy.colOffice') ?></th>
+                        <th scope="col"><?= lang('Clergy.colOrder') ?></th>
+                        <th scope="col"><?= lang('Clergy.colStanding') ?></th>
+                        <th scope="col"><?= lang('Clergy.colLicensedAppointment') ?></th>
                         <th scope="col"><?= lang('Clergy.colPortalAccess') ?></th>
                         <th scope="col"><?= lang('Clergy.colInvitationSent') ?></th>
                         <th scope="col"><?= lang('Clergy.colStatus') ?></th>
@@ -54,10 +98,46 @@
                             $portalAccess = (string) ($row['portal_access'] ?? 'none');
                             $portalColor = ['enabled' => 'success', 'invited' => 'warning', 'none' => 'secondary'][$portalAccess] ?? 'secondary';
                             $activeColor = (int) ($row['active'] ?? 0) === 1 ? 'success' : 'secondary';
+                            $standingCode = strtolower((string) ($row['standing']['status_code'] ?? ''));
+                            $standingColor = in_array($standingCode, ['suspended', 'inhibited'], true) ? 'danger' : 'success';
+                            $ordination = $row['ordination'] ?? null;
+                            $ordinationVerified = ($ordination['verification_status'] ?? '') === 'verified';
+                            $orderColor = $ordinationVerified ? 'primary' : 'secondary';
+                            $appointment = $row['appointment'] ?? null;
                             ?>
                             <tr>
-                                <td><?= esc(trim((string) ($row['first_name'] ?? '') . ' ' . (string) ($row['last_name'] ?? ''))) ?></td>
-                                <td><?= esc($row['email'] ?? '') ?></td>
+                                <td><?= esc(trim((string) ($row['first_name'] ?? '') . ' ' . (string) ($row['last_name'] ?? ''))) ?><br>
+                                    <small class="text-muted"><?= esc($row['email'] ?? '') ?></small></td>
+                                <td>
+                                    <?php if (!empty($row['positions'])): ?>
+                                        <?php foreach ($row['positions'] as $pos): ?>
+                                            <div><?= esc($pos['title'] ?? '') ?><small class="text-muted"> — <?= esc($pos['parish_name'] ?? $pos['deanery_name'] ?? lang('Clergy.scope.' . ($pos['scope_type'] ?? 'diocese'))) ?></small></div>
+                                        <?php endforeach; ?>
+                                    <?php else: ?>
+                                        <span class="text-muted"><?= lang('Clergy.noActiveOffice') ?></span>
+                                    <?php endif; ?>
+                                </td>
+                                <td>
+                                    <?php if ($ordination !== null): ?>
+                                        <span class="badge border border-<?= $orderColor ?> text-<?= $orderColor ?> fw-normal"><?= esc($ordination['order_code'] ?? '') ?><?= $ordinationVerified ? '' : ' · ' . lang('Clergy.unverified') ?></span>
+                                    <?php else: ?>
+                                        <span class="text-muted">—</span>
+                                    <?php endif; ?>
+                                </td>
+                                <td>
+                                    <?php if ($standingCode !== ''): ?>
+                                        <span class="badge border border-<?= $standingColor ?> text-<?= $standingColor ?> fw-normal"><?= esc($standingCode) ?></span>
+                                    <?php else: ?>
+                                        <span class="text-muted">—</span>
+                                    <?php endif; ?>
+                                </td>
+                                <td>
+                                    <?php if ($appointment !== null): ?>
+                                        <?= esc($appointment['parish_name'] ?? '') ?><small class="text-muted"> — <?= esc($appointment['appointment_type'] ?? '') ?></small>
+                                    <?php else: ?>
+                                        <span class="text-muted">—</span>
+                                    <?php endif; ?>
+                                </td>
                                 <td><span class="badge border border-<?= $portalColor ?> text-<?= $portalColor ?> fw-normal"><?= esc(lang('Clergy.portalAccess.' . $portalAccess) !== 'Clergy.portalAccess.' . $portalAccess ? lang('Clergy.portalAccess.' . $portalAccess) : $portalAccess) ?></span></td>
                                 <td><?= esc($row['invitation_sent_at'] ?? '-') ?></td>
                                 <td><span class="badge border border-<?= $activeColor ?> text-<?= $activeColor ?> fw-normal"><?= (int) ($row['active'] ?? 0) === 1 ? lang('Clergy.statusActive') : lang('Clergy.statusDisabled') ?></span></td>
@@ -89,7 +169,7 @@
                         <?php endforeach; ?>
                     <?php else: ?>
                         <tr>
-                            <td colspan="6" class="text-center text-muted py-4"><?= lang('Clergy.noClergyFound') ?></td>
+                            <td colspan="9" class="text-center text-muted py-4"><?= lang('Clergy.noClergyFound') ?></td>
                         </tr>
                     <?php endif; ?>
                 </tbody>

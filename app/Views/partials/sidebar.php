@@ -243,6 +243,13 @@
                         </a>
                     </li>
                 <?php endif; ?>
+                <?php if (auth()->user()->inGroup('dioceseadmin') && auth()->user()->can('clergy.manage')): ?>
+                    <li class="nav-item">
+                        <a class="nav-link <?= str_starts_with(uri_string(), 'diocese/clergy') ? 'active' : '' ?>" href="<?= base_url('diocese/clergy') ?>">
+                            <i class="bi bi-person-vcard" aria-hidden="true"></i> <?= lang('Clergy.navClergy') ?>
+                        </a>
+                    </li>
+                <?php endif; ?>
                 <li class="nav-item">
                     <a class="nav-link <?= (str_starts_with(uri_string(), 'chart-accounts')) ? 'active' : '' ?>" href="<?= base_url('chart-accounts') ?>">
                         <i class="bi bi-diagram-3" aria-hidden="true"></i> <?= lang('App.navChartOfAccounts') ?>
