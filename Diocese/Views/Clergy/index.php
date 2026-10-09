@@ -143,7 +143,7 @@
                                 <td><span class="badge border border-<?= $activeColor ?> text-<?= $activeColor ?> fw-normal"><?= (int) ($row['active'] ?? 0) === 1 ? lang('Clergy.statusActive') : lang('Clergy.statusDisabled') ?></span></td>
                                 <td>
                                     <div class="dropdown">
-                                        <button class="btn btn-outline-secondary btn-sm" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="<?= esc(lang('App.colActions')) ?>">
+                                        <button class="btn btn-outline-secondary btn-sm" type="button" data-bs-toggle="dropdown" data-bs-strategy="fixed" aria-expanded="false" title="<?= esc(lang('App.colActions')) ?>">
                                             <i class="bi bi-three-dots-vertical" aria-hidden="true"></i>
                                         </button>
                                         <ul class="dropdown-menu dropdown-menu-end shadow-sm">

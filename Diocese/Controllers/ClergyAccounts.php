@@ -84,7 +84,7 @@ class ClergyAccounts extends BaseController
 
         $q = trim((string) $this->request->getGet('q'));
 
-        $builder = db_connect()->table('users u')
+        $base = fn () => db_connect()->table('users u')
             ->select('u.id, u.active, p.first_name, p.last_name, p.portal_access, i.secret AS email, i.invitation_sent_at')
             ->join('profile p', 'p.user_id = u.id', 'inner')
             ->join('auth_groups_users g', "g.user_id = u.id AND g.group = 'clergy'", 'inner')
@@ -93,6 +93,11 @@ class ClergyAccounts extends BaseController
             ->orderBy('p.last_name', 'ASC')
             ->orderBy('p.first_name', 'ASC');
 
+        // Overview cards always reflect the full diocesan roster, not the
+        // filtered view.
+        $statsRoster = $this->enrichRoster($base()->get()->getResultArray(), $dioceseId);
+
+        $builder = $base();
         if ($q !== '') {
             $builder->groupStart()
                 ->like('p.first_name', $q)
@@ -109,7 +114,7 @@ class ClergyAccounts extends BaseController
             [
                 'clergy' => $roster,
                 'q'      => $q,
-                'stats'  => $this->dashboardStats($roster, $dioceseId),
+                'stats'  => $this->dashboardStats($statsRoster, $dioceseId),
             ]
         ));
     }
