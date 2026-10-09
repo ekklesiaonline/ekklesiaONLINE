@@ -35,6 +35,166 @@ final class ClergyReviewService
         $this->positions = new LeadershipPositionService();
     }
 
+    /**
+     * The only reviewer-check bypass: installing a diocesan ordinary is limited to system admins.
+     */
+    public function installOrdinary(int $actorId, int $dioceseId, int $userId, ?string $ordainedOn,
+        string $officeStartedOn, string $evidenceReference): ?int
+    {
+        $evidenceReference = trim($evidenceReference);
+        $today = date('Y-m-d');
+        $profile = $this->db->table('profile')->where('user_id', $userId)
+            ->orderBy('id', 'DESC')->get()->getRowArray();
+        $candidate = [
+            'id' => 0,
+            'role_code' => 'diocesan_bishop',
+            'scope_type' => 'diocese',
+            'diocese_id' => $dioceseId,
+            'started_at' => $officeStartedOn,
+            'ended_at' => null,
+        ];
+
+        if ($actorId <= 0 || $actorId === $userId || $dioceseId <= 0 || $userId <= 0
+            || $this->db->table('auth_groups_users')->where('user_id', $actorId)
+                ->where('group', 'systemadmin')->countAllResults() === 0
+            || $this->db->table('diocese')->where('id', $dioceseId)->countAllResults() === 0
+            || $this->db->table('users')->where('id', $userId)->where('active', 1)->countAllResults() === 0
+            || $this->db->table('auth_groups_users')->where('user_id', $userId)
+                ->where('group', 'dioceseadmin')->countAllResults() === 0
+            || $profile === null || (int) ($profile['diocese_id'] ?? 0) !== $dioceseId
+            || ! $this->positions->hasPortalAccess($userId)
+            || $evidenceReference === '' || strlen($evidenceReference) > 255
+            || ! $this->validDate($officeStartedOn) || $officeStartedOn > $today
+            || ($ordainedOn !== null && ! $this->validDate($ordainedOn))
+            || $this->hasConflictingIncumbent($candidate)) {
+            return null;
+        }
+
+        $now = date('Y-m-d H:i:s');
+        $this->db->transBegin();
+        try {
+            if ($this->db->DBDriver === 'MySQLi') {
+                $this->db->query('SELECT id FROM ' . $this->db->protectIdentifiers('diocese')
+                    . ' WHERE id = ? FOR UPDATE', [$dioceseId]);
+            }
+            if ($this->hasConflictingIncumbent($candidate)) {
+                $this->db->transRollback();
+                return null;
+            }
+
+            $personId = (int) ($this->positions->resolvePersonIdForUser($userId) ?? 0);
+            if ($personId <= 0) {
+                $ok = $this->db->table('person')->insert([
+                    'first_name' => (string) ($profile['first_name'] ?? ''),
+                    'last_name' => (string) ($profile['last_name'] ?? ''),
+                    'created_at' => $now,
+                    'updated_at' => $now,
+                ]);
+                $personId = (int) $this->db->insertID();
+                if (! $ok || $personId <= 0) {
+                    throw new \RuntimeException('Failed to create person record');
+                }
+                if (! $this->db->table('user_person')->insert([
+                    'user_id' => $userId,
+                    'person_id' => $personId,
+                    'is_primary' => 1,
+                    'created_at' => $now,
+                    'updated_at' => $now,
+                ]) || ! $this->db->table('profile')->where('id', $profile['id'])
+                    ->update(['person_id' => $personId, 'updated_at' => $now])) {
+                    throw new \RuntimeException('Failed to link person record');
+                }
+            }
+
+            $verifiedBishopExists = $this->db->table('clergy_ordination')->where('person_id', $personId)
+                ->where('order_code', 'bishop')->where('verification_status', 'verified')
+                ->where('verified_at IS NOT NULL', null, false)->countAllResults() > 0;
+            if (! $verifiedBishopExists) {
+                if (! $this->db->table('clergy_ordination')->insert([
+                    'person_id' => $personId,
+                    'order_code' => 'bishop',
+                    'ordained_on' => $ordainedOn,
+                    'evidence_reference' => $evidenceReference,
+                    'verification_status' => 'verified',
+                    'verified_by_user_id' => $actorId,
+                    'verified_at' => $now,
+                    'created_at' => $now,
+                    'updated_at' => $now,
+                ])) {
+                    throw new \RuntimeException('Failed to record ordination');
+                }
+            }
+
+            if (! $this->authorization->hasCurrentStanding($personId, $dioceseId)
+                && ! $this->db->table('clergy_canonical_status')->insert([
+                    'person_id' => $personId,
+                    'diocese_id' => $dioceseId,
+                    'status_code' => 'licensed',
+                    'effective_from' => $officeStartedOn,
+                    'effective_to' => null,
+                    'evidence_reference' => $evidenceReference,
+                    'verified_by_user_id' => $actorId,
+                    'created_at' => $now,
+                    'updated_at' => $now,
+                ])) {
+                throw new \RuntimeException('Failed to record canonical standing');
+            }
+
+            if (! $this->db->table('leadership_position')->insert([
+                'user_id' => $userId,
+                'person_id' => $personId,
+                'scope_type' => 'diocese',
+                'diocese_id' => $dioceseId,
+                'title' => 'Diocesan Bishop',
+                'role_code' => 'diocesan_bishop',
+                'role_category' => 'clergy',
+                'clergy_order' => 'bishop',
+                'active' => 1,
+                'started_at' => $officeStartedOn,
+                'appointed_by_user_id' => $actorId,
+                'approved_by_user_id' => $actorId,
+                'approved_at' => $now,
+                'approval_evidence_reference' => $evidenceReference,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ])) {
+                throw new \RuntimeException('Failed to install ordinary office');
+            }
+            $positionId = (int) $this->db->insertID();
+            if ($positionId <= 0) {
+                throw new \RuntimeException('Failed to create ordinary office');
+            }
+
+            foreach (self::OFFICE_PERMISSIONS['diocesan_bishop'] as $permission) {
+                if (! $this->db->table('clergy_access_grant')->insert([
+                    'user_id' => $userId,
+                    'permission' => $permission,
+                    'scope_type' => 'diocese',
+                    'scope_id' => $dioceseId,
+                    'source_position_id' => $positionId,
+                    'grant_type' => 'office',
+                    'granted_by_user_id' => $actorId,
+                    'starts_at' => $now,
+                    'ends_at' => null,
+                    'created_at' => $now,
+                ])) {
+                    throw new \RuntimeException('Failed to create ordinary permission grant');
+                }
+                $this->provisionShieldPermission($userId, $permission, $positionId, $now);
+            }
+
+            if ($this->db->transStatus() === false) {
+                $this->db->transRollback();
+                return null;
+            }
+            $this->db->transCommit();
+            return $positionId;
+        } catch (\Throwable $e) {
+            $this->db->transRollback();
+            return null;
+        }
+    }
+
     public function verifyOrdination(int $personId, int $dioceseId, string $order, ?string $track,
         ?string $ordainedOn, string $evidenceReference, int $reviewerId): ?int
     {
