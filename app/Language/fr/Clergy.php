@@ -161,6 +161,19 @@ return [
     'reason.not_in_diocese' => 'Hors de ce diocèse',
     'reason.duplicate' => 'Doublon',
 
+    // Detail dossier
+    'detailOfficeHistory' => 'Historique des Fonctions',
+    'detailAppointments' => 'Nominations Licenciées',
+    'detailGrants' => 'Permissions Accordées',
+    'detailLicensedOn' => 'licencié le',
+    'noOffices' => 'Aucune fonction dans ce diocèse.',
+    'noAppointments' => 'Aucune nomination licenciée dans ce diocèse.',
+    'noGrants' => 'Aucune permission accordée.',
+    'officeStatus.active' => 'Actif',
+    'officeStatus.pending' => 'En attente d\'approbation',
+    'officeStatus.ended' => 'Terminé',
+    'officeStatus.revoked' => 'Révoqué',
+
     // Invitation Email
     'invitationSubject' => 'Invitation à un Compte de Clerc',
     'invitationGreeting' => 'Vous avez été invité à créer un compte de clerc.',

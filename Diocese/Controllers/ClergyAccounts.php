@@ -559,7 +559,7 @@ class ClergyAccounts extends BaseController
                 'clergy' => $clergy,
                 'identity' => db_connect()->table('auth_identities')
                     ->where('user_id', $id)->where('type', 'email_password')->get()->getRowArray(),
-                'canonical' => $this->canonicalSummary((int) ($clergy['person_id'] ?? 0), $dioceseId),
+                'canonical' => $this->canonicalSummary((int) ($clergy['person_id'] ?? 0), $dioceseId, (int) $clergy['id']),
             ]
         ));
     }
@@ -726,25 +726,72 @@ class ClergyAccounts extends BaseController
     }
 
     /**
-     * Read-only ordination + canonical standing summary for the detail view.
+     * Read-only canonical dossier for the detail view: ordination,
+     * standing, office history, licensed appointments and access grants,
+     * all restricted to the admin's diocese.
      *
-     * @return array{ordinations: array, standings: array}
+     * @return array{ordinations: array, standings: array, offices: array, appointments: array, grants: array}
      */
-    private function canonicalSummary(int $personId, int $dioceseId): array
+    private function canonicalSummary(int $personId, int $dioceseId, int $userId = 0): array
     {
-        if ($personId <= 0) {
-            return ['ordinations' => [], 'standings' => []];
+        if ($personId <= 0 && $userId <= 0) {
+            return ['ordinations' => [], 'standings' => [], 'offices' => [], 'appointments' => [], 'grants' => []];
         }
 
         $db = db_connect();
 
+        $ordinations = $personId > 0 ? $db->table('clergy_ordination')
+            ->where('person_id', $personId)
+            ->orderBy('ordained_on', 'ASC')->get()->getResultArray() : [];
+
+        $standings = $personId > 0 ? $db->table('clergy_canonical_status')
+            ->where('person_id', $personId)->where('diocese_id', $dioceseId)
+            ->orderBy('effective_from', 'DESC')->get()->getResultArray() : [];
+
+        // Full office history for the account, restricted to offices inside
+        // this diocese (same scope predicate as the roster).
+        $offices = $userId > 0 ? $db->table('leadership_position lp')
+            ->select('lp.*, c.name AS parish_name, dn.name AS deanery_name')
+            ->join('parish c', 'c.id = lp.parish_id', 'left')
+            ->join('deanery dn', 'dn.id = lp.deanery_id', 'left')
+            ->where('lp.user_id', $userId)
+            ->groupStart()
+                ->groupStart()->where('lp.scope_type', 'diocese')->where('lp.diocese_id', $dioceseId)->groupEnd()
+                ->orGroupStart()->where('lp.scope_type', 'parish')->where('c.diocese_id', $dioceseId)->groupEnd()
+                ->orGroupStart()->where('lp.scope_type', 'deanery')->where('dn.diocese_id', $dioceseId)->groupEnd()
+            ->groupEnd()
+            ->orderBy('lp.started_at', 'DESC')
+            ->get()->getResultArray() : [];
+
+        $appointments = $personId > 0 && $db->tableExists('clergy_appointment')
+            ? $db->table('clergy_appointment ca')
+                ->select('ca.*, c.name AS parish_name')
+                ->join('parish c', 'c.id = ca.parish_id', 'inner')
+                ->where('c.diocese_id', $dioceseId)
+                ->where('ca.person_id', $personId)
+                ->orderBy('ca.started_on', 'DESC')
+                ->get()->getResultArray() : [];
+
+        $grants = $userId > 0 && $db->tableExists('clergy_access_grant')
+            ? $db->table('clergy_access_grant g')
+                ->select('g.*, gpr.first_name AS grantor_first_name, gpr.last_name AS grantor_last_name')
+                ->join('profile gpr', 'gpr.user_id = g.granted_by_user_id', 'left')
+                ->where('g.user_id', $userId)
+                ->groupStart()
+                    ->groupStart()->where('g.scope_type', 'diocese')->where('g.scope_id', $dioceseId)->groupEnd()
+                    ->orGroupStart()->where('g.scope_type', 'parish')
+                        ->where('g.scope_id IN (SELECT id FROM parish WHERE diocese_id = ' . (int) $dioceseId . ')', null, false)
+                    ->groupEnd()
+                ->groupEnd()
+                ->orderBy('g.created_at', 'DESC')
+                ->get()->getResultArray() : [];
+
         return [
-            'ordinations' => $db->table('clergy_ordination')
-                ->where('person_id', $personId)
-                ->orderBy('ordained_on', 'ASC')->get()->getResultArray(),
-            'standings' => $db->table('clergy_canonical_status')
-                ->where('person_id', $personId)->where('diocese_id', $dioceseId)
-                ->orderBy('effective_from', 'DESC')->get()->getResultArray(),
+            'ordinations'  => $ordinations,
+            'standings'    => $standings,
+            'offices'      => $offices,
+            'appointments' => $appointments,
+            'grants'       => $grants,
         ];
     }
 }

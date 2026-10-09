@@ -161,6 +161,19 @@ return [
     'reason.not_in_diocese' => 'No pertenece a esta diócesis',
     'reason.duplicate' => 'Duplicado',
 
+    // Detail dossier
+    'detailOfficeHistory' => 'Historial de Oficios',
+    'detailAppointments' => 'Nombramientos Licenciados',
+    'detailGrants' => 'Permisos Otorgados',
+    'detailLicensedOn' => 'licenciado el',
+    'noOffices' => 'Sin oficios registrados en esta diócesis.',
+    'noAppointments' => 'Sin nombramientos licenciados en esta diócesis.',
+    'noGrants' => 'Sin permisos otorgados.',
+    'officeStatus.active' => 'Activo',
+    'officeStatus.pending' => 'Pendiente de aprobación',
+    'officeStatus.ended' => 'Finalizado',
+    'officeStatus.revoked' => 'Revocado',
+
     // Invitation Email
     'invitationSubject' => 'Invitación a Cuenta de Clero',
     'invitationGreeting' => 'Ha sido invitado a crear una cuenta de clero.',

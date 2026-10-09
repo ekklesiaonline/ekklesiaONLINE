@@ -62,9 +62,16 @@ $fullName = preg_replace('/\s+/', ' ', $fullName);
                 <?php if (!empty($canonical['ordinations'])): ?>
                     <ul class="list-group list-group-flush">
                         <?php foreach ($canonical['ordinations'] as $ordination): ?>
-                            <li class="list-group-item d-flex justify-content-between align-items-center px-0">
-                                <span><?= esc($ordination['order_code'] ?? '-') ?></span>
-                                <span class="text-muted small"><?= esc($ordination['ordained_on'] ?? '') ?> · <?= esc($ordination['verification_status'] ?? '') ?></span>
+                            <?php $ordColor = ($ordination['verification_status'] ?? '') === 'verified' ? 'primary' : 'secondary'; ?>
+                            <li class="list-group-item px-0">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <span><?= esc($ordination['order_code'] ?? '-') ?><?= trim((string) ($ordination['deacon_track'] ?? '')) !== '' ? ' · ' . esc($ordination['deacon_track']) : '' ?></span>
+                                    <span class="badge border border-<?= $ordColor ?> text-<?= $ordColor ?> fw-normal"><?= esc($ordination['verification_status'] ?? '') ?></span>
+                                </div>
+                                <small class="text-muted d-block">
+                                    <?= esc($ordination['ordained_on'] ?? '—') ?>
+                                    <?php if (trim((string) ($ordination['evidence_reference'] ?? '')) !== ''): ?> · <?= esc(lang('Clergy.fieldEvidenceReference')) ?>: <?= esc($ordination['evidence_reference']) ?><?php endif; ?>
+                                </small>
                             </li>
                         <?php endforeach; ?>
                     </ul>
@@ -80,9 +87,15 @@ $fullName = preg_replace('/\s+/', ' ', $fullName);
                 <?php if (!empty($canonical['standings'])): ?>
                     <ul class="list-group list-group-flush">
                         <?php foreach ($canonical['standings'] as $standing): ?>
-                            <li class="list-group-item d-flex justify-content-between align-items-center px-0">
-                                <span><?= esc($standing['status_code'] ?? '-') ?></span>
-                                <span class="text-muted small"><?= esc($standing['effective_from'] ?? '') ?></span>
+                            <?php $stCode = strtolower((string) ($standing['status_code'] ?? '')); $stColor = in_array($stCode, ['suspended', 'inhibited'], true) ? 'danger' : 'success'; ?>
+                            <li class="list-group-item px-0">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <span><?= esc($standing['status_code'] ?? '-') ?></span>
+                                    <span class="badge border border-<?= $stColor ?> text-<?= $stColor ?> fw-normal"><?= esc($standing['effective_from'] ?? '') ?><?= ($standing['effective_to'] ?? null) !== null ? ' – ' . esc($standing['effective_to']) : '' ?></span>
+                                </div>
+                                <?php if (trim((string) ($standing['evidence_reference'] ?? '')) !== ''): ?>
+                                    <small class="text-muted d-block"><?= esc(lang('Clergy.fieldEvidenceReference')) ?>: <?= esc($standing['evidence_reference']) ?></small>
+                                <?php endif; ?>
                             </li>
                         <?php endforeach; ?>
                     </ul>
@@ -90,6 +103,82 @@ $fullName = preg_replace('/\s+/', ' ', $fullName);
                     <p class="text-muted mb-0 small"><?= lang('Clergy.noStanding') ?></p>
                 <?php endif; ?>
                 <small class="text-muted d-block mt-2"><?= lang('Clergy.canonicalFieldsReadOnlyHelp') ?></small>
+            </div>
+        </div>
+
+        <div class="card mb-3">
+            <div class="card-body">
+                <h6 class="card-subtitle mb-3 text-muted"><?= lang('Clergy.detailOfficeHistory') ?></h6>
+                <?php if (!empty($canonical['offices'])): ?>
+                    <ul class="list-group list-group-flush">
+                        <?php foreach ($canonical['offices'] as $office): ?>
+                            <?php
+                            $officeStatus = ($office['revoked_at'] ?? null) !== null ? 'revoked'
+                                : (($office['approved_at'] ?? null) === null ? 'pending'
+                                : ((int) ($office['active'] ?? 0) === 1 ? 'active' : 'ended'));
+                            $officeColor = ['active' => 'success', 'pending' => 'warning', 'ended' => 'secondary', 'revoked' => 'danger'][$officeStatus];
+                            ?>
+                            <li class="list-group-item px-0">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <span><?= esc($office['title'] ?? '') ?><small class="text-muted"> — <?= esc($office['parish_name'] ?? $office['deanery_name'] ?? lang('Clergy.scope.' . ($office['scope_type'] ?? 'diocese'))) ?></small></span>
+                                    <span class="badge border border-<?= $officeColor ?> text-<?= $officeColor ?> fw-normal"><?= lang('Clergy.officeStatus.' . $officeStatus) ?></span>
+                                </div>
+                                <small class="text-muted d-block">
+                                    <?= esc($office['role_code'] ?? '') ?> · <?= esc($office['started_at'] ?? '—') ?> – <?= esc($office['ended_at'] ?? '—') ?>
+                                </small>
+                            </li>
+                        <?php endforeach; ?>
+                    </ul>
+                <?php else: ?>
+                    <p class="text-muted mb-0 small"><?= lang('Clergy.noOffices') ?></p>
+                <?php endif; ?>
+            </div>
+        </div>
+
+        <div class="card mb-3">
+            <div class="card-body">
+                <h6 class="card-subtitle mb-3 text-muted"><?= lang('Clergy.detailAppointments') ?></h6>
+                <?php if (!empty($canonical['appointments'])): ?>
+                    <ul class="list-group list-group-flush">
+                        <?php foreach ($canonical['appointments'] as $appt): ?>
+                            <li class="list-group-item px-0">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <span><?= esc($appt['parish_name'] ?? '') ?><small class="text-muted"> — <?= esc($appt['appointment_type'] ?? '') ?></small></span>
+                                    <span class="badge border border-secondary text-secondary fw-normal"><?= esc($appt['status'] ?? '') ?></span>
+                                </div>
+                                <small class="text-muted d-block">
+                                    <?= esc($appt['started_on'] ?? '—') ?> – <?= esc($appt['ended_on'] ?? '—') ?><?= trim((string) ($appt['licensed_on'] ?? '')) !== '' ? ' · ' . esc(lang('Clergy.detailLicensedOn')) . ' ' . esc($appt['licensed_on']) : '' ?>
+                                </small>
+                            </li>
+                        <?php endforeach; ?>
+                    </ul>
+                <?php else: ?>
+                    <p class="text-muted mb-0 small"><?= lang('Clergy.noAppointments') ?></p>
+                <?php endif; ?>
+            </div>
+        </div>
+
+        <div class="card mb-3">
+            <div class="card-body">
+                <h6 class="card-subtitle mb-3 text-muted"><?= lang('Clergy.detailGrants') ?></h6>
+                <?php if (!empty($canonical['grants'])): ?>
+                    <ul class="list-group list-group-flush">
+                        <?php foreach ($canonical['grants'] as $grant): ?>
+                            <?php $gColor = ($grant['revoked_at'] ?? null) !== null ? 'danger' : 'success'; ?>
+                            <li class="list-group-item px-0">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <span class="badge border border-secondary text-secondary fw-normal"><?= esc($grant['permission'] ?? '') ?></span>
+                                    <span class="badge border border-<?= $gColor ?> text-<?= $gColor ?> fw-normal"><?= ($grant['revoked_at'] ?? null) !== null ? lang('Clergy.officeStatus.revoked') : lang('Clergy.officeStatus.active') ?></span>
+                                </div>
+                                <small class="text-muted d-block">
+                                    <?= esc($grant['grant_type'] ?? '') ?> · <?= esc(lang('Clergy.colEnds')) ?> <?= esc($grant['ends_at'] ?? '—') ?><?php $gName = trim(($grant['grantor_first_name'] ?? '') . ' ' . ($grant['grantor_last_name'] ?? '')); if ($gName !== ''): ?> · <?= esc(lang('Clergy.colGrantedBy')) ?> <?= esc($gName) ?><?php endif; ?>
+                                </small>
+                            </li>
+                        <?php endforeach; ?>
+                    </ul>
+                <?php else: ?>
+                    <p class="text-muted mb-0 small"><?= lang('Clergy.noGrants') ?></p>
+                <?php endif; ?>
             </div>
         </div>
     </div>

@@ -165,6 +165,19 @@ return [
     'reason.not_in_diocese' => 'Not in this diocese',
     'reason.duplicate' => 'Duplicate',
 
+    // Detail dossier
+    'detailOfficeHistory' => 'Office History',
+    'detailAppointments' => 'Licensed Appointments',
+    'detailGrants' => 'Access Grants',
+    'detailLicensedOn' => 'licensed',
+    'noOffices' => 'No office records in this diocese.',
+    'noAppointments' => 'No licensed appointments in this diocese.',
+    'noGrants' => 'No access grants.',
+    'officeStatus.active' => 'Active',
+    'officeStatus.pending' => 'Pending approval',
+    'officeStatus.ended' => 'Ended',
+    'officeStatus.revoked' => 'Revoked',
+
     // Invitation Email
     'invitationSubject' => 'Clergy Account Invitation',
     'invitationGreeting' => 'You have been invited to create a clergy account.',
