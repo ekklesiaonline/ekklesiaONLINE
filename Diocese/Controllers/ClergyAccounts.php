@@ -115,6 +115,8 @@ class ClergyAccounts extends BaseController
                 'clergy' => $roster,
                 'q'      => $q,
                 'stats'  => $this->dashboardStats($statsRoster, $dioceseId),
+                'queues'     => $this->workQueues($dioceseId, $statsRoster),
+                'dioceseId'  => $dioceseId,
             ]
         ));
     }
@@ -205,6 +207,7 @@ class ClergyAccounts extends BaseController
         foreach ($clergy as &$row) {
             $uid = (int) $row['id'];
             $pid = $personIds[$uid] ?? 0;
+            $row['person_id']    = $pid;
             $row['positions']    = $positions[$uid] ?? [];
             $row['standing']     = $pid > 0 ? ($standings[$pid] ?? null) : null;
             $row['ordination']   = $pid > 0 ? ($ordination[$pid] ?? null) : null;
@@ -213,6 +216,119 @@ class ClergyAccounts extends BaseController
         unset($row);
 
         return $clergy;
+    }
+
+    /**
+     * Work queues rendered on the dashboard, each gated by the same
+     * permission as its ClergyReview action endpoints. All lists are
+     * resolved against the admin's diocese server-side.
+     *
+     * @param array<int, array<string, mixed>> $statsRoster enriched full roster
+     * @return array<string, mixed>
+     */
+    private function workQueues(int $dioceseId, array $statsRoster): array
+    {
+        $user = auth()->user();
+        $db   = db_connect();
+        $now  = date('Y-m-d');
+
+        $queues = [
+            'can_appointments' => $user->can('clergy.appointment.manage'),
+            'can_ordination'   => $user->can('clergy.ordination.verify'),
+            'can_governance'   => $user->can('governance.diocese.approve'),
+        ];
+
+        if ($queues['can_appointments'] && $db->tableExists('clergy_appointment_request')) {
+            $queues['appointment_requests'] = $db->table('clergy_appointment_request r')
+                ->select('r.id, r.proposed_office, r.created_at, p.first_name, p.last_name, pa.name AS parish_name')
+                ->join('person p', 'p.id = r.person_id', 'left')
+                ->join('parish pa', 'pa.id = r.parish_id', 'left')
+                ->where('r.diocese_id', $dioceseId)
+                ->where('r.review_status', 'pending')
+                ->orderBy('r.id', 'ASC')
+                ->get()->getResultArray();
+
+            // Offices recorded but not yet approved, inside this diocese.
+            $queues['pending_offices'] = $db->table('leadership_position lp')
+                ->select('lp.id, lp.title, lp.role_code, lp.scope_type, lp.started_at,
+                    pr.first_name, pr.last_name, c.name AS parish_name, dn.name AS deanery_name')
+                ->join('profile pr', 'pr.user_id = lp.user_id', 'left')
+                ->join('parish c', 'c.id = lp.parish_id', 'left')
+                ->join('deanery dn', 'dn.id = lp.deanery_id', 'left')
+                ->where('lp.active', 1)
+                ->where('lp.approved_at IS NULL', null, false)
+                ->where('lp.revoked_at IS NULL', null, false)
+                ->groupStart()
+                    ->groupStart()->where('lp.scope_type', 'diocese')->where('lp.diocese_id', $dioceseId)->groupEnd()
+                    ->orGroupStart()->where('lp.scope_type', 'parish')->where('c.diocese_id', $dioceseId)->groupEnd()
+                    ->orGroupStart()->where('lp.scope_type', 'deanery')->where('dn.diocese_id', $dioceseId)->groupEnd()
+                ->groupEnd()
+                ->orderBy('lp.id', 'ASC')
+                ->get()->getResultArray();
+        }
+
+        if ($queues['can_ordination'] && $db->tableExists('clergy_transition_candidate')) {
+            // Same jurisdiction predicate as ClergyReview::candidates.
+            $queues['candidates'] = $db->table('clergy_transition_candidate tc')
+                ->distinct()
+                ->select('tc.id, tc.source_type, tc.user_id, tc.person_id, tc.proposed_order, tc.proposed_office, tc.scope_type, tc.scope_id,
+                    pr.first_name, pr.last_name, pn.first_name AS person_first_name, pn.last_name AS person_last_name, pa.name AS parish_name')
+                ->join('parish p', "tc.scope_type = 'parish' AND p.id = tc.scope_id", 'left')
+                ->join('profile pr', 'pr.user_id = tc.user_id', 'left')
+                ->join('parish pp', 'pp.id = pr.parish_id', 'left')
+                ->join('person pn', 'pn.id = tc.person_id', 'left')
+                ->join('parish pa', 'pa.id = tc.scope_id', 'left')
+                ->where('tc.review_status', 'pending')
+                ->groupStart()
+                    ->groupStart()->where('tc.scope_type', 'diocese')->where('tc.scope_id', $dioceseId)->groupEnd()
+                    ->orGroupStart()->where('tc.scope_type', 'parish')->where('p.diocese_id', $dioceseId)->groupEnd()
+                    ->orGroupStart()->where('tc.scope_type', null)
+                        ->groupStart()->where('pr.diocese_id', $dioceseId)->orWhere('pp.diocese_id', $dioceseId)->groupEnd()
+                    ->groupEnd()
+                ->groupEnd()
+                ->orderBy('tc.id', 'ASC')
+                ->get()->getResultArray();
+
+            // Clergy on the register whose ordination is missing or unverified.
+            $queues['unverified_ordinations'] = [];
+            foreach ($statsRoster as $row) {
+                $ordination = $row['ordination'] ?? null;
+                if ((int) ($row['person_id'] ?? 0) > 0
+                    && ($ordination === null || ($ordination['verification_status'] ?? '') !== 'verified')) {
+                    $queues['unverified_ordinations'][] = [
+                        'person_id'  => (int) $row['person_id'],
+                        'name'       => trim((string) ($row['first_name'] ?? '') . ' ' . (string) ($row['last_name'] ?? '')),
+                        'order_code' => $ordination['order_code'] ?? null,
+                    ];
+                }
+            }
+        }
+
+        if ($queues['can_governance'] && $db->tableExists('clergy_access_grant')) {
+            $queues['delegations'] = $db->table('clergy_access_grant g')
+                ->select('g.id, g.permission, g.ends_at, pr.first_name, pr.last_name, gpr.first_name AS grantor_first_name, gpr.last_name AS grantor_last_name')
+                ->join('profile pr', 'pr.user_id = g.user_id', 'inner')
+                ->join('profile gpr', 'gpr.user_id = g.granted_by_user_id', 'left')
+                ->where('g.grant_type', 'delegation')
+                ->where('g.scope_type', 'diocese')
+                ->where('g.scope_id', $dioceseId)
+                ->where('g.revoked_at IS NULL', null, false)
+                ->groupStart()->where('g.ends_at IS NULL', null, false)->orWhere('g.ends_at >=', $now)->groupEnd()
+                ->orderBy('g.ends_at', 'ASC')
+                ->get()->getResultArray();
+
+            // Delegation targets: active accounts belonging to this diocese.
+            $queues['delegation_targets'] = $db->table('users u')
+                ->select('u.id, p.first_name, p.last_name')
+                ->join('profile p', 'p.user_id = u.id', 'inner')
+                ->where('u.active', 1)
+                ->where('p.diocese_id', $dioceseId)
+                ->orderBy('p.last_name', 'ASC')
+                ->orderBy('p.first_name', 'ASC')
+                ->get()->getResultArray();
+        }
+
+        return $queues;
     }
 
     /**
