@@ -69,7 +69,7 @@ $queueName = static function (array $row): string {
             <div class="card-body">
                 <div class="table-responsive">
                     <table class="table table-hover align-middle mb-0">
-                        <thead><tr><th><?= lang('Clergy.colPerson') ?></th><th><?= lang('Clergy.colParish') ?></th><th><?= lang('Clergy.colProposedOffice') ?></th><th><?= lang('App.colActions') ?></th></tr></thead>
+                        <thead><tr><th scope="col"><?= lang('Clergy.colPerson') ?></th><th scope="col"><?= lang('Clergy.colParish') ?></th><th scope="col"><?= lang('Clergy.colProposedOffice') ?></th><th scope="col"><?= lang('App.colActions') ?></th></tr></thead>
                         <tbody>
                         <?php foreach (($queues['appointment_requests'] ?? []) as $req): ?>
                             <tr>
@@ -104,7 +104,7 @@ $queueName = static function (array $row): string {
             <div class="card-body">
                 <div class="table-responsive">
                     <table class="table table-hover align-middle mb-0">
-                        <thead><tr><th><?= lang('Clergy.colPerson') ?></th><th><?= lang('Clergy.colOfficeTitle') ?></th><th><?= lang('Clergy.colScope') ?></th><th><?= lang('App.colActions') ?></th></tr></thead>
+                        <thead><tr><th scope="col"><?= lang('Clergy.colPerson') ?></th><th scope="col"><?= lang('Clergy.colOfficeTitle') ?></th><th scope="col"><?= lang('Clergy.colScope') ?></th><th scope="col"><?= lang('App.colActions') ?></th></tr></thead>
                         <tbody>
                         <?php foreach (($queues['pending_offices'] ?? []) as $office): ?>
                             <tr>
@@ -141,7 +141,7 @@ $queueName = static function (array $row): string {
             <div class="card-body">
                 <div class="table-responsive">
                     <table class="table table-hover align-middle mb-0">
-                        <thead><tr><th><?= lang('Clergy.colPerson') ?></th><th><?= lang('Clergy.colProposed') ?></th><th><?= lang('Clergy.colSource') ?></th><th><?= lang('App.colActions') ?></th></tr></thead>
+                        <thead><tr><th scope="col"><?= lang('Clergy.colPerson') ?></th><th scope="col"><?= lang('Clergy.colProposed') ?></th><th scope="col"><?= lang('Clergy.colSource') ?></th><th scope="col"><?= lang('App.colActions') ?></th></tr></thead>
                         <tbody>
                         <?php foreach (($queues['candidates'] ?? []) as $cand): ?>
                             <tr>
@@ -176,7 +176,7 @@ $queueName = static function (array $row): string {
             <div class="card-body">
                 <div class="table-responsive">
                     <table class="table table-hover align-middle mb-0">
-                        <thead><tr><th><?= lang('Clergy.colPerson') ?></th><th><?= lang('Clergy.colOrder') ?></th><th><?= lang('App.colActions') ?></th></tr></thead>
+                        <thead><tr><th scope="col"><?= lang('Clergy.colPerson') ?></th><th scope="col"><?= lang('Clergy.colOrder') ?></th><th scope="col"><?= lang('App.colActions') ?></th></tr></thead>
                         <tbody>
                         <?php foreach (($queues['unverified_ordinations'] ?? []) as $ord): ?>
                             <tr>
@@ -215,7 +215,7 @@ $queueName = static function (array $row): string {
             <div class="card-body">
                 <div class="table-responsive">
                     <table class="table table-hover align-middle mb-0">
-                        <thead><tr><th><?= lang('Clergy.colPerson') ?></th><th><?= lang('Clergy.colPermission') ?></th><th><?= lang('Clergy.colEnds') ?></th><th><?= lang('Clergy.colGrantedBy') ?></th><th><?= lang('App.colActions') ?></th></tr></thead>
+                        <thead><tr><th scope="col"><?= lang('Clergy.colPerson') ?></th><th scope="col"><?= lang('Clergy.colPermission') ?></th><th scope="col"><?= lang('Clergy.colEnds') ?></th><th scope="col"><?= lang('Clergy.colGrantedBy') ?></th><th scope="col"><?= lang('App.colActions') ?></th></tr></thead>
                         <tbody>
                         <?php foreach (($queues['delegations'] ?? []) as $grant): ?>
                             <tr>
