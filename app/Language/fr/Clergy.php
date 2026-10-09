@@ -173,6 +173,12 @@ return [
     'officeStatus.pending' => 'En attente d\'approbation',
     'officeStatus.ended' => 'Terminé',
     'officeStatus.revoked' => 'Révoqué',
+    'officeStatus.upcoming' => 'À venir',
+    'grantStatus.active' => 'Actif',
+    'grantStatus.scheduled' => 'Planifié',
+    'grantStatus.expired' => 'Expiré',
+    'grantStatus.revoked' => 'Révoqué',
+    'processing' => 'Traitement...',
 
     // Invitation Email
     'invitationSubject' => 'Invitation à un Compte de Clerc',

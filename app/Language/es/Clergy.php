@@ -173,6 +173,12 @@ return [
     'officeStatus.pending' => 'Pendiente de aprobación',
     'officeStatus.ended' => 'Finalizado',
     'officeStatus.revoked' => 'Revocado',
+    'officeStatus.upcoming' => 'Próximo',
+    'grantStatus.active' => 'Activo',
+    'grantStatus.scheduled' => 'Programado',
+    'grantStatus.expired' => 'Vencido',
+    'grantStatus.revoked' => 'Revocado',
+    'processing' => 'Procesando...',
 
     // Invitation Email
     'invitationSubject' => 'Invitación a Cuenta de Clero',

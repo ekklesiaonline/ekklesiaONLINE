@@ -5,6 +5,7 @@ namespace Diocese\Controllers;
 use App\Controllers\BaseController;
 use App\Services\AccountCreationService;
 use App\Services\ClergyInvitationService;
+use App\Services\ClergyReviewService;
 
 /**
  * ClergyAccounts — diocesan clergy account management.
@@ -196,6 +197,7 @@ class ClergyAccounts extends BaseController
                 ->select('ca.person_id, ca.appointment_type, ca.status, ca.licensed_on, c.name AS parish_name')
                 ->join('parish c', 'c.id = ca.parish_id', 'inner')
                 ->where('c.diocese_id', $dioceseId)
+                ->where('ca.licensed_on IS NOT NULL', null, false)
                 ->whereIn('ca.person_id', $personIdList)
                 ->orderBy('ca.started_on', 'DESC')
                 ->get()->getResultArray();
@@ -259,10 +261,7 @@ class ClergyAccounts extends BaseController
                 ->join('parish c', 'c.id = lp.parish_id', 'left')
                 ->join('deanery dn', 'dn.id = lp.deanery_id', 'left')
                 ->where('lp.active', 1)
-                ->whereIn('lp.role_code', [
-                    'diocesan_bishop', 'rector', 'priest_in_charge', 'interim_rector',
-                    'vicar', 'cathedral_dean', 'regional_dean', 'deanery_dean',
-                ])
+                ->whereIn('lp.role_code', array_keys(ClergyReviewService::OFFICE_PERMISSIONS))
                 ->where('lp.approved_at IS NULL', null, false)
                 ->where('lp.revoked_at IS NULL', null, false)
                 ->groupStart()
@@ -769,6 +768,7 @@ class ClergyAccounts extends BaseController
                 ->join('parish c', 'c.id = ca.parish_id', 'inner')
                 ->where('c.diocese_id', $dioceseId)
                 ->where('ca.person_id', $personId)
+                ->where('ca.licensed_on IS NOT NULL', null, false)
                 ->orderBy('ca.started_on', 'DESC')
                 ->get()->getResultArray() : [];
 

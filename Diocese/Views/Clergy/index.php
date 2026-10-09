@@ -550,6 +550,7 @@ $queueName = static function (array $row): string {
     const rejectLabel = <?= json_encode(lang('Clergy.actionReject')) ?>;
     const approveTitle = <?= json_encode(lang('Clergy.modalApproveTitle')) ?>;
     const rejectTitle = <?= json_encode(lang('Clergy.modalRejectTitle')) ?>;
+    const processingLabel = <?= json_encode(lang('Clergy.processing')) ?>;
 
     document.querySelectorAll('.queue-action[data-modal]').forEach(function (btn) {
         btn.addEventListener('click', function () {
@@ -587,7 +588,7 @@ $queueName = static function (array $row): string {
             const originalLabel = submit ? (submit.tagName === 'BUTTON' ? submit.innerHTML : submit.value) : null;
             if (submit) {
                 submit.disabled = true;
-                if (submit.tagName === 'BUTTON') submit.innerHTML = 'Processing...';
+                if (submit.tagName === 'BUTTON') submit.innerHTML = processingLabel;
             }
             const restore = function () {
                 if (submit) {

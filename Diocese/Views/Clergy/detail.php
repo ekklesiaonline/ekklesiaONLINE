@@ -113,10 +113,13 @@ $fullName = preg_replace('/\s+/', ' ', $fullName);
                     <ul class="list-group list-group-flush">
                         <?php foreach ($canonical['offices'] as $office): ?>
                             <?php
+                            $today = date('Y-m-d');
                             $officeStatus = ($office['revoked_at'] ?? null) !== null ? 'revoked'
                                 : (($office['approved_at'] ?? null) === null ? 'pending'
-                                : ((int) ($office['active'] ?? 0) === 1 ? 'active' : 'ended'));
-                            $officeColor = ['active' => 'success', 'pending' => 'warning', 'ended' => 'secondary', 'revoked' => 'danger'][$officeStatus];
+                                : (((int) ($office['active'] ?? 0) !== 1
+                                    || (($office['ended_at'] ?? null) !== null && $office['ended_at'] < $today)) ? 'ended'
+                                : ((($office['started_at'] ?? null) !== null && $office['started_at'] > $today) ? 'upcoming' : 'active')));
+                            $officeColor = ['active' => 'success', 'pending' => 'warning', 'upcoming' => 'info', 'ended' => 'secondary', 'revoked' => 'danger'][$officeStatus];
                             ?>
                             <li class="list-group-item px-0">
                                 <div class="d-flex justify-content-between align-items-center">
@@ -164,11 +167,17 @@ $fullName = preg_replace('/\s+/', ' ', $fullName);
                 <?php if (!empty($canonical['grants'])): ?>
                     <ul class="list-group list-group-flush">
                         <?php foreach ($canonical['grants'] as $grant): ?>
-                            <?php $gColor = ($grant['revoked_at'] ?? null) !== null ? 'danger' : 'success'; ?>
+                            <?php
+                            $now = date('Y-m-d H:i:s');
+                            $grantStatus = ($grant['revoked_at'] ?? null) !== null ? 'revoked'
+                                : ((($grant['starts_at'] ?? null) !== null && $grant['starts_at'] > $now) ? 'scheduled'
+                                : ((($grant['ends_at'] ?? null) !== null && $grant['ends_at'] < $now) ? 'expired' : 'active'));
+                            $gColor = ['active' => 'success', 'scheduled' => 'info', 'expired' => 'secondary', 'revoked' => 'danger'][$grantStatus];
+                            ?>
                             <li class="list-group-item px-0">
                                 <div class="d-flex justify-content-between align-items-center">
                                     <span class="badge border border-secondary text-secondary fw-normal"><?= esc($grant['permission'] ?? '') ?></span>
-                                    <span class="badge border border-<?= $gColor ?> text-<?= $gColor ?> fw-normal"><?= ($grant['revoked_at'] ?? null) !== null ? lang('Clergy.officeStatus.revoked') : lang('Clergy.officeStatus.active') ?></span>
+                                    <span class="badge border border-<?= $gColor ?> text-<?= $gColor ?> fw-normal"><?= lang('Clergy.grantStatus.' . $grantStatus) ?></span>
                                 </div>
                                 <small class="text-muted d-block">
                                     <?= esc($grant['grant_type'] ?? '') ?> · <?= esc(lang('Clergy.colEnds')) ?> <?= esc($grant['ends_at'] ?? '—') ?><?php $gName = trim(($grant['grantor_first_name'] ?? '') . ' ' . ($grant['grantor_last_name'] ?? '')); if ($gName !== ''): ?> · <?= esc(lang('Clergy.colGrantedBy')) ?> <?= esc($gName) ?><?php endif; ?>

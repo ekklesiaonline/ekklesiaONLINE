@@ -177,6 +177,12 @@ return [
     'officeStatus.pending' => 'Pending approval',
     'officeStatus.ended' => 'Ended',
     'officeStatus.revoked' => 'Revoked',
+    'officeStatus.upcoming' => 'Upcoming',
+    'grantStatus.active' => 'Active',
+    'grantStatus.scheduled' => 'Scheduled',
+    'grantStatus.expired' => 'Expired',
+    'grantStatus.revoked' => 'Revoked',
+    'processing' => 'Processing...',
 
     // Invitation Email
     'invitationSubject' => 'Clergy Account Invitation',
