@@ -143,13 +143,26 @@ class ClergyAccounts extends BaseController
             }
         }
 
+        $now = date('Y-m-d');
+
+        // Only offices inside this diocese and currently in force:
+        // approved, started, and not yet ended.
         $positions = [];
         foreach ($db->table('leadership_position lp')
             ->select('lp.user_id, lp.title, lp.scope_type, lp.pastoral_in_charge, c.name AS parish_name, dn.name AS deanery_name')
             ->join('parish c', 'c.id = lp.parish_id', 'left')
             ->join('deanery dn', 'dn.id = lp.deanery_id', 'left')
             ->where('lp.active', 1)
+            ->where('lp.approved_at IS NOT NULL', null, false)
+            ->where('lp.revoked_at IS NULL', null, false)
+            ->groupStart()->where('lp.started_at IS NULL', null, false)->orWhere('lp.started_at <=', $now)->groupEnd()
+            ->groupStart()->where('lp.ended_at IS NULL', null, false)->orWhere('lp.ended_at >=', $now)->groupEnd()
             ->whereIn('lp.user_id', $userIds)
+            ->groupStart()
+                ->groupStart()->where('lp.scope_type', 'diocese')->where('lp.diocese_id', $dioceseId)->groupEnd()
+                ->orGroupStart()->where('lp.scope_type', 'parish')->where('c.diocese_id', $dioceseId)->groupEnd()
+                ->orGroupStart()->where('lp.scope_type', 'deanery')->where('dn.diocese_id', $dioceseId)->groupEnd()
+            ->groupEnd()
             ->orderBy('lp.scope_type', 'ASC')
             ->orderBy('lp.title', 'ASC')
             ->get()->getResultArray() as $pos) {
@@ -179,7 +192,8 @@ class ClergyAccounts extends BaseController
         if ($personIdList !== [] && $db->tableExists('clergy_appointment')) {
             $rows = $db->table('clergy_appointment ca')
                 ->select('ca.person_id, ca.appointment_type, ca.status, ca.licensed_on, c.name AS parish_name')
-                ->join('parish c', 'c.id = ca.parish_id', 'left')
+                ->join('parish c', 'c.id = ca.parish_id', 'inner')
+                ->where('c.diocese_id', $dioceseId)
                 ->whereIn('ca.person_id', $personIdList)
                 ->orderBy('ca.started_on', 'DESC')
                 ->get()->getResultArray();
@@ -216,7 +230,14 @@ class ClergyAccounts extends BaseController
             if ((int) ($row['active'] ?? 0) === 1) {
                 $active++;
             }
-            if (($row['positions'] ?? []) === []) {
+            $hasParishOffice = false;
+            foreach (($row['positions'] ?? []) as $pos) {
+                if (($pos['scope_type'] ?? '') === 'parish') {
+                    $hasParishOffice = true;
+                    break;
+                }
+            }
+            if (! $hasParishOffice) {
                 $awaiting++;
             }
             if (($row['portal_access'] ?? '') === 'invited') {
@@ -232,15 +253,25 @@ class ClergyAccounts extends BaseController
                 ->countAllResults();
         }
 
+        // Same jurisdiction predicate as ClergyReview::candidates: diocese and
+        // parish scopes resolve directly; legacy group candidates resolve
+        // through the candidate's profile diocese or profile parish.
         $pendingCandidates = 0;
         if ($db->tableExists('clergy_transition_candidate')) {
             $pendingCandidates = (int) $db->table('clergy_transition_candidate tc')
-                ->join('parish c', "c.id = tc.scope_id AND tc.scope_type = 'parish'", 'left')
-                ->groupStart()
-                    ->where("(tc.scope_type = 'diocese' AND tc.scope_id = {$dioceseId})", null, false)
-                    ->orWhere("(tc.scope_type = 'parish' AND c.diocese_id = {$dioceseId})", null, false)
-                ->groupEnd()
+                ->distinct()
+                ->select('tc.id')
+                ->join('parish p', "tc.scope_type = 'parish' AND p.id = tc.scope_id", 'left')
+                ->join('profile pr', 'pr.user_id = tc.user_id', 'left')
+                ->join('parish pp', 'pp.id = pr.parish_id', 'left')
                 ->where('tc.review_status', 'pending')
+                ->groupStart()
+                    ->groupStart()->where('tc.scope_type', 'diocese')->where('tc.scope_id', $dioceseId)->groupEnd()
+                    ->orGroupStart()->where('tc.scope_type', 'parish')->where('p.diocese_id', $dioceseId)->groupEnd()
+                    ->orGroupStart()->where('tc.scope_type', null)
+                        ->groupStart()->where('pr.diocese_id', $dioceseId)->orWhere('pp.diocese_id', $dioceseId)->groupEnd()
+                    ->groupEnd()
+                ->groupEnd()
                 ->countAllResults();
         }
 
