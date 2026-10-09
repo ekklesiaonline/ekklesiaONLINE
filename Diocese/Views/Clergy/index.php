@@ -23,14 +23,18 @@
     </div>
     <div class="col-6 col-md-4 col-xl-2">
         <div class="card h-100"><div class="card-body py-3">
+            <?php if ($queues['can_appointments'] ?? false): ?><a href="#queue-appointment-requests" class="text-decoration-none text-body"><?php endif; ?>
             <div class="text-muted small"><?= lang('Clergy.cardPendingRequests') ?></div>
             <div class="fs-4"><?= (int) $stats['pending_requests'] ?></div>
+            <?php if ($queues['can_appointments'] ?? false): ?></a><?php endif; ?>
         </div></div>
     </div>
     <div class="col-6 col-md-4 col-xl-2">
         <div class="card h-100"><div class="card-body py-3">
+            <?php if ($queues['can_ordination'] ?? false): ?><a href="#queue-candidates" class="text-decoration-none text-body"><?php endif; ?>
             <div class="text-muted small"><?= lang('Clergy.cardPendingCandidates') ?></div>
             <div class="fs-4"><?= (int) $stats['pending_candidates'] ?></div>
+            <?php if ($queues['can_ordination'] ?? false): ?></a><?php endif; ?>
         </div></div>
     </div>
     <div class="col-6 col-md-4 col-xl-2">
@@ -64,7 +68,7 @@ $queueName = static function (array $row): string {
 
 <?php if ($queues['can_appointments'] ?? false): ?>
     <div class="col-12">
-        <div class="card">
+        <div class="card" id="queue-appointment-requests">
             <div class="card-header"><?= lang('Clergy.queueAppointmentRequests') ?> <span class="badge border border-primary text-primary fw-normal"><?= count($queues['appointment_requests'] ?? []) ?></span></div>
             <div class="card-body">
                 <div class="table-responsive">
@@ -99,7 +103,7 @@ $queueName = static function (array $row): string {
     </div>
 
     <div class="col-12">
-        <div class="card">
+        <div class="card" id="queue-pending-offices">
             <div class="card-header"><?= lang('Clergy.queuePendingOffices') ?> <span class="badge border border-primary text-primary fw-normal"><?= count($queues['pending_offices'] ?? []) ?></span></div>
             <div class="card-body">
                 <div class="table-responsive">
@@ -136,7 +140,7 @@ $queueName = static function (array $row): string {
 
 <?php if ($queues['can_ordination'] ?? false): ?>
     <div class="col-12">
-        <div class="card">
+        <div class="card" id="queue-candidates">
             <div class="card-header"><?= lang('Clergy.queueCandidates') ?> <span class="badge border border-primary text-primary fw-normal"><?= count($queues['candidates'] ?? []) ?></span></div>
             <div class="card-body">
                 <div class="table-responsive">
@@ -171,7 +175,7 @@ $queueName = static function (array $row): string {
     </div>
 
     <div class="col-12">
-        <div class="card">
+        <div class="card" id="queue-unverified-ordinations">
             <div class="card-header"><?= lang('Clergy.queueUnverifiedOrdinations') ?> <span class="badge border border-primary text-primary fw-normal"><?= count($queues['unverified_ordinations'] ?? []) ?></span></div>
             <div class="card-body">
                 <div class="table-responsive">
@@ -205,7 +209,7 @@ $queueName = static function (array $row): string {
 
 <?php if ($queues['can_governance'] ?? false): ?>
     <div class="col-12">
-        <div class="card">
+        <div class="card" id="queue-delegations">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <span><?= lang('Clergy.queueDelegations') ?> <span class="badge border border-primary text-primary fw-normal"><?= count($queues['delegations'] ?? []) ?></span></span>
                 <button type="button" class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#delegationIssueModal">

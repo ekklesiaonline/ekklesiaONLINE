@@ -380,12 +380,16 @@ class ClergyAccounts extends BaseController
         // through the candidate's profile diocese or profile parish.
         $pendingCandidates = 0;
         if ($db->tableExists('clergy_transition_candidate')) {
-            $pendingCandidates = (int) $db->table('clergy_transition_candidate tc')
-                ->distinct()
-                ->select('tc.id')
+            // countAllResults() would reset the select and count joined rows, so
+            // count distinct candidate ids instead — mirrors the candidates
+            // work-queue query in workQueues().
+            $pendingCandidates = (int) ($db->table('clergy_transition_candidate tc')
+                ->select('COUNT(DISTINCT tc.id) AS cnt', false)
                 ->join('parish p', "tc.scope_type = 'parish' AND p.id = tc.scope_id", 'left')
                 ->join('profile pr', 'pr.user_id = tc.user_id', 'left')
                 ->join('parish pp', 'pp.id = pr.parish_id', 'left')
+                ->join('person pn', 'pn.id = tc.person_id', 'left')
+                ->join('parish pa', 'pa.id = tc.scope_id', 'left')
                 ->where('tc.review_status', 'pending')
                 ->groupStart()
                     ->groupStart()->where('tc.scope_type', 'diocese')->where('tc.scope_id', $dioceseId)->groupEnd()
@@ -394,7 +398,7 @@ class ClergyAccounts extends BaseController
                         ->groupStart()->where('pr.diocese_id', $dioceseId)->orWhere('pp.diocese_id', $dioceseId)->groupEnd()
                     ->groupEnd()
                 ->groupEnd()
-                ->countAllResults();
+                ->get()->getRow()->cnt ?? 0);
         }
 
         $expiringGrants = 0;
