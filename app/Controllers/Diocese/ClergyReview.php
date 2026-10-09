@@ -202,7 +202,7 @@ class ClergyReview extends BaseController
         if ($this->requirePermission('clergy.appointment.manage')) {
             return $this->jsonResponse($this->apiErrorPayload('Forbidden', 403, 'FORBIDDEN'), 403);
         }
-        if (! service('validation')->run(['position_id' => $positionId], ['position_id' => 'required|is_natural_no_zero'])) {
+        if (! service('validation')->setRules(['position_id' => 'required|is_natural_no_zero'])->run(['position_id' => $positionId])) {
             return $this->jsonResponse($this->apiErrorPayload('Invalid office ID.', 422, 'VALIDATION_FAILED'), 422);
         }
         if (! (new ClergyReviewService())->revokeOffice($positionId, (int) auth()->id())) {
@@ -319,7 +319,7 @@ class ClergyReview extends BaseController
             return $this->jsonResponse($this->apiErrorPayload('Forbidden', 403, 'FORBIDDEN'), 403);
         }
         $validation = service('validation');
-        if (! $validation->run(['grant_id' => $grantId], ['grant_id' => 'required|is_natural_no_zero'])) {
+        if (! $validation->setRules(['grant_id' => 'required|is_natural_no_zero'])->run(['grant_id' => $grantId])) {
             return $this->jsonResponse($this->apiErrorPayload('Invalid delegation ID.', 422, 'VALIDATION_FAILED', $validation->getErrors()), 422);
         }
         if (! (new ClergyReviewService())->revokeDelegation($grantId, (int) auth()->id())) {

@@ -15,7 +15,7 @@ final class ClergyReviewService
     private ClergyAuthorizationService $authorization;
     private LeadershipPositionService $positions;
 
-    private const OFFICE_PERMISSIONS = [
+    public const OFFICE_PERMISSIONS = [
         'diocesan_bishop' => [
             'governance.diocese.approve', 'clergy.appointment.manage', 'clergy.ordination.verify',
         ],
