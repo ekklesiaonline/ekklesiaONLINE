@@ -215,7 +215,7 @@ return [
     'diocesanOrdinaryNotEffectiveHint' => 'Este ordinario ya no tiene autoridad vigente. Termine el cargo para instalar a un sucesor.',
     'diocesanOrdinaryEndOffice' => 'Terminar cargo',
     'diocesanOrdinaryEndOfficeTitle' => 'Terminar el cargo de ordinario diocesano',
-    'diocesanOrdinaryEndOfficeWarning' => 'El cargo terminará y se revocarán sus permisos. La ordenación y el historial se conservan.',
+    'diocesanOrdinaryEndOfficeWarning' => 'El cargo terminará y se revocarán sus permisos y las delegaciones que este obispo emitió en la diócesis. La ordenación y el historial se conservan.',
     'diocesanOrdinaryEndOn' => 'Fecha de finalización del cargo',
     'diocesanOrdinaryEndReason' => 'Motivo para terminar el cargo',
     'diocesanOrdinaryEnded' => 'El cargo de ordinario diocesano terminó correctamente.',

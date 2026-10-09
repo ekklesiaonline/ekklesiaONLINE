@@ -219,7 +219,7 @@ return [
     'diocesanOrdinaryNotEffectiveHint' => 'This Ordinary no longer holds effective authority. End the office to install a successor.',
     'diocesanOrdinaryEndOffice' => 'End office',
     'diocesanOrdinaryEndOfficeTitle' => 'End Diocesan Ordinary office',
-    'diocesanOrdinaryEndOfficeWarning' => 'The office will end and its permissions will be revoked. Ordination and history are kept.',
+    'diocesanOrdinaryEndOfficeWarning' => 'The office will end and its permissions and delegations issued by this bishop in the diocese will be revoked. Ordination and history are kept.',
     'diocesanOrdinaryEndOn' => 'Office end date',
     'diocesanOrdinaryEndReason' => 'Reason for ending the office',
     'diocesanOrdinaryEnded' => 'Diocesan Ordinary office ended successfully.',

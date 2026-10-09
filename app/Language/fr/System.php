@@ -212,7 +212,7 @@ return [
     'diocesanOrdinaryNotEffectiveHint' => 'Cet ordinaire ne détient plus d’autorité effective. Terminez le mandat pour installer un successeur.',
     'diocesanOrdinaryEndOffice' => 'Terminer le mandat',
     'diocesanOrdinaryEndOfficeTitle' => 'Terminer le mandat d’ordinaire diocésain',
-    'diocesanOrdinaryEndOfficeWarning' => 'Le mandat prendra fin et ses autorisations seront révoquées. L’ordination et l’historique sont conservés.',
+    'diocesanOrdinaryEndOfficeWarning' => 'Le mandat prendra fin et ses autorisations ainsi que les délégations émises par cet évêque dans le diocèse seront révoquées. L’ordination et l’historique sont conservés.',
     'diocesanOrdinaryEndOn' => 'Date de fin du mandat',
     'diocesanOrdinaryEndReason' => 'Motif de fin du mandat',
     'diocesanOrdinaryEnded' => 'Le mandat d’ordinaire diocésain a pris fin.',

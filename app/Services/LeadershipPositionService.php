@@ -489,20 +489,8 @@ class LeadershipPositionService
             ->where('id', $scopeId)->get()->getRowArray()['congregation_type'] ?? '') !== 'cathedral') {
             return false;
         }
-        $today = date('Y-m-d');
-        $standing = $db->table('clergy_canonical_status')
-            ->select('status_code')->where('person_id', $personId)->where('diocese_id', $dioceseId)
-            ->where('effective_from <=', $today)
-            ->groupStart()->where('effective_to', null)->orWhere('effective_to >=', $today)->groupEnd()
-            ->get()->getResultArray();
-        $licensed = false;
-        foreach ($standing as $row) {
-            if (in_array($row['status_code'], ['suspended', 'inhibited', 'transferred', 'retired'], true)) {
-                return false;
-            }
-            $licensed = $licensed || in_array($row['status_code'], ['resident', 'licensed'], true);
-        }
-        return $licensed;
+        return (new ClergyAuthorizationService($db, static fn (): bool => true))
+            ->hasCurrentStanding($personId, $dioceseId);
     }
 
     /**

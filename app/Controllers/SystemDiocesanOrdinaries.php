@@ -4,6 +4,7 @@ namespace App\Controllers;
 
 use App\Services\ClergyReviewService;
 use App\Services\ClergyAuthorizationService;
+use App\Services\LeadershipPositionService;
 
 class SystemDiocesanOrdinaries extends BaseController
 {
@@ -33,6 +34,7 @@ class SystemDiocesanOrdinaries extends BaseController
             ->get()->getResultArray();
         $ordinaryByDiocese = [];
         $authorization = new ClergyAuthorizationService();
+        $positions = new LeadershipPositionService();
         foreach ($ordinaryRows as $ordinary) {
             $ordinary['effective'] = $authorization->isCurrentOrdinary((int) $ordinary['user_id'],
                 (int) $ordinary['diocese_id']);
@@ -51,6 +53,10 @@ class SystemDiocesanOrdinaries extends BaseController
             ->get()->getResultArray();
         $candidatesByDiocese = [];
         foreach ($candidateRows as $candidate) {
+            $personId = $positions->resolvePersonIdForUser((int) $candidate['user_id']);
+            if (($personId ?? 0) > 0 && $authorization->hasSystemWideSuspension($personId)) {
+                continue;
+            }
             $candidatesByDiocese[(int) $candidate['diocese_id']][] = $candidate;
         }
 
@@ -161,7 +167,8 @@ class SystemDiocesanOrdinaries extends BaseController
         }
 
         $endedOn = (string) $this->request->getPost('ended_on');
-        $success = (new ClergyReviewService())->endOrdinaryOffice(
+        $service = new ClergyReviewService();
+        $success = $service->endOrdinaryOffice(
             (int) auth()->id(),
             $positionId,
             $endedOn,
@@ -183,6 +190,7 @@ class SystemDiocesanOrdinaries extends BaseController
                 'user_id' => (int) $position['user_id'],
                 'position_id' => $positionId,
                 'ended_on' => $endedOn,
+                'delegations_revoked' => count($service->lastRevokedDelegationIds()),
             ],
         ]);
 

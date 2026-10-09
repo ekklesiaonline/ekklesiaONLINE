@@ -74,6 +74,57 @@ final class ClergyAuthorizationTest extends CIUnitTestCase
         self::assertFalse($service->allows($user, 'governance.diocese.approve', 'diocese', $dioceseA));
     }
 
+    public function testSuspensionIsSystemWideWhileTransferAndExpiredSuspensionAreNot(): void
+    {
+        [$dioceseA, $dioceseB] = $this->places();
+        [$user, $person] = $this->personUser();
+        [$approver] = $this->personUser();
+        $this->order($person, 'bishop');
+        $this->order($person, 'priest');
+        $this->standing($person, $dioceseB);
+        $position = $this->position($user, $person, 'diocese', $dioceseB, 'diocesan_bishop');
+        $this->db->table('leadership_position')->where('id', $position)
+            ->update(['approved_by_user_id' => $approver]);
+        $this->grant($user, $position, 'governance.diocese.approve', 'diocese', $dioceseB);
+        $service = $this->service();
+
+        self::assertTrue($service->isCurrentOrdinary($user, $dioceseB));
+        self::assertTrue($service->canServeAsPriest($user, $dioceseB));
+
+        $suspensionId = $this->row('clergy_canonical_status', [
+            'person_id' => $person,
+            'diocese_id' => $dioceseA,
+            'status_code' => 'suspended',
+            'effective_from' => date('Y-m-d', strtotime('-1 day')),
+            'effective_to' => null,
+            'verified_by_user_id' => $approver,
+        ]);
+        self::assertTrue($service->hasSystemWideSuspension($person));
+        self::assertTrue($service->hasDisqualifyingStanding($person, $dioceseB));
+        self::assertFalse($service->hasCurrentStanding($person, $dioceseB));
+        self::assertFalse($service->isCurrentOrdinary($user, $dioceseB));
+        self::assertFalse($service->canServeAsPriest($user, $dioceseB));
+
+        $this->db->table('clergy_canonical_status')->where('id', $suspensionId)
+            ->update(['effective_to' => date('Y-m-d', strtotime('-1 day'))]);
+        self::assertFalse($service->hasSystemWideSuspension($person));
+        self::assertTrue($service->hasCurrentStanding($person, $dioceseB));
+        self::assertTrue($service->isCurrentOrdinary($user, $dioceseB));
+        self::assertTrue($service->canServeAsPriest($user, $dioceseB));
+
+        $this->row('clergy_canonical_status', [
+            'person_id' => $person,
+            'diocese_id' => $dioceseA,
+            'status_code' => 'transferred',
+            'effective_from' => date('Y-m-d', strtotime('-1 day')),
+            'verified_by_user_id' => $approver,
+        ]);
+        self::assertFalse($service->hasSystemWideSuspension($person));
+        self::assertFalse($service->hasDisqualifyingStanding($person, $dioceseB));
+        self::assertTrue($service->hasCurrentStanding($person, $dioceseB));
+        self::assertTrue($service->isCurrentOrdinary($user, $dioceseB));
+    }
+
     public function testRegionalDeanGetsOnlyCurrentMemberParishView(): void
     {
         [$dioceseA, , $parishA, $parishB] = $this->places();

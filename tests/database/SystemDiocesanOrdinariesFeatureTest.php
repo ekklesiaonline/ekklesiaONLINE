@@ -46,10 +46,39 @@ final class SystemDiocesanOrdinariesFeatureTest extends CIUnitTestCase
         [, $vacantDioceseId] = $this->createDiocese('Vacant Feature Ordinary Diocese');
         $adminId = $this->createAccount('systemadmin', $installedDioceseId, 'System', 'Admin');
         $bishopId = $this->createAccount('dioceseadmin', $installedDioceseId, 'Installed', 'Bishop');
+        $suspendedCandidateId = $this->createAccount('dioceseadmin', $vacantDioceseId, 'Suspended', 'Candidate');
         $this->injectOrdinaryAuth($adminId, true);
         $positionId = (new ClergyReviewService($this->db, new ClergyAuthorizationService($this->db)))
             ->installOrdinary($adminId, $installedDioceseId, $bishopId, null, date('Y-m-d'),
                 'feature-test-rendered-ordinary');
+        $now = date('Y-m-d H:i:s');
+        $this->db->table('person')->insert([
+            'first_name' => 'Suspended',
+            'last_name' => 'Candidate',
+            'created_at' => $now,
+            'updated_at' => $now,
+        ]);
+        $suspendedPersonId = (int) $this->db->insertID();
+        $this->db->table('profile')->where('user_id', $suspendedCandidateId)
+            ->update(['person_id' => $suspendedPersonId, 'updated_at' => $now]);
+        $this->db->table('user_person')->insert([
+            'user_id' => $suspendedCandidateId,
+            'person_id' => $suspendedPersonId,
+            'is_primary' => 1,
+            'created_at' => $now,
+            'updated_at' => $now,
+        ]);
+        $this->db->table('clergy_canonical_status')->insert([
+            'person_id' => $suspendedPersonId,
+            'diocese_id' => $installedDioceseId,
+            'status_code' => 'suspended',
+            'effective_from' => date('Y-m-d', strtotime('-1 day')),
+            'effective_to' => null,
+            'evidence_reference' => 'feature-test-system-wide-suspension',
+            'verified_by_user_id' => $adminId,
+            'created_at' => $now,
+            'updated_at' => $now,
+        ]);
 
         $response = $this->get('system/diocesan-ordinaries');
 
@@ -57,6 +86,7 @@ final class SystemDiocesanOrdinariesFeatureTest extends CIUnitTestCase
         $response->assertOK();
         $response->assertSee('Installed Feature Ordinary Diocese');
         $response->assertSee('Vacant Feature Ordinary Diocese');
+        $response->assertDontSee('Suspended Candidate');
 
         $body = (string) $response->getBody();
         self::assertStringContainsString(
@@ -154,6 +184,7 @@ final class SystemDiocesanOrdinariesFeatureTest extends CIUnitTestCase
             'user_id' => $bishopId,
             'position_id' => $positionId,
             'ended_on' => date('Y-m-d'),
+            'delegations_revoked' => 0,
         ], $newValues);
         self::assertStringNotContainsString('Feature test office ending', (string) $audit['new_values']);
     }

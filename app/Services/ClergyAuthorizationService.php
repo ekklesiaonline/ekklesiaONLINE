@@ -9,7 +9,8 @@ use CodeIgniter\Database\BaseConnection;
 /** Ecclesial authority is never inferred from Shield group or numeric rank. */
 final class ClergyAuthorizationService
 {
-    private const DISQUALIFYING_STANDINGS = ['suspended', 'inhibited', 'transferred', 'retired'];
+    private const SYSTEM_WIDE_DISQUALIFYING = ['suspended', 'inhibited'];
+    private const DIOCESAN_DISQUALIFYING = ['transferred', 'retired'];
 
     /** @var array<string, array{target: string, scopes: list<string>, offices: list<string>, order: string}> */
     private const POLICY = [
@@ -154,11 +155,29 @@ final class ClergyAuthorizationService
         if ($personId <= 0 || $dioceseId <= 0) {
             return false;
         }
+        if ($this->hasSystemWideSuspension($personId)) {
+            return true;
+        }
 
         $today = date('Y-m-d');
         return $this->db->table('clergy_canonical_status')
             ->where('person_id', $personId)->where('diocese_id', $dioceseId)
-            ->whereIn('status_code', self::DISQUALIFYING_STANDINGS)
+            ->whereIn('status_code', self::DIOCESAN_DISQUALIFYING)
+            ->where('effective_from <=', $today)
+            ->groupStart()->where('effective_to', null)->orWhere('effective_to >=', $today)->groupEnd()
+            ->countAllResults() > 0;
+    }
+
+    public function hasSystemWideSuspension(int $personId): bool
+    {
+        if ($personId <= 0) {
+            return false;
+        }
+
+        $today = date('Y-m-d');
+        return $this->db->table('clergy_canonical_status')
+            ->where('person_id', $personId)
+            ->whereIn('status_code', self::SYSTEM_WIDE_DISQUALIFYING)
             ->where('effective_from <=', $today)
             ->groupStart()->where('effective_to', null)->orWhere('effective_to >=', $today)->groupEnd()
             ->countAllResults() > 0;
@@ -248,6 +267,10 @@ final class ClergyAuthorizationService
 
     private function currentStanding(int $personId, int $dioceseId): bool
     {
+        if ($this->hasSystemWideSuspension($personId)) {
+            return false;
+        }
+
         $today = date('Y-m-d');
         $rows = $this->db->table('clergy_canonical_status')
             ->select('status_code')->where('person_id', $personId)->where('diocese_id', $dioceseId)
@@ -256,7 +279,7 @@ final class ClergyAuthorizationService
             ->get()->getResultArray();
         $licensed = false;
         foreach ($rows as $row) {
-            if (in_array($row['status_code'], self::DISQUALIFYING_STANDINGS, true)) {
+            if (in_array($row['status_code'], self::DIOCESAN_DISQUALIFYING, true)) {
                 return false;
             }
             $licensed = $licensed || in_array($row['status_code'], ['resident', 'licensed'], true);

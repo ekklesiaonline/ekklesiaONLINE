@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests;
 
 use App\Services\ClergyAuthorizationService;
+use App\Services\ClergyGrantReconciliationService;
 use App\Services\ClergyReviewService;
 use CodeIgniter\Test\CIUnitTestCase;
 use CodeIgniter\Test\DatabaseTestTrait;
@@ -222,6 +223,278 @@ final class ClergyOrdinaryBootstrapTest extends CIUnitTestCase
         self::assertTrue($authorization->isCurrentOrdinary($successor, $dioceseA));
     }
 
+    public function testEndingOrdinaryRevokesOnlyDelegationsIssuedWithinThatDiocese(): void
+    {
+        [, $dioceseA, $dioceseB, $parishA] = $this->places();
+        $parishB = $this->row('parish', ['diocese_id' => $dioceseB, 'name' => 'Diocese B Parish']);
+        $actor = $this->systemAdmin();
+        [$bishopA] = $this->dioceseAdmin($dioceseA);
+        [$bishopB] = $this->dioceseAdmin($dioceseB);
+        $service = $this->reviewService();
+        $positionA = $service->installOrdinary($actor, $dioceseA, $bishopA, null,
+            date('Y-m-d', strtotime('-1 day')), 'ordinary-cascade-a');
+        $positionB = $service->installOrdinary($actor, $dioceseB, $bishopB, null,
+            date('Y-m-d', strtotime('-1 day')), 'ordinary-cascade-b');
+        self::assertNotNull($positionA);
+        self::assertNotNull($positionB);
+
+        $dioceseDelegationId = $service->issueDelegation($bishopA, $bishopB, $dioceseA,
+            'clergy.appointment.manage', date('Y-m-d', strtotime('+7 days')), 'delegation-cascade-diocese');
+        [$priest, $priestPerson] = $this->personUser($dioceseA);
+        $now = date('Y-m-d H:i:s');
+        $this->row('clergy_ordination', [
+            'person_id' => $priestPerson,
+            'order_code' => 'priest',
+            'verification_status' => 'verified',
+            'verified_by_user_id' => $actor,
+            'verified_at' => $now,
+        ]);
+        $this->row('clergy_canonical_status', [
+            'person_id' => $priestPerson,
+            'diocese_id' => $dioceseA,
+            'status_code' => 'licensed',
+            'effective_from' => date('Y-m-d', strtotime('-1 day')),
+            'verified_by_user_id' => $actor,
+        ]);
+        $parishDelegationId = $service->issueParishVacancyDelegation($bishopA, $priest, $parishA,
+            date('Y-m-d', strtotime('+7 days')), 'delegation-cascade-parish');
+        $otherBishopDelegationId = $service->issueDelegation($bishopB, $bishopA, $dioceseB,
+            'clergy.appointment.manage', date('Y-m-d', strtotime('+7 days')), 'delegation-other-diocese');
+        self::assertNotNull($dioceseDelegationId);
+        self::assertNotNull($parishDelegationId);
+        self::assertNotNull($otherBishopDelegationId);
+
+        $bishopBPermission = $this->db->table('auth_permissions_users')
+            ->where('user_id', $bishopB)->where('permission', 'clergy.appointment.manage')
+            ->get()->getRowArray();
+        self::assertNotNull($bishopBPermission);
+        self::assertSame(1, $this->db->table('permission_role_sync_managed')
+            ->where('permission_user_id', $bishopBPermission['id'])
+            ->where('source_type', 'office')->where('source_key', (string) $positionB)->countAllResults());
+
+        self::assertTrue($service->endOrdinaryOffice($actor, $positionA, date('Y-m-d'), 'Ordinary office ended'));
+
+        self::assertSame([$dioceseDelegationId, $parishDelegationId], $service->lastRevokedDelegationIds());
+        self::assertSame(2, $this->db->table('clergy_access_grant')
+            ->whereIn('id', [$dioceseDelegationId, $parishDelegationId])
+            ->where('revoked_at IS NOT NULL', null, false)->countAllResults());
+        self::assertNull($this->db->table('clergy_access_grant')->where('id', $otherBishopDelegationId)
+            ->get()->getRow('revoked_at'));
+        self::assertSame(1, $this->db->table('auth_permissions_users')
+            ->where('id', $bishopBPermission['id'])->countAllResults());
+        self::assertSame(1, $this->db->table('permission_role_sync_managed')
+            ->where('permission_user_id', $bishopBPermission['id'])
+            ->where('source_type', 'office')->where('source_key', (string) $positionB)->countAllResults());
+        self::assertSame(1, $this->db->table('clergy_ordination')->where('person_id',
+            $this->db->table('profile')->where('user_id', $bishopA)->get()->getRow('person_id'))
+            ->where('order_code', 'bishop')->where('verification_status', 'verified')->countAllResults());
+        self::assertTrue($this->authorization()->isCurrentOrdinary($bishopB, $dioceseB));
+
+        self::assertFalse($service->endOrdinaryOffice($actor, $positionA, date('Y-m-d'), 'Already ended'));
+        self::assertSame([], $service->lastRevokedDelegationIds());
+    }
+
+    public function testEndingOneOfficeKeepsDelegationsWhileIssuerHasAnotherCurrentOrdinaryOffice(): void
+    {
+        [, $dioceseA] = $this->places();
+        $actor = $this->systemAdmin();
+        [$bishop] = $this->dioceseAdmin($dioceseA);
+        [$recipient] = $this->personUser($dioceseA);
+        $service = $this->reviewService();
+        $positionId = $service->installOrdinary($actor, $dioceseA, $bishop, null,
+            date('Y-m-d', strtotime('-1 day')), 'ordinary-two-offices');
+        self::assertNotNull($positionId);
+
+        $now = date('Y-m-d H:i:s');
+        $otherPositionId = $this->row('leadership_position', [
+            'user_id' => $bishop,
+            'person_id' => (int) $this->db->table('profile')->where('user_id', $bishop)->get()->getRow('person_id'),
+            'scope_type' => 'diocese',
+            'diocese_id' => $dioceseA,
+            'title' => 'Diocesan Bishop',
+            'role_code' => 'diocesan_bishop',
+            'role_category' => 'clergy',
+            'clergy_order' => 'bishop',
+            'active' => 1,
+            'started_at' => date('Y-m-d', strtotime('-1 day')),
+            'approved_by_user_id' => $actor,
+            'approved_at' => $now,
+            'approval_evidence_reference' => 'second-current-office',
+        ]);
+        foreach (ClergyReviewService::OFFICE_PERMISSIONS['diocesan_bishop'] as $permission) {
+            $this->row('clergy_access_grant', [
+                'user_id' => $bishop,
+                'permission' => $permission,
+                'scope_type' => 'diocese',
+                'scope_id' => $dioceseA,
+                'source_position_id' => $otherPositionId,
+                'grant_type' => 'office',
+                'granted_by_user_id' => $actor,
+                'starts_at' => $now,
+            ]);
+        }
+        $delegationId = $service->issueDelegation($bishop, $recipient, $dioceseA,
+            'clergy.ordination.verify', date('Y-m-d', strtotime('+7 days')), 'delegation-retained');
+        self::assertNotNull($delegationId);
+        self::assertTrue($this->authorization()->isCurrentOrdinary($bishop, $dioceseA));
+
+        self::assertTrue($service->endOrdinaryOffice($actor, $positionId, date('Y-m-d'), 'One office ended'));
+
+        self::assertSame([], $service->lastRevokedDelegationIds());
+        self::assertNull($this->db->table('clergy_access_grant')->where('id', $delegationId)
+            ->get()->getRow('revoked_at'));
+        self::assertTrue($this->authorization()->isCurrentOrdinary($bishop, $dioceseA));
+        self::assertTrue($this->authorization()->allows($recipient, 'clergy.ordination.verify', 'diocese', $dioceseA));
+    }
+
+    public function testRevokingOrdinaryOfficeCascadesItsDiocesanAndParishDelegations(): void
+    {
+        [, $dioceseA, , $parishA] = $this->places();
+        $actor = $this->systemAdmin();
+        [$bishop, $bishopPerson] = $this->dioceseAdmin($dioceseA);
+        [$reviewer, $reviewerPerson] = $this->personUser($dioceseA);
+        [$priest, $priestPerson] = $this->personUser($dioceseA);
+        $service = $this->reviewService();
+        $positionId = $service->installOrdinary($actor, $dioceseA, $bishop, null,
+            date('Y-m-d', strtotime('-1 day')), 'ordinary-revoke-office');
+        self::assertNotNull($positionId);
+        $reviewerPositionId = $this->addCurrentOrdinaryOffice($reviewer, $reviewerPerson, $dioceseA, $actor);
+        $now = date('Y-m-d H:i:s');
+        $this->row('clergy_ordination', [
+            'person_id' => $priestPerson,
+            'order_code' => 'priest',
+            'verification_status' => 'verified',
+            'verified_by_user_id' => $actor,
+            'verified_at' => $now,
+        ]);
+        $this->row('clergy_canonical_status', [
+            'person_id' => $priestPerson,
+            'diocese_id' => $dioceseA,
+            'status_code' => 'licensed',
+            'effective_from' => date('Y-m-d', strtotime('-1 day')),
+            'verified_by_user_id' => $actor,
+        ]);
+        $dioceseDelegationId = $service->issueDelegation($bishop, $priest, $dioceseA,
+            'clergy.appointment.manage', date('Y-m-d', strtotime('+7 days')), 'revoke-office-diocese');
+        $parishDelegationId = $service->issueParishVacancyDelegation($bishop, $priest, $parishA,
+            date('Y-m-d', strtotime('+7 days')), 'revoke-office-parish');
+        self::assertNotNull($dioceseDelegationId);
+        self::assertNotNull($parishDelegationId);
+
+        self::assertTrue($service->revokeOffice($positionId, $reviewer));
+
+        self::assertSame([$dioceseDelegationId, $parishDelegationId], $service->lastRevokedDelegationIds());
+        self::assertSame(2, $this->db->table('clergy_access_grant')
+            ->whereIn('id', [$dioceseDelegationId, $parishDelegationId])
+            ->where('revoked_at IS NOT NULL', null, false)->countAllResults());
+        self::assertSame(1, $this->db->table('leadership_position')->where('id', $reviewerPositionId)
+            ->where('active', 1)->where('revoked_at', null)->countAllResults());
+        self::assertSame(1, $this->db->table('clergy_ordination')->where('person_id', $bishopPerson)
+            ->where('order_code', 'bishop')->where('verification_status', 'verified')->countAllResults());
+        self::assertFalse($service->revokeOffice(0, $reviewer));
+        self::assertSame([], $service->lastRevokedDelegationIds());
+    }
+
+    public function testReconciliationRevokesDelegationWhenIssuerAccountIsDeactivated(): void
+    {
+        [, $dioceseA] = $this->places();
+        $actor = $this->systemAdmin();
+        [$bishop] = $this->dioceseAdmin($dioceseA);
+        [$recipient] = $this->personUser($dioceseA);
+        $service = $this->reviewService();
+        $positionId = $service->installOrdinary($actor, $dioceseA, $bishop, null,
+            date('Y-m-d', strtotime('-1 day')), 'ordinary-deactivated-issuer');
+        self::assertNotNull($positionId);
+        $delegationId = $service->issueDelegation($bishop, $recipient, $dioceseA,
+            'clergy.ordination.verify', date('Y-m-d', strtotime('+7 days')), 'deactivated-issuer-delegation');
+        self::assertNotNull($delegationId);
+
+        $this->db->table('users')->where('id', $bishop)->update(['active' => 0]);
+        $reconciliation = (new ClergyGrantReconciliationService($this->db))->reconcile(true);
+
+        self::assertGreaterThanOrEqual(1, $reconciliation['stale_sources']);
+        self::assertNotEmpty($this->db->table('clergy_access_grant')->where('id', $delegationId)
+            ->get()->getRow('revoked_at'));
+        self::assertSame(0, $this->db->table('permission_role_sync_managed')
+            ->where('source_type', 'delegation')->where('source_key', (string) $delegationId)->countAllResults());
+        self::assertSame(0, $this->db->table('auth_permissions_users')->where('user_id', $recipient)
+            ->where('permission', 'clergy.ordination.verify')->countAllResults());
+        self::assertFalse($this->authorization()->allows($recipient, 'clergy.ordination.verify', 'diocese', $dioceseA));
+    }
+
+    public function testSystemWideSuspensionBlocksOrdinaryAuthorityAndBootstrapInOtherDiocese(): void
+    {
+        [, $dioceseA, $dioceseB] = $this->places();
+        $actor = $this->systemAdmin();
+        [$bishop, $personId] = $this->dioceseAdmin($dioceseB);
+        $service = $this->reviewService();
+        $positionId = $service->installOrdinary($actor, $dioceseB, $bishop, null,
+            date('Y-m-d', strtotime('-1 day')), 'ordinary-before-suspension');
+        self::assertNotNull($positionId);
+        $this->row('clergy_ordination', [
+            'person_id' => $personId,
+            'order_code' => 'priest',
+            'verification_status' => 'verified',
+            'verified_by_user_id' => $actor,
+            'verified_at' => date('Y-m-d H:i:s'),
+        ]);
+        $this->row('clergy_canonical_status', [
+            'person_id' => $personId,
+            'diocese_id' => $dioceseA,
+            'status_code' => 'suspended',
+            'effective_from' => date('Y-m-d', strtotime('-1 day')),
+            'effective_to' => null,
+            'evidence_reference' => 'system-wide-suspension',
+            'verified_by_user_id' => $actor,
+        ]);
+
+        $authorization = $this->authorization();
+        self::assertTrue($authorization->hasSystemWideSuspension($personId));
+        self::assertFalse($authorization->isCurrentOrdinary($bishop, $dioceseB));
+        self::assertFalse($authorization->canServeAsPriest($bishop, $dioceseB));
+        self::assertTrue($service->endOrdinaryOffice($actor, $positionId, date('Y-m-d'), 'Ended during suspension'));
+        self::assertNull($service->installOrdinary($actor, $dioceseB, $bishop, null,
+            date('Y-m-d'), 'ordinary-during-suspension'));
+        self::assertSame(1, $this->db->table('leadership_position')->where('user_id', $bishop)
+            ->where('role_code', 'diocesan_bishop')->countAllResults());
+    }
+
+    public function testTransferAndExpiredSuspensionDoNotBlockBootstrapInAnotherDiocese(): void
+    {
+        [, $dioceseA, $dioceseB] = $this->places();
+        $actor = $this->systemAdmin();
+        $service = $this->reviewService();
+        [$transferredBishop, $transferredPerson] = $this->dioceseAdmin($dioceseB);
+        $this->row('clergy_canonical_status', [
+            'person_id' => $transferredPerson,
+            'diocese_id' => $dioceseA,
+            'status_code' => 'transferred',
+            'effective_from' => date('Y-m-d', strtotime('-1 day')),
+            'verified_by_user_id' => $actor,
+        ]);
+        $transferredPosition = $service->installOrdinary($actor, $dioceseB, $transferredBishop, null,
+            date('Y-m-d'), 'ordinary-after-local-transfer');
+        self::assertNotNull($transferredPosition);
+        self::assertTrue($this->authorization()->isCurrentOrdinary($transferredBishop, $dioceseB));
+        self::assertTrue($service->endOrdinaryOffice($actor, $transferredPosition, date('Y-m-d'), 'Next case'));
+
+        [$previouslySuspendedBishop, $previouslySuspendedPerson] = $this->dioceseAdmin($dioceseB);
+        $this->row('clergy_canonical_status', [
+            'person_id' => $previouslySuspendedPerson,
+            'diocese_id' => $dioceseA,
+            'status_code' => 'suspended',
+            'effective_from' => date('Y-m-d', strtotime('-10 days')),
+            'effective_to' => date('Y-m-d', strtotime('-1 day')),
+            'verified_by_user_id' => $actor,
+        ]);
+        $previouslySuspendedPosition = $service->installOrdinary($actor, $dioceseB, $previouslySuspendedBishop, null,
+            date('Y-m-d'), 'ordinary-after-expired-suspension');
+
+        self::assertNotNull($previouslySuspendedPosition);
+        self::assertFalse($this->authorization()->hasSystemWideSuspension($previouslySuspendedPerson));
+        self::assertTrue($this->authorization()->isCurrentOrdinary($previouslySuspendedBishop, $dioceseB));
+    }
+
     public function testEndOrdinaryOfficeRefusesNonAdminInvalidDateEmptyReasonAndAlreadyEndedOffice(): void
     {
         [, $dioceseA] = $this->places();
@@ -250,6 +523,54 @@ final class ClergyOrdinaryBootstrapTest extends CIUnitTestCase
         }
         self::assertTrue($authorization->isCurrentOrdinary($bishop, $dioceseA));
         self::assertFalse($authorization->allows($bishop, 'governance.diocese.approve', 'diocese', $dioceseB));
+    }
+
+    private function addCurrentOrdinaryOffice(int $userId, int $personId, int $dioceseId, int $approverId): int
+    {
+        $now = date('Y-m-d H:i:s');
+        $this->row('clergy_ordination', [
+            'person_id' => $personId,
+            'order_code' => 'bishop',
+            'verification_status' => 'verified',
+            'verified_by_user_id' => $approverId,
+            'verified_at' => $now,
+        ]);
+        $this->row('clergy_canonical_status', [
+            'person_id' => $personId,
+            'diocese_id' => $dioceseId,
+            'status_code' => 'licensed',
+            'effective_from' => date('Y-m-d', strtotime('-1 day')),
+            'verified_by_user_id' => $approverId,
+        ]);
+        $positionId = $this->row('leadership_position', [
+            'user_id' => $userId,
+            'person_id' => $personId,
+            'scope_type' => 'diocese',
+            'diocese_id' => $dioceseId,
+            'title' => 'Diocesan Bishop',
+            'role_code' => 'diocesan_bishop',
+            'role_category' => 'clergy',
+            'clergy_order' => 'bishop',
+            'active' => 1,
+            'started_at' => date('Y-m-d', strtotime('-1 day')),
+            'approved_by_user_id' => $approverId,
+            'approved_at' => $now,
+            'approval_evidence_reference' => 'reviewer-ordinary-register',
+        ]);
+        foreach (ClergyReviewService::OFFICE_PERMISSIONS['diocesan_bishop'] as $permission) {
+            $this->row('clergy_access_grant', [
+                'user_id' => $userId,
+                'permission' => $permission,
+                'scope_type' => 'diocese',
+                'scope_id' => $dioceseId,
+                'source_position_id' => $positionId,
+                'grant_type' => 'office',
+                'granted_by_user_id' => $approverId,
+                'starts_at' => $now,
+            ]);
+        }
+
+        return $positionId;
     }
 
     private function reviewService(): ClergyReviewService

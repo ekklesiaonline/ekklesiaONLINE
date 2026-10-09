@@ -14,6 +14,8 @@ final class ClergyReviewService
     private BaseConnection $db;
     private ClergyAuthorizationService $authorization;
     private LeadershipPositionService $positions;
+    /** @var list<int> */
+    private array $lastRevokedDelegationIds = [];
 
     public const OFFICE_PERMISSIONS = [
         'diocesan_bishop' => [
@@ -35,7 +37,7 @@ final class ClergyReviewService
         $this->positions = new LeadershipPositionService();
     }
 
-    /** The only system-admin bypasses in clergy review are installing and ending a diocesan ordinary. */
+    /** The only system-admin bypasses in clergy review are installOrdinary() and endOrdinaryOffice(). */
     public function installOrdinary(int $actorId, int $dioceseId, int $userId, ?string $ordainedOn,
         string $officeStartedOn, string $evidenceReference): ?int
     {
@@ -198,9 +200,10 @@ final class ClergyReviewService
         }
     }
 
-    /** The only system-admin bypasses in clergy review are installing and ending a diocesan ordinary. */
+    /** The only system-admin bypasses in clergy review are installOrdinary() and endOrdinaryOffice(). */
     public function endOrdinaryOffice(int $actorId, int $positionId, string $endedOn, string $reason): bool
     {
+        $this->lastRevokedDelegationIds = [];
         $reason = trim($reason);
         $today = date('Y-m-d');
         if (! $this->isSystemAdminUser($actorId) || ! $this->validDate($endedOn) || $endedOn > $today
@@ -243,6 +246,11 @@ final class ClergyReviewService
             $this->db->table('clergy_access_grant')->where('source_position_id', $positionId)
                 ->where('revoked_at', null)->update(['revoked_at' => $now]);
             $this->removeManagedPermissions($positionId);
+            $this->lastRevokedDelegationIds = $this->revokeDelegationsIssuedBy(
+                (int) $position['user_id'],
+                (int) $position['diocese_id'],
+                $now
+            );
 
             if ($this->db->transStatus() === false) {
                 $this->db->transRollback();
@@ -528,6 +536,7 @@ final class ClergyReviewService
 
     public function revokeOffice(int $positionId, int $reviewerId): bool
     {
+        $this->lastRevokedDelegationIds = [];
         $position = $this->positions->find($positionId);
         if ($position === null || (int) ($position['person_id'] ?? 0) <= 0) {
             return false;
@@ -541,7 +550,20 @@ final class ClergyReviewService
             return false;
         }
         $this->removeManagedPermissions($positionId);
+        if (($position['role_code'] ?? '') === 'diocesan_bishop' && $scope === 'diocese') {
+            $this->lastRevokedDelegationIds = $this->revokeDelegationsIssuedBy(
+                (int) $position['user_id'],
+                (int) ($position['diocese_id'] ?? 0),
+                date('Y-m-d H:i:s')
+            );
+        }
         return true;
+    }
+
+    /** @return list<int> */
+    public function lastRevokedDelegationIds(): array
+    {
+        return $this->lastRevokedDelegationIds;
     }
 
     /** A lay signer requires a distinct approver and a documented local appointment. */
@@ -841,6 +863,42 @@ final class ClergyReviewService
     private function removeManagedPermissions(int $positionId): void
     {
         $this->removeManagedPermissionSource('office', $positionId);
+    }
+
+    /** @return list<int> */
+    private function revokeDelegationsIssuedBy(int $issuerUserId, int $dioceseId, string $now): array
+    {
+        if ($issuerUserId <= 0 || $dioceseId <= 0
+            || $this->authorization->isCurrentOrdinary($issuerUserId, $dioceseId)) {
+            return [];
+        }
+
+        $parishIds = array_map(
+            'intval',
+            array_column($this->db->table('parish')->select('id')
+                ->where('diocese_id', $dioceseId)->get()->getResultArray(), 'id')
+        );
+        $query = $this->db->table('clergy_access_grant')
+            ->where('grant_type', 'delegation')
+            ->where('revoked_at', null)
+            ->where('granted_by_user_id', $issuerUserId)
+            ->groupStart()
+                ->groupStart()->where('scope_type', 'diocese')->where('scope_id', $dioceseId)->groupEnd();
+        if ($parishIds !== []) {
+            $query->orGroupStart()->where('scope_type', 'parish')->whereIn('scope_id', $parishIds)->groupEnd();
+        }
+        $delegations = $query->groupEnd()->orderBy('id')->get()->getResultArray();
+
+        $revokedIds = [];
+        foreach ($delegations as $delegation) {
+            $grantId = (int) $delegation['id'];
+            $this->db->table('clergy_access_grant')->where('id', $grantId)
+                ->where('revoked_at', null)->update(['revoked_at' => $now]);
+            $this->removeManagedPermissionSource('delegation', $grantId);
+            $revokedIds[] = $grantId;
+        }
+
+        return $revokedIds;
     }
 
     private function removeManagedPermissionSource(string $sourceType, int $sourceId): void
