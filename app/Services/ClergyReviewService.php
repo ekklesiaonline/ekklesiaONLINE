@@ -35,9 +35,7 @@ final class ClergyReviewService
         $this->positions = new LeadershipPositionService();
     }
 
-    /**
-     * The only reviewer-check bypass: installing a diocesan ordinary is limited to system admins.
-     */
+    /** The only system-admin bypasses in clergy review are installing and ending a diocesan ordinary. */
     public function installOrdinary(int $actorId, int $dioceseId, int $userId, ?string $ordainedOn,
         string $officeStartedOn, string $evidenceReference): ?int
     {
@@ -45,6 +43,7 @@ final class ClergyReviewService
         $today = date('Y-m-d');
         $profile = $this->db->table('profile')->where('user_id', $userId)
             ->orderBy('id', 'DESC')->get()->getRowArray();
+        $existingPersonId = (int) ($this->positions->resolvePersonIdForUser($userId) ?? 0);
         $candidate = [
             'id' => 0,
             'role_code' => 'diocesan_bishop',
@@ -55,17 +54,17 @@ final class ClergyReviewService
         ];
 
         if ($actorId <= 0 || $actorId === $userId || $dioceseId <= 0 || $userId <= 0
-            || $this->db->table('auth_groups_users')->where('user_id', $actorId)
-                ->where('group', 'systemadmin')->countAllResults() === 0
+            || ! $this->isSystemAdminUser($actorId)
             || $this->db->table('diocese')->where('id', $dioceseId)->countAllResults() === 0
             || $this->db->table('users')->where('id', $userId)->where('active', 1)->countAllResults() === 0
             || $this->db->table('auth_groups_users')->where('user_id', $userId)
                 ->where('group', 'dioceseadmin')->countAllResults() === 0
             || $profile === null || (int) ($profile['diocese_id'] ?? 0) !== $dioceseId
             || ! $this->positions->hasPortalAccess($userId)
-            || $evidenceReference === '' || strlen($evidenceReference) > 255
+            || $evidenceReference === '' || mb_strlen($evidenceReference, 'UTF-8') > 255
             || ! $this->validDate($officeStartedOn) || $officeStartedOn > $today
             || ($ordainedOn !== null && ! $this->validDate($ordainedOn))
+            || ($existingPersonId > 0 && $this->authorization->hasDisqualifyingStanding($existingPersonId, $dioceseId))
             || $this->hasConflictingIncumbent($candidate)) {
             return null;
         }
@@ -183,6 +182,10 @@ final class ClergyReviewService
                 $this->provisionShieldPermission($userId, $permission, $positionId, $now);
             }
 
+            if (! $this->authorization->isCurrentOrdinary($userId, $dioceseId)) {
+                $this->db->transRollback();
+                return null;
+            }
             if ($this->db->transStatus() === false) {
                 $this->db->transRollback();
                 return null;
@@ -192,6 +195,64 @@ final class ClergyReviewService
         } catch (\Throwable $e) {
             $this->db->transRollback();
             return null;
+        }
+    }
+
+    /** The only system-admin bypasses in clergy review are installing and ending a diocesan ordinary. */
+    public function endOrdinaryOffice(int $actorId, int $positionId, string $endedOn, string $reason): bool
+    {
+        $reason = trim($reason);
+        $today = date('Y-m-d');
+        if (! $this->isSystemAdminUser($actorId) || ! $this->validDate($endedOn) || $endedOn > $today
+            || $reason === '' || mb_strlen($reason, 'UTF-8') > 255) {
+            return false;
+        }
+
+        $position = $this->db->table('leadership_position')->where('id', $positionId)->get()->getRowArray();
+        if (! $this->isEndableOrdinaryPosition($position, $endedOn)) {
+            return false;
+        }
+
+        $now = date('Y-m-d H:i:s');
+        $this->db->transBegin();
+        try {
+            if ($this->db->DBDriver === 'MySQLi') {
+                $this->db->query('SELECT id FROM ' . $this->db->protectIdentifiers('leadership_position')
+                    . ' WHERE id = ? FOR UPDATE', [$positionId]);
+            }
+
+            $position = $this->db->table('leadership_position')->where('id', $positionId)->get()->getRowArray();
+            if (! $this->isEndableOrdinaryPosition($position, $endedOn)) {
+                $this->db->transRollback();
+                return false;
+            }
+
+            $notes = trim((string) ($position['notes'] ?? '') . "\nOffice ended {$endedOn}: {$reason}");
+            if (! $this->db->table('leadership_position')->where('id', $positionId)
+                ->where('active', 1)->where('revoked_at', null)->update([
+                    'active' => 0,
+                    'ended_at' => $endedOn,
+                    'revoked_at' => $now,
+                    'updated_at' => $now,
+                    'notes' => $notes,
+                ])) {
+                $this->db->transRollback();
+                return false;
+            }
+
+            $this->db->table('clergy_access_grant')->where('source_position_id', $positionId)
+                ->where('revoked_at', null)->update(['revoked_at' => $now]);
+            $this->removeManagedPermissions($positionId);
+
+            if ($this->db->transStatus() === false) {
+                $this->db->transRollback();
+                return false;
+            }
+            $this->db->transCommit();
+            return true;
+        } catch (\Throwable $e) {
+            $this->db->transRollback();
+            return false;
         }
     }
 
@@ -672,6 +733,24 @@ final class ClergyReviewService
     {
         $date = \DateTimeImmutable::createFromFormat('!Y-m-d', $value);
         return $date !== false && $date->format('Y-m-d') === $value;
+    }
+
+    private function isSystemAdminUser(int $userId): bool
+    {
+        return $userId > 0 && $this->db->table('auth_groups_users')->where('user_id', $userId)
+            ->where('group', 'systemadmin')->countAllResults() > 0;
+    }
+
+    private function isEndableOrdinaryPosition(?array $position, string $endedOn): bool
+    {
+        if ($position === null || ($position['role_code'] ?? '') !== 'diocesan_bishop'
+            || ($position['scope_type'] ?? '') !== 'diocese' || (int) ($position['active'] ?? 0) !== 1
+            || empty($position['approved_at']) || ($position['revoked_at'] ?? null) !== null) {
+            return false;
+        }
+
+        $startedAt = trim((string) ($position['started_at'] ?? ''));
+        return $startedAt === '' || substr($startedAt, 0, 10) <= $endedOn;
     }
 
     private function hasConflictingIncumbent(array $candidate): bool

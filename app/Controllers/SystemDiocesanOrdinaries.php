@@ -3,6 +3,7 @@
 namespace App\Controllers;
 
 use App\Services\ClergyReviewService;
+use App\Services\ClergyAuthorizationService;
 
 class SystemDiocesanOrdinaries extends BaseController
 {
@@ -22,7 +23,7 @@ class SystemDiocesanOrdinaries extends BaseController
             ->orderBy('province.name')->orderBy('d.name')->get()->getResultArray();
         $today = date('Y-m-d');
         $ordinaryRows = $db->table('leadership_position lp')
-            ->select('lp.diocese_id, lp.started_at, profile.first_name, profile.last_name')
+            ->select('lp.id AS position_id, lp.user_id, lp.diocese_id, lp.started_at, profile.first_name, profile.last_name')
             ->join('profile', 'profile.user_id = lp.user_id', 'left')
             ->where('lp.scope_type', 'diocese')->where('lp.role_code', 'diocesan_bishop')
             ->where('lp.active', 1)->where('lp.approved_at IS NOT NULL', null, false)
@@ -31,7 +32,10 @@ class SystemDiocesanOrdinaries extends BaseController
             ->orderBy('lp.started_at', 'DESC')->orderBy('lp.id', 'DESC')
             ->get()->getResultArray();
         $ordinaryByDiocese = [];
+        $authorization = new ClergyAuthorizationService();
         foreach ($ordinaryRows as $ordinary) {
+            $ordinary['effective'] = $authorization->isCurrentOrdinary((int) $ordinary['user_id'],
+                (int) $ordinary['diocese_id']);
             $ordinaryByDiocese[(int) $ordinary['diocese_id']] ??= $ordinary;
         }
 
@@ -70,13 +74,26 @@ class SystemDiocesanOrdinaries extends BaseController
         }
 
         $rules = [
-            'user_id' => 'required|is_natural_no_zero',
-            'office_started_on' => 'required|valid_date[Y-m-d]',
-            'ordained_on' => 'permit_empty|valid_date[Y-m-d]',
-            'evidence_reference' => 'required|max_length[255]',
+            'user_id' => [
+                'label' => lang('System.diocesanOrdinaryUser'),
+                'rules' => 'required|is_natural_no_zero',
+            ],
+            'office_started_on' => [
+                'label' => lang('System.diocesanOrdinaryOfficeStartedOn'),
+                'rules' => 'required|valid_date[Y-m-d]',
+            ],
+            'ordained_on' => [
+                'label' => lang('System.diocesanOrdinaryOrdainedOn'),
+                'rules' => 'permit_empty|valid_date[Y-m-d]',
+            ],
+            'evidence_reference' => [
+                'label' => lang('System.diocesanOrdinaryEvidenceReference'),
+                'rules' => 'required|max_length[255]',
+            ],
         ];
         if (! $this->validate($rules)) {
-            return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
+            return redirect()->back()->withInput()->with('errors', $this->validator->getErrors())
+                ->with('open_modal', 'installOrdinaryModal' . $dioceseId);
         }
 
         $userId = (int) $this->request->getPost('user_id');
@@ -90,7 +107,8 @@ class SystemDiocesanOrdinaries extends BaseController
             (string) $this->request->getPost('evidence_reference')
         );
         if ($positionId === null) {
-            return redirect()->back()->withInput()->with('error', lang('System.diocesanOrdinaryInstallFailed'));
+            return redirect()->back()->withInput()->with('error', lang('System.diocesanOrdinaryInstallFailed'))
+                ->with('open_modal', 'installOrdinaryModal' . $dioceseId);
         }
 
         $this->audit()->log('system.diocesan_ordinary.installed', [
@@ -108,5 +126,67 @@ class SystemDiocesanOrdinaries extends BaseController
 
         return redirect()->to(base_url('system/diocesan-ordinaries'))
             ->with('success', lang('System.diocesanOrdinaryInstalled'));
+    }
+
+    public function endOffice(int $positionId)
+    {
+        if ($redirect = $this->requirePermission('system.admin')) {
+            return $redirect;
+        }
+        if (! $this->isSystemAdmin()) {
+            return $this->forbiddenResponse(lang('App.errorForbidden'));
+        }
+
+        $position = db_connect()->table('leadership_position')->select('id, diocese_id, user_id')
+            ->where('id', $positionId)->get()->getRowArray();
+        $dioceseId = (int) ($position['diocese_id'] ?? 0);
+        if ($position === null || $dioceseId <= 0) {
+            return redirect()->to(base_url('system/diocesan-ordinaries'))
+                ->with('error', lang('System.diocesanOrdinaryEndFailed'));
+        }
+
+        $rules = [
+            'ended_on' => [
+                'label' => lang('System.diocesanOrdinaryEndOn'),
+                'rules' => 'required|valid_date[Y-m-d]',
+            ],
+            'reason' => [
+                'label' => lang('System.diocesanOrdinaryEndReason'),
+                'rules' => 'required|max_length[255]',
+            ],
+        ];
+        if (! $this->validate($rules)) {
+            return redirect()->back()->withInput()->with('errors', $this->validator->getErrors())
+                ->with('open_modal', 'endOfficeModal' . $dioceseId);
+        }
+
+        $endedOn = (string) $this->request->getPost('ended_on');
+        $success = (new ClergyReviewService())->endOrdinaryOffice(
+            (int) auth()->id(),
+            $positionId,
+            $endedOn,
+            (string) $this->request->getPost('reason')
+        );
+        if (! $success) {
+            return redirect()->back()->withInput()->with('error', lang('System.diocesanOrdinaryEndFailed'))
+                ->with('open_modal', 'endOfficeModal' . $dioceseId);
+        }
+
+        $this->audit()->log('system.diocesan_ordinary.ended', [
+            'user_id' => (int) auth()->id(),
+            'entity_type' => 'diocese',
+            'entity_id' => $dioceseId,
+            'ip_address' => $this->request->getIPAddress(),
+            'user_agent' => esc($this->request->getUserAgent()->getAgentString()),
+            'timestamp' => date('Y-m-d H:i:s'),
+            'new_values' => [
+                'user_id' => (int) $position['user_id'],
+                'position_id' => $positionId,
+                'ended_on' => $endedOn,
+            ],
+        ]);
+
+        return redirect()->to(base_url('system/diocesan-ordinaries'))
+            ->with('success', lang('System.diocesanOrdinaryEnded'));
     }
 }

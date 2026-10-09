@@ -151,6 +151,95 @@ final class ClergyOrdinaryBootstrapTest extends CIUnitTestCase
         self::assertSame(0, $this->db->table('leadership_position')->where('user_id', $otherDioceseAdmin)->countAllResults());
     }
 
+    public function testCurrentSuspendedStandingBlocksBootstrapWithoutCreatingPosition(): void
+    {
+        [, $dioceseA] = $this->places();
+        $actor = $this->systemAdmin();
+        [$bishop, $personId] = $this->dioceseAdmin($dioceseA);
+        $this->row('clergy_canonical_status', [
+            'person_id' => $personId,
+            'diocese_id' => $dioceseA,
+            'status_code' => 'suspended',
+            'effective_from' => date('Y-m-d', strtotime('-1 day')),
+            'effective_to' => null,
+            'evidence_reference' => 'suspension-order-1',
+            'verified_by_user_id' => $actor,
+            'created_at' => date('Y-m-d H:i:s'),
+            'updated_at' => date('Y-m-d H:i:s'),
+        ]);
+
+        self::assertNull($this->reviewService()->installOrdinary($actor, $dioceseA, $bishop, null,
+            date('Y-m-d'), 'ordinary-register-suspended'));
+        self::assertSame(0, $this->db->table('leadership_position')->where('user_id', $bishop)->countAllResults());
+    }
+
+    public function testBootstrapEvidenceLengthCountsUtf8Characters(): void
+    {
+        [, $dioceseA, $dioceseB] = $this->places();
+        $actor = $this->systemAdmin();
+        [$bishop255] = $this->dioceseAdmin($dioceseA);
+        [$bishop256] = $this->dioceseAdmin($dioceseB);
+        $service = $this->reviewService();
+
+        self::assertNotNull($service->installOrdinary($actor, $dioceseA, $bishop255, null,
+            date('Y-m-d'), str_repeat('é', 255)));
+        self::assertNull($service->installOrdinary($actor, $dioceseB, $bishop256, null,
+            date('Y-m-d'), str_repeat('é', 256)));
+        self::assertSame(0, $this->db->table('leadership_position')->where('user_id', $bishop256)->countAllResults());
+    }
+
+    public function testSystemAdminCanEndOrdinaryOfficeAndInstallSuccessor(): void
+    {
+        [, $dioceseA] = $this->places();
+        $actor = $this->systemAdmin();
+        [$bishop, $personId] = $this->dioceseAdmin($dioceseA);
+        $service = $this->reviewService();
+        $authorization = $this->authorization();
+        $positionId = $service->installOrdinary($actor, $dioceseA, $bishop, null,
+            date('Y-m-d', strtotime('-12 years')), 'ordinary-register-end');
+
+        self::assertNotNull($positionId);
+        $endedOn = date('Y-m-d', strtotime('-1 day'));
+        $reason = 'Transferred to another diocese';
+        self::assertTrue($service->endOrdinaryOffice($actor, $positionId, $endedOn, $reason));
+
+        $position = $this->db->table('leadership_position')->where('id', $positionId)->get()->getRowArray();
+        self::assertSame(0, (int) $position['active']);
+        self::assertSame($endedOn, $position['ended_at']);
+        self::assertNotEmpty($position['revoked_at']);
+        self::assertStringContainsString("Office ended {$endedOn}: {$reason}", (string) $position['notes']);
+        self::assertSame(3, $this->db->table('clergy_access_grant')->where('source_position_id', $positionId)
+            ->where('revoked_at IS NOT NULL', null, false)->countAllResults());
+        self::assertSame(0, $this->db->table('auth_permissions_users')->where('user_id', $bishop)
+            ->whereIn('permission', ClergyReviewService::OFFICE_PERMISSIONS['diocesan_bishop'])->countAllResults());
+        self::assertSame(1, $this->db->table('clergy_ordination')->where('person_id', $personId)
+            ->where('order_code', 'bishop')->where('verification_status', 'verified')->countAllResults());
+        self::assertFalse($authorization->isCurrentOrdinary($bishop, $dioceseA));
+
+        [$successor] = $this->dioceseAdmin($dioceseA);
+        self::assertNotNull($service->installOrdinary($actor, $dioceseA, $successor, null,
+            date('Y-m-d'), 'ordinary-register-successor'));
+        self::assertTrue($authorization->isCurrentOrdinary($successor, $dioceseA));
+    }
+
+    public function testEndOrdinaryOfficeRefusesNonAdminInvalidDateEmptyReasonAndAlreadyEndedOffice(): void
+    {
+        [, $dioceseA] = $this->places();
+        $actor = $this->systemAdmin();
+        [$bishop] = $this->dioceseAdmin($dioceseA);
+        [$nonAdmin] = $this->personUser($dioceseA);
+        $service = $this->reviewService();
+        $positionId = $service->installOrdinary($actor, $dioceseA, $bishop, null,
+            date('Y-m-d'), 'ordinary-register-end-refusals');
+
+        self::assertNotNull($positionId);
+        self::assertFalse($service->endOrdinaryOffice($nonAdmin, $positionId, date('Y-m-d'), 'Valid reason'));
+        self::assertFalse($service->endOrdinaryOffice($actor, $positionId, date('Y-m-d', strtotime('-1 day')), 'Valid reason'));
+        self::assertFalse($service->endOrdinaryOffice($actor, $positionId, date('Y-m-d'), '   '));
+        self::assertTrue($service->endOrdinaryOffice($actor, $positionId, date('Y-m-d'), 'Valid reason'));
+        self::assertFalse($service->endOrdinaryOffice($actor, $positionId, date('Y-m-d'), 'Already ended'));
+    }
+
     private function assertOrdinaryInstalled(int $bishop, int $dioceseA, int $dioceseB): void
     {
         $authorization = $this->authorization();
