@@ -64,14 +64,16 @@ $openModal = (string) session('open_modal');
                                     <?php if ($ordinary !== null): ?>
                                         <?= esc((string) $ordinary['started_at']) ?>
                                     <?php else: ?>
+                                        <span class="text-muted">&mdash;</span>
+                                    <?php endif; ?>
+                                </td>
+                                <td>
+                                    <?php if ($ordinary !== null): ?>
                                         <button type="button" class="btn btn-outline-danger btn-sm"
                                             data-bs-toggle="modal" data-bs-target="#endOfficeModal<?= $dioceseId ?>">
                                             <?= lang('System.diocesanOrdinaryEndOffice') ?>
                                         </button>
-                                    <?php endif; ?>
-                                </td>
-                                <td>
-                                    <?php if ($ordinary === null): ?>
+                                    <?php else: ?>
                                         <?php if ($candidates === []): ?>
                                             <button type="button" class="btn btn-outline-primary btn-sm" disabled>
                                                 <?= lang('System.installOrdinary') ?>
@@ -83,8 +85,6 @@ $openModal = (string) session('open_modal');
                                                 <?= lang('System.installOrdinary') ?>
                                             </button>
                                         <?php endif; ?>
-                                    <?php else: ?>
-                                        <span class="text-muted">&mdash;</span>
                                     <?php endif; ?>
                                 </td>
                             </tr>

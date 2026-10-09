@@ -42,14 +42,33 @@ final class SystemDiocesanOrdinariesFeatureTest extends CIUnitTestCase
 
     public function testSystemAdminCanViewDiocesanOrdinaries(): void
     {
-        [, $dioceseId] = $this->createDiocese('Feature Ordinary Diocese');
-        $adminId = $this->createAccount('systemadmin', $dioceseId, 'System', 'Admin');
+        [, $installedDioceseId] = $this->createDiocese('Installed Feature Ordinary Diocese');
+        [, $vacantDioceseId] = $this->createDiocese('Vacant Feature Ordinary Diocese');
+        $adminId = $this->createAccount('systemadmin', $installedDioceseId, 'System', 'Admin');
+        $bishopId = $this->createAccount('dioceseadmin', $installedDioceseId, 'Installed', 'Bishop');
         $this->injectOrdinaryAuth($adminId, true);
+        $positionId = (new ClergyReviewService($this->db, new ClergyAuthorizationService($this->db)))
+            ->installOrdinary($adminId, $installedDioceseId, $bishopId, null, date('Y-m-d'),
+                'feature-test-rendered-ordinary');
 
         $response = $this->get('system/diocesan-ordinaries');
 
+        self::assertNotNull($positionId);
         $response->assertOK();
-        $response->assertSee('Feature Ordinary Diocese');
+        $response->assertSee('Installed Feature Ordinary Diocese');
+        $response->assertSee('Vacant Feature Ordinary Diocese');
+
+        $body = (string) $response->getBody();
+        self::assertStringContainsString(
+            'data-bs-target="#endOfficeModal' . $installedDioceseId . '"',
+            $body
+        );
+        self::assertStringNotContainsString(
+            'data-bs-target="#endOfficeModal' . $vacantDioceseId . '"',
+            $body
+        );
+        self::assertStringContainsString('id="endOfficeModal' . $installedDioceseId . '"', $body);
+        self::assertStringNotContainsString('id="endOfficeModal' . $vacantDioceseId . '"', $body);
     }
 
     public function testDioceseAdminCannotViewDiocesanOrdinaries(): void
