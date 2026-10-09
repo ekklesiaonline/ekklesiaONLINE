@@ -379,7 +379,7 @@ $queueName = static function (array $row): string {
 <?php if (($queues['can_appointments'] ?? false) || ($queues['can_ordination'] ?? false) || ($queues['can_governance'] ?? false)): ?>
 <!-- Review appointment request (approve / reject) -->
 <div class="modal fade" id="reviewRequestModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog"><form class="modal-content queue-form" method="post">
+    <div class="modal-dialog"><form class="modal-content queue-form" method="post" data-allow-repeat-submit="true">
         <div class="modal-header"><h5 class="modal-title"></h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div>
         <div class="modal-body">
             <p class="queue-subject small text-muted mb-2"></p>
@@ -398,7 +398,7 @@ $queueName = static function (array $row): string {
 
 <!-- Approve / revoke pending office -->
 <div class="modal fade" id="officeApproveModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog"><form class="modal-content queue-form" method="post">
+    <div class="modal-dialog"><form class="modal-content queue-form" method="post" data-allow-repeat-submit="true">
         <div class="modal-header"><h5 class="modal-title"><?= lang('Clergy.modalOfficeApproveTitle') ?></h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div>
         <div class="modal-body">
             <p class="queue-subject small text-muted mb-2"></p>
@@ -414,7 +414,7 @@ $queueName = static function (array $row): string {
 
 <!-- Review transition candidate (approve / reject) -->
 <div class="modal fade" id="reviewCandidateModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog"><form class="modal-content queue-form" method="post">
+    <div class="modal-dialog"><form class="modal-content queue-form" method="post" data-allow-repeat-submit="true">
         <div class="modal-header"><h5 class="modal-title"></h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div>
         <div class="modal-body">
             <p class="queue-subject small text-muted mb-2"></p>
@@ -448,7 +448,7 @@ $queueName = static function (array $row): string {
 
 <!-- Verify ordination -->
 <div class="modal fade" id="verifyOrdinationModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog"><form class="modal-content queue-form" method="post">
+    <div class="modal-dialog"><form class="modal-content queue-form" method="post" data-allow-repeat-submit="true">
         <div class="modal-header"><h5 class="modal-title"><?= lang('Clergy.modalVerifyOrdinationTitle') ?></h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div>
         <div class="modal-body">
             <p class="queue-subject small text-muted mb-2"></p>
@@ -489,7 +489,7 @@ $queueName = static function (array $row): string {
 
 <!-- Issue delegation -->
 <div class="modal fade" id="delegationIssueModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog"><form class="modal-content queue-form" method="post" action="<?= base_url('diocese/clergy-review/delegation/' . $dioceseId) ?>">
+    <div class="modal-dialog"><form class="modal-content queue-form" method="post" data-allow-repeat-submit="true" action="<?= base_url('diocese/clergy-review/delegation/' . $dioceseId) ?>">
         <div class="modal-header"><h5 class="modal-title"><?= lang('Clergy.modalDelegationIssueTitle') ?></h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div>
         <div class="modal-body">
             <div class="row g-2">
@@ -529,7 +529,7 @@ $queueName = static function (array $row): string {
 
 <!-- Generic confirm (revoke office / delegation) -->
 <div class="modal fade" id="confirmModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog"><form class="modal-content queue-form" method="post">
+    <div class="modal-dialog"><form class="modal-content queue-form" method="post" data-allow-repeat-submit="true">
         <div class="modal-header"><h5 class="modal-title"><?= lang('Clergy.modalConfirmTitle') ?></h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div>
         <div class="modal-body">
             <p class="queue-subject small text-muted mb-1"></p>
@@ -582,6 +582,21 @@ $queueName = static function (array $row): string {
     document.querySelectorAll('form.queue-form').forEach(function (form) {
         form.addEventListener('submit', function (e) {
             e.preventDefault();
+            const submit = form.querySelector('button[type="submit"], input[type="submit"]');
+            if (submit && submit.disabled) return;
+            const originalLabel = submit ? (submit.tagName === 'BUTTON' ? submit.innerHTML : submit.value) : null;
+            if (submit) {
+                submit.disabled = true;
+                if (submit.tagName === 'BUTTON') submit.innerHTML = 'Processing...';
+            }
+            const restore = function () {
+                if (submit) {
+                    submit.disabled = false;
+                    if (originalLabel !== null) {
+                        if (submit.tagName === 'BUTTON') submit.innerHTML = originalLabel; else submit.value = originalLabel;
+                    }
+                }
+            };
             const headers = { 'X-Requested-With': 'XMLHttpRequest', 'Content-Type': 'application/x-www-form-urlencoded' };
             if (csrfMeta) headers[csrfHeader] = csrfMeta.content;
             fetch(form.action, {
@@ -599,10 +614,12 @@ $queueName = static function (array $row): string {
                 } else {
                     const msg = (res.data && res.data.message) || <?= json_encode(lang('Clergy.queueActionFailed')) ?>;
                     if (typeof showAppToast === 'function') showAppToast(msg, 'danger'); else alert(msg);
+                    restore();
                 }
             }).catch(function () {
                 const msg = <?= json_encode(lang('Clergy.queueActionFailed')) ?>;
                 if (typeof showAppToast === 'function') showAppToast(msg, 'danger'); else alert(msg);
+                restore();
             });
         });
     });

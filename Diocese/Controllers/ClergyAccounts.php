@@ -249,6 +249,9 @@ class ClergyAccounts extends BaseController
                 ->get()->getResultArray();
 
             // Offices recorded but not yet approved, inside this diocese.
+            // Restricted to the role codes ClergyReviewService::approveOffice
+            // can action (OFFICE_PERMISSIONS); lay offices follow their own
+            // workflows.
             $queues['pending_offices'] = $db->table('leadership_position lp')
                 ->select('lp.id, lp.title, lp.role_code, lp.scope_type, lp.started_at,
                     pr.first_name, pr.last_name, c.name AS parish_name, dn.name AS deanery_name')
@@ -256,6 +259,10 @@ class ClergyAccounts extends BaseController
                 ->join('parish c', 'c.id = lp.parish_id', 'left')
                 ->join('deanery dn', 'dn.id = lp.deanery_id', 'left')
                 ->where('lp.active', 1)
+                ->whereIn('lp.role_code', [
+                    'diocesan_bishop', 'rector', 'priest_in_charge', 'interim_rector',
+                    'vicar', 'cathedral_dean', 'regional_dean', 'deanery_dean',
+                ])
                 ->where('lp.approved_at IS NULL', null, false)
                 ->where('lp.revoked_at IS NULL', null, false)
                 ->groupStart()
