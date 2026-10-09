@@ -171,6 +171,11 @@
                     </a>
                 </li>
                 <li class="nav-item">
+                    <a class="nav-link <?= (uri_string() === 'system/diocesan-ordinaries') ? 'active' : '' ?>" href="<?= base_url('system/diocesan-ordinaries') ?>">
+                        <i class="bi bi-person-badge" aria-hidden="true"></i> <?= lang('System.diocesanOrdinariesNav') ?>
+                    </a>
+                </li>
+                <li class="nav-item">
                     <a class="nav-link <?= (uri_string() === 'system/mission-outcomes') ? 'active' : '' ?>" href="<?= base_url('system/mission-outcomes') ?>">
                         <i class="bi bi-graph-up-arrow" aria-hidden="true"></i> <?= lang('App.navMissionOutcomes') ?>
                     </a>

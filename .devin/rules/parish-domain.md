@@ -80,7 +80,7 @@ trigger: always_on
   4. Scoped Application Capability (managed grants with explicit provenance).
   *Holy orders never imply administrative rank; administrative status never implies ecclesial or liturgical authority.*
 - **Ordination vs Office Invariant**: `leadership_position.clergy_order` is user-submitted/display data, **not** verified ordination. Sacramental or ordaining functions require verified records in `clergy_ordination`.
-- **Canonical Standing Blocks**: A status of `suspended` or `inhibited` in `clergy_canonical_status` hard-blocks all ministerial, signatory, and office functions across the diocese regardless of existing active office rows.
+- **Canonical Standing Blocks**: A status of `suspended` or `inhibited` in `clergy_canonical_status` hard-blocks all ministerial, signatory, and office functions in every diocese (system-wide) until its `effective_to` passes; transferred/retired are diocese-local.
 - **Deanery Scoping Rules**:
   - Diocese is the **only** parent of a deanery (`diocese_id` FK). Provinces have no direct deanery access.
   - Parishes without a deanery remain valid.

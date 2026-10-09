@@ -138,6 +138,9 @@ $routes->group('', ['filter' => 'session'], function ($routes) {
         $routes->get('system-admins', '\\App\\Controllers\\SystemAdminUsers::listSystemAdmins');
         $routes->get('province-admins', '\\App\\Controllers\\SystemAdminUsers::listProvinceAdmins');
         $routes->get('diocese-admins', '\\App\\Controllers\\SystemAdminUsers::listDioceseAdmins');
+        $routes->get('diocesan-ordinaries', '\\App\\Controllers\\SystemDiocesanOrdinaries::index');
+        $routes->post('diocesan-ordinaries/install/(:num)', '\\App\\Controllers\\SystemDiocesanOrdinaries::install/$1');
+        $routes->post('diocesan-ordinaries/end/(:num)', '\\App\\Controllers\\SystemDiocesanOrdinaries::endOffice/$1');
 
         $routes->get('settings', '\\App\\Controllers\\SystemSettings::index');
         $routes->post('settings/update', '\\App\\Controllers\\SystemSettings::update');
