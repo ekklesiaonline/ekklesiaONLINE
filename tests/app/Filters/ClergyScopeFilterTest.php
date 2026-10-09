@@ -25,6 +25,7 @@ final class ClergyScopeFilterTest extends CIUnitTestCase
 
     /** @var array<string, list<int>> */
     private array $created = [];
+    private ?int $reviewerUserId = null;
 
     protected function setUp(): void
     {
@@ -251,7 +252,7 @@ final class ClergyScopeFilterTest extends CIUnitTestCase
     {
         $this->row('clergy_ordination', [
             'person_id' => $person, 'order_code' => $order,
-            'verification_status' => 'verified', 'verified_by_user_id' => 77,
+            'verification_status' => 'verified', 'verified_by_user_id' => $this->reviewerUserId(),
             'verified_at' => date('Y-m-d H:i:s'),
         ]);
     }
@@ -270,7 +271,7 @@ final class ClergyScopeFilterTest extends CIUnitTestCase
             'user_id' => $user, 'person_id' => $person, 'scope_type' => $scope,
             $scope . '_id' => $id, 'role_code' => $role, 'title' => $role,
             'active' => 1, 'started_at' => date('Y-m-d', strtotime('-1 month')),
-            'approved_by_user_id' => 77, 'approved_at' => date('Y-m-d H:i:s'),
+            'approved_by_user_id' => $this->reviewerUserId(), 'approved_at' => date('Y-m-d H:i:s'),
             'approval_evidence_reference' => 'diocesan-appointment-register',
         ]);
     }
@@ -280,9 +281,18 @@ final class ClergyScopeFilterTest extends CIUnitTestCase
         return $this->row('clergy_access_grant', [
             'user_id' => $user, 'source_position_id' => $position,
             'permission' => $permission, 'scope_type' => $scope, 'scope_id' => $id,
-            'grant_type' => 'office', 'granted_by_user_id' => 77,
+            'grant_type' => 'office', 'granted_by_user_id' => $this->reviewerUserId(),
             'starts_at' => date('Y-m-d H:i:s', strtotime('-1 day')),
         ]);
+    }
+
+    private function reviewerUserId(): int
+    {
+        if ($this->reviewerUserId === null) {
+            $this->reviewerUserId = $this->row('users', ['username' => 'reviewer.' . uniqid(), 'active' => 1]);
+        }
+
+        return $this->reviewerUserId;
     }
 
     private function row(string $table, array $fields): int
