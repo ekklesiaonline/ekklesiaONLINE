@@ -239,6 +239,12 @@ final class ClergyReviewTest extends CIUnitTestCase
         self::assertSame(date('Y-m-d'), $row['effective_to']);
         self::assertSame('early-lift-1', $row['lift_evidence_reference']);
 
+        // A same-day lifted row still counts as active (effective_to >= today);
+        // a second lift must not overwrite the first lift's evidence.
+        self::assertNull($review->liftStanding($statusId, date('Y-m-d'), 'early-lift-2', $reviewer));
+        $row = $this->db->table('clergy_canonical_status')->where('id', $statusId)->get()->getRowArray();
+        self::assertSame('early-lift-1', $row['lift_evidence_reference']);
+
         // A row whose window has already ended cannot be lifted.
         $endedId = $this->row('clergy_canonical_status', [
             'person_id' => $person, 'diocese_id' => $diocese, 'status_code' => 'suspended',
