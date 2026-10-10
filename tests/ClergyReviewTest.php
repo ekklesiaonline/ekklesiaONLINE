@@ -220,6 +220,34 @@ final class ClergyReviewTest extends CIUnitTestCase
         self::assertNull($review->liftStanding($statusId, date('Y-m-d'), 'lifting-decree-2', $reviewer));
     }
 
+    public function testLiftSuspensionShortensAScheduledEndDate(): void
+    {
+        [$diocese] = $this->places();
+        [$reviewer] = $this->ordinary($diocese);
+        $person = $this->row('person', ['first_name' => 'Scheduled', 'last_name' => 'Cleric']);
+        $statusId = $this->row('clergy_canonical_status', [
+            'person_id' => $person, 'diocese_id' => $diocese, 'status_code' => 'suspended',
+            'effective_from' => date('Y-m-d', strtotime('-1 month')),
+            'effective_to' => date('Y-m-d', strtotime('+6 months')),
+            'evidence_reference' => 'penal-decree-9', 'verified_by_user_id' => 999,
+        ]);
+        $review = new ClergyReviewService($this->db, $this->authorization());
+
+        // Early lift of a scheduled suspension shortens the window.
+        self::assertTrue($review->liftStanding($statusId, date('Y-m-d'), 'early-lift-1', $reviewer));
+        $row = $this->db->table('clergy_canonical_status')->where('id', $statusId)->get()->getRowArray();
+        self::assertSame(date('Y-m-d'), $row['effective_to']);
+        self::assertSame('early-lift-1', $row['lift_evidence_reference']);
+
+        // A row whose window has already ended cannot be lifted.
+        $endedId = $this->row('clergy_canonical_status', [
+            'person_id' => $person, 'diocese_id' => $diocese, 'status_code' => 'suspended',
+            'effective_from' => date('Y-m-d', strtotime('-2 months')),
+            'effective_to' => date('Y-m-d', strtotime('-1 month')),
+        ]);
+        self::assertNull($review->liftStanding($endedId, date('Y-m-d'), 'too-late', $reviewer));
+    }
+
     public function testLiftSuspensionRejectsInvalidDatesEvidenceStatusAndReviewers(): void
     {
         [$diocese] = $this->places();

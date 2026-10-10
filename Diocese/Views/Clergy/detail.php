@@ -93,7 +93,8 @@ $fullName = preg_replace('/\s+/', ' ', $fullName);
                             $today = date('Y-m-d');
                             $standingActive = ($standing['effective_from'] ?? '') <= $today
                                 && (($standing['effective_to'] ?? null) === null || $standing['effective_to'] >= $today);
-                            $liftable = $standingActive && in_array($stCode, ['suspended', 'inhibited'], true)
+                            $liftable = ! empty($canonical['can_lift']) && $standingActive
+                                && in_array($stCode, ['suspended', 'inhibited'], true)
                                 && empty($standing['lifted_at']);
                             ?>
                             <li class="list-group-item px-0">
@@ -226,7 +227,7 @@ $fullName = preg_replace('/\s+/', ' ', $fullName);
             <div class="modal-body">
                 <div id="liftNoStandingWarning" class="alert alert-warning alert-dismissible fade show d-none" role="alert">
                     <?= esc(lang('Clergy.liftNoStandingWarning')) ?>
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    <button type="button" class="btn-close" id="liftWarningDismiss" aria-label="Close"></button>
                 </div>
                 <div class="mb-3">
                     <label for="liftLiftedOn" class="form-label"><?= lang('Clergy.fieldLiftedOn') ?></label>
@@ -256,10 +257,19 @@ $fullName = preg_replace('/\s+/', ' ', $fullName);
     document.querySelectorAll('.lift-standing-btn').forEach(function (btn) {
         btn.addEventListener('click', function () {
             standingId = parseInt(btn.getAttribute('data-standing-id'), 10);
-            document.getElementById('liftNoStandingWarning').classList.toggle('d-none', positiveCount > 0);
+            var warning = document.getElementById('liftNoStandingWarning');
+            if (warning) {
+                warning.classList.toggle('d-none', positiveCount > 0);
+            }
             modal.show();
         });
     });
+    var warnDismiss = document.getElementById('liftWarningDismiss');
+    if (warnDismiss) {
+        warnDismiss.addEventListener('click', function () {
+            document.getElementById('liftNoStandingWarning').classList.add('d-none');
+        });
+    }
     document.getElementById('liftStandingSubmit').addEventListener('click', function () {
         var csrfMeta = document.querySelector('meta[name="csrf-token"]');
         var csrfHeader = document.querySelector('meta[name="csrf-header"]')?.content ?? 'X-CSRF-TOKEN';
@@ -285,12 +295,14 @@ $fullName = preg_replace('/\s+/', ' ', $fullName);
                 var hasStanding = res.data && res.data.has_active_standing;
                 if (!hasStanding) {
                     showAppToast('<?= esc(lang('Clergy.liftNoStandingWarning'), 'js') ?>', 'warning');
+                } else if (document.getElementById('liftLiftedOn').value >= '<?= esc(date('Y-m-d'), 'js') ?>') {
+                    showAppToast('<?= esc(lang('Clergy.liftEffectiveEndOfDay'), 'js') ?>', 'warning');
                 } else {
                     showAppToast('<?= esc(lang('Clergy.liftSuccess'), 'js') ?>', 'success');
                 }
                 window.location.reload();
             } else {
-                showAppToast((res && res.message) || '<?= esc(lang('Clergy.liftFailed'), 'js') ?>', 'danger');
+                showAppToast('<?= esc(lang('Clergy.liftFailed'), 'js') ?>', 'danger');
             }
         }).catch(function () {
             showAppToast('<?= esc(lang('Clergy.liftFailed'), 'js') ?>', 'danger');

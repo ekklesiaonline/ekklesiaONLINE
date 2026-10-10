@@ -318,15 +318,24 @@ final class ClergyReviewService
             return null;
         }
         $today = date('Y-m-d');
-        if (! $this->validDate($liftedOn) || $liftedOn > $today
+        $currentTo = $row['effective_to'] === null ? null : (string) $row['effective_to'];
+        if (($currentTo !== null && $currentTo < $today)
+            || ! $this->validDate($liftedOn) || $liftedOn > $today
             || $liftedOn < (string) $row['effective_from']
             || trim($evidenceReference) === '' || mb_strlen(trim($evidenceReference), 'UTF-8') > 255
             || ! $this->canReview($reviewerId, (int) $row['person_id'],
                 (int) $row['diocese_id'], 'clergy.ordination.verify')) {
             return null;
         }
-        $this->db->table('clergy_canonical_status')->where('id', $statusId)
-            ->where('effective_to', null)->update([
+        // Guard on the effective_to we read so a concurrent lift or a
+        // rescheduled end fails instead of silently overwriting.
+        $update = $this->db->table('clergy_canonical_status')->where('id', $statusId);
+        if ($currentTo === null) {
+            $update->where('effective_to', null);
+        } else {
+            $update->where('effective_to', $currentTo);
+        }
+        $update->update([
                 'effective_to' => $liftedOn,
                 'lift_evidence_reference' => trim($evidenceReference),
                 'lifted_by_user_id' => $reviewerId,

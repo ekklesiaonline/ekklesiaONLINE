@@ -4,6 +4,7 @@ namespace Diocese\Controllers;
 
 use App\Controllers\BaseController;
 use App\Services\AccountCreationService;
+use App\Services\ClergyAuthorizationService;
 use App\Services\ClergyInvitationService;
 use App\Services\ClergyReviewService;
 
@@ -175,9 +176,11 @@ class ClergyAccounts extends BaseController
         $standings = $ordination = $appointments = [];
         $personIdList = array_values($personIds);
         if ($personIdList !== [] && $db->tableExists('clergy_canonical_status')) {
+            $today = date('Y-m-d');
             $rows = $db->table('clergy_canonical_status')
                 ->whereIn('person_id', $personIdList)
                 ->where('diocese_id', $dioceseId)
+                ->orderBy("(effective_to IS NULL OR effective_to >= " . $db->escape($today) . ") DESC", '', false)
                 ->orderBy('effective_from', 'DESC')
                 ->get()->getResultArray();
             foreach ($rows as $row) {
@@ -798,6 +801,8 @@ class ClergyAccounts extends BaseController
             'grants'       => $grants,
             'positive_standing_count' => $personId > 0
                 ? (new ClergyReviewService())->activePositiveStandingCount($personId, $dioceseId) : 0,
+            'can_lift' => auth()->user()->can('clergy.ordination.verify')
+                && (new ClergyAuthorizationService())->allows((int) auth()->id(), 'clergy.ordination.verify', 'diocese', $dioceseId),
         ];
     }
 }
