@@ -817,6 +817,11 @@ final class ClergyReviewService
 
     private function isSystemAdminUser(int $userId): bool
     {
+        $sessionUserId = function_exists('auth') ? auth()->id() : null;
+        if ($sessionUserId !== null && (int) $sessionUserId !== $userId) {
+            return false;
+        }
+
         return $userId > 0 && $this->db->table('auth_groups_users')->where('user_id', $userId)
             ->where('group', 'systemadmin')->countAllResults() > 0;
     }

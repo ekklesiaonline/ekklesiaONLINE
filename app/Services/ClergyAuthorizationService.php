@@ -100,6 +100,7 @@ final class ClergyAuthorizationService
                 && in_array($permission, ['governance.diocese.approve', 'clergy.ordination.verify', 'clergy.appointment.manage'], true)
                 && $scopeType === 'diocese' && $scopeId === $targetId
                 && (int) $grant['granted_by_user_id'] !== $actorId
+                && ! $this->hasSystemWideSuspension($this->personForUser($actorId))
                 && $this->currentOrdinary((int) $grant['granted_by_user_id'], $dioceseId)) {
                 return $grant;
             }
