@@ -108,7 +108,7 @@ return [
     'standingSummary' => 'Estado Canónico',
     'noOrdinations' => 'Sin registros de ordenación.',
     'noStanding' => 'Sin registros de estado canónico en esta diócesis.',
-    'canonicalFieldsReadOnlyHelp' => 'La ordenación y el estado canónico son registros diocesanos y no se pueden editar aquí.',
+    'canonicalFieldsReadOnlyHelp' => 'La ordenación y el estado canónico son registros diocesanos; las suspensiones solo pueden levantarse, no editarse.',
 
     // Work queues
     'queueWorkQueues' => 'Colas de Trabajo',
@@ -179,6 +179,15 @@ return [
     'grantStatus.expired' => 'Vencido',
     'grantStatus.revoked' => 'Revocado',
     'processing' => 'Procesando...',
+
+    // Lift suspension
+    'actionLiftSuspension' => 'Levantar',
+    'liftModalTitle' => 'Levantar suspensión/inhibición',
+    'fieldLiftedOn' => 'Levantada el',
+    'liftNoStandingWarning' => 'Levantar esta suspensión dejará a esta persona sin estado resident/licensed activo — registre un nuevo estado para restaurar su función.',
+    'liftSuccess' => 'Estado levantado.',
+    'liftFailed' => 'No se pudo levantar el estado.',
+    'liftEffectiveEndOfDay' => 'Levantamiento registrado — la suspensión sigue vigente hasta el final del día de hoy.',
 
     // Invitation Email
     'invitationSubject' => 'Invitación a Cuenta de Clero',

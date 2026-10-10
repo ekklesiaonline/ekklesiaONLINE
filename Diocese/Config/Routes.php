@@ -13,6 +13,7 @@ $routes->group('', ['filter' => 'session'], function ($routes) {
         $routes->post('candidates/(:num)/review/(:num)', '\\App\\Controllers\\Diocese\\ClergyReview::reviewCandidate/$1/$2', ['filter' => 'permission:clergy.ordination.verify']);
         $routes->post('ordination/(:num)', '\\App\\Controllers\\Diocese\\ClergyReview::verifyOrdination/$1', ['filter' => 'permission:clergy.ordination.verify']);
         $routes->post('standing/(:num)', '\\App\\Controllers\\Diocese\\ClergyReview::standing/$1', ['filter' => 'permission:clergy.ordination.verify']);
+        $routes->post('standing/(:num)/lift', '\\App\\Controllers\\Diocese\\ClergyReview::liftStanding/$1', ['filter' => 'permission:clergy.ordination.verify']);
         $routes->post('office/(:num)/approve', '\\App\\Controllers\\Diocese\\ClergyReview::approveOffice/$1', ['filter' => 'permission:clergy.appointment.manage']);
         $routes->post('office/(:num)/revoke', '\\App\\Controllers\\Diocese\\ClergyReview::revokeOffice/$1', ['filter' => 'permission:clergy.appointment.manage']);
         $routes->post('mission-office/(:num)/approve', '\\App\\Controllers\\Diocese\\ClergyReview::approveMissionOffice/$1', ['filter' => 'permission:clergy.appointment.manage']);

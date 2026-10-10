@@ -112,7 +112,7 @@ return [
     'standingSummary' => 'Canonical Standing',
     'noOrdinations' => 'No ordination records.',
     'noStanding' => 'No canonical standing records in this diocese.',
-    'canonicalFieldsReadOnlyHelp' => 'Ordination and canonical standing are diocese-owned records and cannot be edited here.',
+    'canonicalFieldsReadOnlyHelp' => 'Ordination and canonical standing are diocese-owned records; suspensions may only be lifted, not edited.',
 
     // Work queues
     'queueWorkQueues' => 'Work Queues',
@@ -183,6 +183,15 @@ return [
     'grantStatus.expired' => 'Expired',
     'grantStatus.revoked' => 'Revoked',
     'processing' => 'Processing...',
+
+    // Lift suspension
+    'actionLiftSuspension' => 'Lift',
+    'liftModalTitle' => 'Lift suspension/inhibition',
+    'fieldLiftedOn' => 'Lifted on',
+    'liftNoStandingWarning' => 'Lifting this suspension will leave this person with no active resident/licensed standing — record new standing to restore function.',
+    'liftSuccess' => 'Standing lifted.',
+    'liftFailed' => 'Standing could not be lifted.',
+    'liftEffectiveEndOfDay' => 'Lift recorded — the suspension remains in effect through the end of today.',
 
     // Invitation Email
     'invitationSubject' => 'Clergy Account Invitation',
