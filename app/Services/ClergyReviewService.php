@@ -319,7 +319,8 @@ final class ClergyReviewService
         }
         $today = date('Y-m-d');
         $currentTo = $row['effective_to'] === null ? null : (string) $row['effective_to'];
-        if (($currentTo !== null && $currentTo < $today)
+        if (($row['lifted_at'] ?? null) !== null
+            || ($currentTo !== null && $currentTo < $today)
             || ! $this->validDate($liftedOn) || $liftedOn > $today
             || $liftedOn < (string) $row['effective_from']
             || trim($evidenceReference) === '' || mb_strlen(trim($evidenceReference), 'UTF-8') > 255
@@ -328,8 +329,11 @@ final class ClergyReviewService
             return null;
         }
         // Guard on the effective_to we read so a concurrent lift or a
-        // rescheduled end fails instead of silently overwriting.
-        $update = $this->db->table('clergy_canonical_status')->where('id', $statusId);
+        // rescheduled end fails instead of silently overwriting; the
+        // lifted_at IS NULL check stops a second same-day lift from
+        // replacing the first lift's evidence.
+        $update = $this->db->table('clergy_canonical_status')->where('id', $statusId)
+            ->where('lifted_at', null);
         if ($currentTo === null) {
             $update->where('effective_to', null);
         } else {
