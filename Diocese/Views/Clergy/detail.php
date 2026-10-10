@@ -212,6 +212,9 @@ $fullName = preg_replace('/\s+/', ' ', $fullName);
     </div>
 </div>
 
+<?= $this->endSection() ?>
+
+<?= $this->section('modals') ?>
 <div class="modal fade" id="liftStandingModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
@@ -240,7 +243,9 @@ $fullName = preg_replace('/\s+/', ' ', $fullName);
         </div>
     </div>
 </div>
+<?= $this->endSection() ?>
 
+<?= $this->section('scripts') ?>
 <script>
 (function () {
     var positiveCount = <?= (int) ($canonical['positive_standing_count'] ?? 0) ?>;
@@ -292,5 +297,4 @@ $fullName = preg_replace('/\s+/', ' ', $fullName);
     });
 })();
 </script>
-
 <?= $this->endSection() ?>
