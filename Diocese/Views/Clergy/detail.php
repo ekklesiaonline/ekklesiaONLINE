@@ -93,7 +93,8 @@ $fullName = preg_replace('/\s+/', ' ', $fullName);
                             $today = date('Y-m-d');
                             $standingActive = ($standing['effective_from'] ?? '') <= $today
                                 && (($standing['effective_to'] ?? null) === null || $standing['effective_to'] >= $today);
-                            $liftable = $standingActive && in_array($stCode, ['suspended', 'inhibited'], true);
+                            $liftable = $standingActive && in_array($stCode, ['suspended', 'inhibited'], true)
+                                && empty($standing['lifted_at']);
                             ?>
                             <li class="list-group-item px-0">
                                 <div class="d-flex justify-content-between align-items-center">
