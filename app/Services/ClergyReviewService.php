@@ -305,6 +305,51 @@ final class ClergyReviewService
         return $id !== false ? (int) $id : null;
     }
 
+    /**
+     * Lift an active suspension/inhibition by closing its effective window.
+     * Writes no new standing row: the original evidence_reference and
+     * verified_by_user_id still record the decree that imposed it.
+     * Returns true on success, null on any validation/scope failure.
+     */
+    public function liftStanding(int $statusId, string $liftedOn, string $evidenceReference, int $reviewerId): ?bool
+    {
+        $row = $this->db->table('clergy_canonical_status')->where('id', $statusId)->get()->getRowArray();
+        if ($row === null || ! in_array((string) ($row['status_code'] ?? ''), ['suspended', 'inhibited'], true)) {
+            return null;
+        }
+        $today = date('Y-m-d');
+        if (! $this->validDate($liftedOn) || $liftedOn > $today
+            || $liftedOn < (string) $row['effective_from']
+            || trim($evidenceReference) === '' || mb_strlen(trim($evidenceReference), 'UTF-8') > 255
+            || ! $this->canReview($reviewerId, (int) $row['person_id'],
+                (int) $row['diocese_id'], 'clergy.ordination.verify')) {
+            return null;
+        }
+        $this->db->table('clergy_canonical_status')->where('id', $statusId)
+            ->where('effective_to', null)->update([
+                'effective_to' => $liftedOn,
+                'lift_evidence_reference' => trim($evidenceReference),
+                'lifted_by_user_id' => $reviewerId,
+                'lifted_at' => date('Y-m-d H:i:s'),
+            ]);
+        return $this->db->affectedRows() === 1 ? true : null;
+    }
+
+    /** Count of currently-effective resident/licensed standing rows for a person in a diocese. */
+    public function activePositiveStandingCount(int $personId, int $dioceseId): int
+    {
+        if ($personId <= 0 || $dioceseId <= 0) {
+            return 0;
+        }
+        $today = date('Y-m-d');
+        return (int) $this->db->table('clergy_canonical_status')
+            ->where('person_id', $personId)->where('diocese_id', $dioceseId)
+            ->whereIn('status_code', ['resident', 'licensed'])
+            ->where('effective_from <=', $today)
+            ->groupStart()->where('effective_to', null)->orWhere('effective_to >=', $today)->groupEnd()
+            ->countAllResults();
+    }
+
     /** Reviewing a migrated candidate records evidence only, never a grant. */
     public function reviewCandidate(int $candidateId, int $dioceseId, string $decision,
         ?string $confirmedOrder, ?string $reasonCode, int $reviewerId): bool

@@ -796,6 +796,8 @@ class ClergyAccounts extends BaseController
             'offices'      => $offices,
             'appointments' => $appointments,
             'grants'       => $grants,
+            'positive_standing_count' => $personId > 0
+                ? (new ClergyReviewService())->activePositiveStandingCount($personId, $dioceseId) : 0,
         ];
     }
 }

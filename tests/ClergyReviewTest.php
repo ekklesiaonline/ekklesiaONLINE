@@ -188,6 +188,79 @@ final class ClergyReviewTest extends CIUnitTestCase
             ->where('key', 'governance.report.signatures_enabled')->get()->getRow('value'));
     }
 
+    public function testLiftSuspensionClosesWindowAndIsGuardedAgainstDoubleLift(): void
+    {
+        [$diocese] = $this->places();
+        [$reviewer] = $this->ordinary($diocese);
+        $person = $this->row('person', ['first_name' => 'Suspended', 'last_name' => 'Cleric']);
+        $statusId = $this->row('clergy_canonical_status', [
+            'person_id' => $person, 'diocese_id' => $diocese, 'status_code' => 'suspended',
+            'effective_from' => date('Y-m-d', strtotime('-1 month')),
+            'evidence_reference' => 'penal-decree-1', 'verified_by_user_id' => 999,
+        ]);
+        $auth = $this->authorization();
+        $review = new ClergyReviewService($this->db, $auth);
+        self::assertTrue($auth->hasSystemWideSuspension($person));
+        self::assertTrue($auth->hasDisqualifyingStanding($person, $diocese));
+
+        $liftedOn = date('Y-m-d', strtotime('-1 day'));
+        self::assertTrue($review->liftStanding($statusId, $liftedOn, 'lifting-decree-1', $reviewer));
+        $row = $this->db->table('clergy_canonical_status')->where('id', $statusId)->get()->getRowArray();
+        self::assertSame($liftedOn, $row['effective_to']);
+        self::assertSame('lifting-decree-1', $row['lift_evidence_reference']);
+        self::assertSame($reviewer, (int) $row['lifted_by_user_id']);
+        self::assertNotNull($row['lifted_at']);
+        self::assertSame('penal-decree-1', $row['evidence_reference']);
+        self::assertSame(999, (int) $row['verified_by_user_id']);
+        self::assertFalse($auth->hasSystemWideSuspension($person));
+        self::assertFalse($auth->hasDisqualifyingStanding($person, $diocese));
+        self::assertSame(0, $review->activePositiveStandingCount($person, $diocese));
+
+        // An already-lifted row cannot be lifted twice.
+        self::assertNull($review->liftStanding($statusId, date('Y-m-d'), 'lifting-decree-2', $reviewer));
+    }
+
+    public function testLiftSuspensionRejectsInvalidDatesEvidenceStatusAndReviewers(): void
+    {
+        [$diocese] = $this->places();
+        [$reviewer, $reviewerPerson] = $this->ordinary($diocese);
+        $person = $this->row('person', ['first_name' => 'Suspended', 'last_name' => 'Cleric']);
+        $review = new ClergyReviewService($this->db, $this->authorization());
+        $make = function (string $status, string $from) use ($person, $diocese): int {
+            return $this->row('clergy_canonical_status', [
+                'person_id' => $person, 'diocese_id' => $diocese, 'status_code' => $status,
+                'effective_from' => $from, 'evidence_reference' => 'decree', 'verified_by_user_id' => 999,
+            ]);
+        };
+
+        $today = date('Y-m-d');
+        $id = $make('inhibited', date('Y-m-d', strtotime('-1 month')));
+        self::assertNull($review->liftStanding($id, date('Y-m-d', strtotime('+1 day')), 'decree-lift', $reviewer)); // future
+        self::assertNull($review->liftStanding($id, 'not-a-date', 'decree-lift', $reviewer));
+        self::assertNull($review->liftStanding($id, date('Y-m-d', strtotime('-2 months')), 'decree-lift', $reviewer)); // before effective_from
+        self::assertNull($review->liftStanding($id, $today, '   ', $reviewer));
+        self::assertNull($review->liftStanding($id, $today, str_repeat('x', 256), $reviewer));
+
+        // Non-suspension codes are not liftable.
+        self::assertNull($review->liftStanding($make('licensed', date('Y-m-d', strtotime('-1 month'))), $today, 'd', $reviewer));
+        self::assertNull($review->liftStanding($make('retired', date('Y-m-d', strtotime('-1 month'))), $today, 'd', $reviewer));
+
+        // A reviewer from another diocese lacks clergy.ordination.verify here.
+        $otherDiocese = $this->row('diocese', ['province_id' => $this->created['province'][0], 'name' => 'Other']);
+        [$otherReviewer] = $this->ordinary($otherDiocese);
+        self::assertNull($review->liftStanding($id, $today, 'decree-lift', $otherReviewer));
+
+        self::assertTrue($review->liftStanding($id, $today, 'decree-lift', $reviewer));
+
+        // Self-review is rejected. (Checked last: a live suspension on the
+        // reviewer would also strip their own standing for other assertions.)
+        $ownRow = $this->row('clergy_canonical_status', [
+            'person_id' => $reviewerPerson, 'diocese_id' => $diocese, 'status_code' => 'suspended',
+            'effective_from' => $today, 'verified_by_user_id' => 999,
+        ]);
+        self::assertNull($review->liftStanding($ownRow, $today, 'decree-lift', $reviewer));
+    }
+
     private function authorization(): ClergyAuthorizationService
     {
         return new ClergyAuthorizationService($this->db, static fn (): bool => true);

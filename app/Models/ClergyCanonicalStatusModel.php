@@ -13,6 +13,7 @@ class ClergyCanonicalStatusModel extends Model
     protected $returnType = 'array';
     protected $allowedFields = [
         'person_id', 'diocese_id', 'status_code', 'effective_from', 'effective_to', 'evidence_reference', 'verified_by_user_id',
+        'lift_evidence_reference', 'lifted_by_user_id', 'lifted_at',
     ];
     protected $useTimestamps = true;
     protected array $casts = [

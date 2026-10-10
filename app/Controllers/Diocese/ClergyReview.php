@@ -179,6 +179,49 @@ class ClergyReview extends BaseController
         return $this->jsonResponse(['success' => true, 'message' => 'Canonical standing recorded.', 'data' => ['id' => $id]], 201);
     }
 
+    /**
+     * Lift an active suspension/inhibition by closing its effective window.
+     * Jurisdiction is read from the standing row's own diocese_id — the
+     * request body can never move a lift across dioceses.
+     */
+    public function liftStanding(int $statusId): ResponseInterface
+    {
+        $row = db_connect()->table('clergy_canonical_status')->where('id', $statusId)->get()->getRowArray();
+        if ($row === null) {
+            return $this->jsonResponse($this->apiErrorPayload('Canonical standing not found.', 404, 'STANDING_NOT_FOUND'), 404);
+        }
+        $dioceseId = (int) $row['diocese_id'];
+        if (! $this->authorized('clergy.ordination.verify', $dioceseId)) {
+            return $this->jsonResponse($this->apiErrorPayload('Forbidden', 403, 'SCOPE_FORBIDDEN'), 403);
+        }
+        if (! $this->validate([
+            'lifted_on' => 'required|valid_date',
+            'evidence_reference' => 'required|max_length[255]',
+        ])) {
+            return $this->jsonResponse($this->apiErrorPayload('Invalid lift evidence.', 422, 'VALIDATION_FAILED', $this->validator->getErrors()), 422);
+        }
+        $service = new ClergyReviewService();
+        $result = $service->liftStanding(
+            $statusId,
+            (string) $this->request->getPost('lifted_on'),
+            (string) $this->request->getPost('evidence_reference'),
+            (int) auth()->id()
+        );
+        if ($result === null) {
+            return $this->jsonResponse($this->apiErrorPayload('Standing cannot be lifted.', 409, 'STANDING_LIFT_CONFLICT'), 409);
+        }
+        $this->audit()->log('clergy.standing.lift', [
+            'entity_type' => 'clergy_canonical_status', 'entity_id' => $statusId,
+            'diocese_id' => $dioceseId,
+        ]);
+        $hasActiveStanding = $service->activePositiveStandingCount((int) $row['person_id'], $dioceseId) > 0;
+        return $this->jsonResponse([
+            'success' => true,
+            'message' => 'Canonical standing lifted.',
+            'data' => ['id' => $statusId, 'has_active_standing' => $hasActiveStanding],
+        ]);
+    }
+
     public function approveOffice(int $positionId): ResponseInterface
     {
         if ($this->requirePermission('clergy.appointment.manage')) {

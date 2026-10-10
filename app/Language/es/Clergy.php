@@ -180,6 +180,14 @@ return [
     'grantStatus.revoked' => 'Revocado',
     'processing' => 'Procesando...',
 
+    // Lift suspension
+    'actionLiftSuspension' => 'Levantar',
+    'liftModalTitle' => 'Levantar suspensión/inhibición',
+    'fieldLiftedOn' => 'Levantada el',
+    'liftNoStandingWarning' => 'Levantar esta suspensión dejará a esta persona sin estado resident/licensed activo — registre un nuevo estado para restaurar su función.',
+    'liftSuccess' => 'Estado levantado.',
+    'liftFailed' => 'No se pudo levantar el estado.',
+
     // Invitation Email
     'invitationSubject' => 'Invitación a Cuenta de Clero',
     'invitationGreeting' => 'Ha sido invitado a crear una cuenta de clero.',

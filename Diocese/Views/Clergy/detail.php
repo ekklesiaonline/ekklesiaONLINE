@@ -87,14 +87,33 @@ $fullName = preg_replace('/\s+/', ' ', $fullName);
                 <?php if (!empty($canonical['standings'])): ?>
                     <ul class="list-group list-group-flush">
                         <?php foreach ($canonical['standings'] as $standing): ?>
-                            <?php $stCode = strtolower((string) ($standing['status_code'] ?? '')); $stColor = in_array($stCode, ['suspended', 'inhibited'], true) ? 'danger' : 'success'; ?>
+                            <?php
+                            $stCode = strtolower((string) ($standing['status_code'] ?? ''));
+                            $stColor = in_array($stCode, ['suspended', 'inhibited'], true) ? 'danger' : 'success';
+                            $today = date('Y-m-d');
+                            $standingActive = ($standing['effective_from'] ?? '') <= $today
+                                && (($standing['effective_to'] ?? null) === null || $standing['effective_to'] >= $today);
+                            $liftable = $standingActive && in_array($stCode, ['suspended', 'inhibited'], true);
+                            ?>
                             <li class="list-group-item px-0">
                                 <div class="d-flex justify-content-between align-items-center">
                                     <span><?= esc($standing['status_code'] ?? '-') ?></span>
-                                    <span class="badge border border-<?= $stColor ?> text-<?= $stColor ?> fw-normal"><?= esc($standing['effective_from'] ?? '') ?><?= ($standing['effective_to'] ?? null) !== null ? ' – ' . esc($standing['effective_to']) : '' ?></span>
+                                    <span class="d-flex align-items-center gap-2">
+                                        <span class="badge border border-<?= $stColor ?> text-<?= $stColor ?> fw-normal"><?= esc($standing['effective_from'] ?? '') ?><?= ($standing['effective_to'] ?? null) !== null ? ' – ' . esc($standing['effective_to']) : '' ?></span>
+                                        <?php if ($liftable): ?>
+                                            <button type="button" class="btn btn-sm btn-outline-warning lift-standing-btn"
+                                                data-standing-id="<?= (int) $standing['id'] ?>"
+                                                data-status-code="<?= esc($stCode, 'attr') ?>">
+                                                <?= lang('Clergy.actionLiftSuspension') ?>
+                                            </button>
+                                        <?php endif; ?>
+                                    </span>
                                 </div>
                                 <?php if (trim((string) ($standing['evidence_reference'] ?? '')) !== ''): ?>
                                     <small class="text-muted d-block"><?= esc(lang('Clergy.fieldEvidenceReference')) ?>: <?= esc($standing['evidence_reference']) ?></small>
+                                <?php endif; ?>
+                                <?php if (trim((string) ($standing['lift_evidence_reference'] ?? '')) !== ''): ?>
+                                    <small class="text-muted d-block"><?= esc(lang('Clergy.actionLiftSuspension')) ?>: <?= esc($standing['lifted_at'] ?? '') ?> · <?= esc($standing['lift_evidence_reference']) ?></small>
                                 <?php endif; ?>
                             </li>
                         <?php endforeach; ?>
@@ -192,5 +211,86 @@ $fullName = preg_replace('/\s+/', ' ', $fullName);
         </div>
     </div>
 </div>
+
+<div class="modal fade" id="liftStandingModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><?= lang('Clergy.liftModalTitle') ?></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="liftNoStandingWarning" class="alert alert-warning alert-dismissible fade show d-none" role="alert">
+                    <?= esc(lang('Clergy.liftNoStandingWarning')) ?>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+                <div class="mb-3">
+                    <label for="liftLiftedOn" class="form-label"><?= lang('Clergy.fieldLiftedOn') ?></label>
+                    <input type="date" class="form-control" id="liftLiftedOn" max="<?= esc(date('Y-m-d')) ?>" value="<?= esc(date('Y-m-d')) ?>">
+                </div>
+                <div class="mb-0">
+                    <label for="liftEvidence" class="form-label"><?= lang('Clergy.fieldEvidenceReference') ?></label>
+                    <input type="text" class="form-control" id="liftEvidence" maxlength="255">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal"><?= lang('App.cancel') ?></button>
+                <button type="button" class="btn btn-outline-warning" id="liftStandingSubmit"><?= lang('Clergy.actionLiftSuspension') ?></button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+(function () {
+    var positiveCount = <?= (int) ($canonical['positive_standing_count'] ?? 0) ?>;
+    var modalEl = document.getElementById('liftStandingModal');
+    var modal = new bootstrap.Modal(modalEl);
+    var standingId = 0;
+    document.querySelectorAll('.lift-standing-btn').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            standingId = parseInt(btn.getAttribute('data-standing-id'), 10);
+            document.getElementById('liftNoStandingWarning').classList.toggle('d-none', positiveCount > 0);
+            modal.show();
+        });
+    });
+    document.getElementById('liftStandingSubmit').addEventListener('click', function () {
+        var csrfMeta = document.querySelector('meta[name="csrf-token"]');
+        var csrfHeader = document.querySelector('meta[name="csrf-header"]')?.content ?? 'X-CSRF-TOKEN';
+        var headers = {
+            'X-Requested-With': 'XMLHttpRequest',
+            'Content-Type': 'application/x-www-form-urlencoded',
+        };
+        if (csrfMeta) { headers[csrfHeader] = csrfMeta.content; }
+        fetch('<?= base_url('diocese/clergy-review/standing') ?>/' + standingId + '/lift', {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: headers,
+            body: new URLSearchParams({
+                lifted_on: document.getElementById('liftLiftedOn').value,
+                evidence_reference: document.getElementById('liftEvidence').value,
+            }).toString(),
+        }).then(function (r) {
+            var newToken = r.headers.get(csrfHeader);
+            if (newToken && csrfMeta) { csrfMeta.content = newToken; }
+            return r.json();
+        }).then(function (res) {
+            if (res && res.success) {
+                var hasStanding = res.data && res.data.has_active_standing;
+                if (!hasStanding) {
+                    showAppToast('<?= esc(lang('Clergy.liftNoStandingWarning'), 'js') ?>', 'warning');
+                } else {
+                    showAppToast('<?= esc(lang('Clergy.liftSuccess'), 'js') ?>', 'success');
+                }
+                window.location.reload();
+            } else {
+                showAppToast((res && res.message) || '<?= esc(lang('Clergy.liftFailed'), 'js') ?>', 'danger');
+            }
+        }).catch(function () {
+            showAppToast('<?= esc(lang('Clergy.liftFailed'), 'js') ?>', 'danger');
+        });
+    });
+})();
+</script>
 
 <?= $this->endSection() ?>

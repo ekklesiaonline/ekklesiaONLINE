@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests;
 
 use App\Services\ClergyAuthorizationService;
+use App\Services\ClergyReviewService;
 use App\Services\DeaneryService;
 use CodeIgniter\Test\CIUnitTestCase;
 use CodeIgniter\Test\DatabaseTestTrait;
@@ -176,6 +177,46 @@ final class ClergyAuthorizationTest extends CIUnitTestCase
         self::assertTrue($service->allows($user, 'governance.report.finalize_clergy', 'parish', $cathedral));
         $this->db->table('parish')->where('id', $cathedral)->update(['congregation_type' => 'parish']);
         self::assertFalse($service->allows($user, 'governance.report.finalize_clergy', 'parish', $cathedral));
+    }
+
+    public function testLiftingSuspensionRestoresStandingOnlyWhenPositiveRowRemains(): void
+    {
+        [$dioceseA] = $this->places();
+        $auth = $this->service();
+        $review = new ClergyReviewService($this->db, $auth);
+
+        // Reviewer: verified ordinary of diocese A.
+        [$reviewer, $reviewerPerson] = $this->personUser();
+        $this->order($reviewerPerson, 'bishop');
+        $this->standing($reviewerPerson, $dioceseA);
+        $office = $this->position($reviewer, $reviewerPerson, 'diocese', $dioceseA, 'diocesan_bishop');
+        $this->grant($reviewer, $office, 'clergy.ordination.verify', 'diocese', $dioceseA);
+
+        // Case 1: a still-open licensed row — lifting restores current standing automatically.
+        [, $personA] = $this->personUser();
+        $this->standing($personA, $dioceseA);
+        $suspensionA = $this->row('clergy_canonical_status', [
+            'person_id' => $personA, 'diocese_id' => $dioceseA, 'status_code' => 'suspended',
+            'effective_from' => date('Y-m-d', strtotime('-1 month')), 'verified_by_user_id' => 77,
+        ]);
+        self::assertFalse($auth->hasCurrentStanding($personA, $dioceseA));
+        self::assertTrue($review->liftStanding($suspensionA, date('Y-m-d', strtotime('-1 day')), 'lift-decree', $reviewer));
+        self::assertFalse($auth->hasSystemWideSuspension($personA));
+        self::assertTrue($auth->hasCurrentStanding($personA, $dioceseA));
+        self::assertSame(1, $review->activePositiveStandingCount($personA, $dioceseA));
+
+        // Case 2: no other positive row — lifting leaves the person in an
+        // intended limbo (no active standing) until new standing is recorded.
+        [, $personB] = $this->personUser();
+        $suspensionB = $this->row('clergy_canonical_status', [
+            'person_id' => $personB, 'diocese_id' => $dioceseA, 'status_code' => 'inhibited',
+            'effective_from' => date('Y-m-d', strtotime('-1 month')), 'verified_by_user_id' => 77,
+        ]);
+        self::assertTrue($auth->hasSystemWideSuspension($personB));
+        self::assertTrue($review->liftStanding($suspensionB, date('Y-m-d', strtotime('-1 day')), 'lift-decree', $reviewer));
+        self::assertFalse($auth->hasSystemWideSuspension($personB));
+        self::assertFalse($auth->hasCurrentStanding($personB, $dioceseA));
+        self::assertSame(0, $review->activePositiveStandingCount($personB, $dioceseA));
     }
 
     private function service(): ClergyAuthorizationService

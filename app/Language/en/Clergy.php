@@ -184,6 +184,14 @@ return [
     'grantStatus.revoked' => 'Revoked',
     'processing' => 'Processing...',
 
+    // Lift suspension
+    'actionLiftSuspension' => 'Lift',
+    'liftModalTitle' => 'Lift suspension/inhibition',
+    'fieldLiftedOn' => 'Lifted on',
+    'liftNoStandingWarning' => 'Lifting this suspension will leave this person with no active resident/licensed standing — record new standing to restore function.',
+    'liftSuccess' => 'Standing lifted.',
+    'liftFailed' => 'Standing could not be lifted.',
+
     // Invitation Email
     'invitationSubject' => 'Clergy Account Invitation',
     'invitationGreeting' => 'You have been invited to create a clergy account.',
