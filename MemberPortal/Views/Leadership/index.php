@@ -80,7 +80,7 @@
                 <label class="form-label"><?= lang('Leadership.roleCode') ?></label>
                 <input type="text" name="role_code" class="form-control" list="leadershipRoleCodes" placeholder="<?= lang('Leadership.roleCodePlaceholder') ?>">
                 <datalist id="leadershipRoleCodes">
-                    <?php foreach (['diocesan_bishop', 'coadjutor_bishop', 'suffragan_bishop', 'assisting_bishop', 'rector', 'priest_in_charge', 'interim_rector', 'vicar', 'cathedral_dean', 'curate', 'associate_priest', 'parish_deacon', 'regional_dean', 'deanery_dean', 'archdeacon', 'vestry_secretary', 'vestry_clerk', 'warden', 'mission_governance_signer', 'mission_approver'] as $roleCode): ?>
+                    <?php foreach (['diocesan_bishop', 'coadjutor_bishop', 'suffragan_bishop', 'assisting_bishop', 'canon_to_ordinary', 'rector', 'priest_in_charge', 'interim_rector', 'vicar', 'cathedral_dean', 'curate', 'associate_priest', 'parish_deacon', 'regional_dean', 'deanery_dean', 'archdeacon', 'vestry_secretary', 'vestry_clerk', 'warden', 'mission_governance_signer', 'mission_approver'] as $roleCode): ?>
                         <option value="<?= esc($roleCode) ?>"></option>
                     <?php endforeach; ?>
                 </datalist>

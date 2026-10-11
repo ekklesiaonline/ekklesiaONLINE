@@ -295,6 +295,49 @@ final class ClergyReviewTest extends CIUnitTestCase
         self::assertNull($review->liftStanding($ownRow, $today, 'decree-lift', $reviewer));
     }
 
+    public function testCanonToOrdinaryStagesButCannotApproveOrHoldEcclesialKeys(): void
+    {
+        [$diocese, $parish] = $this->places();
+        [$ordinary] = $this->ordinary($diocese);
+        [$canonUser, $canonPerson] = $this->account();
+        $this->verified($canonPerson, $diocese, 'priest');
+
+        $positions = new \App\Services\LeadershipPositionService();
+        self::assertSame('priest', $positions->requiredOrderForOffice('canon_to_ordinary'));
+
+        // The canon office stages unapproved and validates as a diocese-scoped priest office.
+        $canonOfficeId = $this->office($canonUser, $canonPerson, 'diocese', $diocese, 'canon_to_ordinary', null);
+        $canonOffice = $this->db->table('leadership_position')->where('id', $canonOfficeId)->get()->getRowArray();
+        self::assertNull($canonOffice['approved_at']);
+        self::assertTrue($positions->validPositionPayload($canonOffice));
+
+        $auth = $this->authorization();
+        // Title-only: the canon holds no ecclesial approval authority in any diocese.
+        foreach (['clergy.appointment.manage', 'clergy.ordination.verify', 'governance.diocese.approve'] as $permission) {
+            self::assertFalse($auth->allows($canonUser, $permission, 'diocese', $diocese));
+        }
+
+        $review = new ClergyReviewService($this->db, $auth);
+        // approveOffice() rejects a canon position outright: it is not in OFFICE_PERMISSIONS.
+        self::assertFalse($review->approveOffice($canonOfficeId, $ordinary, 'canon-appointment-1'));
+        self::assertSame(0, $this->db->table('clergy_access_grant')
+            ->where('source_position_id', $canonOfficeId)->countAllResults());
+
+        // The canon stages a subordinate office; only the ordinary can approve it.
+        [$rectorUser, $rectorPerson] = $this->account();
+        $this->verified($rectorPerson, $diocese, 'priest');
+        $rectorOfficeId = $this->office($rectorUser, $rectorPerson, 'parish', $parish, 'rector', null);
+        self::assertFalse($review->approveOffice($rectorOfficeId, $canonUser, 'canon-staged-1'));
+        self::assertTrue($review->approveOffice($rectorOfficeId, $ordinary, 'canon-staged-1'));
+        self::assertSame(3, $this->db->table('clergy_access_grant')
+            ->where('source_position_id', $rectorOfficeId)->countAllResults());
+
+        // Approval confers nothing back on the canon: still zero grants and no keys.
+        self::assertSame(0, $this->db->table('clergy_access_grant')
+            ->where('user_id', $canonUser)->countAllResults());
+        self::assertFalse($auth->allows($canonUser, 'clergy.appointment.manage', 'diocese', $diocese));
+    }
+
     private function authorization(): ClergyAuthorizationService
     {
         return new ClergyAuthorizationService($this->db, static fn (): bool => true);
