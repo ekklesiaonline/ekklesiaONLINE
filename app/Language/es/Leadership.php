@@ -10,6 +10,7 @@ return [
     'selectDeanery' => 'Seleccione el decanato exacto',
     'orderEvidenceNote' => 'La ordenación requiere verificación documental independiente; el cargo no otorga privilegios antes de su aprobación.',
     'awaitingReview' => 'Pendiente de revisión del nombramiento',
+    'titleOnly' => 'Solo titular — no aprobable',
     'cathedralCharge' => 'Presbítero a cargo de la catedral (requiere aprobación diocesana separada)',
     'perPage' => 'Por pagina',
     'applyScope' => 'Aplicar alcance',

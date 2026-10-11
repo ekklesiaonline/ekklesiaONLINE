@@ -199,7 +199,13 @@
                                     <span class="badge border border-<?= !empty($position['active']) ? 'success' : 'secondary' ?> text-<?= !empty($position['active']) ? 'success' : 'secondary' ?> fw-normal">
                                         <?= !empty($position['active']) ? lang('App.statusActive') : lang('App.statusInactive') ?>
                                     </span>
-                                    <?php if (empty($position['approved_at']) && in_array($position['role_category'] ?? '', ['clergy', 'lay_staff'], true)): ?>
+                                    <?php
+                                    $titleOnlyOffice = ($position['role_category'] ?? '') === 'clergy'
+                                        && ! isset(\App\Services\ClergyReviewService::OFFICE_PERMISSIONS[(string) ($position['role_code'] ?? '')]);
+                                    ?>
+                                    <?php if ($titleOnlyOffice): ?>
+                                        <span class="badge border border-info text-info fw-normal"><?= lang('Leadership.titleOnly') ?></span>
+                                    <?php elseif (empty($position['approved_at']) && in_array($position['role_category'] ?? '', ['clergy', 'lay_staff'], true)): ?>
                                         <span class="badge border border-warning text-warning fw-normal"><?= lang('Leadership.awaitingReview') ?></span>
                                     <?php endif; ?>
                                 </td>
