@@ -28,6 +28,17 @@ class BankAccountModel extends BaseTenantModel
     protected $createdField  = 'created_at';
     protected $updatedField  = 'updated_at';
 
+    /**
+     * @var array<string, string>
+     */
+    protected array $casts = [
+        'id'               => '?int',
+        'parish_id'        => '?int',
+        'chart_account_id' => '?int',
+        'opening_balance'  => '?float',
+        'is_active'        => '?int',
+    ];
+
     protected $validationRules = [
         'parish_id'             => 'required|is_not_unique[parish.id]',
         'name'                  => 'required|max_length[150]',

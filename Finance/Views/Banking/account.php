@@ -19,15 +19,38 @@ $txnStatusLabels = [
 ];
 ?>
 
-<div class="d-flex justify-content-start align-items-center mb-3 gap-2">
-    <a href="<?= base_url('banking') ?>" class="btn btn-outline-secondary">
-        <i class="bi bi-arrow-left" aria-hidden="true"></i> <?= lang('Finance.bankingTitle') ?>
-    </a>
-    <?php if (!empty($canManage)): ?>
-        <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#importStatementModal">
-            <i class="bi bi-file-earmark-arrow-up" aria-hidden="true"></i> <?= lang('Finance.bankImportStatement') ?>
-        </button>
-    <?php endif; ?>
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div class="d-flex gap-2">
+        <a href="<?= base_url('banking') ?>" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left" aria-hidden="true"></i> <?= lang('Finance.bankingTitle') ?>
+        </a>
+        <?php if (!empty($canManage)): ?>
+            <a href="<?= base_url('banking/edit/' . (int) $account['id']) ?>" class="btn btn-outline-secondary">
+                <i class="bi bi-pencil" aria-hidden="true"></i> <?= lang('App.edit') ?>
+            </a>
+            <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#importStatementModal">
+                <i class="bi bi-file-earmark-arrow-up" aria-hidden="true"></i> <?= lang('Finance.bankImportStatement') ?>
+            </button>
+        <?php endif; ?>
+    </div>
+    <div class="d-flex gap-2 align-items-center">
+        <?php
+        $isActive = (int) ($account['is_active'] ?? 1) === 1;
+        $statusColor = $isActive ? 'success' : 'secondary';
+        ?>
+        <span class="badge border border-<?= $statusColor ?> text-<?= $statusColor ?> fw-normal px-2 py-1">
+            <?= lang($isActive ? 'Finance.bankStatusActive' : 'Finance.bankStatusInactive') ?>
+        </span>
+        <?php if (!empty($canManage)): ?>
+            <form method="post" action="<?= base_url('banking/toggle-active/' . (int) $account['id']) ?>" class="d-inline" onsubmit="return confirm('<?= esc(lang('Finance.bankConfirmToggleActive')) ?>');">
+                <?= csrf_field() ?>
+                <button type="submit" class="btn btn-outline-<?= $isActive ? 'warning' : 'success' ?> btn-sm">
+                    <i class="bi bi-<?= $isActive ? 'archive' : 'check-circle' ?>" aria-hidden="true"></i>
+                    <?= $isActive ? lang('Finance.bankArchiveAccount') : lang('Finance.bankActivateAccount') ?>
+                </button>
+            </form>
+        <?php endif; ?>
+    </div>
 </div>
 
 <div class="row mb-3">

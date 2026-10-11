@@ -57,6 +57,10 @@ $routes->group('', ['filter' => 'session'], function ($routes) {
         $routes->post('(:num)/reconciliations', '\\Finance\\Controllers\\BankingReconciliation::startReconciliation/$1', ['filter' => 'permission:finance.manage']);
         $routes->post('import', '\\Finance\\Controllers\\BankingImport::importStatement', ['filter' => 'permission:finance.manage']);
         $routes->post('(:num)/import', '\\Finance\\Controllers\\BankingImport::importStatement/$1', ['filter' => 'permission:finance.manage']);
+        $routes->get('edit/(:num)', '\\Finance\\Controllers\\Banking::edit/$1', ['filter' => 'permission:finance.manage']);
+        $routes->get('(:num)/edit', '\\Finance\\Controllers\\Banking::edit/$1', ['filter' => 'permission:finance.manage']);
+        $routes->post('update/(:num)', '\\Finance\\Controllers\\Banking::update/$1', ['filter' => 'permission:finance.manage']);
+        $routes->post('toggle-active/(:num)', '\\Finance\\Controllers\\Banking::toggleActive/$1', ['filter' => 'permission:finance.manage']);
     });
 
     $routes->group('funds', ['filter' => 'permission:finance.view'], function ($routes) {
@@ -87,6 +91,14 @@ $routes->group('', ['filter' => 'session'], function ($routes) {
         $routes->get('/', '\\Finance\\Controllers\\JournalEntries::index');
         $routes->get('export', '\\Finance\\Controllers\\JournalEntries::export');
         $routes->get('(:num)', '\\Finance\\Controllers\\JournalEntries::view/$1');
+    });
+
+    $routes->group('accounting-periods', ['filter' => 'permission:finance.view'], function ($routes) {
+        $routes->get('/', '\\Finance\\Controllers\\AccountingPeriods::index');
+        $routes->post('generate', '\\Finance\\Controllers\\AccountingPeriods::generate', ['filter' => 'permission:finance.manage']);
+        $routes->post('store', '\\Finance\\Controllers\\AccountingPeriods::store', ['filter' => 'permission:finance.manage']);
+        $routes->post('close/(:num)', '\\Finance\\Controllers\\AccountingPeriods::close/$1', ['filter' => 'permission:finance.manage']);
+        $routes->post('reopen/(:num)', '\\Finance\\Controllers\\AccountingPeriods::reopen/$1', ['filter' => 'permission:finance.manage']);
     });
 });
 

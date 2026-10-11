@@ -52,9 +52,16 @@
                                 <td><?= (int) ($account['txn_count'] ?? 0) ?></td>
                                 <td><span class="badge border border-<?= $statusColor ?> text-<?= $statusColor ?> fw-normal"><?= lang($isActive ? 'Finance.bankStatusActive' : 'Finance.bankStatusInactive') ?></span></td>
                                 <td class="text-end">
-                                    <a href="<?= base_url('banking/' . (int) $account['id']) ?>" class="btn btn-outline-secondary btn-sm">
-                                        <i class="bi bi-eye" aria-hidden="true"></i> <?= lang('App.view') ?>
-                                    </a>
+                                    <div class="d-flex justify-content-end gap-1">
+                                        <a href="<?= base_url('banking/' . (int) $account['id']) ?>" class="btn btn-outline-secondary btn-sm" title="<?= esc(lang('App.view')) ?>">
+                                            <i class="bi bi-eye" aria-hidden="true"></i>
+                                        </a>
+                                        <?php if (!empty($canManage)): ?>
+                                            <a href="<?= base_url('banking/edit/' . (int) $account['id']) ?>" class="btn btn-outline-secondary btn-sm" title="<?= esc(lang('App.edit')) ?>">
+                                                <i class="bi bi-pencil" aria-hidden="true"></i>
+                                            </a>
+                                        <?php endif; ?>
+                                    </div>
                                 </td>
                             </tr>
                         <?php endforeach; ?>

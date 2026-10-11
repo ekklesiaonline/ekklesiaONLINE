@@ -37,6 +37,9 @@ $statusColorMap = [
         <a href="<?= base_url('reports/trial-balance') ?>" class="btn btn-outline-info">
             <i class="bi bi-scale" aria-hidden="true"></i> <?= lang('Finance.trialBalanceTitle') ?>
         </a>
+        <a href="<?= base_url('accounting-periods') ?>" class="btn btn-outline-secondary">
+            <i class="bi bi-calendar3" aria-hidden="true"></i> <?= lang('Finance.accountingPeriodsTitle') ?>
+        </a>
     </div>
     <div>
         <a href="<?= base_url('journal-entries/export?' . http_build_query($filters)) ?>" class="btn btn-outline-secondary">

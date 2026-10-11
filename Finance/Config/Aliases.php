@@ -6,6 +6,7 @@ declare(strict_types=1);
  * Backward compatibility class aliases: Treasurer\Controllers\* -> Finance\Controllers\*
  */
 if (!class_exists('Treasurer\Controllers\Banking', false)) {
+    class_alias(\Finance\Controllers\AccountingPeriods::class, 'Treasurer\Controllers\AccountingPeriods');
     class_alias(\Finance\Controllers\Banking::class, 'Treasurer\Controllers\Banking');
     class_alias(\Finance\Controllers\BankingImport::class, 'Treasurer\Controllers\BankingImport');
     class_alias(\Finance\Controllers\BankingReconciliation::class, 'Treasurer\Controllers\BankingReconciliation');

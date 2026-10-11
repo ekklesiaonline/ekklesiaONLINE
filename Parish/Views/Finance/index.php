@@ -48,6 +48,9 @@ $fundTypeColors = [
         <a href="<?= base_url('journal-entries') ?>" class="btn btn-outline-secondary btn-sm">
             <i class="bi bi-journal-text" aria-hidden="true"></i> <?= esc(lang('Finance.journalEntriesTitle')) ?>
         </a>
+        <a href="<?= base_url('accounting-periods') ?>" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-calendar3" aria-hidden="true"></i> <?= esc(lang('Finance.accountingPeriodsTitle')) ?>
+        </a>
     <?php endif; ?>
     <?php if (!empty($can_manage_budgets)): ?>
         <a href="<?= base_url('budgets') ?>" class="btn btn-outline-secondary btn-sm">
