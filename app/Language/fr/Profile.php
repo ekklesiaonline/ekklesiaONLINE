@@ -152,4 +152,9 @@ return [
     // Security
     'changePassword'      => 'Changer le mot de passe',
     'changePasswordHint'  => 'Mettez à jour votre mot de passe pour sécuriser votre compte.',
+
+    // Canonical identity
+    'canonicalPersonId'         => 'ID canonique de la personne',
+    'canonicalPersonIdHint'     => 'Ce numéro d’identité reste le même dans toutes les paroisses.',
+    'canonicalIdentityEditHint' => 'La mise à jour de ces champs d’identité met également à jour votre fiche de personne canonique.',
 ];

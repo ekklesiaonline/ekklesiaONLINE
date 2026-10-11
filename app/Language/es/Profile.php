@@ -152,4 +152,9 @@ return [
     // Security
     'changePassword'      => 'Cambiar contraseña',
     'changePasswordHint'  => 'Actualiza tu contraseña para mantener tu cuenta segura.',
+
+    // Canonical identity
+    'canonicalPersonId'         => 'ID canónico de persona',
+    'canonicalPersonIdHint'     => 'Este número de identidad permanece igual en todas las parroquias.',
+    'canonicalIdentityEditHint' => 'Las actualizaciones de estos campos de identidad también actualizan su registro de persona canónica.',
 ];

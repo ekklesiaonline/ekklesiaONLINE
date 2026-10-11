@@ -66,4 +66,7 @@ return [
     'reqGoodStanding' => 'estar en buen estado como comulgante (o una excepcion de buen estado)',
     'reqVerifiedOrder' => 'una ordenación verificada, un cargo compatible y autorización vigente en la diócesis',
     'noPortalAccess' => 'sin acceso al portal',
+    'employmentSelectPrompt' => '— Tipo de empleo —',
+    'roleCategorySelectPrompt' => '— Categoría —',
+    'clergyOrderSelectPrompt' => '— Orden (solo clero) —',
 ];

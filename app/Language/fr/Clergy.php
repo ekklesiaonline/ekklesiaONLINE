@@ -180,6 +180,15 @@ return [
     'grantStatus.revoked' => 'Révoqué',
     'processing' => 'Traitement...',
 
+    // Lift suspension
+    'actionLiftSuspension' => 'Lever',
+    'liftModalTitle' => 'Lever la suspension/inhibition',
+    'fieldLiftedOn' => 'Levée le',
+    'liftNoStandingWarning' => 'La levée de cette suspension laissera cette personne sans statut actif résident/autorisé — enregistrez un nouveau statut pour restaurer sa fonction.',
+    'liftSuccess' => 'Statut levé.',
+    'liftFailed' => 'Impossible de lever le statut.',
+    'liftEffectiveEndOfDay' => 'Levée enregistrée — la suspension reste en vigueur jusqu’à la fin de la journée.',
+
     // Invitation Email
     'invitationSubject' => 'Invitation à un Compte de Clerc',
     'invitationGreeting' => 'Vous avez été invité à créer un compte de clerc.',

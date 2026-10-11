@@ -66,4 +66,7 @@ return [
     'reqGoodStanding' => 'le statut de communiant en regle (ou une derogation de bonne conduite)',
     'reqVerifiedOrder' => 'une ordination vérifiée, une charge compatible et un statut diocésain en vigueur',
     'noPortalAccess' => 'pas d acces au portail',
+    'employmentSelectPrompt' => '— Type d’emploi —',
+    'roleCategorySelectPrompt' => '— Catégorie —',
+    'clergyOrderSelectPrompt' => '— Ordre (clergé uniquement) —',
 ];

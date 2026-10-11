@@ -13,6 +13,10 @@ return [
     'eventSaveFailed' => 'No se pudo guardar el evento provincial. Verifique la asignación de la parroquia.',
     'eventScope' => 'Alcance',
     'calendarProvinceLabel' => 'Provincia',
+    'calendarNationalLabel' => 'Nacional',
+    'organizerLabel' => 'Organizador',
+    'hostParishLabel' => 'Parroquia anfitriona',
+    'manageCalendars' => 'Gestionar calendarios',
 
     // No parishes message
     'noParishesHeading' => 'Sin parroquias en el alcance provincial',

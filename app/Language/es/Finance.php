@@ -122,6 +122,13 @@ return [
     'sectionOperationsFacilities' => 'Operaciones e Instalaciones (8000s)',
     'sectionOtherExpenses'        => 'Otros Gastos',
     'sectionOther'                => 'Otros',
+    // Etiquetas de donaciones restringidas / gastos de capital
+    'isRestricted'                => 'Donación restringida',
+    'restrictedGiftHelp'          => 'Marque si esta donación está restringida a un propósito específico.',
+    'restrictionPurpose'          => 'Propósito de la restricción',
+    'restrictionPurposePlaceholder' => 'p. ej. Renovación de edificio, Viaje misionero',
+    'isCapital'                   => 'Gasto de capital',
+    'capitalExpenseHelp'          => 'Marque si este es un gasto de capital (no operativo) para el Reporte Parroquial.',
     // Etiquetas de fondos predeterminados
     'fundNameUnrestrictedOperating' => 'Fondo Operativo No Restringido',
     'fundNameBuildingFacility'      => 'Fondo de Edificio e Instalaciones',

@@ -249,8 +249,14 @@ return [
 
     'cannotRemoveOwnParishAdminRole' => 'You cannot remove your own parish admin role.',
 
+    'userAlreadyPrimary'            => 'Este usuario ya es el administrador diocesano principal.',
+    'primaryGranted'                => 'Administrador diocesano principal actualizado.',
     'cannotDeletePrimaryDioceseAdmin' => 'The primary diocese admin cannot be deleted.',
     'cannotDeactivatePrimaryDioceseAdmin' => 'The primary diocese admin cannot be deactivated.',
     'cannotDeactivateSelf'          => 'You cannot deactivate your own admin account.',
     'cannotResetPrimaryDioceseAdminPassword' => 'The primary diocese admin password cannot be reset.',
+
+    'noPendingRegistrations'        => 'No hay registros pendientes para aprobar.',
+    'registrationApprovedAll'       => 'Se aprobaron {0} registros pendientes.',
+    'registrationApprovedPartial'   => 'Se aprobaron {0} registros; {1} fallaron.',
 ];

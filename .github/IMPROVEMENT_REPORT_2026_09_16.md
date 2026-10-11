@@ -159,15 +159,16 @@ Across this period, the automated test suite has expanded from **310 tests (with
    - Advanced static analysis from Level 3 to Level 4 in `phpstan.neon` with `treatPhpDocTypesAsCertain: false`.
    - Burned down dead code, redundant null/boolean checks, unused class constants, and unreachable branches across Services, Models, and Libraries.
    - 0 errors reported with baseline reduced to just 3 entries.
+3. **Spanish (`es`) & French (`fr`) Locale Parity Backfill (Phase 1):**
+   - Backfilled all 313 missing translation keys (126 in `es`, 187 in `fr`) across the 10 outstanding language files (`Leadership`, `Profile`, `Province`, `Diocesan`, `Finance`, `Services`, `Clergy`, `People`, `Members`, `App`).
+   - Expanded `AccessibilityAndStaticAnalysisTest::testCompletedLanguageNamespacesHaveLocaleParity` to enforce 100% locale parity across all 17 completed language namespaces (`Visitors`, `Attendance`, `Events`, `System`, `Errors`, `Dashboard`, `Volunteer`, `App`, `People`, `Members`, `Clergy`, `Services`, `Finance`, `Diocesan`, `Province`, `Leadership`, `Profile`).
 
-### Remaining Operational Maintenance & Polish:
+### Remaining Operational Maintenance & Future Extensions:
 - **Priority 1: Automated Affiliation & Eligibility Audits (Data Integrity):**
-  - Diagnostic CLI commands exist (`people:audit-affiliation-drift`, `leadership:audit-eligibility`, `person:diagnose`).
-  - Schedule periodic execution via cron or release verification drills to detect out-of-band data drift.
-- **Priority 2: General Ledger Journal Entry Linking in Banking:**
-  - Reserved `bank_transaction_journal_link` schema table available for future double-entry journal linkage.
-- **Priority 3: Spanish & French Locale Parity Tail:**
-  - Complete remaining admin merge/preview translation keys in `es` and `fr`.
+   - Diagnostic CLI commands exist (`people:audit-affiliation-drift`, `leadership:audit-eligibility`, `person:diagnose`).
+   - Schedule periodic execution via cron or release verification drills to detect out-of-band data drift.
+- **Priority 2: General Ledger Journal Entry Linking in Banking (Phase 2):**
+   - Reserved `bank_transaction_journal_link` schema table available for future double-entry journal linkage.
 
 ---
 
@@ -178,4 +179,4 @@ The ekklesiaRD platform has achieved full production readiness:
 - **Security & Authorization:** The 4-axis authorization model, multi-tier registration guard, rate-limited device verification, concurrent session limits, and sanitized email delivery establish a robust enterprise security perimeter.
 - **Data Integrity & Consistency:** The database schema has been normalized to canonical entities, eliminating transitional dual-writes and dropped tables (`guest`, `parish_people`).
 - **Feature Completeness:** Core Episcopal administrative, financial, pastoral, and governance operations are implemented and covered by automated tests.
-- **Verification Confidence:** **980 tests and 4,459 assertions pass with 0 failures**, corroborated by static analysis at PHPStan Level 3 on PHP 8.5.
+- **Verification Confidence:** **980 tests and 4,459 assertions pass with 0 failures**, corroborated by static analysis at PHPStan Level 4 on PHP 8.5 with 100% localization parity across 17 namespaces.

@@ -13,6 +13,10 @@ return [
     'eventSaveFailed' => 'Impossible d\'enregistrer l\'événement provincial. Vérifiez l\'affectation de la paroisse.',
     'eventScope' => 'Portée',
     'calendarProvinceLabel' => 'Province',
+    'calendarNationalLabel' => 'National',
+    'organizerLabel' => 'Organisateur',
+    'hostParishLabel' => 'Paroisse d’accueil',
+    'manageCalendars' => 'Gérer les calendriers',
 
     // No parishes message
     'noParishesHeading' => 'Aucune paroisse dans la portée provinciale',

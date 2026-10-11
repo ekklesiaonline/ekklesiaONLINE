@@ -143,7 +143,11 @@ final class AccessibilityAndStaticAnalysisTest extends CIUnitTestCase
      */
     public function testCompletedLanguageNamespacesHaveLocaleParity(): void
     {
-        $namespaces = ['Visitors', 'Attendance', 'Events', 'System', 'Errors', 'Dashboard', 'Volunteer'];
+        $namespaces = [
+            'Visitors', 'Attendance', 'Events', 'System', 'Errors', 'Dashboard', 'Volunteer',
+            'App', 'People', 'Members', 'Clergy', 'Services', 'Finance', 'Diocesan', 'Province',
+            'Leadership', 'Profile',
+        ];
         $locales = ['es', 'fr'];
         $problems = [];
 

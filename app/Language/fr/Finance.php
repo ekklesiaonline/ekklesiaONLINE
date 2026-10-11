@@ -121,6 +121,13 @@ return [
     'sectionOperationsFacilities' => 'Opérations et Installations (8000s)',
     'sectionOtherExpenses'        => 'Autres Dépenses',
     'sectionOther'                => 'Autres',
+    // Libellés des dons affectés / dépenses d'investissement
+    'isRestricted'                => 'Don affecté',
+    'restrictedGiftHelp'          => 'Cochez si ce don est affecté à un usage particulier.',
+    'restrictionPurpose'          => 'Objet de l’affectation',
+    'restrictionPurposePlaceholder' => 'ex. Rénovation de bâtiment, Mission paroissiale',
+    'isCapital'                   => 'Dépense d’investissement',
+    'capitalExpenseHelp'          => 'Cochez s’il s’agit d’une dépense d’investissement (non opérationnelle) pour le rapport paroissial.',
     // Libelles des fonds par defaut
     'fundNameUnrestrictedOperating' => 'Fonds Operationnel Non Restreint',
     'fundNameBuildingFacility'      => 'Fonds des Batiments et Installations',
