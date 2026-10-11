@@ -196,6 +196,43 @@ final class BankReconciliationServiceTest extends CIUnitTestCase
         $this->assertNotNull($this->service->reconciliationForParish($recon['id'], 302));
     }
 
+    public function testWorksheetTransactionsPopulatesLinkedJournalEntryDetails(): void
+    {
+        $accountId = $this->insertAccount(301, 'Operating');
+        $txnId = $this->insertTransaction($accountId, '2026-09-15', 500.00);
+
+        // Insert a journal entry
+        $this->db->table('journal_entry')->insert([
+            'parish_id'    => 301,
+            'entry_number' => 'JE-2026-00042',
+            'entry_date'   => '2026-09-15',
+            'source_type'  => 'bank_transaction',
+            'source_id'    => $txnId,
+            'status'       => 'posted',
+            'created_at'   => date('Y-m-d H:i:s'),
+            'updated_at'   => date('Y-m-d H:i:s'),
+        ]);
+        $journalId = (int) $this->db->insertID();
+
+        // Link bank transaction to journal entry
+        $this->db->table('bank_transaction_journal_link')->insert([
+            'bank_transaction_id' => $txnId,
+            'journal_entry_id'    => $journalId,
+            'created_at'          => date('Y-m-d H:i:s'),
+        ]);
+
+        $recon = $this->service->openReconciliation($accountId, '2026-09-30', 500.00);
+        $reconRow = $this->db->table('bank_reconciliation')->where('id', $recon['id'])->get()->getRowArray();
+
+        $worksheet = $this->service->worksheetTransactions($reconRow);
+
+        $this->assertCount(1, $worksheet);
+        $this->assertSame($txnId, (int) $worksheet[0]['id']);
+        $this->assertSame($journalId, (int) $worksheet[0]['journal_entry_id']);
+        $this->assertSame('JE-2026-00042', $worksheet[0]['journal_entry_number']);
+        $this->assertSame('posted', $worksheet[0]['journal_entry_status']);
+    }
+
     private function seedParish(int $parishId): void
     {
         if ($this->db->table('parish')->where('id', $parishId)->countAllResults() > 0) {

@@ -388,3 +388,31 @@ Parishes may need to customize accounts for:
 - **Grant-specific tracking**: Use designated restricted accounts tied to grant requirements.
 
 Contact the system administrator or refer to this document for guidance on adding or modifying accounts.
+
+## Double-Entry General Ledger & Auto-Posting Governance (Signed-off 2026-10-11)
+
+### Approved Decision Points & Policy
+
+1. **Decision 5.1 (Cash Account Resolution)**:
+   - Primary operating cash defaults to **Account 1120 (`Cash - Checking`)**.
+   - Donations debit Account 1120 (Asset) and credit the designated Income account (4000s/5000s).
+   - Expenses debit the designated Expense account (6000s/7000s/8000s) and credit Account 1120 (Asset).
+   - When a specific parish bank account is selected on entry, its linked Asset chart account is credited/debited accordingly.
+
+2. **Decision 5.2 (Posting Timing & Real-Time Sync)**:
+   - **Real-Time Synchronous Posting**: Donations and expenses immediately generate balanced, atomic `posted` double-entry records in `journal_entries` and `journal_entry_lines` upon transaction save via `AccountingJournalSyncService`.
+   - Reversals or deletions maintain full audit trails through reversal entries or linked record updates.
+
+3. **Decision 5.3 (Historical Data Backfill)**:
+   - Historical transactions prior to General Ledger cutover are synchronized using `php spark finance:sync-journal-history` with `--dry-run` support to align historical balance sheets and general ledger totals.
+
+4. **Decision 5.4 (Accounting Period & Mutation Locking)**:
+   - Closed accounting periods enforce strict mutation locks across `donations`, `expenses`, and `bank_transactions`.
+   - Creating, modifying, or deleting operational transactions within a closed period is blocked at the model and controller boundaries with `periodClosedMutationLocked`.
+   - `AccountingJournalSyncService::createJournalEntry()` automatically links entries to the corresponding period via `period_id` and rejects creation if the period is closed.
+
+5. **Decision 5.5 (Bank Reconciliation GL Integration)**:
+   - Bank transactions are linked to general ledger entries via `bank_transaction_journal_link`.
+   - The bank reconciliation worksheet (`/banking/reconciliations/{id}`) displays linked journal entry reference numbers (`JE-YYYY-XXXXX`) alongside cleared transaction rows.
+   - Cleared transactions transitioned to `reconciled` upon reconciliation closure cannot be modified or deleted.
+

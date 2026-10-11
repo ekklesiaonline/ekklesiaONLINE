@@ -3,6 +3,7 @@
 namespace Finance\Controllers;
 
 use App\Controllers\BaseController;
+use App\Services\AccountingJournalSyncService;
 use App\Services\DonationService;
 use App\Services\GivingStatementService;
 
@@ -175,6 +176,12 @@ class Donations extends BaseController
             return redirect()->back()->withInput()->with('error', lang('Treasurer.fundLocked'));
         }
 
+        $donationDate = (string) $this->request->getPost('date');
+        $periodModel = model(\App\Models\AccountingPeriodModel::class);
+        if ($periodModel->isDateInClosedPeriod($attributionParishId, $donationDate)) {
+            return redirect()->back()->withInput()->with('error', lang('Finance.periodClosedMutationLocked'));
+        }
+
         $data = [
             'parish_id' => $attributionParishId,
             'fund_id' => $fundId,
@@ -192,6 +199,14 @@ class Donations extends BaseController
 
         if ($donationId > 0) {
             $receipt = $this->donationModel->issueReceipt($donationId);
+
+            // Synchronous double-entry posting to General Ledger (Decision 5.2)
+            try {
+                $journalSync = new AccountingJournalSyncService();
+                $journalSync->createJournalForDonation($donationId, null, auth()->id());
+            } catch (\Throwable $e) {
+                log_message('error', "Accounting journal sync failed for donation #{$donationId}: " . $e->getMessage());
+            }
 
             $this->audit()->log('donation.create', [
                 'parish_id' => $attributionParishId,
@@ -298,6 +313,13 @@ class Donations extends BaseController
             return redirect()->back()->withInput()->with('error', lang('Treasurer.fundLocked'));
         }
 
+        $newDate = (string) $this->request->getPost('date');
+        $oldDate = (string) ($donation['date'] ?? '');
+        $periodModel = model(\App\Models\AccountingPeriodModel::class);
+        if ($periodModel->isDateInClosedPeriod($parishId, $oldDate) || $periodModel->isDateInClosedPeriod($parishId, $newDate)) {
+            return redirect()->back()->withInput()->with('error', lang('Finance.periodClosedMutationLocked'));
+        }
+
         $data = [
             'fund_id'             => $fundId,
             'user_id'             => $this->request->getPost('user_id') ?: null,
@@ -358,6 +380,12 @@ class Donations extends BaseController
 
         if (!$donation || $donation['parish_id'] != $this->getOperationalParishId()) {
             return $this->jsonResponse(['success' => false, 'message' => lang('Treasurer.donationNotFound')], 404);
+        }
+
+        $attributionParishId = (int) ($donation['parish_id'] ?? 0);
+        $periodModel = model(\App\Models\AccountingPeriodModel::class);
+        if ($periodModel->isDateInClosedPeriod($attributionParishId, (string) ($donation['date'] ?? ''))) {
+            return $this->jsonResponse(['success' => false, 'message' => lang('Finance.periodClosedMutationLocked')], 422);
         }
 
         if ($this->donationModel->delete($id)) {

@@ -456,4 +456,6 @@ return [
     'errorInvalidReceiptType' => 'Format de fichier non valide. Veuillez telecharger un document PDF, JPG, PNG ou WebP.',
     'errorInvalidReceiptSize' => 'La taille du fichier depasse la limite de 10 Mo.',
     'fundLockedCannotTransact' => 'Le fonds selectionne est verrouille et ne peut pas recevoir de transactions.',
+    'periodClosedMutationLocked' => 'Les transactions ne peuvent pas etre creees, modifiees ou supprimees au cours d\'une periode comptable cloturee.',
+    'colJournalEntry' => 'Ecriture Comptable',
 ];

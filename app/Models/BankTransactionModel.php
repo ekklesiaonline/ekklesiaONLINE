@@ -40,6 +40,49 @@ class BankTransactionModel extends Model
         'amount'          => '?float',
     ];
 
+    protected $beforeUpdate = ['checkClosedPeriodLock'];
+    protected $beforeDelete = ['checkClosedPeriodLock'];
+
+    /**
+     * Locks mutations on reconciled transactions or transactions within closed periods.
+     *
+     * @param array<string, mixed> $data
+     * @return array<string, mixed>
+     */
+    protected function checkClosedPeriodLock(array $data): array
+    {
+        $id = $data['id'][0] ?? null;
+        if (!$id) {
+            return $data;
+        }
+
+        $existing = $this->find($id);
+        if (!$existing) {
+            return $data;
+        }
+
+        // If transaction is already reconciled, lock edits to amount/date/delete
+        $isStatusChangeOnly = isset($data['data']) && count($data['data']) === 1 && isset($data['data']['status']);
+        if (($existing['status'] ?? '') === 'reconciled' && !$isStatusChangeOnly) {
+            throw new \RuntimeException('Reconciled bank transactions cannot be modified or deleted.');
+        }
+
+        // Check if transaction date is in a closed accounting period
+        $bankAccount = $this->db->table('bank_account')
+            ->where('id', (int) $existing['bank_account_id'])
+            ->get()
+            ->getRowArray();
+
+        if ($bankAccount && !empty($bankAccount['parish_id'])) {
+            $periodModel = model(AccountingPeriodModel::class);
+            if ($periodModel->isDateInClosedPeriod((int) $bankAccount['parish_id'], (string) $existing['transaction_date'])) {
+                throw new \RuntimeException('Bank transactions in a closed accounting period cannot be modified or deleted.');
+            }
+        }
+
+        return $data;
+    }
+
     /**
      * Transactions for an account, optionally limited to a date.
      *

@@ -82,6 +82,7 @@ $txnStatusLabels = [
                                 <th scope="col" class="text-end"><?= lang('Finance.colAmount') ?></th>
                                 <th scope="col"><?= lang('Finance.bankTxnDescription') ?></th>
                                 <th scope="col"><?= lang('Finance.bankTxnReference') ?></th>
+                                <th scope="col"><?= lang('Finance.colJournalEntry') ?></th>
                                 <th scope="col"><?= lang('App.colStatus') ?></th>
                             </tr>
                         </thead>
@@ -105,6 +106,15 @@ $txnStatusLabels = [
                                     <td class="text-end"><?= number_format((float) $txn['amount'], 2) ?></td>
                                     <td><?= esc($txn['description'] ?? '—') ?></td>
                                     <td><?= esc($txn['reference'] ?? '—') ?></td>
+                                    <td>
+                                        <?php if (! empty($txn['journal_entry_number'])): ?>
+                                            <span class="badge border border-secondary text-secondary fw-normal">
+                                                <i class="bi bi-journal-text me-1" aria-hidden="true"></i><?= esc($txn['journal_entry_number']) ?>
+                                            </span>
+                                        <?php else: ?>
+                                            <span class="text-muted small">—</span>
+                                        <?php endif; ?>
+                                    </td>
                                     <td><span class="badge border border-<?= $txnColor ?> text-<?= $txnColor ?> fw-normal"><?= lang($txnLabelKey) ?></span></td>
                                 </tr>
                             <?php endforeach; ?>

@@ -489,4 +489,6 @@ return [
     'errorInvalidReceiptType' => 'Invalid file format. Please upload a PDF, JPG, PNG, or WebP document.',
     'errorInvalidReceiptSize' => 'File size exceeds the 10MB limit.',
     'fundLockedCannotTransact' => 'The selected fund is locked and cannot receive transactions.',
+    'periodClosedMutationLocked' => 'Transactions cannot be created, modified, or deleted within a closed accounting period.',
+    'colJournalEntry' => 'Journal Entry',
 ];

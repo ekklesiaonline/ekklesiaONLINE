@@ -196,18 +196,54 @@ class BankReconciliationService
      */
     public function worksheetTransactions(array $reconciliation): array
     {
-        $clearedIds = array_flip($this->items->clearedTransactionIds((int) $reconciliation['id']));
+        $reconId = (int) ($reconciliation['id'] ?? 0);
+        $isOpen = ($reconciliation['status'] ?? '') === 'open';
+        $clearedIds = array_flip($this->items->clearedTransactionIds($reconId));
 
-        $rows = $this->transactions
+        $builder = $this->transactions
             ->where('bank_account_id', (int) $reconciliation['bank_account_id'])
-            ->where('transaction_date <=', (string) $reconciliation['statement_date'])
-            ->where('status !=', 'reconciled')
+            ->where('transaction_date <=', (string) $reconciliation['statement_date']);
+
+        if ($isOpen) {
+            $builder->where('status !=', 'reconciled');
+        } else {
+            $itemTxnIds = array_keys($clearedIds);
+            if (empty($itemTxnIds)) {
+                return [];
+            }
+            $builder->whereIn('id', $itemTxnIds);
+        }
+
+        $rows = $builder
             ->orderBy('transaction_date', 'ASC')
             ->orderBy('id', 'ASC')
             ->findAll();
 
+        $txnIds = array_filter(array_map(static fn (array $row): int => (int) ($row['id'] ?? 0), $rows));
+        $journalMap = [];
+
+        if (! empty($txnIds)) {
+            $db = $this->transactions->db;
+            if ($db->tableExists('bank_transaction_journal_link') && $db->tableExists('journal_entry')) {
+                $links = $db->table('bank_transaction_journal_link btjl')
+                    ->select('btjl.bank_transaction_id, je.id AS journal_entry_id, je.entry_number, je.status AS journal_entry_status')
+                    ->join('journal_entry je', 'je.id = btjl.journal_entry_id', 'inner')
+                    ->whereIn('btjl.bank_transaction_id', $txnIds)
+                    ->get()
+                    ->getResultArray();
+
+                foreach ($links as $link) {
+                    $journalMap[(int) $link['bank_transaction_id']] = $link;
+                }
+            }
+        }
+
         foreach ($rows as &$row) {
-            $row['is_cleared'] = isset($clearedIds[(int) $row['id']]) ? 1 : 0;
+            $txnId = (int) $row['id'];
+            $row['is_cleared'] = isset($clearedIds[$txnId]) ? 1 : ($isOpen ? 0 : 1);
+            $row['journal_entry_id'] = isset($journalMap[$txnId]['journal_entry_id']) ? (int) $journalMap[$txnId]['journal_entry_id'] : null;
+            $row['journal_entry_number'] = isset($journalMap[$txnId]['entry_number']) ? (string) $journalMap[$txnId]['entry_number'] : null;
+            $row['journal_entry_status'] = isset($journalMap[$txnId]['journal_entry_status']) ? (string) $journalMap[$txnId]['journal_entry_status'] : null;
         }
         unset($row);
 

@@ -3,6 +3,7 @@
 namespace Finance\Controllers;
 
 use App\Controllers\BaseController;
+use App\Services\AccountingJournalSyncService;
 
 class Expenses extends BaseController
 {
@@ -142,6 +143,12 @@ class Expenses extends BaseController
             return redirect()->back()->withInput()->with('error', lang('Treasurer.fundLocked'));
         }
 
+        $expenseDate = (string) $this->request->getPost('date');
+        $periodModel = model(\App\Models\AccountingPeriodModel::class);
+        if ($periodModel->isDateInClosedPeriod($attributionParishId, $expenseDate)) {
+            return redirect()->back()->withInput()->with('error', lang('Finance.periodClosedMutationLocked'));
+        }
+
         $receiptData = null;
         try {
             $receiptData = \App\Services\ExpenseReceiptUploadService::handleUpload(
@@ -177,6 +184,14 @@ class Expenses extends BaseController
         $expenseId = (int) $this->expenseModel->insert($data, true);
 
         if ($expenseId > 0) {
+            // Synchronous double-entry posting to General Ledger (Decision 5.2)
+            try {
+                $journalSync = new AccountingJournalSyncService();
+                $journalSync->createJournalForExpense($expenseId, null, auth()->id());
+            } catch (\Throwable $e) {
+                log_message('error', "Accounting journal sync failed for expense #{$expenseId}: " . $e->getMessage());
+            }
+
             $this->audit()->log('expense.create', [
                 'parish_id' => $attributionParishId,
                 'entity_type' => 'expense',
@@ -282,6 +297,13 @@ class Expenses extends BaseController
         }
 
         $attributionParishId = (int) ($expense['parish_id'] ?? 0);
+        $newDate = (string) $this->request->getPost('date');
+        $oldDate = (string) ($expense['date'] ?? '');
+        $periodModel = model(\App\Models\AccountingPeriodModel::class);
+        if ($periodModel->isDateInClosedPeriod($attributionParishId, $oldDate) || $periodModel->isDateInClosedPeriod($attributionParishId, $newDate)) {
+            return redirect()->back()->withInput()->with('error', lang('Finance.periodClosedMutationLocked'));
+        }
+
         $removeReceipt = (string) ($this->request->getPost('remove_receipt') ?? '') === '1';
 
         $receiptData = null;
@@ -362,6 +384,12 @@ class Expenses extends BaseController
 
         if (!$expense || $expense['parish_id'] != $this->getOperationalParishId()) {
             return $this->jsonResponse(['success' => false, 'message' => lang('Treasurer.expenseNotFound')], 404);
+        }
+
+        $attributionParishId = (int) ($expense['parish_id'] ?? 0);
+        $periodModel = model(\App\Models\AccountingPeriodModel::class);
+        if ($periodModel->isDateInClosedPeriod($attributionParishId, (string) ($expense['date'] ?? ''))) {
+            return $this->jsonResponse(['success' => false, 'message' => lang('Finance.periodClosedMutationLocked')], 422);
         }
 
         if ($this->expenseModel->delete($id)) {

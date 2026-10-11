@@ -457,4 +457,6 @@ return [
     'errorInvalidReceiptType' => 'Formato no valido. Suba un documento PDF, JPG, PNG o WebP.',
     'errorInvalidReceiptSize' => 'El tamano del archivo supera el limite de 10MB.',
     'fundLockedCannotTransact' => 'El fondo seleccionado esta bloqueado y no puede recibir transacciones.',
+    'periodClosedMutationLocked' => 'No se pueden crear, modificar ni eliminar transacciones dentro de un periodo contable cerrado.',
+    'colJournalEntry' => 'Asiento Contable',
 ];
