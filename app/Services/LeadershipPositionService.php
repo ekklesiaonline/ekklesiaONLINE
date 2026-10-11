@@ -27,6 +27,9 @@ class LeadershipPositionService
         'coadjutor_bishop' => ['diocese', 'bishop'],
         'suffragan_bishop' => ['diocese', 'bishop'],
         'assisting_bishop' => ['diocese', 'bishop'],
+        // Title-only office: deliberately absent from ClergyReviewService::OFFICE_PERMISSIONS
+        // and ClergyAuthorizationService::POLICY, so it can never approve offices.
+        'canon_to_ordinary' => ['diocese', 'priest'],
         'rector' => ['parish', 'priest'],
         'priest_in_charge' => ['parish', 'priest'],
         'interim_rector' => ['parish', 'priest'],

@@ -1,6 +1,6 @@
 # Clergy and deanery: database and permission specification
 
-**Status (implementation update):** This is the **pre-implementation design** and its companion [CI4 migration draft](./DraftClergyDeaneryTransition.php) is not deployable. For the implemented, generated migrations, current role-permission mapping and actual deployment gates, see the [canonical operational runbook](../docs/CLERGY_DEANERY_AUTHORIZATION.md). No live MySQL migration has been executed. Applies to any configured diocese of The Episcopal Church; each diocese must confirm its local signatory/delegation policy before enabling approvals. The baseline observations and projected "later" changes below describe the design point in time, not today's source tree.
+**Status (implementation update):** This is the **pre-implementation design** and its companion [CI4 migration draft](./DraftClergyDeaneryTransition.php) is not deployable. For the implemented, generated migrations, current role-permission mapping and actual deployment gates, see the canonical operational runbooks: [ordinary authorization](../docs/ORDINARY_AUTHORIZATION.md) and [deanery authorization](../docs/DEANERY_AUTHORIZATION.md). No live MySQL migration has been executed. Applies to any configured diocese of The Episcopal Church; each diocese must confirm its local signatory/delegation policy before enabling approvals. The baseline observations and projected "later" changes below describe the design point in time, not today's source tree.
 
 ## 1. Baseline and invariants
 

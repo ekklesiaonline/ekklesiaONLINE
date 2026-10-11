@@ -10,6 +10,7 @@ return [
     'selectDeanery' => 'Select the exact deanery',
     'orderEvidenceNote' => 'Ordination requires separate documentary verification; an office cannot confer privileges before approval.',
     'awaitingReview' => 'Awaiting appointment review',
+    'titleOnly' => 'Title only — not approvable',
     'cathedralCharge' => 'Designated cathedral priest-in-charge (requires separate diocesan approval)',
     'perPage' => 'Per page',
     'applyScope' => 'Apply Scope',

@@ -10,6 +10,7 @@ return [
     'selectDeanery' => 'Sélectionnez le doyenné exact',
     'orderEvidenceNote' => 'L’ordination nécessite une vérification documentaire distincte; la fonction n’accorde aucun privilège avant approbation.',
     'awaitingReview' => 'Nomination en attente de vérification',
+    'titleOnly' => 'Titre honorifique — non approvable',
     'cathedralCharge' => 'Prêtre responsable de la cathédrale (approbation diocésaine distincte requise)',
     'perPage' => 'Par page',
     'applyScope' => 'Appliquer la portee',
