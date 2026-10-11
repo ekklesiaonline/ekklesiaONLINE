@@ -29,26 +29,6 @@ class EmailScopeService
      */
     private const KEY_PREFIX = 'email.';
 
-    private const EMAIL_KEYS = [
-        'enabled',
-        'from_email',
-        'from_name',
-        'reply_to',
-        'protocol',
-        'smtp_host',
-        'smtp_port',
-        'smtp_user',
-        'smtp_pass',
-        'smtp_crypto',
-        'smtp_timeout',
-        'smtp_keep_alive',
-        'smtp_auth_method',
-        'mail_path',
-        'charset',
-        'mail_type',
-        'validate',
-        'priority',
-    ];
 
     private const ENABLED_KEY = 'email.enabled';
 

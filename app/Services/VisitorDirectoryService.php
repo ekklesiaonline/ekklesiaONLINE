@@ -23,12 +23,6 @@ use CodeIgniter\Pager\Pager;
  */
 class VisitorDirectoryService
 {
-    /** Fields merged from the earliest person_visit row. */
-    private const VISIT_FIELD_MAP = [
-        'visit_date'       => 'visit_date',
-        'service_attended' => 'attended_event',
-        'notes'            => 'notes',
-    ];
 
     private function db()
     {

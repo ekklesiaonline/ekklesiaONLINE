@@ -26,7 +26,7 @@ Across this period, the automated test suite has expanded from **310 tests (with
 | Capability / Area | 2026-07-28 Baseline | 2026-09-16 Midpoint Milestone | 2026-10-11 Current State |
 | :--- | :--- | :--- | :--- |
 | **PHPUnit Test Suite** | 310 tests, 11 failures | 508 tests, 2,332 assertions, 0 errors, 8 skipped | **980 tests, 4,459 assertions, 0 errors, 0 failures, 6 skipped** (Suite +93% growth) |
-| **Static Analysis (PHPStan)** | None | PHPStan 2.2 Level 0 with 14 baseline entries | **PHPStan 2.2.16 Level 3 clean** (0 errors with baseline, PHP 8.5 runtime) |
+| **Static Analysis (PHPStan)** | None | PHPStan 2.2 Level 0 with 14 baseline entries | **PHPStan 2.2.16 Level 4 clean** (0 errors with 3-item baseline, PHP 8.5 runtime) |
 | **Database Migrations** | ~60 migrations, raw schema dumps | 88 migrations, initial MySQL verification | **120 migrations**, full automated schema migration & idempotency |
 | **Visitor & Guest Architecture** | Fragmented `guest` table, unlinked duplicates | Initial conversion pre-fill draft; legacy `guest` unaddressed | **Legacy `guest` table dropped**; canonical `visitor → regular_attender → member` lifecycle; follow-up engine with sequences, tasks, and notes |
 | **Membership Lifecycle** | Stale status flags (`affiliation_type`, `canonical_status`) | `MembershipPathwayService` classification introduced | **Single source of truth**: `parish_affiliation.membership_status`; `is_member` generated column; status history tracking under canonical `person_id` |
@@ -36,7 +36,7 @@ Across this period, the automated test suite has expanded from **310 tests (with
 | **Authentication & Onboarding** | Direct profile creation, bypassable gates | Multi-tier approval draft, CSRF resend checks | **Multi-tier `RegistrationApprovalService`** with `AdminHierarchyGuard`, rate-limited device verification, concurrent session cap (3), rotated CSRF tokens |
 | **Controller Architecture** | Monolithic controllers (2,000+ LOC), raw `db_connect()` | Service extraction on `Clergy\People` and `Diocesan\Parishes` | **Module standardization (`Diocese`)**, decomposed single-responsibility controllers (`Banking`, `Events`, `FollowupWorkflow`, `People`), zero raw SQL in controllers |
 | **Legacy Table Status** | Stale parallel stores active | Inventory documented (M7) | **Physical purge complete**: `parish_people`, `guest`, and `user_scope_assignment` completely removed |
-| **CI / CD Pipeline** | Commented-out test execution | `.github/workflows/php.yml` enabled | Outdated workflows removed (commit `993b313`); restoration with modern PHP 8.5 matrix pending |
+| **CI / CD Pipeline** | Commented-out test execution | `.github/workflows/php.yml` enabled | **Active GitHub Actions CI (`.github/workflows/ci.yml`)** running PHPUnit 10 (980 tests) + PHPStan Level 4 on PHP 8.5 |
 
 ---
 
@@ -149,25 +149,25 @@ Across this period, the automated test suite has expanded from **310 tests (with
 
 ---
 
-## Remaining Gaps and Recommended Next Actions
+## Implemented Upgrades & Remaining Operational Items
 
-While all major product backlog items and security vulnerabilities from the July and September 2026 reports have been resolved, the following operational and maintenance items are identified:
+### Completed Upgrades (2026-10-11):
+1. **GitHub Actions CI Pipeline Modernized:**
+   - Restored and activated `.github/workflows/ci.yml` targeting PHP 8.5 with `intl`, `mbstring`, `mysqli`, `curl`, `gd`, `sqlite3`, and `pdo_sqlite`.
+   - Automatically runs `composer install`, PHPStan Level 4, and the full 980-test PHPUnit suite on every `push` and `pull_request` to `main`.
+2. **PHPStan Upgraded to Level 4:**
+   - Advanced static analysis from Level 3 to Level 4 in `phpstan.neon` with `treatPhpDocTypesAsCertain: false`.
+   - Burned down dead code, redundant null/boolean checks, unused class constants, and unreachable branches across Services, Models, and Libraries.
+   - 0 errors reported with baseline reduced to just 3 entries.
 
-### Priority 1: CI Pipeline Modernization (Operational)
-- **Status:** Outdated GitHub workflow files were removed in late September.
-- **Action:** Create a clean, modern `.github/workflows/ci.yml` that executes on push and pull request:
-  - Setup PHP 8.5 with required extensions (`intl`, `mbstring`, `mysqli`, `curl`, `gd`, `sqlite3`).
-  - Run `composer install --prefer-dist --no-progress`.
-  - Run `vendor/bin/phpunit --no-coverage`.
-  - Run `vendor/bin/phpstan analyse --no-progress`.
-
-### Priority 2: Static Analysis Depth (Code Quality)
-- **Status:** PHPStan is green at Level 3 across `app/Services`, `app/Libraries`, and `app/Models`.
-- **Action:** Incrementally advance PHPStan to Level 4. Level 4 identifies approximately 42 type-narrowing and `alwaysTrue` conditions that can be safely refined.
-
-### Priority 3: Automated Affiliation & Eligibility Audits (Data Integrity)
-- **Status:** Diagnostic CLI commands exist (`people:audit-affiliation-drift`, `leadership:audit-eligibility`, `person:diagnose`).
-- **Action:** Schedule periodic execution of `php spark people:audit-affiliation-drift` and `php spark leadership:audit-eligibility` via cron or monthly release verification drills to detect any out-of-band data drift.
+### Remaining Operational Maintenance & Polish:
+- **Priority 1: Automated Affiliation & Eligibility Audits (Data Integrity):**
+  - Diagnostic CLI commands exist (`people:audit-affiliation-drift`, `leadership:audit-eligibility`, `person:diagnose`).
+  - Schedule periodic execution via cron or release verification drills to detect out-of-band data drift.
+- **Priority 2: General Ledger Journal Entry Linking in Banking:**
+  - Reserved `bank_transaction_journal_link` schema table available for future double-entry journal linkage.
+- **Priority 3: Spanish & French Locale Parity Tail:**
+  - Complete remaining admin merge/preview translation keys in `es` and `fr`.
 
 ---
 

@@ -89,7 +89,7 @@ class PersonProvisioningService
 
         // Sync the canonical person record outside the transaction to avoid
         // nested transaction conflicts in PersonProfileSyncService.
-        if (isset($profileId) && $profileId !== null && $profileId > 0) {
+        if (isset($profileId) && $profileId > 0) {
             (new PersonProfileSyncService())->syncFromProfile($profileId);
         }
 

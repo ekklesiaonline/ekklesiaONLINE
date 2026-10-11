@@ -55,7 +55,7 @@ class AuditService
         $writeDb = filter_var((string) (env('monitoring.auditDbEnabled') ?? 'true'), FILTER_VALIDATE_BOOL, FILTER_NULL_ON_FAILURE);
         if ($writeDb !== false && $this->hasAuditTable()) {
             try {
-                db_connect()->table('audit_log')->insert($record);
+                $this->auditLogModel->builder()->insert($record);
             } catch (\Throwable $e) {
                 $this->monitoring->exception('audit.db_write_failed', $e, [
                     'action' => $record['action'],

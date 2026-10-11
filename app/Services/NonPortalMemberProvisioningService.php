@@ -50,7 +50,7 @@ class NonPortalMemberProvisioningService
             : ($isMember ? 'member' : 'visitor');
         $paStatus = \App\Services\MembershipStatusService::normalizeAffiliationStatus($defaultStatus);
 
-        $useTransaction = strtolower((string) ($this->db->DBDriver ?? '')) !== 'sqlite3';
+        $useTransaction = strtolower((string) $this->db->DBDriver) !== 'sqlite3';
         if ($useTransaction) {
             $this->db->transBegin();
         }

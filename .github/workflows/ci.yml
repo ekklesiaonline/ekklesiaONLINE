@@ -1,0 +1,53 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: PHPUnit & PHPStan (PHP 8.5)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.5'
+          extensions: intl, mbstring, mysqli, curl, gd, sqlite3, pdo_sqlite
+          coverage: none
+          ini-values: memory_limit=512M
+
+      - name: Get Composer Cache Directory
+        id: composer-cache
+        run: echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
+
+      - name: Cache Composer dependencies
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
+          restore-keys: ${{ runner.os }}-composer-
+
+      - name: Install dependencies
+        run: composer install --prefer-dist --no-progress --no-interaction
+
+      - name: Ensure writable directories exist
+        run: |
+          mkdir -p writable/cache writable/logs writable/session writable/uploads
+          chmod -R 777 writable
+
+      - name: Run PHPStan (Level 4)
+        run: vendor/bin/phpstan analyse --no-progress --memory-limit=512M
+
+      - name: Run PHPUnit Test Suite
+        run: vendor/bin/phpunit --no-coverage

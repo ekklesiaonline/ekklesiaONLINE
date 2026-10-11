@@ -73,7 +73,7 @@ class EventCalendarModel extends Model
                     ->groupEnd();
             }
 
-            if ($nationalParishId !== null && $nationalParishId > 0 && $hasParishId) {
+            if ($nationalParishId !== null && $nationalParishId > 0) {
                 $builder->orGroupStart()
                     ->where('scope_level', 'national')
                     ->where('parish_id', $nationalParishId)

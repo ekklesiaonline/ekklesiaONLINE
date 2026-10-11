@@ -44,7 +44,7 @@ class DataEncryption
         }
 
         $payload = substr($value, strlen(self::PREFIX));
-        if ($payload === false || $payload === '') {
+        if ($payload === '') {
             return null;
         }
 

@@ -353,7 +353,7 @@ class PersonMergeService
     private function logAudit(int $sourcePersonId, int $targetPersonId, int $parishId, int $actorUserId): void
     {
         $audit = service('audit');
-        if (! is_object($audit) || ! method_exists($audit, 'log')) {
+        if (! $audit instanceof \App\Services\AuditService) {
             return;
         }
 

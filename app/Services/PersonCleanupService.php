@@ -41,18 +41,16 @@ class PersonCleanupService
 
         $personIds = [];
 
-        if ($this->db->tableExists('user_person')) {
-            $rows = $this->db->table('user_person')
-                ->distinct()
-                ->select('person_id')
-                ->where('user_id', $userId)
-                ->get()
-                ->getResultArray();
-            foreach ($rows as $row) {
-                $id = (int) ($row['person_id'] ?? 0);
-                if ($id > 0) {
-                    $personIds[$id] = true;
-                }
+        $rows = $this->db->table('user_person')
+            ->distinct()
+            ->select('person_id')
+            ->where('user_id', $userId)
+            ->get()
+            ->getResultArray();
+        foreach ($rows as $row) {
+            $id = (int) ($row['person_id'] ?? 0);
+            if ($id > 0) {
+                $personIds[$id] = true;
             }
         }
 
@@ -74,11 +72,9 @@ class PersonCleanupService
         $this->db->transBegin();
 
         try {
-            if ($this->db->tableExists('user_person')) {
-                $this->db->table('user_person')
-                    ->where('user_id', $userId)
-                    ->delete();
-            }
+            $this->db->table('user_person')
+                ->where('user_id', $userId)
+                ->delete();
 
             foreach (array_keys($personIds) as $personId) {
                 $this->deleteIfOrphaned($personId);

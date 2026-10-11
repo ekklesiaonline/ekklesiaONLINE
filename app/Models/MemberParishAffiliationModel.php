@@ -635,7 +635,7 @@ class MemberParishAffiliationModel extends BaseTenantModel
 
             try {
                 $result = $this->insert($insertData) !== false;
-            } catch (\CodeIgniter\Database\Exceptions\DatabaseException $e) {
+            } catch (\Throwable $e) {
                 // The unique constraint on (linked_user_id, parish_id) or
                 // (person_id, parish_id) means another concurrent request created
                 // the row first. Fall back to updating it.

@@ -61,9 +61,6 @@ class ExpenseReceiptUploadService
             ];
         }
 
-        if (!$hasNewReceipt || $file === null) {
-            return null;
-        }
 
         $mimeType = (string) $file->getMimeType();
         if (!in_array($mimeType, self::ALLOWED_MIME_TYPES, true)) {

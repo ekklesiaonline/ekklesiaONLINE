@@ -106,7 +106,7 @@ class FollowupDispatchService
         }
 
         $phone = $this->decryptField($visitor['phone'] ?? '');
-        if ($phone === '' || $phone === null) {
+        if ($phone === '') {
             return ['success' => false, 'metadata' => [], 'error' => 'Visitor has no phone number.'];
         }
 
@@ -142,7 +142,7 @@ class FollowupDispatchService
         }
 
         $email = $this->decryptField($visitor['email'] ?? '');
-        if ($email === '' || $email === null) {
+        if ($email === '') {
             return ['success' => false, 'metadata' => [], 'error' => 'Visitor has no email address.'];
         }
 

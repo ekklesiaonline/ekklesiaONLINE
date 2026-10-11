@@ -49,7 +49,7 @@ class ParochialReportDataService
         $summary['subsidiary_organizations_list'] = $this->decodeJsonList($summary['subsidiary_organizations_json'] ?? null);
         $summary['clergy_situation_list'] = $this->decodeJsonList($summary['clergy_situation_json'] ?? null);
 
-        if (!isset($summary['membership_previous_total']) || $summary['membership_previous_total'] === null) {
+        if (!isset($summary['membership_previous_total'])) {
             $summary['membership_previous_total'] = $this->deriveReportedMemberTotal($previousSummary) ?? ($membership['member_total'] ?? 0);
         }
 
@@ -255,7 +255,7 @@ class ParochialReportDataService
             'member_total' => $memberTotal,
             'active_members_other' => $activeMembersOther,
             'active_participants' => $activeParticipants,
-            'average_age' => isset($averageAge['avg_age']) && $averageAge['avg_age'] !== null ? round((float) $averageAge['avg_age'], 1) : null,
+            'average_age' => isset($averageAge['avg_age']) ? round((float) $averageAge['avg_age'], 1) : null,
             'easter_attendance' => $this->getHolidayAttendance($db, $parishId, $year, 'easter'),
             'christmas_attendance' => $this->getHolidayAttendance($db, $parishId, $year, 'christmas'),
         ];
@@ -508,7 +508,7 @@ class ParochialReportDataService
             return null;
         }
 
-        if (!isset($summary['membership_previous_total']) || $summary['membership_previous_total'] === null) {
+        if (!isset($summary['membership_previous_total'])) {
             return null;
         }
 

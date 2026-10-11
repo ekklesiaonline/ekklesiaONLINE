@@ -252,16 +252,10 @@ class MemberAccessService
                 $profileUpdate['portal_enabled_at'] = null;
             }
 
-            if ($profileUpdate !== []) {
-                if ($profileTable === null) {
-                    $profileUpdate = [];
-                }
-
-                if ($profileTable !== null) {
-                    $this->db->table($profileTable)
-                        ->where('user_id', $userId)
-                        ->update($profileUpdate);
-                }
+            if ($profileTable !== null) {
+                $this->db->table($profileTable)
+                    ->where('user_id', $userId)
+                    ->update($profileUpdate);
             }
 
             $this->sendPortalInviteEmail($email, $parishId);

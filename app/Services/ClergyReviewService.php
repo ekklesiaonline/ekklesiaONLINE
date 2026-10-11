@@ -833,6 +833,9 @@ final class ClergyReviewService
         return $startedAt === '' || substr($startedAt, 0, 10) <= $endedOn;
     }
 
+    /**
+     * @phpstan-impure
+     */
     private function hasConflictingIncumbent(array $candidate): bool
     {
         $role = (string) $candidate['role_code'];

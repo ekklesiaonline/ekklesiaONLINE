@@ -2,70 +2,22 @@
 
 $ignoreErrors = [];
 $ignoreErrors[] = [
-	'message' => '#^Deprecated in PHP 8\\.4\\: Parameter \\#5 \\$description \\(string\\) is implicitly nullable via default value null\\.$#',
-	'identifier' => 'parameter.implicitlyNullable',
-	'count' => 1,
-	'path' => __DIR__ . '/app/Models/DioceseSettingModel.php',
-];
-$ignoreErrors[] = [
-	'message' => '#^Deprecated in PHP 8\\.4\\: Parameter \\#4 \\$category \\(string\\) is implicitly nullable via default value null\\.$#',
-	'identifier' => 'parameter.implicitlyNullable',
-	'count' => 1,
-	'path' => __DIR__ . '/app/Models/OrganisationSettingModel.php',
-];
-$ignoreErrors[] = [
-	'message' => '#^Deprecated in PHP 8\\.4\\: Parameter \\#5 \\$description \\(string\\) is implicitly nullable via default value null\\.$#',
-	'identifier' => 'parameter.implicitlyNullable',
-	'count' => 1,
-	'path' => __DIR__ . '/app/Models/OrganisationSettingModel.php',
-];
-$ignoreErrors[] = [
-	'message' => '#^Deprecated in PHP 8\\.4\\: Parameter \\#2 \\$year \\(int\\) is implicitly nullable via default value null\\.$#',
-	'identifier' => 'parameter.implicitlyNullable',
-	'count' => 2,
-	'path' => __DIR__ . '/app/Models/ParishReportModel.php',
-];
-$ignoreErrors[] = [
-	'message' => '#^Deprecated in PHP 8\\.4\\: Parameter \\#3 \\$reason \\(string\\) is implicitly nullable via default value null\\.$#',
-	'identifier' => 'parameter.implicitlyNullable',
-	'count' => 1,
-	'path' => __DIR__ . '/app/Models/ParishReportModel.php',
-];
-$ignoreErrors[] = [
-	'message' => '#^Deprecated in PHP 8\\.4\\: Parameter \\#5 \\$description \\(string\\) is implicitly nullable via default value null\\.$#',
-	'identifier' => 'parameter.implicitlyNullable',
-	'count' => 1,
-	'path' => __DIR__ . '/app/Models/ProvinceSettingModel.php',
-];
-$ignoreErrors[] = [
 	'message' => '#^Deprecated in PHP 8\\.4\\: Parameter \\#4 \\$signature \\(string\\) is implicitly nullable via default value null\\.$#',
 	'identifier' => 'parameter.implicitlyNullable',
 	'count' => 1,
 	'path' => __DIR__ . '/app/Models/ReportSignatoryModel.php',
 ];
 $ignoreErrors[] = [
-	'message' => '#^Array has 2 duplicate keys with value \'parish_id\' \\(\'parish_id\', \'parish_id\'\\)\\.$#',
-	'identifier' => 'array.duplicateKey',
+	'message' => '#^Strict comparison using \\=\\=\\= between true and false will always evaluate to false\\.$#',
+	'identifier' => 'identical.alwaysFalse',
 	'count' => 1,
-	'path' => __DIR__ . '/app/Models/UserRegistrationRequestModel.php',
+	'path' => __DIR__ . '/app/Services/ParishReportApprovalService.php',
 ];
 $ignoreErrors[] = [
-	'message' => '#^Array has 2 duplicate keys with value \'requested_parish_id\' \\(\'requested_parish_id\', \'requested_parish_id\'\\)\\.$#',
-	'identifier' => 'array.duplicateKey',
+	'message' => '#^Call to function in_array\\(\\) with arguments \'clergy\'\\|\'finance\'\\|\'followup_coordinator\'\\|\'member\'\\|\'parishadmin\'\\|\'vestry_secretary\'\\|\'volunteer…\'\\|\'worship_coordinator\'\\|\'worship_volunteer\', array\\{\'member\', \'clergy\', \'parishadmin\', \'finance\', \'vestry_secretary\', \'volunteer…\', \'followup_coordinator\', \'worship_coordinator\', \\.\\.\\.\\} and true will always evaluate to true\\.$#',
+	'identifier' => 'function.alreadyNarrowedType',
 	'count' => 1,
-	'path' => __DIR__ . '/app/Models/UserRegistrationRequestModel.php',
-];
-$ignoreErrors[] = [
-	'message' => '#^Deprecated in PHP 8\\.4\\: Parameter \\#4 \\$category \\(string\\) is implicitly nullable via default value null\\.$#',
-	'identifier' => 'parameter.implicitlyNullable',
-	'count' => 1,
-	'path' => __DIR__ . '/app/Services/ConfigurationService.php',
-];
-$ignoreErrors[] = [
-	'message' => '#^Deprecated in PHP 8\\.4\\: Parameter \\#5 \\$description \\(string\\) is implicitly nullable via default value null\\.$#',
-	'identifier' => 'parameter.implicitlyNullable',
-	'count' => 3,
-	'path' => __DIR__ . '/app/Services/ConfigurationService.php',
+	'path' => __DIR__ . '/app/Services/RegistrationApprovalService.php',
 ];
 
 return ['parameters' => ['ignoreErrors' => $ignoreErrors]];

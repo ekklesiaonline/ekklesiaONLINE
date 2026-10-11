@@ -33,7 +33,6 @@ class MemberDashboardDataService
     private DonationModel $donationModel;
     private AttendanceModel $attendanceModel;
     private FamilyMemberModel $familyMemberModel;
-    private FamilyModel $familyModel;
 
     public function __construct(
         ?ProfileModel $profileModel = null,
@@ -46,8 +45,7 @@ class MemberDashboardDataService
         ?AnnualPledgeModel $pledgeModel = null,
         ?DonationModel $donationModel = null,
         ?AttendanceModel $attendanceModel = null,
-        ?FamilyMemberModel $familyMemberModel = null,
-        ?FamilyModel $familyModel = null
+        ?FamilyMemberModel $familyMemberModel = null
     ) {
         $this->profileModel       = $profileModel ?? model(ProfileModel::class);
         $this->parishModel        = $parishModel ?? model(ParishModel::class);
@@ -60,7 +58,6 @@ class MemberDashboardDataService
         $this->donationModel      = $donationModel ?? model(DonationModel::class);
         $this->attendanceModel    = $attendanceModel ?? model(AttendanceModel::class);
         $this->familyMemberModel  = $familyMemberModel ?? model(FamilyMemberModel::class);
-        $this->familyModel        = $familyModel ?? model(FamilyModel::class);
     }
 
     /**

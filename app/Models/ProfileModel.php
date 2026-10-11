@@ -252,7 +252,7 @@ class ProfileModel extends BaseTenantModel
                 }
 
                 return str_contains($phone, $needle)
-                    || str_contains(($phone !== '' ? preg_replace('/\D+/', '', $phone) : ''), preg_replace('/\D+/', '', $needle));
+                    || str_contains((string) preg_replace('/\D+/', '', $phone), (string) preg_replace('/\D+/', '', $needle));
             }));
         }
 

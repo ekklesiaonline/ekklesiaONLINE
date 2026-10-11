@@ -137,7 +137,7 @@ class PersonMembershipDetailsService
         }
 
         $birthDate = (string) $profile['birth_date'];
-        if ($birthDate === '' || $birthDate === '0000-00-00') {
+        if ($birthDate === '0000-00-00') {
             return null;
         }
 

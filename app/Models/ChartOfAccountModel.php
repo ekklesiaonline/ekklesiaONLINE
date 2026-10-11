@@ -22,10 +22,6 @@ class ChartOfAccountModel extends Model
     protected $createdField  = 'created_at';
     protected $updatedField  = 'updated_at';
 
-    /**
-     * Track generated cache keys so writes can invalidate all related lists.
-     */
-    private array $cacheKeysRegistry = [];
 
     protected function getCacheService()
     {

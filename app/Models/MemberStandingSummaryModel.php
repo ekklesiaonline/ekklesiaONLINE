@@ -36,7 +36,7 @@ class MemberStandingSummaryModel extends Model
         $endDate = sprintf('%04d-12-31', $year);
         $lastUpdated = date('Y-m-d H:i:s');
         $serviceDateColumn = $this->resolveServiceDateColumn();
-        $useTrans = strtolower((string) ($this->db->DBDriver ?? '')) !== 'sqlite3';
+        $useTrans = strtolower((string) $this->db->DBDriver) !== 'sqlite3';
 
         if ($useTrans) {
             $this->db->transStart();

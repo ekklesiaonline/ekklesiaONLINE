@@ -30,9 +30,6 @@ class EventCoverUploadService
             return '';
         }
 
-        if (!$hasNewCover) {
-            return $existingCoverPath;
-        }
 
         $mimeType = (string) $file->getMimeType();
         $allowedMimeTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];

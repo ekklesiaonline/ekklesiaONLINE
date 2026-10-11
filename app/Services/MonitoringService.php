@@ -76,7 +76,7 @@ class MonitoringService
             return;
         }
 
-        $sql = method_exists($query, 'getOriginalQuery') ? $query->getOriginalQuery() : $query->getQuery();
+        $sql = $query->getOriginalQuery();
         $sanitizedSql = $this->sanitizeSql((string) $sql);
 
         $this->log('db.query.slow', [
