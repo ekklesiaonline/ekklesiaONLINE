@@ -86,7 +86,7 @@ final class DonationCreationParishAdminTest extends CIUnitTestCase
     }
 
     /**
-     * Mirrors the critical guard path in Treasurer\\Controllers\\Donations::store().
+     * Mirrors the critical guard path in Finance\\Controllers\\Donations::store().
      */
     private function attemptDonationCreationFlow(int $parishId, array $payload): int
     {

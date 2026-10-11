@@ -12,7 +12,7 @@ use CodeIgniter\Test\DatabaseTestTrait;
 use Config\Services;
 use Tests\Support\Database\CanonicalTestSchema;
 use Tests\Support\Database\SystemSettingsTestHelper;
-use Treasurer\Controllers\BankingReconciliation as Banking;
+use Finance\Controllers\BankingReconciliation as Banking;
 
 /**
  * Phase 6: Banking & Bank Reconciliation Controller Integration Test.

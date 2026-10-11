@@ -23,7 +23,7 @@ final class LayoutFlashEscapingTest extends CIUnitTestCase
             'clergy main'   => [$root . 'Clergy/Views/layouts/main.php'],
             'diocesan main' => [$root . 'Diocese/Views/layouts/main.php'],
             'province main' => [$root . 'Province/Views/layouts/main.php'],
-            'treasurer main'=> [$root . 'Treasurer/Views/layouts/main.php'],
+            'finance main'  => [$root . 'Finance/Views/layouts/main.php'],
             'volunteer main'=> [$root . 'Volunteer/Views/layouts/main.php'],
             'worship main'  => [$root . 'Worship/Views/layouts/main.php'],
         ];

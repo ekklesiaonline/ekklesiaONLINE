@@ -7,7 +7,7 @@ use CodeIgniter\Test\CIUnitTestCase;
 use CodeIgniter\Test\DatabaseTestTrait;
 use Config\Services;
 
-class FinanceAuditPayloadDonationsTestController extends \Treasurer\Controllers\DonationStatements
+class FinanceAuditPayloadDonationsTestController extends \Finance\Controllers\DonationStatements
 {
     private int $forcedParishId = 0;
     private array $auditEvents = [];
@@ -68,7 +68,7 @@ class FinanceAuditPayloadDonationsTestController extends \Treasurer\Controllers\
     }
 }
 
-class FinanceAuditPayloadExpensesTestController extends \Treasurer\Controllers\ExpenseExports
+class FinanceAuditPayloadExpensesTestController extends \Finance\Controllers\ExpenseExports
 {
     private int $forcedParishId = 0;
     private array $auditEvents = [];

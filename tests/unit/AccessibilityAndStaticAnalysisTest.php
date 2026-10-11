@@ -53,7 +53,7 @@ final class AccessibilityAndStaticAnalysisTest extends CIUnitTestCase
         'Clergy/Views',
         'MemberPortal/Views',
         'Diocese/Views',
-        'Treasurer/Views',
+        'Finance/Views',
         'Worship/Views',
         'Parish/Views',
         'Province/Views',

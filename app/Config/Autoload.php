@@ -40,10 +40,10 @@ class Autoload extends AutoloadConfig
     public $psr4 = [
         APP_NAMESPACE  => APPPATH,
         'Province'     => ROOTPATH . 'Province',
-        'Diocesan'     => ROOTPATH . 'Diocesan',
+        'Diocese'      => ROOTPATH . 'Diocese',
         'Clergy'       => ROOTPATH . 'Clergy',
         'Worship'      => ROOTPATH . 'Worship',
-        'Treasurer'    => ROOTPATH . 'Treasurer',
+        'Finance'      => ROOTPATH . 'Finance',
         'Volunteer'    => ROOTPATH . 'Volunteer',
         'MemberPortal' => ROOTPATH . 'MemberPortal',
         'Parish'       => ROOTPATH . 'Parish',

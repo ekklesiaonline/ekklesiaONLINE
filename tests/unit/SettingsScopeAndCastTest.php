@@ -106,7 +106,7 @@ final class SettingsScopeAndCastTest extends CIUnitTestCase
             ROOTPATH . 'MemberPortal/Models',
             ROOTPATH . 'Parish/Models',
             ROOTPATH . 'Province/Models',
-            ROOTPATH . 'Treasurer/Models',
+            ROOTPATH . 'Finance/Models',
             ROOTPATH . 'Volunteer/Models',
             ROOTPATH . 'Worship/Models',
         ];

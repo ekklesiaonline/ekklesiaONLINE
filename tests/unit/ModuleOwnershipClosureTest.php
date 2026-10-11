@@ -14,7 +14,7 @@ final class ModuleOwnershipClosureTest extends CIUnitTestCase
             'diocesan routes' => [ROOTPATH . 'Diocese/Config/Routes.php'],
             'clergy routes' => [ROOTPATH . 'Clergy/Config/Routes.php'],
             'worship routes' => [ROOTPATH . 'Worship/Config/Routes.php'],
-            'treasurer routes' => [ROOTPATH . 'Treasurer/Config/Routes.php'],
+            'finance routes' => [ROOTPATH . 'Finance/Config/Routes.php'],
             'volunteer routes' => [ROOTPATH . 'Volunteer/Config/Routes.php'],
             'member portal routes' => [ROOTPATH . 'MemberPortal/Config/Routes.php'],
         ];
@@ -47,7 +47,7 @@ final class ModuleOwnershipClosureTest extends CIUnitTestCase
             'diocesan views' => ['Diocese/Views'],
             'clergy views' => ['Clergy/Views'],
             'worship views' => ['Worship/Views'],
-            'treasurer views' => ['Treasurer/Views'],
+            'finance views' => ['Finance/Views'],
             'volunteer views' => ['Volunteer/Views'],
         ];
     }

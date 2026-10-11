@@ -12,6 +12,7 @@ declare(strict_types=1);
  */
 
 require_once __DIR__ . '/../vendor/codeigniter4/framework/system/Test/bootstrap.php';
+require_once __DIR__ . '/../Finance/Config/Aliases.php';
 
 $db = db_connect('tests');
 

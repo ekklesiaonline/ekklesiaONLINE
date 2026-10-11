@@ -14,7 +14,7 @@ final class DormantSchemaRouteGuardTest extends CIUnitTestCase
             ROOTPATH . 'Clergy/Config/Routes.php',
             ROOTPATH . 'Diocese/Config/Routes.php',
             ROOTPATH . 'MemberPortal/Config/Routes.php',
-            ROOTPATH . 'Treasurer/Config/Routes.php',
+            ROOTPATH . 'Finance/Config/Routes.php',
             ROOTPATH . 'Volunteer/Config/Routes.php',
             ROOTPATH . 'Worship/Config/Routes.php',
             ROOTPATH . 'Province/Config/Routes.php',

@@ -50,7 +50,7 @@ final class OldEscapingGuardTest extends CIUnitTestCase
             ROOTPATH . 'MemberPortal/Views',
             ROOTPATH . 'Parish/Views',
             ROOTPATH . 'Province/Views',
-            ROOTPATH . 'Treasurer/Views',
+            ROOTPATH . 'Finance/Views',
             ROOTPATH . 'Volunteer/Views',
             ROOTPATH . 'Worship/Views',
         ];

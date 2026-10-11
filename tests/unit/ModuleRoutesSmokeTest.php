@@ -31,8 +31,8 @@ final class ModuleRoutesSmokeTest extends CIUnitTestCase
                     'Attendance::reports',
                 ],
             ],
-            'treasurer routes' => [
-                ROOTPATH . 'Treasurer/Config/Routes.php',
+            'finance routes' => [
+                ROOTPATH . 'Finance/Config/Routes.php',
                 [
                     'Donation::index',
                     'Expense::index',
@@ -79,7 +79,7 @@ final class ModuleRoutesSmokeTest extends CIUnitTestCase
             "require ROOTPATH . 'MemberPortal/Config/Routes.php';",
             "require ROOTPATH . 'Clergy/Config/Routes.php';",
             "require ROOTPATH . 'Worship/Config/Routes.php';",
-            "require ROOTPATH . 'Treasurer/Config/Routes.php';",
+            "require ROOTPATH . 'Finance/Config/Routes.php';",
             "require ROOTPATH . 'Volunteer/Config/Routes.php';",
             "require ROOTPATH . 'Province/Config/Routes.php';",
             "require ROOTPATH . 'Diocese/Config/Routes.php';",

@@ -79,8 +79,8 @@ if (is_file(ROOTPATH . 'Parish/Config/Routes.php')) {
 if (is_file(ROOTPATH . 'Worship/Config/Routes.php')) {
     require ROOTPATH . 'Worship/Config/Routes.php';
 }
-if (is_file(ROOTPATH . 'Treasurer/Config/Routes.php')) {
-    require ROOTPATH . 'Treasurer/Config/Routes.php';
+if (is_file(ROOTPATH . 'Finance/Config/Routes.php')) {
+    require ROOTPATH . 'Finance/Config/Routes.php';
 }
 if (is_file(ROOTPATH . 'Volunteer/Config/Routes.php')) {
     require ROOTPATH . 'Volunteer/Config/Routes.php';
