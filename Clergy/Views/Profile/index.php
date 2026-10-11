@@ -2,21 +2,20 @@
 
 <?= $this->section('content') ?>
 
+<?php
+$callingCodeOptions = \App\Libraries\PhoneHelper::callingCodeOptions();
+$countryOptions = \App\Libraries\AddressHelper::countryOptions();
+[$storedCallingCode, $storedLocalPhone] = \App\Libraries\PhoneHelper::fromE164($profile['phone'] ?? '');
+$selectedCallingCode = old('phone_country_code', $profile['phone_country_code'] ?? $storedCallingCode ?? '+1');
+$localPhoneValue = old('phone', $storedLocalPhone ?? '');
+$selectedCountry = old('country', $profile['country'] ?? '');
+?>
+
 <div class="d-flex justify-content-start align-items-center mb-3">
     <a href="<?= base_url('clergy/dashboard') ?>" class="btn btn-secondary">
         <i class="bi bi-arrow-left" aria-hidden="true"></i> <?= lang('ClergyPortal.backToDashboard') ?>
     </a>
 </div>
-
-<?php if (session('errors')): ?>
-    <div class="alert alert-danger">
-        <ul class="mb-0">
-            <?php foreach ((array) session('errors') as $error): ?>
-                <li><?= esc($error) ?></li>
-            <?php endforeach; ?>
-        </ul>
-    </div>
-<?php endif; ?>
 
 <div class="card mb-3">
     <div class="card-body">
@@ -41,11 +40,15 @@
             <div class="row">
                 <div class="col-md-3 mb-3">
                     <label for="phone_country_code" class="form-label"><?= lang('ClergyPortal.phoneCountryCode') ?></label>
-                    <input type="text" class="form-control" id="phone_country_code" name="phone_country_code" value="<?= esc(old('phone_country_code', $profile['phone_country_code'] ?? '')) ?>" placeholder="+1">
+                    <select class="form-select" id="phone_country_code" name="phone_country_code">
+                        <?php foreach ($callingCodeOptions as $code => $label): ?>
+                            <option value="<?= esc($code) ?>" <?= (string) $selectedCallingCode === $code ? 'selected' : '' ?>><?= esc($label) ?></option>
+                        <?php endforeach; ?>
+                    </select>
                 </div>
                 <div class="col-md-5 mb-3">
                     <label for="phone" class="form-label"><?= lang('ClergyPortal.phone') ?></label>
-                    <input type="text" class="form-control" id="phone" name="phone" value="<?= esc(old('phone', $profile['phone'] ?? '')) ?>">
+                    <input type="tel" class="form-control" id="phone" name="phone" value="<?= esc($localPhoneValue) ?>">
                 </div>
                 <div class="col-md-4 mb-3">
                     <label for="birth_date" class="form-label"><?= lang('ClergyPortal.birthDate') ?></label>
@@ -79,7 +82,12 @@
                 </div>
                 <div class="col-md-3 mb-3">
                     <label for="country" class="form-label"><?= lang('ClergyPortal.country') ?></label>
-                    <input type="text" class="form-control" id="country" name="country" value="<?= esc(old('country', $profile['country'] ?? '')) ?>">
+                    <select class="form-select" id="country" name="country">
+                        <option value="" <?= $selectedCountry === '' ? 'selected' : '' ?>><?= lang('Profile.selectCountry') ?></option>
+                        <?php foreach ($countryOptions as $code => $label): ?>
+                            <option value="<?= esc($code) ?>" <?= (string) $selectedCountry === $code ? 'selected' : '' ?>><?= esc($label) ?></option>
+                        <?php endforeach; ?>
+                    </select>
                 </div>
             </div>
 
