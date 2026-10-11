@@ -19,7 +19,7 @@ Use this skill before changing a cross-module feature or explaining where a new 
 - Framework: CodeIgniter 4.7+, PHP 8.2+, Shield 1.2, MySQL 8, Bootstrap 5.
 - Organizational hierarchy: **System → Province → Diocese → Parish → Personal**.
 - Shared application code lives under `app/`.
-- Role modules use PSR-4 roots: `Province/`, `Diocese/`, `Clergy/`, `Parish/`, `Worship/`, `Treasurer/`, `Volunteer/`, and `MemberPortal/`.
+- Role modules use PSR-4 roots: `Province/`, `Diocese/`, `Clergy/`, `Parish/`, `Worship/`, `Finance/`, `Volunteer/`, and `MemberPortal/`.
 - Module routes are loaded from each module's `Config/Routes.php` by `app/Config/Routes.php`.
 - Domain operations belong in services/models; controllers should coordinate authorization, validation, scope, and response rendering.
 
@@ -40,7 +40,7 @@ Use this as a compact architecture smoke test when reviewing a role-based landin
 1. `BaseController::resolveDashboardScope()` sees the `treasurer` group after higher-tier groups and returns tier `parish`, the operational parish scope, and `/parish/finance`.
 2. `Parish/Config/Routes.php` maps `GET /parish/finance` to `Parish\\Controllers\\FinanceDashboard::index` with session and `permission:finance.view` protection.
 3. `Parish/Controllers/FinanceDashboard.php` resolves `getOperationalParishId()` and applies that `parish_id` to donation and expense queries.
-4. `Treasurer/Config/Routes.php` still exposes `GET /treasurer/dashboard` only as a compatibility entry point; `Treasurer\\Controllers\\Dashboard` redirects to `/parish/finance`.
+4. `Finance/Config/Routes.php` still exposes `GET /treasurer/dashboard` only as a compatibility entry point; `Finance\\Controllers\\Dashboard` redirects to `/parish/finance`.
 5. Confirm the route table with `php spark routes`, then run the focused tests:
 
    ```bash

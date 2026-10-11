@@ -6,8 +6,8 @@ trigger: always_on
 # CodeIgniter 4.7+ & Shield 1.4+ Development Standards
 
 ## Application Architecture & Modules
-- Application space comprises shared code under `app/` and 8 root-level PSR-4 feature modules: `Province/`, `Diocese/`, `Clergy/`, `Parish/`, `Worship/`, `Treasurer/`, `Volunteer/`, and `MemberPortal/`. Never modify files inside `system/` or `vendor/`.
-- Organize controllers in `app/Controllers/` or the owning module (`<Module>\Controllers\*`). Views inside modules are referenced via `<Module>\Views\<Subfolder>/<view>` (e.g., `view('Treasurer\Views\Banking/index', $data)`).
+- Application space comprises shared code under `app/` and 8 root-level PSR-4 feature modules: `Province/`, `Diocese/`, `Clergy/`, `Parish/`, `Worship/`, `Finance/`, `Volunteer/`, and `MemberPortal/`. Never modify files inside `system/` or `vendor/`.
+- Organize controllers in `app/Controllers/` or the owning module (`<Module>\Controllers\*`). Views inside modules are referenced via `<Module>\Views\<Subfolder>/<view>` (e.g., `view('Finance\Views\Banking/index', $data)`).
 - Route files: module routes live in `<Module>/Config/Routes.php` and are loaded by `app/Config/Routes.php`.
 
 ## Boundary Enforcement Filters & Security
