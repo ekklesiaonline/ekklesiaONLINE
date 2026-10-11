@@ -51,8 +51,8 @@ Across this period, the automated test suite has expanded from **310 tests (with
   - `Tests\Support\Database\CanonicalTestSchema` maintains the union set of tables and columns across all modules.
   - `Tests\Support\CanonicalSchemaExtension` attaches to PHPUnit's execution lifecycle to reset and verify schema state before and after each test case, permanently preventing cross-test pollution in SQLite `:memory:` runs.
 - **Continuous Integration (CI):**
-  - In late September 2026 (commit `993b313`), legacy workflow files (`.github/workflows/php.yml` and `nightly-security-rate-limit.yml`) were retired due to outdated dependencies and runner incompatibilities.
-  - *Action Item:* Reintroduce a streamlined GitHub Actions workflow targeting PHP 8.5, invoking `vendor/bin/phpunit --no-coverage` and `vendor/bin/phpstan analyse`.
+  - Modern GitHub Actions workflow created in `.github/workflows/ci.yml` targeting PHP 8.5 with `intl`, `mbstring`, `mysqli`, `curl`, `gd`, `sqlite3`, and `pdo_sqlite`.
+  - Automatically executes `vendor/bin/phpstan analyse` (Level 4) and `vendor/bin/phpunit --no-coverage` (980 tests) on every push and pull request.
 
 ### 2. Visitor Management & Follow-up Workflow System
 - **Legacy `guest` Table Purge:**
