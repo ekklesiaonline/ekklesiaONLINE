@@ -27,11 +27,12 @@ Help with parish-scoped finance, accounting, and treasury workflows.
   - `App\Services\ExpenseReceiptUploadService`: Secure receipt/invoice attachments and downloads (`writable/uploads/receipts/`).
   - `Finance\Controllers\ExpenseExports`: CSV and PDF exports.
 - **Banking & Reconciliation**:
-  - `Finance\Controllers\Banking`: Bank account registration and cash ledger registers (`BankAccountModel`, `BankTransactionModel`).
+  - `Finance\Controllers\Banking`: Bank account registration, cash ledger registers, account edit (`/banking/edit/{id}`), and active/archive toggle (`/banking/toggle-active/{id}`) with open reconciliation guard (`BankAccountModel`, `BankTransactionModel`).
   - `Finance\Controllers\BankingReconciliation`: Statement reconciliation worksheets with unbalanced close prevention (`BankReconciliationModel`, `BankReconciliationItemModel`).
   - `Finance\Controllers\BankingImport`: Statement file importing (OFX 1.x/2.x, QFX, CSV) with duplicate detection via `BankStatementParserService`.
 - **Double-Entry General Ledger & Fiscal Periods**:
   - `Finance\Controllers\JournalEntries`: General Ledger Explorer UI (`/journal-entries`, `/journal-entries/{id}`, `/journal-entries/export`) with date/source/account filtering, debits/credits line drilldown modal, balanced indicators, and streaming CSV export.
+  - `Finance\Controllers\AccountingPeriods`: Accounting Period Management UI (`/accounting-periods`, `/accounting-periods/generate`, `/accounting-periods/store`, `/accounting-periods/close/{id}`, `/accounting-periods/reopen/{id}`) to manage, generate 12 monthly periods, create, close, and reopen fiscal periods.
   - `App\Services\AccountingJournalSyncService`: Real-time synchronous auto-posting of donations and expenses into double-entry journal entries (`JournalEntryModel`, `JournalEntryLineModel`).
   - Account 1120 (`Cash - Checking`) default asset debit/credit resolution.
   - `App\Models\BankTransactionJournalLinkModel`: Links bank transactions to general ledger entries.
@@ -56,8 +57,8 @@ Help with parish-scoped finance, accounting, and treasury workflows.
 - **Priority 4: General Ledger Visibility & Fiscal Controls**:
   - `[x]` 4.1 General Ledger Explorer UI (`/journal-entries`).
   - `[x]` 4.2 Trial Balance Report (`/reports/trial-balance`).
-  - `[ ]` 4.3 Accounting Period Management UI (`/finance/accounting-periods`) to close/reopen periods.
-  - `[ ]` 4.4 Bank Account Edit & Archive (`/banking/edit/{id}`, active toggle).
+  - `[x]` 4.3 Accounting Period Management UI (`/accounting-periods`) to close/reopen periods.
+  - `[x]` 4.4 Bank Account Edit & Archive (`/banking/edit/{id}`, active toggle).
 - **Priority 5: Compliance Statements & Budget Polish**:
   - Statement of Financial Position (Balance Sheet) & Statement of Activities.
   - Episcopal Parochial Report finance lines compiler.
