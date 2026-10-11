@@ -1,6 +1,6 @@
 ---
 name: finance-parish
-description: Explain parish-scoped finance modules and treasurer workflows
+description: Explain parish-scoped finance modules, general ledger sync, and treasurer workflows
 triggers:
   - user
   - model
@@ -10,24 +10,65 @@ allowed-tools:
   - find_file_by_name
 ---
 
-Help with parish-scoped finance.
+Help with parish-scoped finance, accounting, and treasury workflows.
 
-Key areas:
-- Finance dashboard is at `/parish/finance` (Shield group `finance`).
-- Modules & controllers:
-  - Donations: `Finance/Controllers/Donations.php`
-  - Expenses: `Finance/Controllers/Expenses.php`
-  - Banking & Bank Reconciliation: `Finance/Controllers/Banking.php`, `App\Services\BankReconciliationService.php`, `App\Services\AccountingJournalSyncService.php`
-  - Budgets: `Finance/Controllers/Budgets.php`
-  - Fund Accounting: `Finance/Controllers/Funds.php`, `App\Models\FundModel.php`
-  - Financial Reports: `Finance/Controllers/Reports.php`
-  - Chart of Accounts: `Diocese/Controllers/ChartOfAccounts.php`
-  - Annual Pledges: `MemberPortal/Controllers/AnnualPledges.php`
-- Parish scoping: all financial transactions belong strictly to `parish_id`, enforced by `AdminFinanceBoundaryFilter`.
-- Status: Bank Accounts, Bank Reconciliation, and Fund Management are fully implemented. Remaining pending gaps: Giving Statements, Directory Export.
+## Key Areas & Architecture
+- **Finance Dashboard**: `/parish/finance` (Shield group `finance`, permission `finance.view`).
+- **Legacy Compatibility**: `/treasurer/dashboard` redirects to `/parish/finance`.
+- **Tenant Scoping**: All financial transactions belong strictly to `parish_id`, enforced by `AdminFinanceBoundaryFilter` and controller queries. Province and Diocesan admins are blocked from directly modifying parish transactional funds.
+
+## Core Modules & Controllers (`Finance/`)
+- **Donations & Giving**:
+  - `Finance\Controllers\Donations`: CRUD, sequential receipt generation (`DonationReceiptModel`), encrypted amounts.
+  - `Finance\Controllers\DonationStatements`: Single-member and bulk annual giving statements (batch combined PDF and ZIP archive with IRS 501(c)(3) tax disclosures via `GivingStatementService`).
+  - `Finance\Controllers\DonationExports`: Streaming unbuffered CSV (up to 50k rows) and PDF exports.
+- **Expenses & Payables**:
+  - `Finance\Controllers\Expenses`: CRUD, capital project tracking (`is_capital`), approver tagging (`approved_by`).
+  - `App\Services\ExpenseReceiptUploadService`: Secure receipt/invoice attachments and downloads (`writable/uploads/receipts/`).
+  - `Finance\Controllers\ExpenseExports`: CSV and PDF exports.
+- **Banking & Reconciliation**:
+  - `Finance\Controllers\Banking`: Bank account registration and cash ledger registers (`BankAccountModel`, `BankTransactionModel`).
+  - `Finance\Controllers\BankingReconciliation`: Statement reconciliation worksheets with unbalanced close prevention (`BankReconciliationModel`, `BankReconciliationItemModel`).
+  - `Finance\Controllers\BankingImport`: Statement file importing (OFX 1.x/2.x, QFX, CSV) with duplicate detection via `BankStatementParserService`.
+- **Double-Entry General Ledger & Fiscal Periods**:
+  - `App\Services\AccountingJournalSyncService`: Real-time synchronous auto-posting of donations and expenses into double-entry journal entries (`JournalEntryModel`, `JournalEntryLineModel`).
+  - Account 1120 (`Cash - Checking`) default asset debit/credit resolution.
+  - `App\Models\BankTransactionJournalLinkModel`: Links bank transactions to general ledger entries.
+  - `App\Models\AccountingPeriodModel`: Period open/closed status; locks mutations (`donations`, `expenses`, `bank_transactions`) in closed periods.
+  - `App\Commands\SyncJournalHistory` (`php spark finance:sync-journal-history`): Backfills historical donations and expenses into general ledger entries.
+- **Fund Accounting**:
+  - `Finance\Controllers\Funds`: Fund creation, restriction types (unrestricted, temporarily restricted, permanently restricted/endowment), active balances (`FundModel`).
+  - `Finance\Controllers\FundFlags`: Locking/unlocking and activation flags.
+- **Budgets**:
+  - `Finance\Controllers\Budgets`: Fiscal year budget lines vs real-time actuals, utilization percentage, multi-line saving (`ParishBudgetModel`).
+- **Financial Reports**:
+  - `Finance\Controllers\Reports`: Date-filtered KPIs, Fund Breakdown, and Chart of Accounts Category Breakdown via `FinanceReportsDataService`.
+  - `Finance\Controllers\ReportExports`: CSV and PDF reporting.
+- **Chart of Accounts (COA)**:
+  - `Diocese\Controllers\ChartOfAccounts`: Canonical 4-digit Episcopal chart of accounts (1000s Assets, 2000s Liabilities, 3000s Net Assets, 4000s/5000s Income, 6000s-8000s Expenses). Reference guidelines in `docs/CHART_OF_ACCOUNTS_GUIDELINES.md`.
+- **Annual Pledges & Stewardship**:
+  - `MemberPortal\Controllers\AnnualPledges`: Parish stewardship pledges, search, pagination (`AnnualPledgeModel`).
+  - `App\Services\PledgeFulfillmentService`: Automated fulfillment tracking when tithe/pledge donations are recorded.
+  - `MemberPortal\Controllers\MyDashboard`: Member self-service pledging (`POST /me/pledge`), statement download (`/me/statement`), and self-service receipt access (`/me/receipt/{id}`).
+
+## Active Roadmap & Pending Gaps
+- **Priority 4: General Ledger Visibility & Fiscal Controls**:
+  - General Ledger Explorer UI (`/finance/journal-entries`).
+  - Trial Balance Report (`/reports/trial-balance`).
+  - Accounting Period Management UI (`/finance/accounting-periods`) to close/reopen periods.
+  - Bank Account Edit & Archive (`/banking/edit/{id}`, active toggle).
+- **Priority 5: Compliance Statements & Budget Polish**:
+  - Statement of Financial Position (Balance Sheet) & Statement of Activities.
+  - Episcopal Parochial Report finance lines compiler.
+  - Budget CSV/PDF export and roll-forward cloning.
+- **Priority 6: Operational Intake & Governance**:
+  - Sunday batch collection plate / envelope quick entry (`/donations/batch-create`).
+  - Parish read-only Chart of Accounts reference page (`/finance/chart-of-accounts`).
+  - Multi-step expense approval workflow (`draft` → `pending` → `approved` → `paid`).
 
 When asked:
-1. Identify which financial module the question relates to.
-2. Reference controllers under `Finance/Controllers/`, `Diocese/Controllers/`, or `MemberPortal/Controllers/` and models under `app/Models/`.
+1. Identify which financial module or workflow the question relates to.
+2. Reference controllers under `Finance\Controllers\`, `Diocese\Controllers\`, or `MemberPortal\Controllers\` and models under `app/Models/`.
 3. Note parish-scoping rules and that `finance` users land on `/parish/finance`.
-4. Cite the relevant files and line ranges.
+4. Enforce double-entry integrity ($\Delta = 0$) and closed period mutation locks when writing financial logic.
+5. Cite the relevant files and line ranges.
