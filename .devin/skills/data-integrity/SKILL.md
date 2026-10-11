@@ -5,7 +5,7 @@ description: Diagnose or safely change ekklesiaRD parish, person, profile, affil
 
 # Parish Data Integrity
 
-Use `.devin/rules/parish-domain.md` and verify the current model/migration before changing data. Prefer domain services and transactions over ad-hoc writes. Scope every operation by `parish_id` unless the operator is explicitly elevated.
+Use `.agents/rules/parish-domain.md` (or `.devin/rules/parish-domain.md`) and verify the current model/migration before changing data. Prefer domain services and transactions over ad-hoc writes. Scope every operation by `parish_id` unless the operator is explicitly elevated.
 
 ## Canonical identity links
 
@@ -49,10 +49,10 @@ Use `RegistrationApprovalService` for registration approve/dismiss/ban/delete op
 
 ## References
 
-- `.devin/rules/parish-domain.md`
-- `.devin/skills/debug-no-parish/SKILL.md`
-- `.devin/skills/debug-person-not-found/SKILL.md`
-- `.devin/skills/sacrament-sync/SKILL.md`
+- `.agents/rules/parish-domain.md` (or `.devin/rules/parish-domain.md`)
+- `.agents/skills/debug-no-parish/SKILL.md` (or `.devin/skills/debug-no-parish/SKILL.md`)
+- `.agents/skills/debug-person-not-found/SKILL.md` (or `.devin/skills/debug-person-not-found/SKILL.md`)
+- `.agents/skills/sacrament-sync/SKILL.md` (or `.devin/skills/sacrament-sync/SKILL.md`)
 - `docs/VISITOR_LIFECYCLE.md`
 - `docs/PROFILE_PICTURE_SECURITY_AND_DELIVERY.md`
 - `build/verify_alignment.php`

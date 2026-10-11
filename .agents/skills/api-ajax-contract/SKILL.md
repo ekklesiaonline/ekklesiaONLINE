@@ -55,8 +55,8 @@ For native `fetch()` POSTs, follow `.agents/rules/views.md` (or `.devin/rules/vi
 ## References
 
 - `docs/API_AJAX_ERROR_CONTRACT.md`
-- `.agents/rules/codeigniter-shield.md`
-- `.agents/rules/views.md`
+- `.agents/rules/codeigniter-shield.md` (or `.devin/rules/codeigniter.md`)
+- `.agents/rules/views.md` (or `.devin/rules/views.md`)
 - `app/Controllers/BaseController.php`
 - `app/Filters/CsrfTokenHeaderFilter.php`
 - `build/targeted_forms_smoke.sh`

@@ -35,7 +35,7 @@ Use status codes consistently: 400 malformed, 401 unauthenticated, 403 forbidden
 
 ## Native fetch contract
 
-For native `fetch()` POSTs, follow `.devin/rules/views.md` exactly:
+For native `fetch()` POSTs, follow `.agents/rules/views.md` (or `.devin/rules/views.md`) exactly:
 
 - Read the CSRF meta token once.
 - Send `application/x-www-form-urlencoded` via `URLSearchParams`; do not send `JSON.stringify`.
@@ -55,8 +55,8 @@ For native `fetch()` POSTs, follow `.devin/rules/views.md` exactly:
 ## References
 
 - `docs/API_AJAX_ERROR_CONTRACT.md`
-- `.devin/rules/codeigniter.md`
-- `.devin/rules/views.md`
+- `.agents/rules/codeigniter-shield.md` (or `.devin/rules/codeigniter.md`)
+- `.agents/rules/views.md` (or `.devin/rules/views.md`)
 - `app/Controllers/BaseController.php`
 - `app/Filters/CsrfTokenHeaderFilter.php`
 - `build/targeted_forms_smoke.sh`

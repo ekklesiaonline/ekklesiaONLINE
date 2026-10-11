@@ -9,7 +9,7 @@ Use this skill before changing a cross-module feature or explaining where a new 
 
 ## Source precedence
 
-1. `AGENTS.md` and `.devin/rules/*.md` are always-on repository instructions.
+1. `AGENTS.md` and `.agents/rules/*.md` (or `.devin/rules/*.md`) are always-on repository instructions.
 2. `docs/DOCUMENTATION_CANONICAL.md` identifies authoritative project documents.
 3. Canonical domain documents in `docs/` outrank dated reports and implementation snapshots.
 4. The current code and tests are the final authority for behavior; verify paths and symbols before citing them.
@@ -68,8 +68,8 @@ When explaining a feature, report the module, route, controller, service, model,
 
 - `README.md`
 - `AGENTS.md`
-- `.devin/rules/codeigniter.md`
-- `.devin/rules/parish-domain.md`
+- `.agents/rules/codeigniter-shield.md` (or `.devin/rules/codeigniter.md`)
+- `.agents/rules/parish-domain.md` (or `.devin/rules/parish-domain.md`)
 - `docs/DOCUMENTATION_CANONICAL.md`
 - `docs/MODULARIZATION_CUTOVER_EXECUTION_PLAN.md`
 - `docs/ROLE_MENU_PERMISSION_POLICY.md`

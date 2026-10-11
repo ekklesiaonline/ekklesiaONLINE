@@ -5,9 +5,9 @@ This repository contains project-specific instructions for AI agents and contrib
 ## Precedence
 
 1. `AGENTS.md` — repository-wide architecture, terminology, security, testing, and operational rules.
-2. `.devin/rules/*.md` — always-on CodeIgniter/Shield, parish-domain, and Bootstrap/view conventions.
+2. `.agents/rules/*.md` (or `.devin/rules/*.md`) — always-on CodeIgniter/Shield, parish-domain, and Bootstrap/view conventions.
 3. `docs/DOCUMENTATION_CANONICAL.md` — identifies authoritative documentation and separates it from historical reports.
-4. `.devin/skills/*/SKILL.md` — task-specific workflows and diagnostic playbooks; load only when relevant.
+4. `.agents/skills/*/SKILL.md` (or `.devin/skills/*/SKILL.md`) — task-specific workflows and diagnostic playbooks; load only when relevant.
 5. Current code, migrations, and tests — final authority for implemented behavior.
 
 When sources conflict, stop and resolve the discrepancy rather than silently choosing a convenient rule.
@@ -39,7 +39,13 @@ When sources conflict, stop and resolve the discrepancy rather than silently cho
 | `localization` / `audit-logging` | Locale resolution, audit, redaction, and observability |
 | `codeigniter-test` | CI4 test creation and execution |
 | `event-visibility` / `finance-parish` / `liturgical-calendar` / `vestry-governance` | Domain-specific module work |
-| `parish-people-snapshot` / `sacrament-sync` | Derived-data repair and reconciliation commands |
+| `episcopal-clergy-authz-planning` | Episcopal clergy ordination, canonical standing, deaneries, and scoped authorization |
+| `member-portal-security` | Member personal dashboard, session security, device verification, and communicant standing |
+| `parochial-report-governance` | Parochial report preparation, multi-tier approvals, and cryptographic snapshots |
+| `person-member-merge` | Deduplicating persons/members, candidate preview, transactional merge, and reparenting |
+| `volunteer-scheduling` | Volunteer opportunities, shifts, rosters, and reminder notifications |
+| `worship-planning` | Service creation, worship planning, song repertoire, and attendance reporting |
+| `add-member` / `sacrament-sync` / `sunday-attendance-charts` / `debug-no-parish` / `debug-person-not-found` / `explain` | Member onboarding, sacramental sync, attendance charting, diagnostics, and walk-throughs |
 
 ## Canonical document map
 

@@ -49,10 +49,10 @@ Use `RegistrationApprovalService` for registration approve/dismiss/ban/delete op
 
 ## References
 
-- `.agents/rules/parish-domain.md`
-- `.agents/skills/debug-no-parish/SKILL.md`
-- `.agents/skills/debug-person-not-found/SKILL.md`
-- `.agents/skills/sacrament-sync/SKILL.md`
+- `.agents/rules/parish-domain.md` (or `.devin/rules/parish-domain.md`)
+- `.agents/skills/debug-no-parish/SKILL.md` (or `.devin/skills/debug-no-parish/SKILL.md`)
+- `.agents/skills/debug-person-not-found/SKILL.md` (or `.devin/skills/debug-person-not-found/SKILL.md`)
+- `.agents/skills/sacrament-sync/SKILL.md` (or `.devin/skills/sacrament-sync/SKILL.md`)
 - `docs/VISITOR_LIFECYCLE.md`
 - `docs/PROFILE_PICTURE_SECURITY_AND_DELIVERY.md`
 - `build/verify_alignment.php`

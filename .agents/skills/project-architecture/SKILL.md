@@ -68,8 +68,8 @@ When explaining a feature, report the module, route, controller, service, model,
 
 - `README.md`
 - `AGENTS.md`
-- `.agents/rules/codeigniter-shield.md`
-- `.agents/rules/parish-domain.md`
+- `.agents/rules/codeigniter-shield.md` (or `.devin/rules/codeigniter.md`)
+- `.agents/rules/parish-domain.md` (or `.devin/rules/parish-domain.md`)
 - `docs/DOCUMENTATION_CANONICAL.md`
 - `docs/MODULARIZATION_CUTOVER_EXECUTION_PLAN.md`
 - `docs/ROLE_MENU_PERMISSION_POLICY.md`
