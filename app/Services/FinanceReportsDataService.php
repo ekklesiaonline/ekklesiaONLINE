@@ -816,4 +816,141 @@ class FinanceReportsDataService
 
         return ucwords(str_replace('_', ' ', $categoryKey));
     }
+
+    /**
+     * Builds the Trial Balance for a parish as of a specified date.
+     *
+     * Summarizes the net ending debit and credit balances across all active chart of accounts
+     * lines from posted general ledger journal entries up to the specified date.
+     *
+     * Normal Balances:
+     * - Asset (1000s) & Expense (6000s-8000s): Debit normal balance. Net = Debits - Credits.
+     * - Liability (2000s), Equity (3000s), & Income (4000s-5000s): Credit normal balance. Net = Credits - Debits.
+     *
+     * @return array{
+     *     as_of_date: string,
+     *     parish_id: int,
+     *     accounts: array<int, array{
+     *         id: int,
+     *         code: string,
+     *         name: string,
+     *         account_type: string,
+     *         debit_balance: float,
+     *         credit_balance: float,
+     *         total_debit: float,
+     *         total_credit: float
+     *     }>,
+     *     total_debits: float,
+     *     total_credits: float,
+     *     variance: float,
+     *     is_balanced: bool,
+     *     include_zero: bool
+     * }
+     */
+    public function buildTrialBalance(int $parishId, string $asOfDate, bool $includeZero = false): array
+    {
+        if (!$this->isValidDate($asOfDate)) {
+            $asOfDate = date('Y-m-d');
+        }
+
+        $db = db_connect();
+
+        // Subquery aggregating debit and credit totals up to $asOfDate for this parish
+        $aggSubquery = $db->table('journal_entry_line jel')
+            ->select('jel.chart_account_id, ' .
+                'COALESCE(SUM(jel.debit_amount), 0.0) as sum_debit, ' .
+                'COALESCE(SUM(jel.credit_amount), 0.0) as sum_credit')
+            ->join('journal_entry je', 'je.id = jel.journal_entry_id', 'inner')
+            ->where('je.parish_id', $parishId)
+            ->where('je.entry_date <=', $asOfDate)
+            ->where('je.status', 'posted')
+            ->groupBy('jel.chart_account_id');
+
+        $compiledSubquery = $aggSubquery->getCompiledSelect();
+
+        $rows = $db->table('chart_of_accounts coa')
+            ->select('coa.id, coa.code, coa.name, coa.account_type, coa.sort_order, ' .
+                'COALESCE(agg.sum_debit, 0.0) as total_debit, ' .
+                'COALESCE(agg.sum_credit, 0.0) as total_credit')
+            ->join("({$compiledSubquery}) agg", 'agg.chart_account_id = coa.id', 'left')
+            ->where('coa.is_active', 1)
+            ->orderBy("CASE coa.account_type 
+                WHEN 'asset' THEN 1 
+                WHEN 'liability' THEN 2 
+                WHEN 'equity' THEN 3 
+                WHEN 'income' THEN 4 
+                WHEN 'expense' THEN 5 
+                ELSE 6 END", 'ASC', false)
+            ->orderBy('coa.sort_order', 'ASC')
+            ->orderBy('coa.code', 'ASC')
+            ->get()
+            ->getResultArray();
+
+        $accounts = [];
+        $totalDebits = 0.0;
+        $totalCredits = 0.0;
+
+        foreach ($rows as $row) {
+            $totalDebit = (float) ($row['total_debit'] ?? 0.0);
+            $totalCredit = (float) ($row['total_credit'] ?? 0.0);
+            $type = strtolower((string) ($row['account_type'] ?? ''));
+
+            $debitBalance = 0.0;
+            $creditBalance = 0.0;
+
+            if (in_array($type, ['asset', 'expense'], true)) {
+                // Normal debit balance
+                $net = $totalDebit - $totalCredit;
+                if ($net >= 0) {
+                    $debitBalance = round($net, 2);
+                } else {
+                    $creditBalance = round(abs($net), 2);
+                }
+            } else {
+                // Normal credit balance (liability, equity, income)
+                $net = $totalCredit - $totalDebit;
+                if ($net >= 0) {
+                    $creditBalance = round($net, 2);
+                } else {
+                    $debitBalance = round(abs($net), 2);
+                }
+            }
+
+            // If account has zero balances and not includeZero, skip
+            if (!$includeZero && $debitBalance == 0.0 && $creditBalance == 0.0) {
+                continue;
+            }
+
+            $totalDebits += $debitBalance;
+            $totalCredits += $creditBalance;
+
+            $accounts[] = [
+                'id'             => (int) $row['id'],
+                'code'           => (string) $row['code'],
+                'name'           => (string) $row['name'],
+                'account_type'   => $type,
+                'debit_balance'  => $debitBalance,
+                'credit_balance' => $creditBalance,
+                'total_debit'    => $totalDebit,
+                'total_credit'   => $totalCredit,
+            ];
+        }
+
+        $totalDebits = round($totalDebits, 2);
+        $totalCredits = round($totalCredits, 2);
+        $variance = round(abs($totalDebits - $totalCredits), 2);
+        $isBalanced = $variance <= 0.005;
+
+        return [
+            'as_of_date'    => $asOfDate,
+            'parish_id'     => $parishId,
+            'accounts'      => $accounts,
+            'total_debits'  => $totalDebits,
+            'total_credits' => $totalCredits,
+            'variance'      => $variance,
+            'is_balanced'   => $isBalanced,
+            'include_zero'  => $includeZero,
+        ];
+    }
 }
+

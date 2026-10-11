@@ -21,6 +21,7 @@ if (!class_exists('Treasurer\Controllers\Banking', false)) {
     class_alias(\Finance\Controllers\FundExports::class, 'Treasurer\Controllers\FundExports');
     class_alias(\Finance\Controllers\FundFlags::class, 'Treasurer\Controllers\FundFlags');
     class_alias(\Finance\Controllers\Funds::class, 'Treasurer\Controllers\Funds');
+    class_alias(\Finance\Controllers\JournalEntries::class, 'Treasurer\Controllers\JournalEntries');
     class_alias(\Finance\Controllers\ReportExports::class, 'Treasurer\Controllers\ReportExports');
     class_alias(\Finance\Controllers\Reports::class, 'Treasurer\Controllers\Reports');
     if (!class_exists('App\Services\TreasurerReportsDataService', false)) {

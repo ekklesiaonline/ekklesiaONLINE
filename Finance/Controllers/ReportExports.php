@@ -583,4 +583,177 @@ class ReportExports extends Reports
 
         return $html;
     }
+
+    /**
+     * Export Trial Balance as CSV.
+     */
+    public function trialBalanceCsv()
+    {
+        if ($redirect = $this->requirePermission('report.view')) {
+            return $redirect;
+        }
+
+        if ($redirect = $this->requireParish()) {
+            return $redirect;
+        }
+
+        $parishId = (int) ($this->getOperationalParishId() ?? 0);
+        $asOfDate = (string) ($this->request->getGet('as_of_date') ?? date('Y-m-d'));
+        if (!$this->reportData->isValidDate($asOfDate)) {
+            $asOfDate = date('Y-m-d');
+        }
+
+        $includeZero = (string) ($this->request->getGet('include_zero') ?? '') === '1';
+        $tb = $this->reportData->buildTrialBalance($parishId, $asOfDate, $includeZero);
+
+        $filename = 'trial_balance_' . $parishId . '_' . date('Ymd', strtotime($asOfDate)) . '.csv';
+
+        $output = fopen('php://temp', 'r+');
+        if ($output === false) {
+            return redirect()->back()->with('error', lang('App.errorGeneric'));
+        }
+
+        fputcsv($output, [
+            lang('Finance.colAccountCode'),
+            lang('Finance.colAccountName'),
+            lang('Finance.colAccountType'),
+            lang('Finance.colDebitBalance'),
+            lang('Finance.colCreditBalance'),
+        ]);
+
+        foreach ($tb['accounts'] as $acc) {
+            fputcsv($output, [
+                $acc['code'],
+                $acc['name'],
+                ucfirst((string) $acc['account_type']),
+                $acc['debit_balance'] > 0 ? number_format((float) $acc['debit_balance'], 2, '.', '') : '0.00',
+                $acc['credit_balance'] > 0 ? number_format((float) $acc['credit_balance'], 2, '.', '') : '0.00',
+            ]);
+        }
+
+        fputcsv($output, []);
+        fputcsv($output, [
+            lang('Finance.reportTotal'),
+            '',
+            '',
+            number_format((float) $tb['total_debits'], 2, '.', ''),
+            number_format((float) $tb['total_credits'], 2, '.', ''),
+        ]);
+        fputcsv($output, [
+            lang('Finance.trialBalanceStatus'),
+            $tb['is_balanced'] ? lang('Finance.trialBalanceBalanced') : lang('Finance.trialBalanceUnbalanced'),
+            '',
+            '',
+            '',
+        ]);
+
+        rewind($output);
+        $csvContent = stream_get_contents($output);
+        fclose($output);
+
+        return $this->response
+            ->setHeader('Content-Type', 'text/csv; charset=UTF-8')
+            ->setHeader('Content-Disposition', 'attachment; filename="' . $filename . '"')
+            ->setBody($csvContent ?: '');
+    }
+
+    /**
+     * Export Trial Balance as PDF.
+     */
+    public function trialBalancePdf()
+    {
+        if ($redirect = $this->requirePermission('report.view')) {
+            return $redirect;
+        }
+
+        if ($redirect = $this->requireParish()) {
+            return $redirect;
+        }
+
+        $parishId = (int) ($this->getOperationalParishId() ?? 0);
+        $asOfDate = (string) ($this->request->getGet('as_of_date') ?? date('Y-m-d'));
+        if (!$this->reportData->isValidDate($asOfDate)) {
+            $asOfDate = date('Y-m-d');
+        }
+
+        $includeZero = (string) ($this->request->getGet('include_zero') ?? '') === '1';
+        $tb = $this->reportData->buildTrialBalance($parishId, $asOfDate, $includeZero);
+
+        $parish = model('ParishModel')->find($parishId);
+        $parishName = $parish['name'] ?? 'Parish';
+
+        $rowsHtml = '';
+        foreach ($tb['accounts'] as $acc) {
+            $debitStr = $acc['debit_balance'] > 0 ? '$' . number_format((float) $acc['debit_balance'], 2) : '—';
+            $creditStr = $acc['credit_balance'] > 0 ? '$' . number_format((float) $acc['credit_balance'], 2) : '—';
+
+            $rowsHtml .= '<tr>'
+                . '<td style="padding: 6px 8px; border-bottom: 1px solid #e2e8f0; font-family: monospace;">' . htmlspecialchars((string) $acc['code']) . '</td>'
+                . '<td style="padding: 6px 8px; border-bottom: 1px solid #e2e8f0;">' . htmlspecialchars((string) $acc['name']) . '</td>'
+                . '<td style="padding: 6px 8px; border-bottom: 1px solid #e2e8f0; text-transform: capitalize;">' . htmlspecialchars((string) $acc['account_type']) . '</td>'
+                . '<td style="padding: 6px 8px; border-bottom: 1px solid #e2e8f0; text-align: right;">' . $debitStr . '</td>'
+                . '<td style="padding: 6px 8px; border-bottom: 1px solid #e2e8f0; text-align: right;">' . $creditStr . '</td>'
+                . '</tr>';
+        }
+
+        $statusColor = $tb['is_balanced'] ? '#15803d' : '#b91c1c';
+        $statusBg = $tb['is_balanced'] ? '#f0fdf4' : '#fef2f2';
+        $statusText = $tb['is_balanced'] ? lang('Finance.trialBalanceBalanced') : lang('Finance.trialBalanceUnbalanced');
+
+        $html = '<!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <style>
+                body { font-family: Helvetica, Arial, sans-serif; font-size: 11px; color: #1e293b; margin: 20px; line-height: 1.4; }
+                h1 { font-size: 18px; margin: 0 0 4px 0; color: #0f172a; }
+                .subtitle { color: #64748b; font-size: 12px; margin-bottom: 16px; }
+                .status-box { padding: 8px 12px; margin-bottom: 16px; border: 1px solid ' . $statusColor . '; background: ' . $statusBg . '; color: ' . $statusColor . '; border-radius: 4px; font-weight: bold; }
+                table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+                th { text-align: left; padding: 8px; border-bottom: 2px solid #cbd5e1; font-weight: bold; }
+                th.num { text-align: right; }
+                tfoot tr td { padding: 10px 8px; border-top: 2px solid #0f172a; font-weight: bold; }
+            </style>
+        </head>
+        <body>
+            <h1>' . htmlspecialchars($parishName) . '</h1>
+            <div class="subtitle">' . htmlspecialchars(lang('Finance.trialBalanceTitle')) . ' — ' . htmlspecialchars(lang('Finance.asOfDate')) . ': ' . htmlspecialchars($asOfDate) . '</div>
+            <div class="status-box">' . htmlspecialchars($statusText) . '</div>
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width: 15%;">' . htmlspecialchars(lang('Finance.colAccountCode')) . '</th>
+                        <th style="width: 45%;">' . htmlspecialchars(lang('Finance.colAccountName')) . '</th>
+                        <th style="width: 16%;">' . htmlspecialchars(lang('Finance.colAccountType')) . '</th>
+                        <th class="num" style="width: 12%;">' . htmlspecialchars(lang('Finance.colDebitBalance')) . '</th>
+                        <th class="num" style="width: 12%;">' . htmlspecialchars(lang('Finance.colCreditBalance')) . '</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ' . $rowsHtml . '
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <td colspan="3">' . htmlspecialchars(lang('Finance.reportTotal')) . '</td>
+                        <td style="text-align: right;">$' . number_format((float) $tb['total_debits'], 2) . '</td>
+                        <td style="text-align: right;">$' . number_format((float) $tb['total_credits'], 2) . '</td>
+                    </tr>
+                </tfoot>
+            </table>
+        </body>
+        </html>';
+
+        $dompdf = new \Dompdf\Dompdf();
+        $dompdf->loadHtml($html);
+        $dompdf->setPaper('A4', 'portrait');
+        $dompdf->render();
+
+        $filename = 'trial_balance_' . $parishId . '_' . date('Ymd', strtotime($asOfDate)) . '.pdf';
+
+        return $this->response
+            ->setHeader('Content-Type', 'application/pdf')
+            ->setHeader('Content-Disposition', 'attachment; filename="' . $filename . '"')
+            ->setBody($dompdf->output());
+    }
 }
+

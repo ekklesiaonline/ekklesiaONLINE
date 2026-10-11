@@ -44,6 +44,11 @@ $fundTypeColors = [
             <i class="bi bi-bank" aria-hidden="true"></i> <?= esc(lang('Finance.bankAccountsTitle')) ?>
         </a>
     <?php endif; ?>
+    <?php if (!empty($can_view_ledger)): ?>
+        <a href="<?= base_url('journal-entries') ?>" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-journal-text" aria-hidden="true"></i> <?= esc(lang('Finance.journalEntriesTitle')) ?>
+        </a>
+    <?php endif; ?>
     <?php if (!empty($can_manage_budgets)): ?>
         <a href="<?= base_url('budgets') ?>" class="btn btn-outline-secondary btn-sm">
             <i class="bi bi-calculator" aria-hidden="true"></i> <?= esc(lang('Finance.budgetsTitle')) ?>

@@ -125,4 +125,41 @@ class Reports extends BaseController
             ],
         ]);
     }
+
+    /**
+     * Trial Balance report view.
+     */
+    public function trialBalance()
+    {
+        if ($redirect = $this->requirePermission('report.view')) {
+            return $redirect;
+        }
+
+        if ($redirect = $this->requireParish()) {
+            return $redirect;
+        }
+
+        $parishId = (int) ($this->getOperationalParishId() ?? 0);
+        if ($parishId <= 0) {
+            return redirect()->to('/dashboard')->with('error', lang('App.errorNoParishScope'));
+        }
+
+        $asOfDate = (string) ($this->request->getGet('as_of_date') ?? date('Y-m-d'));
+        if (!$this->reportData->isValidDate($asOfDate)) {
+            $asOfDate = date('Y-m-d');
+        }
+
+        $includeZero = (string) ($this->request->getGet('include_zero') ?? '') === '1';
+
+        $trialBalance = $this->reportData->buildTrialBalance($parishId, $asOfDate, $includeZero);
+
+        $data = array_merge($this->getCommonViewData(lang('Finance.trialBalanceTitle')), [
+            'trialBalance' => $trialBalance,
+            'asOfDate'     => $asOfDate,
+            'includeZero'  => $includeZero,
+        ]);
+
+        return view('Finance\Views\Reports/trial_balance', $data);
+    }
 }
+

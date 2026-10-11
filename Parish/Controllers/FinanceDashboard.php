@@ -188,6 +188,7 @@ class FinanceDashboard extends BaseController
         $canViewExpenses   = $user !== null && ($user->can('expense.view') || $user->inGroup('finance', 'parishadmin', 'systemadmin'));
         $canManageFunds    = $user !== null && ($user->can('finance.view') || $user->can('finance.manage') || $user->inGroup('finance', 'parishadmin', 'systemadmin'));
         $canManageBanking  = $user !== null && ($user->can('finance.view') || $user->can('finance.manage') || $user->inGroup('finance', 'parishadmin', 'systemadmin'));
+        $canViewLedger     = $user !== null && ($user->can('finance.view') || $user->can('finance.manage') || $user->inGroup('finance', 'parishadmin', 'systemadmin'));
         $canManageBudgets  = $user !== null && ($user->can('budget.view') || $user->can('budget.manage') || $user->inGroup('finance', 'parishadmin', 'systemadmin'));
         $canManagePledges  = $user !== null && ($user->can('finance.manage') || $user->inGroup('finance', 'parishadmin', 'systemadmin'));
         $canViewReports    = $user !== null && ($user->can('report.view') || $user->inGroup('finance', 'parishadmin', 'systemadmin'));
@@ -216,6 +217,7 @@ class FinanceDashboard extends BaseController
             'can_view_expenses'     => $canViewExpenses,
             'can_manage_funds'      => $canManageFunds,
             'can_manage_banking'    => $canManageBanking,
+            'can_view_ledger'       => $canViewLedger,
             'can_manage_budgets'    => $canManageBudgets,
             'can_manage_pledges'    => $canManagePledges,
             'can_view_reports'      => $canViewReports,

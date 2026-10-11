@@ -75,8 +75,18 @@ $routes->group('', ['filter' => 'session'], function ($routes) {
 
     $routes->group('reports', ['filter' => 'permission:report.view'], function ($routes) {
         $routes->get('/', '\\Finance\\Controllers\\Reports::index');
+        $routes->get('trial-balance', '\\Finance\\Controllers\\Reports::trialBalance');
+        $routes->get('trial-balance/export-csv', '\\Finance\\Controllers\\ReportExports::trialBalanceCsv');
+        $routes->get('trial-balance/export-pdf', '\\Finance\\Controllers\\ReportExports::trialBalancePdf');
         $routes->get('export', '\\Finance\\Controllers\\ReportExports::export');
         $routes->get('export-pdf', '\\Finance\\Controllers\\ReportExports::exportPdf');
         $routes->get('api/summary', '\\Finance\\Controllers\\Reports::summaryApi');
     });
+
+    $routes->group('journal-entries', ['filter' => 'permission:finance.view'], function ($routes) {
+        $routes->get('/', '\\Finance\\Controllers\\JournalEntries::index');
+        $routes->get('export', '\\Finance\\Controllers\\JournalEntries::export');
+        $routes->get('(:num)', '\\Finance\\Controllers\\JournalEntries::view/$1');
+    });
 });
+

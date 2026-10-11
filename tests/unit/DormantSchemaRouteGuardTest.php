@@ -24,7 +24,6 @@ final class DormantSchemaRouteGuardTest extends CIUnitTestCase
             'facility',
             'vendor',
             'bank-',
-            'journal',
             'communication-campaign',
             'notification',
             'portal-access-request',

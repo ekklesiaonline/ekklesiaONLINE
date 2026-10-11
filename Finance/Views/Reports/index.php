@@ -2,20 +2,27 @@
 
 <?= $this->section('content') ?>
 
-<div class="mb-4 d-flex justify-content-end gap-2">
-    <a class="btn btn-outline-secondary" href="#" onclick="window.print(); return false;">
-        <i class="bi bi-printer" aria-hidden="true"></i> <?= lang('Treasurer.reportPrint') ?>
-    </a>
-    <a
-        class="btn btn-outline-primary"
-        href="<?= base_url('reports/export?start_date=' . urlencode((string) ($report_start_date ?? date('Y-01-01'))) . '&end_date=' . urlencode((string) ($report_end_date ?? date('Y-m-d')))) ?>">
-        <i class="bi bi-file-csv" aria-hidden="true"></i> CSV
-    </a>
-    <a
-        class="btn btn-primary"
-        href="<?= base_url('reports/export-pdf?start_date=' . urlencode((string) ($report_start_date ?? date('Y-01-01'))) . '&end_date=' . urlencode((string) ($report_end_date ?? date('Y-m-d')))) ?>">
-        <i class="bi bi-file-pdf" aria-hidden="true"></i> PDF
-    </a>
+<div class="mb-4 d-flex justify-content-between align-items-center">
+    <div>
+        <a class="btn btn-outline-info" href="<?= base_url('reports/trial-balance') ?>">
+            <i class="bi bi-scale" aria-hidden="true"></i> <?= lang('Finance.trialBalanceTitle') ?>
+        </a>
+    </div>
+    <div class="d-flex gap-2">
+        <a class="btn btn-outline-secondary" href="#" onclick="window.print(); return false;">
+            <i class="bi bi-printer" aria-hidden="true"></i> <?= lang('Treasurer.reportPrint') ?>
+        </a>
+        <a
+            class="btn btn-outline-primary"
+            href="<?= base_url('reports/export?start_date=' . urlencode((string) ($report_start_date ?? date('Y-01-01'))) . '&end_date=' . urlencode((string) ($report_end_date ?? date('Y-m-d')))) ?>">
+            <i class="bi bi-file-csv" aria-hidden="true"></i> CSV
+        </a>
+        <a
+            class="btn btn-primary"
+            href="<?= base_url('reports/export-pdf?start_date=' . urlencode((string) ($report_start_date ?? date('Y-01-01'))) . '&end_date=' . urlencode((string) ($report_end_date ?? date('Y-m-d')))) ?>">
+            <i class="bi bi-file-pdf" aria-hidden="true"></i> PDF
+        </a>
+    </div>
 </div>
 
 <?php $request = service('request'); ?>

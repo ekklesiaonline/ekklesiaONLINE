@@ -40,4 +40,21 @@ class JournalEntryLineModel extends Model
         'credit_amount'    => 'permit_empty|decimal',
         'memo'             => 'permit_empty|max_length[255]',
     ];
+
+    /**
+     * Retrieve line items for a journal entry joined with chart of accounts.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    public function getLinesForEntry(int $journalEntryId): array
+    {
+        return $this->db->table($this->table . ' jel')
+            ->select('jel.*, coa.code as account_code, coa.name as account_name, coa.account_type')
+            ->join('chart_of_accounts coa', 'coa.id = jel.chart_account_id', 'left')
+            ->where('jel.journal_entry_id', $journalEntryId)
+            ->orderBy('jel.id', 'ASC')
+            ->get()
+            ->getResultArray();
+    }
 }
+
