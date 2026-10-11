@@ -19,11 +19,12 @@ Key areas:
   - Expenses: `Treasurer/Controllers/Expenses.php`
   - Banking & Bank Reconciliation: `Treasurer/Controllers/Banking.php`, `App\Services\BankReconciliationService.php`
   - Budgets: `Treasurer/Controllers/Budgets.php`
+  - Fund Accounting: `Treasurer/Controllers/Funds.php`, `App\Models\FundModel.php`
   - Financial Reports: `Treasurer/Controllers/Reports.php`
   - Chart of Accounts: `Diocese/Controllers/ChartOfAccounts.php`
   - Annual Pledges: `MemberPortal/Controllers/AnnualPledges.php`
 - Parish scoping: all financial transactions belong strictly to `parish_id`, enforced by `AdminFinanceBoundaryFilter`.
-- Status: Bank Accounts and Bank Reconciliation are fully implemented. Remaining pending gaps: Giving Statements, Directory Export.
+- Status: Bank Accounts, Bank Reconciliation, and Fund Management are fully implemented. Remaining pending gaps: Giving Statements, Directory Export.
 
 When asked:
 1. Identify which financial module the question relates to.

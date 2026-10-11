@@ -50,6 +50,7 @@ trigger: always_on
 - Resolve sender identity and SMTP only through `EmailScopeService` (`senderConfig()`, `mailer()`, `systemMailer()`). Never read `email.*` settings directly in mailers.
 - Feed `Email::setFrom()` strictly from `senderConfig()` output (it strips RFC 5322 punctuation from `from_name` to prevent Exchange `550 5.1.20` bounces).
 - Credential-bearing mail (activation, magic link, OTP, device verification, password reset) must use `credentialMailer($scope)` on System transport with tenant display name/Reply-To (avoids DMARC misalignment).
+- For delivery failures and provider alignment, use the `/email-deliverability` skill and `docs/EMAIL_DELIVERABILITY.md`.
 
 ## API & AJAX Responses
 - Follow `docs/API_AJAX_ERROR_CONTRACT.md`.
@@ -57,6 +58,7 @@ trigger: always_on
 - Error shape: `{ "success": false, "status": "error", "message": "...", "error": { "code": "...", "message": "...", "details": {} }, "errors": {}, "meta": {} }`.
 - `error.code` is mandatory for new/updated endpoints.
 - Return generic messages on 500s; never leak raw exception traces.
+- HTTP status map: 400 malformed, 401 unauthenticated, 403 forbidden/scope, 404 not-in-scope, 409 conflict, 422 validation, 429 rate-limited, 500 server error.
 
 ## Scaffolding & Testing
 - Use `php spark make:*` commands to generate boilerplate; do not write manual boilerplate from scratch.
