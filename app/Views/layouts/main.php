@@ -414,6 +414,7 @@
                         'pledges' => 'App.navPledges',
                         'worship-planning' => 'App.navWorshipPlanning',
                         'chart-accounts' => 'App.navChartOfAccounts',
+                        'chart-of-accounts' => 'App.navChartOfAccounts',
                     ];
 
                     if (isset($segmentMap[$segment])) {

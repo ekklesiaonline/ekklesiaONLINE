@@ -387,6 +387,14 @@
                 </li>
             <?php endif; ?>
 
+            <?php if (!$isSystemAdminSidebar && !$isProvinceAdminSidebar && !$isDioceseAdminSidebar && ($isParishAdminSidebar || auth()->user()->can('finance.manage'))): ?>
+                <li class="nav-item">
+                    <a class="nav-link <?= (str_starts_with(uri_string(), 'finance/chart-of-accounts') || str_starts_with(uri_string(), 'chart-of-accounts')) ? 'active' : '' ?>" href="<?= base_url('finance/chart-of-accounts') ?>">
+                        <i class="bi bi-diagram-3" aria-hidden="true"></i> <?= lang('App.navChartOfAccounts') ?>
+                    </a>
+                </li>
+            <?php endif; ?>
+
             <?php if (!$isSystemAdminSidebar && !$isProvinceAdminSidebar && !$isDioceseAdminSidebar && (auth()->user()->can('donation.view') || auth()->user()->can('expense.view') || auth()->user()->can('finance.view') || auth()->user()->can('finance.manage'))): ?>
                 <?php $isFinanceSectionActive = (str_starts_with(uri_string(), 'donations') || str_starts_with(uri_string(), 'expenses') || str_starts_with(uri_string(), 'budgets') || str_starts_with(uri_string(), 'pledges') || str_starts_with(uri_string(), 'banking') || str_starts_with(uri_string(), 'funds') || str_starts_with(uri_string(), 'finance/chart-of-accounts')); ?>
                 <li class="nav-item">

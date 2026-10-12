@@ -115,7 +115,7 @@ final class SidebarRoleVisibilityTest extends CIUnitTestCase
             'parish admin' => [
                 ['parishadmin'],
                 ['member.view', 'family.view', 'service.view', 'attendance.view', 'visitor.view', 'visitor.edit', 'member.edit', 'leadership_position.manage', 'followup.manage', 'finance.view', 'volunteer.manage', 'volunteer.schedule', 'event.view', 'worship.view', 'report.view', 'dashboard.view'],
-                ['parish/dashboard', 'me', 'members', 'families', 'services', 'attendance/reports', 'visitors/dashboard', 'leadership', 'standing', 'donations', 'expenses', 'budgets', 'volunteers', 'volunteers/schedules', 'events', 'worship-planning', 'reports', 'admin/audit-logs'],
+                ['parish/dashboard', 'me', 'members', 'families', 'services', 'attendance/reports', 'visitors/dashboard', 'leadership', 'standing', 'finance/chart-of-accounts', 'donations', 'expenses', 'budgets', 'volunteers', 'volunteers/schedules', 'events', 'worship-planning', 'reports', 'admin/audit-logs'],
                 ['province/dashboard', 'diocese/finance', 'dioceses', 'liturgical-source', 'parish_list', 'dashboard'],
             ],
             'clergy' => [

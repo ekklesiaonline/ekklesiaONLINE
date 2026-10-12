@@ -20,6 +20,7 @@ $routes->addRedirect('parishes', 'parish_list');
 $routes->addRedirect('parishes/(:any)', 'parish_list/$1');
 $routes->addRedirect('parish', 'parish_list');
 $routes->addRedirect('parish/(:any)', 'parish_list/$1');
+$routes->addRedirect('chart-of-accounts', 'finance/chart-of-accounts');
 
 // Public media endpoints
 $routes->get('health', '\\App\\Controllers\\Health::index');
