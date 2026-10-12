@@ -755,5 +755,425 @@ class ReportExports extends Reports
             ->setHeader('Content-Disposition', 'attachment; filename="' . $filename . '"')
             ->setBody($dompdf->output());
     }
+
+    /**
+     * Export Statement of Financial Position (Balance Sheet) as CSV.
+     */
+    public function balanceSheetCsv()
+    {
+        if ($redirect = $this->requirePermission('report.view')) {
+            return $redirect;
+        }
+
+        if ($redirect = $this->requireParish()) {
+            return $redirect;
+        }
+
+        $parishId = (int) ($this->getOperationalParishId() ?? 0);
+        $asOfDate = (string) ($this->request->getGet('as_of_date') ?? date('Y-m-d'));
+        if (!$this->reportData->isValidDate($asOfDate)) {
+            $asOfDate = date('Y-m-d');
+        }
+
+        $bs = $this->reportData->buildStatementOfFinancialPosition($parishId, $asOfDate);
+        $filename = 'balance_sheet_' . $parishId . '_' . date('Ymd', strtotime($asOfDate)) . '.csv';
+
+        $output = fopen('php://temp', 'r+');
+        if ($output === false) {
+            return redirect()->back()->with('error', lang('App.errorGeneric'));
+        }
+
+        fputcsv($output, [lang('Finance.colCategory'), lang('Finance.colAccountCode'), lang('Finance.colAccountName'), lang('Finance.colBalance')]);
+
+        // Current Assets
+        fputcsv($output, [lang('Finance.currentAssetsHeading'), '', '', '']);
+        foreach ($bs['current_assets'] as $acc) {
+            fputcsv($output, ['', $acc['code'], $acc['name'], number_format((float) $acc['balance'], 2, '.', '')]);
+        }
+        fputcsv($output, ['', '', lang('Finance.totalCurrentAssets'), number_format((float) $bs['total_current_assets'], 2, '.', '')]);
+
+        // Fixed Assets
+        fputcsv($output, [lang('Finance.fixedAssetsHeading'), '', '', '']);
+        foreach ($bs['fixed_assets'] as $acc) {
+            fputcsv($output, ['', $acc['code'], $acc['name'], number_format((float) $acc['balance'], 2, '.', '')]);
+        }
+        fputcsv($output, ['', '', lang('Finance.totalFixedAssets'), number_format((float) $bs['total_fixed_assets'], 2, '.', '')]);
+        fputcsv($output, [lang('Finance.totalAssetsHeading'), '', '', number_format((float) $bs['total_assets'], 2, '.', '')]);
+        fputcsv($output, []);
+
+        // Current Liabilities
+        fputcsv($output, [lang('Finance.currentLiabilitiesHeading'), '', '', '']);
+        foreach ($bs['current_liabilities'] as $acc) {
+            fputcsv($output, ['', $acc['code'], $acc['name'], number_format((float) $acc['balance'], 2, '.', '')]);
+        }
+        fputcsv($output, ['', '', lang('Finance.totalCurrentLiabilities'), number_format((float) $bs['total_current_liabilities'], 2, '.', '')]);
+
+        // Long-term Liabilities
+        fputcsv($output, [lang('Finance.longTermLiabilitiesHeading'), '', '', '']);
+        foreach ($bs['long_term_liabilities'] as $acc) {
+            fputcsv($output, ['', $acc['code'], $acc['name'], number_format((float) $acc['balance'], 2, '.', '')]);
+        }
+        fputcsv($output, ['', '', lang('Finance.totalLongTermLiabilities'), number_format((float) $bs['total_long_term_liabilities'], 2, '.', '')]);
+        fputcsv($output, [lang('Finance.totalLiabilitiesHeading'), '', '', number_format((float) $bs['total_liabilities'], 2, '.', '')]);
+        fputcsv($output, []);
+
+        // Net Assets / Equity
+        fputcsv($output, [lang('Finance.netAssetsHeading'), '', '', '']);
+        foreach ($bs['equity_accounts'] as $acc) {
+            fputcsv($output, ['', $acc['code'], $acc['name'], number_format((float) $acc['balance'], 2, '.', '')]);
+        }
+        fputcsv($output, ['', '', lang('Finance.currentPeriodNetChange'), number_format((float) $bs['current_period_net_change'], 2, '.', '')]);
+        fputcsv($output, [lang('Finance.totalNetAssetsHeading'), '', '', number_format((float) $bs['total_net_assets'], 2, '.', '')]);
+        fputcsv($output, []);
+
+        // Grand Total
+        fputcsv($output, [lang('Finance.totalLiabilitiesAndNetAssetsHeading'), '', '', number_format((float) $bs['total_liabilities_and_net_assets'], 2, '.', '')]);
+        fputcsv($output, [lang('Finance.trialBalanceStatus'), $bs['is_balanced'] ? lang('Finance.trialBalanceBalanced') : lang('Finance.trialBalanceUnbalanced'), '', '']);
+
+        rewind($output);
+        $csvContent = stream_get_contents($output);
+        fclose($output);
+
+        return $this->response
+            ->setHeader('Content-Type', 'text/csv; charset=UTF-8')
+            ->setHeader('Content-Disposition', 'attachment; filename="' . $filename . '"')
+            ->setBody($csvContent ?: '');
+    }
+
+    /**
+     * Export Statement of Financial Position (Balance Sheet) as PDF.
+     */
+    public function balanceSheetPdf()
+    {
+        if ($redirect = $this->requirePermission('report.view')) {
+            return $redirect;
+        }
+
+        if ($redirect = $this->requireParish()) {
+            return $redirect;
+        }
+
+        $parishId = (int) ($this->getOperationalParishId() ?? 0);
+        $asOfDate = (string) ($this->request->getGet('as_of_date') ?? date('Y-m-d'));
+        if (!$this->reportData->isValidDate($asOfDate)) {
+            $asOfDate = date('Y-m-d');
+        }
+
+        $bs = $this->reportData->buildStatementOfFinancialPosition($parishId, $asOfDate);
+        $parish = db_connect()->table('parish')->select('name')->where('id', $parishId)->get()->getRowArray();
+        $parishName = $parish['name'] ?? 'Parish';
+
+        $renderRows = static function (array $accounts): string {
+            if (empty($accounts)) {
+                return '<tr><td colspan="3" style="font-style: italic; color: #64748b;">' . htmlspecialchars(lang('Finance.noneLabel')) . '</td></tr>';
+            }
+            $html = '';
+            foreach ($accounts as $acc) {
+                $html .= '<tr>'
+                    . '<td style="width: 20%;">' . htmlspecialchars((string) $acc['code']) . '</td>'
+                    . '<td style="width: 55%;">' . htmlspecialchars((string) $acc['name']) . '</td>'
+                    . '<td style="width: 25%; text-align: right;">$' . number_format((float) $acc['balance'], 2) . '</td>'
+                    . '</tr>';
+            }
+            return $html;
+        };
+
+        $statusColor = $bs['is_balanced'] ? '#15803d' : '#b91c1c';
+        $statusBg = $bs['is_balanced'] ? '#f0fdf4' : '#fef2f2';
+        $statusText = $bs['is_balanced'] ? lang('Finance.balanceSheetBalanced') : lang('Finance.balanceSheetUnbalanced');
+
+        $html = '<!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <title>' . htmlspecialchars(lang('Finance.balanceSheetTitle')) . '</title>
+            <style>
+                body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; font-size: 11px; color: #0f172a; margin: 20px; line-height: 1.4; }
+                h1 { font-size: 18px; margin: 0 0 4px; color: #0f172a; }
+                .subtitle { font-size: 12px; color: #475569; margin-bottom: 12px; }
+                .status-box { padding: 6px 12px; background: ' . $statusBg . '; color: ' . $statusColor . '; font-weight: bold; border-radius: 4px; display: inline-block; margin-bottom: 15px; border: 1px solid ' . $statusColor . '; }
+                .section-header { font-size: 13px; font-weight: bold; background: #f1f5f9; padding: 6px 8px; margin: 14px 0 6px; border-left: 3px solid #0284c7; }
+                .subsection-header { font-size: 11px; font-weight: bold; color: #475569; padding: 4px 8px; margin-top: 6px; }
+                table { width: 100%; border-collapse: collapse; margin-bottom: 8px; }
+                th, td { padding: 5px 8px; text-align: left; }
+                tr.subtotal td { border-top: 1px solid #cbd5e1; font-weight: bold; }
+                tr.total td { border-top: 2px solid #0f172a; border-bottom: 2px solid #0f172a; font-weight: bold; font-size: 12px; }
+            </style>
+        </head>
+        <body>
+            <h1>' . htmlspecialchars($parishName) . '</h1>
+            <div class="subtitle">' . htmlspecialchars(lang('Finance.balanceSheetTitle')) . ' — ' . htmlspecialchars(lang('Finance.asOfDate')) . ': ' . htmlspecialchars($asOfDate) . '</div>
+            <div class="status-box">' . htmlspecialchars($statusText) . '</div>
+
+            <div class="section-header">' . htmlspecialchars(lang('Finance.assetsHeading')) . '</div>
+            <div class="subsection-header">' . htmlspecialchars(lang('Finance.currentAssetsHeading')) . '</div>
+            <table>
+                ' . $renderRows($bs['current_assets']) . '
+                <tr class="subtotal"><td colspan="2">' . htmlspecialchars(lang('Finance.totalCurrentAssets')) . '</td><td style="text-align: right;">$' . number_format((float) $bs['total_current_assets'], 2) . '</td></tr>
+            </table>
+
+            <div class="subsection-header">' . htmlspecialchars(lang('Finance.fixedAssetsHeading')) . '</div>
+            <table>
+                ' . $renderRows($bs['fixed_assets']) . '
+                <tr class="subtotal"><td colspan="2">' . htmlspecialchars(lang('Finance.totalFixedAssets')) . '</td><td style="text-align: right;">$' . number_format((float) $bs['total_fixed_assets'], 2) . '</td></tr>
+                <tr class="total"><td colspan="2">' . htmlspecialchars(lang('Finance.totalAssetsHeading')) . '</td><td style="text-align: right;">$' . number_format((float) $bs['total_assets'], 2) . '</td></tr>
+            </table>
+
+            <div class="section-header">' . htmlspecialchars(lang('Finance.liabilitiesHeading')) . '</div>
+            <div class="subsection-header">' . htmlspecialchars(lang('Finance.currentLiabilitiesHeading')) . '</div>
+            <table>
+                ' . $renderRows($bs['current_liabilities']) . '
+                <tr class="subtotal"><td colspan="2">' . htmlspecialchars(lang('Finance.totalCurrentLiabilities')) . '</td><td style="text-align: right;">$' . number_format((float) $bs['total_current_liabilities'], 2) . '</td></tr>
+            </table>
+
+            <div class="subsection-header">' . htmlspecialchars(lang('Finance.longTermLiabilitiesHeading')) . '</div>
+            <table>
+                ' . $renderRows($bs['long_term_liabilities']) . '
+                <tr class="subtotal"><td colspan="2">' . htmlspecialchars(lang('Finance.totalLongTermLiabilities')) . '</td><td style="text-align: right;">$' . number_format((float) $bs['total_long_term_liabilities'], 2) . '</td></tr>
+                <tr class="total"><td colspan="2">' . htmlspecialchars(lang('Finance.totalLiabilitiesHeading')) . '</td><td style="text-align: right;">$' . number_format((float) $bs['total_liabilities'], 2) . '</td></tr>
+            </table>
+
+            <div class="section-header">' . htmlspecialchars(lang('Finance.netAssetsHeading')) . '</div>
+            <table>
+                ' . $renderRows($bs['equity_accounts']) . '
+                <tr><td colspan="2">' . htmlspecialchars(lang('Finance.currentPeriodNetChange')) . '</td><td style="text-align: right;">$' . number_format((float) $bs['current_period_net_change'], 2) . '</td></tr>
+                <tr class="total"><td colspan="2">' . htmlspecialchars(lang('Finance.totalNetAssetsHeading')) . '</td><td style="text-align: right;">$' . number_format((float) $bs['total_net_assets'], 2) . '</td></tr>
+            </table>
+
+            <div style="margin-top: 15px;">
+                <table>
+                    <tr class="total" style="background: #f8fafc;">
+                        <td colspan="2" style="font-size: 13px;">' . htmlspecialchars(lang('Finance.totalLiabilitiesAndNetAssetsHeading')) . '</td>
+                        <td style="text-align: right; font-size: 13px;">$' . number_format((float) $bs['total_liabilities_and_net_assets'], 2) . '</td>
+                    </tr>
+                </table>
+            </div>
+        </body>
+        </html>';
+
+        $dompdf = new \Dompdf\Dompdf();
+        $dompdf->loadHtml($html);
+        $dompdf->setPaper('A4', 'portrait');
+        $dompdf->render();
+
+        $filename = 'balance_sheet_' . $parishId . '_' . date('Ymd', strtotime($asOfDate)) . '.pdf';
+
+        return $this->response
+            ->setHeader('Content-Type', 'application/pdf')
+            ->setHeader('Content-Disposition', 'attachment; filename="' . $filename . '"')
+            ->setBody($dompdf->output());
+    }
+
+    /**
+     * Export Statement of Activities (Income Statement) as CSV.
+     */
+    public function statementOfActivitiesCsv()
+    {
+        if ($redirect = $this->requirePermission('report.view')) {
+            return $redirect;
+        }
+
+        if ($redirect = $this->requireParish()) {
+            return $redirect;
+        }
+
+        $parishId = (int) ($this->getOperationalParishId() ?? 0);
+        $startDate = (string) ($this->request->getGet('start_date') ?? date('Y-01-01'));
+        $endDate   = (string) ($this->request->getGet('end_date') ?? date('Y-m-d'));
+
+        if (!$this->reportData->isValidDate($startDate)) {
+            $startDate = date('Y-01-01');
+        }
+        if (!$this->reportData->isValidDate($endDate)) {
+            $endDate = date('Y-m-d');
+        }
+
+        $soa = $this->reportData->buildStatementOfActivities($parishId, $startDate, $endDate);
+        $filename = 'statement_of_activities_' . $parishId . '_' . date('Ymd', strtotime($startDate)) . '_' . date('Ymd', strtotime($endDate)) . '.csv';
+
+        $output = fopen('php://temp', 'r+');
+        if ($output === false) {
+            return redirect()->back()->with('error', lang('App.errorGeneric'));
+        }
+
+        fputcsv($output, [lang('Finance.colCategory'), lang('Finance.colAccountCode'), lang('Finance.colAccountName'), lang('Finance.colAmount')]);
+
+        // Revenues
+        fputcsv($output, [lang('Finance.revenuesHeading'), '', '', '']);
+        fputcsv($output, [lang('Finance.unrestrictedRevenuesHeading'), '', '', '']);
+        foreach ($soa['unrestricted_revenues'] as $acc) {
+            fputcsv($output, ['', $acc['code'], $acc['name'], number_format((float) $acc['amount'], 2, '.', '')]);
+        }
+        fputcsv($output, ['', '', lang('Finance.totalUnrestrictedRevenues'), number_format((float) $soa['total_unrestricted_revenues'], 2, '.', '')]);
+
+        fputcsv($output, [lang('Finance.restrictedRevenuesHeading'), '', '', '']);
+        foreach ($soa['restricted_revenues'] as $acc) {
+            fputcsv($output, ['', $acc['code'], $acc['name'], number_format((float) $acc['amount'], 2, '.', '')]);
+        }
+        fputcsv($output, ['', '', lang('Finance.totalRestrictedRevenues'), number_format((float) $soa['total_restricted_revenues'], 2, '.', '')]);
+        fputcsv($output, [lang('Finance.totalRevenuesHeading'), '', '', number_format((float) $soa['total_revenues'], 2, '.', '')]);
+        fputcsv($output, []);
+
+        // Expenses
+        fputcsv($output, [lang('Finance.expensesHeading'), '', '', '']);
+        fputcsv($output, [lang('Finance.outreachExpensesHeading'), '', '', '']);
+        foreach ($soa['outreach_expenses'] as $acc) {
+            fputcsv($output, ['', $acc['code'], $acc['name'], number_format((float) $acc['amount'], 2, '.', '')]);
+        }
+        fputcsv($output, ['', '', lang('Finance.totalOutreachExpenses'), number_format((float) $soa['total_outreach_expenses'], 2, '.', '')]);
+
+        fputcsv($output, [lang('Finance.ministryExpensesHeading'), '', '', '']);
+        foreach ($soa['ministry_expenses'] as $acc) {
+            fputcsv($output, ['', $acc['code'], $acc['name'], number_format((float) $acc['amount'], 2, '.', '')]);
+        }
+        fputcsv($output, ['', '', lang('Finance.totalMinistryExpenses'), number_format((float) $soa['total_ministry_expenses'], 2, '.', '')]);
+
+        fputcsv($output, [lang('Finance.operationsExpensesHeading'), '', '', '']);
+        foreach ($soa['operations_expenses'] as $acc) {
+            fputcsv($output, ['', $acc['code'], $acc['name'], number_format((float) $acc['amount'], 2, '.', '')]);
+        }
+        fputcsv($output, ['', '', lang('Finance.totalOperationsExpenses'), number_format((float) $soa['total_operations_expenses'], 2, '.', '')]);
+        fputcsv($output, [lang('Finance.totalExpensesHeading'), '', '', number_format((float) $soa['total_expenses'], 2, '.', '')]);
+        fputcsv($output, []);
+
+        // Net Change
+        fputcsv($output, [lang('Finance.changeInNetAssetsHeading'), '', '', number_format((float) $soa['net_change'], 2, '.', '')]);
+
+        rewind($output);
+        $csvContent = stream_get_contents($output);
+        fclose($output);
+
+        return $this->response
+            ->setHeader('Content-Type', 'text/csv; charset=UTF-8')
+            ->setHeader('Content-Disposition', 'attachment; filename="' . $filename . '"')
+            ->setBody($csvContent ?: '');
+    }
+
+    /**
+     * Export Statement of Activities (Income Statement) as PDF.
+     */
+    public function statementOfActivitiesPdf()
+    {
+        if ($redirect = $this->requirePermission('report.view')) {
+            return $redirect;
+        }
+
+        if ($redirect = $this->requireParish()) {
+            return $redirect;
+        }
+
+        $parishId = (int) ($this->getOperationalParishId() ?? 0);
+        $startDate = (string) ($this->request->getGet('start_date') ?? date('Y-01-01'));
+        $endDate   = (string) ($this->request->getGet('end_date') ?? date('Y-m-d'));
+
+        if (!$this->reportData->isValidDate($startDate)) {
+            $startDate = date('Y-01-01');
+        }
+        if (!$this->reportData->isValidDate($endDate)) {
+            $endDate = date('Y-m-d');
+        }
+
+        $soa = $this->reportData->buildStatementOfActivities($parishId, $startDate, $endDate);
+        $parish = db_connect()->table('parish')->select('name')->where('id', $parishId)->get()->getRowArray();
+        $parishName = $parish['name'] ?? 'Parish';
+
+        $renderRows = static function (array $accounts): string {
+            if (empty($accounts)) {
+                return '<tr><td colspan="3" style="font-style: italic; color: #64748b;">' . htmlspecialchars(lang('Finance.noneLabel')) . '</td></tr>';
+            }
+            $html = '';
+            foreach ($accounts as $acc) {
+                $html .= '<tr>'
+                    . '<td style="width: 20%;">' . htmlspecialchars((string) $acc['code']) . '</td>'
+                    . '<td style="width: 55%;">' . htmlspecialchars((string) $acc['name']) . '</td>'
+                    . '<td style="width: 25%; text-align: right;">$' . number_format((float) $acc['amount'], 2) . '</td>'
+                    . '</tr>';
+            }
+            return $html;
+        };
+
+        $netColor = $soa['net_change'] >= 0 ? '#15803d' : '#b91c1c';
+        $netBg = $soa['net_change'] >= 0 ? '#f0fdf4' : '#fef2f2';
+
+        $html = '<!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <title>' . htmlspecialchars(lang('Finance.statementOfActivitiesTitle')) . '</title>
+            <style>
+                body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; font-size: 11px; color: #0f172a; margin: 20px; line-height: 1.4; }
+                h1 { font-size: 18px; margin: 0 0 4px; color: #0f172a; }
+                .subtitle { font-size: 12px; color: #475569; margin-bottom: 12px; }
+                .summary-card { padding: 10px 14px; background: ' . $netBg . '; color: ' . $netColor . '; font-weight: bold; border-radius: 4px; display: inline-block; margin-bottom: 15px; border: 1px solid ' . $netColor . '; font-size: 13px; }
+                .section-header { font-size: 13px; font-weight: bold; background: #f1f5f9; padding: 6px 8px; margin: 14px 0 6px; border-left: 3px solid #0284c7; }
+                .subsection-header { font-size: 11px; font-weight: bold; color: #475569; padding: 4px 8px; margin-top: 6px; }
+                table { width: 100%; border-collapse: collapse; margin-bottom: 8px; }
+                th, td { padding: 5px 8px; text-align: left; }
+                tr.subtotal td { border-top: 1px solid #cbd5e1; font-weight: bold; }
+                tr.total td { border-top: 2px solid #0f172a; border-bottom: 2px solid #0f172a; font-weight: bold; font-size: 12px; }
+            </style>
+        </head>
+        <body>
+            <h1>' . htmlspecialchars($parishName) . '</h1>
+            <div class="subtitle">' . htmlspecialchars(lang('Finance.statementOfActivitiesTitle')) . ' — ' . htmlspecialchars($startDate) . ' ' . htmlspecialchars(lang('Treasurer.reportTo')) . ' ' . htmlspecialchars($endDate) . '</div>
+            <div class="summary-card">' . htmlspecialchars(lang('Finance.changeInNetAssetsHeading')) . ': $' . number_format((float) $soa['net_change'], 2) . '</div>
+
+            <div class="section-header">' . htmlspecialchars(lang('Finance.revenuesHeading')) . '</div>
+            <div class="subsection-header">' . htmlspecialchars(lang('Finance.unrestrictedRevenuesHeading')) . '</div>
+            <table>
+                ' . $renderRows($soa['unrestricted_revenues']) . '
+                <tr class="subtotal"><td colspan="2">' . htmlspecialchars(lang('Finance.totalUnrestrictedRevenues')) . '</td><td style="text-align: right;">$' . number_format((float) $soa['total_unrestricted_revenues'], 2) . '</td></tr>
+            </table>
+
+            <div class="subsection-header">' . htmlspecialchars(lang('Finance.restrictedRevenuesHeading')) . '</div>
+            <table>
+                ' . $renderRows($soa['restricted_revenues']) . '
+                <tr class="subtotal"><td colspan="2">' . htmlspecialchars(lang('Finance.totalRestrictedRevenues')) . '</td><td style="text-align: right;">$' . number_format((float) $soa['total_restricted_revenues'], 2) . '</td></tr>
+                <tr class="total"><td colspan="2">' . htmlspecialchars(lang('Finance.totalRevenuesHeading')) . '</td><td style="text-align: right;">$' . number_format((float) $soa['total_revenues'], 2) . '</td></tr>
+            </table>
+
+            <div class="section-header">' . htmlspecialchars(lang('Finance.expensesHeading')) . '</div>
+            <div class="subsection-header">' . htmlspecialchars(lang('Finance.outreachExpensesHeading')) . '</div>
+            <table>
+                ' . $renderRows($soa['outreach_expenses']) . '
+                <tr class="subtotal"><td colspan="2">' . htmlspecialchars(lang('Finance.totalOutreachExpenses')) . '</td><td style="text-align: right;">$' . number_format((float) $soa['total_outreach_expenses'], 2) . '</td></tr>
+            </table>
+
+            <div class="subsection-header">' . htmlspecialchars(lang('Finance.ministryExpensesHeading')) . '</div>
+            <table>
+                ' . $renderRows($soa['ministry_expenses']) . '
+                <tr class="subtotal"><td colspan="2">' . htmlspecialchars(lang('Finance.totalMinistryExpenses')) . '</td><td style="text-align: right;">$' . number_format((float) $soa['total_ministry_expenses'], 2) . '</td></tr>
+            </table>
+
+            <div class="subsection-header">' . htmlspecialchars(lang('Finance.operationsExpensesHeading')) . '</div>
+            <table>
+                ' . $renderRows($soa['operations_expenses']) . '
+                <tr class="subtotal"><td colspan="2">' . htmlspecialchars(lang('Finance.totalOperationsExpenses')) . '</td><td style="text-align: right;">$' . number_format((float) $soa['total_operations_expenses'], 2) . '</td></tr>
+                <tr class="total"><td colspan="2">' . htmlspecialchars(lang('Finance.totalExpensesHeading')) . '</td><td style="text-align: right;">$' . number_format((float) $soa['total_expenses'], 2) . '</td></tr>
+            </table>
+
+            <div style="margin-top: 15px;">
+                <table>
+                    <tr class="total" style="background: ' . $netBg . '; color: ' . $netColor . ';">
+                        <td colspan="2" style="font-size: 13px;">' . htmlspecialchars(lang('Finance.changeInNetAssetsHeading')) . '</td>
+                        <td style="text-align: right; font-size: 13px;">$' . number_format((float) $soa['net_change'], 2) . '</td>
+                    </tr>
+                </table>
+            </div>
+        </body>
+        </html>';
+
+        $dompdf = new \Dompdf\Dompdf();
+        $dompdf->loadHtml($html);
+        $dompdf->setPaper('A4', 'portrait');
+        $dompdf->render();
+
+        $filename = 'statement_of_activities_' . $parishId . '_' . date('Ymd', strtotime($startDate)) . '_' . date('Ymd', strtotime($endDate)) . '.pdf';
+
+        return $this->response
+            ->setHeader('Content-Type', 'application/pdf')
+            ->setHeader('Content-Disposition', 'attachment; filename="' . $filename . '"')
+            ->setBody($dompdf->output());
+    }
 }
 

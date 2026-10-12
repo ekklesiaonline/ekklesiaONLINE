@@ -3,9 +3,15 @@
 <?= $this->section('content') ?>
 
 <div class="mb-4 d-flex justify-content-between align-items-center">
-    <div>
+    <div class="d-flex gap-2">
         <a class="btn btn-outline-info" href="<?= base_url('reports/trial-balance') ?>">
             <i class="bi bi-scale" aria-hidden="true"></i> <?= lang('Finance.trialBalanceTitle') ?>
+        </a>
+        <a class="btn btn-outline-primary" href="<?= base_url('reports/balance-sheet') ?>">
+            <i class="bi bi-wallet2" aria-hidden="true"></i> <?= lang('Finance.balanceSheetTitle') ?>
+        </a>
+        <a class="btn btn-outline-success" href="<?= base_url('reports/statement-of-activities') ?>">
+            <i class="bi bi-graph-up" aria-hidden="true"></i> <?= lang('Finance.statementOfActivitiesTitle') ?>
         </a>
     </div>
     <div class="d-flex gap-2">

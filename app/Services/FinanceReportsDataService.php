@@ -952,5 +952,342 @@ class FinanceReportsDataService
             'include_zero'  => $includeZero,
         ];
     }
+
+    /**
+     * Builds the Statement of Financial Position (Balance Sheet) as of a given date.
+     * Assets = Liabilities + Net Assets.
+     *
+     * @return array<string, mixed>
+     */
+    public function buildStatementOfFinancialPosition(int $parishId, string $asOfDate): array
+    {
+        if (!$this->isValidDate($asOfDate)) {
+            $asOfDate = date('Y-m-d');
+        }
+
+        $db = db_connect();
+
+        // 1. Aggregate posted debits and credits up to $asOfDate
+        $aggSubquery = $db->table('journal_entry_line jel')
+            ->select('jel.chart_account_id, ' .
+                'COALESCE(SUM(jel.debit_amount), 0.0) as sum_debit, ' .
+                'COALESCE(SUM(jel.credit_amount), 0.0) as sum_credit')
+            ->join('journal_entry je', 'je.id = jel.journal_entry_id', 'inner')
+            ->where('je.parish_id', $parishId)
+            ->where('je.entry_date <=', $asOfDate)
+            ->where('je.status', 'posted')
+            ->groupBy('jel.chart_account_id');
+
+        $compiledSubquery = $aggSubquery->getCompiledSelect();
+
+        $rows = $db->table('chart_of_accounts coa')
+            ->select('coa.id, coa.code, coa.name, coa.account_type, coa.category, coa.sort_order, ' .
+                'COALESCE(agg.sum_debit, 0.0) as total_debit, ' .
+                'COALESCE(agg.sum_credit, 0.0) as total_credit')
+            ->join("({$compiledSubquery}) agg", 'agg.chart_account_id = coa.id', 'left')
+            ->where('coa.is_active', 1)
+            ->orderBy('coa.sort_order', 'ASC')
+            ->orderBy('coa.code', 'ASC')
+            ->get()
+            ->getResultArray();
+
+        $currentAssets = [];
+        $fixedAssets = [];
+        $totalCurrentAssets = 0.0;
+        $totalFixedAssets = 0.0;
+        $totalAssets = 0.0;
+
+        $currentLiabilities = [];
+        $longTermLiabilities = [];
+        $totalCurrentLiabilities = 0.0;
+        $totalLongTermLiabilities = 0.0;
+        $totalLiabilities = 0.0;
+
+        $equityAccounts = [];
+        $totalStatedEquity = 0.0;
+
+        $cumulativeIncome = 0.0;
+        $cumulativeExpense = 0.0;
+
+        foreach ($rows as $row) {
+            $code = (string) $row['code'];
+            $name = (string) $row['name'];
+            $type = strtolower((string) ($row['account_type'] ?? ''));
+            $cat  = strtolower((string) ($row['category'] ?? ''));
+            $debit = (float) ($row['total_debit'] ?? 0.0);
+            $credit = (float) ($row['total_credit'] ?? 0.0);
+
+            if ($type === 'asset') {
+                $balance = round($debit - $credit, 2);
+                $accountData = [
+                    'id'      => (int) $row['id'],
+                    'code'    => $code,
+                    'name'    => $name,
+                    'balance' => $balance,
+                ];
+
+                if (str_starts_with($code, '14') || str_contains($cat, 'fixed')) {
+                    $fixedAssets[] = $accountData;
+                    $totalFixedAssets += $balance;
+                } else {
+                    $currentAssets[] = $accountData;
+                    $totalCurrentAssets += $balance;
+                }
+                $totalAssets += $balance;
+            } elseif ($type === 'liability') {
+                $balance = round($credit - $debit, 2);
+                $accountData = [
+                    'id'      => (int) $row['id'],
+                    'code'    => $code,
+                    'name'    => $name,
+                    'balance' => $balance,
+                ];
+
+                if (str_starts_with($code, '23') || str_contains($cat, 'long_term') || str_contains($cat, 'mortgage')) {
+                    $longTermLiabilities[] = $accountData;
+                    $totalLongTermLiabilities += $balance;
+                } else {
+                    $currentLiabilities[] = $accountData;
+                    $totalCurrentLiabilities += $balance;
+                }
+                $totalLiabilities += $balance;
+            } elseif ($type === 'equity') {
+                $balance = round($credit - $debit, 2);
+                $equityAccounts[] = [
+                    'id'      => (int) $row['id'],
+                    'code'    => $code,
+                    'name'    => $name,
+                    'balance' => $balance,
+                ];
+                $totalStatedEquity += $balance;
+            } elseif ($type === 'income') {
+                $cumulativeIncome += ($credit - $debit);
+            } elseif ($type === 'expense') {
+                $cumulativeExpense += ($debit - $credit);
+            }
+        }
+
+        // Cumulative operating surplus / (deficit) up to as-of date
+        $currentPeriodNetChange = round($cumulativeIncome - $cumulativeExpense, 2);
+        $totalNetAssets = round($totalStatedEquity + $currentPeriodNetChange, 2);
+
+        $totalCurrentAssets = round($totalCurrentAssets, 2);
+        $totalFixedAssets = round($totalFixedAssets, 2);
+        $totalAssets = round($totalAssets, 2);
+
+        $totalCurrentLiabilities = round($totalCurrentLiabilities, 2);
+        $totalLongTermLiabilities = round($totalLongTermLiabilities, 2);
+        $totalLiabilities = round($totalLiabilities, 2);
+
+        $totalLiabilitiesAndNetAssets = round($totalLiabilities + $totalNetAssets, 2);
+        $variance = round(abs($totalAssets - $totalLiabilitiesAndNetAssets), 2);
+        $isBalanced = $variance <= 0.005;
+
+        // Parish Fund Breakdown for equity context
+        $fundsSummary = [
+            'unrestricted'           => 0.0,
+            'temporarily_restricted' => 0.0,
+            'permanently_restricted' => 0.0,
+            'total'                  => 0.0,
+            'funds'                  => [],
+        ];
+
+        if ($db->tableExists('fund')) {
+            $hasCurrentBalance = $db->fieldExists('current_balance', 'fund');
+            $selectCols = 'id, name, fund_type, is_active' . ($hasCurrentBalance ? ', current_balance' : '');
+            $fundRows = $db->table('fund')
+                ->select($selectCols)
+                ->where('parish_id', $parishId)
+                ->where('is_active', 1)
+                ->get()
+                ->getResultArray();
+
+            foreach ($fundRows as $f) {
+                $fBal = $hasCurrentBalance ? (float) ($f['current_balance'] ?? 0.0) : 0.0;
+                $fType = (string) ($f['fund_type'] ?? 'unrestricted');
+                if ($fType === 'temporarily_restricted' || $fType === 'restricted') {
+                    $fundsSummary['temporarily_restricted'] += $fBal;
+                } elseif ($fType === 'permanently_restricted' || $fType === 'endowment') {
+                    $fundsSummary['permanently_restricted'] += $fBal;
+                } else {
+                    $fundsSummary['unrestricted'] += $fBal;
+                }
+                $fundsSummary['total'] += $fBal;
+                $fundsSummary['funds'][] = [
+                    'name'    => (string) $f['name'],
+                    'type'    => $fType,
+                    'balance' => $fBal,
+                ];
+            }
+        }
+
+        return [
+            'as_of_date'                       => $asOfDate,
+            'parish_id'                        => $parishId,
+            'current_assets'                   => $currentAssets,
+            'total_current_assets'             => $totalCurrentAssets,
+            'fixed_assets'                     => $fixedAssets,
+            'total_fixed_assets'               => $totalFixedAssets,
+            'total_assets'                     => $totalAssets,
+            'current_liabilities'              => $currentLiabilities,
+            'total_current_liabilities'        => $totalCurrentLiabilities,
+            'long_term_liabilities'            => $longTermLiabilities,
+            'total_long_term_liabilities'      => $totalLongTermLiabilities,
+            'total_liabilities'                => $totalLiabilities,
+            'equity_accounts'                  => $equityAccounts,
+            'total_stated_equity'              => $totalStatedEquity,
+            'current_period_net_change'        => $currentPeriodNetChange,
+            'total_net_assets'                 => $totalNetAssets,
+            'total_liabilities_and_net_assets' => $totalLiabilitiesAndNetAssets,
+            'variance'                         => $variance,
+            'is_balanced'                      => $isBalanced,
+            'funds_summary'                    => $fundsSummary,
+        ];
+    }
+
+    /**
+     * Builds the Statement of Activities (Revenues and Expenses / Changes in Net Assets)
+     * for a given date range.
+     *
+     * @return array<string, mixed>
+     */
+    public function buildStatementOfActivities(int $parishId, string $startDate, string $endDate): array
+    {
+        if (!$this->isValidDate($startDate)) {
+            $startDate = date('Y-01-01');
+        }
+        if (!$this->isValidDate($endDate)) {
+            $endDate = date('Y-m-d');
+        }
+
+        $db = db_connect();
+
+        // 1. Aggregate posted debits and credits between $startDate and $endDate
+        $aggSubquery = $db->table('journal_entry_line jel')
+            ->select('jel.chart_account_id, ' .
+                'COALESCE(SUM(jel.debit_amount), 0.0) as sum_debit, ' .
+                'COALESCE(SUM(jel.credit_amount), 0.0) as sum_credit')
+            ->join('journal_entry je', 'je.id = jel.journal_entry_id', 'inner')
+            ->where('je.parish_id', $parishId)
+            ->where('je.entry_date >=', $startDate)
+            ->where('je.entry_date <=', $endDate)
+            ->where('je.status', 'posted')
+            ->groupBy('jel.chart_account_id');
+
+        $compiledSubquery = $aggSubquery->getCompiledSelect();
+
+        $rows = $db->table('chart_of_accounts coa')
+            ->select('coa.id, coa.code, coa.name, coa.account_type, coa.category, coa.sort_order, ' .
+                'COALESCE(agg.sum_debit, 0.0) as total_debit, ' .
+                'COALESCE(agg.sum_credit, 0.0) as total_credit')
+            ->join("({$compiledSubquery}) agg", 'agg.chart_account_id = coa.id', 'left')
+            ->where('coa.is_active', 1)
+            ->whereIn('coa.account_type', ['income', 'expense'])
+            ->orderBy('coa.sort_order', 'ASC')
+            ->orderBy('coa.code', 'ASC')
+            ->get()
+            ->getResultArray();
+
+        $unrestrictedRevenues = [];
+        $restrictedRevenues = [];
+        $totalUnrestrictedRevenues = 0.0;
+        $totalRestrictedRevenues = 0.0;
+        $totalRevenues = 0.0;
+
+        $outreachExpenses = [];
+        $ministryExpenses = [];
+        $operationsExpenses = [];
+        $totalOutreachExpenses = 0.0;
+        $totalMinistryExpenses = 0.0;
+        $totalOperationsExpenses = 0.0;
+        $totalExpenses = 0.0;
+
+        foreach ($rows as $row) {
+            $code = (string) $row['code'];
+            $name = (string) $row['name'];
+            $type = strtolower((string) ($row['account_type'] ?? ''));
+            $debit = (float) ($row['total_debit'] ?? 0.0);
+            $credit = (float) ($row['total_credit'] ?? 0.0);
+
+            if ($type === 'income') {
+                $amount = round($credit - $debit, 2);
+                if ($amount == 0.0 && $debit == 0.0 && $credit == 0.0) {
+                    continue;
+                }
+
+                $accountData = [
+                    'id'     => (int) $row['id'],
+                    'code'   => $code,
+                    'name'   => $name,
+                    'amount' => $amount,
+                ];
+
+                // 4000-4999: Unrestricted, 5000-5999: Restricted/Designated
+                if (str_starts_with($code, '5') || str_contains(strtolower($name), 'restricted') || str_contains(strtolower($name), 'designated')) {
+                    $restrictedRevenues[] = $accountData;
+                    $totalRestrictedRevenues += $amount;
+                } else {
+                    $unrestrictedRevenues[] = $accountData;
+                    $totalUnrestrictedRevenues += $amount;
+                }
+                $totalRevenues += $amount;
+            } elseif ($type === 'expense') {
+                $amount = round($debit - $credit, 2);
+                if ($amount == 0.0 && $debit == 0.0 && $credit == 0.0) {
+                    continue;
+                }
+
+                $accountData = [
+                    'id'     => (int) $row['id'],
+                    'code'   => $code,
+                    'name'   => $name,
+                    'amount' => $amount,
+                ];
+
+                // 6000s: Outreach, 7000s: Ministry & Program, 8000s: Operations & Facilities
+                if (str_starts_with($code, '6')) {
+                    $outreachExpenses[] = $accountData;
+                    $totalOutreachExpenses += $amount;
+                } elseif (str_starts_with($code, '7')) {
+                    $ministryExpenses[] = $accountData;
+                    $totalMinistryExpenses += $amount;
+                } else {
+                    $operationsExpenses[] = $accountData;
+                    $totalOperationsExpenses += $amount;
+                }
+                $totalExpenses += $amount;
+            }
+        }
+
+        $totalUnrestrictedRevenues = round($totalUnrestrictedRevenues, 2);
+        $totalRestrictedRevenues = round($totalRestrictedRevenues, 2);
+        $totalRevenues = round($totalRevenues, 2);
+
+        $totalOutreachExpenses = round($totalOutreachExpenses, 2);
+        $totalMinistryExpenses = round($totalMinistryExpenses, 2);
+        $totalOperationsExpenses = round($totalOperationsExpenses, 2);
+        $totalExpenses = round($totalExpenses, 2);
+
+        $netChange = round($totalRevenues - $totalExpenses, 2);
+
+        return [
+            'start_date'                  => $startDate,
+            'end_date'                    => $endDate,
+            'parish_id'                   => $parishId,
+            'unrestricted_revenues'       => $unrestrictedRevenues,
+            'total_unrestricted_revenues' => $totalUnrestrictedRevenues,
+            'restricted_revenues'         => $restrictedRevenues,
+            'total_restricted_revenues'   => $totalRestrictedRevenues,
+            'total_revenues'              => $totalRevenues,
+            'outreach_expenses'           => $outreachExpenses,
+            'total_outreach_expenses'     => $totalOutreachExpenses,
+            'ministry_expenses'           => $ministryExpenses,
+            'total_ministry_expenses'     => $totalMinistryExpenses,
+            'operations_expenses'         => $operationsExpenses,
+            'total_operations_expenses'   => $totalOperationsExpenses,
+            'total_expenses'              => $totalExpenses,
+            'net_change'                  => $netChange,
+        ];
+    }
 }
 

@@ -82,6 +82,12 @@ $routes->group('', ['filter' => 'session'], function ($routes) {
         $routes->get('trial-balance', '\\Finance\\Controllers\\Reports::trialBalance');
         $routes->get('trial-balance/export-csv', '\\Finance\\Controllers\\ReportExports::trialBalanceCsv');
         $routes->get('trial-balance/export-pdf', '\\Finance\\Controllers\\ReportExports::trialBalancePdf');
+        $routes->get('balance-sheet', '\\Finance\\Controllers\\Reports::balanceSheet');
+        $routes->get('balance-sheet/export-csv', '\\Finance\\Controllers\\ReportExports::balanceSheetCsv');
+        $routes->get('balance-sheet/export-pdf', '\\Finance\\Controllers\\ReportExports::balanceSheetPdf');
+        $routes->get('statement-of-activities', '\\Finance\\Controllers\\Reports::statementOfActivities');
+        $routes->get('statement-of-activities/export-csv', '\\Finance\\Controllers\\ReportExports::statementOfActivitiesCsv');
+        $routes->get('statement-of-activities/export-pdf', '\\Finance\\Controllers\\ReportExports::statementOfActivitiesPdf');
         $routes->get('export', '\\Finance\\Controllers\\ReportExports::export');
         $routes->get('export-pdf', '\\Finance\\Controllers\\ReportExports::exportPdf');
         $routes->get('api/summary', '\\Finance\\Controllers\\Reports::summaryApi');

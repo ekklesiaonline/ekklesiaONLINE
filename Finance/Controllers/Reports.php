@@ -161,5 +161,77 @@ class Reports extends BaseController
 
         return view('Finance\Views\Reports/trial_balance', $data);
     }
+
+    /**
+     * Statement of Financial Position (Balance Sheet) report view.
+     */
+    public function balanceSheet()
+    {
+        if ($redirect = $this->requirePermission('report.view')) {
+            return $redirect;
+        }
+
+        if ($redirect = $this->requireParish()) {
+            return $redirect;
+        }
+
+        $parishId = (int) ($this->getOperationalParishId() ?? 0);
+        if ($parishId <= 0) {
+            return redirect()->to('/dashboard')->with('error', lang('App.errorNoParishScope'));
+        }
+
+        $asOfDate = (string) ($this->request->getGet('as_of_date') ?? date('Y-m-d'));
+        if (!$this->reportData->isValidDate($asOfDate)) {
+            $asOfDate = date('Y-m-d');
+        }
+
+        $balanceSheet = $this->reportData->buildStatementOfFinancialPosition($parishId, $asOfDate);
+
+        $data = array_merge($this->getCommonViewData(lang('Finance.balanceSheetTitle')), [
+            'balanceSheet' => $balanceSheet,
+            'asOfDate'     => $asOfDate,
+        ]);
+
+        return view('Finance\Views\Reports/balance_sheet', $data);
+    }
+
+    /**
+     * Statement of Activities (Income Statement / P&L) report view.
+     */
+    public function statementOfActivities()
+    {
+        if ($redirect = $this->requirePermission('report.view')) {
+            return $redirect;
+        }
+
+        if ($redirect = $this->requireParish()) {
+            return $redirect;
+        }
+
+        $parishId = (int) ($this->getOperationalParishId() ?? 0);
+        if ($parishId <= 0) {
+            return redirect()->to('/dashboard')->with('error', lang('App.errorNoParishScope'));
+        }
+
+        $startDate = (string) ($this->request->getGet('start_date') ?? date('Y-01-01'));
+        $endDate   = (string) ($this->request->getGet('end_date') ?? date('Y-m-d'));
+
+        if (!$this->reportData->isValidDate($startDate)) {
+            $startDate = date('Y-01-01');
+        }
+        if (!$this->reportData->isValidDate($endDate)) {
+            $endDate = date('Y-m-d');
+        }
+
+        $statement = $this->reportData->buildStatementOfActivities($parishId, $startDate, $endDate);
+
+        $data = array_merge($this->getCommonViewData(lang('Finance.statementOfActivitiesTitle')), [
+            'statement' => $statement,
+            'startDate' => $startDate,
+            'endDate'   => $endDate,
+        ]);
+
+        return view('Finance\Views\Reports/statement_of_activities', $data);
+    }
 }
 

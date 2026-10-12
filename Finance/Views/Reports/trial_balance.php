@@ -23,7 +23,13 @@ $typeBadgeMap = [
         <a href="<?= base_url('reports') ?>" class="btn btn-outline-secondary">
             <i class="bi bi-arrow-left" aria-hidden="true"></i> <?= lang('Finance.backToReports') ?>
         </a>
-        <a href="<?= base_url('journal-entries') ?>" class="btn btn-outline-primary">
+        <a href="<?= base_url('reports/balance-sheet') ?>" class="btn btn-outline-primary">
+            <i class="bi bi-wallet2" aria-hidden="true"></i> <?= lang('Finance.balanceSheetTitle') ?>
+        </a>
+        <a href="<?= base_url('reports/statement-of-activities') ?>" class="btn btn-outline-success">
+            <i class="bi bi-graph-up" aria-hidden="true"></i> <?= lang('Finance.statementOfActivitiesTitle') ?>
+        </a>
+        <a href="<?= base_url('journal-entries') ?>" class="btn btn-outline-secondary">
             <i class="bi bi-journal-text" aria-hidden="true"></i> <?= lang('Finance.journalEntriesTitle') ?>
         </a>
     </div>

@@ -66,6 +66,12 @@ $fundTypeColors = [
         <a href="<?= base_url('reports') ?>" class="btn btn-outline-secondary btn-sm">
             <i class="bi bi-file-earmark-bar-graph" aria-hidden="true"></i> <?= esc(lang('Finance.reportsTitle')) ?>
         </a>
+        <a href="<?= base_url('reports/balance-sheet') ?>" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-wallet2" aria-hidden="true"></i> <?= esc(lang('Finance.balanceSheetTitle')) ?>
+        </a>
+        <a href="<?= base_url('reports/statement-of-activities') ?>" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-graph-up" aria-hidden="true"></i> <?= esc(lang('Finance.statementOfActivitiesTitle')) ?>
+        </a>
     <?php endif; ?>
 </div>
 
