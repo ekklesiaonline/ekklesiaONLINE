@@ -42,10 +42,10 @@ Help with parish-scoped finance, accounting, and treasury workflows.
   - `Finance\Controllers\Funds`: Fund creation, restriction types (unrestricted, temporarily restricted, permanently restricted/endowment), active balances (`FundModel`).
   - `Finance\Controllers\FundFlags`: Locking/unlocking and activation flags.
 - **Budgets**:
-  - `Finance\Controllers\Budgets`: Fiscal year budget lines vs real-time actuals, utilization percentage, multi-line saving (`ParishBudgetModel`).
+  - `Finance\Controllers\Budgets`: Fiscal year budget lines vs real-time actuals, utilization percentage, multi-line saving (`ParishBudgetModel`), export CSV (`/budgets/export-csv`), Vestry PDF document export with certification blocks (`/budgets/export-pdf`), and automated budget roll-forward / cloning with adjustment factor and audit logging (`POST /budgets/clone`).
 - **Financial Reports**:
-  - `Finance\Controllers\Reports`: Date-filtered KPIs, Fund Breakdown, Chart of Accounts Category Breakdown, Trial Balance (`/reports/trial-balance`), Statement of Financial Position (Balance Sheet) (`/reports/balance-sheet`), and Statement of Activities (`/reports/statement-of-activities`) via `FinanceReportsDataService`.
-  - `Finance\Controllers\ReportExports`: CSV, PDF, Trial Balance exports (`/reports/trial-balance/export-csv`, `/reports/trial-balance/export-pdf`), Balance Sheet exports (`/reports/balance-sheet/export-csv`, `/reports/balance-sheet/export-pdf`), and Statement of Activities exports (`/reports/statement-of-activities/export-csv`, `/reports/statement-of-activities/export-pdf`).
+  - `Finance\Controllers\Reports`: Date-filtered KPIs, Fund Breakdown, Chart of Accounts Category Breakdown, Trial Balance (`/reports/trial-balance`), Statement of Financial Position (Balance Sheet) (`/reports/balance-sheet`), Statement of Activities (`/reports/statement-of-activities`), and Episcopal Parochial Report Financial Lines Compiler (`/reports/parochial-report`) via `FinanceReportsDataService`.
+  - `Finance\Controllers\ReportExports`: CSV, PDF, Trial Balance exports (`/reports/trial-balance/export-csv`, `/reports/trial-balance/export-pdf`), Balance Sheet exports (`/reports/balance-sheet/export-csv`, `/reports/balance-sheet/export-pdf`), Statement of Activities exports (`/reports/statement-of-activities/export-csv`, `/reports/statement-of-activities/export-pdf`), and Parochial Report exports (`/reports/parochial-report/export-csv`, `/reports/parochial-report/export-pdf`).
 - **Chart of Accounts (COA)**:
   - `Diocese\Controllers\ChartOfAccounts`: Canonical 4-digit Episcopal chart of accounts (1000s Assets, 2000s Liabilities, 3000s Net Assets, 4000s/5000s Income, 6000s-8000s Expenses). Reference guidelines in `docs/CHART_OF_ACCOUNTS_GUIDELINES.md`.
 - **Annual Pledges & Stewardship**:
@@ -62,8 +62,8 @@ Help with parish-scoped finance, accounting, and treasury workflows.
 - **Priority 5: Compliance Statements & Budget Polish**:
   - `[x]` 5.1 Statement of Financial Position (Balance Sheet) (`/reports/balance-sheet`, CSV/PDF exports).
   - `[x]` 5.2 Statement of Activities (`/reports/statement-of-activities`, CSV/PDF exports).
-  - `[ ]` 5.3 Episcopal Parochial Report finance lines compiler.
-  - `[ ]` 5.4 Budget CSV/PDF export and roll-forward cloning.
+  - `[x]` 5.3 Episcopal Parochial Report finance lines compiler (`/reports/parochial-report`, CSV/PDF exports, delegate from `ParochialReportDataService`).
+  - `[x]` 5.4 Budget CSV/PDF export and roll-forward cloning (`/budgets/export-csv`, `/budgets/export-pdf`, `POST /budgets/clone`).
 - **Priority 6: Operational Intake & Governance**:
   - Sunday batch collection plate / envelope quick entry (`/donations/batch-create`).
   - Parish read-only Chart of Accounts reference page (`/finance/chart-of-accounts`).
