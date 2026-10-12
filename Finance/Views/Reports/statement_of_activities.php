@@ -31,6 +31,9 @@ $isSurplus = $netChange >= 0;
         <a href="<?= base_url('reports/balance-sheet') ?>" class="btn btn-outline-primary">
             <i class="bi bi-wallet2" aria-hidden="true"></i> <?= lang('Finance.balanceSheetTitle') ?>
         </a>
+        <a href="<?= base_url('reports/parochial-report') ?>" class="btn btn-outline-warning">
+            <i class="bi bi-file-earmark-ruled" aria-hidden="true"></i> <?= lang('Finance.parochialReportTitle') ?>
+        </a>
     </div>
     <div class="d-flex gap-2">
         <button type="button" onclick="window.print()" class="btn btn-outline-secondary">

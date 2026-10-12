@@ -1289,5 +1289,376 @@ class FinanceReportsDataService
             'net_change'                  => $netChange,
         ];
     }
+
+    /**
+     * Compiles the authoritative Episcopal Parochial Report finance lines (Lines 1 to 12b)
+     * following the national Church canons and the official reference contract.
+     *
+     * @param int $parishId
+     * @param int $year
+     * @return array<string, mixed>
+     */
+    public function buildParochialReportFinanceLines(int $parishId, int $year): array
+    {
+        $db = db_connect();
+        $startDate = sprintf('%04d-01-01', $year);
+        $endDate = sprintf('%04d-12-31', $year);
+
+        // 1. Line 1 & Line 2: Pledges
+        $pledgesCount = 0;
+        $pledgesAmount = 0.0;
+        if ($db->tableExists('annual_pledge')) {
+            $pledges = model(\App\Models\AnnualPledgeModel::class)->getParishPledgeSummary($parishId, $year);
+            $pledgesCount = (int) ($pledges['total_pledges'] ?? 0);
+            $pledgesAmount = (float) ($pledges['pledged_total'] ?? 0.0);
+        }
+
+        // 2. Fetch any manual entries from parish_report_storage
+        $storage = [];
+        if ($db->tableExists('parish_report_storage')) {
+            $storageRow = $db->table('parish_report_storage')
+                ->where('parish_id', $parishId)
+                ->where('report_year', $year)
+                ->get()
+                ->getRowArray();
+            if ($storageRow) {
+                $storage = $storageRow;
+            }
+        }
+
+        // 3. Check General Ledger entries for the year
+        $glEntriesExist = false;
+        if ($db->tableExists('journal_entry') && $db->tableExists('journal_entry_line') && $db->tableExists('chart_of_accounts')) {
+            $checkCount = $db->table('journal_entry')
+                ->where('parish_id', $parishId)
+                ->where('entry_date >=', $startDate)
+                ->where('entry_date <=', $endDate)
+                ->where('status', 'posted')
+                ->countAllResults();
+            $glEntriesExist = ($checkCount > 0);
+        }
+
+        $line3 = 0.0;
+        $line4 = 0.0;
+        $line5 = 0.0;
+        $line6 = 0.0;
+        $line7 = 0.0;
+        $cashBalance = 0.0;
+        $debtAmount = 0.0;
+        $rentalIncome = 0.0;
+        $rentalExpense = 0.0;
+        $ownsProperty = 0;
+
+        $rev3Accounts = [];
+        $rev4Accounts = [];
+        $rev5Accounts = [];
+        $exp6Accounts = [];
+        $exp7Accounts = [];
+        $cash8Accounts = [];
+
+        if ($glEntriesExist) {
+            // Aggregate posted debits and credits by account
+            $aggSubquery = $db->table('journal_entry_line jel')
+                ->select('jel.chart_account_id, ' .
+                    'COALESCE(SUM(jel.debit_amount), 0.0) as sum_debit, ' .
+                    'COALESCE(SUM(jel.credit_amount), 0.0) as sum_credit')
+                ->join('journal_entry je', 'je.id = jel.journal_entry_id', 'inner')
+                ->where('je.parish_id', $parishId)
+                ->where('je.entry_date >=', $startDate)
+                ->where('je.entry_date <=', $endDate)
+                ->where('je.status', 'posted')
+                ->groupBy('jel.chart_account_id');
+
+            $compiledSubquery = $aggSubquery->getCompiledSelect();
+
+            $rows = $db->table('chart_of_accounts coa')
+                ->select('coa.id, coa.code, coa.name, coa.account_type, coa.category, ' .
+                    'COALESCE(agg.sum_debit, 0.0) as total_debit, ' .
+                    'COALESCE(agg.sum_credit, 0.0) as total_credit')
+                ->join("({$compiledSubquery}) agg", 'agg.chart_account_id = coa.id', 'left')
+                ->where('coa.is_active', 1)
+                ->whereIn('coa.account_type', ['income', 'expense'])
+                ->orderBy('coa.code', 'ASC')
+                ->get()
+                ->getResultArray();
+
+            foreach ($rows as $row) {
+                $code = (string) $row['code'];
+                $name = (string) $row['name'];
+                $type = strtolower((string) ($row['account_type'] ?? ''));
+                $debit = (float) ($row['total_debit'] ?? 0.0);
+                $credit = (float) ($row['total_credit'] ?? 0.0);
+
+                if ($type === 'income') {
+                    $amount = round($credit - $debit, 2);
+                    if ($amount == 0.0 && $debit == 0.0 && $credit == 0.0) {
+                        continue;
+                    }
+
+                    $accData = ['code' => $code, 'name' => $name, 'amount' => $amount];
+
+                    if (str_starts_with($code, '41') || $code === '4320') {
+                        // Line 3: Plate, pledge, and unrestricted contributions
+                        $line3 += $amount;
+                        $rev3Accounts[] = $accData;
+                    } elseif (str_starts_with($code, '5')) {
+                        // Line 4: Restricted/Designated contributions
+                        $line4 += $amount;
+                        $rev4Accounts[] = $accData;
+                    } else {
+                        // Line 5: All other operating revenue (rentals 42xx, fundraising 4310, sales 4330, etc.)
+                        $line5 += $amount;
+                        $rev5Accounts[] = $accData;
+                        if (str_starts_with($code, '42')) {
+                            $rentalIncome += $amount;
+                        }
+                    }
+                } elseif ($type === 'expense') {
+                    $amount = round($debit - $credit, 2);
+                    if ($amount == 0.0 && $debit == 0.0 && $credit == 0.0) {
+                        continue;
+                    }
+
+                    $accData = ['code' => $code, 'name' => $name, 'amount' => $amount];
+
+                    // Line 7: Capital expenses (8610 Major Repairs, 8611 Capital Purchases)
+                    if (str_starts_with($code, '86')) {
+                        $line7 += $amount;
+                        $exp7Accounts[] = $accData;
+                    } else {
+                        // Line 6: Non-capital operating expenses (6xxx, 7xxx, 8xxx other)
+                        $line6 += $amount;
+                        $exp6Accounts[] = $accData;
+                        if ($code === '8111') {
+                            $rentalExpense += $amount;
+                        }
+                    }
+                }
+            }
+
+            $jelTable = $db->prefixTable('journal_entry_line');
+            $jeTable = $db->prefixTable('journal_entry');
+
+            // Year-end Cash balances as of Dec 31
+            $cashRows = $db->table('chart_of_accounts coa')
+                ->select('coa.code, coa.name, ' .
+                    '(SELECT COALESCE(SUM(jel.debit_amount - jel.credit_amount), 0.0) ' .
+                    " FROM {$jelTable} jel " .
+                    " JOIN {$jeTable} je ON je.id = jel.journal_entry_id " .
+                    ' WHERE jel.chart_account_id = coa.id AND je.parish_id = ' . $db->escape($parishId) . ' ' .
+                    ' AND je.entry_date <= ' . $db->escape($endDate) . ' AND je.status = "posted") as balance')
+                ->where('coa.is_active', 1)
+                ->where('coa.account_type', 'asset')
+                ->where('coa.code LIKE "11%"')
+                ->get()
+                ->getResultArray();
+
+            foreach ($cashRows as $crow) {
+                $cbal = (float) ($crow['balance'] ?? 0.0);
+                if ($cbal != 0.0) {
+                    $cash8Accounts[] = ['code' => $crow['code'], 'name' => $crow['name'], 'balance' => $cbal];
+                    $cashBalance += $cbal;
+                }
+            }
+
+            // Debt balances as of Dec 31 (2110 AP, 23xx Notes/Mortgage)
+            $debtRows = $db->table('chart_of_accounts coa')
+                ->select('(SELECT COALESCE(SUM(jel.credit_amount - jel.debit_amount), 0.0) ' .
+                    " FROM {$jelTable} jel " .
+                    " JOIN {$jeTable} je ON je.id = jel.journal_entry_id " .
+                    ' WHERE jel.chart_account_id = coa.id AND je.parish_id = ' . $db->escape($parishId) . ' ' .
+                    ' AND je.entry_date <= ' . $db->escape($endDate) . ' AND je.status = "posted") as balance')
+                ->where('coa.is_active', 1)
+                ->where('coa.account_type', 'liability')
+                ->where('(coa.code = "2110" OR coa.code LIKE "23%")')
+                ->get()
+                ->getResultArray();
+
+            foreach ($debtRows as $drow) {
+                $dbal = (float) ($drow['balance'] ?? 0.0);
+                if ($dbal > 0) {
+                    $debtAmount += $dbal;
+                }
+            }
+
+            // Property check (Fixed assets 14xx)
+            $propCount = $db->table('chart_of_accounts coa')
+                ->where('coa.is_active', 1)
+                ->where('coa.account_type', 'asset')
+                ->where('coa.code LIKE "14%"')
+                ->countAllResults();
+            $ownsProperty = $propCount > 0 ? 1 : 0;
+        }
+
+        // Fallbacks for transactions when GL is unpopulated
+        if ($line3 === 0.0 && $line4 === 0.0 && $db->tableExists('donation')) {
+            $donationModel = model(\App\Models\DonationModel::class);
+            $donationRows = $db->table('donation')
+                ->select('amount, is_restricted')
+                ->where('parish_id', $parishId)
+                ->where('date >=', $startDate)
+                ->where('date <=', $endDate)
+                ->get()
+                ->getResultArray();
+
+            foreach ($donationRows as $row) {
+                $amount = $donationModel->normalizeAmount($row['amount'] ?? null);
+                if ((int) ($row['is_restricted'] ?? 0) === 1) {
+                    $line4 += $amount;
+                } else {
+                    $line3 += $amount;
+                }
+            }
+        }
+
+        if ($line6 === 0.0 && $line7 === 0.0 && $db->tableExists('expense')) {
+            $expenseTable = $db->prefixTable('expense');
+            $expenseRow = $db->query(
+                "SELECT
+                    COALESCE(SUM(CASE WHEN is_capital = 0 THEN amount ELSE 0 END), 0) AS noncapital,
+                    COALESCE(SUM(CASE WHEN is_capital = 1 THEN amount ELSE 0 END), 0) AS capital
+                 FROM {$expenseTable}
+                 WHERE parish_id = ? AND date >= ? AND date <= ?",
+                [$parishId, $startDate, $endDate]
+            )->getRowArray() ?? [];
+
+            $line6 = (float) ($expenseRow['noncapital'] ?? 0.0);
+            $line7 = (float) ($expenseRow['capital'] ?? 0.0);
+        }
+
+        // Check bank accounts for cash balance fallback if GL was 0
+        if ($cashBalance === 0.0 && $db->tableExists('bank_account')) {
+            $bankRows = $db->table('bank_account')
+                ->select('opening_balance, id')
+                ->where('parish_id', $parishId)
+                ->where('is_active', 1)
+                ->get()
+                ->getResultArray();
+
+            foreach ($bankRows as $b) {
+                $bBal = (float) ($b['opening_balance'] ?? 0.0);
+                if ($db->tableExists('bank_transaction')) {
+                    $txTotal = (float) ($db->table('bank_transaction')
+                        ->select('COALESCE(SUM(amount), 0) as total')
+                        ->where('bank_account_id', (int) $b['id'])
+                        ->where('transaction_date <=', $endDate)
+                        ->get()
+                        ->getRowArray()['total'] ?? 0.0);
+                    $bBal += $txTotal;
+                }
+                $cashBalance += $bBal;
+            }
+        }
+
+        // Merge manual storage values if present
+        if (!empty($storage)) {
+            if ($pledgesCount === 0 && isset($storage['confirmed_pledges_count'])) {
+                $pledgesCount = (int) $storage['confirmed_pledges_count'];
+            }
+            if ($pledgesAmount === 0.0 && isset($storage['confirmed_pledges_amount'])) {
+                $pledgesAmount = (float) $storage['confirmed_pledges_amount'];
+            }
+            if ($line5 === 0.0 && isset($storage['other_revenue_amount'])) {
+                $line5 = (float) $storage['other_revenue_amount'];
+            }
+            if ($cashBalance === 0.0 && isset($storage['cash_balance'])) {
+                $cashBalance = (float) $storage['cash_balance'];
+            }
+            if ($debtAmount === 0.0 && isset($storage['debt_amount'])) {
+                $debtAmount = (float) $storage['debt_amount'];
+            }
+            if ($rentalIncome === 0.0 && isset($storage['rental_income'])) {
+                $rentalIncome = (float) $storage['rental_income'];
+            }
+            if ($rentalExpense === 0.0 && isset($storage['rental_expense'])) {
+                $rentalExpense = (float) $storage['rental_expense'];
+            }
+            if (isset($storage['owns_property'])) {
+                $ownsProperty = (int) $storage['owns_property'];
+            }
+        }
+
+        $line3 = round($line3, 2);
+        $line4 = round($line4, 2);
+        $line5 = round($line5, 2);
+        $totalRevenue = round($line3 + $line4 + $line5, 2);
+
+        $line6 = round($line6, 2);
+        $line7 = round($line7, 2);
+        $totalExpenses = round($line6 + $line7, 2);
+
+        $netOperating = round($totalRevenue - $totalExpenses, 2);
+        $cashBalance = round($cashBalance, 2);
+        $debtAmount = round($debtAmount, 2);
+        $hasDebt = ($debtAmount > 0.0 || (int) ($storage['has_debt'] ?? 0) === 1) ? 1 : 0;
+        $rentsToOutside = ($rentalIncome > 0.0 || (int) ($storage['rents_to_outside'] ?? 0) === 1) ? 1 : 0;
+
+        // Endowments and Investments (Line 9)
+        $endowmentRestricted = (float) ($storage['endowment_restricted'] ?? 0.0);
+        $endowmentUnrestricted = (float) ($storage['endowment_unrestricted'] ?? 0.0);
+        $totalEndowment = round($endowmentRestricted + $endowmentUnrestricted, 2);
+
+        $investRestricted = (float) ($storage['investment_restricted'] ?? 0.0);
+        $investUnrestricted = (float) ($storage['investment_unrestricted'] ?? 0.0);
+        $totalNonendowed = round($investRestricted + $investUnrestricted, 2);
+
+        $totalInvestments = round($totalEndowment + $totalNonendowed, 2);
+
+        return [
+            'year'                     => $year,
+            'parish_id'                => $parishId,
+            'reporting_currency'       => (string) ($storage['reporting_currency'] ?? 'USD'),
+            // Stewardship (Lines 1 & 2)
+            'confirmed_pledges_count'  => $pledgesCount,
+            'confirmed_pledges_amount' => $pledgesAmount,
+            // Operating Revenue (Lines 3, 4, 5 & Total A)
+            'line_3_plate_pledge'      => $line3,
+            'revenue_unrestricted'     => $line3,
+            'line_4_restricted'        => $line4,
+            'revenue_restricted'       => $line4,
+            'line_5_other_revenue'     => $line5,
+            'other_revenue'            => $line5,
+            'other_revenue_amount'     => $line5,
+            'total_revenue'            => $totalRevenue,
+            // Operating Expenses (Lines 6, 7 & Total B)
+            'line_6_noncapital'        => $line6,
+            'expenses_noncapital'      => $line6,
+            'line_7_capital'           => $line7,
+            'expenses_capital'         => $line7,
+            'total_expenses'           => $totalExpenses,
+            'net_operating'            => $netOperating,
+            // Year-End Cash & Bank Accounts (Line 8)
+            'cash_balance'             => $cashBalance,
+            'line_8_cash'              => $cashBalance,
+            // Endowments & Investments (Line 9a-d)
+            'endowment_restricted'     => $endowmentRestricted,
+            'endowment_unrestricted'   => $endowmentUnrestricted,
+            'total_endowment'          => $totalEndowment,
+            'investment_restricted'    => $investRestricted,
+            'investment_unrestricted'  => $investUnrestricted,
+            'total_nonendowed'         => $totalNonendowed,
+            'total_investments'        => $totalInvestments,
+            'pct_draw'                 => (float) ($storage['pct_draw'] ?? 0.0),
+            'amount_drawn_operating'   => (float) ($storage['amount_drawn_operating'] ?? 0.0),
+            'amount_drawn_capital'     => (float) ($storage['amount_drawn_capital'] ?? 0.0),
+            'investment_net_gain_loss' => (float) ($storage['investment_net_gain_loss'] ?? 0.0),
+            // Debt (Line 10)
+            'has_debt'                 => $hasDebt,
+            'debt_amount'              => $debtAmount,
+            'debt_description'         => (string) ($storage['debt_description'] ?? ''),
+            // Property & Rental (Lines 11 & 12)
+            'owns_property'            => $ownsProperty,
+            'rents_to_outside'         => $rentsToOutside,
+            'rental_income'            => $rentalIncome,
+            'rental_expense'           => $rentalExpense,
+            // Detailed account line items for audit & breakdown
+            'revenue_line3_accounts'   => $rev3Accounts,
+            'revenue_line4_accounts'   => $rev4Accounts,
+            'revenue_line5_accounts'   => $rev5Accounts,
+            'expense_line6_accounts'   => $exp6Accounts,
+            'expense_line7_accounts'   => $exp7Accounts,
+            'cash_line8_accounts'      => $cash8Accounts,
+        ];
+    }
 }
 

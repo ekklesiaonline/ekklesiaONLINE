@@ -233,5 +233,38 @@ class Reports extends BaseController
 
         return view('Finance\Views\Reports/statement_of_activities', $data);
     }
+
+    /**
+     * Episcopal Parochial Report Finance Lines Compiler view.
+     */
+    public function parochialReport()
+    {
+        if ($redirect = $this->requirePermission('report.view')) {
+            return $redirect;
+        }
+
+        if ($redirect = $this->requireParish()) {
+            return $redirect;
+        }
+
+        $parishId = (int) ($this->getOperationalParishId() ?? 0);
+        if ($parishId <= 0) {
+            return redirect()->to('/dashboard')->with('error', lang('App.errorNoParishScope'));
+        }
+
+        $year = (int) ($this->request->getGet('year') ?? date('Y'));
+        if ($year < 2000 || $year > 2100) {
+            $year = (int) date('Y');
+        }
+
+        $reportLines = $this->reportData->buildParochialReportFinanceLines($parishId, $year);
+
+        $data = array_merge($this->getCommonViewData(lang('Finance.parochialReportTitle')), [
+            'reportLines' => $reportLines,
+            'year'        => $year,
+        ]);
+
+        return view('Finance\Views\Reports/parochial_report', $data);
+    }
 }
 

@@ -1175,5 +1175,317 @@ class ReportExports extends Reports
             ->setHeader('Content-Disposition', 'attachment; filename="' . $filename . '"')
             ->setBody($dompdf->output());
     }
+
+    /**
+     * Export Episcopal Parochial Report Finance Lines as CSV.
+     */
+    public function parochialReportCsv()
+    {
+        if ($redirect = $this->requirePermission('report.view')) {
+            return $redirect;
+        }
+
+        if ($redirect = $this->requireParish()) {
+            return $redirect;
+        }
+
+        $parishId = (int) ($this->getOperationalParishId() ?? 0);
+        if ($parishId <= 0) {
+            return redirect()->to('/dashboard')->with('error', lang('App.errorNoParishScope'));
+        }
+
+        $year = (int) ($this->request->getGet('year') ?? date('Y'));
+        if ($year < 2000 || $year > 2100) {
+            $year = (int) date('Y');
+        }
+
+        $lines = $this->reportData->buildParochialReportFinanceLines($parishId, $year);
+        $filename = 'parochial_report_finance_' . $parishId . '_' . $year . '.csv';
+
+        $output = fopen('php://temp', 'r+');
+        if ($output === false) {
+            return redirect()->back()->with('error', lang('App.errorGeneric'));
+        }
+
+        fputcsv($output, [lang('Finance.colParochialLine'), lang('Finance.colDescription'), lang('Finance.colAmount'), lang('Finance.colNotes')]);
+
+        // Stewardship
+        fputcsv($output, [lang('Finance.stewardshipSectionHeading'), '', '', '']);
+        fputcsv($output, ['Line 1', lang('Finance.line1PledgesCount'), (string) $lines['confirmed_pledges_count'], '']);
+        fputcsv($output, ['Line 2', lang('Finance.line2PledgesAmount'), number_format((float) $lines['confirmed_pledges_amount'], 2, '.', ''), '']);
+        fputcsv($output, []);
+
+        // Operating Revenue
+        fputcsv($output, [lang('Finance.operatingRevenueHeading'), '', '', '']);
+        fputcsv($output, ['Line 3', lang('Finance.line3PlatePledge'), number_format((float) $lines['line_3_plate_pledge'], 2, '.', ''), '']);
+        foreach ($lines['revenue_line3_accounts'] as $acc) {
+            fputcsv($output, ['', '  ' . $acc['code'] . ' - ' . $acc['name'], number_format((float) $acc['amount'], 2, '.', ''), '']);
+        }
+
+        fputcsv($output, ['Line 4', lang('Finance.line4Restricted'), number_format((float) $lines['line_4_restricted'], 2, '.', ''), '']);
+        foreach ($lines['revenue_line4_accounts'] as $acc) {
+            fputcsv($output, ['', '  ' . $acc['code'] . ' - ' . $acc['name'], number_format((float) $acc['amount'], 2, '.', ''), '']);
+        }
+
+        fputcsv($output, ['Line 5', lang('Finance.line5OtherRevenue'), number_format((float) $lines['line_5_other_revenue'], 2, '.', ''), '']);
+        foreach ($lines['revenue_line5_accounts'] as $acc) {
+            fputcsv($output, ['', '  ' . $acc['code'] . ' - ' . $acc['name'], number_format((float) $acc['amount'], 2, '.', ''), '']);
+        }
+
+        fputcsv($output, ['Line A', lang('Finance.totalOperatingRevenueA'), number_format((float) $lines['total_revenue'], 2, '.', ''), '']);
+        fputcsv($output, []);
+
+        // Operating Expenses
+        fputcsv($output, [lang('Finance.operatingExpensesHeading'), '', '', '']);
+        fputcsv($output, ['Line 6', lang('Finance.line6Noncapital'), number_format((float) $lines['line_6_noncapital'], 2, '.', ''), '']);
+        foreach ($lines['expense_line6_accounts'] as $acc) {
+            fputcsv($output, ['', '  ' . $acc['code'] . ' - ' . $acc['name'], number_format((float) $acc['amount'], 2, '.', ''), '']);
+        }
+
+        fputcsv($output, ['Line 7', lang('Finance.line7Capital'), number_format((float) $lines['line_7_capital'], 2, '.', ''), '']);
+        foreach ($lines['expense_line7_accounts'] as $acc) {
+            fputcsv($output, ['', '  ' . $acc['code'] . ' - ' . $acc['name'], number_format((float) $acc['amount'], 2, '.', ''), '']);
+        }
+
+        fputcsv($output, ['Line B', lang('Finance.totalOperatingExpensesB'), number_format((float) $lines['total_expenses'], 2, '.', ''), '']);
+        fputcsv($output, ['', lang('Finance.netOperatingTotal'), number_format((float) $lines['net_operating'], 2, '.', ''), '']);
+        fputcsv($output, []);
+
+        // Cash & Liquid Assets
+        fputcsv($output, [lang('Finance.cashAndInvestmentsHeading'), '', '', '']);
+        fputcsv($output, ['Line 8', lang('Finance.line8Cash'), number_format((float) $lines['cash_balance'], 2, '.', ''), '']);
+        foreach ($lines['cash_line8_accounts'] as $acc) {
+            fputcsv($output, ['', '  ' . $acc['code'] . ' - ' . $acc['name'], number_format((float) $acc['balance'], 2, '.', ''), '']);
+        }
+
+        // Endowments & Investments
+        fputcsv($output, ['Line 9a', lang('Finance.line9aRestrictedEndowment'), number_format((float) $lines['endowment_restricted'], 2, '.', ''), '']);
+        fputcsv($output, ['Line 9b', lang('Finance.line9bUnrestrictedEndowment'), number_format((float) $lines['endowment_unrestricted'], 2, '.', ''), '']);
+        fputcsv($output, ['', lang('Finance.totalEndowmentsInvestments') . ' (Endowments)', number_format((float) $lines['total_endowment'], 2, '.', ''), '']);
+        fputcsv($output, ['Line 9c', lang('Finance.line9cRestrictedInvestments'), number_format((float) $lines['investment_restricted'], 2, '.', ''), '']);
+        fputcsv($output, ['Line 9d', lang('Finance.line9dUnrestrictedInvestments'), number_format((float) $lines['investment_unrestricted'], 2, '.', ''), '']);
+        fputcsv($output, ['', lang('Finance.totalEndowmentsInvestments'), number_format((float) $lines['total_investments'], 2, '.', ''), '']);
+        fputcsv($output, []);
+
+        // Debt & Real Estate
+        fputcsv($output, [lang('Finance.debtAndPropertyHeading'), '', '', '']);
+        fputcsv($output, ['Line 10', lang('Finance.line10Debt'), number_format((float) $lines['debt_amount'], 2, '.', ''), $lines['debt_description']]);
+        fputcsv($output, ['Line 11', lang('Finance.line11Property'), $lines['owns_property'] ? 'Yes' : 'No', '']);
+        fputcsv($output, ['Line 12', lang('Finance.line12Rental'), $lines['rents_to_outside'] ? 'Yes' : 'No', '']);
+        if ($lines['rents_to_outside']) {
+            fputcsv($output, ['', lang('Finance.rentalIncomeLabel'), number_format((float) $lines['rental_income'], 2, '.', ''), '']);
+            fputcsv($output, ['', lang('Finance.rentalExpenseLabel'), number_format((float) $lines['rental_expense'], 2, '.', ''), '']);
+        }
+
+        rewind($output);
+        $csvContent = stream_get_contents($output);
+        fclose($output);
+
+        return $this->response
+            ->setHeader('Content-Type', 'text/csv; charset=UTF-8')
+            ->setHeader('Content-Disposition', 'attachment; filename="' . $filename . '"')
+            ->setBody($csvContent ?: '');
+    }
+
+    /**
+     * Export Episcopal Parochial Report Finance Lines as PDF.
+     */
+    public function parochialReportPdf()
+    {
+        if ($redirect = $this->requirePermission('report.view')) {
+            return $redirect;
+        }
+
+        if ($redirect = $this->requireParish()) {
+            return $redirect;
+        }
+
+        $parishId = (int) ($this->getOperationalParishId() ?? 0);
+        if ($parishId <= 0) {
+            return redirect()->to('/dashboard')->with('error', lang('App.errorNoParishScope'));
+        }
+
+        $year = (int) ($this->request->getGet('year') ?? date('Y'));
+        if ($year < 2000 || $year > 2100) {
+            $year = (int) date('Y');
+        }
+
+        $lines = $this->reportData->buildParochialReportFinanceLines($parishId, $year);
+        $parish = db_connect()->table('parish')->select('name, city, state')->where('id', $parishId)->get()->getRowArray();
+        $parishName = $parish['name'] ?? 'Parish';
+        $location = trim(($parish['city'] ?? '') . ', ' . ($parish['state'] ?? ''), ', ');
+
+        $netColor = $lines['net_operating'] >= 0 ? '#15803d' : '#b91c1c';
+        $netBg = $lines['net_operating'] >= 0 ? '#f0fdf4' : '#fef2f2';
+
+        $renderSubRows = static function (array $accounts, string $amtKey = 'amount'): string {
+            if (empty($accounts)) {
+                return '';
+            }
+            $html = '';
+            foreach ($accounts as $acc) {
+                $html .= '<tr class="sub-row">'
+                    . '<td style="padding-left: 20px; color: #475569;">' . htmlspecialchars((string) $acc['code']) . ' — ' . htmlspecialchars((string) $acc['name']) . '</td>'
+                    . '<td style="text-align: right; color: #475569;">$' . number_format((float) ($acc[$amtKey] ?? 0), 2) . '</td>'
+                    . '</tr>';
+            }
+            return $html;
+        };
+
+        $html = '<!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <title>' . htmlspecialchars(lang('Finance.parochialReportTitle')) . ' — ' . $year . '</title>
+            <style>
+                body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; font-size: 11px; color: #0f172a; margin: 25px; line-height: 1.4; }
+                .header-table { width: 100%; border-bottom: 2px solid #0f172a; padding-bottom: 10px; margin-bottom: 15px; }
+                h1 { font-size: 18px; margin: 0 0 4px; color: #0f172a; }
+                .subtitle { font-size: 13px; color: #475569; font-weight: 600; }
+                .badge-year { font-size: 14px; font-weight: bold; background: #e0f2fe; color: #0369a1; padding: 4px 10px; border-radius: 4px; border: 1px solid #7dd3fc; text-align: right; }
+                .summary-container { margin-bottom: 15px; width: 100%; }
+                .summary-box { width: 31%; display: inline-block; padding: 8px 12px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 4px; margin-right: 2%; vertical-align: top; }
+                .summary-label { font-size: 10px; color: #64748b; text-transform: uppercase; font-weight: 600; }
+                .summary-value { font-size: 15px; font-weight: bold; color: #0f172a; margin-top: 4px; }
+                .section-header { font-size: 12px; font-weight: bold; background: #f1f5f9; padding: 6px 10px; margin: 12px 0 6px; border-left: 3px solid #0284c7; }
+                table.data-table { width: 100%; border-collapse: collapse; margin-bottom: 8px; }
+                table.data-table th, table.data-table td { padding: 5px 8px; text-align: left; border-bottom: 1px solid #e2e8f0; }
+                table.data-table th { background: #f8fafc; font-weight: 600; font-size: 10px; text-transform: uppercase; color: #475569; }
+                tr.subtotal td { border-top: 1px solid #94a3b8; font-weight: bold; background: #f8fafc; }
+                tr.total-a td, tr.total-b td { border-top: 2px solid #0f172a; border-bottom: 2px solid #0f172a; font-weight: bold; font-size: 12px; }
+                tr.sub-row td { font-size: 10px; border-bottom: 1px dashed #f1f5f9; }
+                .notice-box { margin-top: 15px; padding: 8px 12px; background: #f8fafc; border: 1px solid #e2e8f0; font-size: 10px; color: #64748b; border-radius: 4px; }
+                .signature-section { margin-top: 25px; page-break-inside: avoid; }
+                .signature-title { font-size: 11px; font-weight: bold; margin-bottom: 15px; text-transform: uppercase; color: #334155; }
+                .sig-box { width: 46%; display: inline-block; vertical-align: top; margin-right: 5%; }
+                .sig-line { border-bottom: 1px solid #0f172a; height: 35px; margin-bottom: 5px; }
+                .sig-label { font-size: 10px; color: #475569; }
+            </style>
+        </head>
+        <body>
+            <table class="header-table">
+                <tr>
+                    <td>
+                        <h1>' . htmlspecialchars($parishName) . '</h1>
+                        <div class="subtitle">' . htmlspecialchars(lang('Finance.parochialReportTitle')) . '</div>
+                        <div style="font-size: 11px; color: #64748b;">' . htmlspecialchars($location) . '</div>
+                    </td>
+                    <td style="text-align: right; vertical-align: middle;">
+                        <span class="badge-year">' . htmlspecialchars(lang('App.year')) . ' ' . $year . '</span>
+                    </td>
+                </tr>
+            </table>
+
+            <div class="summary-container">
+                <div class="summary-box">
+                    <div class="summary-label">' . htmlspecialchars(lang('Finance.totalOperatingRevenueA')) . '</div>
+                    <div class="summary-value">$' . number_format((float) $lines['total_revenue'], 2) . '</div>
+                </div>
+                <div class="summary-box">
+                    <div class="summary-label">' . htmlspecialchars(lang('Finance.totalOperatingExpensesB')) . '</div>
+                    <div class="summary-value">$' . number_format((float) $lines['total_expenses'], 2) . '</div>
+                </div>
+                <div class="summary-box" style="margin-right: 0; background: ' . $netBg . '; border-color: ' . $netColor . ';">
+                    <div class="summary-label" style="color: ' . $netColor . ';">' . htmlspecialchars(lang('Finance.netOperatingTotal')) . '</div>
+                    <div class="summary-value" style="color: ' . $netColor . ';">$' . number_format((float) $lines['net_operating'], 2) . '</div>
+                </div>
+            </div>
+
+            <!-- Stewardship & Pledging -->
+            <div class="section-header">' . htmlspecialchars(lang('Finance.stewardshipSectionHeading')) . '</div>
+            <table class="data-table">
+                <thead><tr><th>Line</th><th>' . htmlspecialchars(lang('Finance.colDescription')) . '</th><th style="text-align: right;">' . htmlspecialchars(lang('Finance.colAmount')) . '</th></tr></thead>
+                <tbody>
+                    <tr><td style="width: 12%;"><strong>Line 1</strong></td><td style="width: 63%;">' . htmlspecialchars(lang('Finance.line1PledgesCount')) . '</td><td style="width: 25%; text-align: right;"><strong>' . (int) $lines['confirmed_pledges_count'] . '</strong></td></tr>
+                    <tr><td><strong>Line 2</strong></td><td>' . htmlspecialchars(lang('Finance.line2PledgesAmount')) . '</td><td style="text-align: right;"><strong>$' . number_format((float) $lines['confirmed_pledges_amount'], 2) . '</strong></td></tr>
+                </tbody>
+            </table>
+
+            <!-- Operating Revenue -->
+            <div class="section-header">' . htmlspecialchars(lang('Finance.operatingRevenueHeading')) . '</div>
+            <table class="data-table">
+                <thead><tr><th>Line</th><th>' . htmlspecialchars(lang('Finance.colDescription')) . '</th><th style="text-align: right;">' . htmlspecialchars(lang('Finance.colAmount')) . '</th></tr></thead>
+                <tbody>
+                    <tr><td style="width: 12%;"><strong>Line 3</strong></td><td style="width: 63%;">' . htmlspecialchars(lang('Finance.line3PlatePledge')) . '</td><td style="width: 25%; text-align: right;"><strong>$' . number_format((float) $lines['line_3_plate_pledge'], 2) . '</strong></td></tr>
+                    ' . $renderSubRows($lines['revenue_line3_accounts']) . '
+                    <tr><td><strong>Line 4</strong></td><td>' . htmlspecialchars(lang('Finance.line4Restricted')) . '</td><td style="text-align: right;"><strong>$' . number_format((float) $lines['line_4_restricted'], 2) . '</strong></td></tr>
+                    ' . $renderSubRows($lines['revenue_line4_accounts']) . '
+                    <tr><td><strong>Line 5</strong></td><td>' . htmlspecialchars(lang('Finance.line5OtherRevenue')) . '</td><td style="text-align: right;"><strong>$' . number_format((float) $lines['line_5_other_revenue'], 2) . '</strong></td></tr>
+                    ' . $renderSubRows($lines['revenue_line5_accounts']) . '
+                    <tr class="total-a"><td><strong>Line A</strong></td><td>' . htmlspecialchars(lang('Finance.totalOperatingRevenueA')) . '</td><td style="text-align: right;">$' . number_format((float) $lines['total_revenue'], 2) . '</td></tr>
+                </tbody>
+            </table>
+
+            <!-- Operating Expenses -->
+            <div class="section-header">' . htmlspecialchars(lang('Finance.operatingExpensesHeading')) . '</div>
+            <table class="data-table">
+                <thead><tr><th>Line</th><th>' . htmlspecialchars(lang('Finance.colDescription')) . '</th><th style="text-align: right;">' . htmlspecialchars(lang('Finance.colAmount')) . '</th></tr></thead>
+                <tbody>
+                    <tr><td style="width: 12%;"><strong>Line 6</strong></td><td style="width: 63%;">' . htmlspecialchars(lang('Finance.line6Noncapital')) . '</td><td style="width: 25%; text-align: right;"><strong>$' . number_format((float) $lines['line_6_noncapital'], 2) . '</strong></td></tr>
+                    ' . $renderSubRows($lines['expense_line6_accounts']) . '
+                    <tr><td><strong>Line 7</strong></td><td>' . htmlspecialchars(lang('Finance.line7Capital')) . '</td><td style="text-align: right;"><strong>$' . number_format((float) $lines['line_7_capital'], 2) . '</strong></td></tr>
+                    ' . $renderSubRows($lines['expense_line7_accounts']) . '
+                    <tr class="total-b"><td><strong>Line B</strong></td><td>' . htmlspecialchars(lang('Finance.totalOperatingExpensesB')) . '</td><td style="text-align: right;">$' . number_format((float) $lines['total_expenses'], 2) . '</td></tr>
+                </tbody>
+            </table>
+
+            <!-- Year-End Cash, Endowments & Investments -->
+            <div class="section-header">' . htmlspecialchars(lang('Finance.cashAndInvestmentsHeading')) . '</div>
+            <table class="data-table">
+                <thead><tr><th>Line</th><th>' . htmlspecialchars(lang('Finance.colDescription')) . '</th><th style="text-align: right;">' . htmlspecialchars(lang('Finance.colAmount')) . '</th></tr></thead>
+                <tbody>
+                    <tr><td style="width: 12%;"><strong>Line 8</strong></td><td style="width: 63%;">' . htmlspecialchars(lang('Finance.line8Cash')) . '</td><td style="width: 25%; text-align: right;"><strong>$' . number_format((float) $lines['cash_balance'], 2) . '</strong></td></tr>
+                    ' . $renderSubRows($lines['cash_line8_accounts'], 'balance') . '
+                    <tr><td><strong>Line 9a</strong></td><td>' . htmlspecialchars(lang('Finance.line9aRestrictedEndowment')) . '</td><td style="text-align: right;">$' . number_format((float) $lines['endowment_restricted'], 2) . '</td></tr>
+                    <tr><td><strong>Line 9b</strong></td><td>' . htmlspecialchars(lang('Finance.line9bUnrestrictedEndowment')) . '</td><td style="text-align: right;">$' . number_format((float) $lines['endowment_unrestricted'], 2) . '</td></tr>
+                    <tr class="subtotal"><td></td><td>' . htmlspecialchars(lang('Finance.totalEndowmentsInvestments')) . ' (Endowments)</td><td style="text-align: right;">$' . number_format((float) $lines['total_endowment'], 2) . '</td></tr>
+                    <tr><td><strong>Line 9c</strong></td><td>' . htmlspecialchars(lang('Finance.line9cRestrictedInvestments')) . '</td><td style="text-align: right;">$' . number_format((float) $lines['investment_restricted'], 2) . '</td></tr>
+                    <tr><td><strong>Line 9d</strong></td><td>' . htmlspecialchars(lang('Finance.line9dUnrestrictedInvestments')) . '</td><td style="text-align: right;">$' . number_format((float) $lines['investment_unrestricted'], 2) . '</td></tr>
+                    <tr class="subtotal"><td></td><td><strong>' . htmlspecialchars(lang('Finance.totalEndowmentsInvestments')) . '</strong></td><td style="text-align: right;"><strong>$' . number_format((float) $lines['total_investments'], 2) . '</strong></td></tr>
+                </tbody>
+            </table>
+
+            <!-- Debt & Property -->
+            <div class="section-header">' . htmlspecialchars(lang('Finance.debtAndPropertyHeading')) . '</div>
+            <table class="data-table">
+                <thead><tr><th>Line</th><th>' . htmlspecialchars(lang('Finance.colDescription')) . '</th><th style="text-align: right;">' . htmlspecialchars(lang('Finance.colAmount')) . '</th></tr></thead>
+                <tbody>
+                    <tr><td style="width: 12%;"><strong>Line 10</strong></td><td style="width: 63%;">' . htmlspecialchars(lang('Finance.line10Debt')) . ($lines['debt_description'] ? ' (' . htmlspecialchars($lines['debt_description']) . ')' : '') . '</td><td style="width: 25%; text-align: right;"><strong>$' . number_format((float) $lines['debt_amount'], 2) . '</strong></td></tr>
+                    <tr><td><strong>Line 11</strong></td><td>' . htmlspecialchars(lang('Finance.line11Property')) . '</td><td style="text-align: right;"><strong>' . ($lines['owns_property'] ? 'Yes' : 'No') . '</strong></td></tr>
+                    <tr><td><strong>Line 12</strong></td><td>' . htmlspecialchars(lang('Finance.line12Rental')) . '</td><td style="text-align: right;"><strong>' . ($lines['rents_to_outside'] ? 'Yes' : 'No') . '</strong></td></tr>
+                    ' . ($lines['rents_to_outside'] ? '<tr><td></td><td style="padding-left: 20px;">' . htmlspecialchars(lang('Finance.rentalIncomeLabel')) . '</td><td style="text-align: right;">$' . number_format((float) $lines['rental_income'], 2) . '</td></tr><tr><td></td><td style="padding-left: 20px;">' . htmlspecialchars(lang('Finance.rentalExpenseLabel')) . '</td><td style="text-align: right;">$' . number_format((float) $lines['rental_expense'], 2) . '</td></tr>' : '') . '
+                </tbody>
+            </table>
+
+            <div class="notice-box">
+                ' . htmlspecialchars(lang('Finance.canonicalParochialNotice')) . '
+            </div>
+
+            <div class="signature-section">
+                <div class="signature-title">' . htmlspecialchars(lang('Finance.vestryApprovalSignature')) . '</div>
+                <div class="sig-box">
+                    <div class="sig-line"></div>
+                    <div class="sig-label">' . htmlspecialchars(lang('Finance.treasurerSignature')) . ' &nbsp;&nbsp;|&nbsp;&nbsp; ' . htmlspecialchars(lang('Finance.dateSignature')) . ': ____________________</div>
+                </div>
+                <div class="sig-box" style="margin-right: 0;">
+                    <div class="sig-line"></div>
+                    <div class="sig-label">' . htmlspecialchars(lang('Finance.rectorSignature')) . ' &nbsp;&nbsp;|&nbsp;&nbsp; ' . htmlspecialchars(lang('Finance.dateSignature')) . ': ____________________</div>
+                </div>
+            </div>
+        </body>
+        </html>';
+
+        $dompdf = new \Dompdf\Dompdf();
+        $dompdf->loadHtml($html);
+        $dompdf->setPaper('A4', 'portrait');
+        $dompdf->render();
+
+        $filename = 'parochial_report_finance_' . $parishId . '_' . $year . '.pdf';
+
+        return $this->response
+            ->setHeader('Content-Type', 'application/pdf')
+            ->setHeader('Content-Disposition', 'attachment; filename="' . $filename . '"')
+            ->setBody($dompdf->output());
+    }
 }
 

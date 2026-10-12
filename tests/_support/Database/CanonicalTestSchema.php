@@ -294,6 +294,16 @@ final class CanonicalTestSchema
             'updated_at'            => 'TEXT',
             'deleted_at'            => 'TEXT',
         ],
+        'parish_budget' => [
+            'parish_id'        => 'INTEGER',
+            'chart_account_id' => 'INTEGER',
+            'fiscal_year'      => 'INTEGER',
+            'budget_amount'    => "REAL DEFAULT '0.00'",
+            'created_by'       => 'INTEGER',
+            'updated_by'       => 'INTEGER',
+            'created_at'       => 'TEXT',
+            'updated_at'       => 'TEXT',
+        ],
         'bank_account' => [
             'parish_id'             => 'INTEGER',
             'chart_account_id'      => 'INTEGER',

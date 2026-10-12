@@ -3,11 +3,24 @@
 <?= $this->section('content') ?>
 
 <div class="d-flex justify-content-between align-items-center mb-3">
-    <?php if ($canManageBudget): ?>
-        <button type="submit" form="budgetForm" class="btn btn-primary">
-            <i class="bi bi-save" aria-hidden="true"></i> <?= lang('Treasurer.saveBudget') ?>
-        </button>
-    <?php endif; ?>
+    <div class="d-flex gap-2">
+        <?php if ($canManageBudget): ?>
+            <button type="submit" form="budgetForm" class="btn btn-primary">
+                <i class="bi bi-save" aria-hidden="true"></i> <?= lang('Treasurer.saveBudget') ?>
+            </button>
+            <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#cloneBudgetModal">
+                <i class="bi bi-copy" aria-hidden="true"></i> <?= lang('Finance.cloneBudgetModalTitle') ?>
+            </button>
+        <?php endif; ?>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="<?= base_url('budgets/export-csv?year=' . (int) $selected_year) ?>" class="btn btn-outline-secondary">
+            <i class="bi bi-download" aria-hidden="true"></i> <?= lang('Finance.exportCsv') ?>
+        </a>
+        <a href="<?= base_url('budgets/export-pdf?year=' . (int) $selected_year) ?>" class="btn btn-outline-secondary">
+            <i class="bi bi-file-earmark-pdf" aria-hidden="true"></i> <?= lang('Finance.btnExportVestryPdf') ?>
+        </a>
+    </div>
 </div>
 
 <?php $request = service('request'); ?>
@@ -156,6 +169,63 @@
             </div>
         </div>
     </form>
+<?php endif; ?>
+
+<?php if ($canManageBudget): ?>
+<div class="modal fade" id="cloneBudgetModal" tabindex="-1" aria-labelledby="cloneBudgetModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <form method="post" action="<?= base_url('budgets/clone') ?>" class="modal-content">
+            <?= csrf_field() ?>
+            <div class="modal-header">
+                <h5 class="modal-title" id="cloneBudgetModalLabel">
+                    <i class="bi bi-copy me-1" aria-hidden="true"></i> <?= lang('Finance.cloneBudgetModalTitle') ?>
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="<?= lang('App.close') ?>"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label for="cloneSourceYear" class="form-label fw-semibold"><?= lang('Finance.sourceYear') ?></label>
+                    <select class="form-select" id="cloneSourceYear" name="source_year" required>
+                        <?php foreach ($year_options as $y): ?>
+                            <option value="<?= (int) $y ?>" <?= (int) $y === (int) $selected_year ? 'selected' : '' ?>><?= (int) $y ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label for="cloneTargetYear" class="form-label fw-semibold"><?= lang('Finance.targetYear') ?></label>
+                    <input type="number" class="form-control" id="cloneTargetYear" name="target_year" value="<?= (int) $selected_year + 1 ?>" min="2000" max="2100" required>
+                </div>
+                <div class="mb-3">
+                    <label for="cloneSourceBasis" class="form-label fw-semibold"><?= lang('Finance.sourceBasis') ?></label>
+                    <select class="form-select" id="cloneSourceBasis" name="source_basis">
+                        <option value="budget"><?= lang('Finance.basisBudget') ?></option>
+                        <option value="actuals"><?= lang('Finance.basisActuals') ?></option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label for="cloneAdjustment" class="form-label fw-semibold"><?= lang('Finance.adjustmentPercent') ?></label>
+                    <div class="input-group">
+                        <input type="number" step="0.1" class="form-control" id="cloneAdjustment" name="adjustment_percent" value="0.0">
+                        <span class="input-group-text">%</span>
+                    </div>
+                    <div class="form-text"><?= lang('Finance.adjustmentHelp') ?></div>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" value="1" id="cloneOverwrite" name="overwrite">
+                    <label class="form-check-label" for="cloneOverwrite">
+                        <?= lang('Finance.overwriteExisting') ?>
+                    </label>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal"><?= lang('App.cancel') ?></button>
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-arrow-repeat me-1" aria-hidden="true"></i> <?= lang('Finance.btnCloneBudget') ?>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
 <?php endif; ?>
 
 <?= $this->endSection() ?>

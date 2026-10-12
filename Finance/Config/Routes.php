@@ -30,7 +30,10 @@ $routes->group('', ['filter' => 'session'], function ($routes) {
 
     $routes->group('budgets', ['filter' => 'permission:finance.view'], function ($routes) {
         $routes->get('/', '\\Finance\\Controllers\\Budgets::index');
+        $routes->get('export-csv', '\\Finance\\Controllers\\Budgets::exportCsv');
+        $routes->get('export-pdf', '\\Finance\\Controllers\\Budgets::exportPdf');
         $routes->post('save', '\\Finance\\Controllers\\Budgets::save', ['filter' => 'permission:finance.manage']);
+        $routes->post('clone', '\\Finance\\Controllers\\Budgets::clone', ['filter' => 'permission:finance.manage']);
     });
 
     $routes->group('expenses', ['filter' => 'permission:expense.view'], function ($routes) {
@@ -88,6 +91,9 @@ $routes->group('', ['filter' => 'session'], function ($routes) {
         $routes->get('statement-of-activities', '\\Finance\\Controllers\\Reports::statementOfActivities');
         $routes->get('statement-of-activities/export-csv', '\\Finance\\Controllers\\ReportExports::statementOfActivitiesCsv');
         $routes->get('statement-of-activities/export-pdf', '\\Finance\\Controllers\\ReportExports::statementOfActivitiesPdf');
+        $routes->get('parochial-report', '\\Finance\\Controllers\\Reports::parochialReport');
+        $routes->get('parochial-report/export-csv', '\\Finance\\Controllers\\ReportExports::parochialReportCsv');
+        $routes->get('parochial-report/export-pdf', '\\Finance\\Controllers\\ReportExports::parochialReportPdf');
         $routes->get('export', '\\Finance\\Controllers\\ReportExports::export');
         $routes->get('export-pdf', '\\Finance\\Controllers\\ReportExports::exportPdf');
         $routes->get('api/summary', '\\Finance\\Controllers\\Reports::summaryApi');

@@ -13,6 +13,9 @@
         <a class="btn btn-outline-success" href="<?= base_url('reports/statement-of-activities') ?>">
             <i class="bi bi-graph-up" aria-hidden="true"></i> <?= lang('Finance.statementOfActivitiesTitle') ?>
         </a>
+        <a class="btn btn-outline-warning" href="<?= base_url('reports/parochial-report') ?>">
+            <i class="bi bi-file-earmark-ruled" aria-hidden="true"></i> <?= lang('Finance.parochialReportTitle') ?>
+        </a>
     </div>
     <div class="d-flex gap-2">
         <a class="btn btn-outline-secondary" href="#" onclick="window.print(); return false;">

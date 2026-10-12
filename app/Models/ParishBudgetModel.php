@@ -126,4 +126,99 @@ class ParishBudgetModel extends Model
 
         return $this->db->transStatus() !== false;
     }
+
+    /**
+     * Roll-forward / clone budget lines from a source year to a target year.
+     *
+     * @param int    $parishId
+     * @param int    $sourceYear
+     * @param int    $targetYear
+     * @param string $sourceBasis 'budget' (prior year budget) or 'actual' (prior year actuals)
+     * @param float  $adjustmentPercent Percentage to adjust (e.g. +3.0 for 3% increase)
+     * @param bool   $overwrite If true, overwrites any existing lines in target year
+     * @param int    $userId
+     * @return array{success: bool, copied_count: int, message: string, error?: string}
+     */
+    public function cloneBudget(
+        int $parishId,
+        int $sourceYear,
+        int $targetYear,
+        string $sourceBasis = 'budget',
+        float $adjustmentPercent = 0.0,
+        bool $overwrite = false,
+        int $userId = 0
+    ): array {
+        if ($sourceYear === $targetYear) {
+            return [
+                'success'      => false,
+                'copied_count' => 0,
+                'error'        => 'same_year',
+                'message'      => lang('Finance.cannotCloneToSameYear'),
+            ];
+        }
+
+        // Check if target year already has budget lines
+        $existingTargetRows = $this->where('parish_id', $parishId)
+            ->where('fiscal_year', $targetYear)
+            ->findAll();
+
+        if (!empty($existingTargetRows) && !$overwrite) {
+            return [
+                'success'      => false,
+                'copied_count' => 0,
+                'error'        => 'target_has_existing',
+                'message'      => lang('Finance.targetYearAlreadyHasBudget'),
+            ];
+        }
+
+        $sourceLines = $this->getBudgetLinesWithActuals($parishId, $sourceYear);
+        if (empty($sourceLines)) {
+            return [
+                'success'      => false,
+                'copied_count' => 0,
+                'error'        => 'no_source_lines',
+                'message'      => lang('Finance.noSourceBudgetLines'),
+            ];
+        }
+
+        $multiplier = 1.0 + ($adjustmentPercent / 100.0);
+        $amountsToSave = [];
+
+        foreach ($sourceLines as $line) {
+            $baseAmount = ($sourceBasis === 'actual' || $sourceBasis === 'actuals')
+                ? (float) ($line['actual_amount'] ?? 0.0)
+                : (float) ($line['budget_amount'] ?? 0.0);
+
+            if ($baseAmount > 0.0) {
+                $adjusted = round($baseAmount * $multiplier, 2);
+                $amountsToSave[(int) $line['chart_account_id']] = max(0.0, $adjusted);
+            }
+        }
+
+        if (empty($amountsToSave)) {
+            return [
+                'success'      => false,
+                'copied_count' => 0,
+                'error'        => 'no_positive_amounts',
+                'message'      => lang('Finance.noSourceAmountsToClone'),
+            ];
+        }
+
+        $saved = $this->saveBudgetLines($parishId, $targetYear, $amountsToSave, $userId);
+
+        if (!$saved) {
+            return [
+                'success'      => false,
+                'copied_count' => 0,
+                'error'        => 'save_failed',
+                'message'      => lang('Treasurer.budgetSaveFailed'),
+            ];
+        }
+
+        return [
+            'success'      => true,
+            'copied_count' => count($amountsToSave),
+            'message'      => lang('Finance.budgetClonedSuccess', [count($amountsToSave), $sourceYear, $targetYear, $adjustmentPercent]),
+        ];
+    }
 }

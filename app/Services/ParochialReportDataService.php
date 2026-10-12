@@ -322,49 +322,9 @@ class ParochialReportDataService
 
     public function getFinancialMetrics($db, int $parishId, int $year): array
     {
-        $startDate = sprintf('%04d-01-01', $year);
-        $endDate = sprintf('%04d-12-31', $year);
+        $compiler = new FinanceReportsDataService();
 
-        $donationRows = $db->table('donation')
-            ->select('amount, is_restricted')
-            ->where('parish_id', $parishId)
-            ->where('date >=', $startDate)
-            ->where('date <=', $endDate)
-            ->get()
-            ->getResultArray();
-
-        $unrestricted = 0.0;
-        $restricted = 0.0;
-        foreach ($donationRows as $row) {
-            $amount = $this->normalizeEncryptedNumeric($row['amount'] ?? null);
-            if ((int) ($row['is_restricted'] ?? 0) === 1) {
-                $restricted += $amount;
-            } else {
-                $unrestricted += $amount;
-            }
-        }
-
-        $expenseRow = $db->query(
-            "SELECT
-                COALESCE(SUM(CASE WHEN is_capital = 0 THEN amount ELSE 0 END), 0) AS noncapital,
-                COALESCE(SUM(CASE WHEN is_capital = 1 THEN amount ELSE 0 END), 0) AS capital
-                         FROM expense
-             WHERE parish_id = ?
-               AND date >= ?
-               AND date <= ?",
-            [$parishId, $startDate, $endDate]
-        )->getRowArray() ?? [];
-
-        $pledges = model(AnnualPledgeModel::class)->getParishPledgeSummary($parishId, $year);
-
-        return [
-            'confirmed_pledges_count' => (int) ($pledges['total_pledges'] ?? 0),
-            'confirmed_pledges_amount' => (float) ($pledges['pledged_total'] ?? 0),
-            'revenue_unrestricted' => round($unrestricted, 2),
-            'revenue_restricted' => round($restricted, 2),
-            'expenses_noncapital' => (float) ($expenseRow['noncapital'] ?? 0),
-            'expenses_capital' => (float) ($expenseRow['capital'] ?? 0),
-        ];
+        return $compiler->buildParochialReportFinanceLines($parishId, $year);
     }
 
 
