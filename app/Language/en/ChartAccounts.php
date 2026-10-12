@@ -67,6 +67,18 @@ return [
     'labelAllowBudgeting'   => 'Allow budgeting',
     'labelDescription'      => 'Description',
     'labelParentAccount'    => 'Parent Account',
+    'selectAccountType'     => 'Select an account type',
+    'selectParentAccount'   => 'None (standalone account)',
+    'placeholderCode'       => 'e.g. 01',
+    'helpAccountType'       => 'Select the financial classification for this account.',
+    'helpParentAccount'     => 'Choose an active account of the selected type to create a subaccount.',
+    'helpCode'              => 'Enter the unique account suffix; the selected parent code is added automatically.',
+    'helpName'              => 'Enter a clear name that identifies the account in reports and transactions.',
+    'helpDefaultCategory'   => 'Optionally group this account under a reporting category.',
+    'helpSortOrder'         => 'Lower numbers display before higher numbers within the chart.',
+    'helpAllowBudgeting'    => 'Enable this account for use in parish budget lines.',
+    'helpActive'            => 'Active accounts are available for new financial activity.',
+    'helpDescription'       => 'Optionally describe the purpose and intended use of this account.',
 
     // Hierarchy & Tiers
     'colTier'               => 'Tier',

@@ -67,6 +67,18 @@ return [
     'labelAllowBudgeting'   => 'Permitir presupuesto',
     'labelDescription'      => 'Descripción',
     'labelParentAccount'    => 'Cuenta Principal',
+    'selectAccountType'     => 'Seleccione un tipo de cuenta',
+    'selectParentAccount'   => 'Ninguna (cuenta independiente)',
+    'placeholderCode'       => 'p. ej. 01',
+    'helpAccountType'       => 'Seleccione la clasificación financiera de esta cuenta.',
+    'helpParentAccount'     => 'Elija una cuenta activa del tipo seleccionado para crear una subcuenta.',
+    'helpCode'              => 'Ingrese el sufijo único; el código de la cuenta principal se agrega automáticamente.',
+    'helpName'              => 'Ingrese un nombre claro que identifique la cuenta en informes y transacciones.',
+    'helpDefaultCategory'   => 'Opcionalmente, agrupe esta cuenta bajo una categoría de informes.',
+    'helpSortOrder'         => 'Los números menores aparecen antes que los mayores en el catálogo.',
+    'helpAllowBudgeting'    => 'Habilite esta cuenta para usarla en las partidas del presupuesto parroquial.',
+    'helpActive'            => 'Las cuentas activas están disponibles para nueva actividad financiera.',
+    'helpDescription'       => 'Opcionalmente, describa el propósito y el uso previsto de esta cuenta.',
 
     // Jerarquía y Niveles
     'colTier'               => 'Nivel',

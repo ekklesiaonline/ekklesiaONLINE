@@ -67,6 +67,18 @@ return [
     'labelAllowBudgeting'   => 'Autoriser le budget',
     'labelDescription'      => 'Description',
     'labelParentAccount'    => 'Compte Parent',
+    'selectAccountType'     => 'Sélectionnez un type de compte',
+    'selectParentAccount'   => 'Aucun (compte autonome)',
+    'placeholderCode'       => 'p. ex. 01',
+    'helpAccountType'       => 'Sélectionnez la classification financière de ce compte.',
+    'helpParentAccount'     => 'Choisissez un compte actif du type sélectionné pour créer un sous-compte.',
+    'helpCode'              => 'Saisissez le suffixe unique ; le code du compte parent est ajouté automatiquement.',
+    'helpName'              => 'Saisissez un nom clair qui identifie le compte dans les rapports et transactions.',
+    'helpDefaultCategory'   => 'Regroupez éventuellement ce compte sous une catégorie de rapport.',
+    'helpSortOrder'         => 'Les nombres inférieurs apparaissent avant les nombres supérieurs dans le plan.',
+    'helpAllowBudgeting'    => 'Activez ce compte pour les postes du budget paroissial.',
+    'helpActive'            => 'Les comptes actifs sont disponibles pour les nouvelles activités financières.',
+    'helpDescription'       => 'Décrivez éventuellement le but et l’utilisation prévue de ce compte.',
 
     // Hiérarchie et Niveaux
     'colTier'               => 'Niveau',
