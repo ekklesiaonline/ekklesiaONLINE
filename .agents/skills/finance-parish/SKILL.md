@@ -56,6 +56,8 @@ Help with parish-scoped finance, accounting, and treasury workflows.
   - `Finance\Controllers\ReportExports`: CSV, PDF, Trial Balance exports (`/reports/trial-balance/export-csv`, `/reports/trial-balance/export-pdf`), Balance Sheet exports (`/reports/balance-sheet/export-csv`, `/reports/balance-sheet/export-pdf`), Statement of Activities exports (`/reports/statement-of-activities/export-csv`, `/reports/statement-of-activities/export-pdf`), and Parochial Report exports (`/reports/parochial-report/export-csv`, `/reports/parochial-report/export-pdf`).
 - **Chart of Accounts (COA)**:
   - `Diocese\Controllers\ChartOfAccounts`: Canonical 4-digit Episcopal chart of accounts (1000s Assets, 2000s Liabilities, 3000s Net Assets, 4000s/5000s Income, 6000s-8000s Expenses). Reference guidelines in `docs/CHART_OF_ACCOUNTS_GUIDELINES.md`.
+  - `Finance\Controllers\ChartOfAccounts`: Parish-scoped account extensions and hierarchy management under `/finance/chart-of-accounts`.
+  - The create form requires account type selection before enabling the parent selector, limits parent options to active accounts of the same type, and prefixes a child account code with the selected parent code plus `-`.
 - **Annual Pledges & Stewardship**:
   - `MemberPortal\Controllers\AnnualPledges`: Parish stewardship pledges, search, pagination (`AnnualPledgeModel`).
   - `App\Services\PledgeFulfillmentService`: Automated fulfillment tracking when tithe/pledge donations are recorded.
