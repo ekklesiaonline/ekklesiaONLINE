@@ -16,6 +16,7 @@ class DatabaseSeeder extends Seeder
         // Run seeders in order of dependencies
         $this->call('PermissionsAndRolesSeeder');
         $this->call('ProvincesAndDiocesesSeeder');
+        $this->call('ChartOfAccountsSeeder');
         // Add more seeders here as needed
     }
 }

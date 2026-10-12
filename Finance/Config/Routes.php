@@ -112,5 +112,14 @@ $routes->group('', ['filter' => 'session'], function ($routes) {
         $routes->post('close/(:num)', '\\Finance\\Controllers\\AccountingPeriods::close/$1', ['filter' => 'permission:finance.manage']);
         $routes->post('reopen/(:num)', '\\Finance\\Controllers\\AccountingPeriods::reopen/$1', ['filter' => 'permission:finance.manage']);
     });
+
+    $routes->group('finance/chart-of-accounts', ['filter' => 'permission:finance.view'], function ($routes) {
+        $routes->get('/', '\\Finance\\Controllers\\ChartOfAccounts::index');
+        $routes->get('create', '\\Finance\\Controllers\\ChartOfAccounts::create', ['filter' => 'permission:finance.manage']);
+        $routes->post('store', '\\Finance\\Controllers\\ChartOfAccounts::store', ['filter' => 'permission:finance.manage']);
+        $routes->get('edit/(:num)', '\\Finance\\Controllers\\ChartOfAccounts::edit/$1', ['filter' => 'permission:finance.manage']);
+        $routes->post('update/(:num)', '\\Finance\\Controllers\\ChartOfAccounts::update/$1', ['filter' => 'permission:finance.manage']);
+        $routes->post('toggle/(:num)', '\\Finance\\Controllers\\ChartOfAccounts::toggle/$1', ['filter' => 'permission:finance.manage']);
+    });
 });
 

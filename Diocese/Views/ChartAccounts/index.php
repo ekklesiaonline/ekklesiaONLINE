@@ -3,7 +3,12 @@
 <?= $this->section('content') ?>
 
 <div class="d-flex justify-content-between align-items-center mb-3">
-    <a href="<?= base_url('chart-accounts/create') ?>" class="btn btn-primary"><i class="bi bi-plus-circle" aria-hidden="true"></i> <?= lang('ChartAccounts.btn_newAccount') ?></a>
+    <a href="<?= base_url('chart-accounts/create') ?>" class="btn btn-outline-primary"><i class="bi bi-plus-circle" aria-hidden="true"></i> <?= lang('ChartAccounts.btn_newAccount') ?></a>
+</div>
+
+<div class="alert alert-info border border-info text-info bg-transparent d-flex align-items-center mb-3" role="alert">
+    <i class="bi bi-info-circle me-2" aria-hidden="true"></i>
+    <div><?= esc(lang('ChartAccounts.dioceseScopeNotice')) ?></div>
 </div>
 
 <?php $request = service('request'); ?>
@@ -71,6 +76,7 @@
                     <tr>
                         <th scope="col"><?= lang('ChartAccounts.colCode') ?></th>
                         <th scope="col"><?= lang('ChartAccounts.colName') ?></th>
+                        <th scope="col"><?= lang('ChartAccounts.colTier') ?></th>
                         <th scope="col"><?= lang('ChartAccounts.colType') ?></th>
                         <th scope="col"><?= lang('ChartAccounts.colCategory') ?></th>
                         <th scope="col"><?= lang('ChartAccounts.colBudgetable') ?></th>
@@ -99,26 +105,38 @@
                                 'equity' => lang('ChartAccounts.typeEquity'),
                             ];
                             $localizedType = (string) ($accountTypeLabels[$accountType] ?? ucfirst($accountType));
+                            $isSystem = ($account['scope_type'] ?? 'system') === 'system';
                             ?>
                             <tr>
                                 <td><strong><?= esc($account['code']) ?></strong></td>
                                 <td><?= esc($localizedName) ?><?php if ($localizedDescription !== ''): ?><div class="small text-muted"><?= esc($localizedDescription) ?></div><?php endif; ?></td>
+                                <td>
+                                    <?php if ($isSystem): ?>
+                                        <span class="badge border border-info text-info fw-normal"><?= esc(lang('ChartAccounts.tierMaster')) ?></span>
+                                    <?php else: ?>
+                                        <span class="badge border border-primary text-primary fw-normal"><?= esc(lang('ChartAccounts.tierDiocese')) ?></span>
+                                    <?php endif; ?>
+                                </td>
                                 <td><span class="badge border border-secondary text-secondary fw-normal"><?= esc($localizedType) ?></span></td>
                                 <td><?= esc($localizedCategory) ?></td>
                                 <td><?= (int) $account['allow_budget'] === 1 ? lang('ChartAccounts.valueYes') : lang('ChartAccounts.valueNo') ?></td>
                                 <td><span class="badge border border-<?= (int) $account['is_active'] === 1 ? 'success' : 'secondary' ?> text-<?= (int) $account['is_active'] === 1 ? 'success' : 'secondary' ?> fw-normal"><?= (int) $account['is_active'] === 1 ? lang('ChartAccounts.labelActive') : lang('ChartAccounts.labelInactive') ?></span></td>
                                 <td><?= (int) ($account['sort_order'] ?? 0) ?></td>
                                 <td>
-                                    <div class="d-inline-flex flex-nowrap gap-1 align-items-center">
-                                        <a href="<?= base_url('chart-accounts/edit/' . $account['id']) ?>" class="btn btn-sm btn-warning" aria-label="<?= esc(lang('App.edit')) ?>"><i class="bi bi-pencil" aria-hidden="true"></i></a>
-                                        <form action="<?= base_url('chart-accounts/toggle/' . $account['id']) ?>" method="post" class="d-inline"><?= csrf_field() ?><button type="submit" class="btn btn-sm btn-outline-secondary" aria-label="<?= esc(lang('ChartAccounts.actionToggle')) ?>"><i class="bi bi-arrow-repeat" aria-hidden="true"></i></button></form>
-                                    </div>
+                                    <?php if ($isSystem): ?>
+                                        <span class="badge border border-secondary text-secondary fw-normal"><?= esc(lang('ChartAccounts.readOnly')) ?></span>
+                                    <?php else: ?>
+                                        <div class="d-inline-flex flex-nowrap gap-1 align-items-center">
+                                            <a href="<?= base_url('chart-accounts/edit/' . $account['id']) ?>" class="btn btn-sm btn-outline-warning" aria-label="<?= esc(lang('App.edit')) ?>"><i class="bi bi-pencil" aria-hidden="true"></i></a>
+                                            <form action="<?= base_url('chart-accounts/toggle/' . $account['id']) ?>" method="post" class="d-inline"><?= csrf_field() ?><button type="submit" class="btn btn-sm btn-outline-secondary" aria-label="<?= esc(lang('ChartAccounts.actionToggle')) ?>"><i class="bi bi-arrow-repeat" aria-hidden="true"></i></button></form>
+                                        </div>
+                                    <?php endif; ?>
                                 </td>
                             </tr>
                         <?php endforeach; ?>
                     <?php else: ?>
                         <tr>
-                            <td colspan="8" class="text-center text-muted py-4"><?= lang('ChartAccounts.noAccountsFound') ?></td>
+                            <td colspan="9" class="text-center text-muted py-4"><?= lang('ChartAccounts.noAccountsFound') ?></td>
                         </tr>
                     <?php endif; ?>
                 </tbody>

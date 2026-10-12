@@ -15,7 +15,28 @@ class ChartOfAccountModel extends Model
     protected $returnType       = 'array';
     protected $useSoftDeletes   = false;
     protected $protectFields    = true;
-    protected $allowedFields    = ['code', 'name', 'account_type', 'category', 'description', 'allow_budget', 'is_active', 'sort_order'];
+    protected $allowedFields    = [
+        'code',
+        'name',
+        'account_type',
+        'category',
+        'description',
+        'allow_budget',
+        'is_active',
+        'sort_order',
+        'scope_type',
+        'scope_id',
+        'parent_account_id',
+    ];
+
+    protected array $casts = [
+        'id'                => '?int',
+        'allow_budget'      => '?bool',
+        'is_active'         => '?bool',
+        'sort_order'        => '?int',
+        'scope_id'          => '?int',
+        'parent_account_id' => '?int',
+    ];
 
     protected $useTimestamps = true;
     protected $dateFormat    = 'datetime';
@@ -65,8 +86,111 @@ class ChartOfAccountModel extends Model
         $cache->delete($registryKey);
     }
 
-    public function getActiveByType(?string $type = null): array
+    /**
+     * Resolves active accounts inherited by a specific parish:
+     * - System (TEC Master) accounts
+     * - Diocese accounts for the parish's diocese
+     * - Parish-specific accounts
+     */
+    public function getActiveForParish(int $parishId, ?int $dioceseId = null, ?string $type = null): array
     {
+        if ($dioceseId === null && $parishId > 0) {
+            $parish = $this->db->table('parish')->select('diocese_id')->where('id', $parishId)->get()->getRowArray();
+            if ($parish && !empty($parish['diocese_id'])) {
+                $dioceseId = (int) $parish['diocese_id'];
+            }
+        }
+
+        $cacheKey = self::CACHE_PREFIX . 'parish_' . $parishId . '_d' . ($dioceseId ?? 0) . '_' . ($type ?? 'all');
+        $cached = $this->getCacheService()->get($cacheKey);
+        if (is_array($cached)) {
+            return $cached;
+        }
+
+        $builder = $this->where('is_active', 1);
+
+        $builder->groupStart()
+            ->where('scope_type', 'system')
+            ->orGroupStart()
+                ->where('scope_type', 'diocese')
+                ->where('scope_id', (int) ($dioceseId ?? 0))
+            ->groupEnd()
+            ->orGroupStart()
+                ->where('scope_type', 'parish')
+                ->where('scope_id', $parishId)
+            ->groupEnd()
+        ->groupEnd();
+
+        if ($type !== null) {
+            $builder->where('account_type', $type);
+        }
+
+        $result = $builder->orderBy('sort_order', 'ASC')->orderBy('code', 'ASC')->findAll();
+        return $this->rememberListResult($cacheKey, $result);
+    }
+
+    /**
+     * Resolves active accounts inherited by a specific diocese:
+     * - System (TEC Master) accounts
+     * - Diocese-specific accounts
+     */
+    public function getActiveForDiocese(int $dioceseId, ?string $type = null): array
+    {
+        $cacheKey = self::CACHE_PREFIX . 'diocese_' . $dioceseId . '_' . ($type ?? 'all');
+        $cached = $this->getCacheService()->get($cacheKey);
+        if (is_array($cached)) {
+            return $cached;
+        }
+
+        $builder = $this->where('is_active', 1);
+
+        $builder->groupStart()
+            ->where('scope_type', 'system')
+            ->orGroupStart()
+                ->where('scope_type', 'diocese')
+                ->where('scope_id', $dioceseId)
+            ->groupEnd()
+        ->groupEnd();
+
+        if ($type !== null) {
+            $builder->where('account_type', $type);
+        }
+
+        $result = $builder->orderBy('sort_order', 'ASC')->orderBy('code', 'ASC')->findAll();
+        return $this->rememberListResult($cacheKey, $result);
+    }
+
+    /**
+     * Resolves System (TEC Master) active accounts.
+     */
+    public function getActiveForSystem(?string $type = null): array
+    {
+        $cacheKey = self::CACHE_PREFIX . 'system_' . ($type ?? 'all');
+        $cached = $this->getCacheService()->get($cacheKey);
+        if (is_array($cached)) {
+            return $cached;
+        }
+
+        $builder = $this->where('is_active', 1)->where('scope_type', 'system');
+
+        if ($type !== null) {
+            $builder->where('account_type', $type);
+        }
+
+        $result = $builder->orderBy('sort_order', 'ASC')->orderBy('code', 'ASC')->findAll();
+        return $this->rememberListResult($cacheKey, $result);
+    }
+
+    public function getActiveByType(?string $type = null, ?int $parishId = null, ?int $dioceseId = null): array
+    {
+        if ($parishId !== null && $parishId > 0) {
+            return $this->getActiveForParish($parishId, $dioceseId, $type);
+        }
+
+        if ($dioceseId !== null && $dioceseId > 0) {
+            return $this->getActiveForDiocese($dioceseId, $type);
+        }
+
         $cacheKey = self::CACHE_PREFIX . 'active_type_' . ($type ?? 'all');
         $cached = $this->getCacheService()->get($cacheKey);
         if (is_array($cached)) {
@@ -211,16 +335,16 @@ class ChartOfAccountModel extends Model
             ->findAll();
     }
 
-    public function getGroupedActiveAccountsForType(string $type): array
+    public function getGroupedActiveAccountsForType(string $type, ?int $parishId = null, ?int $dioceseId = null): array
     {
-        $cacheKey = self::CACHE_PREFIX . 'grouped_type_' . $type;
+        $cacheKey = self::CACHE_PREFIX . 'grouped_type_' . $type . '_p' . ($parishId ?? 0) . '_d' . ($dioceseId ?? 0);
         $cached = $this->getCacheService()->get($cacheKey);
         if (is_array($cached)) {
             return $cached;
         }
 
         $groups = [];
-        $accounts = $this->getActiveByType($type);
+        $accounts = $this->getActiveByType($type, $parishId, $dioceseId);
 
         foreach ($accounts as $account) {
             // Hide structural heading rows from transaction dropdowns.
@@ -233,6 +357,20 @@ class ChartOfAccountModel extends Model
         }
 
         return $this->rememberListResult($cacheKey, $groups);
+    }
+
+    public function isSystemAccount(array $account): bool
+    {
+        return ($account['scope_type'] ?? 'system') === 'system';
+    }
+
+    public function canMutateAccount(array $account, string $scopeType, int $scopeId): bool
+    {
+        if (($account['scope_type'] ?? 'system') === 'system') {
+            return false;
+        }
+
+        return ($account['scope_type'] ?? '') === $scopeType && (int) ($account['scope_id'] ?? 0) === $scopeId;
     }
 
     public function insert($data = null, bool $returnID = true)

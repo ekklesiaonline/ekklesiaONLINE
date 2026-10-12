@@ -3,7 +3,7 @@
 <?= $this->section('content') ?>
 
 <div class="d-flex justify-content-start align-items-center mb-3">
-    <a href="<?= base_url('chart-accounts') ?>" class="btn btn-secondary"><i class="bi bi-arrow-left" aria-hidden="true"></i> <?= lang('ChartAccounts.btn_back') ?></a>
+    <a href="<?= base_url('chart-accounts') ?>" class="btn btn-outline-secondary"><i class="bi bi-arrow-left" aria-hidden="true"></i> <?= lang('ChartAccounts.btn_back') ?></a>
 </div>
 
 <div class="card">
@@ -21,6 +21,17 @@
                             <option value="liability"><?= lang('ChartAccounts.typeLiability') ?></option>
                             <option value="equity"><?= lang('ChartAccounts.typeEquity') ?></option>
                         </select></div>
+                    <div class="mb-3">
+                        <label for="parent_account_id" class="form-label"><?= lang('ChartAccounts.labelParentAccount') ?></label>
+                        <select class="form-select" id="parent_account_id" name="parent_account_id">
+                            <option value="">-- None (Standalone) --</option>
+                            <?php foreach (($parent_accounts ?? []) as $parent): ?>
+                                <option value="<?= esc($parent['id']) ?>" <?= (string) old('parent_account_id') === (string) $parent['id'] ? 'selected' : '' ?>>
+                                    <?= esc($parent['code']) ?> - <?= esc($parent['name']) ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
                 </div>
                 <div class="col-md-6">
                     <div class="mb-3"><label for="category" class="form-label"><?= lang('ChartAccounts.labelDefaultCategory') ?></label><input type="text" class="form-control" id="category" name="category" value="<?= old('category') ?>"></div>
@@ -30,7 +41,7 @@
                 </div>
             </div>
             <div class="mb-3"><label for="description" class="form-label"><?= lang('ChartAccounts.labelDescription') ?></label><textarea class="form-control" id="description" name="description" rows="3"><?= old('description') ?></textarea></div>
-            <div class="d-flex justify-content-end gap-2"><a href="<?= base_url('chart-accounts') ?>" class="btn btn-secondary"><?= lang('ChartAccounts.btn_cancel') ?></a><button type="submit" class="btn btn-primary"><i class="bi bi-save" aria-hidden="true"></i> <?= lang('ChartAccounts.btn_createAccount') ?></button></div>
+            <div class="d-flex justify-content-end gap-2"><a href="<?= base_url('chart-accounts') ?>" class="btn btn-outline-secondary"><?= lang('ChartAccounts.btn_cancel') ?></a><button type="submit" class="btn btn-outline-primary"><i class="bi bi-save" aria-hidden="true"></i> <?= lang('ChartAccounts.btn_createAccount') ?></button></div>
         </form>
     </div>
 </div>

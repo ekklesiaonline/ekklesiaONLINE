@@ -19,11 +19,20 @@ class ChartOfAccounts extends BaseController
             return $this->forbiddenResponse('Access denied. Diocesan admin privileges required.');
         }
 
+        $dioceseId = (int) $this->resolveDiocesanScopeId();
+
         $type = $this->request->getGet('type');
         $status = $this->request->getGet('status');
         $section = $this->request->getGet('section');
 
         $builder = $this->chartOfAccountModel
+            ->groupStart()
+                ->where('scope_type', 'system')
+                ->orGroupStart()
+                    ->where('scope_type', 'diocese')
+                    ->where('scope_id', $dioceseId)
+                ->groupEnd()
+            ->groupEnd()
             ->orderBy("FIELD(account_type, 'asset', 'liability', 'equity', 'income', 'expense')", '', false)
             ->orderBy('sort_order', 'ASC')
             ->orderBy('code', 'ASC');
@@ -45,6 +54,7 @@ class ChartOfAccounts extends BaseController
             'selected_status' => $status,
             'selected_section' => $section,
             'section_options' => $this->getSectionOptions(),
+            'diocese_id' => $dioceseId,
         ]));
     }
 
@@ -54,7 +64,18 @@ class ChartOfAccounts extends BaseController
             return $this->forbiddenResponse('Access denied. Diocesan admin privileges required.');
         }
 
-        return view('Diocese\Views\ChartAccounts/create', $this->getCommonViewData('Create Chart Account'));
+        $dioceseId = (int) $this->resolveDiocesanScopeId();
+        $parentAccounts = $this->chartOfAccountModel
+            ->where('scope_type', 'system')
+            ->where('is_active', 1)
+            ->orderBy('sort_order', 'ASC')
+            ->orderBy('code', 'ASC')
+            ->findAll();
+
+        return view('Diocese\Views\ChartAccounts/create', array_merge($this->getCommonViewData('Create Chart Account'), [
+            'parent_accounts' => $parentAccounts,
+            'diocese_id' => $dioceseId,
+        ]));
     }
 
     public function store()
@@ -63,18 +84,48 @@ class ChartOfAccounts extends BaseController
             return $this->forbiddenResponse('Access denied. Diocesan admin privileges required.');
         }
 
+        $dioceseId = (int) $this->resolveDiocesanScopeId();
+        if ($dioceseId <= 0) {
+            return redirect()->back()->withInput()->with('error', 'A valid diocese scope is required.');
+        }
+
         $rules = [
-            'code' => 'required|max_length[50]|is_unique[chart_of_accounts.code]',
+            'code' => 'required|max_length[50]',
             'name' => 'required|max_length[255]',
             'account_type' => 'required|in_list[income,expense,asset,liability,equity]',
             'sort_order' => 'permit_empty|integer',
+            'parent_account_id' => 'permit_empty|is_natural_no_zero',
         ];
 
         if (!$this->validate($rules)) {
             return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
         }
 
-        if (!$this->chartOfAccountModel->insert($this->extractPayload())) {
+        $code = strtoupper(trim((string) $this->request->getPost('code')));
+
+        // Ensure code does not collide with a system account or existing diocesan account in this diocese
+        $duplicate = $this->chartOfAccountModel
+            ->where('code', $code)
+            ->groupStart()
+                ->where('scope_type', 'system')
+                ->orGroupStart()
+                    ->where('scope_type', 'diocese')
+                    ->where('scope_id', $dioceseId)
+                ->groupEnd()
+            ->groupEnd()
+            ->first();
+
+        if ($duplicate) {
+            return redirect()->back()->withInput()->with('error', lang('Diocesan.chartAccountCodeExists'));
+        }
+
+        $payload = array_merge($this->extractPayload(), [
+            'scope_type' => 'diocese',
+            'scope_id'   => $dioceseId,
+            'parent_account_id' => $this->request->getPost('parent_account_id') ? (int) $this->request->getPost('parent_account_id') : null,
+        ]);
+
+        if (!$this->chartOfAccountModel->insert($payload)) {
             return redirect()->back()->withInput()->with('error', lang('Diocesan.chartAccountCreateFailed'));
         }
 
@@ -92,6 +143,8 @@ class ChartOfAccounts extends BaseController
                     'code' => $this->request->getPost('code'),
                     'name' => $this->request->getPost('name'),
                     'account_type' => $this->request->getPost('account_type'),
+                    'scope_type' => 'diocese',
+                    'scope_id' => $dioceseId,
                 ],
             ]);
         } catch (\Throwable $e) {
@@ -107,12 +160,33 @@ class ChartOfAccounts extends BaseController
             return $this->forbiddenResponse('Access denied. Diocesan admin privileges required.');
         }
 
+        $dioceseId = (int) $this->resolveDiocesanScopeId();
         $account = $this->chartOfAccountModel->find($id);
         if (!$account) {
             return redirect()->to('/chart-accounts')->with('error', lang('Diocesan.chartAccountNotFound'));
         }
 
-        return view('Diocese\Views\ChartAccounts/edit', array_merge($this->getCommonViewData('Edit Chart Account'), ['account' => $account]));
+        if ($this->chartOfAccountModel->isSystemAccount($account)) {
+            return redirect()->to('/chart-accounts')->with('error', lang('Diocesan.systemAccountReadOnly'));
+        }
+
+        if (!$this->chartOfAccountModel->canMutateAccount($account, 'diocese', $dioceseId)) {
+            return redirect()->to('/chart-accounts')->with('error', lang('Diocesan.chartAccountUnauthorized'));
+        }
+
+        $parentAccounts = $this->chartOfAccountModel
+            ->where('scope_type', 'system')
+            ->where('is_active', 1)
+            ->where('id !=', $id)
+            ->orderBy('sort_order', 'ASC')
+            ->orderBy('code', 'ASC')
+            ->findAll();
+
+        return view('Diocese\Views\ChartAccounts/edit', array_merge($this->getCommonViewData('Edit Chart Account'), [
+            'account' => $account,
+            'parent_accounts' => $parentAccounts,
+            'diocese_id' => $dioceseId,
+        ]));
     }
 
     public function update($id)
@@ -121,9 +195,18 @@ class ChartOfAccounts extends BaseController
             return $this->forbiddenResponse('Access denied. Diocesan admin privileges required.');
         }
 
+        $dioceseId = (int) $this->resolveDiocesanScopeId();
         $account = $this->chartOfAccountModel->find($id);
         if (!$account) {
             return redirect()->to('/chart-accounts')->with('error', lang('Diocesan.chartAccountNotFound'));
+        }
+
+        if ($this->chartOfAccountModel->isSystemAccount($account)) {
+            return redirect()->to('/chart-accounts')->with('error', lang('Diocesan.systemAccountReadOnly'));
+        }
+
+        if (!$this->chartOfAccountModel->canMutateAccount($account, 'diocese', $dioceseId)) {
+            return redirect()->to('/chart-accounts')->with('error', lang('Diocesan.chartAccountUnauthorized'));
         }
 
         // Capture old values for audit logging
@@ -139,18 +222,35 @@ class ChartOfAccounts extends BaseController
             'name' => 'required|max_length[255]',
             'account_type' => 'required|in_list[income,expense,asset,liability,equity]',
             'sort_order' => 'permit_empty|integer',
+            'parent_account_id' => 'permit_empty|is_natural_no_zero',
         ];
 
         if (!$this->validate($rules)) {
             return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
         }
 
-        $duplicate = $this->chartOfAccountModel->where('code', strtoupper(trim((string) $this->request->getPost('code'))))->where('id !=', $id)->first();
+        $code = strtoupper(trim((string) $this->request->getPost('code')));
+        $duplicate = $this->chartOfAccountModel
+            ->where('code', $code)
+            ->where('id !=', $id)
+            ->groupStart()
+                ->where('scope_type', 'system')
+                ->orGroupStart()
+                    ->where('scope_type', 'diocese')
+                    ->where('scope_id', $dioceseId)
+                ->groupEnd()
+            ->groupEnd()
+            ->first();
+
         if ($duplicate) {
             return redirect()->back()->withInput()->with('error', lang('Diocesan.chartAccountCodeExists'));
         }
 
-        if (!$this->chartOfAccountModel->update($id, $this->extractPayload())) {
+        $payload = array_merge($this->extractPayload(), [
+            'parent_account_id' => $this->request->getPost('parent_account_id') ? (int) $this->request->getPost('parent_account_id') : null,
+        ]);
+
+        if (!$this->chartOfAccountModel->update($id, $payload)) {
             return redirect()->back()->withInput()->with('error', lang('Diocesan.chartAccountUpdateFailed'));
         }
 
@@ -182,9 +282,18 @@ class ChartOfAccounts extends BaseController
             return $this->forbiddenResponse('Access denied. Diocesan admin privileges required.');
         }
 
+        $dioceseId = (int) $this->resolveDiocesanScopeId();
         $account = $this->chartOfAccountModel->find($id);
         if (!$account) {
             return redirect()->to('/chart-accounts')->with('error', lang('Diocesan.chartAccountNotFound'));
+        }
+
+        if ($this->chartOfAccountModel->isSystemAccount($account)) {
+            return redirect()->to('/chart-accounts')->with('error', lang('Diocesan.systemAccountReadOnly'));
+        }
+
+        if (!$this->chartOfAccountModel->canMutateAccount($account, 'diocese', $dioceseId)) {
+            return redirect()->to('/chart-accounts')->with('error', lang('Diocesan.chartAccountUnauthorized'));
         }
 
         $oldStatus = (int) $account['is_active'];

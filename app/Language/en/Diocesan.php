@@ -88,6 +88,8 @@ return [
     'chartAccountUpdateFailed' => 'Chart account could not be updated.',
     'chartAccountUpdated' => 'Chart account updated successfully.',
     'chartAccountStatusUpdated' => 'Chart account status updated successfully.',
+    'systemAccountReadOnly' => 'Master Episcopal Church accounts are canonical and read-only.',
+    'chartAccountUnauthorized' => 'You do not have permission to modify this account.',
 
     'liturgicalEntryAddFailed' => 'Failed to add liturgical entry.',
     'liturgicalEntryAdded' => 'Liturgical entry added.',

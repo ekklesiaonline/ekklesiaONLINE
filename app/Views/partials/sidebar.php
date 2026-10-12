@@ -388,7 +388,7 @@
             <?php endif; ?>
 
             <?php if (!$isSystemAdminSidebar && !$isProvinceAdminSidebar && !$isDioceseAdminSidebar && (auth()->user()->can('donation.view') || auth()->user()->can('expense.view') || auth()->user()->can('finance.view') || auth()->user()->can('finance.manage'))): ?>
-                <?php $isFinanceSectionActive = (str_starts_with(uri_string(), 'donations') || str_starts_with(uri_string(), 'expenses') || str_starts_with(uri_string(), 'budgets') || str_starts_with(uri_string(), 'pledges') || str_starts_with(uri_string(), 'banking') || str_starts_with(uri_string(), 'funds')); ?>
+                <?php $isFinanceSectionActive = (str_starts_with(uri_string(), 'donations') || str_starts_with(uri_string(), 'expenses') || str_starts_with(uri_string(), 'budgets') || str_starts_with(uri_string(), 'pledges') || str_starts_with(uri_string(), 'banking') || str_starts_with(uri_string(), 'funds') || str_starts_with(uri_string(), 'finance/chart-of-accounts')); ?>
                 <li class="nav-item">
                     <a class="nav-link <?= $isFinanceSectionActive ? 'active' : '' ?>" href="#" data-bs-toggle="collapse" data-bs-target="#financeMenu">
                         <i class="bi bi-cash-coin" aria-hidden="true"></i> <?= lang('App.navFinance') ?>
@@ -400,6 +400,7 @@
                         <li><a class="nav-link <?= str_starts_with(uri_string(), 'banking') ? 'active' : '' ?>" href="<?= base_url('banking') ?>"><?= lang('App.navBanking') ?></a></li>
                         <?php if (auth()->user()->can('finance.view')): ?>
                             <li><a class="nav-link <?= str_starts_with(uri_string(), 'funds') ? 'active' : '' ?>" href="<?= base_url('funds') ?>"><?= lang('App.navFunds') ?></a></li>
+                            <li><a class="nav-link <?= str_starts_with(uri_string(), 'finance/chart-of-accounts') ? 'active' : '' ?>" href="<?= base_url('finance/chart-of-accounts') ?>"><?= lang('App.navChartOfAccounts') ?></a></li>
                         <?php endif; ?>
                         <?php if (auth()->user()->can('finance.manage')): ?>
                             <li><a class="nav-link <?= (str_starts_with(uri_string(), 'pledges')) ? 'active' : '' ?>" href="<?= base_url('pledges') ?>"><?= lang('App.navPledges') ?></a></li>

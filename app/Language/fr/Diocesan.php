@@ -87,6 +87,8 @@ return [
     'chartAccountUpdateFailed' => 'Le compte comptable n\'a pas pu etre mis a jour.',
     'chartAccountUpdated' => 'Compte comptable mis a jour avec succes.',
     'chartAccountStatusUpdated' => 'Statut du compte comptable mis a jour avec succes.',
+    'systemAccountReadOnly' => 'Les comptes principaux de l\'Eglise episcopale sont canoniques et en lecture seule.',
+    'chartAccountUnauthorized' => 'Vous n\'avez pas la permission de modifier ce compte.',
 
     'liturgicalEntryAddFailed' => 'Impossible d\'ajouter l\'entree liturgique.',
     'liturgicalEntryAdded' => 'Entree liturgique ajoutee.',
