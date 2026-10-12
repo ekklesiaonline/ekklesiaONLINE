@@ -22,6 +22,13 @@ Help with parish-scoped finance, accounting, and treasury workflows.
   - `Finance\Controllers\Donations`: CRUD, sequential receipt generation (`DonationReceiptModel`), encrypted amounts.
   - `Finance\Controllers\DonationStatements`: Single-member and bulk annual giving statements (batch combined PDF and ZIP archive with IRS 501(c)(3) tax disclosures via `GivingStatementService`).
   - `Finance\Controllers\DonationExports`: Streaming unbuffered CSV (up to 50k rows) and PDF exports.
+  - **Prohibition of Pass-Through (Conduit) Donations**: Earmarks designating specific individual beneficiaries are strictly prohibited from tax-deductible receipting (IRC §170, Rev. Rul. 62-113, Title III Canon 9.6.b.6). All contributions and alms must be under the church entity's full ownership and unconstrained pastoral discretion.
+  - **Handling Earmarked Gifts (Treasurer & Clergy Protocol)**:
+    1. *Do Not Deposit Immediately*: Hold earmarked checks/transfers without recording or depositing into operating or discretionary accounts.
+    2. *Contact Donor & Explain Law*: Inform donor that IRS regulations and Church canons prohibit tax-deductible donations designated for specific individuals; gifts are accepted only if given to the general Discretionary Fund with full discretion resting with the Rector.
+    3. *Offer Two Choices*:
+       - **Option A**: Give to the general Discretionary Fund without restrictions (valid tax receipt issued; Rector exercises pastoral discretion).
+       - **Option B**: Return the check to the donor to give directly to the individual as a personal, private, non-tax-deductible gift.
 - **Expenses & Payables**:
   - `Finance\Controllers\Expenses`: CRUD, capital project tracking (`is_capital`), approver tagging (`approved_by`).
   - `App\Services\ExpenseReceiptUploadService`: Secure receipt/invoice attachments and downloads (`writable/uploads/receipts/`).

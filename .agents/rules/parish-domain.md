@@ -89,6 +89,19 @@ trigger: always_on
 - **Identity & Accounts**: Unlinked clergy without portal logins may be tracked in the canonical registry (`clergy_ordination`, `clergy_canonical_status`), but application permissions require an active, linked `users` account (`users.active=1`, `auth_identities`, `profile.portal_access='enabled'`).
 - **Deprecated Tables**: `user_scope_assignment` was permanently dropped; never reintroduce it as an authority source.
 
+## Parish Finance & Canonical Stewardship
+
+- **Pass-Through (Conduit) Donations Strictly Prohibited**: Under IRC §170 and Episcopal Canon III.9.6.b.6, donations earmarked by donors for specific named individuals cannot be accepted as tax-deductible charitable contributions and must never be receipted on tax statements. All alms and Discretionary Fund contributions belong to the church entity and must be under the rector's sole, unconstrained pastoral discretion.
+- **Handling Earmarked Gifts (Treasurer & Clergy Protocol)**:
+  When a parish receives a check or electronic gift designated for a specific person, the *Manual of Business Methods in Church Affairs* specifies this mandatory protocol:
+  1. *Do Not Deposit Immediately*: Do not deposit an earmarked gift into the operating account or discretionary account without clarification.
+  2. *Contact the Donor & Explain the Law*: Kindly inform the donor: *"IRS regulations and Church canons do not permit us to accept tax-deductible donations designated for specific individuals. We can only accept this gift if it is given to the general Discretionary Fund with full discretion resting with the Rector."*
+  3. *Offer the Donor Two Choices*:
+     - **Option A**: Give the gift to the general Discretionary Fund without restrictions (the donor receives a valid tax receipt; the Rector uses pastoral judgment).
+     - **Option B**: Return the check to the donor so they can give the money directly to the individual as a personal, private gift (non-tax-deductible, but directly helpful to the individual).
+- **Clergy Discretionary Funds**: Dedicated alms from one Sunday a month Holy Eucharist loose offerings (Canon III.9.6.b.6). Owned by the church entity under its EIN, with monthly statements reviewed by an independent Reviewer (Treasurer/Senior Warden) while keeping recipient identities confidential. Cannot be used for personal clergy expenses or operating budget items.
+- **Title I, Canon 7 Fiduciary Invariants**: Double-entry general ledger balancing ($\Delta = 0$), approved depositories with dual signatures on withdrawals, closed fiscal period mutation locks, annual independent CPA/committee audits filed with the Bishop by September 1, and property held in trust.
+
 ## Bootstrapping & Permissions
 
 - Fresh environment seeding: `php spark db:seed DatabaseSeeder`.
