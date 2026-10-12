@@ -20,6 +20,7 @@ Help with parish-scoped finance, accounting, and treasury workflows.
 ## Core Modules & Controllers (`Finance/`)
 - **Donations & Giving**:
   - `Finance\Controllers\Donations`: CRUD, sequential receipt generation (`DonationReceiptModel`), encrypted amounts.
+  - `Donations::index()` feeds the single-statement member picker via `statement_member_option`/`statement_member_id` view data; `statement_member_id` is read from the GET param so deep links can pre-select a member (must be assigned before building view data — an unassigned `$statementMemberId` throws `ErrorException: Undefined variable` on `/donations`).
   - `Finance\Controllers\DonationStatements`: Single-member and bulk annual giving statements (batch combined PDF and ZIP archive with IRS 501(c)(3) tax disclosures via `GivingStatementService`).
   - `Finance\Controllers\DonationExports`: Streaming unbuffered CSV (up to 50k rows) and PDF exports.
   - **Prohibition of Pass-Through (Conduit) Donations**: Earmarks designating specific individual beneficiaries are strictly prohibited from tax-deductible receipting (IRC §170, Rev. Rul. 62-113, Title III Canon 9.6.b.6). All contributions and alms must be under the church entity's full ownership and unconstrained pastoral discretion.

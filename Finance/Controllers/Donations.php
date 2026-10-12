@@ -84,6 +84,7 @@ class Donations extends BaseController
         $statementService = $this->getStatementService();
         $availableYears = $statementService->getAvailableYears((int) $parishId);
         $selectedYear = (int) ($this->request->getGet('statement_year') ?? ($availableYears[0] ?? date('Y')));
+        $statementMemberId = (int) ($this->request->getGet('statement_member_id') ?? 0);
 
         $data = [
             'donations'               => $donations,
