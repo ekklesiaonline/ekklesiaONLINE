@@ -239,12 +239,28 @@ CREATE TABLE `campaign_delivery_event` (
   PRIMARY KEY (`id`),
   KEY `campaign_id` (`campaign_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+CREATE TABLE `chart_account_category` (
+  `id` int unsigned NOT NULL AUTO_INCREMENT,
+  `category_key` varchar(150) COLLATE utf8mb4_general_ci NOT NULL,
+  `parent_id` int unsigned DEFAULT NULL,
+  `account_type` varchar(20) COLLATE utf8mb4_general_ci NOT NULL,
+  `is_selectable` tinyint(1) NOT NULL DEFAULT '0',
+  `is_active` tinyint(1) NOT NULL DEFAULT '1',
+  `sort_order` int NOT NULL DEFAULT '0',
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `category_key` (`category_key`),
+  KEY `parent_id` (`parent_id`),
+  KEY `idx_coa_category_selectable` (`account_type`,`is_selectable`,`is_active`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 CREATE TABLE `chart_of_accounts` (
   `id` int unsigned NOT NULL AUTO_INCREMENT,
   `code` varchar(50) COLLATE utf8mb4_general_ci NOT NULL,
   `name` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
   `account_type` enum('income','expense','asset','liability','equity') COLLATE utf8mb4_general_ci NOT NULL DEFAULT 'expense',
   `category` varchar(100) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `category_id` int unsigned DEFAULT NULL,
   `description` text COLLATE utf8mb4_general_ci,
   `allow_budget` tinyint(1) NOT NULL DEFAULT '1',
   `is_active` tinyint(1) NOT NULL DEFAULT '1',
@@ -497,6 +513,7 @@ CREATE TABLE `donation` (
   `amount` text COLLATE utf8mb4_general_ci NOT NULL,
   `date` date NOT NULL,
   `category` varchar(100) COLLATE utf8mb4_general_ci NOT NULL DEFAULT 'offering',
+  `category_id` int unsigned DEFAULT NULL,
   `chart_account_id` int unsigned DEFAULT NULL,
   `payment_method` varchar(100) COLLATE utf8mb4_general_ci DEFAULT NULL,
   `notes` text COLLATE utf8mb4_general_ci,
@@ -674,7 +691,8 @@ CREATE TABLE `expense` (
   `fund_id` int unsigned DEFAULT NULL,
   `description` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
   `amount` decimal(10,2) NOT NULL,
-  `category` varchar(100) COLLATE utf8mb4_general_ci NOT NULL COMMENT 'e.g., utilities, salaries, maintenance',
+  `category` varchar(100) COLLATE utf8mb4_general_ci NOT NULL COMMENT 'Stable hierarchical category key',
+  `category_id` int unsigned DEFAULT NULL,
   `chart_account_id` int unsigned DEFAULT NULL,
   `date` date NOT NULL,
   `approved_by` int unsigned DEFAULT NULL,

@@ -37,7 +37,7 @@
                         <select class="form-select" id="parent_account_id" name="parent_account_id" disabled>
                             <option value=""><?= lang('ChartAccounts.selectParentAccount') ?></option>
                             <?php foreach (($parent_accounts ?? []) as $parent): ?>
-                                <option value="<?= esc($parent['id']) ?>" data-account-type="<?= esc($parent['account_type']) ?>" data-code="<?= esc($parent['code']) ?>" <?= (string) old('parent_account_id') === (string) $parent['id'] ? 'selected' : '' ?>>
+                                <option value="<?= esc($parent['id']) ?>" data-account-type="<?= esc($parent['account_type']) ?>" data-code="<?= esc($parent['code']) ?>" data-category-id="<?= esc((string) ($parent['category_id'] ?? '')) ?>" data-category-path="<?= esc($parent['category_path'] ?? '') ?>" <?= (string) old('parent_account_id') === (string) $parent['id'] ? 'selected' : '' ?>>
                                     <?= esc($parent['code']) ?> - <?= esc($parent['name']) ?> (<?= esc(ucfirst($parent['scope_type'] ?? 'system')) ?>)
                                 </option>
                             <?php endforeach; ?>
@@ -61,11 +61,10 @@
                     </div>
                 </div>
                 <div class="col-md-6">
-                    <div class="mb-3">
-                        <label for="category" class="form-label"><?= lang('ChartAccounts.labelDefaultCategory') ?></label>
-                        <input type="text" class="form-control" id="category" name="category" value="<?= esc(old('category')) ?>">
-                        <div class="form-text"><?= lang('ChartAccounts.helpDefaultCategory') ?></div>
-                    </div>
+                    <?= view('partials/_coa_category_hierarchy', [
+                        'account_categories' => $account_categories ?? [],
+                        'selected_category_id' => '',
+                    ]) ?>
                     <div class="mb-3">
                         <label for="sort_order" class="form-label"><?= lang('ChartAccounts.labelSortOrder') ?></label>
                         <input type="number" class="form-control" id="sort_order" name="sort_order" value="<?= esc((string) old('sort_order', 0)) ?>">
@@ -119,7 +118,9 @@ document.addEventListener("DOMContentLoaded", function () {
                 value: opt.value,
                 text: opt.textContent.trim(),
                 accountType: opt.dataset.accountType || "",
-                code: opt.dataset.code || ""
+                code: opt.dataset.code || "",
+                categoryId: opt.dataset.categoryId || "",
+                categoryPath: opt.dataset.categoryPath || ""
             };
         });
 
@@ -164,6 +165,8 @@ document.addEventListener("DOMContentLoaded", function () {
             opt.textContent = acc.text;
             opt.dataset.accountType = acc.accountType;
             opt.dataset.code = acc.code;
+            opt.dataset.categoryId = acc.categoryId;
+            opt.dataset.categoryPath = acc.categoryPath;
             parentAccount.appendChild(opt);
         });
 

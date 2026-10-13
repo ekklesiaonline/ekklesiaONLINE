@@ -79,6 +79,15 @@ return [
     'helpAllowBudgeting'    => 'Activez ce compte pour les postes du budget paroissial.',
     'helpActive'            => 'Les comptes actifs sont disponibles pour les nouvelles activités financières.',
     'helpDescription'       => 'Décrivez éventuellement le but et l’utilisation prévue de ce compte.',
+    'selectCategory'        => 'Sélectionnez une catégorie de rapport',
+    'invalidCategory'       => 'Sélectionnez une catégorie active compatible avec le type de compte.',
+    'invalidParentAccount'  => 'Sélectionnez un compte parent actif du même type dans votre périmètre.',
+    'labelParentCategory'   => 'Catégorie du Compte Parent',
+    'helpParentCategory'    => 'Catégorie en lecture seule proposée initialement depuis le compte parent.',
+    'helpCategorySuggestion' => 'Le système suggère une catégorie ; vous pouvez en choisir une autre compatible.',
+    'categoryHierarchyReference' => 'Voir la hiérarchie des catégories système',
+    'categoryGroup'         => 'groupe',
+    'noParentCategory'      => 'Aucune catégorie parente sélectionnée',
 
     // Hiérarchie et Niveaux
     'colTier'               => 'Niveau',

@@ -22,6 +22,11 @@ if (! function_exists('coa_category_label')) {
     function coa_category_label(?string $category, ?string $fallback = null): string
     {
         $category = (string) ($category ?? '');
+        $hierarchyLabels = lang('ChartAccountCategories.category');
+        if ($category !== '' && is_array($hierarchyLabels) && isset($hierarchyLabels[$category])) {
+            return (string) $hierarchyLabels[$category];
+        }
+
         $labels = lang('ChartOfAccounts.category');
         if ($category !== '' && is_array($labels) && isset($labels[$category]) && is_string($labels[$category]) && $labels[$category] !== '') {
             return $labels[$category];

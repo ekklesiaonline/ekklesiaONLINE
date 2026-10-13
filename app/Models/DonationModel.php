@@ -19,6 +19,7 @@ class DonationModel extends BaseTenantModel
         'amount',
         'date',
         'category',
+        'category_id',
         'chart_account_id',
         'payment_method',
         'notes',

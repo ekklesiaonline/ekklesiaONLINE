@@ -3,6 +3,7 @@
 namespace Finance\Controllers;
 
 use App\Controllers\BaseController;
+use App\Services\ChartAccountCategoryService;
 
 class ChartOfAccounts extends BaseController
 {
@@ -111,10 +112,9 @@ class ChartOfAccounts extends BaseController
             ->orderBy('code', 'ASC')
             ->findAll();
 
-        return view('Finance\Views\ChartOfAccounts/create', array_merge($this->getCommonViewData('Create Chart Account'), [
-            'parent_accounts' => $parentAccounts,
-            'parish_id'       => $parishId,
-            'diocese_id'      => $dioceseId,
+        return view('Finance\Views\ChartOfAccounts/create', array_merge($this->getCommonViewData('Create Chart Account'), $this->categoryViewData($parentAccounts), [
+            'parish_id'  => $parishId,
+            'diocese_id' => $dioceseId,
         ]));
     }
 
@@ -143,10 +143,21 @@ class ChartOfAccounts extends BaseController
             'account_type'      => 'required|in_list[income,expense,asset,liability,equity]',
             'sort_order'        => 'permit_empty|integer',
             'parent_account_id' => 'permit_empty|is_natural_no_zero',
+            'category_id'       => 'required|is_natural_no_zero',
         ];
 
         if (!$this->validate($rules)) {
             return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
+        }
+
+        $category = (new ChartAccountCategoryService())->findSelectable((int) $this->request->getPost('category_id'), (string) $this->request->getPost('account_type'));
+        if (!$category) {
+            return redirect()->back()->withInput()->with('error', lang('ChartAccounts.invalidCategory'));
+        }
+
+        $parentId = (int) ($this->request->getPost('parent_account_id') ?: 0);
+        if ($parentId > 0 && !$this->validParentAccount($parentId, (string) $this->request->getPost('account_type'), $dioceseId)) {
+            return redirect()->back()->withInput()->with('error', lang('ChartAccounts.invalidParentAccount'));
         }
 
         $code = strtoupper(trim((string) $this->request->getPost('code')));
@@ -175,6 +186,8 @@ class ChartOfAccounts extends BaseController
             'scope_type'        => 'parish',
             'scope_id'          => $parishId,
             'parent_account_id' => $this->request->getPost('parent_account_id') ? (int) $this->request->getPost('parent_account_id') : null,
+            'category_id'       => (int) $category['id'],
+            'category'          => (string) $category['category_key'],
         ]);
 
         if (!$this->chartOfAccountModel->insert($payload)) {
@@ -253,10 +266,9 @@ class ChartOfAccounts extends BaseController
             ->orderBy('code', 'ASC')
             ->findAll();
 
-        return view('Finance\Views\ChartOfAccounts/edit', array_merge($this->getCommonViewData('Edit Chart Account'), [
-            'account'         => $account,
-            'parent_accounts' => $parentAccounts,
-            'parish_id'       => $parishId,
+        return view('Finance\Views\ChartOfAccounts/edit', array_merge($this->getCommonViewData('Edit Chart Account'), $this->categoryViewData($parentAccounts), [
+            'account'   => $account,
+            'parish_id' => $parishId,
         ]));
     }
 
@@ -298,10 +310,21 @@ class ChartOfAccounts extends BaseController
             'account_type'      => 'required|in_list[income,expense,asset,liability,equity]',
             'sort_order'        => 'permit_empty|integer',
             'parent_account_id' => 'permit_empty|is_natural_no_zero',
+            'category_id'       => 'required|is_natural_no_zero',
         ];
 
         if (!$this->validate($rules)) {
             return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
+        }
+
+        $category = (new ChartAccountCategoryService())->findSelectable((int) $this->request->getPost('category_id'), (string) $this->request->getPost('account_type'));
+        if (!$category) {
+            return redirect()->back()->withInput()->with('error', lang('ChartAccounts.invalidCategory'));
+        }
+
+        $parentId = (int) ($this->request->getPost('parent_account_id') ?: 0);
+        if ($parentId > 0 && !$this->validParentAccount($parentId, (string) $this->request->getPost('account_type'), $dioceseId)) {
+            return redirect()->back()->withInput()->with('error', lang('ChartAccounts.invalidParentAccount'));
         }
 
         $code = strtoupper(trim((string) $this->request->getPost('code')));
@@ -327,6 +350,8 @@ class ChartOfAccounts extends BaseController
 
         $payload = array_merge($this->extractPayload(), [
             'parent_account_id' => $this->request->getPost('parent_account_id') ? (int) $this->request->getPost('parent_account_id') : null,
+            'category_id'       => (int) $category['id'],
+            'category'          => (string) $category['category_key'],
         ]);
 
         if (!$this->chartOfAccountModel->update($id, $payload)) {
@@ -409,12 +434,42 @@ class ChartOfAccounts extends BaseController
             'code'         => strtoupper(trim((string) $this->request->getPost('code'))),
             'name'         => trim((string) $this->request->getPost('name')),
             'account_type' => (string) $this->request->getPost('account_type'),
-            'category'     => trim((string) $this->request->getPost('category')) ?: null,
             'description'  => trim((string) $this->request->getPost('description')) ?: null,
             'allow_budget' => $this->request->getPost('allow_budget') ? 1 : 0,
             'is_active'    => $this->request->getPost('is_active') ? 1 : 0,
             'sort_order'   => (int) ($this->request->getPost('sort_order') ?: 0),
         ];
+    }
+
+    protected function validParentAccount(int $parentId, string $accountType, int $dioceseId): bool
+    {
+        return $this->chartOfAccountModel
+            ->where('id', $parentId)
+            ->where('account_type', $accountType)
+            ->where('is_active', 1)
+            ->groupStart()
+                ->where('scope_type', 'system')
+                ->orGroupStart()->where('scope_type', 'diocese')->where('scope_id', $dioceseId)->groupEnd()
+            ->groupEnd()
+            ->first() !== null;
+    }
+
+    protected function categoryViewData(array $parentAccounts): array
+    {
+        $service = new ChartAccountCategoryService();
+        $categories = $service->all();
+        foreach ($parentAccounts as &$parent) {
+            $parent['category_path'] = !empty($parent['category_id']) ? $service->path((int) $parent['category_id'], $categories) : '';
+        }
+        unset($parent);
+
+        foreach ($categories as &$category) {
+            $category['label'] = $service->label((string) $category['category_key']);
+            $category['path'] = $service->path((int) $category['id'], $categories);
+        }
+        unset($category);
+
+        return ['parent_accounts' => $parentAccounts, 'account_categories' => $categories];
     }
 
     protected function getSectionOptions(): array

@@ -5,6 +5,7 @@
 The **ekklesiaRD Chart of Accounts (COA)** establishes a standardized 4-digit numbering system and financial governance framework designed for Episcopal parishes, missions, and diocesan institutions.
 
 This framework is aligned with:
+
 1. **The Episcopal Church (TEC) Constitution and Canons**: Specifically **Title I, Canon 7** (*"Of Business Methods in Church Affairs"*) and **Title III, Canon 9.6(b)(6)** (*"Clergy Discretionary Funds"*).
 2. **The Manual of Business Methods in Church Affairs** (January 2023 edition), published by The Domestic and Foreign Missionary Society of the Protestant Episcopal Church in the USA (DFMS).
 3. **U.S. GAAP for Not-for-Profit Entities (FASB Topic 958 / ASU 2016-14)**: Regulating presentation of financial statements, net asset classification, liquidity disclosure, and functional expense allocation.
@@ -43,13 +44,17 @@ Total Net Assets = Net Assets Without Donor Restrictions + Net Assets With Donor
 ```
 
 ### 1. Net Assets Without Donor Restrictions
+
 Assets free of donor-imposed stipulations, expendable for general operations and mission:
+
 - **Undesignated Operating**: Cumulative operating surpluses and expendable reserves.
 - **Board-Designated (Quasi-Endowments / Reserves)**: Funds set aside by formal Vestry resolution for specific purposes (e.g., major capital repair reserves, sabbatical funds). Because the Vestry can modify or reverse these designations at its discretion, they remain legally *without donor restrictions*.
 - **Net Investment in Plant & Equipment**: Land, buildings, furniture, and fixtures less accumulated depreciation and related debt.
 
 ### 2. Net Assets With Donor Restrictions
+
 Assets subject to donor-imposed stipulations that cannot be altered or diverted by the parish:
+
 - **Purpose-Restricted**: Monies earmarked for specific ministries or programs (e.g., Altar Guild flower fund, youth mission trips, building renovations, outreach grants).
 - **Time-Restricted**: Unconditional pledges or multi-year grants designated for future periods.
 - **Perpetual Restrictions (Endowments)**: Donor gifts where the original principal must be maintained intact in perpetuity, while income or dividends are expended according to donor terms or prudent spending policies (UPMIFA).
@@ -100,7 +105,7 @@ Assets are ordered by nearness of conversion to cash (liquidity).
 | **1410** | Diocesan Investment Trust (DFMS) | Debit | Non-Current Asset | Funds invested in Diocesan Pooled / DFMS Endowment Portfolio |
 | **1420** | Long-Term Marketable Securities | Debit | Non-Current Asset | Equities, mutual funds, and long-term bonds held by custodian |
 | **1430** | Perpetual Endowment Assets | Debit | Non-Current Asset | Trust assets where principal is inviolate in perpetuity |
-| *1500* | *Property, Plant & Equipment (Fixed Assets)*| | *Sub-heading* | Capital assets capitalized at cost or fair value |
+| *1500* | *Property, Plant & Equipment (Fixed Assets)* | | *Sub-heading* | Capital assets capitalized at cost or fair value |
 | **1510** | Land | Debit | Fixed Asset | Value of real property land (not depreciable) |
 | **1520** | Church & Parish Buildings | Debit | Fixed Asset | Historical cost or appraised acquisition value of parish buildings |
 | **1525** | Accumulated Depreciation - Buildings | Credit | Contra-Asset | Cumulative straight-line depreciation recorded on buildings |
@@ -131,7 +136,7 @@ Liabilities are ordered by maturity and resulting demand on cash.
 | **2240** | Clergy Pension Payable (CPG) | Credit | Current Liability | 18% Church Pension Fund assessment awaiting monthly remittance |
 | **2245** | Lay Pension Payable (ECLERP) | Credit | Current Liability | Defined contribution / benefit lay pension remittances |
 | **2250** | Health & Life Insurance Withholding | Credit | Current Liability | Employee contributions for Episcopal Church Medical Trust |
-| *2300* | *Deferred Revenues & Custodial Liabilities*| | *Sub-heading* | Prepaid fees and agency funds |
+| *2300* | *Deferred Revenues & Custodial Liabilities* | | *Sub-heading* | Prepaid fees and agency funds |
 | **2310** | Prepaid Pledges / Deferred Revenue | Credit | Current Liability | Pledges received in current year intended for next year's budget |
 | **2320** | Custodial Funds (Agency Clearing) | Credit | Current Liability | Pass-through monies held as fiscal agent (e.g., UTO, ERD) |
 | *2400* | *Long-Term Debt* | | *Sub-heading* | Mortgages and notes exceeding one year |
@@ -150,7 +155,7 @@ Articulates parish equity according to donor restrictions per FASB ASU 2016-14.
 | *3100* | *Without Donor Restrictions - Undesignated* | | *Sub-heading* | General operating reserves |
 | **3110** | Operating Net Assets (Accumulated Surplus) | Credit | Without Donor Restrictions | Unrestricted general operating fund balance |
 | **3120** | Net Investment in Plant (PPE Equity) | Credit | Without Donor Restrictions | Net book value of land, buildings, and equipment less debt |
-| *3200* | *Without Donor Restrictions - Board Designated*| | *Sub-heading* | Governing body reserves |
+| *3200* | *Without Donor Restrictions - Board Designated* | | *Sub-heading* | Governing body reserves |
 | **3210** | Vestry Reserve - Capital Maintenance | Credit | Without Donor Restrictions | Vestry-designated reserve for major facility replacements |
 | **3220** | Vestry Reserve - Sabbatical & Special | Credit | Without Donor Restrictions | Vestry-designated reserve for clergy sabbatical or future programs |
 | **3230** | Quasi-Endowment Fund | Credit | Without Donor Restrictions | Vestry-designated endowment where principal may be accessed |
@@ -159,7 +164,7 @@ Articulates parish equity according to donor restrictions per FASB ASU 2016-14.
 | **3320** | Restricted - Memorials & Specific Gifts | Credit | With Donor Restrictions | Memorial gifts designated for specific furnishings or altars |
 | **3330** | Restricted - Outreach & Special Offerings | Credit | With Donor Restrictions | Offerings restricted for local food pantries or external missions |
 | **3340** | Restricted - Youth & Christian Education | Credit | With Donor Restrictions | Donor-restricted funds for youth camps, trips, or scholarships |
-| *3400* | *With Donor Restrictions - Perpetual (Endowments)*| | *Sub-heading* | Endowments held in perpetuity |
+| *3400* | *With Donor Restrictions - Perpetual (Endowments)* | | *Sub-heading* | Endowments held in perpetuity |
 | **3410** | Perpetual Endowment Principal | Credit | With Donor Restrictions | Donor-restricted endowments held in perpetuity (Canon 7.1c) |
 | **3420** | Unexpended Endowment Earnings | Credit | With Donor Restrictions | Accumulated earnings on endowments awaiting purpose spending |
 
@@ -268,10 +273,10 @@ Physical plant maintenance, utilities, insurance, administration, and non-operat
 | **8130** | Heating Fuel & Oil | Debit | Yes | Line 6 | M&G | Heating oil, natural gas, or propane fuel |
 | **8140** | Trash Collection & Recycling | Debit | Yes | Line 6 | M&G | Municipal or private refuse removal |
 | **8150** | Rectory Utilities (Church-Paid) | Debit | Yes | Line 6 | Program | Utilities paid directly for parish-owned rectory |
-| *8200* | *Building Maintenance & Repairs*| | | | | Routine repairs and grounds care |
+| *8200* | *Building Maintenance & Repairs* | | | | | Routine repairs and grounds care |
 | **8210** | Routine Repairs & Maintenance | Debit | Yes | Line 6 | M&G | Plumbing, electrical, lighting, lock repairs |
 | **8220** | Custodial & Janitorial Supplies | Debit | Yes | Line 6 | M&G | Cleaning chemicals, paper products, sanitizers |
-| **8230** | Grounds, Landscaping & Snow Removal| Debit | Yes | Line 6 | M&G | Lawn maintenance, tree trimming, winter snow clearing |
+| **8230** | Grounds, Landscaping & Snow Removal | Debit | Yes | Line 6 | M&G | Lawn maintenance, tree trimming, winter snow clearing |
 | **8240** | Safety, Security & Fire Inspection | Debit | Yes | Line 6 | M&G | Fire alarm monitoring, extinguisher testing, cameras |
 | *8300* | *Insurance & Property Taxes* | | | | | Commercial insurance protection |
 | **8310** | Commercial Property & Liability Ins. | Debit | Yes | Line 6 | M&G | Package policy (Church Insurance Co. / CPG) |
@@ -281,12 +286,12 @@ Physical plant maintenance, utilities, insurance, administration, and non-operat
 | **8410** | Office Supplies & Postage | Debit | Yes | Line 6 | M&G | Paper, envelopes, stationery, postage machine lease |
 | **8420** | Copier Lease & Printing | Debit | Yes | Line 6 | M&G | Bulletins printing, newsletter production, lease |
 | **8430** | Telephone & High-Speed Internet | Debit | Yes | Line 6 | M&G | Telecom services for parish office and rectory |
-| **8440** | Computer Software, IT & Cloud Services| Debit | Yes | Line 6 | M&G | Church management software, accounting, email |
+| **8440** | Computer Software, IT & Cloud Services | Debit | Yes | Line 6 | M&G | Church management software, accounting, email |
 | *8500* | *Professional Fees & Banking* | | | | | Legal, audit, and transactional costs |
 | **8510** | Annual Independent Audit & Accounting | Debit | Yes | Line 6 | M&G | CPA audit / Committee Examination expenses |
 | **8520** | Legal & Professional Consulting | Debit | Yes | Line 6 | M&G | Legal fees, architectural consultations, surveys |
 | **8530** | Bank Fees & Electronic Giving Costs | Debit | Yes | Line 6 | M&G | Merchant gateway discount fees, ACH batch charges |
-| *8600* | *Capital Expenses & Debt Principal*| | | | | Parochial Report Line 7 Outlays |
+| *8600* | *Capital Expenses & Debt Principal* | | | | | Parochial Report Line 7 Outlays |
 | **8610** | Major Capital Repairs & Renovations | Debit | Yes | Line 7 | Capital | Major roof, boiler, masonry repairs (> $1,500) |
 | **8620** | Capital Acquisitions (Land/Buildings) | Debit | No | Line 7 | Capital | Acquisition of real property, land, permanent structures |
 | **8630** | Debt Principal Repayments | Debit | Yes | Line 7 | Debt Service | Principal reduction on building mortgages/loans |
@@ -319,20 +324,24 @@ In strict accordance with Chapter V of the *Manual of Business Methods in Church
 In strict accordance with Chapter V of the *Manual of Business Methods in Church Affairs* and U.S. Internal Revenue Code Section 170:
 
 ### 1. Definition of Pass-Through (Conduit) Contributions
+
 A **pass-through donation** (also termed an *earmarked contribution* or *conduit gift*) occurs whenever a donor tenders funds to the church with a written or verbal stipulation that the proceeds must be paid over to a **designated, specific individual**.
 
 Common examples include:
+
 - A check made out to the church with a memo stating: *"For John Doe's rent"* or *"To help Maria with tuition"*.
 - An offering deposited into the Clergy Discretionary Fund earmarked for a specific family or parish employee.
 - Contributions intended to cover personal living, travel, or medical expenses of a specific cleric or lay minister.
 
 ### 2. Legal & Tax Rationale (IRC Section 170 & Revenue Rulings 62-113, 68-484)
+
 - **Non-Deductibility of Gifts to Individuals**: Under federal tax law, charitable contribution deductions are permitted only for gifts made *to or for the use of* a qualified 501(c)(3) tax-exempt organization. Contributions for the direct benefit of a specified individual—no matter how needy or worthy—are **not tax-deductible**.
 - **Conduit Disallowance**: When a church accepts funds with a commitment to deliver them to a predetermined person, the church is legally considered a mere conduit. The IRS disregards the church's intermediary status and disallows the donor's charitable deduction.
 - **Substantiation & Church Sanctions**: If a parish knowingly issues a formal tax substantiation receipt (or includes such earmarked funds on an annual giving statement) claiming tax-deductible treatment, the parish participates in misleading reporting, risking IRS scrutiny and penalties.
 - **Taxable Compensation Trap for Church Employees**: If an earmarked gift is disbursed to an employee (e.g., sexton, parish administrator, youth minister), the IRS may deem the payout to be **taxable compensation**, requiring retroactive payroll withholding and Form W-2 amendment.
 
 ### 3. Canonical Rationale (Title III, Canon 9.6.b.6)
+
 - **Mandated Pastoral Discretion**: Episcopal Canon III.9.6.b.6 specifies that alms and offerings for the poor must be applied to pious and charitable uses **"as the Rector or Priest-in-Charge shall determine."**
 - The defining element of a *Clergy Discretionary Fund* is that the clergy person exercises **sole pastoral discretion** to assess genuine need, ensure equitable care, and protect the privacy and dignity of recipients.
 - A donor-imposed earmark unlawfully deprives the rector of canonical discretion, reducing the rector to a private disbursement agent.
@@ -348,7 +357,9 @@ Common examples include:
 > For any charitable gift to be tax-deductible, the church entity must retain **full, unconstrained ownership, governance, and discretion** over the ultimate deployment of the funds. If the donor retains the power to direct the recipient, the gift is a conduit and disqualified.
 
 ### 5. Parish Intake & Treasurer Operating Protocol
+
 When an earmarked or conduit check/gift is presented:
+
 1. **Hold & Inspect**: The donation must not be deposited as a tax-deductible contribution.
 2. **Donor Education**: The treasurer or clergy member must contact the donor and explain:
    > *"Under IRS regulations and Episcopal Church canons, we cannot accept tax-deductible contributions earmarked for specific named individuals. We can only receive contributions where full discretion rests with the church's ministry."*
@@ -365,6 +376,16 @@ Not-for-profit financial statements must report expenses by both **Nature** (nat
 | **Program Services** | 6000s, 7100s, 7300s, 7400s | Activities directly fulfilling the Church's spiritual and charitable mission: worship, sacraments, youth/adult education, pastoral care, and external outreach. |
 | **Management & General (M&G)** | 7200s (admin), 8100s–8500s | Oversight, business administration, recordkeeping, budgeting, audit, Vestry operations, office technology, and facility overhead. |
 | **Fundraising & Stewardship** | 4310 expenses, canvass printing | Activities conducted to solicit annual pledges, planned giving campaigns, and capital fundraising appeals. |
+
+---
+
+## System Reporting Category Hierarchy
+
+Reporting categories are a system-owned hierarchy separate from the ledger account hierarchy. `parent_account_id` controls account numbering and rollups; `category_id` controls financial-report presentation. Only active leaf categories can be assigned to accounts. Diocese and parish users may select a compatible leaf but cannot create, rename, reorder, or deactivate system categories.
+
+The hierarchy follows the five account types and subdivides them into current/fixed assets, current/long-term liabilities, restricted/unrestricted net assets and revenue, and functional expense classes (Program Services, Management & General, Fundraising, and Capital/Non-Cash). New diocesan and parish accounts inherit a category suggestion from their selected parent; accounts without a parent receive a code-range suggestion that the operator may override with another compatible leaf.
+
+Donations and expenses copy both the category ID and stable category key from their chart account. Historical records are backfilled from linked chart accounts first and from legacy aliases only when no account link exists. Run `php spark finance:audit-coa-categories` to report unresolved records.
 
 ---
 
@@ -399,9 +420,9 @@ The chart of accounts directly feeds the annual Parochial Report financial lines
 | **Total Line A** | **Total Operating Revenue** | $\text{Line 3} + \text{Line 4} + \text{Line 5}$ |
 | **Line 6** | Operating Expenses (Non-Capital) | 6110–6230 (Outreach & Apportionment), 7110–7440 (Clergy/Lay Salaries, Benefits, Music, Education), 8110–8530 (Utilities, Maintenance, Insurance, Office, Audit) |
 | **Line 7** | Capital Expenses & Debt Principal | 8610 (Major Repairs > $1,500), 8620 (Capital Purchases), 8630 (Loan Principal) |
-| **Total Line B** | **Total Operating & Capital Expenses**| $\text{Line 6} + \text{Line 7}$ |
+| **Total Line B** | **Total Operating & Capital Expenses** | $\text{Line 6} + \text{Line 7}$ |
 | **Net Operating** | Net Balance | $\text{Total Line A} - \text{Total Line B}$ |
 | **Line 8** | Liquid Cash Balances | Accounts 1110 (Petty Cash), 1120 (Checking), 1130 (Savings), 1140 (CDs) |
 | **Lines 9a–9d** | Investments & Endowments | Accounts 1410 (DIT/DFMS), 1420 (Marketable Securities), 1430 (Endowments) |
 | **Line 10** | Total Outstanding Debt Liabilities | Accounts 2410 (Bank Notes), 2420 (Property Mortgages) |
-| **Lines 11 & 12**| Property & Outside Rental Revenue | Verified against 4210 / 4220 Rental Income accounts |
+| **Lines 11 & 12** | Property & Outside Rental Revenue | Verified against 4210 / 4220 Rental Income accounts |

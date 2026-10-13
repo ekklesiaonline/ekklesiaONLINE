@@ -5,6 +5,7 @@ namespace Tests\Database;
 use App\Database\Seeds\ChartOfAccountsSeeder;
 use App\Models\ChartOfAccountModel;
 use App\Models\ParishModel;
+use App\Services\ChartAccountCategoryService;
 use CodeIgniter\Test\CIUnitTestCase;
 use CodeIgniter\Test\DatabaseTestTrait;
 use Config\Services;
@@ -37,6 +38,7 @@ final class ChartOfAccountsHierarchyIntegrationTest extends CIUnitTestCase
 
         foreach ([
             'chart_of_accounts',
+            'chart_account_category',
             'parish',
             'users',
             'profile',
@@ -85,6 +87,25 @@ final class ChartOfAccountsHierarchyIntegrationTest extends CIUnitTestCase
             $this->assertSame('system', $acc['scope_type']);
             $this->assertSame(0, (int) $acc['scope_id']);
         }
+    }
+
+    public function testSystemCategoryHierarchySeedsAndSuggestsCompatibleLeaves(): void
+    {
+        $service = new ChartAccountCategoryService($this->db);
+        $service->seedDefaults();
+        $service->seedDefaults();
+
+        $categories = $service->all();
+        $keys = array_column($categories, 'category_key');
+        $this->assertContains('expense.management.utilities', $keys);
+        $this->assertContains('income.without_restrictions.contributions', $keys);
+        $this->assertSame(count($keys), count(array_unique($keys)));
+
+        $suggested = $service->categoryByKey($service->suggestionKey(null, 'expense', '8110'));
+        $this->assertNotNull($suggested);
+        $this->assertSame('expense', $suggested['account_type']);
+        $this->assertSame(1, (int) $suggested['is_selectable']);
+        $this->assertStringContainsString('Utilities', $service->path((int) $suggested['id'], $categories));
     }
 
     public function testThreeTierInheritanceHierarchy(): void

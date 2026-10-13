@@ -79,6 +79,15 @@ return [
     'helpAllowBudgeting'    => 'Enable this account for use in parish budget lines.',
     'helpActive'            => 'Active accounts are available for new financial activity.',
     'helpDescription'       => 'Optionally describe the purpose and intended use of this account.',
+    'selectCategory'        => 'Select a reporting category',
+    'invalidCategory'       => 'Select an active reporting category compatible with the account type.',
+    'invalidParentAccount'  => 'Select an active parent account of the same type within your scope.',
+    'labelParentCategory'   => 'Parent Account Category',
+    'helpParentCategory'    => 'Read-only category inherited as the initial suggestion from the selected parent.',
+    'helpCategorySuggestion' => 'The system suggests a category; you may choose another compatible category.',
+    'categoryHierarchyReference' => 'View system category hierarchy',
+    'categoryGroup'         => 'group',
+    'noParentCategory'      => 'No parent category selected',
 
     // Hierarchy & Tiers
     'colTier'               => 'Tier',

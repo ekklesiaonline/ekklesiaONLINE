@@ -79,6 +79,15 @@ return [
     'helpAllowBudgeting'    => 'Habilite esta cuenta para usarla en las partidas del presupuesto parroquial.',
     'helpActive'            => 'Las cuentas activas están disponibles para nueva actividad financiera.',
     'helpDescription'       => 'Opcionalmente, describa el propósito y el uso previsto de esta cuenta.',
+    'selectCategory'        => 'Seleccione una categoría de informe',
+    'invalidCategory'       => 'Seleccione una categoría activa compatible con el tipo de cuenta.',
+    'invalidParentAccount'  => 'Seleccione una cuenta principal activa del mismo tipo dentro de su ámbito.',
+    'labelParentCategory'   => 'Categoría de la Cuenta Principal',
+    'helpParentCategory'    => 'Categoría de solo lectura usada como sugerencia inicial de la cuenta principal.',
+    'helpCategorySuggestion' => 'El sistema sugiere una categoría; puede elegir otra categoría compatible.',
+    'categoryHierarchyReference' => 'Ver jerarquía de categorías del sistema',
+    'categoryGroup'         => 'grupo',
+    'noParentCategory'      => 'No se seleccionó categoría principal',
 
     // Jerarquía y Niveles
     'colTier'               => 'Nivel',

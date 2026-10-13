@@ -814,7 +814,12 @@ class FinanceReportsDataService
             return $map[$categoryKey];
         }
 
-        return ucwords(str_replace('_', ' ', $categoryKey));
+        $hierarchyLabels = lang('ChartAccountCategories.category');
+        if (is_array($hierarchyLabels) && isset($hierarchyLabels[$categoryKey])) {
+            return (string) $hierarchyLabels[$categoryKey];
+        }
+
+        return ucwords(str_replace(['.', '_'], [' → ', ' '], $categoryKey));
     }
 
     /**

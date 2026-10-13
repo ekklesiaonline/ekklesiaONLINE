@@ -20,6 +20,7 @@ class ChartOfAccountModel extends Model
         'name',
         'account_type',
         'category',
+        'category_id',
         'description',
         'allow_budget',
         'is_active',
@@ -36,6 +37,7 @@ class ChartOfAccountModel extends Model
         'sort_order'        => '?int',
         'scope_id'          => '?int',
         'parent_account_id' => '?int',
+        'category_id'       => '?int',
     ];
 
     protected $useTimestamps = true;

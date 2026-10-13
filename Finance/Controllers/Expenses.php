@@ -168,6 +168,7 @@ class Expenses extends BaseController
             'amount' => $this->request->getPost('amount'),
             // Keep transaction category aligned with the selected chart account.
             'category' => (string) ($chartAccount['category'] ?? ($this->request->getPost('category') ?: 'other')),
+            'category_id' => !empty($chartAccount['category_id']) ? (int) $chartAccount['category_id'] : null,
             'chart_account_id' => (int) $chartAccount['id'],
             'description' => $this->request->getPost('description'),
             'notes' => $this->request->getPost('notes'),
@@ -323,6 +324,7 @@ class Expenses extends BaseController
             'date' => $this->request->getPost('date'),
             'amount' => $this->request->getPost('amount'),
             'category' => (string) ($chartAccount['category'] ?? ($this->request->getPost('category') ?: 'other')),
+            'category_id' => !empty($chartAccount['category_id']) ? (int) $chartAccount['category_id'] : null,
             'chart_account_id' => (int) $chartAccount['id'],
             'description' => $this->request->getPost('description'),
             'notes' => $this->request->getPost('notes'),

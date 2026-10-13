@@ -2,6 +2,7 @@
 
 namespace App\Database\Seeds;
 
+use App\Services\ChartAccountCategoryService;
 use CodeIgniter\Database\Seeder;
 
 /**
@@ -1456,8 +1457,13 @@ class ChartOfAccountsSeeder extends Seeder
         ];
 
         $table = $this->db->table('chart_of_accounts');
+        $categoryService = new ChartAccountCategoryService($this->db);
+        $categoryService->seedDefaults();
 
         foreach ($accounts as $acc) {
+            $category = $categoryService->categoryByKey($categoryService->suggestionKey(null, (string) $acc['account_type'], (string) $acc['code']));
+            $acc['category_id'] = $category['id'] ?? null;
+            $acc['category'] = $category['category_key'] ?? $acc['category'];
             $acc['scope_type']        = 'system';
             $acc['scope_id']          = 0;
             $acc['parent_account_id'] = null;

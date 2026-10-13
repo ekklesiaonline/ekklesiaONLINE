@@ -191,6 +191,7 @@ class Donations extends BaseController
             'amount' => $this->request->getPost('amount'),
             // Keep transaction category aligned with the selected chart account.
             'category' => (string) ($chartAccount['category'] ?? ($this->request->getPost('category') ?: 'other')),
+            'category_id' => !empty($chartAccount['category_id']) ? (int) $chartAccount['category_id'] : null,
             'chart_account_id' => (int) $chartAccount['id'],
             'payment_method' => $this->request->getPost('payment_method'),
             'notes' => $this->request->getPost('notes'),
@@ -327,6 +328,7 @@ class Donations extends BaseController
             'date'                => (string) $this->request->getPost('date'),
             'amount'              => (string) $this->request->getPost('amount'),
             'category'            => (string) ($chartAccount['category'] ?? ($this->request->getPost('category') ?: 'other')),
+            'category_id'         => !empty($chartAccount['category_id']) ? (int) $chartAccount['category_id'] : null,
             'chart_account_id'    => (int) $chartAccount['id'],
             'payment_method'      => $this->request->getPost('payment_method') ?: null,
             'notes'               => $this->request->getPost('notes') ?: null,
