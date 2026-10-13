@@ -58,6 +58,7 @@ Help with parish-scoped finance, accounting, and treasury workflows.
   - `Diocese\Controllers\ChartOfAccounts`: Canonical 4-digit Episcopal chart of accounts (1000s Assets, 2000s Liabilities, 3000s Net Assets, 4000s/5000s Income, 6000s-8000s Expenses). Reference guidelines in `docs/CHART_OF_ACCOUNTS_GUIDELINES.md`.
   - `Finance\Controllers\ChartOfAccounts`: Parish-scoped account extensions and hierarchy management under `/finance/chart-of-accounts`.
   - The create form requires account type selection before enabling the parent selector, limits parent options to active accounts of the same type, and prefixes a child account code with the selected parent code plus `-`.
+  - Reporting categories are system-owned hierarchical leaves stored by `category_id`, separate from the ledger parent hierarchy. Diocese/parish forms suggest from the parent or account code, allow compatible overrides, and expose the read-only hierarchy. Audit unresolved mappings with `php spark finance:audit-coa-categories`.
 - **Annual Pledges & Stewardship**:
   - `MemberPortal\Controllers\AnnualPledges`: Parish stewardship pledges, search, pagination (`AnnualPledgeModel`).
   - `App\Services\PledgeFulfillmentService`: Automated fulfillment tracking when tithe/pledge donations are recorded.
