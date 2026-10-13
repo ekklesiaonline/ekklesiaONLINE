@@ -39,9 +39,9 @@
                     <div class="mb-3">
                         <label for="parent_account_id" class="form-label"><?= lang('ChartAccounts.labelParentAccount') ?></label>
                         <select class="form-select" id="parent_account_id" name="parent_account_id">
-                            <option value="">-- None (Standalone) --</option>
+                            <option value=""><?= lang('ChartAccounts.selectParentAccount') ?></option>
                             <?php foreach (($parent_accounts ?? []) as $parent): ?>
-                                <option value="<?= esc($parent['id']) ?>" <?= (string) old('parent_account_id', (string) ($account['parent_account_id'] ?? '')) === (string) $parent['id'] ? 'selected' : '' ?>>
+                                <option value="<?= esc($parent['id']) ?>" data-account-type="<?= esc($parent['account_type']) ?>" data-code="<?= esc($parent['code']) ?>" <?= (string) old('parent_account_id', (string) ($account['parent_account_id'] ?? '')) === (string) $parent['id'] ? 'selected' : '' ?>>
                                     <?= esc($parent['code']) ?> - <?= esc($parent['name']) ?> (<?= esc(ucfirst($parent['scope_type'] ?? 'system')) ?>)
                                 </option>
                             <?php endforeach; ?>
@@ -79,4 +79,79 @@
     </div>
 </div>
 
+<?= $this->endSection() ?>
+
+<?= $this->section('scripts') ?>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const accountType = document.getElementById("account_type");
+    const parentAccount = document.getElementById("parent_account_id");
+
+    const placeholderText = "<?= esc(lang('ChartAccounts.selectParentAccount')) ?>";
+
+    // Cache all parent account records from initial DOM options
+    const allParentAccounts = Array.from(parentAccount.querySelectorAll("option"))
+        .filter(function (opt) {
+            return opt.value !== "";
+        })
+        .map(function (opt) {
+            return {
+                value: opt.value,
+                text: opt.textContent.trim(),
+                accountType: opt.dataset.accountType || "",
+                code: opt.dataset.code || ""
+            };
+        });
+
+    function filterParentAccounts(targetValue) {
+        const selectedType = accountType.value;
+        const desiredValue = targetValue !== undefined ? String(targetValue) : String(parentAccount.value || "");
+
+        // Empty select entirely so non-matching options are not rendered as dimmed/disabled
+        parentAccount.innerHTML = "";
+
+        // Add default placeholder
+        const placeholder = document.createElement("option");
+        placeholder.value = "";
+        placeholder.textContent = placeholderText;
+        parentAccount.appendChild(placeholder);
+
+        if (!selectedType) {
+            parentAccount.disabled = true;
+            parentAccount.value = "";
+            return;
+        }
+
+        // Only append options that match the selected account type
+        const matchingAccounts = allParentAccounts.filter(function (acc) {
+            return acc.accountType === selectedType;
+        });
+
+        matchingAccounts.forEach(function (acc) {
+            const opt = document.createElement("option");
+            opt.value = acc.value;
+            opt.textContent = acc.text;
+            opt.dataset.accountType = acc.accountType;
+            opt.dataset.code = acc.code;
+            parentAccount.appendChild(opt);
+        });
+
+        parentAccount.disabled = false;
+
+        // Restore selected value if it exists in the matching list
+        if (desiredValue && matchingAccounts.some(function (acc) { return String(acc.value) === desiredValue; })) {
+            parentAccount.value = desiredValue;
+        } else {
+            parentAccount.value = "";
+        }
+    }
+
+    accountType.addEventListener("change", function () {
+        filterParentAccounts("");
+    });
+
+    const initialParentId = "<?= esc((string) old('parent_account_id', (string) ($account['parent_account_id'] ?? ''))) ?>";
+    filterParentAccounts(initialParentId);
+});
+</script>
 <?= $this->endSection() ?>
