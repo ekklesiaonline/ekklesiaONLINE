@@ -5,7 +5,7 @@ This repository contains project-specific instructions for AI agents and contrib
 ## Precedence
 
 1. `AGENTS.md` — repository-wide architecture, terminology, security, testing, and operational rules.
-2. `.agents/rules/*.md` (or `.devin/rules/*.md`) — always-on CodeIgniter/Shield, parish-domain, and Bootstrap/view conventions.
+2. `.agents/rules/*.md` (or `.devin/rules/*.md`) — always-on CodeIgniter/Shield, domain (membership, sacraments, hierarchy/authz, finance), and Bootstrap/view conventions.
 3. `docs/DOCUMENTATION_CANONICAL.md` — identifies authoritative documentation and separates it from historical reports.
 4. `.agents/skills/*/SKILL.md` (or `.devin/skills/*/SKILL.md`) — task-specific workflows and diagnostic playbooks; load only when relevant.
 5. Current code, migrations, and tests — final authority for implemented behavior.

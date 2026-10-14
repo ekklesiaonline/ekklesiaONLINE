@@ -38,6 +38,7 @@
 
 - For view/HTML rules, see `.agents/rules/views.md` (or `.devin/rules/views.md`).
 - For CI4/Shield coding rules, see `.agents/rules/codeigniter-shield.md` (or `.devin/rules/codeigniter.md`).
+- For domain invariants, see `.agents/rules/membership-domain.md` (membership status, person identity, counts), `.agents/rules/sacraments.md` (sacramental records), `.agents/rules/hierarchy-authz.md` (scopes, elevated admins, registration approvals, clergy/deanery governance), and `.agents/rules/parish-finance.md` (donations, funds, stewardship) — or the `.devin/rules/` mirrors.
 - For diagnostic playbooks, invoke the relevant skill (`/debug-no-parish`, `/debug-person-not-found`, `/sacrament-sync`, `/data-integrity`, `/email-deliverability`, etc.).
 - For the visitor → regular_attender → member lifecycle and promotion flow, see `docs/VISITOR_LIFECYCLE.md` or `/visitor-lifecycle`; for follow-up sequences/dispatch, see `docs/FOLLOWUP_WORKFLOW_SYSTEM.md` or `/visitor-followup`.
 - For permission/scope issues, use `/parish-permissions` or `/permission-denied`.

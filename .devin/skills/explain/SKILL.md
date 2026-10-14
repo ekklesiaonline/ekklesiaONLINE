@@ -25,7 +25,7 @@ Guidelines:
 1. State what the topic is and which module(s) it belongs to.
 2. Cite specific files and line ranges using `<ref_file ... />` and `<ref_snippet ... />`.
 3. If the topic involves data flow, trace the controller → service → model path.
-4. Mention related rules/skills when relevant (`views.md`, `parish-domain.md`, `codeigniter.md`, etc.).
+4. Mention related rules/skills when relevant (`views.md`, `membership-domain.md`, `sacraments.md`, `hierarchy-authz.md`, `parish-finance.md`, `codeigniter.md`, etc.).
 5. Note any known gaps or pending implementation.
 
 Do not make up file paths. Verify with `read`, `grep`, or `find_file_by_name` before citing.

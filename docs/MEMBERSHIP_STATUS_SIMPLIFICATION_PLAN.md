@@ -239,7 +239,7 @@ Full suite after Phase 3: 664 tests, 2954 assertions, 6 skipped.
    same file. Audit `new_values` payloads and non-status metadata updates
    (`linked_user_id`, `converted_*`, `followed_up`, `deleted_at`) do not
    trigger it.
-3. The invariant is documented in `.devin/rules/parish-domain.md`
+3. The invariant is documented in `.devin/rules/membership-domain.md`
    (status columns are never written directly).
 
 Full suite after Phase 4: 665 tests, 2955 assertions, 6 skipped.
