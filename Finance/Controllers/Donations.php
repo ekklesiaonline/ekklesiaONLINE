@@ -5,6 +5,7 @@ namespace Finance\Controllers;
 use App\Controllers\BaseController;
 use App\Services\AccountingJournalSyncService;
 use App\Services\DonationService;
+use App\Services\FinanceReadinessService;
 use App\Services\GivingStatementService;
 
 class Donations extends BaseController
@@ -126,10 +127,13 @@ class Donations extends BaseController
         $chartAccounts = $chartOfAccountModel->getActiveByType('income');
         $groupedChartAccounts = $chartOfAccountModel->getGroupedActiveAccountsForType('income');
         $funds = $this->getFundModel()->getUsableParishFunds($parishId);
+        $financeReadiness = (new FinanceReadinessService())->readinessForParish($parishId);
 
         return view('Finance\Views\Donations/create', array_merge($this->getCommonViewData('Record Donation'), [
             'donor_option' => $this->memberSelectOption($parishId, (int) old('user_id')),
             'funds' => $funds,
+            'financeReadiness' => $financeReadiness,
+            'canManageFunds' => auth()->user()->can('finance.manage'),
             'chartAccounts' => $chartAccounts,
             'groupedChartAccounts' => $groupedChartAccounts,
         ]));

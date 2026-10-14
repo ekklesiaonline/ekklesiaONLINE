@@ -64,6 +64,27 @@ final class DonationEditControllerIntegrationTest extends CIUnitTestCase
     // Edit Form
     // -----------------------------------------------------------------------
 
+    public function testCreateBlocksEntryWhenParishHasNoUsableFunds(): void
+    {
+        $output = $this->makeController()->create();
+
+        $this->assertIsString($output);
+        $this->assertStringContainsString('Fund setup required', $output);
+        $this->assertStringContainsString('Contact a Parish Administrator or Finance Officer', $output);
+        $this->assertStringNotContainsString('<form action="' . base_url('donations/store') . '"', $output);
+    }
+
+    public function testCreateOffersFundSetupToFinanceManager(): void
+    {
+        $this->injectFinanceAuth($this->userId, ['finance.manage', 'donation.create']);
+
+        $output = $this->makeController()->create();
+
+        $this->assertIsString($output);
+        $this->assertStringContainsString(base_url('funds/create'), $output);
+        $this->assertStringNotContainsString('<form action="' . base_url('donations/store') . '"', $output);
+    }
+
     public function testEditLoadsExistingDonationView(): void
     {
         $coaId  = $this->insertChartAccount('4010', 'Pledge Offerings', 'income', 'tithe');

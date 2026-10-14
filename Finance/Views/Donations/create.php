@@ -8,6 +8,25 @@
     </a>
 </div>
 
+<?php if (empty($funds)): ?>
+    <?php $readinessStatus = (string) ($financeReadiness['status'] ?? 'no_funds'); ?>
+    <?php $readinessMessageKey = match ($readinessStatus) {
+        'no_active_funds' => 'Finance.donationNoActiveFunds',
+        'all_active_funds_locked' => 'Finance.donationAllFundsLocked',
+        default => 'Finance.donationNoFunds',
+    }; ?>
+    <div class="alert alert-warning" role="alert">
+        <h2 class="h5"><?= esc(lang('Finance.donationFundSetupRequired')) ?></h2>
+        <p class="mb-3"><?= esc(lang($readinessMessageKey)) ?></p>
+        <?php if (!empty($canManageFunds)): ?>
+            <a href="<?= base_url('funds/create') ?>" class="btn btn-outline-primary">
+                <i class="bi bi-plus-circle" aria-hidden="true"></i> <?= esc(lang('Finance.fundCreate')) ?>
+            </a>
+        <?php else: ?>
+            <p class="mb-0"><?= esc(lang('Finance.donationContactFundManager')) ?></p>
+        <?php endif; ?>
+    </div>
+<?php else: ?>
 <div class="card">
     <div class="card-body">
         <form action="<?= base_url('donations/store') ?>" method="post">
@@ -139,6 +158,7 @@
         </form>
     </div>
 </div>
+<?php endif; ?>
 
 <script>
     const donationCategory = document.getElementById('category');

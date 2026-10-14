@@ -2,6 +2,7 @@
 
 namespace Tests\Database;
 
+use App\Services\FinanceReadinessService;
 use CodeIgniter\HTTP\RedirectResponse;
 use CodeIgniter\Shield\Auth;
 use CodeIgniter\Shield\Entities\User;
@@ -92,6 +93,53 @@ final class FundsControllerIntegrationTest extends CIUnitTestCase
         $this->setRequestGet(['status' => 'all']);
         $all = $this->makeController()->index();
         $this->assertStringContainsString('Dormant Fund', $all);
+    }
+
+    public function testFinanceReadinessDistinguishesMissingInactiveLockedAndUsableFunds(): void
+    {
+        $this->seedParish(303, 'Parish 303');
+        $this->seedParish(304, 'Parish 304');
+        $this->seedParish(305, 'Parish 305');
+        $this->insertFund(303, 'Inactive Fund', 'unrestricted', null, 0);
+        $this->insertFund(304, 'Locked Fund', 'unrestricted', null, 1, 1);
+        $this->insertFund(305, 'Operating Fund');
+
+        $service = new FinanceReadinessService($this->db);
+
+        $this->assertSame('no_funds', $service->readinessForParish(302)['status']);
+        $this->assertSame('no_active_funds', $service->readinessForParish(303)['status']);
+        $this->assertSame('all_active_funds_locked', $service->readinessForParish(304)['status']);
+        $this->assertSame('ready', $service->readinessForParish(305)['status']);
+    }
+
+    public function testDefaultFundProvisioningIsIdempotentAndAudited(): void
+    {
+        $service = new FinanceReadinessService($this->db);
+
+        $first = $service->provisionDefaultFund(302, $this->userId);
+        $second = $service->provisionDefaultFund(302, $this->userId);
+
+        $this->assertTrue($first['created']);
+        $this->assertFalse($second['created']);
+        $this->assertSame(1, $this->db->table('fund')->where('parish_id', 302)->countAllResults());
+
+        $fund = $this->db->table('fund')->where('parish_id', 302)->get()->getRowArray();
+        $this->assertSame('Unrestricted Operating Fund', $fund['name']);
+        $this->assertSame('unrestricted', $fund['fund_type']);
+        $this->assertSame(1, (int) $fund['is_active']);
+        $this->assertSame(0, (int) $fund['is_locked']);
+        $this->assertSame($this->userId, (int) $fund['created_by']);
+        $this->assertSame(1, $this->db->table('audit_log')->where('action', 'fund.provision_default')->countAllResults());
+    }
+
+    public function testDefaultProvisioningDoesNotOverrideExistingInactiveFund(): void
+    {
+        $this->insertFund(302, 'Archived Fund', 'unrestricted', null, 0);
+
+        $result = (new FinanceReadinessService($this->db))->provisionDefaultFund(302, $this->userId);
+
+        $this->assertFalse($result['created']);
+        $this->assertSame(1, $this->db->table('fund')->where('parish_id', 302)->countAllResults());
     }
 
     // -----------------------------------------------------------------------
