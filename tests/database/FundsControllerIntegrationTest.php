@@ -8,6 +8,7 @@ use CodeIgniter\Shield\Auth;
 use CodeIgniter\Shield\Entities\User;
 use CodeIgniter\Test\CIUnitTestCase;
 use CodeIgniter\Test\DatabaseTestTrait;
+use CodeIgniter\Test\FeatureTestTrait;
 use Config\Services;
 use Tests\Support\Database\CanonicalTestSchema;
 use Tests\Support\Database\SystemSettingsTestHelper;
@@ -22,6 +23,7 @@ use Finance\Controllers\FundFlags as Funds;
 final class FundsControllerIntegrationTest extends CIUnitTestCase
 {
     use DatabaseTestTrait;
+    use FeatureTestTrait;
 
     private int $userId;
 
@@ -40,6 +42,11 @@ final class FundsControllerIntegrationTest extends CIUnitTestCase
         foreach (['parish', 'users', 'profile', 'audit_log'] as $table) {
             CanonicalTestSchema::reset($this->db, $table);
         }
+        foreach (['user_registration_requests', 'user_session', 'user_trusted_device'] as $table) {
+            if ($this->db->tableExists($table)) {
+                $this->db->table($table)->emptyTable();
+            }
+        }
 
         $this->createFinanceTables();
 
@@ -51,6 +58,10 @@ final class FundsControllerIntegrationTest extends CIUnitTestCase
         $this->injectFinanceAuth($this->userId, ['finance.view', 'finance.manage']);
 
         session()->set('selected_parish_id', 301);
+        $this->withRoutes([
+            ['POST', 'funds/lock/(:num)', '\\Finance\\Controllers\\FundFlags::lock/$1'],
+            ['POST', 'funds/deactivate/(:num)', '\\Finance\\Controllers\\FundFlags::deactivate/$1'],
+        ]);
     }
 
     protected function tearDown(): void
@@ -326,6 +337,30 @@ final class FundsControllerIntegrationTest extends CIUnitTestCase
 
         $this->assertSame(1, (int) $this->fundRow($id)['is_active']);
         $this->assertSame(0, $this->db->table('audit_log')->where('action', 'fund.deactivate')->countAllResults());
+    }
+
+    public function testLockRouteBlocksLastUsableFund(): void
+    {
+        $id = $this->insertFund(301, 'Route Only Fund');
+
+        $response = $this->withHeaders([csrf_header() => csrf_hash()])->withBodyFormat('form')
+            ->post('funds/lock/' . $id);
+
+        $response->assertRedirectTo('/funds');
+        $this->assertSame(0, (int) $this->fundRow($id)['is_locked']);
+    }
+
+    public function testDeactivateRouteSucceedsWhenAnotherUsableFundExists(): void
+    {
+        $id = $this->insertFund(301, 'Route Target Fund');
+        $this->insertFund(301, 'Route Backup Fund');
+
+        $response = $this->withHeaders([csrf_header() => csrf_hash()])->withBodyFormat('form')
+            ->post('funds/deactivate/' . $id);
+
+        $response->assertRedirectTo('/funds');
+        $this->assertSame(0, (int) $this->fundRow($id)['is_active']);
+        $this->assertSame(1, $this->db->table('audit_log')->where('action', 'fund.deactivate')->where('entity_id', $id)->countAllResults());
     }
 
     public function testFlagChangesBlockCrossParishAccess(): void

@@ -8,6 +8,7 @@ use CodeIgniter\Shield\Auth;
 use CodeIgniter\Shield\Entities\User;
 use CodeIgniter\Test\CIUnitTestCase;
 use CodeIgniter\Test\DatabaseTestTrait;
+use CodeIgniter\Test\FeatureTestTrait;
 use Config\Services;
 use Tests\Support\Database\CanonicalTestSchema;
 use Tests\Support\Database\SystemSettingsTestHelper;
@@ -23,6 +24,7 @@ use Finance\Controllers\Donations;
 final class DonationEditControllerIntegrationTest extends CIUnitTestCase
 {
     use DatabaseTestTrait;
+    use FeatureTestTrait;
 
     private int $userId;
 
@@ -41,6 +43,11 @@ final class DonationEditControllerIntegrationTest extends CIUnitTestCase
         foreach (['parish', 'users', 'profile', 'audit_log'] as $table) {
             CanonicalTestSchema::reset($this->db, $table);
         }
+        foreach (['user_registration_requests', 'user_session', 'user_trusted_device'] as $table) {
+            if ($this->db->tableExists($table)) {
+                $this->db->table($table)->emptyTable();
+            }
+        }
 
         $this->createFinanceTables();
 
@@ -52,6 +59,10 @@ final class DonationEditControllerIntegrationTest extends CIUnitTestCase
         $this->injectFinanceAuth($this->userId, ['finance.view', 'donation.view', 'donation.create', 'donation.edit', 'donation.delete']);
 
         session()->set('selected_parish_id', 301);
+        $this->withRoutes([
+            ['GET', 'donations/create', '\\Finance\\Controllers\\Donation::create'],
+            ['POST', 'donations/store', '\\Finance\\Controllers\\Donation::store'],
+        ]);
     }
 
     protected function tearDown(): void
@@ -83,6 +94,33 @@ final class DonationEditControllerIntegrationTest extends CIUnitTestCase
         $this->assertIsString($output);
         $this->assertStringContainsString(base_url('funds/create'), $output);
         $this->assertStringNotContainsString('<form action="' . base_url('donations/store') . '"', $output);
+    }
+
+    public function testCreateRouteRendersBlockedStateWithoutUsableFund(): void
+    {
+        $response = $this->get('donations/create');
+
+        $response->assertOK();
+        $response->assertSee('Fund setup required');
+        $this->assertStringNotContainsString('<form action="' . base_url('donations/store') . '"', $response->getBody());
+    }
+
+    public function testStoreRouteRejectsInactiveFund(): void
+    {
+        $coaId = $this->insertChartAccount('4010', 'Pledge Offerings', 'income', 'tithe');
+        $fundId = $this->insertFund(301, 'Inactive Fund', 'unrestricted', null, 0);
+
+        $response = $this->withHeaders([csrf_header() => csrf_hash()])->withBodyFormat('form')
+            ->post('donations/store', [
+                'date'             => '2099-09-15',
+                'amount'           => '150.00',
+                'fund_id'          => $fundId,
+                'chart_account_id' => $coaId,
+            ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHas('error', lang('Treasurer.validFundRequired'));
+        $this->assertSame(0, $this->db->table('donation')->countAllResults());
     }
 
     public function testEditLoadsExistingDonationView(): void
