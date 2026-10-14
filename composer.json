@@ -49,7 +49,12 @@
 		"sort-packages": true
 	},
 	"scripts": {
-		"test": "phpunit",
+		"test": "phpunit --no-coverage",
+		"phpstan": "phpstan analyse",
+		"check": [
+			"@phpstan",
+			"@test"
+		],
 		"post-install-cmd": [
 			"@chmod-writable"
 		],
