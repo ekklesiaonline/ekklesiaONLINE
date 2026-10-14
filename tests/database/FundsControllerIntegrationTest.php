@@ -341,6 +341,19 @@ final class FundsControllerIntegrationTest extends CIUnitTestCase
         $this->assertStringContainsString((string) $coaId, (string) $audit['new_values']);
     }
 
+    public function testStoreRejectsNonIncomeDefaultAccount(): void
+    {
+        $expenseAccountId = $this->insertChartAccount('7010', 'Program Expense', 'expense');
+
+        $this->makeController('POST', [
+            'name'             => 'Invalid Default Fund',
+            'fund_type'        => 'unrestricted',
+            'chart_account_id' => $expenseAccountId,
+        ])->store();
+
+        $this->assertSame(0, $this->db->table('fund')->where('name', 'Invalid Default Fund')->countAllResults());
+    }
+
     public function testUpdateWithChartAccountIdPersistsAndAudits(): void
     {
         $id    = $this->insertFund(301, 'Unlinked Fund');

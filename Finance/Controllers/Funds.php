@@ -136,7 +136,7 @@ class Funds extends BaseController
         return view('Finance\Views\Funds/form', array_merge($this->getCommonViewData(lang('Finance.fundCreate')), [
             'fund'             => null,
             'typeChangeLocked' => false,
-            'chartAccounts'    => model(\App\Models\ChartOfAccountModel::class)->getActiveByType(),
+            'chartAccounts'    => model(\App\Models\ChartOfAccountModel::class)->getActiveByType('income'),
         ]));
     }
 
@@ -207,7 +207,7 @@ class Funds extends BaseController
         return view('Finance\Views\Funds/form', array_merge($this->getCommonViewData(lang('Finance.fundEdit')), [
             'fund'             => $fund,
             'typeChangeLocked' => $this->hasTransactions((int) $fund['id']),
-            'chartAccounts'    => model(\App\Models\ChartOfAccountModel::class)->getActiveByType(),
+            'chartAccounts'    => model(\App\Models\ChartOfAccountModel::class)->getActiveByType('income'),
         ]));
     }
 
@@ -304,6 +304,17 @@ class Funds extends BaseController
     {
         if ($payload['fund_type'] !== 'unrestricted' && $payload['restriction_purpose'] === null) {
             return ['restriction_purpose' => lang('Finance.fundPurposeRequired')];
+        }
+
+        if ($payload['chart_account_id'] !== null) {
+            $chartAccount = model(\App\Models\ChartOfAccountModel::class)
+                ->where('id', (int) $payload['chart_account_id'])
+                ->where('is_active', 1)
+                ->where('account_type', 'income')
+                ->first();
+            if (! is_array($chartAccount)) {
+                return ['chart_account_id' => lang('Finance.fundIncomeAccountRequired')];
+            }
         }
 
         $builder = $this->fundModel->builder()

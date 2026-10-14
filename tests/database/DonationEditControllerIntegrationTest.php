@@ -215,6 +215,44 @@ final class DonationEditControllerIntegrationTest extends CIUnitTestCase
         $this->assertSame('Roof restoration', $row['restriction_purpose']);
     }
 
+    public function testUpdateUsesFundDefaultIncomeAccountWhenAccountIsOmitted(): void
+    {
+        $defaultAccount = $this->insertChartAccount('4010', 'Pledge Offerings', 'income', 'tithe');
+        $fund = $this->insertFund(301, 'General Fund');
+        $this->db->table('fund')->where('id', $fund)->update(['chart_account_id' => $defaultAccount]);
+        $donId = $this->insertDonation(301, $fund, '100.00');
+
+        $this->makeController('POST', [
+            'date'    => '2026-09-15',
+            'amount'  => '100.00',
+            'fund_id' => $fund,
+        ])->update($donId);
+
+        $row = $this->db->table('donation')->where('id', $donId)->get()->getRowArray();
+        $this->assertSame($defaultAccount, (int) $row['chart_account_id']);
+        $this->assertSame('tithe', $row['category']);
+    }
+
+    public function testUpdateAllowsExplicitActiveIncomeAccountOverride(): void
+    {
+        $defaultAccount = $this->insertChartAccount('4010', 'Pledge Offerings', 'income', 'tithe');
+        $overrideAccount = $this->insertChartAccount('4020', 'Plate Offerings', 'income', 'offering');
+        $fund = $this->insertFund(301, 'General Fund');
+        $this->db->table('fund')->where('id', $fund)->update(['chart_account_id' => $defaultAccount]);
+        $donId = $this->insertDonation(301, $fund, '100.00', $defaultAccount);
+
+        $this->makeController('POST', [
+            'date'             => '2026-09-15',
+            'amount'           => '100.00',
+            'fund_id'          => $fund,
+            'chart_account_id' => $overrideAccount,
+        ])->update($donId);
+
+        $row = $this->db->table('donation')->where('id', $donId)->get()->getRowArray();
+        $this->assertSame($overrideAccount, (int) $row['chart_account_id']);
+        $this->assertSame('offering', $row['category']);
+    }
+
     public function testUpdateBlocksCrossParishAccess(): void
     {
         $coaId   = $this->insertChartAccount('4010', 'Pledge Offerings', 'income', 'tithe');

@@ -41,7 +41,7 @@ $currentMethod      = (string) old('payment_method', $donation['payment_method']
                         <select class="form-select" id="fund_id" name="fund_id" required>
                             <option value=""><?= lang('Finance.selectFund') ?></option>
                             <?php foreach (($funds ?? []) as $fund): ?>
-                                <option value="<?= (int) $fund['id'] ?>" <?= $currentFundId === (int) $fund['id'] ? 'selected' : '' ?>>
+                                <option value="<?= (int) $fund['id'] ?>" data-default-chart-account="<?= (int) ($fund['chart_account_id'] ?? 0) ?>" <?= $currentFundId === (int) $fund['id'] ? 'selected' : '' ?>>
                                     <?php $fundType = (string) ($fund['fund_type'] ?? 'unrestricted'); ?>
                                     <?php $fundTypeLabelMap = ['restricted' => lang('Treasurer.fundTypeRestricted'), 'permanent' => lang('Treasurer.fundTypePermanent'), 'unrestricted' => lang('Treasurer.fundTypeUnrestricted')]; ?>
                                     <?= esc(fund_name_label((string) ($fund['name'] ?? ''))) ?> (<?= esc($fundTypeLabelMap[$fundType] ?? ucfirst($fundType)) ?>)
@@ -151,7 +151,26 @@ $currentMethod      = (string) old('payment_method', $donation['payment_method']
 
 <script>
     const donationCategory = document.getElementById('category');
+    const donationFund = document.getElementById('fund_id');
     const donationChartAccount = document.getElementById('chart_account_id');
+
+    function applyFundDefault(force = false) {
+        if (!donationFund || !donationChartAccount || (!force && donationChartAccount.value)) {
+            return;
+        }
+
+        const defaultAccountId = donationFund.selectedOptions[0]?.dataset.defaultChartAccount ?? '';
+        donationChartAccount.value = defaultAccountId && donationChartAccount.querySelector(`option[value="${defaultAccountId}"]`) ? defaultAccountId : '';
+        const selectedAccount = donationChartAccount.selectedOptions[0];
+        if (selectedAccount?.dataset.category && donationCategory) {
+            donationCategory.value = selectedAccount.dataset.category;
+        }
+    }
+
+    donationFund?.addEventListener('change', function() {
+        applyFundDefault(true);
+    });
+
     function syncDonationAccount(force = false) {
         if (!donationCategory || !donationChartAccount) {
             return;
@@ -172,6 +191,7 @@ $currentMethod      = (string) old('payment_method', $donation['payment_method']
         syncDonationAccount(true);
     });
 
+    applyFundDefault();
     syncDonationAccount();
 </script>
 

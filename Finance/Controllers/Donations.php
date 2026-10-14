@@ -162,16 +162,15 @@ class Donations extends BaseController
             return redirect()->back()->withInput()->with('error', lang('App.errorNoParishScope'));
         }
 
-        $chartAccount = $this->donationService->findIncomeAccount((int) $this->request->getPost('chart_account_id'));
-
-        if ($chartAccount === null) {
-            return redirect()->back()->withInput()->with('error', lang('Treasurer.validIncomeAccountRequired'));
-        }
-
         $fundId = (int) $this->request->getPost('fund_id');
         $fund = $this->donationService->findUsableFund($fundId, $attributionParishId);
         if ($fund === null) {
             return redirect()->back()->withInput()->with('error', lang('Treasurer.validFundRequired'));
+        }
+
+        $chartAccount = $this->donationService->resolveIncomeAccount($fund, (int) $this->request->getPost('chart_account_id'));
+        if ($chartAccount === null) {
+            return redirect()->back()->withInput()->with('error', lang('Treasurer.validIncomeAccountRequired'));
         }
 
         $donationDate = (string) $this->request->getPost('date');
@@ -290,11 +289,6 @@ class Donations extends BaseController
             return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
         }
 
-        $chartAccount = $this->donationService->findIncomeAccount((int) $this->request->getPost('chart_account_id'));
-        if ($chartAccount === null) {
-            return redirect()->back()->withInput()->with('error', lang('Treasurer.validIncomeAccountRequired'));
-        }
-
         $fundId = (int) $this->request->getPost('fund_id');
         $fund = $this->donationService->findUsableFund($fundId, $parishId);
         if ($fund === null && (int) ($donation['fund_id'] ?? 0) === $fundId) {
@@ -303,6 +297,11 @@ class Donations extends BaseController
         }
         if ($fund === null) {
             return redirect()->back()->withInput()->with('error', lang('Treasurer.validFundRequired'));
+        }
+
+        $chartAccount = $this->donationService->resolveIncomeAccount($fund, (int) $this->request->getPost('chart_account_id'));
+        if ($chartAccount === null) {
+            return redirect()->back()->withInput()->with('error', lang('Treasurer.validIncomeAccountRequired'));
         }
 
         $newDate = (string) $this->request->getPost('date');

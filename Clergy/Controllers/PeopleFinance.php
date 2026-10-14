@@ -79,7 +79,7 @@ class PeopleFinance extends BaseController
             return $this->jsonResponse($this->apiErrorPayload(lang('Treasurer.validFundRequired'), 400, 'INVALID_FUND'), 400);
         }
 
-        $chartAccount = $this->donationService->findIncomeAccount((int) $this->request->getPost('chart_account_id'));
+        $chartAccount = $this->donationService->resolveIncomeAccount($fund, (int) $this->request->getPost('chart_account_id'));
 
         if ($chartAccount === null) {
             return $this->jsonResponse($this->apiErrorPayload(lang('Treasurer.validIncomeAccountRequired'), 400, 'INVALID_CHART_ACCOUNT'), 400);
@@ -177,7 +177,7 @@ class PeopleFinance extends BaseController
             return $this->jsonResponse($this->apiErrorPayload(lang('Treasurer.validFundRequired'), 400, 'INVALID_FUND'), 400);
         }
 
-        $chartAccount = $this->donationService->findIncomeAccount((int) $this->request->getPost('chart_account_id'));
+        $chartAccount = $this->donationService->resolveIncomeAccount($fund, (int) $this->request->getPost('chart_account_id'));
 
         if ($chartAccount === null) {
             return $this->jsonResponse($this->apiErrorPayload(lang('Treasurer.validIncomeAccountRequired'), 400, 'INVALID_CHART_ACCOUNT'), 400);

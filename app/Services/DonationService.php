@@ -40,7 +40,7 @@ class DonationService
             'amount'           => 'required|decimal|greater_than[0]',
             'fund_id'          => 'required|is_not_unique[fund.id]',
             'category'         => 'permit_empty|max_length[100]',
-            'chart_account_id' => 'required|is_not_unique[chart_of_accounts.id]',
+            'chart_account_id' => 'permit_empty|is_not_unique[chart_of_accounts.id]',
             'payment_method'   => 'permit_empty|max_length[50]',
             'notes'            => 'permit_empty|max_length[500]',
         ];
@@ -89,6 +89,17 @@ class DonationService
             ->first();
 
         return is_array($account) ? $account : null;
+    }
+
+    public function resolveIncomeAccount(array $fund, int $requestedChartAccountId): ?array
+    {
+        if ($requestedChartAccountId > 0) {
+            return $this->findIncomeAccount($requestedChartAccountId);
+        }
+
+        $defaultChartAccountId = (int) ($fund['chart_account_id'] ?? 0);
+
+        return $defaultChartAccountId > 0 ? $this->findIncomeAccount($defaultChartAccountId) : null;
     }
 
     /**
