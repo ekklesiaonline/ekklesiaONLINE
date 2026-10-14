@@ -33,7 +33,8 @@
                                 <option value="<?= (int) $fund['id'] ?>" <?= (int) ($expense['fund_id'] ?? 0) === (int) $fund['id'] ? 'selected' : '' ?>>
                                     <?php $editFundType = (string) ($fund['fund_type'] ?? 'unrestricted'); ?>
                                     <?php $editFundTypeLabelMap = ['restricted' => lang('Treasurer.fundTypeRestricted'), 'permanent' => lang('Treasurer.fundTypePermanent'), 'unrestricted' => lang('Treasurer.fundTypeUnrestricted')]; ?>
-                                    <?= esc(fund_name_label((string) ($fund['name'] ?? ''))) ?> (<?= esc($editFundTypeLabelMap[$editFundType] ?? ucfirst($editFundType)) ?>)
+                                    <?php $fundStatusSuffix = (int) ($fund['is_active'] ?? 0) !== 1 ? ' — ' . lang('Finance.fundStatusInactive') : ((int) ($fund['is_locked'] ?? 0) === 1 ? ' — ' . lang('Finance.fundLockedBadge') : ''); ?>
+                                    <?= esc(fund_name_label((string) ($fund['name'] ?? ''))) ?> (<?= esc($editFundTypeLabelMap[$editFundType] ?? ucfirst($editFundType)) ?>)<?= esc($fundStatusSuffix) ?>
                                 </option>
                             <?php endforeach; ?>
                         </select>

@@ -35,9 +35,16 @@ $fundTypeColors = [
         </a>
     <?php endif; ?>
     <?php if (!empty($can_manage_funds)): ?>
-        <a href="<?= base_url('funds') ?>" class="btn btn-outline-secondary btn-sm">
-            <i class="bi bi-piggy-bank" aria-hidden="true"></i> <?= esc(lang('Finance.fundsTitle')) ?>
-        </a>
+        <?php if (($finance_readiness['status'] ?? '') === 'no_funds'): ?>
+            <form method="post" action="<?= base_url('funds/setup') ?>">
+                <?= csrf_field() ?>
+                <button type="submit" class="btn btn-outline-primary btn-sm"><i class="bi bi-gear" aria-hidden="true"></i> <?= esc(lang('Finance.setupParishFinance')) ?></button>
+            </form>
+        <?php else: ?>
+            <a href="<?= base_url('funds') ?>" class="btn btn-outline-secondary btn-sm">
+                <i class="bi bi-piggy-bank" aria-hidden="true"></i> <?= esc(lang('Finance.fundsTitle')) ?>
+            </a>
+        <?php endif; ?>
     <?php endif; ?>
     <?php if (!empty($can_manage_banking)): ?>
         <a href="<?= base_url('banking') ?>" class="btn btn-outline-secondary btn-sm">

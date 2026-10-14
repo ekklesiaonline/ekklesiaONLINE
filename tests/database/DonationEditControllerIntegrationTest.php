@@ -92,7 +92,7 @@ final class DonationEditControllerIntegrationTest extends CIUnitTestCase
         $output = $this->makeController()->create();
 
         $this->assertIsString($output);
-        $this->assertStringContainsString(base_url('funds/create'), $output);
+        $this->assertStringContainsString(base_url('funds/setup'), $output);
         $this->assertStringNotContainsString('<form action="' . base_url('donations/store') . '"', $output);
     }
 

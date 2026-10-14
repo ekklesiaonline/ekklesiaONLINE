@@ -88,18 +88,43 @@
     const addDonationBtn = document.getElementById('addDonationBtn');
     const donationModalTitle = document.getElementById('donationModalLabel');
     const donationSaveBtn = document.getElementById('saveDonationBtn');
-    const isRestrictedChk = document.getElementById('d_is_restricted');
-    const restrictionRow = document.getElementById('d_restriction_purpose_row');
+    const donationFundSelect = document.getElementById('d_fund_id');
+    const fundRestrictionText = document.getElementById('d_fund_restriction_text');
 
-    function toggleRestrictionPurpose() {
-        if (restrictionRow) {
-            restrictionRow.style.display = isRestrictedChk && isRestrictedChk.checked ? '' : 'none';
+    function syncFundRestrictionSummary() {
+        if (!fundRestrictionText || !donationFundSelect) return;
+        const option = donationFundSelect.selectedOptions[0];
+        if (!option || !option.value) {
+            fundRestrictionText.textContent = '<?= esc(lang('Finance.selectFundRestrictionHelp'), 'js') ?>';
+            return;
+        }
+
+        const type = option.dataset.fundType || 'unrestricted';
+        const purpose = option.dataset.restrictionPurpose || '';
+        const labels = {
+            unrestricted: '<?= esc(lang('Treasurer.fundTypeUnrestricted'), 'js') ?>',
+            restricted: '<?= esc(lang('Treasurer.fundTypeRestricted'), 'js') ?>',
+            permanent: '<?= esc(lang('Treasurer.fundTypePermanent'), 'js') ?>',
+        };
+        fundRestrictionText.textContent = purpose ? `${labels[type] || type}: ${purpose}` : (labels[type] || type);
+    }
+
+    function applyDonationFundDefault() {
+        const accountSelect = document.getElementById('d_chart_account_id');
+        const option = donationFundSelect?.selectedOptions[0];
+        if (!accountSelect || !option) return;
+        const defaultAccountId = option.dataset.defaultChartAccount || '';
+        accountSelect.value = defaultAccountId && accountSelect.querySelector(`option[value="${defaultAccountId}"]`) ? defaultAccountId : '';
+        const selectedAccount = accountSelect.selectedOptions[0];
+        if (selectedAccount?.dataset.category) {
+            setFieldValue('d_category', selectedAccount.dataset.category);
         }
     }
-    if (isRestrictedChk) {
-        isRestrictedChk.addEventListener('change', toggleRestrictionPurpose);
-        toggleRestrictionPurpose();
-    }
+
+    donationFundSelect?.addEventListener('change', function() {
+        syncFundRestrictionSummary();
+        applyDonationFundDefault();
+    });
 
     function syncDonationChartAccount() {
         const category = document.getElementById('d_category')?.value || '';
@@ -127,7 +152,7 @@
         }
         donationForm.action = '<?= base_url('people/donation/' . $profileId) ?>';
         syncDonationChartAccount();
-        toggleRestrictionPurpose();
+        syncFundRestrictionSummary();
     }
 
     if (addDonationBtn) {
@@ -153,14 +178,13 @@
             setFieldValue('d_chart_account_id', donation.chart_account_id);
             setFieldValue('d_payment_method', donation.payment_method);
             setFieldValue('d_notes', donation.notes);
-            setFieldValue('d_is_restricted', donation.is_restricted);
-            setFieldValue('d_restriction_purpose', donation.restriction_purpose);
+            syncFundRestrictionSummary();
 
             donationForm.action = '<?= base_url('people/donation/') ?>' + donationId + '/update';
             if (donationModalTitle) {
                 donationModalTitle.textContent = '<?= esc(lang('App.edit'), 'js') ?> <?= esc(lang('Finance.donationsTitle'), 'js') ?>';
             }
-            toggleRestrictionPurpose();
+            syncFundRestrictionSummary();
 
             const modal = getModalInstance(donationModalEl);
             if (modal) modal.show();

@@ -173,6 +173,10 @@ class PeopleFinance extends BaseController
 
         $fundId = (int) $this->request->getPost('fund_id');
         $fund = $this->donationService->findUsableFund($fundId, $parishId);
+        if ($fund === null && (int) ($donation['fund_id'] ?? 0) === $fundId) {
+            $existingFund = model(\App\Models\FundModel::class)->find($fundId);
+            $fund = is_array($existingFund) && (int) ($existingFund['parish_id'] ?? 0) === $parishId ? $existingFund : null;
+        }
         if ($fund === null) {
             return $this->jsonResponse($this->apiErrorPayload(lang('Treasurer.validFundRequired'), 400, 'INVALID_FUND'), 400);
         }

@@ -555,11 +555,26 @@ class People extends BaseController
             : null;
         $data['can_assign_groups'] = auth()->user()->can('groups.assign');
 
+        $canViewDonations = auth()->user()->can('donation.view');
+        $donations = ($userId > 0 && $canViewDonations)
+            ? (new \App\Models\DonationModel())->getMemberDonationsForParish($userId, $parishId)
+            : [];
+        $funds = $canViewDonations ? (new \App\Models\FundModel())->getUsableParishFunds($parishId) : [];
+        $listedFundIds = array_map(static fn (array $fund): int => (int) $fund['id'], $funds);
+        foreach (array_unique(array_map(static fn (array $donation): int => (int) ($donation['fund_id'] ?? 0), $donations)) as $historicalFundId) {
+            if ($historicalFundId <= 0 || in_array($historicalFundId, $listedFundIds, true)) {
+                continue;
+            }
+            $historicalFund = (new \App\Models\FundModel())->find($historicalFundId);
+            if (is_array($historicalFund) && (int) ($historicalFund['parish_id'] ?? 0) === $parishId) {
+                $funds[] = $historicalFund;
+                $listedFundIds[] = $historicalFundId;
+            }
+        }
+
         return view('Clergy\Views\People/view', array_merge($data, [
             'profile' => $profile,
-            'donations' => ($userId > 0 && auth()->user()->can('donation.view'))
-                ? (new \App\Models\DonationModel())->getMemberDonationsForParish($userId, $parishId)
-                : [],
+            'donations' => $donations,
             'pledges' => ($userId > 0 && (auth()->user()->can('finance.manage') || auth()->user()->can('annual_pledge.manage')))
                 ? (new \App\Models\AnnualPledgeModel())->getMemberPledges($userId, $parishId)
                 : [],
@@ -580,9 +595,7 @@ class People extends BaseController
                     ->get()
                     ->getResultArray()
                 : [],
-            'funds' => auth()->user()->can('donation.view')
-                ? (new \App\Models\FundModel())->getParishFunds($parishId)
-                : [],
+            'funds' => $funds,
             'chart_accounts' => auth()->user()->can('donation.view')
                 ? (new \App\Models\ChartOfAccountModel())->getGroupedActiveAccountsForType('income')
                 : [],

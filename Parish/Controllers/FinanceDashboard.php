@@ -211,6 +211,7 @@ class FinanceDashboard extends BaseController
             'total_cash_balance'    => $totalCashBalance,
             'funds_summary'         => $fundsSummary,
             'total_in_funds'        => $totalInFunds,
+            'finance_readiness'     => (new \App\Services\FinanceReadinessService())->readinessForParish($parishId),
             'can_record_donation'   => $canRecordDonation,
             'can_record_expense'    => $canRecordExpense,
             'can_view_donations'    => $canViewDonations,

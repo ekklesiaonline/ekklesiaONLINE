@@ -71,6 +71,7 @@ $routes->group('', ['filter' => 'session'], function ($routes) {
         $routes->get('export', '\\Finance\\Controllers\\FundExports::export');
         $routes->get('create', '\\Finance\\Controllers\\Funds::create', ['filter' => 'permission:finance.manage']);
         $routes->post('store', '\\Finance\\Controllers\\Funds::store', ['filter' => 'permission:finance.manage']);
+        $routes->post('setup', '\\Finance\\Controllers\\Funds::setup', ['filter' => 'permission:finance.manage']);
         $routes->get('edit/(:num)', '\\Finance\\Controllers\\Funds::edit/$1', ['filter' => 'permission:finance.manage']);
         $routes->post('update/(:num)', '\\Finance\\Controllers\\Funds::update/$1', ['filter' => 'permission:finance.manage']);
         $routes->post('lock/(:num)', '\\Finance\\Controllers\\FundFlags::lock/$1', ['filter' => 'permission:finance.manage']);

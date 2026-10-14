@@ -61,6 +61,7 @@ final class FundsControllerIntegrationTest extends CIUnitTestCase
         $this->withRoutes([
             ['POST', 'funds/lock/(:num)', '\\Finance\\Controllers\\FundFlags::lock/$1'],
             ['POST', 'funds/deactivate/(:num)', '\\Finance\\Controllers\\FundFlags::deactivate/$1'],
+            ['POST', 'funds/setup', '\\Finance\\Controllers\\Funds::setup'],
         ]);
     }
 
@@ -151,6 +152,30 @@ final class FundsControllerIntegrationTest extends CIUnitTestCase
 
         $this->assertFalse($result['created']);
         $this->assertSame(1, $this->db->table('fund')->where('parish_id', 302)->countAllResults());
+    }
+
+    public function testSetupRouteProvisionsOneDefaultFundAndRedirectsToEdit(): void
+    {
+        $response = $this->withHeaders([csrf_header() => csrf_hash()])->withBodyFormat('form')
+            ->post('funds/setup');
+
+        $fund = $this->db->table('fund')->where('parish_id', 301)->get()->getRowArray();
+        $this->assertNotNull($fund);
+        $response->assertRedirectTo('/funds/edit/' . (int) $fund['id']);
+        $this->assertSame('Unrestricted Operating Fund', $fund['name']);
+        $this->assertSame(1, $this->db->table('audit_log')->where('action', 'fund.provision_default')->countAllResults());
+    }
+
+    public function testSetupRouteDoesNotAddFundWhenAnyFundExists(): void
+    {
+        $this->insertFund(301, 'Existing Inactive Fund', 'unrestricted', null, 0);
+
+        $response = $this->withHeaders([csrf_header() => csrf_hash()])->withBodyFormat('form')
+            ->post('funds/setup');
+
+        $response->assertRedirectTo('/funds');
+        $response->assertSessionHas('error', lang('Finance.financeSetupExistingFunds'));
+        $this->assertSame(1, $this->db->table('fund')->where('parish_id', 301)->countAllResults());
     }
 
     // -----------------------------------------------------------------------

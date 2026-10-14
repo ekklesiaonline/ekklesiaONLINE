@@ -25,7 +25,12 @@
                             <select class="form-select" id="d_fund_id" name="fund_id" required>
                                 <option value=""><?= lang('Finance.selectFund') ?></option>
                                 <?php foreach (($funds ?? []) as $fund): ?>
-                                    <option value="<?= (int) $fund['id'] ?>" data-fund-type="<?= esc($fund['fund_type'] ?? 'unrestricted', 'attr') ?>">
+                                    <option value="<?= (int) $fund['id'] ?>"
+                                        data-fund-type="<?= esc($fund['fund_type'] ?? 'unrestricted', 'attr') ?>"
+                                        data-restriction-purpose="<?= esc($fund['restriction_purpose'] ?? '', 'attr') ?>"
+                                        data-default-chart-account="<?= (int) ($fund['chart_account_id'] ?? 0) ?>"
+                                        data-fund-active="<?= (int) ($fund['is_active'] ?? 0) ?>"
+                                        data-fund-locked="<?= (int) ($fund['is_locked'] ?? 0) ?>">
                                         <?= esc($fund['name'] ?? '') ?>
                                     </option>
                                 <?php endforeach; ?>
@@ -74,14 +79,10 @@
                             <textarea class="form-control" id="d_notes" name="notes" rows="3"></textarea>
                         </div>
                         <div class="col-12">
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="d_is_restricted" name="is_restricted" value="1">
-                                <label class="form-check-label" for="d_is_restricted"><?= lang('Finance.isRestricted') ?></label>
+                            <div class="border rounded p-3 bg-body-tertiary" id="d_fund_restriction_summary" role="status">
+                                <div class="fw-semibold" id="d_fund_restriction_label"><?= esc(lang('Finance.fundRestrictionSummary')) ?></div>
+                                <div class="small text-body-secondary" id="d_fund_restriction_text"><?= esc(lang('Finance.selectFundRestrictionHelp')) ?></div>
                             </div>
-                        </div>
-                        <div class="col-12" id="d_restriction_purpose_row">
-                            <label for="d_restriction_purpose" class="form-label"><?= lang('Finance.restrictionPurpose') ?></label>
-                            <input type="text" class="form-control" id="d_restriction_purpose" name="restriction_purpose">
                         </div>
                     </div>
                 </div>

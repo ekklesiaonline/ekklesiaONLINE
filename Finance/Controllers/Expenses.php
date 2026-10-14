@@ -4,15 +4,19 @@ namespace Finance\Controllers;
 
 use App\Controllers\BaseController;
 use App\Services\AccountingJournalSyncService;
+use App\Services\ExpenseService;
+use App\Services\FinanceReadinessService;
 
 class Expenses extends BaseController
 {
     protected $expenseModel;
     protected $fundModel;
+    protected ExpenseService $expenseService;
 
     public function __construct()
     {
         $this->expenseModel = model('ExpenseModel');
+        $this->expenseService = new ExpenseService($this->expenseModel);
     }
 
     protected function getFundModel()
@@ -81,11 +85,18 @@ class Expenses extends BaseController
             return $redirect;
         }
 
+        $parishId = (int) ($this->getOperationalParishId() ?? 0);
+        if ($parishId <= 0) {
+            return redirect()->to('/dashboard')->with('error', lang('App.errorNoParishScope'));
+        }
+
         $chartOfAccountModel = model('ChartOfAccountModel');
-        $funds = $this->getFundModel()->getParishFunds((int) ($this->getOperationalParishId() ?? 0));
+        $funds = $this->getFundModel()->getUsableParishFunds($parishId);
 
         return view('Finance\Views\Expenses/create', array_merge($this->getCommonViewData(lang('Finance.recordExpense')), [
             'funds' => $funds,
+            'financeReadiness' => (new FinanceReadinessService())->readinessForParish($parishId),
+            'canManageFunds' => auth()->user()->can('finance.manage'),
             'chartAccounts' => $chartOfAccountModel->getActiveByType('expense'),
             'groupedChartAccounts' => $chartOfAccountModel->getGroupedActiveAccountsForType('expense'),
         ]));
@@ -104,43 +115,25 @@ class Expenses extends BaseController
             return $redirect;
         }
 
-        $rules = [
-            'date' => 'required|valid_date',
-            'amount' => 'required|decimal',
-            'fund_id' => 'required|is_not_unique[fund.id]',
-            'category' => 'permit_empty|max_length[100]',
-            'description' => 'required|min_length[3]',
-            'chart_account_id' => 'required|is_not_unique[chart_of_accounts.id]',
-        ];
-
-        if (!$this->validate($rules)) {
+        if (!$this->validate($this->expenseService->validationRules())) {
             return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
         }
 
         $attributionPolicy = self::ATTRIBUTION_POLICY_OPERATIONAL_DEFAULT;
-        $attributionParishId = (int) ($this->resolveAttributionParishId($attributionPolicy) ?? 0);
+        $attributionParishId = (int) ($this->getOperationalParishId() ?? 0);
         if ($attributionParishId <= 0) {
             return redirect()->back()->withInput()->with('error', lang('App.errorNoParishScope'));
         }
 
-        $chartAccount = model('ChartOfAccountModel')
-            ->where('id', (int) $this->request->getPost('chart_account_id'))
-            ->where('is_active', 1)
-            ->where('account_type', 'expense')
-            ->first();
-
-        if (empty($chartAccount)) {
-            return redirect()->back()->withInput()->with('error', lang('Treasurer.validExpenseAccountRequired'));
-        }
-
         $fundId = (int) $this->request->getPost('fund_id');
-        $fund = $this->getFundModel()->find($fundId);
-        if (!$fund || (int) ($fund['parish_id'] ?? 0) !== $attributionParishId) {
+        $fund = $this->expenseService->findUsableFund($fundId, $attributionParishId);
+        if ($fund === null) {
             return redirect()->back()->withInput()->with('error', lang('Treasurer.validFundRequired'));
         }
 
-        if ((int) ($fund['is_locked'] ?? 0) === 1) {
-            return redirect()->back()->withInput()->with('error', lang('Treasurer.fundLocked'));
+        $chartAccount = $this->expenseService->findExpenseAccount((int) $this->request->getPost('chart_account_id'));
+        if ($chartAccount === null) {
+            return redirect()->back()->withInput()->with('error', lang('Treasurer.validExpenseAccountRequired'));
         }
 
         $expenseDate = (string) $this->request->getPost('date');
@@ -228,14 +221,25 @@ class Expenses extends BaseController
             return $redirect;
         }
 
-        $expense = $this->expenseModel->find($id);
+        $parishId = (int) ($this->getOperationalParishId() ?? 0);
+        if ($parishId <= 0) {
+            return redirect()->to('/dashboard')->with('error', lang('App.errorNoParishScope'));
+        }
 
-        if (!$expense || $expense['parish_id'] != $this->getOperationalParishId()) {
+        $expense = $this->expenseService->findInParish((int) $id, $parishId);
+        if ($expense === null) {
             return redirect()->to('/expenses')->with('error', lang('Treasurer.expenseNotFound'));
         }
 
         $chartOfAccountModel = model('ChartOfAccountModel');
-        $funds = $this->getFundModel()->getParishFunds((int) ($this->getOperationalParishId() ?? 0));
+        $funds = $this->getFundModel()->getUsableParishFunds($parishId);
+        $currentFundId = (int) ($expense['fund_id'] ?? 0);
+        if ($currentFundId > 0 && ! in_array($currentFundId, array_map(static fn (array $fund): int => (int) $fund['id'], $funds), true)) {
+            $currentFund = $this->getFundModel()->find($currentFundId);
+            if (is_array($currentFund) && (int) ($currentFund['parish_id'] ?? 0) === $parishId) {
+                $funds[] = $currentFund;
+            }
+        }
 
         return view('Finance\Views\Expenses/edit', array_merge($this->getCommonViewData(lang('Treasurer.editExpenseTitle')), [
             'expense' => $expense,
@@ -258,43 +262,33 @@ class Expenses extends BaseController
             return $redirect;
         }
 
-        $expense = $this->expenseModel->find($id);
+        $parishId = (int) ($this->getOperationalParishId() ?? 0);
+        if ($parishId <= 0) {
+            return redirect()->to('/dashboard')->with('error', lang('App.errorNoParishScope'));
+        }
 
-        if (!$expense || $expense['parish_id'] != $this->getOperationalParishId()) {
+        $expense = $this->expenseService->findInParish((int) $id, $parishId);
+        if ($expense === null) {
             return redirect()->to('/expenses')->with('error', lang('Treasurer.expenseNotFound'));
         }
 
-        $rules = [
-            'date' => 'required|valid_date',
-            'amount' => 'required|decimal',
-            'fund_id' => 'required|is_not_unique[fund.id]',
-            'category' => 'permit_empty|max_length[100]',
-            'description' => 'required|min_length[3]',
-            'chart_account_id' => 'required|is_not_unique[chart_of_accounts.id]',
-        ];
-
-        if (!$this->validate($rules)) {
+        if (!$this->validate($this->expenseService->validationRules())) {
             return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
         }
 
-        $chartAccount = model('ChartOfAccountModel')
-            ->where('id', (int) $this->request->getPost('chart_account_id'))
-            ->where('is_active', 1)
-            ->where('account_type', 'expense')
-            ->first();
-
-        if (empty($chartAccount)) {
-            return redirect()->back()->withInput()->with('error', lang('Treasurer.validExpenseAccountRequired'));
-        }
-
         $fundId = (int) $this->request->getPost('fund_id');
-        $fund = $this->getFundModel()->find($fundId);
-        if (!$fund || (int) ($fund['parish_id'] ?? 0) !== (int) ($this->getOperationalParishId() ?? 0)) {
+        $fund = $this->expenseService->findUsableFund($fundId, $parishId);
+        if ($fund === null && (int) ($expense['fund_id'] ?? 0) === $fundId) {
+            $existingFund = $this->getFundModel()->find($fundId);
+            $fund = is_array($existingFund) && (int) ($existingFund['parish_id'] ?? 0) === $parishId ? $existingFund : null;
+        }
+        if ($fund === null) {
             return redirect()->back()->withInput()->with('error', lang('Treasurer.validFundRequired'));
         }
 
-        if ((int) ($fund['is_locked'] ?? 0) === 1 && (int) ($expense['fund_id'] ?? 0) !== $fundId) {
-            return redirect()->back()->withInput()->with('error', lang('Treasurer.fundLocked'));
+        $chartAccount = $this->expenseService->findExpenseAccount((int) $this->request->getPost('chart_account_id'));
+        if ($chartAccount === null) {
+            return redirect()->back()->withInput()->with('error', lang('Treasurer.validExpenseAccountRequired'));
         }
 
         $attributionParishId = (int) ($expense['parish_id'] ?? 0);

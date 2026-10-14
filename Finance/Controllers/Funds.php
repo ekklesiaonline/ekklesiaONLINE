@@ -4,6 +4,7 @@ namespace Finance\Controllers;
 
 use App\Controllers\BaseController;
 use App\Models\FundModel;
+use App\Services\FinanceReadinessService;
 
 /**
  * Parish fund management: list with balances, create, edit, activate/deactivate
@@ -61,6 +62,7 @@ class Funds extends BaseController
             'funds'     => $funds,
             'totals'    => $totals,
             'status'    => $status,
+            'readiness' => (new FinanceReadinessService())->readinessForParish($parishId),
             'canManage' => auth()->user()->can('finance.manage'),
         ]));
     }
@@ -138,6 +140,34 @@ class Funds extends BaseController
             'typeChangeLocked' => false,
             'chartAccounts'    => model(\App\Models\ChartOfAccountModel::class)->getActiveByType('income'),
         ]));
+    }
+
+    public function setup()
+    {
+        if ($redirect = $this->requirePermission('finance.manage')) {
+            return $redirect;
+        }
+
+        if ($redirect = $this->requireParish()) {
+            return $redirect;
+        }
+
+        $parishId = (int) ($this->getOperationalParishId() ?? 0);
+        if ($parishId <= 0) {
+            return redirect()->to('/dashboard')->with('error', lang('App.errorNoParishScope'));
+        }
+
+        try {
+            $result = (new FinanceReadinessService())->provisionDefaultFund($parishId, (int) auth()->id());
+        } catch (\Throwable $e) {
+            return redirect()->to('/funds')->with('error', lang('Finance.financeSetupFailed'));
+        }
+
+        if (! $result['created']) {
+            return redirect()->to('/funds')->with('error', lang('Finance.financeSetupExistingFunds'));
+        }
+
+        return redirect()->to('/funds/edit/' . (int) ($result['fund']['id'] ?? 0))->with('success', lang('Finance.financeSetupCreated'));
     }
 
     /**

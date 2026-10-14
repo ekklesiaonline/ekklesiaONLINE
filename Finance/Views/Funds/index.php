@@ -17,9 +17,16 @@ $fundFiltersActive = ($status ?? 'active') !== 'active';
 
 <div class="d-flex justify-content-start align-items-center mb-3 gap-2">
     <?php if (!empty($canManage)): ?>
-        <a href="<?= base_url('funds/create') ?>" class="btn btn-outline-primary">
-            <i class="bi bi-plus-circle" aria-hidden="true"></i> <?= lang('Finance.fundCreate') ?>
-        </a>
+        <?php if (($readiness['status'] ?? '') === 'no_funds'): ?>
+            <form method="post" action="<?= base_url('funds/setup') ?>">
+                <?= csrf_field() ?>
+                <button type="submit" class="btn btn-outline-primary"><i class="bi bi-gear" aria-hidden="true"></i> <?= esc(lang('Finance.setupParishFinance')) ?></button>
+            </form>
+        <?php else: ?>
+            <a href="<?= base_url('funds/create') ?>" class="btn btn-outline-primary">
+                <i class="bi bi-plus-circle" aria-hidden="true"></i> <?= lang('Finance.fundCreate') ?>
+            </a>
+        <?php endif; ?>
     <?php endif; ?>
     <a href="<?= base_url('funds/export' . (($status ?? 'active') !== 'active' ? '?status=' . esc($status, 'url') : '')) ?>" class="btn btn-outline-secondary">
         <i class="bi bi-download" aria-hidden="true"></i> <?= lang('Finance.fundExportCsv') ?>

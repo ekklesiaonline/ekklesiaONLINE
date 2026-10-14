@@ -19,9 +19,14 @@
         <h2 class="h5"><?= esc(lang('Finance.donationFundSetupRequired')) ?></h2>
         <p class="mb-3"><?= esc(lang($readinessMessageKey)) ?></p>
         <?php if (!empty($canManageFunds)): ?>
-            <a href="<?= base_url('funds/create') ?>" class="btn btn-outline-primary">
-                <i class="bi bi-plus-circle" aria-hidden="true"></i> <?= esc(lang('Finance.fundCreate')) ?>
-            </a>
+            <?php if ($readinessStatus === 'no_funds'): ?>
+                <form method="post" action="<?= base_url('funds/setup') ?>">
+                    <?= csrf_field() ?>
+                    <button type="submit" class="btn btn-outline-primary"><i class="bi bi-gear" aria-hidden="true"></i> <?= esc(lang('Finance.setupParishFinance')) ?></button>
+                </form>
+            <?php else: ?>
+                <a href="<?= base_url('funds') ?>" class="btn btn-outline-primary"><i class="bi bi-piggy-bank" aria-hidden="true"></i> <?= esc(lang('Finance.manageFunds')) ?></a>
+            <?php endif; ?>
         <?php else: ?>
             <p class="mb-0"><?= esc(lang('Finance.donationContactFundManager')) ?></p>
         <?php endif; ?>

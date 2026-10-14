@@ -155,4 +155,31 @@ final class LayoutAndAssetExtractionTest extends CIUnitTestCase
             'body() method should not use JSON.stringify.'
         );
     }
+
+    public function testParishCreationDoesNotProvisionFinanceFunds(): void
+    {
+        foreach ([
+            ROOTPATH . 'Diocese/Controllers/Parishes.php',
+            ROOTPATH . 'Province/Controllers/Dashboard.php',
+        ] as $file) {
+            $source = file_get_contents($file);
+            $this->assertStringNotContainsString('provisionDefaultFund', $source);
+            $this->assertStringNotContainsString('FinanceReadinessService', $source);
+        }
+    }
+
+    public function testProfileDonationModalUsesReadOnlyFundRestrictionSummary(): void
+    {
+        $modal = file_get_contents(ROOTPATH . 'Clergy/Views/People/_modals_finance.php');
+        $scripts = file_get_contents(ROOTPATH . 'Clergy/Views/People/_scripts_domains.php');
+
+        $this->assertStringContainsString('d_fund_restriction_summary', $modal);
+        $this->assertStringContainsString('data-restriction-purpose', $modal);
+        $this->assertStringContainsString('data-default-chart-account', $modal);
+        $this->assertStringNotContainsString('name="is_restricted"', $modal);
+        $this->assertStringNotContainsString('name="restriction_purpose"', $modal);
+        $this->assertStringContainsString('syncFundRestrictionSummary', $scripts);
+        $this->assertStringNotContainsString("setFieldValue('d_is_restricted'", $scripts);
+        $this->assertStringNotContainsString("setFieldValue('d_restriction_purpose'", $scripts);
+    }
 }

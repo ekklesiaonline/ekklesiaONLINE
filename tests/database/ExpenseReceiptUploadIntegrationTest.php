@@ -5,6 +5,7 @@ namespace Tests\Database;
 use App\Controllers\BaseController;
 use App\Models\ExpenseModel;
 use App\Services\ExpenseReceiptUploadService;
+use App\Services\ExpenseService;
 use App\Services\UploadPathService;
 use CodeIgniter\HTTP\Files\UploadedFile;
 use CodeIgniter\Shield\Entities\User;
@@ -174,6 +175,72 @@ final class ExpenseReceiptUploadIntegrationTest extends CIUnitTestCase
 
         Services::reset(true);
         parent::tearDown();
+    }
+
+    public function testExpenseServiceRequiresUsableSameParishFundAndExpenseAccount(): void
+    {
+        $parishId = $this->insertParish('Expense Invariant Parish');
+        $otherParishId = $this->insertParish('Other Expense Parish');
+        $usable = $this->insertFund($parishId, 'Usable Fund');
+        $inactive = $this->insertFund($parishId, 'Inactive Fund', 0);
+        $locked = $this->insertFund($parishId, 'Locked Fund', 1, 1);
+        $foreign = $this->insertFund($otherParishId, 'Foreign Fund');
+        $expenseAccount = $this->insertChartAccount('6010', 'Outreach Expense', 'expense', 'ministry');
+        $incomeAccount = $this->insertChartAccount('4010', 'Offering Income', 'income', 'offering');
+        $service = new ExpenseService();
+
+        $this->assertNotNull($service->findUsableFund($usable, $parishId));
+        $this->assertNull($service->findUsableFund($inactive, $parishId));
+        $this->assertNull($service->findUsableFund($locked, $parishId));
+        $this->assertNull($service->findUsableFund($foreign, $parishId));
+        $this->assertNotNull($service->findExpenseAccount($expenseAccount));
+        $this->assertNull($service->findExpenseAccount($incomeAccount));
+    }
+
+    public function testExpenseCreateBlocksFormWithoutUsableFunds(): void
+    {
+        $parishId = $this->insertParish('Blocked Expense Parish');
+        $this->injectAuthUser(101);
+        $controller = new TestableExpensesController();
+        $controller->setForcedParishId($parishId);
+        $controller->initController(service('request'), service('response'), service('logger'));
+
+        $output = $controller->create();
+
+        $this->assertIsString($output);
+        $this->assertStringContainsString(lang('Finance.expenseFundSetupRequired'), $output);
+        $this->assertStringNotContainsString('<form action="' . base_url('expenses/store') . '"', $output);
+    }
+
+    public function testExpenseEditShowsCurrentHistoricalFundOnly(): void
+    {
+        $parishId = $this->insertParish('Historical Expense Parish');
+        $this->injectAuthUser(102);
+        $currentFund = $this->insertFund($parishId, 'Historical Expense Fund', 0);
+        $this->insertFund($parishId, 'Other Inactive Expense Fund', 0);
+        $this->insertFund($parishId, 'Other Locked Expense Fund', 1, 1);
+        $this->insertFund($parishId, 'Current Expense Fund');
+        $accountId = $this->insertChartAccount('6020', 'Program Expense', 'expense', 'ministry');
+        $expenseId = (int) (new ExpenseModel())->insert([
+            'parish_id' => $parishId,
+            'fund_id' => $currentFund,
+            'date' => '2026-10-04',
+            'amount' => '50.00',
+            'category' => 'ministry',
+            'chart_account_id' => $accountId,
+            'description' => 'Historical expense',
+        ], true);
+        $controller = new TestableExpensesController();
+        $controller->setForcedParishId($parishId);
+        $controller->initController(service('request'), service('response'), service('logger'));
+
+        $output = $controller->edit($expenseId);
+
+        $this->assertStringContainsString('Historical Expense Fund', $output);
+        $this->assertStringContainsString(lang('Finance.fundStatusInactive'), $output);
+        $this->assertStringContainsString('Current Expense Fund', $output);
+        $this->assertStringNotContainsString('Other Inactive Expense Fund', $output);
+        $this->assertStringNotContainsString('Other Locked Expense Fund', $output);
     }
 
     public function testExpenseReceiptUploadServiceValidatesMimeType(): void
@@ -699,14 +766,14 @@ final class ExpenseReceiptUploadIntegrationTest extends CIUnitTestCase
         return (int) $this->db->insertID();
     }
 
-    private function insertFund(int $parishId, string $name): int
+    private function insertFund(int $parishId, string $name, int $active = 1, int $locked = 0): int
     {
         $this->db->table('fund')->insert([
             'parish_id' => $parishId,
             'name' => $name,
             'fund_type' => 'unrestricted',
-            'is_active' => 1,
-            'is_locked' => 0,
+            'is_active' => $active,
+            'is_locked' => $locked,
             'created_at' => date('Y-m-d H:i:s'),
             'updated_at' => date('Y-m-d H:i:s'),
         ]);
