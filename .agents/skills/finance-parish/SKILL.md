@@ -32,6 +32,9 @@ Help with parish-scoped finance, accounting, and treasury workflows.
        - **Option B**: Return the check to the donor to give directly to the individual as a personal, private, non-tax-deductible gift.
 - **Expenses & Payables**:
   - `Finance\Controllers\Expenses`: CRUD, capital project tracking (`is_capital`), approver tagging (`approved_by`).
+  - `App\Services\ExpenseService`: Shared validation plus exact-parish usable-fund and active expense-account resolution.
+  - New expenses require a positive operational parish and a same-parish active, unlocked fund. Expense edits expose usable funds plus the record’s current inactive/locked historical fund only; retention is allowed, reassignment to another unusable fund is not.
+  - `fund.chart_account_id` is donation-income-only. Expenses independently require an active `account_type=expense` account and never inherit the fund’s donation account.
   - `App\Services\ExpenseReceiptUploadService`: Secure receipt/invoice attachments and downloads (`writable/uploads/receipts/`).
   - `Finance\Controllers\ExpenseExports`: CSV and PDF exports.
 - **Banking & Reconciliation**:
@@ -53,8 +56,9 @@ Help with parish-scoped finance, accounting, and treasury workflows.
   - Fund classification is the donation restriction source of truth. Use `DonationService::restrictionDataForFund()`; do not accept client-supplied `is_restricted` or `restriction_purpose` values that contradict the selected fund.
   - Existing donations may retain their historical inactive/locked fund during unrelated edits, but they may not be reassigned to a different unusable fund.
   - Use `DonationService::validationRules()` across every donation write surface so positive amount, required fund/account, and field limits remain consistent.
-  - `FinanceReadinessService::readinessForParish()` distinguishes `no_funds`, `no_active_funds`, `all_active_funds_locked`, and `ready`; donation entry must render a blocked setup state instead of a submit-ready form when no usable fund exists.
-  - Users with `finance.manage` receive a `/funds/create` setup action; other donation operators are instructed to contact a Parish Administrator or Finance Officer.
+  - `FinanceReadinessService::readinessForParish()` distinguishes `no_funds`, `no_active_funds`, `all_active_funds_locked`, and `ready`; donation and expense entry must render a blocked setup state instead of a submit-ready form when no usable fund exists.
+  - Basic parish creation never provisions funds. Managers use CSRF-protected `POST /funds/setup` for explicit activation only when `no_funds`; inactive/locked states go to fund management. The command remains the remediation interface.
+  - Profile donation modals display the selected fund’s restriction type/purpose read-only and never submit editable restriction fields.
   - Audit readiness with `php spark finance:audit-readiness [--parish <id>]`. The command is report-only unless `--provision` is explicitly supplied; provisioning creates one audited `Unrestricted Operating Fund` only when the parish has no fund records and never overrides inactive/locked funds.
   - `fund.chart_account_id` means the optional **default donation income account**, not the fund-balance/net-assets account. Fund create/update may link only an active `account_type=income` account.
   - Donation forms expose the fund default through `data-default-chart-account` and select it when the fund changes. `DonationService::resolveIncomeAccount()` uses the fund default when no account is submitted; an explicitly selected different active income account is an allowed, audited override.
