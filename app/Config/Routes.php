@@ -165,6 +165,15 @@ $routes->group('', ['filter' => 'session'], function ($routes) {
             $routes->post('update/(:num)', '\\App\\Controllers\\SystemEvents::update/$1');
             $routes->post('delete/(:num)', '\\App\\Controllers\\SystemEvents::delete/$1');
         });
+
+        $routes->group('chart-of-accounts', function ($routes) {
+            $routes->get('/', '\\App\\Controllers\\SystemChartOfAccounts::index');
+            $routes->get('create', '\\App\\Controllers\\SystemChartOfAccounts::create');
+            $routes->post('store', '\\App\\Controllers\\SystemChartOfAccounts::store');
+            $routes->get('edit/(:num)', '\\App\\Controllers\\SystemChartOfAccounts::edit/$1');
+            $routes->post('update/(:num)', '\\App\\Controllers\\SystemChartOfAccounts::update/$1');
+            $routes->post('toggle/(:num)', '\\App\\Controllers\\SystemChartOfAccounts::toggle/$1');
+        });
     });
 
     // Shared parish-scoped member search for AJAX pickers (bounded payload).

@@ -33,6 +33,7 @@ This table defines the baseline least-privilege policy used by the canonical sid
 | Follow-up diocesan sequences/templates (`/diocese/followup-workflow/*`) | `diocese.admin` | `dioceseadmin` |
 | Chart of Accounts (Diocesan) | `diocese.admin` | `dioceseadmin` |
 | Chart of Accounts (Parish) | `parishadmin` OR `finance.manage` (nested: `finance.view`) | `parishadmin`, `finance` |
+| Chart of Accounts (System) (`/system/chart-of-accounts/*`) | `system.admin` | `systemadmin` |
 | Finance section visibility | `donation.view` OR `expense.view` OR `finance.view` OR `finance.manage` | `parishadmin`, `finance` and separately authorized operational actors |
 | Pledges (inside Finance) | `finance.manage` | `parishadmin`, `finance` |
 | Volunteers | `volunteer.manage` | `parishadmin`, `volunteer_coordinator` |

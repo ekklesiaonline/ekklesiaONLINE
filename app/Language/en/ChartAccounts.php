@@ -107,4 +107,17 @@ return [
     'parishAccountCreateFailed' => 'Could not create chart account.',
     'parishAccountUpdateFailed' => 'Could not update chart account.',
     'systemAccountReadOnly' => 'Master Episcopal Church accounts are canonical and read-only.',
+
+    // System CoA management
+    'pageHeadingSystemIndex' => 'System Chart of Accounts',
+    'pageHeadingSystemCreate' => 'Create System Chart Account',
+    'pageHeadingSystemEdit' => 'Edit System Chart Account',
+    'systemScopeNotice' => 'System accounts are the canonical TEC master chart of accounts inherited by all dioceses and parishes.',
+    'systemAccountCreated' => 'System chart account created successfully.',
+    'systemAccountUpdated' => 'System chart account updated successfully.',
+    'systemAccountStatusUpdated' => 'System chart account status updated successfully.',
+    'systemAccountNotFound' => 'System chart account not found.',
+    'systemAccountCodeExists' => 'Account code already exists in the system chart of accounts.',
+    'systemAccountCreateFailed' => 'Could not create system chart account.',
+    'systemAccountUpdateFailed' => 'Could not update system chart account.',
 ];

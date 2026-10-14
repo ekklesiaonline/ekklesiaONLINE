@@ -107,4 +107,17 @@ return [
     'parishAccountCreateFailed' => 'No se pudo crear la cuenta contable parroquial.',
     'parishAccountUpdateFailed' => 'No se pudo actualizar la cuenta contable parroquial.',
     'systemAccountReadOnly' => 'Las cuentas maestras de la Iglesia Episcopal son canónicas y de solo lectura.',
+
+    // Administración de plan de cuentas del sistema
+    'pageHeadingSystemIndex' => 'Plan de Cuentas del Sistema',
+    'pageHeadingSystemCreate' => 'Crear Cuenta Contable del Sistema',
+    'pageHeadingSystemEdit' => 'Editar Cuenta Contable del Sistema',
+    'systemScopeNotice' => 'Las cuentas del sistema son el plan de cuentas maestro canónico de la Iglesia Episcopal heredado por todas las diócesis y parroquias.',
+    'systemAccountCreated' => 'Cuenta contable del sistema creada exitosamente.',
+    'systemAccountUpdated' => 'Cuenta contable del sistema actualizada exitosamente.',
+    'systemAccountStatusUpdated' => 'Estado de la cuenta contable del sistema actualizado exitosamente.',
+    'systemAccountNotFound' => 'Cuenta contable del sistema no encontrada.',
+    'systemAccountCodeExists' => 'El código de cuenta ya existe en el plan de cuentas del sistema.',
+    'systemAccountCreateFailed' => 'No se pudo crear la cuenta contable del sistema.',
+    'systemAccountUpdateFailed' => 'No se pudo actualizar la cuenta contable del sistema.',
 ];

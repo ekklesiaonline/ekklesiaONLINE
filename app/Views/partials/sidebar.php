@@ -151,6 +151,11 @@
                     </a>
                 </li>
                 <li class="nav-item">
+                    <a class="nav-link <?= str_starts_with(uri_string(), 'system/chart-of-accounts') ? 'active' : '' ?>" href="<?= base_url('system/chart-of-accounts') ?>">
+                        <i class="bi bi-journal-book" aria-hidden="true"></i> <?= lang('App.navChartOfAccounts') ?>
+                    </a>
+                </li>
+                <li class="nav-item">
                     <a class="nav-link <?= str_starts_with(uri_string(), 'system/followup-workflow') ? 'active' : '' ?>" href="<?= base_url('system/followup-workflow/sequences') ?>">
                         <i class="bi bi-diagram-3" aria-hidden="true"></i> <?= lang('App.navFollowupWorkflow') ?>
                     </a>

@@ -107,4 +107,17 @@ return [
     'parishAccountCreateFailed' => 'Impossible de créer le compte comptable paroissial.',
     'parishAccountUpdateFailed' => 'Impossible de mettre à jour le compte comptable paroissial.',
     'systemAccountReadOnly' => 'Les comptes maîtres de l\'Église épiscopale sont canoniques et en lecture seule.',
+
+    // Gestion du plan comptable système
+    'pageHeadingSystemIndex' => 'Plan Comptable Système',
+    'pageHeadingSystemCreate' => 'Créer un Compte Comptable Système',
+    'pageHeadingSystemEdit' => 'Modifier le Compte Comptable Système',
+    'systemScopeNotice' => 'Les comptes système sont le plan comptable maître canonique de l\'Église épiscopale hérité par tous les diocèses et paroisses.',
+    'systemAccountCreated' => 'Compte comptable système créé avec succès.',
+    'systemAccountUpdated' => 'Compte comptable système mis à jour avec succès.',
+    'systemAccountStatusUpdated' => 'Statut du compte comptable système mis à jour avec succès.',
+    'systemAccountNotFound' => 'Compte comptable système introuvable.',
+    'systemAccountCodeExists' => 'Le code de compte existe déjà dans le plan comptable système.',
+    'systemAccountCreateFailed' => 'Impossible de créer le compte comptable système.',
+    'systemAccountUpdateFailed' => 'Impossible de mettre à jour le compte comptable système.',
 ];

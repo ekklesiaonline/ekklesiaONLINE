@@ -375,6 +375,46 @@ class ChartOfAccountModel extends Model
         return ($account['scope_type'] ?? '') === $scopeType && (int) ($account['scope_id'] ?? 0) === $scopeId;
     }
 
+    /**
+     * Resolves system (TEC Master) accounts.
+     */
+    public function getSystemAccounts(?string $type = null, bool $activeOnly = true): array
+    {
+        $builder = $this->where('scope_type', 'system');
+
+        if ($activeOnly) {
+            $builder->where('is_active', 1);
+        }
+
+        if ($type !== null) {
+            $builder->where('account_type', $type);
+        }
+
+        return $builder->orderBy('sort_order', 'ASC')->orderBy('code', 'ASC')->findAll();
+    }
+
+    /**
+     * Checks whether a code already exists within the system scope.
+     */
+    public function systemCodeExists(string $code, ?int $excludeId = null): bool
+    {
+        $builder = $this->where('scope_type', 'system')->where('code', $code);
+
+        if ($excludeId !== null && $excludeId > 0) {
+            $builder->where('id !=', $excludeId);
+        }
+
+        return $builder->first() !== null;
+    }
+
+    /**
+     * Determines whether a system account can be mutated by a system administrator.
+     */
+    public function canMutateSystemAccount(array $account): bool
+    {
+        return ($account['scope_type'] ?? '') === 'system';
+    }
+
     public function insert($data = null, bool $returnID = true)
     {
         $result = parent::insert($data, $returnID);

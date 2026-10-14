@@ -97,7 +97,7 @@ final class SidebarRoleVisibilityTest extends CIUnitTestCase
             'system admin' => [
                 ['systemadmin'],
                 ['system.admin', 'dashboard.view'],
-                ['system/dashboard', 'system/overview', 'system/settings', 'system/liturgical-source', 'parish_list', 'admin/audit-logs', 'profile', 'logout'],
+                ['system/dashboard', 'system/overview', 'system/settings', 'system/chart-of-accounts', 'system/liturgical-source', 'parish_list', 'admin/audit-logs', 'profile', 'logout'],
                 ['province/dashboard', 'dashboard', 'members', 'services', 'families', 'liturgical-source', 'chart-accounts', 'reports', 'donations', 'expenses', 'budgets', 'pledges'],
             ],
             'province admin' => [
