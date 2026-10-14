@@ -53,6 +53,9 @@ Help with parish-scoped finance, accounting, and treasury workflows.
   - Fund classification is the donation restriction source of truth. Use `DonationService::restrictionDataForFund()`; do not accept client-supplied `is_restricted` or `restriction_purpose` values that contradict the selected fund.
   - Existing donations may retain their historical inactive/locked fund during unrelated edits, but they may not be reassigned to a different unusable fund.
   - Use `DonationService::validationRules()` across every donation write surface so positive amount, required fund/account, and field limits remain consistent.
+  - `FinanceReadinessService::readinessForParish()` distinguishes `no_funds`, `no_active_funds`, `all_active_funds_locked`, and `ready`; donation entry must render a blocked setup state instead of a submit-ready form when no usable fund exists.
+  - Users with `finance.manage` receive a `/funds/create` setup action; other donation operators are instructed to contact a Parish Administrator or Finance Officer.
+  - Audit readiness with `php spark finance:audit-readiness [--parish <id>]`. The command is report-only unless `--provision` is explicitly supplied; provisioning creates one audited `Unrestricted Operating Fund` only when the parish has no fund records and never overrides inactive/locked funds.
 - **Budgets**:
   - `Finance\Controllers\Budgets`: Fiscal year budget lines vs real-time actuals, utilization percentage, multi-line saving (`ParishBudgetModel`), export CSV (`/budgets/export-csv`), Vestry PDF document export with certification blocks (`/budgets/export-pdf`), and automated budget roll-forward / cloning with adjustment factor and audit logging (`POST /budgets/clone`).
 - **Financial Reports**:

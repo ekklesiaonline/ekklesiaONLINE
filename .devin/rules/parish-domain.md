@@ -105,6 +105,8 @@ trigger: always_on
 - **Donation Fund Invariants**: New donations require a positive operational `parish_id` and a fund from that exact parish with `is_active=1` and `is_locked=0`. Use `FundModel::getUsableParishFunds()` for selectors and `DonationService::findUsableFund()` for writes; never continue a finance mutation with parish scope `0`.
 - **Restriction Source of Truth**: Donation restriction status and purpose derive from the selected fund through `DonationService::restrictionDataForFund()`. Do not trust or persist client-supplied restriction fields that conflict with the fund. Historical donations may retain their existing inactive/locked fund during unrelated edits, but cannot be reassigned to another unusable fund.
 - **Donation Validation**: All donation write surfaces must use `DonationService::validationRules()` and then perform parish-scoped usable-fund and active-income-account checks.
+- **Finance Readiness**: `FinanceReadinessService` is canonical for distinguishing `no_funds`, `no_active_funds`, `all_active_funds_locked`, and `ready`. Donation entry must be blocked when no usable fund exists; managers link to `/funds/create`, while non-managers receive escalation guidance.
+- **Default Fund Provisioning**: `php spark finance:audit-readiness` is report-only by default. `--provision` may create one audited `Unrestricted Operating Fund` only for a parish with zero fund records; it must be idempotent and must never reactivate, unlock, replace, or supplement existing funds automatically.
 
 ## Bootstrapping & Permissions
 
