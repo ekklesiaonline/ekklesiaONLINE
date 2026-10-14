@@ -241,6 +241,7 @@ return [
     'fundNotFound' => 'Fondo no encontrado.',
     'fundSaveFailed' => 'No se pudo guardar el fondo.',
     'fundLockedNoEdit' => 'Este fondo está bloqueado. Desbloquéelo antes de editarlo.',
+    'fundLastUsableRequired' => 'Este es el último fondo activo y desbloqueado de la parroquia. Cree o restaure otro fondo disponible antes de bloquearlo o desactivarlo.',
     'fundTypeChangeBlocked' => 'No se puede cambiar el tipo de fondo porque ya tiene transacciones.',
     'fundPurposeRequired' => 'Se requiere un propósito de restricción para fondos restringidos y permanentes.',
     'fundNameTaken' => 'Ya existe un fondo con este nombre en su parroquia.',

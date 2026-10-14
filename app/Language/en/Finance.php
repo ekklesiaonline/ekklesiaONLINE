@@ -274,6 +274,7 @@ return [
     'fundNotFound' => 'Fund not found.',
     'fundSaveFailed' => 'Could not save the fund.',
     'fundLockedNoEdit' => 'This fund is locked. Unlock it before editing.',
+    'fundLastUsableRequired' => 'This is the parish’s last active, unlocked fund. Create or restore another usable fund before locking or deactivating it.',
     'fundTypeChangeBlocked' => 'The fund type cannot be changed because the fund already has transactions.',
     'fundPurposeRequired' => 'A restriction purpose is required for restricted and permanent funds.',
     'fundNameTaken' => 'A fund with this name already exists in your parish.',

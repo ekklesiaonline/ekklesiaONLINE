@@ -44,7 +44,8 @@ $currentMethod      = (string) old('payment_method', $donation['payment_method']
                                 <option value="<?= (int) $fund['id'] ?>" data-default-chart-account="<?= (int) ($fund['chart_account_id'] ?? 0) ?>" <?= $currentFundId === (int) $fund['id'] ? 'selected' : '' ?>>
                                     <?php $fundType = (string) ($fund['fund_type'] ?? 'unrestricted'); ?>
                                     <?php $fundTypeLabelMap = ['restricted' => lang('Treasurer.fundTypeRestricted'), 'permanent' => lang('Treasurer.fundTypePermanent'), 'unrestricted' => lang('Treasurer.fundTypeUnrestricted')]; ?>
-                                    <?= esc(fund_name_label((string) ($fund['name'] ?? ''))) ?> (<?= esc($fundTypeLabelMap[$fundType] ?? ucfirst($fundType)) ?>)
+                                    <?php $fundStatusSuffix = (int) ($fund['is_active'] ?? 0) !== 1 ? ' — ' . lang('Finance.fundStatusInactive') : ((int) ($fund['is_locked'] ?? 0) === 1 ? ' — ' . lang('Finance.fundLockedBadge') : ''); ?>
+                                    <?= esc(fund_name_label((string) ($fund['name'] ?? ''))) ?> (<?= esc($fundTypeLabelMap[$fundType] ?? ucfirst($fundType)) ?>)<?= esc($fundStatusSuffix) ?>
                                 </option>
                             <?php endforeach; ?>
                         </select>

@@ -240,6 +240,7 @@ return [
     'fundNotFound' => 'Fonds introuvable.',
     'fundSaveFailed' => 'Impossible d’enregistrer le fonds.',
     'fundLockedNoEdit' => 'Ce fonds est verrouillé. Déverrouillez-le avant de le modifier.',
+    'fundLastUsableRequired' => 'Il s’agit du dernier fonds actif et déverrouillé de la paroisse. Créez ou restaurez un autre fonds utilisable avant de le verrouiller ou de le désactiver.',
     'fundTypeChangeBlocked' => 'Le type de fonds ne peut pas être modifié car le fonds a déjà des transactions.',
     'fundPurposeRequired' => 'Un objet de restriction est requis pour les fonds restreints et permanents.',
     'fundNameTaken' => 'Un fonds portant ce nom existe déjà dans votre paroisse.',

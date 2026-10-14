@@ -252,7 +252,14 @@ class Donations extends BaseController
         $chartOfAccountModel  = model('ChartOfAccountModel');
         $chartAccounts        = $chartOfAccountModel->getActiveByType('income');
         $groupedChartAccounts = $chartOfAccountModel->getGroupedActiveAccountsForType('income');
-        $funds                = $this->getFundModel()->getParishFunds($parishId);
+        $funds = $this->getFundModel()->getUsableParishFunds($parishId);
+        $currentFundId = (int) ($donation['fund_id'] ?? 0);
+        if ($currentFundId > 0 && ! in_array($currentFundId, array_map(static fn (array $fund): int => (int) $fund['id'], $funds), true)) {
+            $currentFund = $this->getFundModel()->find($currentFundId);
+            if (is_array($currentFund) && (int) ($currentFund['parish_id'] ?? 0) === $parishId) {
+                $funds[] = $currentFund;
+            }
+        }
 
         $donorUserId = (int) old('user_id', $donation['user_id'] ?? 0);
 

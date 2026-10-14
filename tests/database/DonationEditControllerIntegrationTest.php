@@ -176,6 +176,59 @@ final class DonationEditControllerIntegrationTest extends CIUnitTestCase
         $this->assertSame($fund1, (int) $row['fund_id']);
     }
 
+    public function testEditIncludesCurrentInactiveFundButExcludesOtherUnusableFunds(): void
+    {
+        $currentInactive = $this->insertFund(301, 'Historical Fund', 'unrestricted', null, 0);
+        $this->insertFund(301, 'Other Inactive Fund', 'unrestricted', null, 0);
+        $this->insertFund(301, 'Other Locked Fund', 'unrestricted', null, 1, 1);
+        $this->insertFund(301, 'Current Operating Fund');
+        $donId = $this->insertDonation(301, $currentInactive, '100.00');
+
+        $output = $this->makeController()->edit($donId);
+
+        $this->assertStringContainsString('Historical Fund', $output);
+        $this->assertStringContainsString('Inactive', $output);
+        $this->assertStringContainsString('Current Operating Fund', $output);
+        $this->assertStringNotContainsString('Other Inactive Fund', $output);
+        $this->assertStringNotContainsString('Other Locked Fund', $output);
+    }
+
+    public function testUpdateCanRetainCurrentInactiveHistoricalFund(): void
+    {
+        $coaId = $this->insertChartAccount('4010', 'Pledge Offerings', 'income', 'tithe');
+        $fundId = $this->insertFund(301, 'Historical Inactive', 'unrestricted', null, 0);
+        $donId = $this->insertDonation(301, $fundId, '100.00', $coaId);
+
+        $this->makeController('POST', [
+            'date'             => '2026-09-15',
+            'amount'           => '125.00',
+            'fund_id'          => $fundId,
+            'chart_account_id' => $coaId,
+        ])->update($donId);
+
+        $row = $this->db->table('donation')->where('id', $donId)->get()->getRowArray();
+        $this->assertSame($fundId, (int) $row['fund_id']);
+        $this->assertSame('125.00', DataEncryption::decrypt((string) $row['amount']));
+    }
+
+    public function testUpdateCanRetainCurrentLockedHistoricalFund(): void
+    {
+        $coaId = $this->insertChartAccount('4010', 'Pledge Offerings', 'income', 'tithe');
+        $fundId = $this->insertFund(301, 'Historical Locked', 'unrestricted', null, 1, 1);
+        $donId = $this->insertDonation(301, $fundId, '100.00', $coaId);
+
+        $this->makeController('POST', [
+            'date'             => '2026-09-15',
+            'amount'           => '125.00',
+            'fund_id'          => $fundId,
+            'chart_account_id' => $coaId,
+        ])->update($donId);
+
+        $row = $this->db->table('donation')->where('id', $donId)->get()->getRowArray();
+        $this->assertSame($fundId, (int) $row['fund_id']);
+        $this->assertSame('125.00', DataEncryption::decrypt((string) $row['amount']));
+    }
+
     public function testUpdateRejectsInactiveFund(): void
     {
         $coaId    = $this->insertChartAccount('4010', 'Pledge Offerings', 'income', 'tithe');

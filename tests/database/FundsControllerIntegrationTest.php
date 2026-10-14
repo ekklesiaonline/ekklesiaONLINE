@@ -287,6 +287,7 @@ final class FundsControllerIntegrationTest extends CIUnitTestCase
     public function testLockUnlockActivateDeactivateToggleFlagsAndAudit(): void
     {
         $id = $this->insertFund(301, 'Toggle Fund');
+        $this->insertFund(301, 'Backup Fund');
 
         $this->makeController('POST')->lock($id);
         $this->assertSame(1, (int) $this->fundRow($id)['is_locked']);
@@ -303,6 +304,28 @@ final class FundsControllerIntegrationTest extends CIUnitTestCase
         foreach (['fund.lock', 'fund.unlock', 'fund.deactivate', 'fund.activate'] as $action) {
             $this->assertSame(1, $this->db->table('audit_log')->where('action', $action)->countAllResults(), $action);
         }
+    }
+
+    public function testCannotLockLastUsableFund(): void
+    {
+        $id = $this->insertFund(301, 'Only Usable Fund');
+        $this->insertFund(301, 'Inactive Fund', 'unrestricted', null, 0);
+        $this->insertFund(301, 'Locked Fund', 'unrestricted', null, 1, 1);
+
+        $this->makeController('POST')->lock($id);
+
+        $this->assertSame(0, (int) $this->fundRow($id)['is_locked']);
+        $this->assertSame(0, $this->db->table('audit_log')->where('action', 'fund.lock')->countAllResults());
+    }
+
+    public function testCannotDeactivateLastUsableFund(): void
+    {
+        $id = $this->insertFund(301, 'Only Usable Fund');
+
+        $this->makeController('POST')->deactivate($id);
+
+        $this->assertSame(1, (int) $this->fundRow($id)['is_active']);
+        $this->assertSame(0, $this->db->table('audit_log')->where('action', 'fund.deactivate')->countAllResults());
     }
 
     public function testFlagChangesBlockCrossParishAccess(): void

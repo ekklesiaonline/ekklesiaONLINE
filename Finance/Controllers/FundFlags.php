@@ -57,6 +57,21 @@ class FundFlags extends FundExports
         }
 
         if ((int) $fund[$field] !== $value) {
+            $removesUsableFund = ($field === 'is_locked' && $value === 1)
+                || ($field === 'is_active' && $value === 0);
+            $currentlyUsable = (int) ($fund['is_active'] ?? 0) === 1 && (int) ($fund['is_locked'] ?? 0) === 0;
+            if ($removesUsableFund && $currentlyUsable) {
+                $otherUsableFunds = $this->fundModel->builder()
+                    ->where('parish_id', $parishId)
+                    ->where('id !=', $id)
+                    ->where('is_active', 1)
+                    ->where('is_locked', 0)
+                    ->countAllResults();
+                if ($otherUsableFunds === 0) {
+                    return redirect()->to('/funds')->with('error', lang('Finance.fundLastUsableRequired'));
+                }
+            }
+
             if (! $this->fundModel->update($id, [$field => $value])) {
                 return redirect()->to('/funds')->with('error', lang('Finance.fundSaveFailed'));
             }
