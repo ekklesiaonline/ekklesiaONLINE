@@ -108,6 +108,8 @@ trigger: always_on
 - **Finance Readiness**: `FinanceReadinessService` is canonical for distinguishing `no_funds`, `no_active_funds`, `all_active_funds_locked`, and `ready`. Donation entry must be blocked when no usable fund exists; managers link to `/funds/create`, while non-managers receive escalation guidance.
 - **Default Fund Provisioning**: `php spark finance:audit-readiness` is report-only by default. `--provision` may create one audited `Unrestricted Operating Fund` only for a parish with zero fund records; it must be idempotent and must never reactivate, unlock, replace, or supplement existing funds automatically.
 - **Fund Account Mapping**: `fund.chart_account_id` is the optional default donation income account, never a fund-balance/net-assets account. It must reference an active `account_type=income` account. Donation writes use `DonationService::resolveIncomeAccount()`: omitted account IDs inherit the fund default, while an explicitly selected different active income account is allowed as an override and remains visible in the donation audit data.
+- **Last Usable Fund Guard**: Never lock or deactivate a parish’s final fund where `is_active=1 AND is_locked=0`; another usable fund must exist first. A blocked lifecycle attempt performs no mutation and writes no success audit event.
+- **Historical Fund Retention**: Donation edits may retain the donation’s existing inactive/locked fund during unrelated corrections. Edit selectors show usable funds plus that current historical fund only; they must exclude every other inactive/locked fund, and server-side validation must reject reassignment to an unusable fund.
 
 ## Bootstrapping & Permissions
 

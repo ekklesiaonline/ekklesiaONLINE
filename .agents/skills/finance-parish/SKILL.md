@@ -58,6 +58,8 @@ Help with parish-scoped finance, accounting, and treasury workflows.
   - Audit readiness with `php spark finance:audit-readiness [--parish <id>]`. The command is report-only unless `--provision` is explicitly supplied; provisioning creates one audited `Unrestricted Operating Fund` only when the parish has no fund records and never overrides inactive/locked funds.
   - `fund.chart_account_id` means the optional **default donation income account**, not the fund-balance/net-assets account. Fund create/update may link only an active `account_type=income` account.
   - Donation forms expose the fund default through `data-default-chart-account` and select it when the fund changes. `DonationService::resolveIncomeAccount()` uses the fund default when no account is submitted; an explicitly selected different active income account is an allowed, audited override.
+  - `FundFlags` must block locking or deactivating the parish’s last active, unlocked fund. The operator must create, activate, or unlock another usable fund first; blocked attempts do not mutate or audit the target.
+  - Donation edit selectors contain usable funds plus the donation’s current historical fund when it is inactive or locked. Unrelated edits may retain that current historical fund, but other unusable funds are excluded and reassignment to them remains blocked server-side.
 - **Budgets**:
   - `Finance\Controllers\Budgets`: Fiscal year budget lines vs real-time actuals, utilization percentage, multi-line saving (`ParishBudgetModel`), export CSV (`/budgets/export-csv`), Vestry PDF document export with certification blocks (`/budgets/export-pdf`), and automated budget roll-forward / cloning with adjustment factor and audit logging (`POST /budgets/clone`).
 - **Financial Reports**:
