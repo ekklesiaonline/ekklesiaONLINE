@@ -56,6 +56,8 @@ Help with parish-scoped finance, accounting, and treasury workflows.
   - `FinanceReadinessService::readinessForParish()` distinguishes `no_funds`, `no_active_funds`, `all_active_funds_locked`, and `ready`; donation entry must render a blocked setup state instead of a submit-ready form when no usable fund exists.
   - Users with `finance.manage` receive a `/funds/create` setup action; other donation operators are instructed to contact a Parish Administrator or Finance Officer.
   - Audit readiness with `php spark finance:audit-readiness [--parish <id>]`. The command is report-only unless `--provision` is explicitly supplied; provisioning creates one audited `Unrestricted Operating Fund` only when the parish has no fund records and never overrides inactive/locked funds.
+  - `fund.chart_account_id` means the optional **default donation income account**, not the fund-balance/net-assets account. Fund create/update may link only an active `account_type=income` account.
+  - Donation forms expose the fund default through `data-default-chart-account` and select it when the fund changes. `DonationService::resolveIncomeAccount()` uses the fund default when no account is submitted; an explicitly selected different active income account is an allowed, audited override.
 - **Budgets**:
   - `Finance\Controllers\Budgets`: Fiscal year budget lines vs real-time actuals, utilization percentage, multi-line saving (`ParishBudgetModel`), export CSV (`/budgets/export-csv`), Vestry PDF document export with certification blocks (`/budgets/export-pdf`), and automated budget roll-forward / cloning with adjustment factor and audit logging (`POST /budgets/clone`).
 - **Financial Reports**:
