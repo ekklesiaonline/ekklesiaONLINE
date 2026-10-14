@@ -49,6 +49,10 @@ Help with parish-scoped finance, accounting, and treasury workflows.
 - **Fund Accounting**:
   - `Finance\Controllers\Funds`: Fund creation, restriction types (unrestricted, temporarily restricted, permanently restricted/endowment), active balances (`FundModel`).
   - `Finance\Controllers\FundFlags`: Locking/unlocking and activation flags.
+  - New donations require an exact operational `parish_id` and a usable fund: same parish, `is_active=1`, and `is_locked=0`. Use `FundModel::getUsableParishFunds()` for entry forms and `DonationService::findUsableFund()` for server-side writes; never cast a missing parish scope to `0` and continue.
+  - Fund classification is the donation restriction source of truth. Use `DonationService::restrictionDataForFund()`; do not accept client-supplied `is_restricted` or `restriction_purpose` values that contradict the selected fund.
+  - Existing donations may retain their historical inactive/locked fund during unrelated edits, but they may not be reassigned to a different unusable fund.
+  - Use `DonationService::validationRules()` across every donation write surface so positive amount, required fund/account, and field limits remain consistent.
 - **Budgets**:
   - `Finance\Controllers\Budgets`: Fiscal year budget lines vs real-time actuals, utilization percentage, multi-line saving (`ParishBudgetModel`), export CSV (`/budgets/export-csv`), Vestry PDF document export with certification blocks (`/budgets/export-pdf`), and automated budget roll-forward / cloning with adjustment factor and audit logging (`POST /budgets/clone`).
 - **Financial Reports**:
