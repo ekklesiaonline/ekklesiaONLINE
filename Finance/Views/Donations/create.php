@@ -130,20 +130,6 @@
                         <textarea class="form-control" id="notes" name="notes" rows="3"><?= old('notes') ?></textarea>
                     </div>
 
-                    <div class="mb-3">
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox" id="is_restricted" name="is_restricted" value="1" <?= old('is_restricted') ? 'checked' : '' ?>>
-                            <label class="form-check-label" for="is_restricted"><?= lang('Finance.isRestricted') ?></label>
-                            <div class="form-text"><?= lang('Finance.restrictedGiftHelp') ?></div>
-                        </div>
-                    </div>
-                    <div class="mb-3" id="restriction_purpose_row">
-                        <label for="restriction_purpose" class="form-label"><?= lang('Finance.restrictionPurpose') ?></label>
-                        <input type="text" class="form-control" id="restriction_purpose" name="restriction_purpose"
-                            value="<?= old('restriction_purpose') ?>"
-                            placeholder="<?= esc(lang('Finance.restrictionPurposePlaceholder')) ?>">
-                    </div>
-
                     <div class="d-flex justify-content-end gap-2 mt-3">
                         <a href="<?= base_url('donations') ?>" class="btn btn-secondary"><?= lang('App.cancel') ?></a>
                         <button type="submit" class="btn btn-primary">
@@ -157,18 +143,6 @@
 <script>
     const donationCategory = document.getElementById('category');
     const donationChartAccount = document.getElementById('chart_account_id');
-    const isRestrictedChk = document.getElementById('is_restricted');
-    const restrictionPurposeRow = document.getElementById('restriction_purpose_row');
-
-    function toggleRestrictionPurpose() {
-        if (restrictionPurposeRow) {
-            restrictionPurposeRow.style.display = isRestrictedChk && isRestrictedChk.checked ? '' : 'none';
-        }
-    }
-
-    isRestrictedChk?.addEventListener('change', toggleRestrictionPurpose);
-    toggleRestrictionPurpose();
-
     function syncDonationAccount(force = false) {
         if (!donationCategory || !donationChartAccount) {
             return;

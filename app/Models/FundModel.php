@@ -55,6 +55,20 @@ class FundModel extends Model
             ->getResultArray();
     }
 
+    public function getUsableParishFunds(int $parishId): array
+    {
+        return $this->db->table('fund f')
+            ->select('f.*, coa.code as chart_account_code, coa.name as chart_account_name')
+            ->join('chart_of_accounts coa', 'coa.id = f.chart_account_id', 'left')
+            ->where('f.parish_id', $parishId)
+            ->where('f.is_active', 1)
+            ->where('f.is_locked', 0)
+            ->orderBy('f.fund_type', 'ASC')
+            ->orderBy('f.name', 'ASC')
+            ->get()
+            ->getResultArray();
+    }
+
     public function getFundWithBalance(int $fundId): ?array
     {
         $fund = $this->db->table('fund f')

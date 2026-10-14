@@ -57,11 +57,22 @@ class DonationService
 
         if (! is_array($fund)
             || (int) ($fund['parish_id'] ?? 0) !== $parishId
+            || (int) ($fund['is_active'] ?? 0) !== 1
             || (int) ($fund['is_locked'] ?? 0) === 1) {
             return null;
         }
 
         return $fund;
+    }
+
+    public function restrictionDataForFund(array $fund): array
+    {
+        $isRestricted = (string) ($fund['fund_type'] ?? 'unrestricted') !== 'unrestricted';
+
+        return [
+            'is_restricted'       => $isRestricted ? 1 : 0,
+            'restriction_purpose' => $isRestricted ? ($fund['restriction_purpose'] ?? null) : null,
+        ];
     }
 
     /**

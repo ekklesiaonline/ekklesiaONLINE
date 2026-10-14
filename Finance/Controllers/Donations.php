@@ -117,13 +117,18 @@ class Donations extends BaseController
             return $redirect;
         }
 
+        $parishId = (int) ($this->getOperationalParishId() ?? 0);
+        if ($parishId <= 0) {
+            return redirect()->to('/dashboard')->with('error', lang('App.errorNoParishScope'));
+        }
+
         $chartOfAccountModel = model('ChartOfAccountModel');
         $chartAccounts = $chartOfAccountModel->getActiveByType('income');
         $groupedChartAccounts = $chartOfAccountModel->getGroupedActiveAccountsForType('income');
-        $funds = $this->getFundModel()->getParishFunds((int) ($this->getOperationalParishId() ?? 0));
+        $funds = $this->getFundModel()->getUsableParishFunds($parishId);
 
         return view('Finance\Views\Donations/create', array_merge($this->getCommonViewData('Record Donation'), [
-            'donor_option' => $this->memberSelectOption((int) $this->getOperationalParishId(), (int) old('user_id')),
+            'donor_option' => $this->memberSelectOption($parishId, (int) old('user_id')),
             'funds' => $funds,
             'chartAccounts' => $chartAccounts,
             'groupedChartAccounts' => $groupedChartAccounts,
@@ -143,20 +148,12 @@ class Donations extends BaseController
             return $redirect;
         }
 
-        $rules = [
-            'date' => 'required|valid_date',
-            'amount' => 'required|decimal',
-            'fund_id' => 'required|is_not_unique[fund.id]',
-            'category' => 'permit_empty|max_length[100]',
-            'chart_account_id' => 'required|is_not_unique[chart_of_accounts.id]',
-        ];
-
-        if (!$this->validate($rules)) {
+        if (!$this->validate($this->donationService->validationRules())) {
             return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
         }
 
         $attributionPolicy = self::ATTRIBUTION_POLICY_OPERATIONAL_DEFAULT;
-        $attributionParishId = (int) ($this->resolveAttributionParishId($attributionPolicy) ?? 0);
+        $attributionParishId = (int) ($this->getOperationalParishId() ?? 0);
         if ($attributionParishId <= 0) {
             return redirect()->back()->withInput()->with('error', lang('App.errorNoParishScope'));
         }
@@ -168,13 +165,9 @@ class Donations extends BaseController
         }
 
         $fundId = (int) $this->request->getPost('fund_id');
-        $fund = $this->getFundModel()->find($fundId);
-        if (!$fund || (int) ($fund['parish_id'] ?? 0) !== $attributionParishId) {
+        $fund = $this->donationService->findUsableFund($fundId, $attributionParishId);
+        if ($fund === null) {
             return redirect()->back()->withInput()->with('error', lang('Treasurer.validFundRequired'));
-        }
-
-        if ((int) ($fund['is_locked'] ?? 0) === 1) {
-            return redirect()->back()->withInput()->with('error', lang('Treasurer.fundLocked'));
         }
 
         $donationDate = (string) $this->request->getPost('date');
@@ -195,6 +188,7 @@ class Donations extends BaseController
             'chart_account_id' => (int) $chartAccount['id'],
             'payment_method' => $this->request->getPost('payment_method'),
             'notes' => $this->request->getPost('notes'),
+            ...$this->donationService->restrictionDataForFund($fund),
         ];
 
         $donationId = (int) $this->donationModel->insert($data, true);
@@ -288,15 +282,7 @@ class Donations extends BaseController
             return redirect()->to('/donations')->with('error', lang('Treasurer.donationNotFound'));
         }
 
-        $rules = [
-            'date'             => 'required|valid_date',
-            'amount'           => 'required|decimal|greater_than[0]',
-            'fund_id'          => 'required|is_not_unique[fund.id]',
-            'category'         => 'permit_empty|max_length[100]',
-            'chart_account_id' => 'required|is_not_unique[chart_of_accounts.id]',
-        ];
-
-        if (!$this->validate($rules)) {
+        if (!$this->validate($this->donationService->validationRules())) {
             return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
         }
 
@@ -306,13 +292,13 @@ class Donations extends BaseController
         }
 
         $fundId = (int) $this->request->getPost('fund_id');
-        $fund   = $this->getFundModel()->find($fundId);
-        if (!$fund || (int) ($fund['parish_id'] ?? 0) !== $parishId) {
-            return redirect()->back()->withInput()->with('error', lang('Treasurer.validFundRequired'));
+        $fund = $this->donationService->findUsableFund($fundId, $parishId);
+        if ($fund === null && (int) ($donation['fund_id'] ?? 0) === $fundId) {
+            $existingFund = $this->getFundModel()->find($fundId);
+            $fund = is_array($existingFund) && (int) ($existingFund['parish_id'] ?? 0) === $parishId ? $existingFund : null;
         }
-
-        if ((int) ($fund['is_locked'] ?? 0) === 1 && (int) ($donation['fund_id'] ?? 0) !== $fundId) {
-            return redirect()->back()->withInput()->with('error', lang('Treasurer.fundLocked'));
+        if ($fund === null) {
+            return redirect()->back()->withInput()->with('error', lang('Treasurer.validFundRequired'));
         }
 
         $newDate = (string) $this->request->getPost('date');
@@ -332,8 +318,7 @@ class Donations extends BaseController
             'chart_account_id'    => (int) $chartAccount['id'],
             'payment_method'      => $this->request->getPost('payment_method') ?: null,
             'notes'               => $this->request->getPost('notes') ?: null,
-            'is_restricted'       => $this->request->getPost('is_restricted') ? 1 : 0,
-            'restriction_purpose' => $this->request->getPost('is_restricted') ? ($this->request->getPost('restriction_purpose') ?: null) : null,
+            ...$this->donationService->restrictionDataForFund($fund),
         ];
 
         if ($this->donationModel->update($id, $data)) {

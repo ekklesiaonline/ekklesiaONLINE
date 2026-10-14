@@ -155,6 +155,45 @@ final class DonationEditControllerIntegrationTest extends CIUnitTestCase
         $this->assertSame($fund1, (int) $row['fund_id']);
     }
 
+    public function testUpdateRejectsInactiveFund(): void
+    {
+        $coaId    = $this->insertChartAccount('4010', 'Pledge Offerings', 'income', 'tithe');
+        $fund     = $this->insertFund(301, 'General Fund');
+        $inactive = $this->insertFund(301, 'Inactive Fund', 'unrestricted', null, 0);
+        $donId    = $this->insertDonation(301, $fund, '100.00', $coaId);
+
+        $response = $this->makeController('POST', [
+            'date'             => '2026-09-15',
+            'amount'           => '100.00',
+            'fund_id'          => $inactive,
+            'chart_account_id' => $coaId,
+        ])->update($donId);
+
+        $this->assertInstanceOf(RedirectResponse::class, $response);
+        $this->assertSame($fund, (int) $this->db->table('donation')->where('id', $donId)->get()->getRowArray()['fund_id']);
+    }
+
+    public function testUpdateDerivesRestrictionFromFund(): void
+    {
+        $coaId     = $this->insertChartAccount('4010', 'Pledge Offerings', 'income', 'tithe');
+        $general   = $this->insertFund(301, 'General Fund');
+        $restricted = $this->insertFund(301, 'Roof Fund', 'restricted', 'Roof restoration');
+        $donId     = $this->insertDonation(301, $general, '100.00', $coaId);
+
+        $this->makeController('POST', [
+            'date'                => '2026-09-15',
+            'amount'              => '100.00',
+            'fund_id'             => $restricted,
+            'chart_account_id'    => $coaId,
+            'is_restricted'       => '0',
+            'restriction_purpose' => 'Manipulated purpose',
+        ])->update($donId);
+
+        $row = $this->db->table('donation')->where('id', $donId)->get()->getRowArray();
+        $this->assertSame(1, (int) $row['is_restricted']);
+        $this->assertSame('Roof restoration', $row['restriction_purpose']);
+    }
+
     public function testUpdateBlocksCrossParishAccess(): void
     {
         $coaId   = $this->insertChartAccount('4010', 'Pledge Offerings', 'income', 'tithe');

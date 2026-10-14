@@ -95,8 +95,7 @@ class PeopleFinance extends BaseController
             'chart_account_id' => (int) $chartAccount['id'],
             'payment_method' => (string) ($this->request->getPost('payment_method') ?? ''),
             'notes' => trim((string) ($this->request->getPost('notes') ?? '')),
-            'is_restricted' => (int) ($this->request->getPost('is_restricted') === '1'),
-            'restriction_purpose' => (string) ($this->request->getPost('restriction_purpose') ?? ''),
+            ...$this->donationService->restrictionDataForFund($fund),
         ];
 
         $donationId = $this->donationService->create($data);
@@ -192,8 +191,7 @@ class PeopleFinance extends BaseController
             'chart_account_id' => (int) $chartAccount['id'],
             'payment_method' => (string) ($this->request->getPost('payment_method') ?? ''),
             'notes' => trim((string) ($this->request->getPost('notes') ?? '')),
-            'is_restricted' => (int) ($this->request->getPost('is_restricted') === '1'),
-            'restriction_purpose' => (string) ($this->request->getPost('restriction_purpose') ?? ''),
+            ...$this->donationService->restrictionDataForFund($fund),
         ];
 
         if (!$this->donationService->update($donationId, $data)) {
