@@ -110,6 +110,7 @@ trigger: always_on
 - **Fund Account Mapping**: `fund.chart_account_id` is the optional default donation income account, never a fund-balance/net-assets account. It must reference an active `account_type=income` account. Donation writes use `DonationService::resolveIncomeAccount()`: omitted account IDs inherit the fund default, while an explicitly selected different active income account is allowed as an override and remains visible in the donation audit data.
 - **Last Usable Fund Guard**: Never lock or deactivate a parish’s final fund where `is_active=1 AND is_locked=0`; another usable fund must exist first. A blocked lifecycle attempt performs no mutation and writes no success audit event.
 - **Historical Fund Retention**: Donation edits may retain the donation’s existing inactive/locked fund during unrelated corrections. Edit selectors show usable funds plus that current historical fund only; they must exclude every other inactive/locked fund, and server-side validation must reject reassignment to an unusable fund.
+- **Finance Route Regression Tests**: Use `FeatureTestTrait` to cover actual donation create/store and fund lock/deactivate routes in addition to direct controller tests. POST route tests must use form format and exercise CSRF with `withHeaders([csrf_header() => csrf_hash()])->withBodyFormat('form')`; never disable the security filter to make them pass.
 
 ## Bootstrapping & Permissions
 
