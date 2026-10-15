@@ -528,7 +528,7 @@ $canEdit = auth()->user()->can('visitor.edit');
     (function() {
         'use strict';
 
-        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content ?? '';
+        const csrfMeta = document.querySelector('meta[name="csrf-token"]');
         const csrfHeader = document.querySelector('meta[name="csrf-header"]')?.content ?? 'X-CSRF-TOKEN';
 
         function ajaxPost(url, body) {
@@ -537,7 +537,9 @@ $canEdit = auth()->user()->can('visitor.edit');
                 'Content-Type': 'application/x-www-form-urlencoded',
                 'X-Requested-With': 'XMLHttpRequest',
             };
-            headers[csrfHeader] = csrfToken;
+            if (csrfMeta) {
+                headers[csrfHeader] = csrfMeta.content;
+            }
 
             return fetch(url, {
                 method: 'POST',
@@ -547,11 +549,8 @@ $canEdit = auth()->user()->can('visitor.edit');
             }).then(function(r) {
                 // Refresh CSRF token from response header if present
                 const newToken = r.headers.get(csrfHeader);
-                if (newToken) {
-                    const meta = document.querySelector('meta[name="csrf-token"]');
-                    if (meta) {
-                        meta.content = newToken;
-                    }
+                if (newToken && csrfMeta) {
+                    csrfMeta.content = newToken;
                 }
                 return r.json();
             });
@@ -900,7 +899,9 @@ $canEdit = auth()->user()->can('visitor.edit');
                                 'Content-Type': 'application/x-www-form-urlencoded',
                                 'X-Requested-With': 'XMLHttpRequest',
                             };
-                            headers[csrfHeader] = csrfToken;
+                            if (csrfMeta) {
+                                headers[csrfHeader] = csrfMeta.content;
+                            }
 
                             fetch(completeBaseUrl + ctId, {
                                     method: 'POST',
@@ -912,11 +913,8 @@ $canEdit = auth()->user()->can('visitor.edit');
                                 })
                                 .then(function(r) {
                                     const newToken = r.headers.get(csrfHeader);
-                                    if (newToken) {
-                                        const meta = document.querySelector('meta[name="csrf-token"]');
-                                        if (meta) {
-                                            meta.content = newToken;
-                                        }
+                                    if (newToken && csrfMeta) {
+                                        csrfMeta.content = newToken;
                                     }
                                     return r.json();
                                 })

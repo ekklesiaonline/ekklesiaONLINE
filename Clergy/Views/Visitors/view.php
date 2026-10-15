@@ -448,7 +448,7 @@ $suggestAttender  = ! $visitorConverted && $visitorStatus === 'visitor' && $visi
             return;
         }
 
-        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content ?? '';
+        const csrfMeta = document.querySelector('meta[name="csrf-token"]');
         const csrfHeader = document.querySelector('meta[name="csrf-header"]')?.content ?? 'X-CSRF-TOKEN';
         const assignUrl = <?= json_encode(base_url('visitors/assign-sequence/' . (int) $visitor['id'])) ?>;
 
@@ -466,7 +466,9 @@ $suggestAttender  = ! $visitorConverted && $visitorStatus === 'visitor' && $visi
                 'Accept': 'application/json',
                 'X-Requested-With': 'XMLHttpRequest',
             };
-            headers[csrfHeader] = csrfToken;
+            if (csrfMeta) {
+                headers[csrfHeader] = csrfMeta.content;
+            }
 
             fetch(assignUrl, {
                     method: 'POST',
@@ -478,11 +480,8 @@ $suggestAttender  = ! $visitorConverted && $visitorStatus === 'visitor' && $visi
                 })
                 .then(function(r) {
                     const t = r.headers.get(csrfHeader);
-                    if (t) {
-                        const m = document.querySelector('meta[name="csrf-token"]');
-                        if (m) {
-                            m.content = t;
-                        }
+                    if (t && csrfMeta) {
+                        csrfMeta.content = t;
                     }
                     return r.json();
                 })

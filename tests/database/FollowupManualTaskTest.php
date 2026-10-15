@@ -60,6 +60,7 @@ final class FollowupManualTaskTest extends CIUnitTestCase
         $this->withRoutes([
             ['POST', 'followup-workflow/manual-trigger/(:num)/(:num)', '\\Clergy\\Controllers\\FollowupTasks::manual_trigger/$1/$2'],
             ['POST', 'followup-workflow/tasks/complete/(:num)', '\\Clergy\\Controllers\\FollowupTasks::completeCallTask/$1'],
+            ['POST', 'visitors/followup-log/mark-done/(:num)', '\\Clergy\\Controllers\\VisitorFollowup::logMarkDone/$1'],
         ]);
     }
 
@@ -687,6 +688,59 @@ final class FollowupManualTaskTest extends CIUnitTestCase
         $this->assertSame('Send Manual a social media invitation', $timeline[0]['call_task_title']);
     }
 
+    public function testSequentialMarkDoneRotatesCsrfToken(): void
+    {
+        $adminId = $this->seedUser('visitor.followup.admin');
+        $this->db->table('profile')->insert([
+            'user_id'    => $adminId,
+            'parish_id'  => 301,
+            'first_name' => 'Parish',
+            'last_name'  => 'Admin',
+            'created_at' => date('Y-m-d H:i:s'),
+            'updated_at' => date('Y-m-d H:i:s'),
+        ]);
+        $this->injectVisitorAuth($adminId);
+
+        $personId = $this->seedPerson();
+
+        $this->db->table('followup_log')->insert([
+            'person_id'      => $personId,
+            'parish_id'      => 301,
+            'scheduled_date' => date('Y-m-d'),
+            'status'         => 'pending',
+            'created_at'     => date('Y-m-d H:i:s'),
+            'updated_at'     => date('Y-m-d H:i:s'),
+        ]);
+        $logId1 = (int) $this->db->insertID();
+
+        $this->db->table('followup_log')->insert([
+            'person_id'      => $personId,
+            'parish_id'      => 301,
+            'scheduled_date' => date('Y-m-d'),
+            'status'         => 'pending',
+            'created_at'     => date('Y-m-d H:i:s'),
+            'updated_at'     => date('Y-m-d H:i:s'),
+        ]);
+        $logId2 = (int) $this->db->insertID();
+
+        $first = $this->withHeaders($this->csrfHeaders(['X-Requested-With' => 'XMLHttpRequest']))
+            ->withBodyFormat('form')
+            ->post('visitors/followup-log/mark-done/' . $logId1);
+        $first->assertOK();
+        $body1 = json_decode($first->response()->getBody(), true);
+        $this->assertTrue($body1['success'] ?? false, $body1['message'] ?? 'First mark-done failed');
+
+        $second = $this->withHeaders($this->csrfHeaders(['X-Requested-With' => 'XMLHttpRequest']))
+            ->withBodyFormat('form')
+            ->post('visitors/followup-log/mark-done/' . $logId2);
+        $second->assertOK();
+        $body2 = json_decode($second->response()->getBody(), true);
+        $this->assertTrue($body2['success'] ?? false, $body2['message'] ?? 'Second mark-done failed');
+
+        $this->assertSame('sent', $this->db->table('followup_log')->where('id', $logId1)->get()->getRowArray()['status'] ?? null);
+        $this->assertSame('sent', $this->db->table('followup_log')->where('id', $logId2)->get()->getRowArray()['status'] ?? null);
+    }
+
     private function injectFollowupAuth(int $userId): void
     {
         $fakeUser = new class($userId) extends User {
@@ -702,6 +756,60 @@ final class FollowupManualTaskTest extends CIUnitTestCase
             public function can(string ...$permissions): bool
             {
                 return in_array('followup.manage', $permissions, true);
+            }
+
+            public function inGroup(string ...$groups): bool
+            {
+                return in_array('parishadmin', $groups, true);
+            }
+        };
+
+        $auth = new class(config('Auth'), $fakeUser, $userId) extends Auth {
+            public function __construct($config, private User $fakeUser, private int $testUserId)
+            {
+                parent::__construct($config);
+            }
+
+            public function loggedIn(): bool
+            {
+                return true;
+            }
+
+            public function id(): ?int
+            {
+                return $this->testUserId;
+            }
+
+            public function user(): ?User
+            {
+                return $this->fakeUser;
+            }
+        };
+
+        Services::injectMock('auth', $auth);
+    }
+
+    private function injectVisitorAuth(int $userId): void
+    {
+        $fakeUser = new class($userId) extends User {
+            public function __construct(private int $testUserId)
+            {
+                parent::__construct([
+                    'id'       => $testUserId,
+                    'username' => 'visitor.test.' . $testUserId,
+                    'email'    => 'visitor.test.' . $testUserId . '@example.org',
+                ]);
+            }
+
+            public function can(string ...$permissions): bool
+            {
+                foreach ($permissions as $permission) {
+                    if (in_array($permission, ['visitor.view', 'visitor.edit', 'followup.view', 'followup.manage'], true)) {
+                        return true;
+                    }
+                }
+
+                return false;
             }
 
             public function inGroup(string ...$groups): bool
