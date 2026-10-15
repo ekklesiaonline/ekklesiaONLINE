@@ -37,11 +37,11 @@ Use status codes consistently: 400 malformed, 401 unauthenticated, 403 forbidden
 
 For native `fetch()` POSTs, follow `.agents/rules/views.md` (or `.devin/rules/views.md`) exactly:
 
-- Read the CSRF meta token once.
+- Keep a reference to the CSRF meta **element** (`const csrfMeta = document.querySelector('meta[name="csrf-token"]')`) and read `csrfMeta.content` every time you build request headers. Do **not** cache the token value in a separate variable; CI4 regenerates the token after each successful POST, and a stale value produces "The action you requested is not allowed."
 - Send `application/x-www-form-urlencoded` via `URLSearchParams`; do not send `JSON.stringify`.
 - Include `X-Requested-With: XMLHttpRequest` and the configured CSRF header.
 - Send same-origin credentials.
-- Replace the CSRF meta value from the response header when present.
+- Replace `csrfMeta.content` from the response header when present.
 - Handle both the top-level `message`/`errors` compatibility fields and `status`/`error.code` deterministic fields.
 - Use toasts for success/error feedback and redirect unauthenticated keepalive responses to login where required.
 

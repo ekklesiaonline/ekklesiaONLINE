@@ -57,9 +57,9 @@ fetch(url, {
     });
 ```
 
-- Read the `csrf-token` meta tag once before the fetch.
+- Read the `csrf-token` meta **element** once before the fetch (`const csrfMeta = document.querySelector('meta[name="csrf-token"]')`), then read `csrfMeta.content` each time you build request headers. Never cache the token value in a separate variable — CI4 regenerates it after every successful POST, so a cached value causes the next request to fail with "The action you requested is not allowed."
 - Send form-encoded bodies (`URLSearchParams`), never `JSON.stringify`.
-- Refresh the token from the response header.
+- Refresh the token from the response header and write it back to `csrfMeta.content`.
 
 ## Shared Partials
 

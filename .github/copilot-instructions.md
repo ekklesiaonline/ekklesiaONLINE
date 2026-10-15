@@ -454,9 +454,9 @@ fetch(url, {
 **Critical rules:**
 
 - The meta tag name in the layout is `csrf-token` (all lowercase). Never use `X-CSRF-TOKEN` as the `querySelector` selector — that returns `null` and sends an empty token, causing a CI4 403 "The action you requested is not allowed."
-- Always read `csrfMeta` once before the fetch, then refresh `csrfMeta.content` from the response header inside `.then()`.
+- Always keep a reference to the `csrfMeta` **element** (`const csrfMeta = document.querySelector('meta[name="csrf-token"]')`) and read `csrfMeta.content` each time you build headers. Do not cache the token value in a separate variable — CI4 regenerates the token after every successful POST, and a cached value causes the next request to fail with "The action you requested is not allowed." Refresh `csrfMeta.content` from the response header inside `.then()`.
 - Send body fields as `URLSearchParams` (form-encoded), not `JSON.stringify`. Controller reads via `$this->request->getPost('field')`.
-- Reference implementation: `Clergy/Views/Visitors/followup_manual.php` lines 514–539.
+- Reference implementation: `Clergy/Views/Visitors/followup_manual.php` `ajaxPost()` helper.
 
 ## 7. Security Considerations
 
