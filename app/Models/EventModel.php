@@ -224,6 +224,33 @@ class EventModel extends BaseTenantModel
         return is_array($row) ? $row : null;
     }
 
+    public function getEventWithCountsForParishAudience(int $eventId, int $parishId, int $dioceseId = 0): ?array
+    {
+        $builder = $this->db->table('event e')
+            ->select('e.*, ec.name as calendar_name, ec.color_hex as calendar_color, COUNT(er.id) as registration_count, ' . $this->getCheckinCountSelect())
+            ->join('event_calendar ec', 'ec.id = e.calendar_id', 'left')
+            ->join('event_registration er', 'er.event_id = e.id', 'left')
+            ->where('e.id', $eventId)
+            ->groupStart()
+            ->where('e.organizer_type', 'parish')
+            ->where('e.organizer_parish_id', $parishId);
+
+        if ($dioceseId > 0) {
+            $builder->orGroupStart()
+                ->where('e.organizer_type', 'diocese')
+                ->where('e.organizer_diocese_id', $dioceseId)
+                ->groupEnd();
+        }
+
+        $row = $builder->groupEnd()
+            ->where('e.deleted_at', null)
+            ->groupBy('e.id')
+            ->get()
+            ->getRowArray();
+
+        return is_array($row) ? $row : null;
+    }
+
     public function getVisibleEventsForRange(int $parishId, int $dioceseId, string $rangeStart, string $rangeEnd): array
     {
         $builder = $this->db->table('event e')

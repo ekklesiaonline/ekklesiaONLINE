@@ -28,6 +28,7 @@ final class EventsControllerFeatureTest extends CIUnitTestCase
         $this->withRoutes([
             ['GET', 'events/create', '\\Clergy\\Controllers\\Events::create'],
             ['GET', 'events/edit/(:num)', '\\Clergy\\Controllers\\Events::edit/$1'],
+            ['GET', 'events/view/(:num)', '\\Clergy\\Controllers\\Events::view/$1'],
         ]);
     }
 
@@ -99,6 +100,70 @@ final class EventsControllerFeatureTest extends CIUnitTestCase
         $this->assertStringContainsString('option value="invited" selected', $body);
         $this->assertStringContainsString('option value="' . $inviteeId . '" selected', $body);
         $response->assertSee('Irene Invitee');
+    }
+
+    public function testDiocesanEventCanBeListedAndOpenedFromAnotherParishInSameDiocese(): void
+    {
+        [, $dioceseId, $hostParishId] = $this->insertHierarchy();
+        $viewerParishId = $this->insertParish($dioceseId, 'Viewer Parish');
+
+        $viewerId = $this->insertUser('event.feature.cross.parish.viewer');
+        $this->insertProfile($viewerId, $viewerParishId, $dioceseId, 'Cross', 'Parish');
+        $this->injectEventsAuth($viewerId, ['event.view']);
+        session()->set('selected_parish_id', $viewerParishId);
+
+        $calendarId = $this->insertCalendar($hostParishId, $dioceseId, 'Diocesan Calendar');
+        $eventId = $this->insertEvent($hostParishId, $calendarId, [
+            'organizer_type' => 'diocese',
+            'organizer_diocese_id' => $dioceseId,
+            'organizer_parish_id' => null,
+            'scope_level' => 'diocese',
+            'scope_diocese_id' => $dioceseId,
+            'title' => 'Same Diocese Gathering',
+            'visibility' => 'public',
+        ]);
+
+        $listedEvents = model('EventModel')->getParishEventsWithCounts($viewerParishId, $dioceseId);
+        $this->assertContains($eventId, array_map('intval', array_column($listedEvents, 'id')));
+
+        $viewResponse = $this->get('events/view/' . $eventId);
+        $viewResponse->assertOK();
+        $viewResponse->assertSee('Same Diocese Gathering');
+    }
+
+    public function testEventDetailRejectsOtherParishAndOtherDioceseCandidates(): void
+    {
+        [$provinceId, $dioceseId, $viewerParishId] = $this->insertHierarchy();
+        $otherParishId = $this->insertParish($dioceseId, 'Other Parish');
+        $otherDioceseId = $this->insertDiocese($provinceId, 'Other Diocese');
+        $otherDioceseParishId = $this->insertParish($otherDioceseId, 'Other Diocese Parish');
+
+        $viewerId = $this->insertUser('event.feature.isolation.viewer');
+        $this->insertProfile($viewerId, $viewerParishId, $dioceseId, 'Scope', 'Viewer');
+        $this->injectEventsAuth($viewerId, ['event.view']);
+        session()->set('selected_parish_id', $viewerParishId);
+
+        $otherParishCalendarId = $this->insertCalendar($otherParishId, $dioceseId, 'Other Parish Calendar');
+        $otherParishEventId = $this->insertEvent($otherParishId, $otherParishCalendarId, [
+            'organizer_type' => 'parish',
+            'organizer_parish_id' => $otherParishId,
+            'title' => 'Hidden Parish Event',
+            'visibility' => 'public',
+        ]);
+
+        $otherDioceseCalendarId = $this->insertCalendar($otherDioceseParishId, $otherDioceseId, 'Other Diocese Calendar');
+        $otherDioceseEventId = $this->insertEvent($otherDioceseParishId, $otherDioceseCalendarId, [
+            'organizer_type' => 'diocese',
+            'organizer_diocese_id' => $otherDioceseId,
+            'organizer_parish_id' => null,
+            'scope_level' => 'diocese',
+            'scope_diocese_id' => $otherDioceseId,
+            'title' => 'Hidden Diocese Event',
+            'visibility' => 'public',
+        ]);
+
+        $this->get('events/view/' . $otherParishEventId)->assertRedirectTo('/events');
+        $this->get('events/view/' . $otherDioceseEventId)->assertRedirectTo('/events');
     }
 
     /**
@@ -257,6 +322,8 @@ final class EventsControllerFeatureTest extends CIUnitTestCase
     {
         $payload = array_merge([
             'parish_id' => $parishId,
+            'organizer_type' => 'parish',
+            'organizer_parish_id' => $parishId,
             'calendar_id' => $calendarId,
             'scope_level' => 'parish',
             'scope_diocese_id' => null,

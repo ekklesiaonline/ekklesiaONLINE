@@ -378,7 +378,11 @@ class Events extends BaseController
 
     protected function getViewableParishEvent(int $eventId): ?array
     {
-        $event = $this->eventModel->getEventWithCounts($eventId);
+        $event = $this->eventModel->getEventWithCountsForParishAudience(
+            $eventId,
+            (int) ($this->getOperationalParishId() ?? 0),
+            $this->resolveCurrentDioceseId()
+        );
 
         if (!is_array($event)) {
             return null;
