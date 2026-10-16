@@ -1,4 +1,4 @@
-# EkklesiaRD - Multi-Parish Management System
+# EkklesiaONLINE - Multi-Parish Management System
 
 EkklesiaRD is a Parish Management System (PMS) for province, diocese, and local parish operations, built on CodeIgniter 4.7 with Shield 1.4+ (v1.4.1) authentication.
 
@@ -13,8 +13,8 @@ EkklesiaRD is a Parish Management System (PMS) for province, diocese, and local 
 
 ## Tech Stack
 
-- PHP 8.2+
-- CodeIgniter 4.7
+- PHP 8.5+
+- CodeIgniter 4.7+
 - CodeIgniter Shield 1.4+ (v1.4.1)
 - MySQL 8.0+
 - Bootstrap 5
