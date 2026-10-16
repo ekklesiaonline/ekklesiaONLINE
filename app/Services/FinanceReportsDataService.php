@@ -183,140 +183,143 @@ class FinanceReportsDataService
             ->get()
             ->getResultArray();
 
-        if (empty($dioceses)) {
+        if ($dioceses === []) {
             return [];
         }
 
-        // OPTIMIZATION: Fetch all parishes in one query, then group by diocese (N+1 prevention)
-        $dioceseIds = array_map(static fn(array $d) => (int) $d['id'], $dioceses);
-        $allParishes = $db->table('parish')
+        $dioceseIds = array_map(static fn(array $row): int => (int) $row['id'], $dioceses);
+        $parishes = $db->table('parish')
             ->select('id, diocese_id')
             ->whereIn('diocese_id', $dioceseIds)
             ->get()
             ->getResultArray();
+        $parishIds = array_map(static fn(array $row): int => (int) $row['id'], $parishes);
+        $parishCounts = array_fill_keys($dioceseIds, 0);
+        foreach ($parishes as $parish) {
+            $parishCounts[(int) $parish['diocese_id']]++;
+        }
 
-        // Group parishes by diocese in memory
-        $parishesByDiocese = [];
-        foreach ($allParishes as $parish) {
-            $dioId = (int) $parish['diocese_id'];
-            if (!isset($parishesByDiocese[$dioId])) {
-                $parishesByDiocese[$dioId] = [];
+        $metrics = [];
+        foreach ($dioceseIds as $dioceseId) {
+            $metrics[$dioceseId] = [
+                'people_count' => 0,
+                'visitor_count' => 0,
+                'member_count' => 0,
+                'good_standing_count' => 0,
+                'service_count' => 0,
+                'attendance_count' => 0,
+                'donations_total' => 0.0,
+                'expenses_total' => 0.0,
+            ];
+        }
+
+        if ($parishIds !== []) {
+            $affiliations = $db->table('parish_affiliation pa')
+                ->select('c.diocese_id')
+                ->select('COUNT(DISTINCT CASE WHEN pa.is_member = 1 AND agu.id IS NULL THEN pa.person_id END) AS registered_count', false)
+                ->select('COUNT(DISTINCT CASE WHEN pa.membership_status = "member" AND agu.id IS NULL THEN pa.person_id END) AS member_count', false)
+                ->select('COUNT(DISTINCT CASE WHEN pa.membership_status IN ("visitor", "regular_attender") AND pa.converted_to_member_at IS NULL THEN pa.person_id END) AS visitor_count', false)
+                ->join('parish c', 'c.id = pa.parish_id', 'inner')
+                ->join('person pe', 'pe.id = pa.person_id AND pe.deleted_at IS NULL', 'inner')
+                ->join('users u', 'u.id = pa.linked_user_id', 'left')
+                ->join('auth_groups_users agu', 'agu.user_id = u.id AND agu.group IN ("provinceadmin","diocesanadmin","dioceseadmin")', 'left')
+                ->whereIn('pa.parish_id', $parishIds)
+                ->where('pa.deleted_at IS NULL', null, false)
+                ->groupBy('c.diocese_id')
+                ->get()
+                ->getResultArray();
+            foreach ($affiliations as $row) {
+                $dioceseId = (int) $row['diocese_id'];
+                $metrics[$dioceseId]['visitor_count'] = (int) $row['visitor_count'];
+                $metrics[$dioceseId]['people_count'] = (int) $row['registered_count'] + (int) $row['visitor_count'];
+                $metrics[$dioceseId]['member_count'] = (int) $row['member_count'];
             }
-            $parishesByDiocese[$dioId][] = (int) $parish['id'];
+
+            $standing = $db->table('member_standing_summary mss')
+                ->select('c.diocese_id, COUNT(DISTINCT mss.user_id) AS count', false)
+                ->join('parish_affiliation pa', 'pa.linked_user_id = mss.user_id', 'inner')
+                ->join('parish c', 'c.id = pa.parish_id', 'inner')
+                ->join('users u', 'u.id = mss.user_id', 'inner')
+                ->join('auth_groups_users agu', 'agu.user_id = u.id AND agu.group IN ("provinceadmin","diocesanadmin","dioceseadmin")', 'left')
+                ->whereIn('pa.parish_id', $parishIds)
+                ->where('pa.is_member', 1)
+                ->where('pa.membership_status', 'member')
+                ->where('mss.year', (int) date('Y', strtotime($endDate)))
+                ->where('mss.is_good_standing', 1)
+                ->where('agu.id IS NULL')
+                ->groupBy('c.diocese_id')
+                ->get()
+                ->getResultArray();
+            foreach ($standing as $row) {
+                $metrics[(int) $row['diocese_id']]['good_standing_count'] = (int) $row['count'];
+            }
+
+            $services = $db->table('service s')
+                ->select('c.diocese_id, COUNT(s.id) AS count', false)
+                ->join('parish c', 'c.id = s.parish_id', 'inner')
+                ->whereIn('s.parish_id', $parishIds)
+                ->where('s.service_date >=', $startDate)
+                ->where('s.service_date <=', $endDate)
+                ->groupBy('c.diocese_id')
+                ->get()
+                ->getResultArray();
+            foreach ($services as $row) {
+                $metrics[(int) $row['diocese_id']]['service_count'] = (int) $row['count'];
+            }
+
+            $attendance = $db->table('attendance a')
+                ->select('c.diocese_id, COUNT(a.id) AS count', false)
+                ->join('service s', 's.id = a.service_id', 'inner')
+                ->join('parish c', 'c.id = s.parish_id', 'inner')
+                ->whereIn('s.parish_id', $parishIds)
+                ->where('a.attended', 1)
+                ->where('s.service_date >=', $startDate)
+                ->where('s.service_date <=', $endDate)
+                ->groupBy('c.diocese_id')
+                ->get()
+                ->getResultArray();
+            foreach ($attendance as $row) {
+                $metrics[(int) $row['diocese_id']]['attendance_count'] = (int) $row['count'];
+            }
+
+            $donationModel = model(DonationModel::class);
+            $donations = $db->table('donation d')
+                ->select('c.diocese_id, d.amount')
+                ->join('parish c', 'c.id = d.parish_id', 'inner')
+                ->whereIn('d.parish_id', $parishIds)
+                ->where('d.date >=', $startDate)
+                ->where('d.date <=', $endDate)
+                ->where('d.deleted_at', null)
+                ->get()
+                ->getResultArray();
+            foreach ($donations as $row) {
+                $metrics[(int) $row['diocese_id']]['donations_total'] += $donationModel->normalizeAmount($row['amount'] ?? null);
+            }
+
+            $expenses = $db->table('expense e')
+                ->select('c.diocese_id, COALESCE(SUM(e.amount), 0) AS total', false)
+                ->join('parish c', 'c.id = e.parish_id', 'inner')
+                ->whereIn('e.parish_id', $parishIds)
+                ->where('e.date >=', $startDate)
+                ->where('e.date <=', $endDate)
+                ->groupBy('c.diocese_id')
+                ->get()
+                ->getResultArray();
+            foreach ($expenses as $row) {
+                $metrics[(int) $row['diocese_id']]['expenses_total'] = (float) $row['total'];
+            }
         }
 
         $rows = [];
         foreach ($dioceses as $diocese) {
             $dioceseId = (int) $diocese['id'];
-            $parishIds = $parishesByDiocese[$dioceseId] ?? [];
-
-            if (empty($parishIds)) {
-                $rows[] = [
-                    'diocese_id' => $dioceseId,
-                    'diocese_name' => (string) $diocese['name'],
-                    'parish_count' => 0,
-                    'people_count' => 0,
-                    'visitor_count' => 0,
-                    'member_count' => 0,
-                    'good_standing_count' => 0,
-                    'service_count' => 0,
-                    'attendance_count' => 0,
-                    'donations_total' => 0.0,
-                    'expenses_total' => 0.0,
-                    'net_balance' => 0.0,
-                ];
-                continue;
-            }
-
-            // Build summary for the whole diocese parish set.
-            $peopleRow = $db->table('parish_affiliation mca')
-                ->select('COUNT(DISTINCT mca.person_id) as count', false)
-                ->join('person pe', 'pe.id = mca.person_id AND pe.deleted_at IS NULL', 'inner')
-                ->join('users u', 'u.id = mca.linked_user_id', 'left')
-                ->join('auth_groups_users agu', 'agu.user_id = u.id AND agu.group IN ("provinceadmin","diocesanadmin","dioceseadmin")', 'left')
-                ->whereIn('mca.parish_id', $parishIds)
-                ->where('mca.is_member', 1)
-                ->where('mca.deleted_at IS NULL', null, false)
-                ->where('agu.id IS NULL')
-                ->get()
-                ->getRowArray();
-
-            $memberRow = $db->table('parish_affiliation mca')
-                ->select('COUNT(DISTINCT mca.person_id) as count', false)
-                ->join('person pe', 'pe.id = mca.person_id AND pe.deleted_at IS NULL', 'inner')
-                ->join('users u', 'u.id = mca.linked_user_id', 'left')
-                ->join('auth_groups_users agu', 'agu.user_id = u.id AND agu.group IN ("provinceadmin","diocesanadmin","dioceseadmin")', 'left')
-                ->whereIn('mca.parish_id', $parishIds)
-                ->where('mca.membership_status', 'member')
-                ->where('mca.deleted_at IS NULL', null, false)
-                ->where('agu.id IS NULL')
-                ->get()
-                ->getRowArray();
-
-            $visitorRow = $db->table('parish_affiliation pa')
-                ->select('COUNT(DISTINCT pa.person_id) AS visitor_count', false)
-                ->join('person pe', 'pe.id = pa.person_id AND pe.deleted_at IS NULL', 'inner')
-                ->whereIn('pa.parish_id', $parishIds)
-                ->whereIn('pa.membership_status', ['visitor', 'regular_attender'])
-                ->where('pa.converted_to_member_at IS NULL', null, false)
-                ->where('pa.deleted_at IS NULL', null, false)
-                ->get()
-                ->getRowArray();
-
-            $goodStandingYear = (int) date('Y', strtotime($endDate));
-            $goodStandingRow = $db->table('member_standing_summary mss')
-                ->select('COUNT(DISTINCT mss.user_id) AS count', false)
-                ->join('parish_affiliation mca', 'mca.linked_user_id = mss.user_id', 'inner')
-                ->join('users u', 'u.id = mss.user_id', 'inner')
-                ->join('auth_groups_users agu', 'agu.user_id = u.id AND agu.group IN ("provinceadmin","diocesanadmin","dioceseadmin")', 'left')
-                ->whereIn('mca.parish_id', $parishIds)
-                ->where('mca.is_member', 1)
-                ->where('mca.membership_status', 'member')
-                ->where('mss.year', $goodStandingYear)
-                ->where('mss.is_good_standing', 1)
-                ->where('agu.id IS NULL')
-                ->get()
-                ->getRowArray();
-
-            $serviceCount = (int) $db->table('service')
-                ->whereIn('parish_id', $parishIds)
-                ->where('service_date >=', $startDate)
-                ->where('service_date <=', $endDate)
-                ->countAllResults();
-
-            $attendanceCount = (int) $db->table('attendance a')
-                ->join('service s', 's.id = a.service_id')
-                ->whereIn('s.parish_id', $parishIds)
-                ->where('a.attended', 1)
-                ->where('s.service_date >=', $startDate)
-                ->where('s.service_date <=', $endDate)
-                ->countAllResults();
-
-            $donationsTotal = model(DonationModel::class)->getAllParishesTotalDonations($startDate, $endDate, $parishIds, false);
-
-            $expenseRow = $db->table('expense')
-                ->select('COALESCE(SUM(amount), 0) AS total_amount')
-                ->whereIn('parish_id', $parishIds)
-                ->where('date >=', $startDate)
-                ->where('date <=', $endDate)
-                ->get()
-                ->getRowArray();
-
-            $expensesTotal = (float) ($expenseRow['total_amount'] ?? 0);
-
+            $dioceseMetrics = $metrics[$dioceseId];
             $rows[] = [
-                'diocese_id' => (int) $diocese['id'],
+                'diocese_id' => $dioceseId,
                 'diocese_name' => (string) $diocese['name'],
-                'parish_count' => count($parishIds),
-                'people_count' => (int) ($peopleRow['count'] ?? 0) + (int) ($visitorRow['visitor_count'] ?? 0),
-                'visitor_count' => (int) ($visitorRow['visitor_count'] ?? 0),
-                'member_count' => (int) ($memberRow['count'] ?? 0),
-                'good_standing_count' => (int) ($goodStandingRow['count'] ?? 0),
-                'service_count' => $serviceCount,
-                'attendance_count' => $attendanceCount,
-                'donations_total' => $donationsTotal,
-                'expenses_total' => $expensesTotal,
-                'net_balance' => $donationsTotal - $expensesTotal,
+                'parish_count' => $parishCounts[$dioceseId],
+                ...$dioceseMetrics,
+                'net_balance' => $dioceseMetrics['donations_total'] - $dioceseMetrics['expenses_total'],
             ];
         }
 

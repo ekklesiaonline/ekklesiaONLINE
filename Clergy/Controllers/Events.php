@@ -47,8 +47,12 @@ class Events extends BaseController
         $dioceseId = $this->resolveCurrentDioceseId();
         $status = trim((string) ($this->request->getGet('status') ?? ''));
         $search = trim((string) ($this->request->getGet('search') ?? ''));
+        $page = max(1, (int) ($this->request->getGet('page') ?? 1));
+        $perPage = 25;
 
-        $events = $this->eventModel->getParishEventsWithCounts($parishId, $dioceseId, $status, $search);
+        $events = $this->eventModel->getParishEventsWithCounts($parishId, $dioceseId, $status, $search, $perPage + 1, ($page - 1) * $perPage);
+        $hasMore = count($events) > $perPage;
+        $events = array_slice($events, 0, $perPage);
         $events = $this->eventVisibilityService->filterVisibleEvents($events, $this->getEventVisibilityContext());
         $canEditEvents = auth()->user()->can('event.edit');
         $canDeleteEvents = auth()->user()->can('event.delete');
@@ -64,6 +68,8 @@ class Events extends BaseController
             'events' => $events,
             'status' => $status,
             'search' => $search,
+            'page' => $page,
+            'has_more' => $hasMore,
         ]));
     }
 

@@ -41,6 +41,8 @@ abstract class BaseController extends Controller
      */
     //protected $parishId;
     protected $parishId;
+    protected bool $operationalParishResolved = false;
+    protected ?int $operationalParishId = null;
 
     /**
      * Current user's profile
@@ -415,15 +417,21 @@ abstract class BaseController extends Controller
      */
     protected function getOperationalParishId(): ?int
     {
+        if ($this->operationalParishResolved) {
+            return $this->operationalParishId;
+        }
+
         if ($this->isProvinceAdmin() || $this->isDioceseAdmin()) {
             $selectedParish = (int) (session()->get('selected_parish_id') ?? 0);
             if ($selectedParish > 0) {
-                return $selectedParish;
+                $this->operationalParishResolved = true;
+                return $this->operationalParishId = $selectedParish;
             }
 
             $homeparishId = $this->getHomeparishId();
             if ($homeparishId !== null) {
-                return $homeparishId;
+                $this->operationalParishResolved = true;
+                return $this->operationalParishId = $homeparishId;
             }
 
             // Diocesan admins may not have a direct profile parish. In that case,
@@ -465,15 +473,18 @@ abstract class BaseController extends Controller
                         $this->parishId = $fallbackparishId;
                         session()->set('selected_parish_id', $fallbackparishId);
 
-                        return $fallbackparishId;
+                        $this->operationalParishResolved = true;
+                        return $this->operationalParishId = $fallbackparishId;
                     }
                 }
             }
 
-            return null;
+            $this->operationalParishResolved = true;
+            return $this->operationalParishId = null;
         }
 
-        return $this->getHomeparishId();
+        $this->operationalParishResolved = true;
+        return $this->operationalParishId = $this->getHomeparishId();
     }
 
     /**
@@ -484,6 +495,8 @@ abstract class BaseController extends Controller
         $parishIdInt = (int) $parishId;
         if (($this->isProvinceAdmin() || $this->isDioceseAdmin()) && $parishIdInt > 0) {
             session()->set('selected_parish_id', $parishIdInt);
+            $this->operationalParishResolved = true;
+            $this->operationalParishId = $parishIdInt;
         }
     }
 

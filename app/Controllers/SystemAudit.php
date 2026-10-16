@@ -105,11 +105,13 @@ class SystemAudit extends BaseController
         }
 
         if ($search !== '') {
-            $builder->groupStart();
-            $builder->like('action', $search);
-            $builder->orLike('entity_type', $search);
-            $builder->orLike('old_values', $search);
-            $builder->orLike('new_values', $search);
+            $builder->groupStart()
+                ->like('action', $search)
+                ->orLike('entity_type', $search);
+            if ($dateFrom !== '' || $dateTo !== '') {
+                $builder->orLike('old_values', $search)
+                    ->orLike('new_values', $search);
+            }
             $builder->groupEnd();
         }
 
@@ -148,36 +150,14 @@ class SystemAudit extends BaseController
         $dateTo = trim((string) $this->request->getGet('date_to'));
         $search = trim((string) $this->request->getGet('search'));
 
-        $builder = $db->table('audit_log');
-
-        if ($action !== '') {
-            $builder->like('action', $action, 'after');
-        }
-
-        if (is_numeric($userId) && (int) $userId > 0) {
-            $builder->where('user_id', (int) $userId);
-        }
-
-        if ($entityType !== '') {
-            $builder->where('entity_type', $entityType);
-        }
-
-        if ($dateFrom !== '' && preg_match('/^\d{4}-\d{2}-\d{2}$/', $dateFrom)) {
-            $builder->where('created_at >=', $dateFrom . ' 00:00:00');
-        }
-
-        if ($dateTo !== '' && preg_match('/^\d{4}-\d{2}-\d{2}$/', $dateTo)) {
-            $builder->where('created_at <=', $dateTo . ' 23:59:59');
-        }
-
-        if ($search !== '') {
-            $builder->groupStart();
-            $builder->like('action', $search);
-            $builder->orLike('entity_type', $search);
-            $builder->orLike('old_values', $search);
-            $builder->orLike('new_values', $search);
-            $builder->groupEnd();
-        }
+        $builder = $this->buildAuditQuery($db, [
+            'action' => $action,
+            'user_id' => $userId,
+            'entity_type' => $entityType,
+            'date_from' => $dateFrom,
+            'date_to' => $dateTo,
+            'search' => $search,
+        ]);
 
         $totalRecords = (int) $db->table('audit_log')->countAllResults();
 

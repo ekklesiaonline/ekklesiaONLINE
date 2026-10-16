@@ -270,8 +270,8 @@ class PeopleDirectoryService
         }
 
         $builder->groupStart()
-            ->like('p.first_name', $search, 'both', null, true)
-            ->orLike('p.last_name', $search, 'both', null, true)
+            ->like('p.first_name', $search, 'after', null, true)
+            ->orLike('p.last_name', $search, 'after', null, true)
             ->groupEnd();
     }
 

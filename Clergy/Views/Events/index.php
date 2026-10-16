@@ -176,6 +176,15 @@ $eventsFiltersActive = trim((string) ($search ?? '')) !== '' || trim((string) ($
     </div>
 </div>
 
+<?php if (($page ?? 1) > 1 || !empty($has_more)): ?>
+    <nav class="d-flex justify-content-between mt-3" aria-label="<?= esc(lang('App.pagination')) ?>">
+        <?php $previousQuery = http_build_query(['search' => $search ?? '', 'status' => $status ?? '', 'page' => max(1, ($page ?? 1) - 1)]); ?>
+        <?php $nextQuery = http_build_query(['search' => $search ?? '', 'status' => $status ?? '', 'page' => ($page ?? 1) + 1]); ?>
+        <a class="btn btn-sm btn-outline-secondary <?= ($page ?? 1) <= 1 ? 'disabled' : '' ?>" href="<?= base_url('events') . '?' . $previousQuery ?>"><?= lang('App.previous') ?></a>
+        <a class="btn btn-sm btn-outline-secondary <?= empty($has_more) ? 'disabled' : '' ?>" href="<?= base_url('events') . '?' . $nextQuery ?>"><?= lang('App.next') ?></a>
+    </nav>
+<?php endif; ?>
+
 <script>
     const eventsDeleteCsrfName = '<?= csrf_token() ?>';
     const eventsDeleteCsrfHash = '<?= csrf_hash() ?>';

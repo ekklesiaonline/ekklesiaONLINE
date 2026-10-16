@@ -26,8 +26,12 @@ class SystemEvents extends BaseController
 
         $status = trim((string) ($this->request->getGet('status') ?? ''));
         $search = trim((string) ($this->request->getGet('search') ?? ''));
+        $page = max(1, (int) ($this->request->getGet('page') ?? 1));
+        $perPage = 25;
 
-        $events = model('EventModel')->getNationalEventsWithCounts($parishId, $status === '' ? null : $status, $search === '' ? null : $search);
+        $events = model('EventModel')->getNationalEventsWithCounts($parishId, $status === '' ? null : $status, $search === '' ? null : $search, $perPage + 1, ($page - 1) * $perPage);
+        $hasMore = count($events) > $perPage;
+        $events = array_slice($events, 0, $perPage);
 
         $canEdit = auth()->user()->can('national.event.manage');
         foreach ($events as &$event) {
@@ -40,6 +44,8 @@ class SystemEvents extends BaseController
             'events' => $events,
             'status' => $status,
             'search' => $search,
+            'page' => $page,
+            'has_more' => $hasMore,
         ]));
     }
 

@@ -174,6 +174,7 @@ class WorshipServiceDataService
             $peopleNames = (array) (service('request')->getPost('people_name') ?? []);
             $peopleRoles = (array) (service('request')->getPost('people_role') ?? []);
             $maxRows = max(count($peopleNames), count($peopleRoles));
+            $people = [];
 
             for ($i = 0; $i < $maxRows; $i++) {
                 $name = trim((string) ($peopleNames[$i] ?? ''));
@@ -183,12 +184,16 @@ class WorshipServiceDataService
                     continue;
                 }
 
-                $this->servicePeopleModel->insert([
+                $people[] = [
                     'service_id' => $serviceId,
                     'person_name' => $name,
                     'role_name' => $role !== '' ? $role : null,
                     'sort_order' => $i,
-                ]);
+                ];
+            }
+
+            if ($people !== []) {
+                $this->servicePeopleModel->insertBatch($people);
             }
         }
     }
@@ -262,22 +267,12 @@ class WorshipServiceDataService
 
     public function safeFindMetrics(int $serviceId): array
     {
-        $db = db_connect();
-        if (!$db->tableExists('service_metric')) {
-            return [];
-        }
-
         return $this->serviceMetricsModel->find($serviceId) ?? [];
     }
 
 
     public function safeGetServicePeople(int $serviceId): array
     {
-        $db = db_connect();
-        if (!$db->tableExists('service_people')) {
-            return [];
-        }
-
         return $this->servicePeopleModel
             ->where('service_id', $serviceId)
             ->orderBy('sort_order', 'ASC')
@@ -287,33 +282,18 @@ class WorshipServiceDataService
 
     public function safeGetLiturgicalSeasons($parishId): array
     {
-        $db = db_connect();
-        if (!$db->tableExists('liturgical_calendar_entry')) {
-            return [];
-        }
-
         return $this->liturgicalCalendarEntryModel->getSeasonsForDropdown($parishId);
     }
 
 
     public function safeGetLiturgicalDays($parishId, string $season): array
     {
-        $db = db_connect();
-        if (!$db->tableExists('liturgical_calendar_entry')) {
-            return [];
-        }
-
         return $this->liturgicalCalendarEntryModel->getDaysBySeason($parishId, $season);
     }
 
 
     public function safeFindLiturgicalEntryByName($parishId, string $name): ?array
     {
-        $db = db_connect();
-        if (!$db->tableExists('liturgical_calendar_entry')) {
-            return null;
-        }
-
         return $this->liturgicalCalendarEntryModel->findByName($parishId, $name);
     }
 }

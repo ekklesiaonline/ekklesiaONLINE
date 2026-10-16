@@ -127,17 +127,13 @@ class ParishDashboardDataService
     private function countBirthdaysThisWeek($db, int $parishId, \DateTimeImmutable $weekStart, \DateTimeImmutable $weekEnd): int
     {
         $profileTable = $this->resolveExistingProfileTable($db);
-        if ($profileTable === null) {
-            return 0;
-        }
 
-        $startMonthDay = $weekStart->format('m-d');
-        $endMonthDay   = $weekEnd->format('m-d');
+        $startMonthDay = ((int) $weekStart->format('m') * 100) + (int) $weekStart->format('d');
+        $endMonthDay   = ((int) $weekEnd->format('m') * 100) + (int) $weekEnd->format('d');
 
-        // M6: Use driver-appropriate date formatting function
         $dateExpr = $db->DBDriver === 'SQLite3'
-            ? "strftime('%m-%d', p.birth_date)"
-            : "DATE_FORMAT(p.birth_date, '%m-%d')";
+            ? "(CAST(strftime('%m', p.birth_date) AS INTEGER) * 100 + CAST(strftime('%d', p.birth_date) AS INTEGER))"
+            : '(MONTH(p.birth_date) * 100 + DAYOFMONTH(p.birth_date))';
 
         $builder = $db->table('parish_affiliation mca')
             ->select('1')
@@ -167,14 +163,8 @@ class ParishDashboardDataService
     /**
      * Resolve which profile table exists (profile or a snapshot).
      */
-    private function resolveExistingProfileTable($db): ?string
+    private function resolveExistingProfileTable($db): string
     {
-        $candidates = ['profile'];
-        foreach ($candidates as $table) {
-            if ($db->tableExists($table)) {
-                return $table;
-            }
-        }
-        return null;
+        return 'profile';
     }
 }

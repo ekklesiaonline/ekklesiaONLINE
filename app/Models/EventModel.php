@@ -168,7 +168,7 @@ class EventModel extends BaseTenantModel
         return '0 as checkin_count';
     }
 
-    public function getParishEventsWithCounts(int $parishId, int $dioceseId = 0, ?string $status = null, ?string $search = null): array
+    public function getParishEventsWithCounts(int $parishId, int $dioceseId = 0, ?string $status = null, ?string $search = null, int $limit = 25, int $offset = 0): array
     {
         $builder = $this->db->table('event e')
             ->select('e.*, ec.name as calendar_name, ec.color_hex as calendar_color, COUNT(er.id) as registration_count, ' . $this->getCheckinCountSelect())
@@ -203,7 +203,7 @@ class EventModel extends BaseTenantModel
                 ->groupEnd();
         }
 
-        return $builder->get()->getResultArray();
+        return $builder->limit(max(1, min($limit, 100)), max(0, $offset))->get()->getResultArray();
     }
 
     public function getEventWithCounts(int $eventId): ?array
@@ -272,10 +272,17 @@ class EventModel extends BaseTenantModel
             ->groupStart()
             ->groupStart()
             ->where('e.start_at <=', $rangeEnd)
-            ->where('COALESCE(e.end_at, e.start_at) >=', $rangeStart)
+            ->groupStart()
+            ->where('e.end_at >=', $rangeStart)
+            ->orGroupStart()
+            ->where('e.end_at IS NULL', null, false)
+            ->where('e.start_at >=', $rangeStart)
+            ->groupEnd()
+            ->groupEnd()
             ->groupEnd()
             ->orGroupStart()
             ->where('e.recurrence_pattern !=', 'none')
+            ->where('e.start_at <=', $rangeEnd)
             ->groupStart()
             ->where('e.recurrence_until IS NULL', null, false)
             ->orWhere('e.recurrence_until >=', substr($rangeStart, 0, 10))
@@ -288,7 +295,7 @@ class EventModel extends BaseTenantModel
             ->getResultArray();
     }
 
-    public function getNationalEventsWithCounts(int $parishId, ?string $status = null, ?string $search = null): array
+    public function getNationalEventsWithCounts(int $parishId, ?string $status = null, ?string $search = null, int $limit = 25, int $offset = 0): array
     {
         $builder = $this->db->table('event e')
             ->select('e.*, ec.name as calendar_name, ec.color_hex as calendar_color, COUNT(er.id) as registration_count, ' . $this->getCheckinCountSelect())
@@ -312,7 +319,7 @@ class EventModel extends BaseTenantModel
                 ->groupEnd();
         }
 
-        return $builder->get()->getResultArray();
+        return $builder->limit(max(1, min($limit, 100)), max(0, $offset))->get()->getResultArray();
     }
 
     public function getNationalEventsForRange(int $parishId, string $rangeStart, string $rangeEnd): array
@@ -325,10 +332,17 @@ class EventModel extends BaseTenantModel
             ->groupStart()
             ->groupStart()
             ->where('e.start_at <=', $rangeEnd)
-            ->where('COALESCE(e.end_at, e.start_at) >=', $rangeStart)
+            ->groupStart()
+            ->where('e.end_at >=', $rangeStart)
+            ->orGroupStart()
+            ->where('e.end_at IS NULL', null, false)
+            ->where('e.start_at >=', $rangeStart)
+            ->groupEnd()
+            ->groupEnd()
             ->groupEnd()
             ->orGroupStart()
             ->where('e.recurrence_pattern !=', 'none')
+            ->where('e.start_at <=', $rangeEnd)
             ->groupStart()
             ->where('e.recurrence_until IS NULL', null, false)
             ->orWhere('e.recurrence_until >=', substr($rangeStart, 0, 10))
