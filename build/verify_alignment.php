@@ -1,7 +1,7 @@
 <?php
 
 /**
- * ekklesiaRD — Schema Alignment Verification
+ * ekklesiaONLINE — Schema Alignment Verification
  *
  * Uses system grep for speed across a large codebase.
  * Checks all PHP source files for old table/column references.
@@ -249,7 +249,7 @@ $B = "\033[1m";
 $Z = "\033[0m";
 $D = "\033[2m";
 
-echo "\n{$B}ekklesiaRD — Schema Alignment Verification{$Z}\n" . str_repeat('─', 68) . "\n";
+echo "\n{$B}ekklesiaONLINE — Schema Alignment Verification{$Z}\n" . str_repeat('─', 68) . "\n";
 echo ($dbErrors ? "{$R}DB old tables still present: " . implode(', ', $dbErrors) . "{$Z}" : "{$G}DB: All old table names removed ✓{$Z}") . "\n";
 echo "Code errors   : {$R}" . count($allErrors)   . "{$Z}\n";
 echo "Code warnings : {$Y}" . count($allWarnings)  . "{$Z}  (Phase 7 — service.date/time)\n";

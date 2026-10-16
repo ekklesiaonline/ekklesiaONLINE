@@ -2,7 +2,7 @@
 
 ## Scope
 
-This report documents the families feature in ekklesiaRD, including data model, request flow, CRUD behavior, parish scoping, security controls, and implementation files.
+This report documents the families feature in ekklesiaONLINE, including data model, request flow, CRUD behavior, parish scoping, security controls, and implementation files.
 
 ## Architecture Summary
 

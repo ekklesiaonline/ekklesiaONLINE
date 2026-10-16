@@ -1,4 +1,4 @@
-# ekklesiaRD — Always-On Project Rules
+# ekklesiaONLINE — Always-On Project Rules
 
 ## Architecture
 

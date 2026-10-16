@@ -2,7 +2,7 @@
 
 ## Overview & Canonical Authority
 
-The **ekklesiaRD Chart of Accounts (COA)** establishes a standardized 4-digit numbering system and financial governance framework designed for Episcopal parishes, missions, and diocesan institutions.
+The **ekklesiaONLINE Chart of Accounts (COA)** establishes a standardized 4-digit numbering system and financial governance framework designed for Episcopal parishes, missions, and diocesan institutions.
 
 This framework is aligned with:
 
@@ -63,7 +63,7 @@ Assets subject to donor-imposed stipulations that cannot be altered or diverted 
 
 ## 4-Digit Account Numbering Architecture
 
-The ekklesiaRD Chart of Accounts employs a structured 4-digit tiering system that balances simplicity for parish bookkeepers with depth for diocesan consolidation and auditing:
+The ekklesiaONLINE Chart of Accounts employs a structured 4-digit tiering system that balances simplicity for parish bookkeepers with depth for diocesan consolidation and auditing:
 
 ```ini
 1000–1999: Assets (What the parish owns)

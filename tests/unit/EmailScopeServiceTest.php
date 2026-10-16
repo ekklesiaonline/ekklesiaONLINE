@@ -264,7 +264,7 @@ final class EmailScopeServiceTest extends CIUnitTestCase
     {
         $this->config->values = [
             'email.from_email' => 'noreply@system.test',
-            'email.from_name'  => 'EkklesiaRD',
+            'email.from_name'  => 'ekklesiaONLINE',
         ];
         $this->config->scopedValues = [
             ['email.from_email', ['parish_id' => 30], 'office@parish.test'],
@@ -285,14 +285,14 @@ final class EmailScopeServiceTest extends CIUnitTestCase
     {
         $this->config->values = [
             'email.from_email' => 'noreply@system.test',
-            'email.from_name'  => 'EkklesiaRD',
+            'email.from_name'  => 'ekklesiaONLINE',
             'email.reply_to'   => 'support@system.test',
         ];
 
         $sender = $this->service->credentialSenderConfig(['parish_id' => 30]);
 
         $this->assertSame('noreply@system.test', $sender['from_email']);
-        $this->assertSame('EkklesiaRD', $sender['from_name']);
+        $this->assertSame('ekklesiaONLINE', $sender['from_name']);
         $this->assertSame('support@system.test', $sender['reply_to']);
     }
 

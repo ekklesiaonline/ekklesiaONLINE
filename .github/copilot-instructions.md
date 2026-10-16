@@ -1,8 +1,8 @@
-# ekklesiaRD – Multi-Parish Management System (ChMS)
+# ekklesiaONLINE – Multi-Parish Management System (ChMS)
 
 ## 1. Project Overview
 
-ekklesiaRD is a multi‑parish web application designed to streamline administrative tasks for parishes, dioceses and provincial networks in the Episcopal Church.
+ekklesiaONLINE is a multi‑parish web application designed to streamline administrative tasks for parishes, dioceses and provincial networks in the Episcopal Church.
 A system admin (Presiding Bishop, or staff from the central office or 815 ) can view aggregated data across all parishes, while each parish has its own administrators (clergy, vestry members[Senior and Junior Guardians, clerk, treasurer], ministry leaders) who manage only their parish’s data. Diocesan bishop and bishops’ staff have read-only access to all parishes in their diocese. The system supports member management, service attendance tracking, financial record-keeping, volunteer coordination, and visitor follow-up.
 
 Built on CodeIgniter 4.7 with Shield 1.2 for authentication and authorization, and MySQL 8.0, the system uses a modular architecture.
@@ -759,7 +759,7 @@ public function index()
 
 ## 12. Sunday Attendance Graphics Constraint (Parish Admin Scope)
 
-Hard rule for parish admin dashboard graphics that draw Sunday attendance (for example, `ekklesiard.local/dashboard` in non-diocesan scope):
+Hard rule for parish admin dashboard graphics that draw Sunday attendance (for example, `ekklesiaONLINE.local/dashboard` in non-diocesan scope):
 
 - Use raw values from `service_metrics` rows joined to `services`.
 - Do not apply bucket-level averaging or derived ASA/ASC calculations for these graphics.

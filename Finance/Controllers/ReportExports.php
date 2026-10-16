@@ -509,7 +509,7 @@ class ReportExports extends Reports
         </head>
         <body>
             <div class="header">
-                <h1>EkklesiaRD ' . htmlspecialchars(lang('Treasurer.reportTitle')) . ' - ' . htmlspecialchars($scopeLabel) . ' ' . htmlspecialchars(lang('Treasurer.reportLevel')) . '</h1>
+                <h1>ekklesiaONLINE ' . htmlspecialchars(lang('Treasurer.reportTitle')) . ' - ' . htmlspecialchars($scopeLabel) . ' ' . htmlspecialchars(lang('Treasurer.reportLevel')) . '</h1>
                 <div class="summary-info">
                     <strong>' . htmlspecialchars(lang('Treasurer.reportPeriod')) . ':</strong> ' . htmlspecialchars($startDate) . ' ' . htmlspecialchars(lang('Treasurer.reportTo')) . ' ' . htmlspecialchars($endDate) . '<br>
                     <strong>' . htmlspecialchars(lang('Treasurer.generatedLabel')) . ':</strong> ' . date('F j, Y \a\t g:i A') . '<br>' .

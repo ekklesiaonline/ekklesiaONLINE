@@ -6,7 +6,7 @@
 
 ## Purpose
 
-This guide defines the canonical handling rules for people records in ekklesiaRD, including:
+This guide defines the canonical handling rules for people records in ekklesiaONLINE, including:
 
 - Users (authentication identity in Shield)
 - Members (parish-affiliated people)

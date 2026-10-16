@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document codifies the permission constraints for parish editing, Tax ID field access, and staff management across all administrative roles in ekklesiaRD.
+This document codifies the permission constraints for parish editing, Tax ID field access, and staff management across all administrative roles in ekklesiaONLINE.
 
 ## Permission Matrix
 

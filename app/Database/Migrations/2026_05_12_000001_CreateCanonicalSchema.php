@@ -7,7 +7,7 @@ use CodeIgniter\Database\Migration;
 /**
  * CreateCanonicalSchema
  *
- * Baseline migration that creates all tables in the current ekklesiaRD schema.
+ * Baseline migration that creates all tables in the current ekklesiaONLINE schema.
  */
 class CreateCanonicalSchema extends Migration
 {

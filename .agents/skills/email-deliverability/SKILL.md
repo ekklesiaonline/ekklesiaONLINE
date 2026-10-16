@@ -11,7 +11,7 @@ allowed-tools:
   - exec
 ---
 
-Diagnose and safely work with outbound email deliverability in EkklesiaRD.
+Diagnose and safely work with outbound email deliverability in ekklesiaONLINE.
 
 Key sources:
 - `docs/EMAIL_DELIVERABILITY.md` is the canonical provider-alignment and diagnostic runbook.
@@ -54,7 +54,7 @@ Diagnostic workflow:
 
 Important interpretation:
 - CodeIgniter does not sign these messages with DKIM. The selected SMTP provider does.
-- Do not configure a private DKIM key in EkklesiaRD for Gmail SMTP.
+- Do not configure a private DKIM key in ekklesiaONLINE for Gmail SMTP.
 - A tenant From address sent through unrelated System SMTP can fail DKIM/DMARC. Require an authorized tenant transport or use a System-aligned From address with tenant Reply-To.
 - For Gmail consumer addresses, the Google Workspace custom-domain DKIM setup instructions do not apply; Gmail signs messages accepted through the authorized Gmail account.
 - Outlook.com commonly uses `smtp-mail.outlook.com` with STARTTLS/587, but Microsoft 365 tenants may disable basic SMTP AUTH or require OAuth, which is not currently implemented.

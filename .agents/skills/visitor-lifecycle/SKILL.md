@@ -10,7 +10,7 @@ allowed-tools:
   - find_file_by_name
 ---
 
-Explain or work with the visitor lifecycle in ekklesiaRD. Canonical doc: `docs/VISITOR_LIFECYCLE.md`.
+Explain or work with the visitor lifecycle in ekklesiaONLINE. Canonical doc: `docs/VISITOR_LIFECYCLE.md`.
 
 ## Canonical model
 

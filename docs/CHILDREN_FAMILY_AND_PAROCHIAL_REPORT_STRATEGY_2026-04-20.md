@@ -1,7 +1,7 @@
 # Children, Family Registration & Parochial Report Strategy
 
 **Date:** April 20, 2026  
-**Scope:** ekklesiaRD codebase analysis combined with TEC Parochial Report field requirements  
+**Scope:** ekklesiaONLINE codebase analysis combined with TEC Parochial Report field requirements
 **Status:** Strategy plus implementation context. The parochial report UI, controller mapping, and report-year persistence were updated on April 21, 2026 to follow `docs/EPISCOPAL_PAROCHIAL_REPORT_FOR_REFERENCE.md` as the authoritative field contract.
 
 ## Implementation Update — April 21, 2026
@@ -136,11 +136,11 @@ The pipeline transition at confirmation is currently **entirely manual** — no 
 
 ---
 
-## 3. Parochial Report — Full Field Mapping vs. ekklesiaRD
+## 3. Parochial Report — Full Field Mapping vs. ekklesiaONLINE
 
 ### 3.1 Page 1 — Congregation Identity & Certification
 
-| Report Field | ekklesiaRD Mapping | Gap |
+| Report Field | ekklesiaONLINE Mapping | Gap |
 | --- | --- | --- |
 | Name of Congregation | `parishes.name` | None |
 | Diocese | `dioceses` via FK | None |
@@ -158,7 +158,7 @@ The pipeline transition at confirmation is currently **entirely manual** — no 
 
 #### Attendance lines (1–8)
 
-| Line | Formula | ekklesiaRD Source | Gap |
+| Line | Formula | ekklesiaONLINE Source | Gap |
 | --- | --- | --- | --- |
 | 1 — ASA In-Person | Total in-person attendance ÷ Sundays in-person worship held | `services` (Sunday Worship) + `attendance.attended = 1` | Computable now. See §12 constraint: use raw per-service values, no bucket averaging. |
 | 2 — ASA Online | Total live viewership ÷ Sundays online held | Not tracked | New field: `services.online_live_viewers INT` |
@@ -177,7 +177,7 @@ The TEC definition requires all four criteria to be true:
 3. **Faithful in corporate worship** → modeled as `is_good_standing = 1` in `member_standing_summary`
 4. **Working, praying, giving** → partially modeled via `donations`; qualitative remainder
 
-| Line | Segment | Age filter | ekklesiaRD Query |
+| Line | Segment | Age filter | ekklesiaONLINE Query |
 | --- | --- | --- | --- |
 | 9 | Adult communicants in good standing | `TIMESTAMPDIFF(YEAR, p.birth_date, CURDATE()) >= 16` | `member_standing_summary.is_good_standing=1` + baptized + communion ≥ 3 + age ≥ 16 |
 | 10 | Youth communicants in good standing | `TIMESTAMPDIFF(YEAR, p.birth_date, CURDATE()) < 16` | Same criteria, age < 16 |
@@ -189,7 +189,7 @@ The TEC definition requires all four criteria to be true:
 
 #### Active Members and Participants (Lines 12–13)
 
-| Line | Description | ekklesiaRD Mapping |
+| Line | Description | ekklesiaONLINE Mapping |
 | --- | --- | --- |
 | 12 | Active Members (other) — meet membership standard but not Communicant threshold | `is_member=1` AND `is_good_standing=0` (or `is_good_standing` unknown). Includes non-Episcopalians who are parish members. |
 | 13 | Active Participants (non-members) — participate but meet neither threshold | `is_member=0` AND `membership_status IN ('visitor', 'regular_attender', 'pending')` AND attended at least once in the report year |
@@ -206,7 +206,7 @@ The TEC definition requires all four criteria to be true:
 
 #### Line 16 — Clergy and Staff
 
-Not currently tracked in ekklesiaRD. `leadership_positions` tracks roles but not employment type or compensation status.
+Not currently tracked in ekklesiaONLINE. `leadership_positions` tracks roles but not employment type or compensation status.
 
 **Schema addition needed:**
 
@@ -315,7 +315,7 @@ $averageAge = count($ages) ? array_sum($ages) / count($ages) : null;
 
 #### Stewardship (Lines 1–2)
 
-| Field | ekklesiaRD Mapping | Gap |
+| Field | ekklesiaONLINE Mapping | Gap |
 | --- | --- | --- |
 | Number of confirmed pledges | `annual_pledges` (if present) | Verify `annual_pledges` table covers operating-fund pledges distinctly from restricted pledges |
 | Total dollar amount of pledges | `annual_pledges.amount` | Same |
@@ -354,7 +354,7 @@ ALTER TABLE expenses
 
 #### Year-End (Lines 8–12)
 
-None of these are tracked in ekklesiaRD. A dedicated table is needed:
+None of these are tracked in ekklesiaONLINE. A dedicated table is needed:
 
 ```sql
 CREATE TABLE parish_financial_summary (
@@ -468,7 +468,7 @@ This makes the confirmation event the programmatic trigger for covenant membersh
 
 ---
 
-## 5. Full Gap Summary — ekklesiaRD vs. Parochial Report
+## 5. Full Gap Summary — ekklesiaONLINE vs. Parochial Report
 
 ### Schema additions required
 

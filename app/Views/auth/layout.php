@@ -8,7 +8,7 @@
     <meta name="csrf-header" content="X-CSRF-TOKEN">
     <script>
         (function () {
-            var storageKey = 'ekklesiard-theme';
+            var storageKey = 'ekklesiaONLINE-theme';
             var savedTheme = null;
 
             try {
@@ -80,7 +80,7 @@ $returnUrl = current_url() . ((string) service('request')->getServer('QUERY_STRI
 
     <script>
         (function () {
-            var storageKey = 'ekklesiard-theme';
+            var storageKey = 'ekklesiaONLINE-theme';
             var root = document.documentElement;
             var toggleBtn = document.getElementById('themeToggleBtn');
             var toggleIcon = document.getElementById('themeToggleIcon');

@@ -110,8 +110,8 @@ return [
     'verifyEmailFailed'      => 'No pudimos enviar el correo con el código de verificación. Usa "Reenviar código" para intentarlo de nuevo.',
 
     // Device verification email
-    'deviceVerifyEmailSubject'    => 'Verificar inicio de sesión en nuevo dispositivo - EkklesiaRD',
-    'deviceVerifyEmailIntro'      => 'Se detectó un inicio de sesión desde un nuevo dispositivo en tu cuenta de EkklesiaRD. Para continuar esta sesión, introduce este código de verificación:',
+    'deviceVerifyEmailSubject'    => 'Verificar inicio de sesión en nuevo dispositivo - ekklesiaONLINE',
+    'deviceVerifyEmailIntro'      => 'Se detectó un inicio de sesión desde un nuevo dispositivo en tu cuenta de ekklesiaONLINE. Para continuar esta sesión, introduce este código de verificación:',
     'deviceVerifyEmailCodeExpiry' => 'Este código expira en {0} minutos.',
     'deviceVerifyEmailTime'       => 'Hora:',
     'deviceVerifyEmailIp'         => 'Dirección IP:',
@@ -148,14 +148,14 @@ return [
     'registrationPendingNoName'  => 'Nombre no proporcionado',
 
     // Portal access invitation email
-    'portalInviteSubject'      => 'Invitación de acceso al portal - EkklesiaRD',
+    'portalInviteSubject'      => 'Invitación de acceso al portal - ekklesiaONLINE',
     'portalInviteIntro'        => 'Se creó tu invitación de acceso al portal.',
     'portalInvitePasswordNote' => 'Por seguridad, debes establecer tu contraseña antes de que se habilite el acceso completo.',
     'portalInviteGoTo'         => 'Ve a:',
 
     // Password-changed notification email
-    'passwordChangedSubject' => 'Tu contraseña fue cambiada - EkklesiaRD',
-    'passwordChangedIntro'   => 'La contraseña de tu cuenta de EkklesiaRD fue cambiada.',
+    'passwordChangedSubject' => 'Tu contraseña fue cambiada - ekklesiaONLINE',
+    'passwordChangedIntro'   => 'La contraseña de tu cuenta de ekklesiaONLINE fue cambiada.',
     'passwordChangedAt'      => 'Hora:',
     'passwordChangedNotYou'  => 'Si no realizaste este cambio, <strong>cambia tu contraseña de inmediato</strong> y contacta al administrador de tu parroquia.',
 ];

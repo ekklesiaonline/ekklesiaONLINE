@@ -1,6 +1,6 @@
 ---
 name: api-ajax-contract
-description: Implement, review, test, or diagnose CodeIgniter API and AJAX endpoints using ekklesiaRD's validation, CSRF, JSON response, status-code, and redaction contract. Use for new or changed POST endpoints, fetch handlers, keepalive flows, and endpoint smoke tests.
+description: Implement, review, test, or diagnose CodeIgniter API and AJAX endpoints using ekklesiaONLINE's validation, CSRF, JSON response, status-code, and redaction contract. Use for new or changed POST endpoints, fetch handlers, keepalive flows, and endpoint smoke tests.
 ---
 
 # API and AJAX Contract

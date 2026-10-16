@@ -19,8 +19,8 @@ This plan details the steps required to resolve the 5 confirmed, reproducible bu
 
 ### Task 1: Fix `RegistrationNotificationService` Sender Headers and Diocese Admin Role
 **Files to modify**:
-- [`app/Services/RegistrationNotificationService.php`](file:///Users/juanrosariodelacruz/Sites/ekklesiaRD/app/Services/RegistrationNotificationService.php)
-- [`tests/unit/RegistrationNotificationServiceTest.php`](file:///Users/juanrosariodelacruz/Sites/ekklesiaRD/tests/unit/RegistrationNotificationServiceTest.php) (new unit test)
+- [`app/Services/RegistrationNotificationService.php`](file:///Users/juanrosariodelacruz/Sites/ekklesiaONLINE/app/Services/RegistrationNotificationService.php)
+- [`tests/unit/RegistrationNotificationServiceTest.php`](file:///Users/juanrosariodelacruz/Sites/ekklesiaONLINE/tests/unit/RegistrationNotificationServiceTest.php) (new unit test)
 
 **Implementation details**:
 1. In `parishAdminRecipients()` (line 143), update `'diocesanadmin'` to `\Config\AuthGroups::DIOCESE_ADMIN`.
@@ -35,8 +35,8 @@ This plan details the steps required to resolve the 5 confirmed, reproducible bu
 
 ### Task 2: Fix `ProvinceStaffDirectoryService` Diocesan Staff Role Filter
 **Files to modify**:
-- [`app/Services/ProvinceStaffDirectoryService.php`](file:///Users/juanrosariodelacruz/Sites/ekklesiaRD/app/Services/ProvinceStaffDirectoryService.php)
-- [`tests/unit/ProvinceStaffDirectoryServiceTest.php`](file:///Users/juanrosariodelacruz/Sites/ekklesiaRD/tests/unit/ProvinceStaffDirectoryServiceTest.php) (new unit test)
+- [`app/Services/ProvinceStaffDirectoryService.php`](file:///Users/juanrosariodelacruz/Sites/ekklesiaONLINE/app/Services/ProvinceStaffDirectoryService.php)
+- [`tests/unit/ProvinceStaffDirectoryServiceTest.php`](file:///Users/juanrosariodelacruz/Sites/ekklesiaONLINE/tests/unit/ProvinceStaffDirectoryServiceTest.php) (new unit test)
 
 **Implementation details**:
 1. On line 60 of `ProvinceStaffDirectoryService::diocesanStaff()`, update the query filter:
@@ -53,10 +53,10 @@ This plan details the steps required to resolve the 5 confirmed, reproducible bu
 
 ### Task 3: Align Administrative Role Exclusion Filter Across Dashboards and Reports
 **Files to modify**:
-- [`app/Services/ParishDashboardDataService.php`](file:///Users/juanrosariodelacruz/Sites/ekklesiaRD/app/Services/ParishDashboardDataService.php) (line 146)
-- [`MemberPortal/Controllers/Standing.php`](file:///Users/juanrosariodelacruz/Sites/ekklesiaRD/MemberPortal/Controllers/Standing.php) (lines 146, 158, 174, 185)
-- [`Treasurer/Controllers/Reports.php`](file:///Users/juanrosariodelacruz/Sites/ekklesiaRD/Treasurer/Controllers/Reports.php) (line 10 `ADMIN_EXCLUDED_GROUPS` and lines 504, 516, 539, 649, 661, 684)
-- [`Province/Controllers/Dashboard.php`](file:///Users/juanrosariodelacruz/Sites/ekklesiaRD/Province/Controllers/Dashboard.php) (lines 80, 88, 96, 104)
+- [`app/Services/ParishDashboardDataService.php`](file:///Users/juanrosariodelacruz/Sites/ekklesiaONLINE/app/Services/ParishDashboardDataService.php) (line 146)
+- [`MemberPortal/Controllers/Standing.php`](file:///Users/juanrosariodelacruz/Sites/ekklesiaONLINE/MemberPortal/Controllers/Standing.php) (lines 146, 158, 174, 185)
+- [`Treasurer/Controllers/Reports.php`](file:///Users/juanrosariodelacruz/Sites/ekklesiaONLINE/Treasurer/Controllers/Reports.php) (line 10 `ADMIN_EXCLUDED_GROUPS` and lines 504, 516, 539, 649, 661, 684)
+- [`Province/Controllers/Dashboard.php`](file:///Users/juanrosariodelacruz/Sites/ekklesiaONLINE/Province/Controllers/Dashboard.php) (lines 80, 88, 96, 104)
 
 **Implementation details**:
 1. In `Treasurer/Controllers/Reports.php`:
@@ -73,8 +73,8 @@ This plan details the steps required to resolve the 5 confirmed, reproducible bu
 
 ### Task 4: Fix `PersonConversionService::linkToUser` Profile Linking & Unique Constraint Collision
 **Files to modify**:
-- [`app/Services/PersonConversionService.php`](file:///Users/juanrosariodelacruz/Sites/ekklesiaRD/app/Services/PersonConversionService.php) (lines 119–143)
-- [`tests/unit/VisitorConversionPrefillTest.php`](file:///Users/juanrosariodelacruz/Sites/ekklesiaRD/tests/unit/VisitorConversionPrefillTest.php)
+- [`app/Services/PersonConversionService.php`](file:///Users/juanrosariodelacruz/Sites/ekklesiaONLINE/app/Services/PersonConversionService.php) (lines 119–143)
+- [`tests/unit/VisitorConversionPrefillTest.php`](file:///Users/juanrosariodelacruz/Sites/ekklesiaONLINE/tests/unit/VisitorConversionPrefillTest.php)
 
 **Implementation details**:
 1. In `PersonConversionService::linkToUser()`, query `ProfileModel` by `user_id = $userId` rather than `user_id AND person_id`:
@@ -118,8 +118,8 @@ This plan details the steps required to resolve the 5 confirmed, reproducible bu
 
 ### Task 5: Handle Mailer Send Failure in `SystemPrimary::transferPrimarySystemAdmin`
 **Files to modify**:
-- [`app/Controllers/SystemPrimary.php`](file:///Users/juanrosariodelacruz/Sites/ekklesiaRD/app/Controllers/SystemPrimary.php) (lines 94–106)
-- [`tests/database/SystemPrimaryTransferTest.php`](file:///Users/juanrosariodelacruz/Sites/ekklesiaRD/tests/database/SystemPrimaryTransferTest.php)
+- [`app/Controllers/SystemPrimary.php`](file:///Users/juanrosariodelacruz/Sites/ekklesiaONLINE/app/Controllers/SystemPrimary.php) (lines 94–106)
+- [`tests/database/SystemPrimaryTransferTest.php`](file:///Users/juanrosariodelacruz/Sites/ekklesiaONLINE/tests/database/SystemPrimaryTransferTest.php)
 
 **Implementation details**:
 1. Switch to `credentialMailer()` for the OTP email:

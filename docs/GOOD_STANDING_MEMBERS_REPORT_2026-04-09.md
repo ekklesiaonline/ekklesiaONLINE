@@ -48,7 +48,7 @@ Refresh population scope behavior:
 
 ## Count Results (Database Snapshot)
 
-Database: ekklesiaRD
+Database: ekklesiaONLINE
 Snapshot date: 2026-04-09
 
 ### By Year

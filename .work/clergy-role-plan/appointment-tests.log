@@ -1,7 +1,7 @@
 PHPUnit 10.5.65 by Sebastian Bergmann and contributors.
 
 Runtime:       PHP 8.5.11
-Configuration: /Users/juanrosariodelacruz/Sites/ekklesiaRD/phpunit.xml.dist
+Configuration: /Users/juanrosariodelacruz/Sites/ekklesiaONLINE/phpunit.xml.dist
 
 ........FF.........F...                                           23 / 23 (100%)
 
@@ -13,7 +13,7 @@ There were 3 failures:
 {"eligible":false,"checks":{"portal_access":true,"baptized":null,"confirmed":null,"pledged":null,"good_standing":null,"verified_order":false},"failed":["verified_order"]}
 Failed asserting that false is true.
 
-/Users/juanrosariodelacruz/Sites/ekklesiaRD/tests/unit/LeadershipPositionGateTest.php:98
+/Users/juanrosariodelacruz/Sites/ekklesiaONLINE/tests/unit/LeadershipPositionGateTest.php:98
 
 2) LeadershipPositionGateTest::testUsersRowWithoutPortalIdentityIsRejected
 Failed asserting that two arrays are identical.
@@ -25,13 +25,13 @@ Failed asserting that two arrays are identical.
 +    1 => 'verified_order',
  ]
 
-/Users/juanrosariodelacruz/Sites/ekklesiaRD/tests/unit/LeadershipPositionGateTest.php:114
+/Users/juanrosariodelacruz/Sites/ekklesiaONLINE/tests/unit/LeadershipPositionGateTest.php:114
 
 3) LeadershipPositionsScopeIntegrationTest::testStoringParishScopeLeadershipPositionSucceeds
-http://ekklesiard.local
+http://ekklesiaONLINE.local
 Failed asserting that null is identical to '/leadership'.
 
-/Users/juanrosariodelacruz/Sites/ekklesiaRD/tests/database/LeadershipPositionsScopeIntegrationTest.php:64
+/Users/juanrosariodelacruz/Sites/ekklesiaONLINE/tests/database/LeadershipPositionsScopeIntegrationTest.php:64
 
 FAILURES!
 Tests: 23, Assertions: 51, Failures: 3.

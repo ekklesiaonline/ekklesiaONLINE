@@ -2,7 +2,7 @@
 
 **Date:** 2026-09-21  
 **Account investigated:** parish administrator account reported by the user  
-**Environment:** local development (`ekklesiard.local`)
+**Environment:** local development (`ekklesiaONLINE.local`)
 
 ## Executive summary
 

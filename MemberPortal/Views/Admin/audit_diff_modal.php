@@ -610,7 +610,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // React to theme change for Chart.js
-    document.addEventListener('ekklesiard:themechange', function(e) {
+    document.addEventListener('ekklesiaONLINE:themechange', function(e) {
         if (activityChartInstance) {
             const isDark = (e.detail?.theme || document.documentElement.getAttribute('data-bs-theme') || 'light') === 'dark';
             const textColor = isDark ? '#cbd5e1' : '#334155';

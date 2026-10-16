@@ -253,5 +253,5 @@ grep -RInE "(Access denied|Diocese created|User created|alert\(')" Province/ --i
 ---
 
 *Report Generated:* March 31, 2026  
-*Audit Scope:* System-wide admin UX i18n (ekklesiaRD v2.9 MEDIUM priority)  
+*Audit Scope:* System-wide admin UX i18n (ekklesiaONLINE v2.9 MEDIUM priority)
 *Status:* Ready for production deployment (admin UX tier)

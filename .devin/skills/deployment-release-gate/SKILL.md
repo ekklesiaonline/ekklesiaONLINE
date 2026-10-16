@@ -1,6 +1,6 @@
 ---
 name: deployment-release-gate
-description: Prepare, validate, review, or troubleshoot an ekklesiaRD deployment, release, rollback, backup, restore drill, health check, or staging smoke run. Use before declaring a release ready or changing production operations.
+description: Prepare, validate, review, or troubleshoot an ekklesiaONLINE deployment, release, rollback, backup, restore drill, health check, or staging smoke run. Use before declaring a release ready or changing production operations.
 ---
 
 # Deployment and Release Gate

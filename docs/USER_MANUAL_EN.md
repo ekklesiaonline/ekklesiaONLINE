@@ -1,8 +1,8 @@
-# EkklesiaRD User Manual
+# ekklesiaONLINE User Manual
 
 ## 1. Purpose
 
-EkklesiaRD is a multi-level Parish Management System (ChMS) for:
+ekklesiaONLINE is a multi-level Parish Management System (ChMS) for:
 
 - Province oversight
 - Diocese administration

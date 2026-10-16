@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * ekklesiaRD PHPUnit bootstrap.
+ * ekklesiaONLINE PHPUnit bootstrap.
  *
  * Loads the standard CodeIgniter test bootstrap, then builds the canonical
  * shared-table schema on the shared SQLite :memory: tests connection so that

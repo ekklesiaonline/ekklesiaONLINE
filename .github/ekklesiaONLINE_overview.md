@@ -1,8 +1,8 @@
-# ekklesiaRD
+# ekklesiaONLINE
 
 ## Overview
 
-**ekklesiaRD** is a multi-parish management system built for Episcopal dioceses and parish networks.
+**ekklesiaONLINE** is a multi-parish management system built for Episcopal dioceses and parish networks.
 It covers member management, liturgical service tracking, guest follow-up automation, financial
 accounting, volunteer coordination, event management, and worship planning.
 
@@ -37,7 +37,7 @@ accounting, volunteer coordination, event management, and worship planning.
 
 ## Ministry Framework (Source: ParishDiocese.md)
 
-ekklesiaRD is built to implement the **Diocesan Membership and Systems Framework** described in `ParishDiocese.md`.
+ekklesiaONLINE is built to implement the **Diocesan Membership and Systems Framework** described in `ParishDiocese.md`.
 The software is the operational layer for that framework. Key concepts below.
 
 ### Good Standing (canonical definition)

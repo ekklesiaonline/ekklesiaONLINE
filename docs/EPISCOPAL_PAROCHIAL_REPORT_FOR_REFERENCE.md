@@ -1,8 +1,8 @@
-# ekklesiaRD -> Parochial Report
+# ekklesiaONLINE -> Parochial Report
 
 ## Canonical Status
 
-This file is the authoritative source for the ekklesiaRD parochial report implementation.
+This file is the authoritative source for the ekklesiaONLINE parochial report implementation.
 
 - Controller/view contract: `Worship/Controllers/ParochialReport.php` and `Worship/Views/ParochialReport/index.php`
 - Report-year persistence: `parish_financial_summary`

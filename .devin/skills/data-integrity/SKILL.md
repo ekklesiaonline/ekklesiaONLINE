@@ -1,6 +1,6 @@
 ---
 name: data-integrity
-description: Diagnose or safely change ekklesiaRD parish, person, profile, affiliation, membership, sacrament, snapshot, and schema-alignment data. Use for missing-person/parish issues, manual repairs, reconciliation, migrations, or queries involving canonical identity and lifecycle state.
+description: Diagnose or safely change ekklesiaONLINE parish, person, profile, affiliation, membership, sacrament, snapshot, and schema-alignment data. Use for missing-person/parish issues, manual repairs, reconciliation, migrations, or queries involving canonical identity and lifecycle state.
 ---
 
 # Parish Data Integrity

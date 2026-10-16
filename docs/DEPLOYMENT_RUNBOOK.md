@@ -2,7 +2,7 @@
 
 ## Purpose
 
-This is the canonical go/no-go, deployment, validation, and rollback procedure for ekklesiaRD.
+This is the canonical go/no-go, deployment, validation, and rollback procedure for ekklesiaONLINE.
 
 ## 1. Supported Production Platform
 
@@ -189,7 +189,7 @@ sh build/restore_database.sh --check
 Schedule backups only after the command succeeds under the service account. Example:
 
 ```cron
-0 2 * * * cd /path/to/ekklesiaRD && sh build/backup_database.sh >> writable/logs/backup-cron.log 2>&1
+0 2 * * * cd /path/to/ekklesiaONLINE && sh build/backup_database.sh >> writable/logs/backup-cron.log 2>&1
 ```
 
 At a scheduled interval, restore the latest backup into an isolated database, verify expected tables and `php spark migrate:status --all`, then destroy the isolated environment through the approved infrastructure process. Never use a production database as a restore-drill target.
@@ -223,7 +223,7 @@ The workflow runs `build/stress_rate_limit_test.sh`, requires at least one HTTP 
 
 ## 11. Edge Protection and Monitoring
 
-- Reverse-proxy rate limits and body controls: `build/nginx/ekklesiard-rate-limit.conf`.
+- Reverse-proxy rate limits and body controls: `build/nginx/ekklesiaONLINE-rate-limit.conf`.
 - CDN/WAF procedure: `docs/EDGE_RATE_LIMIT_AND_WAF_PLAYBOOK.md`.
 - Application logs: `writable/logs/log-YYYY-MM-DD.log`.
 - Structured monitoring logs: `writable/logs/monitoring-YYYY-MM-DD.log`.

@@ -1,4 +1,4 @@
-# EkklesiaRD — Multilingual (i18n) Implementation Plan
+# ekklesiaONLINE — Multilingual (i18n) Implementation Plan
 
 **Supported locales:** English (`en`) · Spanish (`es`) · French (`fr`)
 **Strategy:** User-preference locale (DB → session → filter) for authenticated routes; browser negotiation for login/register pages.
@@ -86,7 +86,7 @@ php spark migrate:status
 php spark db:table profile   # check locale column is present
 
 # 1c. Confirm app still loads (no regressions)
-curl -s -o /dev/null -w "%{http_code}" http://ekklesiard.local/
+curl -s -o /dev/null -w "%{http_code}" http://ekklesiaONLINE.local/
 # → 200 or 302 (redirect to login)
 
 # 1d. Quick model test (Tinker/spark console)
@@ -187,10 +187,10 @@ Events::on('shield-logout', function ($user) {
 
 # 2b. Log out — confirm user_locale is removed from session
 # Re-open login page with Accept-Language: fr header and confirm locale = 'fr'
-# curl -H 'Accept-Language: fr,fr-FR;q=0.9' http://ekklesiard.local/login -v | grep -i locale
+# curl -H 'Accept-Language: fr,fr-FR;q=0.9' http://ekklesiaONLINE.local/login -v | grep -i locale
 
 # 2c. No regression on routes that previously worked
-curl -s -o /dev/null -w "%{http_code}" http://ekklesiard.local/dashboard   # → 302 (to login)
+curl -s -o /dev/null -w "%{http_code}" http://ekklesiaONLINE.local/dashboard   # → 302 (to login)
 ```
 
 **Pass criteria:** `getLocale()` returns correct value per user preference; login page responds to browser language; no 500 errors.
@@ -263,19 +263,19 @@ CI4 merges app-level language files over vendor files, so only override what dif
 
 ```bash
 # 4a. Test with Spanish browser preference
-curl -H 'Accept-Language: es,es-ES;q=0.9' http://ekklesiard.local/login
+curl -H 'Accept-Language: es,es-ES;q=0.9' http://ekklesiaONLINE.local/login
 # → Response HTML contains "Iniciar sesión" (not "Login")
 
 # 4b. Test with French browser preference
-curl -H 'Accept-Language: fr' http://ekklesiard.local/login
+curl -H 'Accept-Language: fr' http://ekklesiaONLINE.local/login
 # → Response HTML contains "Se connecter"
 
 # 4c. Test English fallback (unsupported locale)
-curl -H 'Accept-Language: zh' http://ekklesiard.local/login
+curl -H 'Accept-Language: zh' http://ekklesiaONLINE.local/login
 # → Falls back to English — "Login"
 
 # 4d. No visual regressions (layout intact)
-# Open http://ekklesiard.local/login in browser — check layout is not broken
+# Open http://ekklesiaONLINE.local/login in browser — check layout is not broken
 ```
 
 **Pass criteria:** Login/register pages render in the correct language based on browser preference; layout is unchanged; English fallback works.

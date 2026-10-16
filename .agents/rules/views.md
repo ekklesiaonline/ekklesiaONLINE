@@ -1,5 +1,5 @@
 ---
-description: Bootstrap 5 view consistency rules for ekklesiaRD
+description: Bootstrap 5 view consistency rules for ekklesiaONLINE
 trigger: always_on
 ---
 

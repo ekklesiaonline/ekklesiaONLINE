@@ -2,7 +2,7 @@
 
 ## Scope and Counting Method
 
-This report is based on the live `ekklesiaRD` schema (`information_schema`). It includes tables that store member identity, profile, affiliation, household, standing, participation, authentication, and onboarding workflow data.
+This report is based on the live `ekklesiaONLINE` schema (`information_schema`). It includes tables that store member identity, profile, affiliation, household, standing, participation, authentication, and onboarding workflow data.
 
 ## Total Tables Used for People or Members Information
 

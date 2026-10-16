@@ -78,7 +78,7 @@ Locales executed:
 Roles executed:
 
 - parish_admin (`parish@admin.com`)
-- diocesan_admin_1 (`admin@ekklesiaRD.org`)
+- diocesan_admin_1 (`admin@ekklesiaONLINE.org`)
 - diocesan_admin_2 (`diocesanadmin@firstparish.org`)
 
 Observed behavior summary:

@@ -284,7 +284,7 @@ Performance improvements from added indexes:
 
 ```bash
 # 1. Backup database
-mysqldump ekklesiaRD > backup_2026_04_01.sql
+mysqldump ekklesiaONLINE > backup_2026_04_01.sql
 
 # 2. Run migration
 php spark migrate
@@ -325,7 +325,7 @@ php spark migrate:rollback
 git revert HEAD~3  # Assuming last 3 commits were optimization
 
 # Restore database if needed
-mysql ekklesiaRD < backup_2026_04_01.sql
+mysql ekklesiaONLINE < backup_2026_04_01.sql
 ```
 
 ---

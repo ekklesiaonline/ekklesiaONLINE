@@ -101,6 +101,6 @@ final class MemberPortalEndpointsTest extends CIUnitTestCase
         // Native Bootstrap modal event handling
         $this->assertStringContainsString('show.bs.modal', $content);
         $this->assertStringContainsString('hidden.bs.modal', $content);
-        $this->assertStringContainsString('ekklesiard:themechange', $content);
+        $this->assertStringContainsString('ekklesiaONLINE:themechange', $content);
     }
 }

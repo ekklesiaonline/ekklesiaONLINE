@@ -1,7 +1,7 @@
 PHPUnit 10.5.65 by Sebastian Bergmann and contributors.
 
 Runtime:       PHP 8.5.11
-Configuration: /Users/juanrosariodelacruz/Sites/ekklesiaRD/phpunit.xml.dist
+Configuration: /Users/juanrosariodelacruz/Sites/ekklesiaONLINE/phpunit.xml.dist
 
 E                                                                   1 / 1 (100%)
 
@@ -12,45 +12,45 @@ There was 1 error:
 1) LeadershipPositionsScopeIntegrationTest::testDioceseAdminCanOpenDiocesanLeadershipWithoutSelectedParish
 CodeIgniter\Database\Exceptions\DatabaseException: Unable to prepare statement: no such table: db_lp
 
-/Users/juanrosariodelacruz/Sites/ekklesiaRD/vendor/codeigniter4/framework/system/Database/BaseConnection.php:863
-/Users/juanrosariodelacruz/Sites/ekklesiaRD/vendor/codeigniter4/framework/system/Database/BaseBuilder.php:1659
-/Users/juanrosariodelacruz/Sites/ekklesiaRD/MemberPortal/Controllers/LeadershipPositions.php:106
-/Users/juanrosariodelacruz/Sites/ekklesiaRD/vendor/codeigniter4/framework/system/CodeIgniter.php:974
-/Users/juanrosariodelacruz/Sites/ekklesiaRD/vendor/codeigniter4/framework/system/CodeIgniter.php:520
-/Users/juanrosariodelacruz/Sites/ekklesiaRD/vendor/codeigniter4/framework/system/CodeIgniter.php:363
-/Users/juanrosariodelacruz/Sites/ekklesiaRD/vendor/codeigniter4/framework/system/Test/FeatureTestTrait.php:234
-/Users/juanrosariodelacruz/Sites/ekklesiaRD/vendor/codeigniter4/framework/system/Test/FeatureTestTrait.php:254
-/Users/juanrosariodelacruz/Sites/ekklesiaRD/tests/database/LeadershipPositionsScopeIntegrationTest.php:49
+/Users/juanrosariodelacruz/Sites/ekklesiaONLINE/vendor/codeigniter4/framework/system/Database/BaseConnection.php:863
+/Users/juanrosariodelacruz/Sites/ekklesiaONLINE/vendor/codeigniter4/framework/system/Database/BaseBuilder.php:1659
+/Users/juanrosariodelacruz/Sites/ekklesiaONLINE/MemberPortal/Controllers/LeadershipPositions.php:106
+/Users/juanrosariodelacruz/Sites/ekklesiaONLINE/vendor/codeigniter4/framework/system/CodeIgniter.php:974
+/Users/juanrosariodelacruz/Sites/ekklesiaONLINE/vendor/codeigniter4/framework/system/CodeIgniter.php:520
+/Users/juanrosariodelacruz/Sites/ekklesiaONLINE/vendor/codeigniter4/framework/system/CodeIgniter.php:363
+/Users/juanrosariodelacruz/Sites/ekklesiaONLINE/vendor/codeigniter4/framework/system/Test/FeatureTestTrait.php:234
+/Users/juanrosariodelacruz/Sites/ekklesiaONLINE/vendor/codeigniter4/framework/system/Test/FeatureTestTrait.php:254
+/Users/juanrosariodelacruz/Sites/ekklesiaONLINE/tests/database/LeadershipPositionsScopeIntegrationTest.php:49
 
 Caused by
 CodeIgniter\Database\Exceptions\DatabaseException: Unable to prepare statement: no such table: db_lp
 
-/Users/juanrosariodelacruz/Sites/ekklesiaRD/vendor/codeigniter4/framework/system/Database/SQLite3/Connection.php:174
-/Users/juanrosariodelacruz/Sites/ekklesiaRD/vendor/codeigniter4/framework/system/Database/BaseConnection.php:908
-/Users/juanrosariodelacruz/Sites/ekklesiaRD/vendor/codeigniter4/framework/system/Database/BaseConnection.php:825
-/Users/juanrosariodelacruz/Sites/ekklesiaRD/vendor/codeigniter4/framework/system/Database/BaseBuilder.php:1659
-/Users/juanrosariodelacruz/Sites/ekklesiaRD/MemberPortal/Controllers/LeadershipPositions.php:106
-/Users/juanrosariodelacruz/Sites/ekklesiaRD/vendor/codeigniter4/framework/system/CodeIgniter.php:974
-/Users/juanrosariodelacruz/Sites/ekklesiaRD/vendor/codeigniter4/framework/system/CodeIgniter.php:520
-/Users/juanrosariodelacruz/Sites/ekklesiaRD/vendor/codeigniter4/framework/system/CodeIgniter.php:363
-/Users/juanrosariodelacruz/Sites/ekklesiaRD/vendor/codeigniter4/framework/system/Test/FeatureTestTrait.php:234
-/Users/juanrosariodelacruz/Sites/ekklesiaRD/vendor/codeigniter4/framework/system/Test/FeatureTestTrait.php:254
-/Users/juanrosariodelacruz/Sites/ekklesiaRD/tests/database/LeadershipPositionsScopeIntegrationTest.php:49
+/Users/juanrosariodelacruz/Sites/ekklesiaONLINE/vendor/codeigniter4/framework/system/Database/SQLite3/Connection.php:174
+/Users/juanrosariodelacruz/Sites/ekklesiaONLINE/vendor/codeigniter4/framework/system/Database/BaseConnection.php:908
+/Users/juanrosariodelacruz/Sites/ekklesiaONLINE/vendor/codeigniter4/framework/system/Database/BaseConnection.php:825
+/Users/juanrosariodelacruz/Sites/ekklesiaONLINE/vendor/codeigniter4/framework/system/Database/BaseBuilder.php:1659
+/Users/juanrosariodelacruz/Sites/ekklesiaONLINE/MemberPortal/Controllers/LeadershipPositions.php:106
+/Users/juanrosariodelacruz/Sites/ekklesiaONLINE/vendor/codeigniter4/framework/system/CodeIgniter.php:974
+/Users/juanrosariodelacruz/Sites/ekklesiaONLINE/vendor/codeigniter4/framework/system/CodeIgniter.php:520
+/Users/juanrosariodelacruz/Sites/ekklesiaONLINE/vendor/codeigniter4/framework/system/CodeIgniter.php:363
+/Users/juanrosariodelacruz/Sites/ekklesiaONLINE/vendor/codeigniter4/framework/system/Test/FeatureTestTrait.php:234
+/Users/juanrosariodelacruz/Sites/ekklesiaONLINE/vendor/codeigniter4/framework/system/Test/FeatureTestTrait.php:254
+/Users/juanrosariodelacruz/Sites/ekklesiaONLINE/tests/database/LeadershipPositionsScopeIntegrationTest.php:49
 
 Caused by
 SQLite3Exception: Unable to prepare statement: no such table: db_lp
 
-/Users/juanrosariodelacruz/Sites/ekklesiaRD/vendor/codeigniter4/framework/system/Database/SQLite3/Connection.php:164
-/Users/juanrosariodelacruz/Sites/ekklesiaRD/vendor/codeigniter4/framework/system/Database/BaseConnection.php:908
-/Users/juanrosariodelacruz/Sites/ekklesiaRD/vendor/codeigniter4/framework/system/Database/BaseConnection.php:825
-/Users/juanrosariodelacruz/Sites/ekklesiaRD/vendor/codeigniter4/framework/system/Database/BaseBuilder.php:1659
-/Users/juanrosariodelacruz/Sites/ekklesiaRD/MemberPortal/Controllers/LeadershipPositions.php:106
-/Users/juanrosariodelacruz/Sites/ekklesiaRD/vendor/codeigniter4/framework/system/CodeIgniter.php:974
-/Users/juanrosariodelacruz/Sites/ekklesiaRD/vendor/codeigniter4/framework/system/CodeIgniter.php:520
-/Users/juanrosariodelacruz/Sites/ekklesiaRD/vendor/codeigniter4/framework/system/CodeIgniter.php:363
-/Users/juanrosariodelacruz/Sites/ekklesiaRD/vendor/codeigniter4/framework/system/Test/FeatureTestTrait.php:234
-/Users/juanrosariodelacruz/Sites/ekklesiaRD/vendor/codeigniter4/framework/system/Test/FeatureTestTrait.php:254
-/Users/juanrosariodelacruz/Sites/ekklesiaRD/tests/database/LeadershipPositionsScopeIntegrationTest.php:49
+/Users/juanrosariodelacruz/Sites/ekklesiaONLINE/vendor/codeigniter4/framework/system/Database/SQLite3/Connection.php:164
+/Users/juanrosariodelacruz/Sites/ekklesiaONLINE/vendor/codeigniter4/framework/system/Database/BaseConnection.php:908
+/Users/juanrosariodelacruz/Sites/ekklesiaONLINE/vendor/codeigniter4/framework/system/Database/BaseConnection.php:825
+/Users/juanrosariodelacruz/Sites/ekklesiaONLINE/vendor/codeigniter4/framework/system/Database/BaseBuilder.php:1659
+/Users/juanrosariodelacruz/Sites/ekklesiaONLINE/MemberPortal/Controllers/LeadershipPositions.php:106
+/Users/juanrosariodelacruz/Sites/ekklesiaONLINE/vendor/codeigniter4/framework/system/CodeIgniter.php:974
+/Users/juanrosariodelacruz/Sites/ekklesiaONLINE/vendor/codeigniter4/framework/system/CodeIgniter.php:520
+/Users/juanrosariodelacruz/Sites/ekklesiaONLINE/vendor/codeigniter4/framework/system/CodeIgniter.php:363
+/Users/juanrosariodelacruz/Sites/ekklesiaONLINE/vendor/codeigniter4/framework/system/Test/FeatureTestTrait.php:234
+/Users/juanrosariodelacruz/Sites/ekklesiaONLINE/vendor/codeigniter4/framework/system/Test/FeatureTestTrait.php:254
+/Users/juanrosariodelacruz/Sites/ekklesiaONLINE/tests/database/LeadershipPositionsScopeIntegrationTest.php:49
 
 ERRORS!
 Tests: 1, Assertions: 0, Errors: 1.

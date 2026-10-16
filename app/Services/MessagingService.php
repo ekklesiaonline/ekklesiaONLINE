@@ -30,7 +30,7 @@ use App\Services\EmailScopeService;
  *   email.SMTPPass  = your-password
  *   email.SMTPPort  = 587
  *   email.fromEmail = no-reply@example.com
- *   email.fromName  = ekklesiaRD
+ *   email.fromName  = ekklesiaONLINE
  *
  * ─────────────────────────────────────────────────────────────────────
  * Queued SMS — stores in the `sms_queue` table for background processing

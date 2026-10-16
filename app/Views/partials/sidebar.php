@@ -2,7 +2,7 @@
 <nav class="col-md-3 col-lg-2 d-md-block sidebar p-3">
     <div class="position-sticky">
         <h4 class="text-center mb-4">
-            <i class="bi bi-parish" aria-hidden="true"></i> EkklesiaRD
+            <i class="bi bi-parish" aria-hidden="true"></i> ekklesiaONLINE
         </h4>
 
         <?php $isProvinceAdminSidebar = auth()->user()->inGroup('provinceadmin') || auth()->user()->can('province.admin'); ?>

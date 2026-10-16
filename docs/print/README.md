@@ -19,8 +19,8 @@ This folder contains PDF-ready HTML manuals:
 
 ## Suggested Output Names
 
-- EkklesiaRD_User_Manual_EN.pdf
-- EkklesiaRD_Manual_de_Usuario_ES.pdf
+- ekklesiaONLINE_User_Manual_EN.pdf
+- ekklesiaONLINE_Manual_de_Usuario_ES.pdf
 
 ## Notes
 

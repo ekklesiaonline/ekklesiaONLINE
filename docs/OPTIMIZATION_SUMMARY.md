@@ -2,7 +2,7 @@
 
 ## 🎯 Implemented Optimizations (March 2026)
 
-This document summarizes the performance optimizations that have been implemented in the ekklesiaRD system.
+This document summarizes the performance optimizations that have been implemented in the ekklesiaONLINE system.
 
 ---
 

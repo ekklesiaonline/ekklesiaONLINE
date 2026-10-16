@@ -1,4 +1,4 @@
-# EkklesiaRD Deep Analysis Report
+# ekklesiaONLINE Deep Analysis Report
 
 **Date:** March 31, 2026  
 **System:** Multi-Parish Management System (ChMS) on CodeIgniter 4.7  
@@ -8,7 +8,7 @@
 
 ## Executive Summary
 
-EkklesiaRD is a **well-architected, production-ready multi-parish management system** that demonstrates solid
+ekklesiaONLINE is a **well-architected, production-ready multi-parish management system** that demonstrates solid
 software engineering practices. The system successfully manages complex multi-tenancy requirements with
 clear role-based access control, has implemented significant performance optimizations, and maintains
 good documentation standards.
@@ -23,7 +23,7 @@ good documentation standards.
 
 ### 1.1 Core Capabilities
 
-EkklesiaRD is a comprehensive Parish Management System (ChMS) designed for diocesan/provincial oversight with granular parish-level operations. It manages:
+ekklesiaONLINE is a comprehensive Parish Management System (ChMS) designed for diocesan/provincial oversight with granular parish-level operations. It manages:
 
 | Capability                 | Scope                         | Features                                                                                                                         |
 |----------------------------|-------------------------------|----------------------------------------------------------------------------------------------------------------------------------|
@@ -552,13 +552,13 @@ CREATE TABLE audit_logs (
 **Improvements Needed:**
 
 1. **Automated Daily Backups**:
-   - Schedule MySQL dump via cron: `mysqldump ekklesiaRD > backup_$(date +%Y%m%d).sql`
+   - Schedule MySQL dump via cron: `mysqldump ekklesiaONLINE > backup_$(date +%Y%m%d).sql`
    - Retain 30-day rolling backups
    - Store off-site (AWS S3, Google Drive, etc.)
 
    ```bash
    # Cron job (daily at 2 AM)
-   0 2 * * * mysqldump -u user -p ekklesiaRD | gzip > /backups/ekklesiaRD_$(date +\%Y\%m\%d).sql.gz
+   0 2 * * * mysqldump -u user -p ekklesiaONLINE | gzip > /backups/ekklesiaONLINE_$(date +\%Y\%m\%d).sql.gz
    ```
 
 2. **File Uploads Backup**:
@@ -802,7 +802,7 @@ MEDIUM PRIORITY (NICE TO HAVE)
 
 ## 5. CONCLUSION
 
-EkklesiaRD is a **well-designed system with solid fundamentals**. The architecture is clean, multi-tenancy is properly implemented, and performance has been optimized.
+ekklesiaONLINE is a **well-designed system with solid fundamentals**. The architecture is clean, multi-tenancy is properly implemented, and performance has been optimized.
 
 **To deploy with confidence:**
 

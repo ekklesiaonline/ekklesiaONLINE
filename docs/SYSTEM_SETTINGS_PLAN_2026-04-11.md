@@ -10,7 +10,7 @@ No `Settings` controller or settings view exists yet.
 The active cron entry for parish people sync is:
 
 ```cron
-*/5 * * * * cd /Users/juanrosariodelacruz/Sites/ekklesiaRD && sh build/cron_sync_parish_people.sh >> writable/logs/parish_people_sync_cron.log 2>&1
+*/5 * * * * cd /Users/juanrosariodelacruz/Sites/ekklesiaONLINE && sh build/cron_sync_parish_people.sh >> writable/logs/parish_people_sync_cron.log 2>&1
 ```
 
 ---
@@ -154,7 +154,7 @@ Add to `app/Language/en/App.php` and `app/Language/es/App.php`:
   corresponding ready-to-copy crontab line:
 
 ```cron
-*/5 * * * * cd /path/to/ekklesiaRD && sh build/cron_sync_parish_people.sh >> writable/logs/parish_people_sync_cron.log 2>&1
+*/5 * * * * cd /path/to/ekklesiaONLINE && sh build/cron_sync_parish_people.sh >> writable/logs/parish_people_sync_cron.log 2>&1
 ```
 
 - Changing the interval in the UI updates the hint; it does NOT

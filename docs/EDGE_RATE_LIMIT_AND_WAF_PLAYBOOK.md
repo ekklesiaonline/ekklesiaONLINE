@@ -6,7 +6,7 @@ This playbook configures reverse-proxy and CDN/WAF protections for section 2.5 o
 
 ## 1. Nginx Reverse-Proxy Controls
 
-1. Include [build/nginx/ekklesiard-rate-limit.conf](build/nginx/ekklesiard-rate-limit.conf) in the target `server {}` block.
+1. Include [build/nginx/ekklesiaONLINE-rate-limit.conf](build/nginx/ekklesiaONLINE-rate-limit.conf) in the target `server {}` block.
 2. Reload and validate:
    - `nginx -t`
    - `systemctl reload nginx`
@@ -24,25 +24,25 @@ Create these rules in Cloudflare (Security -> WAF -> Custom Rules / Rate Limitin
 
 ### 2.1 Rule: Repeated 429 Offenders
 
-- Name: `ekklesiard-429-repeat-offender`
+- Name: `ekklesiaONLINE-429-repeat-offender`
 - Expression:
-  - `(http.host eq "ekklesiard.local" and cf.response.1xxx_code eq 429)`
+  - `(http.host eq "ekklesiaONLINE.local" and cf.response.1xxx_code eq 429)`
 - Action: `Managed Challenge` (or `Block` if abuse persists)
 - Threshold: `>= 10` matches in `5 minutes` from same source IP
 - Mitigation timeout: `15 minutes`
 
 ### 2.2 Rule: Bot Traffic on Write Paths
 
-- Name: `ekklesiard-bot-write-paths`
+- Name: `ekklesiaONLINE-bot-write-paths`
 - Expression:
-  - `(http.host eq "ekklesiard.local" and http.request.method in {"POST" "PUT" "PATCH" "DELETE"} and cf.bot_management.score lt 30 and http.request.uri.path matches "^/(province/(create-diocese|assign-diocesan-admin|create-admin)|diocesan/registrations/|members/|guests/|followup/|events/|services/|attendance/|donations/|expenses/|budgets/save|volunteers/|families/|pledges/|leadership/|standing/refresh|profile/|guest-conversions/)")`
+  - `(http.host eq "ekklesiaONLINE.local" and http.request.method in {"POST" "PUT" "PATCH" "DELETE"} and cf.bot_management.score lt 30 and http.request.uri.path matches "^/(province/(create-diocese|assign-diocesan-admin|create-admin)|diocesan/registrations/|members/|guests/|followup/|events/|services/|attendance/|donations/|expenses/|budgets/save|volunteers/|families/|pledges/|leadership/|standing/refresh|profile/|guest-conversions/)")`
 - Action: `Managed Challenge`
 
 ### 2.3 Rule: Absolute Burst Guard
 
-- Name: `ekklesiard-write-burst-guard`
+- Name: `ekklesiaONLINE-write-burst-guard`
 - Expression:
-  - `(http.host eq "ekklesiard.local" and http.request.method in {"POST" "PUT" "PATCH" "DELETE"} and http.request.uri.path matches "^/(members|guests|followup|events|services|attendance|donations|expenses|volunteers|families|pledges|leadership|guest-conversions|profile)")`
+  - `(http.host eq "ekklesiaONLINE.local" and http.request.method in {"POST" "PUT" "PATCH" "DELETE"} and http.request.uri.path matches "^/(members|guests|followup|events|services|attendance|donations|expenses|volunteers|families|pledges|leadership|guest-conversions|profile)")`
 - Threshold: `120 requests/minute` per IP
 - Action: `Block`
 - Mitigation timeout: `10 minutes`
@@ -53,7 +53,7 @@ Run from repository root:
 
 ```bash
 chmod +x build/stress_rate_limit_test.sh
-BASE_URL=https://staging.ekklesiard.local \
+BASE_URL=https://staging.ekklesiaONLINE.local \
 REQUESTS=50 \
 LOGIN_EMAIL=your-staging-admin@example.org \
 LOGIN_PASSWORD='your-staging-password' \

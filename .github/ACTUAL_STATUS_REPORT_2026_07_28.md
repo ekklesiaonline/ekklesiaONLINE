@@ -1,4 +1,4 @@
-# ekklesiaRD – Actual Status Report
+# ekklesiaONLINE – Actual Status Report
 
 Date: 2026-07-28
 

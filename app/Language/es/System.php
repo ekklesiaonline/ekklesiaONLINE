@@ -135,7 +135,7 @@ return [
     'emailAlreadyInUse' => 'Correo ya en uso.',
     'adminUserCreated' => 'Usuario administrador creado exitosamente. Se envio un correo de invitacion.',
     'adminInvitationWillBeSent' => 'Se enviara un correo de invitacion para que el administrador establezca su propia contrasena.',
-    'adminInvitationSubject' => 'Invitacion de Cuenta de Administrador - EkklesiaRD',
+    'adminInvitationSubject' => 'Invitacion de Cuenta de Administrador - ekklesiaONLINE',
     'adminInvitationGreeting' => 'Su cuenta de administrador ha sido creada.',
     'adminInvitationBody' => 'Use un enlace de acceso para establecer su contrasena de forma segura antes de acceder al sistema.',
     'adminStatus_active' => 'Activo',
