@@ -1,7 +1,7 @@
 PHPUnit 10.5.65 by Sebastian Bergmann and contributors.
 
 Runtime:       PHP 8.5.11
-Configuration: /Users/juanrosariodelacruz/Sites/ekklesiaRD/phpunit.xml.dist
+Configuration: /Users/juanrosariodelacruz/Sites/ekklesiaONLINE/phpunit.xml.dist
 
 F                                                                   1 / 1 (100%)
 
@@ -24,7 +24,7 @@ AND `db_lp`.`diocese_id` = 1
 ORDER BY `db_lp`.`active` DESC, `db_lp`.`scope_type` ASC, `db_lp`.`title` ASC
  LIMIT 25
 
-/Users/juanrosariodelacruz/Sites/ekklesiaRD/tests/database/LeadershipPositionsScopeIntegrationTest.php:52
+/Users/juanrosariodelacruz/Sites/ekklesiaONLINE/tests/database/LeadershipPositionsScopeIntegrationTest.php:52
 
 FAILURES!
 Tests: 1, Assertions: 1, Failures: 1.

@@ -1,4 +1,4 @@
-# ekklesiaRD – Status Comparison & Comprehensive Improvement Report
+# ekklesiaONLINE – Status Comparison & Comprehensive Improvement Report
 
 **Original Snapshot Date:** 2026-09-16  
 **Updated Re-Analysis Date:** 2026-10-11  
@@ -9,7 +9,7 @@
 
 ## Executive Summary
 
-Since the baseline evaluation on 2026-07-28 and the initial hardening pass on 2026-09-16, the ekklesiaRD codebase has undergone comprehensive architectural maturation, culminating in an enterprise-grade Episcopal church management platform.
+Since the baseline evaluation on 2026-07-28 and the initial hardening pass on 2026-09-16, the ekklesiaONLINE codebase has undergone comprehensive architectural maturation, culminating in an enterprise-grade Episcopal church management platform.
 
 Across this period, the automated test suite has expanded from **310 tests (with 11 failures)** at baseline, through **508 tests** in mid-September, to **980 tests with 4,459 assertions (0 errors, 0 failures, 6 skipped)** as of 2026-10-11. The test suite is **100% green**.
 
@@ -174,7 +174,7 @@ Across this period, the automated test suite has expanded from **310 tests (with
 
 ## Conclusion & Production Readiness Verdict
 
-The ekklesiaRD platform has achieved full production readiness:
+The ekklesiaONLINE platform has achieved full production readiness:
 
 - **Security & Authorization:** The 4-axis authorization model, multi-tier registration guard, rate-limited device verification, concurrent session limits, and sanitized email delivery establish a robust enterprise security perimeter.
 - **Data Integrity & Consistency:** The database schema has been normalized to canonical entities, eliminating transitional dual-writes and dropped tables (`guest`, `parish_people`).

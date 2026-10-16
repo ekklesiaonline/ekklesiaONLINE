@@ -132,8 +132,8 @@ return [
     'verifyEmailFailed'      => 'We could not send the verification code email. Use "Resend Code" to try again.',
 
     // Device verification email
-    'deviceVerifyEmailSubject'    => 'Verify New Device Login - EkklesiaRD',
-    'deviceVerifyEmailIntro'      => 'A login was detected from a new device on your EkklesiaRD account. To continue this session, enter this verification code:',
+    'deviceVerifyEmailSubject'    => 'Verify New Device Login - ekklesiaONLINE',
+    'deviceVerifyEmailIntro'      => 'A login was detected from a new device on your ekklesiaONLINE account. To continue this session, enter this verification code:',
     'deviceVerifyEmailCodeExpiry' => 'This code expires in {0} minutes.',
     'deviceVerifyEmailTime'       => 'Time:',
     'deviceVerifyEmailIp'         => 'IP Address:',
@@ -170,14 +170,14 @@ return [
     'registrationPendingNoName'  => 'Name not provided',
 
     // Portal access invitation email
-    'portalInviteSubject'      => 'Portal Access Invitation - EkklesiaRD',
+    'portalInviteSubject'      => 'Portal Access Invitation - ekklesiaONLINE',
     'portalInviteIntro'        => 'Your portal access invitation was created.',
     'portalInvitePasswordNote' => 'For security, you must set your password before full access is enabled.',
     'portalInviteGoTo'         => 'Go to:',
 
     // Password-changed notification email
-    'passwordChangedSubject' => 'Your password was changed - EkklesiaRD',
-    'passwordChangedIntro'   => 'The password for your EkklesiaRD account was changed.',
+    'passwordChangedSubject' => 'Your password was changed - ekklesiaONLINE',
+    'passwordChangedIntro'   => 'The password for your ekklesiaONLINE account was changed.',
     'passwordChangedAt'      => 'Time:',
     'passwordChangedNotYou'  => 'If you did not make this change, please <strong>change your password immediately</strong> and contact your parish administrator.',
 ];

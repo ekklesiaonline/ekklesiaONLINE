@@ -146,7 +146,7 @@ class Import extends BaseController
             . '?size=300x300&format=png&qzone=2&data=' . rawurlencode($cardUrl);
 
         $context = stream_context_create([
-            'http' => ['timeout' => 8, 'user_agent' => 'EkklesiaRD/1.0'],
+            'http' => ['timeout' => 8, 'user_agent' => 'ekklesiaONLINE/1.0'],
         ]);
 
         $image = @file_get_contents($apiUrl, false, $context);

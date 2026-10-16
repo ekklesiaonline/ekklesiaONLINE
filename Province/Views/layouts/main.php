@@ -7,7 +7,7 @@
     <meta name="csrf-token" content="<?= csrf_hash() ?>">
     <script>
         (function() {
-            var storageKey = 'ekklesiard-theme';
+            var storageKey = 'ekklesiaONLINE-theme';
             var savedTheme = null;
 
             try {
@@ -26,7 +26,7 @@
             document.documentElement.setAttribute('data-bs-theme', theme);
         }());
     </script>
-    <title><?= esc($title ?? 'EkklesiaRD - Parish Management System') ?></title>
+    <title><?= esc($title ?? 'ekklesiaONLINE - Parish Management System') ?></title>
 
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -949,7 +949,7 @@
             lightMode: '<?= lang('App.themeLight') ?>'
         };
         (function() {
-            var storageKey = 'ekklesiard-theme';
+            var storageKey = 'ekklesiaONLINE-theme';
             var root = document.documentElement;
             var toggleBtn = document.getElementById('themeToggleBtn');
             var toggleIcon = document.getElementById('themeToggleIcon');
@@ -1044,7 +1044,7 @@
                 }
 
                 applyChartTheme();
-                document.dispatchEvent(new CustomEvent('ekklesiard:themechange', {
+                document.dispatchEvent(new CustomEvent('ekklesiaONLINE:themechange', {
                     detail: {
                         theme: theme
                     }

@@ -1,7 +1,7 @@
 PHPUnit 10.5.65 by Sebastian Bergmann and contributors.
 
 Runtime:       PHP 8.5.11
-Configuration: /Users/juanrosariodelacruz/Sites/ekklesiaRD/phpunit.xml.dist
+Configuration: /Users/juanrosariodelacruz/Sites/ekklesiaONLINE/phpunit.xml.dist
 
 ...............................................................  63 / 828 (  7%)
 ..................F...................................F........ 126 / 828 ( 15%)
@@ -127,12 +127,12 @@ Failed asserting that Array &0 [
     'interests' => null,
 ] is null.
 
-/Users/juanrosariodelacruz/Sites/ekklesiaRD/tests/app/Services/PersonCleanupServiceTest.php:53
+/Users/juanrosariodelacruz/Sites/ekklesiaONLINE/tests/app/Services/PersonCleanupServiceTest.php:53
 
 2) CleanupOrphanedPersonRowsMigrationTest::testMigrationRemovesOrphanedPersonRowsButKeepsReferencedOnes
 Failed asserting that an array does not contain 2.
 
-/Users/juanrosariodelacruz/Sites/ekklesiaRD/tests/database/CleanupOrphanedPersonRowsMigrationTest.php:74
+/Users/juanrosariodelacruz/Sites/ekklesiaONLINE/tests/database/CleanupOrphanedPersonRowsMigrationTest.php:74
 
 3) AuthGroupsGovernanceBoundaryTest::testProvinceAndDiocesanGroupsAreStrictlyNonGovernanceAndNonFinance
 diocesanadmin matrix must remain strict/read-only.
@@ -150,7 +150,7 @@ Failed asserting that two arrays are identical.
 +    26 => 'deanery.manage',
  ]
 
-/Users/juanrosariodelacruz/Sites/ekklesiaRD/tests/unit/AuthGroupsGovernanceBoundaryTest.php:43
+/Users/juanrosariodelacruz/Sites/ekklesiaONLINE/tests/unit/AuthGroupsGovernanceBoundaryTest.php:43
 
 FAILURES!
 Tests: 828, Assertions: 3573, Failures: 3, Skipped: 6.

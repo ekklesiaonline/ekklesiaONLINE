@@ -58,7 +58,7 @@ Result: Safe to proceed with direct reassignment in a single transaction.
 
 ## Pre-Check SQL
 
-USE ekklesiaRD;
+USE ekklesiaONLINE;
 
 SELECT id, name, parish_ueid, diocese_id, is_active
 FROM parishes
@@ -67,7 +67,7 @@ ORDER BY id;
 
 ## Transaction SQL (Move All Data)
 
-USE ekklesiaRD;
+USE ekklesiaONLINE;
 
 START TRANSACTION;
 
@@ -98,7 +98,7 @@ COMMIT;
 
 ## Post-Validation SQL
 
-USE ekklesiaRD;
+USE ekklesiaONLINE;
 
 -- Should all be zero after move:
 SELECT 'annual_pledges' AS t, COUNT(*) AS c FROM annual_pledges WHERE parish_id = 1

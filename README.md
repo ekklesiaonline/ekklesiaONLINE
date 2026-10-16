@@ -1,6 +1,6 @@
 # EkklesiaONLINE - Multi-Parish Management System
 
-EkklesiaRD is a Parish Management System (PMS) for province, diocese, and local parish operations, built on CodeIgniter 4.7 with Shield 1.4+ (v1.4.1) authentication.
+ekklesiaONLINE is a Parish Management System (PMS) for province, diocese, and local parish operations, built on CodeIgniter 4.7 with Shield 1.4+ (v1.4.1) authentication.
 
 ## Core Capabilities
 
@@ -40,7 +40,7 @@ If you prefer the framework defaults as a starting point, you can still copy `en
 
 ```bash
 # Create database (example)
-mysql -u root -p -e "CREATE DATABASE ekklesiaRD CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
+mysql -u root -p -e "CREATE DATABASE ekklesiaONLINE CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
 
 # Run migrations and Shield setup
 php spark migrate --all

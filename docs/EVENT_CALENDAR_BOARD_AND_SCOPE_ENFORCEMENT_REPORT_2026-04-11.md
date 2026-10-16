@@ -129,7 +129,7 @@ Attempted:
 Current result:
 
 - The local isolated server exposed an environment-level base URL mismatch.
-- Login requests on the isolated smoke server still redirected to `http://ekklesiaRD.local`, which prevented a stable authenticated session on the temporary test host.
+- Login requests on the isolated smoke server still redirected to `http://ekklesiaONLINE.local`, which prevented a stable authenticated session on the temporary test host.
 - Because of that environment mismatch, the smoke test could not be completed as a trustworthy end-to-end browser or curl validation in the current local harness.
 
 Interpretation:

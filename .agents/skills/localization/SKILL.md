@@ -10,7 +10,7 @@ allowed-tools:
   - find_file_by_name
 ---
 
-Help with localization (i18n) in ekklesiaRD.
+Help with localization (i18n) in ekklesiaONLINE.
 
 Key facts:
 - `BaseController::resolvePreferredLocale()` is the single source of truth for locale resolution.

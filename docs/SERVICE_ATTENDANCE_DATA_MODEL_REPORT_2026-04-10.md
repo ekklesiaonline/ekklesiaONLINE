@@ -2,7 +2,7 @@
 
 ## Scope
 
-This report is generated from the live `ekklesiaRD` schema (`information_schema`) and focuses on:
+This report is generated from the live `ekklesiaONLINE` schema (`information_schema`) and focuses on:
 
 1. Tables that store service and service-metrics information.
 2. Tables used to store people or members attendance-related information.

@@ -2,7 +2,7 @@
 
 ## Objective
 
-Verify where attendance data is stored in the live `ekklesiaRD` database and where it is written/read in application code.
+Verify where attendance data is stored in the live `ekklesiaONLINE` database and where it is written/read in application code.
 
 ## Verification Method
 

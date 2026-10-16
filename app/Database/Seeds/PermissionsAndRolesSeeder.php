@@ -9,7 +9,7 @@ use CodeIgniter\Database\Seeder;
  * PermissionsAndRolesSeeder
  *
  * Seeds the Shield auth_permissions and auth_groups (roles) tables with
- * the permissions and roles required by ekklesiaRD.
+ * the permissions and roles required by ekklesiaONLINE.
  */
 class PermissionsAndRolesSeeder extends Seeder
 {

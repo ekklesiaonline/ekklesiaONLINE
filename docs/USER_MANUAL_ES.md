@@ -1,8 +1,8 @@
-# Manual de Usuario de EkklesiaRD
+# Manual de Usuario de ekklesiaONLINE
 
 ## 1. Proposito
 
-EkklesiaRD es un sistema de gestion eclesial multinivel (ChMS) para:
+ekklesiaONLINE es un sistema de gestion eclesial multinivel (ChMS) para:
 
 - Supervision provincial
 - Administracion diocesana

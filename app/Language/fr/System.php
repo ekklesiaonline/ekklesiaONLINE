@@ -132,7 +132,7 @@ return [
     'emailAlreadyInUse' => 'E-mail deja utilise.',
     'adminUserCreated' => 'Utilisateur administrateur cree avec succes. Un e-mail d\'invitation a ete envoye.',
     'adminInvitationWillBeSent' => 'Un e-mail d\'invitation sera envoye afin que l\'administrateur definisse son propre mot de passe.',
-    'adminInvitationSubject' => 'Invitation au Compte Administrateur - EkklesiaRD',
+    'adminInvitationSubject' => 'Invitation au Compte Administrateur - ekklesiaONLINE',
     'adminInvitationGreeting' => 'Votre compte administrateur a ete cree.',
     'adminInvitationBody' => 'Utilisez un lien de connexion pour definir votre mot de passe en toute securite avant d\'acceder au systeme.',
     'adminStatus_active' => 'Actif',

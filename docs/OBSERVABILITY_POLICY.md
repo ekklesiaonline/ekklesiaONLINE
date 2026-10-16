@@ -5,7 +5,7 @@ Status: Phase B baseline policy
 
 ## Objective
 
-Provide a minimum production-ready observability standard for request tracing, audit events, and slow-query diagnostics in ekklesiaRD.
+Provide a minimum production-ready observability standard for request tracing, audit events, and slow-query diagnostics in ekklesiaONLINE.
 
 ## Signals
 

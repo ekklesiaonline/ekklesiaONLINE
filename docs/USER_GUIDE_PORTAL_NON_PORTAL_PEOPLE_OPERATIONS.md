@@ -2,7 +2,7 @@
 
 ## Audience
 
-This guide is for parish admins, pastors, and authorized staff who manage people records in ekklesiaRD.
+This guide is for parish admins, pastors, and authorized staff who manage people records in ekklesiaONLINE.
 
 ## What This Guide Covers
 

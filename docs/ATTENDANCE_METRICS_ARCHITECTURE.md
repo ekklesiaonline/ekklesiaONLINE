@@ -563,4 +563,4 @@ git revert HEAD
 ## Related Documentation
 
 - [TOTAL_COMMUNICANTS_FIELD_DOCUMENTATION.md](../docs/TOTAL_COMMUNICANTS_FIELD_DOCUMENTATION.md) - Detailed field definitions
-- [ekklesiaRD Instructions](../.github/copilot-instructions.md) - Project overview
+- [ekklesiaONLINE Instructions](../.github/copilot-instructions.md) - Project overview

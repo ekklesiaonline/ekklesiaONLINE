@@ -1,6 +1,6 @@
 ---
 name: project-architecture
-description: Explain or change ekklesiaRD architecture, module ownership, routing, scopes, and canonical documentation. Use when tracing a feature, deciding where code belongs, reviewing a modularization change, or explaining the project to a contributor.
+description: Explain or change ekklesiaONLINE architecture, module ownership, routing, scopes, and canonical documentation. Use when tracing a feature, deciding where code belongs, reviewing a modularization change, or explaining the project to a contributor.
 ---
 
 # Project Architecture

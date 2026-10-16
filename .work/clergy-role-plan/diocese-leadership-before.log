@@ -1,7 +1,7 @@
 PHPUnit 10.5.65 by Sebastian Bergmann and contributors.
 
 Runtime:       PHP 8.5.11
-Configuration: /Users/juanrosariodelacruz/Sites/ekklesiaRD/phpunit.xml.dist
+Configuration: /Users/juanrosariodelacruz/Sites/ekklesiaONLINE/phpunit.xml.dist
 
 F                                                                   1 / 1 (100%)
 
@@ -10,12 +10,12 @@ Time: 00:00.218, Memory: 20.00 MB
 There was 1 failure:
 
 1) LeadershipPositionsScopeIntegrationTest::testDioceseAdminCanOpenDiocesanLeadershipWithoutSelectedParish
-Location=http://ekklesiard.local/dashboard; body=
+Location=http://ekklesiaONLINE.local/dashboard; body=
 
 Failed asserting that '\n
 ' [ASCII](length: 1) contains "Leadership Positions" [ASCII](length: 20).
 
-/Users/juanrosariodelacruz/Sites/ekklesiaRD/tests/database/LeadershipPositionsScopeIntegrationTest.php:52
+/Users/juanrosariodelacruz/Sites/ekklesiaONLINE/tests/database/LeadershipPositionsScopeIntegrationTest.php:52
 
 FAILURES!
 Tests: 1, Assertions: 2, Failures: 1.

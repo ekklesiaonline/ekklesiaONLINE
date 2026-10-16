@@ -1,6 +1,6 @@
 # Seeders (Canonical Set)
 
-This document defines the active seeder strategy for ekklesiaRD.
+This document defines the active seeder strategy for ekklesiaONLINE.
 
 ## Policy
 

@@ -17,7 +17,7 @@
 Use weekly Sunday 11:00 PM server local time:
 
 ```cron
-0 23 * * 0 cd /Users/juanrosariodelacruz/Sites/ekklesiaRD && php spark standing:refresh --year $(date +\%Y) >> writable/logs/standing_refresh_cron.log 2>&1
+0 23 * * 0 cd /Users/juanrosariodelacruz/Sites/ekklesiaONLINE && php spark standing:refresh --year $(date +\%Y) >> writable/logs/standing_refresh_cron.log 2>&1
 ```
 
 Notes:

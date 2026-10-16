@@ -372,7 +372,7 @@ trait SystemAdminService
         $safeTarget = esc($targetName);
 
         return <<<HTML
-        <p>A primary system admin ownership transfer has been requested in <strong>EkklesiaRD</strong>.</p>
+        <p>A primary system admin ownership transfer has been requested in <strong>ekklesiaONLINE</strong>.</p>
         <p>Enter this verification code to complete the transfer:</p>
         <p style="font-size:1.5rem;font-weight:700;letter-spacing:0.15em;">{$safeCode}</p>
         <p>Target system admin: <strong>{$safeTarget}</strong></p>

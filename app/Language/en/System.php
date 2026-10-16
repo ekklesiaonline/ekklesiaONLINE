@@ -137,7 +137,7 @@ return [
     'emailAlreadyInUse' => 'Email already in use.',
     'adminUserCreated' => 'Admin user created successfully. An invitation email was sent.',
     'adminInvitationWillBeSent' => 'An invitation email will be sent so the administrator can set their own password.',
-    'adminInvitationSubject' => 'Administrator Account Invitation - EkklesiaRD',
+    'adminInvitationSubject' => 'Administrator Account Invitation - ekklesiaONLINE',
     'adminInvitationGreeting' => 'Your administrator account has been created.',
     'adminInvitationBody' => 'Use a login link to securely set your password before accessing the system.',
     'adminStatus_active' => 'Active',

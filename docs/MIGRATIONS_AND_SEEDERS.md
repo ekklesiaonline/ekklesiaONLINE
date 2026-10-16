@@ -1,4 +1,4 @@
-# ekklesiaRD - Migrations & Seeders Setup
+# ekklesiaONLINE - Migrations & Seeders Setup
 
 **Created: May 12, 2026**
 

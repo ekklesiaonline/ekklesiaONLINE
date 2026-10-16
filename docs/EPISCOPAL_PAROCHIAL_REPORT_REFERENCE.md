@@ -4,7 +4,7 @@
 **Canons:** I.6, I.7, and I.17  
 **Alias:** The Parochial Report
 
-This document describes the structure, fields, and calculation rules of the TEC Parochial Report. It serves as the source-of-truth for mapping ekklesiaRD data to the report's required fields.
+This document describes the structure, fields, and calculation rules of the TEC Parochial Report. It serves as the source-of-truth for mapping ekklesiaONLINE data to the report's required fields.
 
 ---
 
@@ -64,7 +64,7 @@ Total In-Person Annual Attendance ÷ Total Number of Sundays In-Person Worship W
 
 - Includes Saturday Evening services counted as Sunday.
 - Maps to: `services` table (`service_type = 'Sunday Worship'`) + `attendance` table (`attended = 1`).
-- **ekklesiaRD note:** §12 of the system rules prohibits bucket-level averaging for parish-admin dashboard graphics. The formula above is the canonical Parochial Report calculation and applies here.
+- **ekklesiaONLINE note:** §12 of the system rules prohibits bucket-level averaging for parish-admin dashboard graphics. The formula above is the canonical Parochial Report calculation and applies here.
 
 #### Line 2 — Average Sunday Attendance Online (ASA Online)
 
@@ -92,7 +92,7 @@ Total In-Person Attendance (weekdays, holy days, special annual feasts) ÷ Total
 #### Line 6 — Outreach Beneficiaries
 
 - Estimated beneficiaries of outreach ministries **per week**.
-- Not currently tracked in ekklesiaRD. New data entry field needed.
+- Not currently tracked in ekklesiaONLINE. New data entry field needed.
 
 #### Line 7 — Average Non-Member Volunteers
 
@@ -117,7 +117,7 @@ Total Impact = Lines 1 + 2 + 3 + 4 + 6 + 7
 | 10 | Youth communicants in good standing | Under age 16 | Same, age < 16 |
 | 11 | Total (Line 9 + Line 10) | — | Sum |
 
-**ekklesiaRD mapping note:** `member_standing_summary.is_good_standing` is the canonical field. The Parochial Report age split (16 / under 16) differs from the system's current `is_dependent` concept (under 18). A separate age-threshold query will be needed at report time.
+**ekklesiaONLINE mapping note:** `member_standing_summary.is_good_standing` is the canonical field. The Parochial Report age split (16 / under 16) differs from the system's current `is_dependent` concept (under 18). A separate age-threshold query will be needed at report time.
 
 The TEC definition of Communicant in Good Standing requires:
 1. Baptized (→ `profile.baptism_date IS NOT NULL`)
@@ -163,7 +163,7 @@ Totals required:
 - Total Lay Staff
 - Total Staff
 
-Not currently tracked in ekklesiaRD — would require a `staff_roster` or extension of `leadership_positions`.
+Not currently tracked in ekklesiaONLINE — would require a `staff_roster` or extension of `leadership_positions`.
 
 ---
 
@@ -210,7 +210,7 @@ Maps to: `services` table + `service_sacramental_counts` (if implemented). `Serv
 
 ### Services, Programs & Initiatives (Line 20)
 
-Checkbox selection. Current coverage in ekklesiaRD vs. required:
+Checkbox selection. Current coverage in ekklesiaONLINE vs. required:
 
 | Program | Tracked? |
 | --- |---|
@@ -252,7 +252,7 @@ Checkbox: Preschool or Nursery, K-8 School, 9-12 School, Outreach Ministry, Othe
 | 24 | % White/Caucasian/European descent | Scale or numeric percentage |
 | 25 | Estimated average age of congregation | Scale or numeric |
 
-Lines 24–25 are not currently tracked in ekklesiaRD. `birth_date` is stored in `profile` so average age is computable. Ethnicity/race is not stored and would require a new optional field.
+Lines 24–25 are not currently tracked in ekklesiaONLINE. `birth_date` is stored in `profile` so average age is computable. Ethnicity/race is not stored and would require a new optional field.
 
 ---
 
@@ -343,9 +343,9 @@ Maps to: `annual_pledges` table (if implemented). Not explicitly tracked in curr
 
 ---
 
-## ekklesiaRD Data Gap Summary
+## ekklesiaONLINE Data Gap Summary
 
-The following Parochial Report fields have **no current mapping** in ekklesiaRD and would require new schema additions or manual data entry:
+The following Parochial Report fields have **no current mapping** in ekklesiaONLINE and would require new schema additions or manual data entry:
 
 | Report Field | Gap Type | Suggested Resolution |
 | --- |---| --- |

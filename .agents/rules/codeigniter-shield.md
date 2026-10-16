@@ -1,5 +1,5 @@
 ---
-description: CodeIgniter 4.7+ & Shield 1.4+ standards and ekklesiaRD domain conventions
+description: CodeIgniter 4.7+ & Shield 1.4+ standards and ekklesiaONLINE domain conventions
 trigger: always_on
 ---
 

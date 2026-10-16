@@ -110,8 +110,8 @@ return [
     'verifyEmailFailed'      => 'Nous n\'avons pas pu envoyer le courriel avec le code de vérification. Utilisez « Renvoyer le code » pour réessayer.',
 
     // Device verification email
-    'deviceVerifyEmailSubject'    => 'Vérifier la connexion depuis un nouvel appareil - EkklesiaRD',
-    'deviceVerifyEmailIntro'      => 'Une connexion a été détectée depuis un nouvel appareil sur votre compte EkklesiaRD. Pour poursuivre cette session, saisissez ce code de vérification :',
+    'deviceVerifyEmailSubject'    => 'Vérifier la connexion depuis un nouvel appareil - ekklesiaONLINE',
+    'deviceVerifyEmailIntro'      => 'Une connexion a été détectée depuis un nouvel appareil sur votre compte ekklesiaONLINE. Pour poursuivre cette session, saisissez ce code de vérification :',
     'deviceVerifyEmailCodeExpiry' => 'Ce code expire dans {0} minutes.',
     'deviceVerifyEmailTime'       => 'Heure :',
     'deviceVerifyEmailIp'         => 'Adresse IP :',
@@ -148,14 +148,14 @@ return [
     'registrationPendingNoName'  => 'Nom non fourni',
 
     // Portal access invitation email
-    'portalInviteSubject'      => 'Invitation d’accès au portail - EkklesiaRD',
+    'portalInviteSubject'      => 'Invitation d’accès au portail - ekklesiaONLINE',
     'portalInviteIntro'        => 'Votre invitation d’accès au portail a été créée.',
     'portalInvitePasswordNote' => 'Pour des raisons de sécurité, vous devez définir votre mot de passe avant que l’accès complet ne soit activé.',
     'portalInviteGoTo'         => 'Accédez à :',
 
     // Password-changed notification email
-    'passwordChangedSubject' => 'Votre mot de passe a été modifié - EkklesiaRD',
-    'passwordChangedIntro'   => 'Le mot de passe de votre compte EkklesiaRD a été modifié.',
+    'passwordChangedSubject' => 'Votre mot de passe a été modifié - ekklesiaONLINE',
+    'passwordChangedIntro'   => 'Le mot de passe de votre compte ekklesiaONLINE a été modifié.',
     'passwordChangedAt'      => 'Heure :',
     'passwordChangedNotYou'  => 'Si vous n’êtes pas à l’origine de ce changement, veuillez <strong>changer immédiatement votre mot de passe</strong> et contacter l’administrateur de votre paroisse.',
 ];

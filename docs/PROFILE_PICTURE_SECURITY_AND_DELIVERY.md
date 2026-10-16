@@ -2,7 +2,7 @@
 
 ## Goal
 
-Codify the private-by-default media delivery model for ekklesiaRD with clear security and performance behavior.
+Codify the private-by-default media delivery model for ekklesiaONLINE with clear security and performance behavior.
 
 ## Final Model
 

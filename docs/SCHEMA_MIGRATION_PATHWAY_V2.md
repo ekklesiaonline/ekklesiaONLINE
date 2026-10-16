@@ -1,4 +1,4 @@
-# Schema Migration Pathway: ekklesiaRD → ekklesiaonline v2
+# Schema Migration Pathway: ekklesiaONLINE → ekklesiaonline v2
 
 **Prepared:** 2026-05-08  
 **Scope:** Full database architecture alignment from current schema to `ekklesiaonline.sql`  
@@ -166,7 +166,7 @@ The target schema (`ekklesiaonline.sql`) represents a **v2 architectural overhau
 ```bash
 # 1. Full database backup
 php spark db:seed --no-migrations  # verify seeder health
-mysqldump -u root -p ekklesiard > backup_pre_v2_$(date +%Y%m%d_%H%M%S).sql
+mysqldump -u root -p ekklesiaONLINE > backup_pre_v2_$(date +%Y%m%d_%H%M%S).sql
 
 # 2. Create staging clone and test all phases there first
 # 3. Put application in maintenance mode before phase 3+

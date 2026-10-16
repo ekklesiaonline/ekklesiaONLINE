@@ -1,7 +1,7 @@
 PHPUnit 10.5.65 by Sebastian Bergmann and contributors.
 
 Runtime:       PHP 8.5.11
-Configuration: /Users/juanrosariodelacruz/Sites/ekklesiaRD/phpunit.xml.dist
+Configuration: /Users/juanrosariodelacruz/Sites/ekklesiaONLINE/phpunit.xml.dist
 
 ....F..........................................................  63 / 837 (  7%)
 ............................................................... 126 / 837 ( 15%)
@@ -107,7 +107,7 @@ There was 1 failure:
 1) Tests\ClergyMigrationRehearsalTest::testAdditiveMigrationsStageLegacyEvidenceWithoutPromotion
 Failed asserting that false is true.
 
-/Users/juanrosariodelacruz/Sites/ekklesiaRD/tests/ClergyMigrationRehearsalTest.php:55
+/Users/juanrosariodelacruz/Sites/ekklesiaONLINE/tests/ClergyMigrationRehearsalTest.php:55
 
 FAILURES!
 Tests: 837, Assertions: 3657, Failures: 1, Skipped: 6.

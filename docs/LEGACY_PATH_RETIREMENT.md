@@ -6,7 +6,7 @@ Status: **in progress**. Canonical model: `person` (identity) +
 + `user_person` (portal linkage). Legacy tables: `profile`, `guest`,
 `parish_people`.
 
-## Evidence (dev MySQL `ekklesiaRD`, 2026-09-17)
+## Evidence (dev MySQL `ekklesiaONLINE`, 2026-09-17)
 
 | Check | Result |
 | --- | --- |

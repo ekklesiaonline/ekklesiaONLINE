@@ -30,7 +30,7 @@ The layout-level theme pipeline and chart-render lifecycle were tightly coupled.
 Approach:
 
 - Keep layout `applyTheme()` focused only on root theme state + event dispatch.
-- In chart pages (for example diocesan finance), listen for `ekklesiard:themechange`.
+- In chart pages (for example diocesan finance), listen for `ekklesiaONLINE:themechange`.
 - Re-apply chart option colors directly on each chart instance and call `chart.update('none')`.
 - Never mutate nested `Chart.defaults.plugins.*` during runtime.
 
@@ -89,7 +89,7 @@ Risk:
 
 Approach:
 
-- On `ekklesiard:themechange`, destroy and recreate each chart with new themed config.
+- On `ekklesiaONLINE:themechange`, destroy and recreate each chart with new themed config.
 
 Pros:
 

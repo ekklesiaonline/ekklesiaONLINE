@@ -6,13 +6,13 @@ Purpose: lock a known-good baseline before redesign work.
 
 - [x] Translation tables are absent.
   - Check:
-    - `SELECT COUNT(*) AS translation_tables_remaining FROM information_schema.tables WHERE table_schema='ekklesiaRD' AND table_name IN ('chart_account_translations','liturgical_entry_translations');`
+    - `SELECT COUNT(*) AS translation_tables_remaining FROM information_schema.tables WHERE table_schema='ekklesiaONLINE' AND table_name IN ('chart_account_translations','liturgical_entry_translations');`
   - Result: `0`
 
 - [x] Developer rollback account artifacts are absent.
   - Checks:
     - `SELECT COUNT(*) AS developer_users FROM users WHERE username='developer';`
-    - `SELECT COUNT(*) AS developer_identities FROM auth_identities WHERE secret='developer@ekklesiard.org';`
+    - `SELECT COUNT(*) AS developer_identities FROM auth_identities WHERE secret='developer@ekklesiaONLINE.org';`
   - Results: `0`, `0`
 
 - [x] Tier-1 migration versions are absent from migration history.
@@ -24,7 +24,7 @@ Purpose: lock a known-good baseline before redesign work.
 
 - [x] No explicit references found for removed translation artifacts or temporary developer seeders in app/module/docs scan.
   - Search patterns:
-    - `chart_of_accounts.manage|liturgical_source.manage|developer@ekklesiard.org|SystemDeveloperSeeder|LiturgicalTranslationsSeeder|chart_account_translations|liturgical_entry_translations`
+    - `chart_of_accounts.manage|liturgical_source.manage|developer@ekklesiaONLINE.org|SystemDeveloperSeeder|LiturgicalTranslationsSeeder|chart_account_translations|liturgical_entry_translations`
   - Result: no matches
 
 - [x] Route-level translation permission filters are not present in diocesan routes.
@@ -56,7 +56,7 @@ Use these hashes to detect drift before/after rethink implementation.
 
 ## 4) Workspace Note
 
-- [x] No git repository detected at workspace root (`/Users/juanrosariodelacruz/Sites/ekklesiaRD`).
+- [x] No git repository detected at workspace root (`/Users/juanrosariodelacruz/Sites/ekklesiaONLINE`).
 - Action for future snapshots:
   - If needed, initialize git or run snapshots from the actual repo root to track diffs over time.
 

@@ -177,7 +177,7 @@ private function insertAffiliation(int $userId, int $parishId, int $dioceseId, s
 ### Schema Alignment Verification
 
 ```
-ekklesiaRD — Schema Alignment Verification (Post-Wave 5)
+ekklesiaONLINE — Schema Alignment Verification (Post-Wave 5)
 ────────────────────────────────────────────────────────────────────
 DB: All old table names removed ✓
 Code errors   : 0

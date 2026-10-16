@@ -2,7 +2,7 @@
 
 ## Purpose
 
-EkklesiaRD resolves outbound email across System, Organisation, Province,
+ekklesiaONLINE resolves outbound email across System, Organisation, Province,
 Diocese, and Parish scopes. This document describes the transport/authentication
 requirements for scoped senders and the diagnostic process for SMTP, SPF, DKIM,
 and DMARC failures.
@@ -35,7 +35,7 @@ required DKIM authentication. The common causes are:
    DMARC alignment fails.
 4. A forwarding or relay path modifies a DKIM-signed message.
 
-Do not add a DKIM private key to EkklesiaRD for Gmail SMTP. CodeIgniter submits
+Do not add a DKIM private key to ekklesiaONLINE for Gmail SMTP. CodeIgniter submits
 the message to Gmail, and Gmail signs accepted outbound mail. For a consumer
 `@gmail.com` account, use that same account as SMTP username and From address.
 For Google Workspace custom domains, the Workspace administrator must enable
@@ -45,7 +45,7 @@ DKIM and publish the Google-provided DNS TXT record.
 
 Exchange Online Protection returns
 `550 5.1.20 Multiple From addresses are not allowed without a Sender address`
-when the `From:` header parses as more than one mailbox. In EkklesiaRD the
+when the `From:` header parses as more than one mailbox. In ekklesiaONLINE the
 trigger was a scoped `email.from_name` containing both a comma and a non-ASCII
 character (e.g. `Iglesia Episcopal La Transfiguración, Bani RD`): CI4's
 `Email::setFrom()` Q-encodes non-ASCII display names via
@@ -126,7 +126,7 @@ accept CodeIgniter's username/password SMTP authentication.
 For Outlook.com consumer mailboxes, the usual submission endpoint is
 `smtp-mail.outlook.com`, port 587 with STARTTLS. The From address must be the
 authenticated mailbox or an alias permitted by Microsoft. Microsoft 365 tenants
-may disable SMTP AUTH or require OAuth; EkklesiaRD does not currently implement
+may disable SMTP AUTH or require OAuth; ekklesiaONLINE does not currently implement
 Microsoft OAuth SMTP, so those tenants need an approved SMTP relay or a future
 OAuth transport integration.
 
@@ -164,7 +164,7 @@ but it can still generate a delayed bounce or filter the message later.
 ## Gmail sender to Outlook or iCloud recipients
 
 When Gmail accepts a message but an Outlook or iCloud recipient does not see it,
-EkklesiaRD cannot treat SMTP acceptance as proof of final delivery. Each test
+ekklesiaONLINE cannot treat SMTP acceptance as proof of final delivery. Each test
 message includes a unique reference in its subject/body so the accepted request,
 bounce, provider trace, and received message can be correlated. Check in this
 order:

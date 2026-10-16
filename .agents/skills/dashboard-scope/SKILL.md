@@ -9,7 +9,7 @@ allowed-tools:
   - grep
 ---
 
-Explain how ekklesiaRD resolves dashboards and scopes.
+Explain how ekklesiaONLINE resolves dashboards and scopes.
 
 Key sources:
 - `BaseController::resolveDashboardScope()`

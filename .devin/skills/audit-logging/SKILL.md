@@ -10,7 +10,7 @@ allowed-tools:
   - find_file_by_name
 ---
 
-Help with audit logging and observability in ekklesiaRD.
+Help with audit logging and observability in ekklesiaONLINE.
 
 Key sources:
 - `BaseController::audit()` returns `App\Services\AuditService`.
