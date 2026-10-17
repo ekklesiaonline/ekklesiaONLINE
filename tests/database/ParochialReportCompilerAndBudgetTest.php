@@ -48,6 +48,8 @@ final class ParochialReportCompilerAndBudgetTest extends CIUnitTestCase
             'journal_entry_line',
             'journal_entry',
             'chart_of_accounts',
+            'bank_transaction',
+            'bank_account',
             'parish_budget',
             'parish_affiliation',
             'parish',
@@ -162,6 +164,59 @@ final class ParochialReportCompilerAndBudgetTest extends CIUnitTestCase
         $this->assertSame(4000.0, (float) $metrics['expenses_noncapital']);
         $this->assertSame(3000.0, (float) $metrics['expenses_capital']);
         $this->assertSame(6700.0, (float) $metrics['cash_balance']);
+    }
+
+    public function testBankCashFallbackAggregatesTransactionsForAllAccounts(): void
+    {
+        $year = (int) date('Y');
+        $activeAccounts = [];
+        foreach ([
+            ['Operating', 1000.0, 1],
+            ['Savings', 2000.0, 1],
+            ['Inactive', 5000.0, 0],
+        ] as [$name, $openingBalance, $isActive]) {
+            $this->db->table('bank_account')->insert([
+                'parish_id' => 501,
+                'name' => $name,
+                'opening_balance' => $openingBalance,
+                'is_active' => $isActive,
+            ]);
+            if ($isActive === 1) {
+                $activeAccounts[] = (int) $this->db->insertID();
+            }
+        }
+
+        foreach ([
+            [$activeAccounts[0], sprintf('%04d-06-01', $year), 250.0],
+            [$activeAccounts[0], sprintf('%04d-06-15', $year), -50.0],
+            [$activeAccounts[0], sprintf('%04d-12-31', $year + 1), 900.0],
+            [$activeAccounts[1], sprintf('%04d-07-01', $year), 100.0],
+        ] as [$accountId, $date, $amount]) {
+            $this->db->table('bank_transaction')->insert([
+                'bank_account_id' => $accountId,
+                'transaction_date' => $date,
+                'amount' => $amount,
+            ]);
+        }
+
+        $lines = (new FinanceReportsDataService())->buildParochialReportFinanceLines(501, $year);
+
+        $this->assertSame(3300.0, (float) $lines['cash_balance']);
+    }
+
+    public function testLedgerBalanceAggregationIncludesParishLiabilities(): void
+    {
+        $year = (int) date('Y');
+        $this->postJournalEntry(501, sprintf('%04d-02-01', $year), 'Short-term borrowing', [
+            ['chart_account_id' => $this->getChartAccountId('1110'), 'debit' => 300.0, 'credit' => 0.0],
+            ['chart_account_id' => $this->getChartAccountId('2110'), 'debit' => 0.0, 'credit' => 300.0],
+        ]);
+
+        $lines = (new FinanceReportsDataService())->buildParochialReportFinanceLines(501, $year);
+
+        $this->assertSame(300.0, (float) $lines['cash_balance']);
+        $this->assertSame(300.0, (float) $lines['debt_amount']);
+        $this->assertSame(1, (int) $lines['has_debt']);
     }
 
     public function testBudgetCloningRollForwardWithAdjustment(): void
