@@ -31,15 +31,36 @@ class SystemSettingModel extends Model
         'data_type' => 'required|in_list[string,integer,boolean,json,text]',
     ];
 
+    /**
+     * Request-level value cache. Settings change rarely, and this model is
+     * usually a shared instance per request, so memoizing reads removes
+     * repeated round-trips for hot keys (e.g. maintenance mode, password policy).
+     */
+    private array $valueCache = [];
+    private ?array $allCache = null;
+    private array $categoryCache = [];
+    private array $lockCache = [];
+
     public function getValue(string $key, mixed $default = null): mixed
     {
+        if (array_key_exists($key, $this->valueCache)) {
+            $value = $this->valueCache[$key];
+
+            return $value['exists'] ? $value['value'] : $default;
+        }
+
         $row = $this->where('setting_key', $key)->first();
 
         if (!$row) {
+            $this->valueCache[$key] = ['exists' => false, 'value' => null];
+
             return $default;
         }
 
-        return $this->castValue($row['setting_value'], $row['data_type']);
+        $value = $this->castValue($row['setting_value'], $row['data_type']);
+        $this->valueCache[$key] = ['exists' => true, 'value' => $value];
+
+        return $value;
     }
 
     public function setValue(string $key, mixed $value, string $dataType = 'string', ?string $category = null, ?string $description = null): bool
@@ -55,25 +76,39 @@ class SystemSettingModel extends Model
         ];
 
         if ($existing) {
-            return $this->update($existing['id'], $data);
+            $result = $this->update($existing['id'], $data);
+        } else {
+            $result = $this->insert($data) !== false;
         }
 
-        return $this->insert($data) !== false;
+        $this->clearCache($key);
+
+        return $result;
     }
 
     public function getByCategory(string $category): array
     {
+        if (isset($this->categoryCache[$category])) {
+            return $this->categoryCache[$category];
+        }
+
         $rows = $this->where('category', $category)->findAll();
         $settings = [];
         foreach ($rows as $row) {
             $settings[$row['setting_key']] = $this->castValue($row['setting_value'], $row['data_type']);
         }
 
+        $this->categoryCache[$category] = $settings;
+
         return $settings;
     }
 
     public function getAll(): array
     {
+        if ($this->allCache !== null) {
+            return $this->allCache;
+        }
+
         $rows = $this->orderBy('category', 'ASC')->orderBy('setting_key', 'ASC')->findAll();
         $settings = [];
         foreach ($rows as $row) {
@@ -85,6 +120,8 @@ class SystemSettingModel extends Model
                 'is_locked' => (bool) $row['is_locked'],
             ];
         }
+
+        $this->allCache = $settings;
 
         return $settings;
     }
@@ -111,9 +148,30 @@ class SystemSettingModel extends Model
 
     public function isLocked(string $key): bool
     {
-        $row = $this->where('setting_key', $key)->first();
+        if (array_key_exists($key, $this->lockCache)) {
+            return $this->lockCache[$key];
+        }
 
-        return $row ? (bool) $row['is_locked'] : false;
+        $row = $this->where('setting_key', $key)->first();
+        $locked = $row ? (bool) $row['is_locked'] : false;
+        $this->lockCache[$key] = $locked;
+
+        return $locked;
+    }
+
+    private function clearCache(?string $key = null): void
+    {
+        $this->allCache = null;
+        $this->categoryCache = [];
+        $this->lockCache = [];
+
+        if ($key !== null) {
+            unset($this->valueCache[$key]);
+
+            return;
+        }
+
+        $this->valueCache = [];
     }
 
     private function castValue(mixed $value, string $type): mixed

@@ -131,4 +131,29 @@ final class SystemSettingModelTest extends CIUnitTestCase
         $this->assertArrayHasKey('data_type', $all['password_policy.min_length']);
         $this->assertArrayHasKey('category', $all['password_policy.min_length']);
     }
+
+    public function testValueCacheIsInvalidatedOnUpdate(): void
+    {
+        $model = model(SystemSettingModel::class);
+
+        $this->assertSame(12, $model->getValue('password_policy.min_length'));
+
+        $model->setValue('password_policy.min_length', 8, 'integer');
+
+        $this->assertSame(8, $model->getValue('password_policy.min_length'));
+    }
+
+    public function testAllCacheIsInvalidatedOnUpdate(): void
+    {
+        $model = model(SystemSettingModel::class);
+
+        $before = $model->getAll();
+        $originalMinLength = $before['password_policy.min_length']['value'];
+
+        $model->setValue('password_policy.min_length', 10, 'integer');
+
+        $after = $model->getAll();
+        $this->assertSame(10, $after['password_policy.min_length']['value']);
+        $this->assertSame($originalMinLength, $before['password_policy.min_length']['value']);
+    }
 }
