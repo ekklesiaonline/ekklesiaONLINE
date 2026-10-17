@@ -166,6 +166,21 @@ final class ClergyScopeFilterTest extends CIUnitTestCase
         self::assertInstanceOf(RedirectResponse::class, $this->runFilter('pastoral.parish.manage'));
     }
 
+    public function testAjaxDenialUsesCanonicalErrorEnvelope(): void
+    {
+        [, , $parish] = $this->places();
+        [$user] = $this->personUser($parish);
+        $this->loginWithPermission($user, 'pastoral.parish.manage');
+        service('request')->setHeader('X-Requested-With', 'XMLHttpRequest');
+
+        $response = $this->runFilter('pastoral.parish.manage');
+        $payload = json_decode((string) $response->getBody(), true);
+
+        self::assertSame(403, $response->getStatusCode());
+        self::assertSame([], $payload['error']['details']);
+        self::assertSame([], $payload['errors']);
+    }
+
     public function testNoAuthoritativeParishScopeDenies(): void
     {
         [$diocese, , $parish] = $this->places();
