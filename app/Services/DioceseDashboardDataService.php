@@ -95,16 +95,20 @@ class DioceseDashboardDataService
         // merged in PHP so the affiliation join cannot multiply the
         // service/metric aggregates.
         $memberCounts = [];
-        foreach ($db->table('parish_affiliation')
+        $memberCountQuery = $db->table('parish_affiliation pa')
             ->select("
-                parish_id,
-                COUNT(DISTINCT CASE WHEN is_member = 1 THEN person_id END) AS total_members,
-                COUNT(DISTINCT CASE WHEN is_member = 1 AND membership_status = 'member' THEN person_id END) AS active_members
+                pa.parish_id,
+                COUNT(DISTINCT CASE WHEN pa.is_member = 1 THEN pa.person_id END) AS total_members,
+                COUNT(DISTINCT CASE WHEN pa.is_member = 1 AND pa.membership_status = 'member' THEN pa.person_id END) AS active_members
             ", false)
-            ->where('deleted_at IS NULL', null, false)
-            ->groupBy('parish_id')
-            ->get()
-            ->getResultArray() as $mc) {
+            ->join('parish c', 'c.id = pa.parish_id')
+            ->where('pa.deleted_at IS NULL', null, false)
+            ->where('c.diocese_id', $dioceseId)
+            ->groupBy('pa.parish_id');
+        if ($parishId !== null) {
+            $memberCountQuery->where('pa.parish_id', $parishId);
+        }
+        foreach ($memberCountQuery->get()->getResultArray() as $mc) {
             $memberCounts[(int) $mc['parish_id']] = $mc;
         }
 
@@ -217,6 +221,58 @@ class DioceseDashboardDataService
             'total_attendance'   => $totalAttendance,
             'average_per_service' => $totalServices > 0 ? round($totalAttendance / $totalServices, 2) : 0.0,
         ];
+    }
+
+
+    public function getDioceseAttendancePresets(int $dioceseId, ?int $parishId = null): array
+    {
+        $db = db_connect();
+        [$todayStart, $todayEnd] = $this->normalizeDateRange('today', null, null);
+        [$weekStart, $weekEnd] = $this->normalizeDateRange('week', null, null);
+        [$monthStart, $monthEnd] = $this->normalizeDateRange('month', null, null);
+        [$yearStart, $yearEnd] = $this->normalizeDateRange('year', null, null);
+        $scanStart = min($weekStart, $yearStart);
+        $scanEnd = max($weekEnd, date('Y-12-31'));
+
+        $conditions = [
+            'today' => "s.service_date >= " . $db->escape($todayStart) . " AND s.service_date <= " . $db->escape($todayEnd),
+            'week' => "s.service_date >= " . $db->escape($weekStart) . " AND s.service_date <= " . $db->escape($weekEnd),
+            'month' => "s.service_date >= " . $db->escape($monthStart) . " AND s.service_date <= " . $db->escape($monthEnd),
+            'year' => "s.service_date >= " . $db->escape($yearStart) . " AND s.service_date <= " . $db->escape($yearEnd),
+            'sundays' => "s.service_date >= " . $db->escape(date('Y-01-01')) . " AND s.service_date <= " . $db->escape(date('Y-12-31')) . ' AND DAYOFWEEK(s.service_date) = 1',
+            'weekdays' => "s.service_date >= " . $db->escape(date('Y-01-01')) . " AND s.service_date <= " . $db->escape(date('Y-12-31')) . ' AND DAYOFWEEK(s.service_date) != 1',
+        ];
+
+        $select = [];
+        foreach ($conditions as $key => $condition) {
+            $select[] = "COUNT(DISTINCT CASE WHEN $condition THEN s.id END) AS {$key}_services";
+            $select[] = "COALESCE(SUM(CASE WHEN $condition THEN sm.reported_present_count ELSE 0 END), 0) AS {$key}_attendance";
+        }
+
+        $query = $db->table('service s')
+            ->select(implode(', ', $select), false)
+            ->join('service_metric sm', 'sm.service_id = s.id', 'left')
+            ->join('parish c', 'c.id = s.parish_id')
+            ->where('c.diocese_id', $dioceseId)
+            ->where('s.service_date >=', $scanStart)
+            ->where('s.service_date <=', $scanEnd);
+        if ($parishId !== null) {
+            $query->where('s.parish_id', $parishId);
+        }
+
+        $row = $query->get()->getRowArray() ?? [];
+        $presets = [];
+        foreach (array_keys($conditions) as $key) {
+            $totalServices = (int) ($row["{$key}_services"] ?? 0);
+            $totalAttendance = (int) ($row["{$key}_attendance"] ?? 0);
+            $presets[$key] = [
+                'total_services' => $totalServices,
+                'total_attendance' => $totalAttendance,
+                'average_per_service' => $totalServices > 0 ? round($totalAttendance / $totalServices, 2) : 0.0,
+            ];
+        }
+
+        return $presets;
     }
 
 

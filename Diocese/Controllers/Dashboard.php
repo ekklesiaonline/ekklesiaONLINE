@@ -53,17 +53,21 @@ class Dashboard extends BaseController
 
         $membershipOverview = $this->dashboardData->getMembershipOverview($scopeDioceseId, $selectedParishId);
         $parishSummaryRows  = $this->dashboardData->getParishSummaryRows($period, $startDate, $endDate, $scopeDioceseId, $selectedParishId);
-        $allParishSummaryRows = $this->dashboardData->getParishSummaryRows($period, $startDate, $endDate, $scopeDioceseId, null);
+        $allParishSummaryRows = $selectedParishId === null
+            ? $parishSummaryRows
+            : $this->dashboardData->getParishSummaryRows($period, $startDate, $endDate, $scopeDioceseId, null);
         $dioceseTotals      = $this->dashboardData->buildDioceseTotals($allParishSummaryRows);
 
-        $attendanceToday    = $this->dashboardData->getDioceseAttendanceAggregate('today',    null, null, $scopeDioceseId, $selectedParishId);
-        $attendanceWeek     = $this->dashboardData->getDioceseAttendanceAggregate('week',     null, null, $scopeDioceseId, $selectedParishId);
-        $attendanceMonth    = $this->dashboardData->getDioceseAttendanceAggregate('month',    null, null, $scopeDioceseId, $selectedParishId);
-        $attendanceYear     = $this->dashboardData->getDioceseAttendanceAggregate('year',     null, null, $scopeDioceseId, $selectedParishId);
-        $attendanceSundays  = $this->dashboardData->getDioceseAttendanceAggregate('sundays',  date('Y-01-01'), date('Y-12-31'), $scopeDioceseId, $selectedParishId);
-        $attendanceWeekdays = $this->dashboardData->getDioceseAttendanceAggregate('weekdays', date('Y-01-01'), date('Y-12-31'), $scopeDioceseId, $selectedParishId);
+        $attendancePresets  = $this->dashboardData->getDioceseAttendancePresets($scopeDioceseId, $selectedParishId);
+        $attendanceToday    = $attendancePresets['today'];
+        $attendanceWeek     = $attendancePresets['week'];
+        $attendanceMonth    = $attendancePresets['month'];
+        $attendanceYear     = $attendancePresets['year'];
+        $attendanceSundays  = $attendancePresets['sundays'];
+        $attendanceWeekdays = $attendancePresets['weekdays'];
 
-        $attendanceStats = $this->dashboardData->getDioceseAttendanceAggregate($period, $startDate, $endDate, $scopeDioceseId, $selectedParishId);
+        $attendanceStats = $attendancePresets[$period]
+            ?? $this->dashboardData->getDioceseAttendanceAggregate($period, $startDate, $endDate, $scopeDioceseId, $selectedParishId);
 
         $selectedParishName = 'All Parishes';
         if ($selectedParishId !== null) {
