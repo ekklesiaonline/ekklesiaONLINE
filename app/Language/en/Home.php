@@ -1,7 +1,7 @@
 <?php
 
 return [
-    'title' => 'EkklessiaONLINE - Parish Management System',
+    'title' => 'EkklesiaONLINE - Parish Management System',
     'heroHeading' => 'Multi-Parish Management System',
     'heroSubheading' => 'Streamline your parish administration, manage members, track attendance, and grow your ministry',
     'login' => 'Login',

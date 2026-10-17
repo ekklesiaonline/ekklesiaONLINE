@@ -1,7 +1,7 @@
 <?php
 
 return [
-    'title' => 'EkklessiaONLINE - Système de gestion paroissiale',
+    'title' => 'EkklesiaONLINE - Système de gestion paroissiale',
     'heroHeading' => 'Système de gestion multi-paroisse',
     'heroSubheading' => 'Simplifiez l\'administration de votre paroisse, gérez les membres, suivez la présence et développez votre ministère',
     'login' => 'Connexion',

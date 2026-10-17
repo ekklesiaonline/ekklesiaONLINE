@@ -57,7 +57,7 @@
     <div class="container">
         <div class="hero-section">
             <div class="logo-section">
-                <i class="bi bi-parish" aria-hidden="true"></i> EkklessiaONLINE
+                <i class="bi bi-parish" aria-hidden="true"></i> EkklesiaONLINE
             </div>
             <h1 class="display-4 mb-4"><?= lang('Home.heroHeading') ?></h1>
             <p class="lead mb-5"><?= lang('Home.heroSubheading') ?></p>
@@ -121,7 +121,7 @@
         </div>
 
         <div class="text-center mt-5 text-white">
-            <p>&copy; <?= date('Y') ?> EkklessiaONLINE. <?= lang('Home.footerRights') ?></p>
+            <p>&copy; <?= date('Y') ?> EkklesiaONLINE. <?= lang('Home.footerRights') ?></p>
         </div>
     </div>
 

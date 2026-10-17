@@ -1,8 +1,8 @@
-# ekklessiaRD Executive Summary (24-Week Plan)
+# ekklesiaONLINE Executive Summary (24-Week Plan)
 
 ## Purpose
 
-Launch ekklessiaRD as a new Episcopal-aligned platform with canonical terminology and governance:
+Launch ekklesiaONLINE as a new Episcopal-aligned platform with canonical terminology and governance:
 
 - Province, Diocese, Parish.
 - Bishop and Rector role model.
@@ -80,7 +80,7 @@ Controls:
 
 By Week 24, leadership should expect:
 
-- A production-ready Episcopal-domain platform (ekklessiaRD).
+- A production-ready Episcopal-domain platform (ekklesiaONLINE).
 - Canonical, auditable hierarchy and permission model.
 - Validated data migration with rollback safety.
 - Improved user consistency through a standardized AdminLTE4 experience.
@@ -94,4 +94,4 @@ By Week 24, leadership should expect:
 
 ## Reference
 
-Detailed matrix: docs/EKKLESSIARD_24_WEEK_GANTT_EXECUTION_MATRIX.md
+Detailed matrix: docs/EKKLESIAONLINE_24_WEEK_GANTT_EXECUTION_MATRIX.md

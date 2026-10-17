@@ -1,8 +1,8 @@
-# ekklessiaRD 24-Week Gantt-Style Execution Matrix
+# ekklesiaONLINE 24-Week Gantt-Style Execution Matrix
 
 ## 1. Objective
 
-Build and cut over to a new Episcopal-aligned platform (ekklessiaRD) with:
+Build and cut over to a new Episcopal-aligned platform (ekklesiaONLINE) with:
 
 - Canonical Episcopal domain: Province, Diocese, Parish, Bishop, Rector.
 - New database schema and migration pipelines.
