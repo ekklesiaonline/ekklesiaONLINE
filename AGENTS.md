@@ -34,6 +34,11 @@
 
 - Prefer `parish` in code, routes, models, and new namespaces. `parish` is acceptable only in user-facing labels or legacy aliases (e.g., `parishes` → `parish_list` redirect).
 
+## Git Workflow
+
+- Always `git push` immediately after committing on `main` — never leave local commits unpushed (they diverge from `origin/main` while the remote moves via PR merges/web edits).
+- If `main` does diverge, reconcile with `git pull --rebase origin main` (the local convention is linear history for unpushed local work).
+
 ## When In Doubt
 
 - For view/HTML rules, see `.agents/rules/views.md` (or `.devin/rules/views.md`).
