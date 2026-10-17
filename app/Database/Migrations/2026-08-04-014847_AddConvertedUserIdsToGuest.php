@@ -38,7 +38,15 @@ class AddConvertedUserIdsToGuest extends Migration
 
     public function down()
     {
-        $this->forge->dropColumn('guest', 'converted_user_id');
-        $this->forge->dropColumn('guest', 'converted_by_user_id');
+        if (! $this->db->tableExists('guest')) {
+            return;
+        }
+
+        if ($this->db->fieldExists('converted_user_id', 'guest')) {
+            $this->forge->dropColumn('guest', 'converted_user_id');
+        }
+        if ($this->db->fieldExists('converted_by_user_id', 'guest')) {
+            $this->forge->dropColumn('guest', 'converted_by_user_id');
+        }
     }
 }

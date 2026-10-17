@@ -24,6 +24,10 @@ class MakeCallTaskGuestIdNullable extends Migration
 
     public function down()
     {
+        if (! $this->db->fieldExists('guest_id', 'call_task')) {
+            return;
+        }
+
         $this->forge->modifyColumn('call_task', [
             'guest_id' => [
                 'type'       => 'INT',

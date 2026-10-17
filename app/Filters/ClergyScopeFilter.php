@@ -71,7 +71,9 @@ class ClergyScopeFilter implements FilterInterface
                     'error'   => [
                         'code'    => 'CLERGY_SCOPE_DENIED',
                         'message' => 'This action requires a current ecclesial office or delegation for the parish.',
+                        'details' => [],
                     ],
+                    'errors' => [],
                     'meta' => [
                         'http_status' => 403,
                         'ts'          => date('c'),
