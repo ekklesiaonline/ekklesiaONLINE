@@ -1444,48 +1444,42 @@ class FinanceReportsDataService
                 }
             }
 
-            $jelTable = $db->prefixTable('journal_entry_line');
-            $jeTable = $db->prefixTable('journal_entry');
+            $balanceSubquery = $db->table('journal_entry_line jel')
+                ->select('jel.chart_account_id')
+                ->select('SUM(jel.debit_amount - jel.credit_amount) AS balance', false)
+                ->join('journal_entry je', 'je.id = jel.journal_entry_id', 'inner')
+                ->where('je.parish_id', $parishId)
+                ->where('je.entry_date <=', $endDate)
+                ->where('je.status', 'posted')
+                ->groupBy('jel.chart_account_id')
+                ->getCompiledSelect();
 
-            // Year-end Cash balances as of Dec 31
-            $cashRows = $db->table('chart_of_accounts coa')
-                ->select('coa.code, coa.name, ' .
-                    '(SELECT COALESCE(SUM(jel.debit_amount - jel.credit_amount), 0.0) ' .
-                    " FROM {$jelTable} jel " .
-                    " JOIN {$jeTable} je ON je.id = jel.journal_entry_id " .
-                    ' WHERE jel.chart_account_id = coa.id AND je.parish_id = ' . $db->escape($parishId) . ' ' .
-                    ' AND je.entry_date <= ' . $db->escape($endDate) . ' AND je.status = "posted") as balance')
+            $balanceRows = $db->table('chart_of_accounts coa')
+                ->select('coa.code, coa.name, coa.account_type, COALESCE(agg.balance, 0) AS balance', false)
+                ->join("({$balanceSubquery}) agg", 'agg.chart_account_id = coa.id', 'left')
                 ->where('coa.is_active', 1)
-                ->where('coa.account_type', 'asset')
-                ->where('coa.code LIKE "11%"')
+                ->whereIn('coa.account_type', ['asset', 'liability'])
                 ->get()
                 ->getResultArray();
 
-            foreach ($cashRows as $crow) {
-                $cbal = (float) ($crow['balance'] ?? 0.0);
-                if ($cbal != 0.0) {
-                    $cash8Accounts[] = ['code' => $crow['code'], 'name' => $crow['name'], 'balance' => $cbal];
-                    $cashBalance += $cbal;
-                }
-            }
+            foreach ($balanceRows as $balanceRow) {
+                $code = (string) ($balanceRow['code'] ?? '');
+                $type = strtolower((string) ($balanceRow['account_type'] ?? ''));
+                $balance = (float) ($balanceRow['balance'] ?? 0.0);
 
-            // Debt balances as of Dec 31 (2110 AP, 23xx Notes/Mortgage)
-            $debtRows = $db->table('chart_of_accounts coa')
-                ->select('(SELECT COALESCE(SUM(jel.credit_amount - jel.debit_amount), 0.0) ' .
-                    " FROM {$jelTable} jel " .
-                    " JOIN {$jeTable} je ON je.id = jel.journal_entry_id " .
-                    ' WHERE jel.chart_account_id = coa.id AND je.parish_id = ' . $db->escape($parishId) . ' ' .
-                    ' AND je.entry_date <= ' . $db->escape($endDate) . ' AND je.status = "posted") as balance')
-                ->where('coa.is_active', 1)
-                ->where('coa.account_type', 'liability')
-                ->where('(coa.code = "2110" OR coa.code LIKE "23%")')
-                ->get()
-                ->getResultArray();
-
-            foreach ($debtRows as $drow) {
-                $dbal = (float) ($drow['balance'] ?? 0.0);
-                if ($dbal > 0) {
-                    $debtAmount += $dbal;
+                if ($type === 'asset' && str_starts_with($code, '11') && $balance != 0.0) {
+                    $cash8Accounts[] = [
+                        'code' => $code,
+                        'name' => $balanceRow['name'],
+                        'balance' => $balance,
+                    ];
+                    $cashBalance += $balance;
+                } elseif (
+                    $type === 'liability'
+                    && ($code === '2110' || str_starts_with($code, '23'))
+                    && $balance < 0.0
+                ) {
+                    $debtAmount += abs($balance);
                 }
             }
 
@@ -1543,17 +1537,28 @@ class FinanceReportsDataService
                 ->get()
                 ->getResultArray();
 
+            $bankAccountIds = array_map(
+                static fn(array $bankRow): int => (int) $bankRow['id'],
+                $bankRows
+            );
+            $transactionTotalsByAccount = [];
+            if ($bankAccountIds !== [] && $db->tableExists('bank_transaction')) {
+                $transactionRows = $db->table('bank_transaction')
+                    ->select('bank_account_id, SUM(amount) AS total', false)
+                    ->whereIn('bank_account_id', $bankAccountIds)
+                    ->where('transaction_date <=', $endDate)
+                    ->groupBy('bank_account_id')
+                    ->get()
+                    ->getResultArray();
+
+                foreach ($transactionRows as $transactionRow) {
+                    $transactionTotalsByAccount[(int) $transactionRow['bank_account_id']] = (float) $transactionRow['total'];
+                }
+            }
+
             foreach ($bankRows as $b) {
                 $bBal = (float) ($b['opening_balance'] ?? 0.0);
-                if ($db->tableExists('bank_transaction')) {
-                    $txTotal = (float) ($db->table('bank_transaction')
-                        ->select('COALESCE(SUM(amount), 0) as total')
-                        ->where('bank_account_id', (int) $b['id'])
-                        ->where('transaction_date <=', $endDate)
-                        ->get()
-                        ->getRowArray()['total'] ?? 0.0);
-                    $bBal += $txTotal;
-                }
+                $bBal += $transactionTotalsByAccount[(int) $b['id']] ?? 0.0;
                 $cashBalance += $bBal;
             }
         }
@@ -1669,4 +1674,3 @@ class FinanceReportsDataService
         ];
     }
 }
-
