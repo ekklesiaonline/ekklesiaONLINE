@@ -1823,10 +1823,7 @@ CREATE TABLE `service` (
   `created_at` datetime DEFAULT NULL,
   `updated_at` datetime DEFAULT NULL,
   PRIMARY KEY (`id`),
-  KEY `parish_id` (`parish_id`),
-  KEY `idx_parish_date_composite` (`parish_id`),
-  KEY `idx_parish_date` (`parish_id`),
-  KEY `idx_date_range` (`parish_id`),
+  KEY `idx_service_parish_date` (`parish_id`,`service_date`),
   CONSTRAINT `services_parish_id_foreign` FOREIGN KEY (`parish_id`) REFERENCES `parish` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=30 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 CREATE TABLE `service_metric` (

@@ -239,7 +239,31 @@
         </div>
     </div>
 <?php else: ?>
-    <?php $healthByDiocese = array_column($diocese_health_rows ?? [], null, 'diocese_id'); ?>
+    <?php
+    $healthByDiocese = array_column($diocese_health_rows ?? [], null, 'diocese_id');
+    $pagination = $summary_pagination ?? ['page' => 1, 'per_page' => 25, 'total' => 0, 'last_page' => 1];
+    $summaryPage = (int) ($pagination['page'] ?? 1);
+    $summaryPerPage = (int) ($pagination['per_page'] ?? 25);
+    $summaryTotal = (int) ($pagination['total'] ?? 0);
+    $summaryLastPage = (int) ($pagination['last_page'] ?? 1);
+    $summaryShowPagination = $summaryTotal > $summaryPerPage || $summaryLastPage > 1;
+
+    $buildSummaryPageUrl = static function (int $targetPage, int $targetPerPage) use ($current_period, $start_date, $end_date, $selected_diocese_id): string {
+        $query = [
+            'summary_page'     => $targetPage,
+            'summary_per_page' => $targetPerPage,
+            'period'           => $current_period,
+        ];
+        if ($current_period === 'custom') {
+            $query['start_date'] = (string) $start_date;
+            $query['end_date'] = (string) $end_date;
+        }
+        if ($selected_diocese_id !== null) {
+            $query['diocese_id'] = $selected_diocese_id;
+        }
+        return base_url('province/dashboard?' . http_build_query($query));
+    };
+    ?>
     <div class="card mb-4">
         <div class="card-header d-flex justify-content-between align-items-center">
             <div><h6 class="mb-0"><i class="bi bi-list-columns" aria-hidden="true"></i> <?= lang('Dashboard.perDioceseSummaryAll') ?></h6><small class="text-muted"><?= lang('Dashboard.provinceReportDefinition') ?></small></div>
@@ -295,6 +319,20 @@
                     </tbody>
                 </table>
             </div>
+            <?php if ($summaryShowPagination): ?>
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 p-3 border-top">
+                    <div class="btn-group btn-group-sm" role="group" aria-label="<?= esc(lang('Dashboard.recentActivityPerPageAria')) ?>">
+                        <?php foreach ([10, 25, 50, 100] as $size): ?>
+                            <a href="<?= $buildSummaryPageUrl(1, $size) ?>" class="btn <?= $summaryPerPage === $size ? 'btn-primary' : 'btn-outline-primary' ?>"><?= $size ?></a>
+                        <?php endforeach; ?>
+                    </div>
+                    <div class="btn-group btn-group-sm" role="group" aria-label="<?= esc(lang('App.pagination')) ?>">
+                        <a href="<?= $buildSummaryPageUrl(max(1, $summaryPage - 1), $summaryPerPage) ?>" class="btn btn-outline-secondary <?= $summaryPage <= 1 ? 'disabled' : '' ?>">&laquo; <?= lang('Dashboard.recentActivityPrev') ?></a>
+                        <span class="btn btn-light disabled"><?= lang('Dashboard.recentActivityPageLabel') ?> <?= number_format($summaryPage) ?> / <?= number_format($summaryLastPage) ?></span>
+                        <a href="<?= $buildSummaryPageUrl(min($summaryLastPage, $summaryPage + 1), $summaryPerPage) ?>" class="btn btn-outline-secondary <?= $summaryPage >= $summaryLastPage ? 'disabled' : '' ?>"><?= lang('Dashboard.recentActivityNext') ?> &raquo;</a>
+                    </div>
+                </div>
+            <?php endif; ?>
         </div>
     </div>
 <?php endif; ?>

@@ -52,11 +52,34 @@ class Dashboard extends BaseController
         }
 
         $membershipOverview = $this->dashboardData->getMembershipOverview($scopeDioceseId, $selectedParishId);
-        $parishSummaryRows  = $this->dashboardData->getParishSummaryRows($period, $startDate, $endDate, $scopeDioceseId, $selectedParishId);
-        $allParishSummaryRows = $selectedParishId === null
-            ? $parishSummaryRows
-            : $this->dashboardData->getParishSummaryRows($period, $startDate, $endDate, $scopeDioceseId, null);
-        $dioceseTotals      = $this->dashboardData->buildDioceseTotals($allParishSummaryRows);
+
+        // Parish summary pagination
+        $summaryPage    = (int) ($this->request->getGet('summary_page') ?? 1);
+        $summaryPerPage = (int) ($this->request->getGet('summary_per_page') ?? 10);
+        if (!in_array($summaryPerPage, [10, 25, 50, 100], true)) {
+            $summaryPerPage = 10;
+        }
+        $summaryTotal    = $this->dashboardData->countParishSummaryRows($scopeDioceseId, $selectedParishId);
+        $summaryLastPage = max(1, (int) ceil($summaryTotal / $summaryPerPage));
+        $summaryPage     = max(1, min($summaryPage, $summaryLastPage));
+        $summaryOffset   = ($summaryPage - 1) * $summaryPerPage;
+
+        $parishSummaryRows = $this->dashboardData->getParishSummaryRows(
+            $period,
+            $startDate,
+            $endDate,
+            $scopeDioceseId,
+            $selectedParishId,
+            $summaryPerPage,
+            $summaryOffset
+        );
+        $dioceseTotals = $this->dashboardData->getDioceseSummaryTotals(
+            $period,
+            $startDate,
+            $endDate,
+            $scopeDioceseId,
+            $selectedParishId
+        );
 
         $attendancePresets  = $this->dashboardData->getDioceseAttendancePresets($scopeDioceseId, $selectedParishId);
         $attendanceToday    = $attendancePresets['today'];
@@ -164,6 +187,12 @@ class Dashboard extends BaseController
 
             'parish_summary_rows'     => $parishSummaryRows,
             'diocese_totals'          => $dioceseTotals,
+            'summary_pagination'      => [
+                'page'      => $summaryPage,
+                'per_page'  => $summaryPerPage,
+                'total'     => $summaryTotal,
+                'last_page' => $summaryLastPage,
+            ],
 
             'show_parish_scope_dashboard' => $showParishScopeDashboard,
             'scope_total_people'      => (int) ($membershipOverview['total_people'] ?? 0),

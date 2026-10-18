@@ -224,20 +224,30 @@ class ExpenseModel extends Model
             return [];
         }
         $startDate = date('Y-m-01', strtotime('-' . ($months - 1) . ' months'));
+        $isSqlite = $this->db->DBDriver === 'SQLite3';
+        $monthKeyExpr = $isSqlite ? "strftime('%Y-%m', date)" : "DATE_FORMAT(date, '%Y-%m')";
 
         $builder = $this->db->table('expense')
-            ->select("DATE_FORMAT(date, '%Y-%m') as month_key, DATE_FORMAT(date, '%b %Y') as month_label, SUM(amount) as total_amount")
+            ->select("{$monthKeyExpr} as month_key, SUM(amount) as total_amount", false)
             ->where('date >=', $startDate);
 
         if (!empty($parishIds)) {
             $builder->whereIn('parish_id', $parishIds);
         }
 
-        return $builder
-            ->groupBy("DATE_FORMAT(date, '%Y-%m'), DATE_FORMAT(date, '%b %Y')")
+        $rows = $builder
+            ->groupBy($monthKeyExpr, false)
             ->orderBy('month_key', 'ASC')
             ->get()
             ->getResultArray();
+
+        foreach ($rows as &$row) {
+            $monthKey = (string) ($row['month_key'] ?? '');
+            $row['month_label'] = date('M Y', strtotime($monthKey . '-01'));
+        }
+        unset($row);
+
+        return $rows;
     }
 
     /**
@@ -251,9 +261,11 @@ class ExpenseModel extends Model
             return [];
         }
         $startDate = date('Y-m-01', strtotime('-' . ($months - 1) . ' months'));
+        $isSqlite = $this->db->DBDriver === 'SQLite3';
+        $monthKeyExpr = $isSqlite ? "strftime('%Y-%m', e.date)" : "DATE_FORMAT(e.date, '%Y-%m')";
 
         $builder = $this->db->table('expense e')
-            ->select("e.parish_id, c.name as parish_name, DATE_FORMAT(e.date, '%Y-%m') as month_key, DATE_FORMAT(e.date, '%b %Y') as month_label, SUM(e.amount) as total_amount")
+            ->select("e.parish_id, c.name as parish_name, {$monthKeyExpr} as month_key, SUM(e.amount) as total_amount", false)
             ->join('parish c', 'c.id = e.parish_id')
             ->where('e.date >=', $startDate);
 
@@ -261,10 +273,18 @@ class ExpenseModel extends Model
             $builder->whereIn('e.parish_id', $parishIds);
         }
 
-        return $builder
-            ->groupBy("e.parish_id, c.name, DATE_FORMAT(e.date, '%Y-%m'), DATE_FORMAT(e.date, '%b %Y')")
+        $rows = $builder
+            ->groupBy("e.parish_id, c.name, {$monthKeyExpr}", false)
             ->orderBy('month_key', 'ASC')
             ->get()
             ->getResultArray();
+
+        foreach ($rows as &$row) {
+            $monthKey = (string) ($row['month_key'] ?? '');
+            $row['month_label'] = date('M Y', strtotime($monthKey . '-01'));
+        }
+        unset($row);
+
+        return $rows;
     }
 }

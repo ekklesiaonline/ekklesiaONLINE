@@ -86,16 +86,60 @@ class DioceseDashboardDataService
     }
 
 
-    public function getParishSummaryRows(string $period, ?string $startDate, ?string $endDate, int $dioceseId, ?int $parishId = null): array
+    public function countParishSummaryRows(int $dioceseId, ?int $parishId = null): int
     {
-        $db = db_connect();
-        [$start, $end] = $this->normalizeDateRange($period, $startDate, $endDate);
+        $query = db_connect()->table('parish')
+            ->where('diocese_id', $dioceseId);
 
-        // Member counts per parish from the canonical affiliation table;
-        // merged in PHP so the affiliation join cannot multiply the
-        // service/metric aggregates.
-        $memberCounts = [];
-        $memberCountQuery = $db->table('parish_affiliation pa')
+        if ($parishId !== null) {
+            $query->where('id', $parishId);
+        }
+
+        return (int) $query->countAllResults();
+    }
+
+
+    /**
+     * Return the ordered parish list for a scope, optionally paginated.
+     *
+     * @return list<array{id: int, name: string}>
+     */
+    private function getParishListForScope(int $dioceseId, ?int $parishId, ?int $limit = null, int $offset = 0): array
+    {
+        $query = db_connect()->table('parish')
+            ->select('id, name')
+            ->where('diocese_id', $dioceseId)
+            ->orderBy('name', 'ASC');
+
+        if ($parishId !== null) {
+            $query->where('id', $parishId);
+        }
+
+        if ($limit !== null) {
+            $query->limit($limit, $offset);
+        }
+
+        return array_map(
+            static fn(array $row) => ['id' => (int) $row['id'], 'name' => (string) $row['name']],
+            $query->get()->getResultArray()
+        );
+    }
+
+
+    /**
+     * Member counts per parish from the canonical affiliation table.
+     *
+     * @param array<int, mixed> $parishIds
+     * @return array<int, array{total_members: int, active_members: int}>
+     */
+    private function getMemberCountsByParish(array $parishIds, int $dioceseId): array
+    {
+        if ($parishIds === []) {
+            return [];
+        }
+
+        $counts = [];
+        $rows = db_connect()->table('parish_affiliation pa')
             ->select("
                 pa.parish_id,
                 COUNT(DISTINCT CASE WHEN pa.is_member = 1 THEN pa.person_id END) AS total_members,
@@ -104,52 +148,200 @@ class DioceseDashboardDataService
             ->join('parish c', 'c.id = pa.parish_id')
             ->where('pa.deleted_at IS NULL', null, false)
             ->where('c.diocese_id', $dioceseId)
-            ->groupBy('pa.parish_id');
-        if ($parishId !== null) {
-            $memberCountQuery->where('pa.parish_id', $parishId);
-        }
-        foreach ($memberCountQuery->get()->getResultArray() as $mc) {
-            $memberCounts[(int) $mc['parish_id']] = $mc;
+            ->whereIn('pa.parish_id', $parishIds)
+            ->groupBy('pa.parish_id')
+            ->get()
+            ->getResultArray();
+
+        foreach ($rows as $row) {
+            $counts[(int) $row['parish_id']] = [
+                'total_members'  => (int) ($row['total_members'] ?? 0),
+                'active_members' => (int) ($row['active_members'] ?? 0),
+            ];
         }
 
-        $query = $db->table('parish c')
+        return $counts;
+    }
+
+
+    /**
+     * Service/attendance aggregates per parish for a date range.
+     *
+     * @param array<int, mixed> $parishIds
+     * @return array<int, array{total_services: int, total_attendance: int, sunday_attendance: int, sunday_services: int, weekday_attendance: int, weekday_services: int}>
+     */
+    private function getServiceAggregatesByParish(array $parishIds, string $start, string $end): array
+    {
+        if ($parishIds === []) {
+            return [];
+        }
+
+        $db = db_connect();
+        $isSqlite = $db->DBDriver === 'SQLite3';
+        $sundayPredicate = $isSqlite ? "strftime('%w', s.service_date) = '0'" : 'DAYOFWEEK(s.service_date) = 1';
+        $weekdayPredicate = $isSqlite ? "strftime('%w', s.service_date) != '0'" : 'DAYOFWEEK(s.service_date) != 1';
+
+        $aggregates = [];
+        $rows = $db->table('service s')
             ->select("
-                c.id AS parish_id,
-                c.name AS parish_name,
+                s.parish_id,
                 COUNT(DISTINCT s.id) AS total_services,
                 COALESCE(SUM(sm.reported_present_count), 0) AS total_attendance,
-                COALESCE(SUM(CASE WHEN DAYOFWEEK(s.service_date) = 1 THEN sm.reported_present_count ELSE 0 END), 0) AS sunday_attendance,
-                COUNT(DISTINCT CASE WHEN DAYOFWEEK(s.service_date) = 1 THEN s.id END) AS sunday_services,
-                COALESCE(SUM(CASE WHEN DAYOFWEEK(s.service_date) != 1 THEN sm.reported_present_count ELSE 0 END), 0) AS weekday_attendance,
-                COUNT(DISTINCT CASE WHEN DAYOFWEEK(s.service_date) != 1 THEN s.id END) AS weekday_services
+                COALESCE(SUM(CASE WHEN {$sundayPredicate} THEN sm.reported_present_count ELSE 0 END), 0) AS sunday_attendance,
+                COUNT(DISTINCT CASE WHEN {$sundayPredicate} THEN s.id END) AS sunday_services,
+                COALESCE(SUM(CASE WHEN {$weekdayPredicate} THEN sm.reported_present_count ELSE 0 END), 0) AS weekday_attendance,
+                COUNT(DISTINCT CASE WHEN {$weekdayPredicate} THEN s.id END) AS weekday_services
             ", false)
-            ->join('service s', "s.parish_id = c.id AND s.service_date >= '$start' AND s.service_date <= '$end'", 'left')
             ->join('service_metric sm', 'sm.service_id = s.id', 'left')
-            ->where('c.diocese_id', $dioceseId)
-            ->groupBy('c.id, c.name')
-            ->orderBy('c.name', 'ASC');
+            ->whereIn('s.parish_id', $parishIds)
+            ->where('s.service_date >=', $start)
+            ->where('s.service_date <=', $end)
+            ->groupBy('s.parish_id')
+            ->get()
+            ->getResultArray();
 
-        if ($parishId !== null) {
-            $query->where('c.id', $parishId);
+        foreach ($rows as $row) {
+            $aggregates[(int) $row['parish_id']] = [
+                'total_services'     => (int) ($row['total_services'] ?? 0),
+                'total_attendance'   => (int) ($row['total_attendance'] ?? 0),
+                'sunday_attendance'  => (int) ($row['sunday_attendance'] ?? 0),
+                'sunday_services'    => (int) ($row['sunday_services'] ?? 0),
+                'weekday_attendance' => (int) ($row['weekday_attendance'] ?? 0),
+                'weekday_services'   => (int) ($row['weekday_services'] ?? 0),
+            ];
         }
 
-        $rows = $query->get()->getResultArray();
+        return $aggregates;
+    }
 
-        foreach ($rows as &$row) {
-            $mc = $memberCounts[(int) ($row['parish_id'] ?? 0)] ?? [];
-            $row['total_members']  = (int) ($mc['total_members'] ?? 0);
-            $row['active_members'] = (int) ($mc['active_members'] ?? 0);
-            $sundayServices = (int) ($row['sunday_services'] ?? 0);
-            $weekdayServices = (int) ($row['weekday_services'] ?? 0);
-            $row['asa'] = $sundayServices > 0 ? round((float) $row['sunday_attendance'] / $sundayServices, 2) : 0.0;
-            $row['awa'] = $weekdayServices > 0 ? round((float) $row['weekday_attendance'] / $weekdayServices, 2) : 0.0;
-            $row['average_per_service'] = (int) ($row['total_services'] ?? 0) > 0
-                ? round((float) ($row['total_attendance'] ?? 0) / (int) $row['total_services'], 2)
-                : 0.0;
+
+    /**
+     * Merge parish list, member counts, and service aggregates into the
+     * canonical row shape used by the dashboard view.
+     *
+     * @param list<array{id: int, name: string}> $parishes
+     * @param array<int, array{total_members: int, active_members: int}> $memberCounts
+     * @param array<int, array{total_services: int, total_attendance: int, sunday_attendance: int, sunday_services: int, weekday_attendance: int, weekday_services: int}> $serviceAggs
+     * @return list<array{...}>
+     */
+    private function mergeParishSummaryRows(array $parishes, array $memberCounts, array $serviceAggs): array
+    {
+        $rows = [];
+
+        foreach ($parishes as $parish) {
+            $id = (int) $parish['id'];
+            $mc = $memberCounts[$id] ?? ['total_members' => 0, 'active_members' => 0];
+            $sa = $serviceAggs[$id] ?? [
+                'total_services'     => 0,
+                'total_attendance'   => 0,
+                'sunday_attendance'  => 0,
+                'sunday_services'    => 0,
+                'weekday_attendance' => 0,
+                'weekday_services'   => 0,
+            ];
+
+            $sundayServices  = (int) ($sa['sunday_services'] ?? 0);
+            $weekdayServices = (int) ($sa['weekday_services'] ?? 0);
+            $totalServices   = (int) ($sa['total_services'] ?? 0);
+
+            $rows[] = [
+                'parish_id'          => $id,
+                'parish_name'        => (string) $parish['name'],
+                'total_members'      => (int) ($mc['total_members'] ?? 0),
+                'active_members'     => (int) ($mc['active_members'] ?? 0),
+                'total_attendance'   => (int) ($sa['total_attendance'] ?? 0),
+                'total_services'     => $totalServices,
+                'sunday_attendance'  => (int) ($sa['sunday_attendance'] ?? 0),
+                'sunday_services'    => $sundayServices,
+                'weekday_attendance' => (int) ($sa['weekday_attendance'] ?? 0),
+                'weekday_services'   => $weekdayServices,
+                'asa'                => $sundayServices > 0
+                    ? round((float) $sa['sunday_attendance'] / $sundayServices, 2)
+                    : 0.0,
+                'awa'                => $weekdayServices > 0
+                    ? round((float) $sa['weekday_attendance'] / $weekdayServices, 2)
+                    : 0.0,
+                'average_per_service' => $totalServices > 0
+                    ? round((float) $sa['total_attendance'] / $totalServices, 2)
+                    : 0.0,
+            ];
         }
-        unset($row);
 
         return $rows;
+    }
+
+
+    public function getParishSummaryRows(
+        string $period,
+        ?string $startDate,
+        ?string $endDate,
+        int $dioceseId,
+        ?int $parishId = null,
+        ?int $limit = null,
+        int $offset = 0
+    ): array {
+        [$start, $end] = $this->normalizeDateRange($period, $startDate, $endDate);
+
+        $parishes     = $this->getParishListForScope($dioceseId, $parishId, $limit, $offset);
+        $parishIds    = array_column($parishes, 'id');
+        $memberCounts = $this->getMemberCountsByParish($parishIds, $dioceseId);
+        $serviceAggs  = $this->getServiceAggregatesByParish($parishIds, $start, $end);
+
+        return $this->mergeParishSummaryRows($parishes, $memberCounts, $serviceAggs);
+    }
+
+
+    /**
+     * Compute diocese-level totals directly from aggregate queries instead of
+     * materializing every parish row.
+     */
+    public function getDioceseSummaryTotals(
+        string $period,
+        ?string $startDate,
+        ?string $endDate,
+        int $dioceseId,
+        ?int $parishId = null
+    ): array {
+        [$start, $end] = $this->normalizeDateRange($period, $startDate, $endDate);
+
+        $parishes     = $this->getParishListForScope($dioceseId, $parishId, null, 0);
+        $parishIds    = array_column($parishes, 'id');
+        $memberCounts = $this->getMemberCountsByParish($parishIds, $dioceseId);
+        $serviceAggs  = $this->getServiceAggregatesByParish($parishIds, $start, $end);
+
+        $totals = [
+            'total_parishes'    => count($parishes),
+            'total_members'     => 0,
+            'active_members'    => 0,
+            'total_services'    => 0,
+            'total_attendance'  => 0,
+            'sunday_services'   => 0,
+            'sunday_attendance' => 0,
+            'weekday_services'  => 0,
+            'weekday_attendance' => 0,
+        ];
+
+        foreach ($parishIds as $id) {
+            $mc = $memberCounts[$id] ?? [];
+            $sa = $serviceAggs[$id] ?? [];
+            $totals['total_members']      += (int) ($mc['total_members'] ?? 0);
+            $totals['active_members']     += (int) ($mc['active_members'] ?? 0);
+            $totals['total_services']     += (int) ($sa['total_services'] ?? 0);
+            $totals['total_attendance']   += (int) ($sa['total_attendance'] ?? 0);
+            $totals['sunday_services']    += (int) ($sa['sunday_services'] ?? 0);
+            $totals['sunday_attendance']  += (int) ($sa['sunday_attendance'] ?? 0);
+            $totals['weekday_services']   += (int) ($sa['weekday_services'] ?? 0);
+            $totals['weekday_attendance'] += (int) ($sa['weekday_attendance'] ?? 0);
+        }
+
+        $totals['asa'] = $totals['sunday_services'] > 0
+            ? round($totals['sunday_attendance'] / $totals['sunday_services'], 2) : 0.0;
+        $totals['awa'] = $totals['weekday_services'] > 0
+            ? round($totals['weekday_attendance'] / $totals['weekday_services'], 2) : 0.0;
+        $totals['average_per_service'] = $totals['total_services'] > 0
+            ? round($totals['total_attendance'] / $totals['total_services'], 2) : 0.0;
+
+        return $totals;
     }
 
 
@@ -206,10 +398,19 @@ class DioceseDashboardDataService
             $query->where('s.parish_id', $parishId);
         }
 
+        $isSqlite = $db->DBDriver === 'SQLite3';
         if ($period === 'sundays') {
-            $query->where('DAYOFWEEK(s.service_date) = 1', null, false);
+            if ($isSqlite) {
+                $query->where("strftime('%w', s.service_date) =", '0', false);
+            } else {
+                $query->where('DAYOFWEEK(s.service_date)', 1);
+            }
         } elseif ($period === 'weekdays') {
-            $query->where('DAYOFWEEK(s.service_date) != 1', null, false);
+            if ($isSqlite) {
+                $query->where("strftime('%w', s.service_date) !=", '0', false);
+            } else {
+                $query->where('DAYOFWEEK(s.service_date) !=', 1);
+            }
         }
 
         $row = $query->get()->getRowArray() ?? [];
@@ -234,13 +435,17 @@ class DioceseDashboardDataService
         $scanStart = min($weekStart, $yearStart);
         $scanEnd = max($weekEnd, date('Y-12-31'));
 
+        $isSqlite = $db->DBDriver === 'SQLite3';
+        $sundayPredicate = $isSqlite ? "strftime('%w', s.service_date) = '0'" : 'DAYOFWEEK(s.service_date) = 1';
+        $weekdayPredicate = $isSqlite ? "strftime('%w', s.service_date) != '0'" : 'DAYOFWEEK(s.service_date) != 1';
+
         $conditions = [
             'today' => "s.service_date >= " . $db->escape($todayStart) . " AND s.service_date <= " . $db->escape($todayEnd),
             'week' => "s.service_date >= " . $db->escape($weekStart) . " AND s.service_date <= " . $db->escape($weekEnd),
             'month' => "s.service_date >= " . $db->escape($monthStart) . " AND s.service_date <= " . $db->escape($monthEnd),
             'year' => "s.service_date >= " . $db->escape($yearStart) . " AND s.service_date <= " . $db->escape($yearEnd),
-            'sundays' => "s.service_date >= " . $db->escape(date('Y-01-01')) . " AND s.service_date <= " . $db->escape(date('Y-12-31')) . ' AND DAYOFWEEK(s.service_date) = 1',
-            'weekdays' => "s.service_date >= " . $db->escape(date('Y-01-01')) . " AND s.service_date <= " . $db->escape(date('Y-12-31')) . ' AND DAYOFWEEK(s.service_date) != 1',
+            'sundays' => "s.service_date >= " . $db->escape(date('Y-01-01')) . " AND s.service_date <= " . $db->escape(date('Y-12-31')) . " AND {$sundayPredicate}",
+            'weekdays' => "s.service_date >= " . $db->escape(date('Y-01-01')) . " AND s.service_date <= " . $db->escape(date('Y-12-31')) . " AND {$weekdayPredicate}",
         ];
 
         $select = [];
@@ -328,17 +533,21 @@ class DioceseDashboardDataService
             return $empty;
         }
 
+        $isSqlite = $db->DBDriver === 'SQLite3';
+        $sundayPredicate = $isSqlite ? "strftime('%w', s.service_date) = '0'" : 'DAYOFWEEK(s.service_date) = 1';
+        $prefix = $db->getPrefix();
+
         $serviceRows = $db->query("
             SELECT s.service_date,
                    COALESCE(sm.reported_present_count, 0) AS present_count,
                    COALESCE(sm.reported_communion_count, 0) AS communion_count
-            FROM service s
-            JOIN parish c ON c.id = s.parish_id
-            JOIN service_metric sm ON sm.service_id = s.id
+            FROM {$prefix}service s
+            JOIN {$prefix}parish c ON c.id = s.parish_id
+            JOIN {$prefix}service_metric sm ON sm.service_id = s.id
             WHERE c.diocese_id = ?
               AND s.service_date >= ?
               AND s.service_date <= ?
-              AND DAYOFWEEK(s.service_date) = 1
+              AND {$sundayPredicate}
             ORDER BY s.service_date ASC
         ", [$dioceseId, $range['start_date'], $range['end_date']])->getResultArray();
 

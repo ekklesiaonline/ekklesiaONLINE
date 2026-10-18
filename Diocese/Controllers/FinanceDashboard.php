@@ -63,12 +63,26 @@ class FinanceDashboard extends BaseController
 
         $allParishes = $parishModel->where('diocese_id', $scopeDioceseId)->orderBy('name', 'ASC')->findAll();
 
+        // Pagination for the parish comparison table/chart.
+        $allowedPerPage = [10, 25, 50, 100];
+        $perPage = (int) ($this->request->getGet('per_page') ?? 10);
+        if (!in_array($perPage, $allowedPerPage, true)) {
+            $perPage = 10;
+        }
+        $page = max(1, (int) ($this->request->getGet('page') ?? 1));
+        $totalParishes = count($allParishes);
+        $lastPage = max(1, (int) ceil($totalParishes / $perPage));
+        $page = min($page, $lastPage);
+        $offset = ($page - 1) * $perPage;
+        $pagedParishes = array_slice($allParishes, $offset, $perPage);
+
         // Build scoped parish ID list to pass to every financial query.
         $scopedParishIds = array_map(static fn($c) => (int) $c['id'], $allParishes);
 
         if (empty($scopedParishIds)) {
             $data = array_merge($this->getCommonViewData(lang('App.navFinanceDashboard')), [
                 'all_parishes' => [],
+                'paged_parishes' => [],
                 'total_income' => 0,
                 'total_expenses' => 0,
                 'net_amount' => 0,
@@ -82,6 +96,12 @@ class FinanceDashboard extends BaseController
                 'current_period' => $period,
                 'start_date' => $startDate,
                 'end_date' => $endDate,
+                'summary_pagination' => [
+                    'page' => 1,
+                    'per_page' => $perPage,
+                    'total' => 0,
+                    'last_page' => 1,
+                ],
             ]);
 
             return view('Diocese\Views\Dashboard/finance', $data);
@@ -104,6 +124,7 @@ class FinanceDashboard extends BaseController
 
         $data = array_merge($this->getCommonViewData(lang('App.navFinanceDashboard')), [
             'all_parishes' => $allParishes,
+            'paged_parishes' => $pagedParishes,
             'total_income' => $totalIncome,
             'total_expenses' => $totalExpenses,
             'net_amount' => $totalIncome - $totalExpenses,
@@ -117,6 +138,12 @@ class FinanceDashboard extends BaseController
             'current_period' => $period,
             'start_date' => $startDate,
             'end_date' => $endDate,
+            'summary_pagination' => [
+                'page' => $page,
+                'per_page' => $perPage,
+                'total' => $totalParishes,
+                'last_page' => $lastPage,
+            ],
         ]);
 
         return view('Diocese\Views\Dashboard/finance', $data);

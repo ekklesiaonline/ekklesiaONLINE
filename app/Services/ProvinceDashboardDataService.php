@@ -261,9 +261,47 @@ class ProvinceDashboardDataService
     }
 
 
-    public function getDioceseSummaryRows(string $period, ?string $startDate, ?string $endDate, int $provinceId, ?int $dioceseId = null): array
+    public function countDioceseSummaryRows(int $provinceId, ?int $dioceseId = null): int
     {
+        $query = db_connect()->table('diocese')
+            ->where('province_id', $provinceId);
+
+        if ($dioceseId !== null) {
+            $query->where('id', $dioceseId);
+        }
+
+        return (int) $query->countAllResults();
+    }
+
+
+    public function getDioceseSummaryRows(
+        string $period,
+        ?string $startDate,
+        ?string $endDate,
+        int $provinceId,
+        ?int $dioceseId = null,
+        ?int $limit = null,
+        int $offset = 0
+    ): array {
         $db = db_connect();
+
+        // When paginating, restrict every subquery to the target page of
+        // dioceses so we do not aggregate attendance/visitors province-wide.
+        $restrictedDioceseIds = null;
+        if ($limit !== null) {
+            $idQuery = $db->table('diocese')
+                ->select('id')
+                ->where('province_id', $provinceId)
+                ->orderBy('name', 'ASC')
+                ->limit($limit, $offset);
+            if ($dioceseId !== null) {
+                $idQuery->where('id', $dioceseId);
+            }
+            $restrictedDioceseIds = array_map(
+                static fn(array $row) => (int) $row['id'],
+                $idQuery->get()->getResultArray()
+            );
+        }
 
         $baseBuilder = $db->table('diocese d')
             ->select('d.id as diocese_id, d.name as diocese_name, COUNT(DISTINCT c.id) as parishes_count')
@@ -278,7 +316,9 @@ class ProvinceDashboardDataService
             ->groupBy('d.id, d.name')
             ->orderBy('d.name', 'ASC');
 
-        if ($dioceseId !== null) {
+        if ($restrictedDioceseIds !== null) {
+            $baseBuilder->whereIn('d.id', $restrictedDioceseIds);
+        } elseif ($dioceseId !== null) {
             $baseBuilder->where('d.id', $dioceseId);
         }
 
@@ -293,7 +333,9 @@ class ProvinceDashboardDataService
             ->where('g.deleted_at IS NULL', null, false)
             ->where('g.converted_to_member_at IS NULL', null, false);
 
-        if ($dioceseId !== null) {
+        if ($restrictedDioceseIds !== null) {
+            $visitorBuilder->whereIn('c.diocese_id', $restrictedDioceseIds);
+        } elseif ($dioceseId !== null) {
             $visitorBuilder->where('c.diocese_id', $dioceseId);
         }
 
@@ -312,9 +354,13 @@ class ProvinceDashboardDataService
             ->join('attendance a', 'a.service_id = s.id', 'left')
             ->where('d.province_id', $provinceId);
 
-        if ($dioceseId !== null) {
+        if ($restrictedDioceseIds !== null) {
+            $attendanceBuilder->whereIn('c.diocese_id', $restrictedDioceseIds);
+        } elseif ($dioceseId !== null) {
             $attendanceBuilder->where('c.diocese_id', $dioceseId);
         }
+
+        $isSqlite = $db->DBDriver === 'SQLite3';
 
         switch ($period) {
             case 'today':
@@ -333,12 +379,20 @@ class ProvinceDashboardDataService
                 $attendanceBuilder->where('s.service_date <=', date('Y-12-31'));
                 break;
             case 'sundays':
-                $attendanceBuilder->where('DAYOFWEEK(s.service_date)', 1);
+                if ($isSqlite) {
+                    $attendanceBuilder->where("strftime('%w', s.service_date) =", '0', false);
+                } else {
+                    $attendanceBuilder->where('DAYOFWEEK(s.service_date)', 1);
+                }
                 $attendanceBuilder->where('s.service_date >=', $startDate ?: date('Y-01-01'));
                 $attendanceBuilder->where('s.service_date <=', $endDate ?: date('Y-12-31'));
                 break;
             case 'weekdays':
-                $attendanceBuilder->whereIn('DAYOFWEEK(s.service_date)', [2, 3, 4, 5, 6, 7]);
+                if ($isSqlite) {
+                    $attendanceBuilder->where("strftime('%w', s.service_date) !=", '0', false);
+                } else {
+                    $attendanceBuilder->whereIn('DAYOFWEEK(s.service_date)', [2, 3, 4, 5, 6, 7]);
+                }
                 $attendanceBuilder->where('s.service_date >=', $startDate ?: date('Y-01-01'));
                 $attendanceBuilder->where('s.service_date <=', $endDate ?: date('Y-12-31'));
                 break;
@@ -388,19 +442,47 @@ class ProvinceDashboardDataService
     }
 
 
-    public function getDioceseHealthRows(array $summaryRows, int $provinceId): array
+    /**
+     * Compute province-level totals from aggregate queries instead of
+     * materializing all diocese rows twice.
+     */
+    public function getProvinceSummaryTotals(
+        string $period,
+        ?string $startDate,
+        ?string $endDate,
+        int $provinceId,
+        ?int $dioceseId = null
+    ): array {
+        $rows = $this->getDioceseSummaryRows($period, $startDate, $endDate, $provinceId, $dioceseId, null, 0);
+
+        return $this->buildProvinceTotals($rows);
+    }
+
+
+    public function getDioceseHealthRows(array $summaryRows, int $provinceId, ?array $dioceseIds = null): array
     {
-        $adminRows = db_connect()->table('profile p')
+        // Note: we intentionally query the whole province and let PHP filter by
+        // summaryRows. The number of dioceses per province is small, and using
+        // table aliases in whereIn/groupBy triggers CI4/SQLite prefixing issues
+        // in test environments.
+        $adminBuilder = db_connect()->table('profile p')
             ->select('p.diocese_id, COUNT(*) AS active_admins')
             ->join('auth_groups_users agu', 'agu.user_id = p.user_id AND agu.group = "dioceseadmin"', 'inner')
             ->join('users u', 'u.id = p.user_id AND u.active = 1', 'inner')
-            ->join('diocese d', 'd.id = p.diocese_id AND d.province_id = ' . $provinceId, 'inner', false)
-            ->groupBy('p.diocese_id')->get()->getResultArray();
-        $serviceRows = db_connect()->table('service s')
-            ->select('c.diocese_id, MAX(s.service_date) AS last_service_date')
-            ->join('parish c', 'c.id = s.parish_id', 'inner')
-            ->join('diocese d', 'd.id = c.diocese_id', 'inner')
-            ->where('d.province_id', $provinceId)->groupBy('c.diocese_id')->get()->getResultArray();
+            ->join('diocese d', 'd.id = p.diocese_id', 'inner')
+            ->where('d.province_id', $provinceId)
+            ->groupBy('p.diocese_id');
+        $db = db_connect();
+        $prefix = $db->getPrefix();
+        $adminRows = $adminBuilder->get()->getResultArray();
+        $serviceRows = $db->query("
+            SELECT c.diocese_id, MAX(s.service_date) AS last_service_date
+            FROM {$prefix}service s
+            INNER JOIN {$prefix}parish c ON c.id = s.parish_id
+            INNER JOIN {$prefix}diocese d ON d.id = c.diocese_id
+            WHERE d.province_id = ?
+            GROUP BY c.diocese_id
+        ", [$provinceId])->getResultArray();
         $adminMap = array_column($adminRows, 'active_admins', 'diocese_id');
         $serviceMap = array_column($serviceRows, 'last_service_date', 'diocese_id');
         $overdueDays = min(365, max(1, (int) service('systemSettings')->get('province_dashboard.reporting_overdue_days', 30)));
