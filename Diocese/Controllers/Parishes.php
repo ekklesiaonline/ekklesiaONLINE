@@ -49,10 +49,10 @@ class Parishes extends BaseController
             return redirect()->to('/parish_list/edit/' . $parishId);
         }
 
-        $validPerPage = [25, 50, 75, 100];
-        $perPage      = (int) ($this->request->getGet('per_page') ?? 25);
+        $validPerPage = [10, 25, 50, 100];
+        $perPage      = (int) ($this->request->getGet('per_page') ?? 10);
         if (!in_array($perPage, $validPerPage, true)) {
-            $perPage = 25;
+            $perPage = 10;
         }
         $page            = max(1, (int) ($this->request->getGet('page') ?? 1));
         $search          = trim((string) ($this->request->getGet('search') ?? ''));
