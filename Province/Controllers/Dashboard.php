@@ -64,10 +64,39 @@ class Dashboard extends BaseController
         $attendanceStats = $this->dashboardData->getAttendanceAggregate($period, $startDate, $endDate, $provinceId, $selectedDioceseId);
         [$previousStartDate, $previousEndDate] = $this->dashboardData->getPreviousDateRange($startDate, $endDate);
         $previousAttendanceStats = $this->dashboardData->getAttendanceAggregate('custom', $previousStartDate, $previousEndDate, $provinceId, $selectedDioceseId);
-        $dioceseSummaryRows = $this->dashboardData->getDioceseSummaryRows($period, $startDate, $endDate, $provinceId, $selectedDioceseId);
-        $allDioceseSummaryRows = $this->dashboardData->getDioceseSummaryRows($period, $startDate, $endDate, $provinceId, null);
-        $provinceTotals = $this->dashboardData->buildProvinceTotals($allDioceseSummaryRows);
-        $dioceseHealthRows = $this->dashboardData->getDioceseHealthRows($dioceseSummaryRows, $provinceId);
+        // Diocese summary pagination
+        $summaryPage    = (int) ($this->request->getGet('summary_page') ?? 1);
+        $summaryPerPage = (int) ($this->request->getGet('summary_per_page') ?? 25);
+        if (!in_array($summaryPerPage, [10, 25, 50, 100], true)) {
+            $summaryPerPage = 25;
+        }
+        $summaryTotal    = $this->dashboardData->countDioceseSummaryRows($provinceId, $selectedDioceseId);
+        $summaryLastPage = max(1, (int) ceil($summaryTotal / $summaryPerPage));
+        $summaryPage     = max(1, min($summaryPage, $summaryLastPage));
+        $summaryOffset   = ($summaryPage - 1) * $summaryPerPage;
+
+        $dioceseSummaryRows = $this->dashboardData->getDioceseSummaryRows(
+            $period,
+            $startDate,
+            $endDate,
+            $provinceId,
+            $selectedDioceseId,
+            $summaryPerPage,
+            $summaryOffset
+        );
+        $provinceTotals = $this->dashboardData->getProvinceSummaryTotals(
+            $period,
+            $startDate,
+            $endDate,
+            $provinceId,
+            $selectedDioceseId
+        );
+        $visibleDioceseIds = array_column($dioceseSummaryRows, 'diocese_id');
+        $dioceseHealthRows = $this->dashboardData->getDioceseHealthRows(
+            $dioceseSummaryRows,
+            $provinceId,
+            $visibleDioceseIds
+        );
 
         $attendanceToday = $this->dashboardData->getAttendanceAggregate('today', null, null, $provinceId, $selectedDioceseId);
         $attendanceWeek = $this->dashboardData->getAttendanceAggregate('week', null, null, $provinceId, $selectedDioceseId);
@@ -125,6 +154,12 @@ class Dashboard extends BaseController
             'diocese_summary_rows' => $dioceseSummaryRows,
             'diocese_health_rows' => $dioceseHealthRows,
             'province_totals' => $provinceTotals,
+            'summary_pagination' => [
+                'page'      => $summaryPage,
+                'per_page'  => $summaryPerPage,
+                'total'     => $summaryTotal,
+                'last_page' => $summaryLastPage,
+            ],
 
             // Diocese-selected mode (single diocese scope)
             'show_diocese_scope_dashboard' => $showDioceseScopeDashboard,

@@ -262,7 +262,7 @@ $currentPeriodLabel = $periodLabels[$current_period] ?? $current_period;
                                 $expensesByParishMap[$row['parish_id']] = $row;
                             }
 
-                            foreach ($all_parishes as $parish):
+                            foreach ($paged_parishes as $parish):
                                 $parishIncome = (float) ($incomeByParishMap[$parish['id']]['total_donations'] ?? 0);
                                 $parishExpenses = (float) ($expensesByParishMap[$parish['id']]['total_expenses'] ?? 0);
                                 $parishNet = $parishIncome - $parishExpenses;
@@ -288,6 +288,45 @@ $currentPeriodLabel = $periodLabels[$current_period] ?? $current_period;
     </div>
 </div>
 
+<?php
+$pagination = $summary_pagination ?? ['page' => 1, 'per_page' => 10, 'total' => 0, 'last_page' => 1];
+$currentPage = (int) ($pagination['page'] ?? 1);
+$perPage = (int) ($pagination['per_page'] ?? 10);
+$totalPages = (int) ($pagination['last_page'] ?? 1);
+$total = (int) ($pagination['total'] ?? 0);
+
+$paginationBase = base_url('diocese/finance') . '?per_page=' . $perPage;
+if ($current_period !== 'month') {
+    $paginationBase .= '&period=' . urlencode($current_period);
+}
+if ($current_period === 'custom') {
+    $paginationBase .= '&start_date=' . urlencode($start_date) . '&end_date=' . urlencode($end_date);
+}
+?>
+
+<?php if ($totalPages > 1): ?>
+    <nav aria-label="<?= esc(lang('App.pagination')) ?>" class="mt-3">
+        <ul class="pagination justify-content-center">
+            <?php if ($currentPage > 1): ?>
+                <li class="page-item">
+                    <a class="page-link" href="<?= $paginationBase ?>&page=<?= $currentPage - 1 ?>">&laquo;</a>
+                </li>
+            <?php endif; ?>
+            <?php for ($i = max(1, $currentPage - 2); $i <= min($totalPages, $currentPage + 2); $i++): ?>
+                <li class="page-item <?= $i === $currentPage ? 'active' : '' ?>">
+                    <a class="page-link" href="<?= $paginationBase ?>&page=<?= $i ?>"><?= $i ?></a>
+                </li>
+            <?php endfor; ?>
+            <?php if ($currentPage < $totalPages): ?>
+                <li class="page-item">
+                    <a class="page-link" href="<?= $paginationBase ?>&page=<?= $currentPage + 1 ?>">&raquo;</a>
+                </li>
+            <?php endif; ?>
+        </ul>
+        <p class="text-center text-muted small"><?= lang('Parishes.textShowingPageSummary', [$currentPage, $totalPages, $total]) ?></p>
+    </nav>
+<?php endif; ?>
+
 <script>
     document.getElementById('periodSelect')?.addEventListener('change', function() {
         const isCustom = this.value === 'custom';
@@ -296,6 +335,7 @@ $currentPeriodLabel = $periodLabels[$current_period] ?? $current_period;
     });
 
     const allParishesRaw = <?= json_encode($all_parishes ?? []) ?>;
+    const pagedParishesRaw = <?= json_encode($paged_parishes ?? []) ?>;
     const incomeByParishRaw = <?= json_encode($income_by_parish ?? []) ?>;
     const expensesByParishRaw = <?= json_encode($expenses_by_parish ?? []) ?>;
     const financeTrendLabels = <?= json_encode($finance_trend_labels ?? []) ?>;
@@ -384,14 +424,20 @@ $currentPeriodLabel = $periodLabels[$current_period] ?? $current_period;
             financeComparisonChart.destroy();
         }
 
-        let rows = Object.values(financeMetricsById)
-            .sort((left, right) => (right.income + right.expenses) - (left.income + left.expenses));
+        let rows;
 
         if (scopeParishId !== 'all') {
             const selected = financeMetricsById[Number(scopeParishId)];
             rows = selected ? [selected] : [];
         } else {
-            rows = rows.slice(0, 10);
+            rows = pagedParishesRaw
+                .map((parish) => financeMetricsById[Number(parish.id)] || {
+                    id: Number(parish.id),
+                    name: parish.name || `${financeParishFallbackPrefix} ${parish.id}`,
+                    income: 0,
+                    expenses: 0,
+                })
+                .sort((left, right) => (right.income + right.expenses) - (left.income + left.expenses));
         }
 
         financeComparisonChart = new Chart(financeComparisonChartEl.getContext('2d'), {

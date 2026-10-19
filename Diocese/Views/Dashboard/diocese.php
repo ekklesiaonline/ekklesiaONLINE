@@ -267,6 +267,30 @@ $formatLocalizedDateTime = static function (?string $value, string $locale): str
 </div>
 
 <!-- Per-parish summary table -->
+<?php
+$pagination = $summary_pagination ?? ['page' => 1, 'per_page' => 10, 'total' => 0, 'last_page' => 1];
+$summaryPage = (int) ($pagination['page'] ?? 1);
+$summaryPerPage = (int) ($pagination['per_page'] ?? 10);
+$summaryTotal = (int) ($pagination['total'] ?? 0);
+$summaryLastPage = (int) ($pagination['last_page'] ?? 1);
+$summaryShowPagination = $summaryTotal > $summaryPerPage || $summaryLastPage > 1;
+
+$buildSummaryPageUrl = static function (int $targetPage, int $targetPerPage) use ($current_period, $start_date, $end_date, $selected_parish_id): string {
+    $query = [
+        'summary_page'     => $targetPage,
+        'summary_per_page' => $targetPerPage,
+        'period'           => $current_period,
+    ];
+    if ($current_period === 'custom') {
+        $query['start_date'] = (string) $start_date;
+        $query['end_date'] = (string) $end_date;
+    }
+    if ($selected_parish_id !== null) {
+        $query['parish_id'] = $selected_parish_id;
+    }
+    return base_url('diocese/dashboard?' . http_build_query($query));
+};
+?>
 <div class="card mb-4">
     <div class="card-header d-flex justify-content-between align-items-center">
         <h6 class="mb-0"><i class="bi bi-table" aria-hidden="true"></i> <?= lang('Dashboard.parishSummaryTable') ?></h6>
@@ -316,6 +340,20 @@ $formatLocalizedDateTime = static function (?string $value, string $locale): str
                 </tbody>
             </table>
         </div>
+        <?php if ($summaryShowPagination): ?>
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 p-3 border-top">
+                <div class="btn-group btn-group-sm" role="group" aria-label="<?= esc(lang('Dashboard.recentActivityPerPageAria')) ?>">
+                    <?php foreach ([10, 25, 50, 100] as $size): ?>
+                        <a href="<?= $buildSummaryPageUrl(1, $size) ?>" class="btn <?= $summaryPerPage === $size ? 'btn-primary' : 'btn-outline-primary' ?>"><?= $size ?></a>
+                    <?php endforeach; ?>
+                </div>
+                <div class="btn-group btn-group-sm" role="group" aria-label="<?= esc(lang('App.pagination')) ?>">
+                    <a href="<?= $buildSummaryPageUrl(max(1, $summaryPage - 1), $summaryPerPage) ?>" class="btn btn-outline-secondary <?= $summaryPage <= 1 ? 'disabled' : '' ?>">&laquo; <?= lang('Dashboard.recentActivityPrev') ?></a>
+                    <span class="btn btn-light disabled"><?= lang('Dashboard.recentActivityPageLabel') ?> <?= number_format($summaryPage) ?> / <?= number_format($summaryLastPage) ?></span>
+                    <a href="<?= $buildSummaryPageUrl(min($summaryLastPage, $summaryPage + 1), $summaryPerPage) ?>" class="btn btn-outline-secondary <?= $summaryPage >= $summaryLastPage ? 'disabled' : '' ?>"><?= lang('Dashboard.recentActivityNext') ?> &raquo;</a>
+                </div>
+            </div>
+        <?php endif; ?>
     </div>
 </div>
 

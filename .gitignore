@@ -7,6 +7,7 @@
 .env.*
 !.env.example
 .devin/config.local.json
+AGENTS.local.md
 
 # Composer dependencies
 /vendor/

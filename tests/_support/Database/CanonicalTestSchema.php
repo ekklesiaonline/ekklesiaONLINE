@@ -1023,6 +1023,7 @@ final class CanonicalTestSchema
         'user_registration_request' => [
             'user_id'      => 'INTEGER',
             'parish_id'    => 'INTEGER',
+            'diocese_id'   => 'INTEGER',
             'status'       => 'TEXT',
             'reviewed_by'  => 'INTEGER',
             'reviewed_at'  => 'TEXT',

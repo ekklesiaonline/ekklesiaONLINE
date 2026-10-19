@@ -9,7 +9,7 @@ $letter          = (string) ($letter ?? '');
 $filterDioceseId = (int) ($filterDioceseId ?? 0);
 $filterProvinceId = (int) ($filterProvinceId ?? 0);
 $filterMailingDiffers = (bool) ($filterMailingDiffers ?? false);
-$perPage         = (int) ($perPage ?? 25);
+$perPage         = (int) ($perPage ?? 10);
 $isSystemAdmin   = (bool) ($isSystemAdmin ?? false);
 $isProvinceAdmin = (bool) ($isProvinceAdmin ?? false);
 $name = '';
@@ -32,7 +32,7 @@ $formatAddressSummary = static function (array $row, string $prefix = ''): strin
 $filtersActive = $search !== '' || $letter !== '' || $filterDioceseId > 0 || $filterProvinceId > 0 || $filterMailingDiffers;
 
 // Build the base URL preserving per_page when clearing filters
-$clearUrl = base_url('parish_list') . ($perPage !== 25 ? '?per_page=' . $perPage : '');
+$clearUrl = base_url('parish_list') . ($perPage !== 10 ? '?per_page=' . $perPage : '');
 
 $chipParams = ['per_page' => $perPage];
 if ($search !== '') {
@@ -125,15 +125,7 @@ $mailingDiffersOffUrl = base_url('parish_list?' . http_build_query($chipParams))
                     </div>
                 <?php endif; ?>
 
-                <!-- Per page -->
-                <div class="col-md-2">
-                    <label class="form-label form-label-sm"><?= lang('Parishes.filterPerPage') ?></label>
-                    <select name="per_page" class="form-select form-select-sm">
-                        <?php foreach ([25, 50, 75, 100] as $opt): ?>
-                            <option value="<?= $opt ?>" <?= $opt === $perPage ? 'selected' : '' ?>><?= $opt ?></option>
-                        <?php endforeach; ?>
-                    </select>
-                </div>
+                <input type="hidden" name="per_page" value="<?= $perPage ?>">
 
                 <div class="col-md-2 d-flex gap-2">
                     <button type="submit" class="btn btn-sm btn-primary flex-fill">
@@ -220,13 +212,43 @@ $mailingDiffersOffUrl = base_url('parish_list?' . http_build_query($chipParams))
     });
 </script>
 
-<div class="card">
-    <div class="card-body">
+<?php
+$showPagination = (int) ($total ?? 0) > $perPage || $total_pages > 1;
+$buildParishPageUrl = static function (int $targetPage, int $targetPerPage) use ($search, $letter, $filterDioceseId, $filterProvinceId, $filterMailingDiffers): string {
+    $query = [
+        'page' => $targetPage,
+        'per_page' => $targetPerPage,
+    ];
+    if ($search !== '') {
+        $query['search'] = $search;
+    }
+    if ($letter !== '') {
+        $query['letter'] = $letter;
+    }
+    if ($filterDioceseId > 0) {
+        $query['diocese_id'] = $filterDioceseId;
+    }
+    if ($filterProvinceId > 0) {
+        $query['province_id'] = $filterProvinceId;
+    }
+    if ($filterMailingDiffers) {
+        $query['mailing_differs'] = 1;
+    }
+
+    return base_url('parish_list?' . http_build_query($query));
+};
+?>
+
+<div class="card mb-4">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h6 class="mb-0"><i class="bi bi-table" aria-hidden="true"></i> <?= lang('Parishes.pageTitle') ?></h6>
+    </div>
+    <div class="card-body p-0">
         <?php if (empty($parishes)): ?>
-            <p class="text-muted mb-0"><?= lang('Parishes.textNoParishesFound') ?></p>
+            <p class="text-center text-muted py-4 mb-0"><?= lang('Parishes.textNoParishesFound') ?></p>
         <?php else: ?>
             <div class="table-responsive">
-                <table class="table table-hover align-middle">
+                <table class="table table-hover align-middle mb-0">
                     <thead>
                         <tr>
                             <?php if (($isDiocesanAdmin ?? false)): ?>
@@ -312,41 +334,22 @@ $mailingDiffersOffUrl = base_url('parish_list?' . http_build_query($chipParams))
                 </table>
             </div>
         <?php endif; ?>
+        <?php if ($showPagination): ?>
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 p-3 border-top">
+                <div class="btn-group btn-group-sm" role="group" aria-label="<?= esc(lang('Dashboard.recentActivityPerPageAria')) ?>">
+                    <?php foreach ([10, 25, 50, 100] as $size): ?>
+                        <a href="<?= $buildParishPageUrl(1, $size) ?>" class="btn <?= $perPage === $size ? 'btn-primary' : 'btn-outline-primary' ?>"><?= $size ?></a>
+                    <?php endforeach; ?>
+                </div>
+                <div class="btn-group btn-group-sm" role="group" aria-label="<?= esc(lang('App.pagination')) ?>">
+                    <a href="<?= $buildParishPageUrl(max(1, $current_page - 1), $perPage) ?>" class="btn btn-outline-secondary <?= $current_page <= 1 ? 'disabled' : '' ?>">&laquo; <?= lang('Dashboard.recentActivityPrev') ?></a>
+                    <span class="btn btn-light disabled"><?= lang('Dashboard.recentActivityPageLabel') ?> <?= number_format($current_page) ?> / <?= number_format($total_pages) ?></span>
+                    <a href="<?= $buildParishPageUrl(min($total_pages, $current_page + 1), $perPage) ?>" class="btn btn-outline-secondary <?= $current_page >= $total_pages ? 'disabled' : '' ?>"><?= lang('Dashboard.recentActivityNext') ?> &raquo;</a>
+                </div>
+            </div>
+        <?php endif; ?>
     </div>
 </div>
-
-<!-- Pagination + per-page summary -->
-<?php
-$paginationBase = base_url('parish_list') . '?per_page=' . $perPage;
-if ($search          !== '') $paginationBase .= '&search='     . urlencode($search);
-if ($letter          !== '') $paginationBase .= '&letter='     . urlencode($letter);
-if ($filterDioceseId  > 0)   $paginationBase .= '&diocese_id=' . $filterDioceseId;
-if ($filterProvinceId > 0)   $paginationBase .= '&province_id=' . $filterProvinceId;
-if ($filterMailingDiffers)   $paginationBase .= '&mailing_differs=1';
-?>
-
-<?php if (($total_pages ?? 1) > 1): ?>
-    <nav aria-label="<?= esc(lang('App.pagination')) ?>" class="mt-3">
-        <ul class="pagination justify-content-center">
-            <?php if ($current_page > 1): ?>
-                <li class="page-item">
-                    <a class="page-link" href="<?= $paginationBase ?>&page=<?= $current_page - 1 ?>">&laquo;</a>
-                </li>
-            <?php endif; ?>
-            <?php for ($i = max(1, $current_page - 2); $i <= min($total_pages, $current_page + 2); $i++): ?>
-                <li class="page-item <?= $i === $current_page ? 'active' : '' ?>">
-                    <a class="page-link" href="<?= $paginationBase ?>&page=<?= $i ?>"><?= $i ?></a>
-                </li>
-            <?php endfor; ?>
-            <?php if ($current_page < $total_pages): ?>
-                <li class="page-item">
-                    <a class="page-link" href="<?= $paginationBase ?>&page=<?= $current_page + 1 ?>">&raquo;</a>
-                </li>
-            <?php endif; ?>
-        </ul>
-        <p class="text-center text-muted small"><?= lang('Parishes.textShowingPageSummary', [(int) $current_page, (int) $total_pages, (int) $total]) ?></p>
-    </nav>
-<?php endif; ?>
 <?php if (($isDiocesanAdmin ?? false)): ?>
     <div class="modal fade" id="deleteParishImpactModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">

@@ -47,6 +47,15 @@ class Deaneries extends BaseController
         }
         $hierarchy = new HierarchyService($db);
         $rows = $hierarchy->deaneriesInDiocese($dioceseId);
+        $allowedPerPage = [10, 25, 50, 100];
+        $perPage = (int) ($this->request->getGet('per_page') ?? 10);
+        if (! in_array($perPage, $allowedPerPage, true)) {
+            $perPage = 10;
+        }
+        $total = count($rows);
+        $lastPage = max(1, (int) ceil($total / $perPage));
+        $page = max(1, min((int) ($this->request->getGet('page') ?? 1), $lastPage));
+        $rows = array_slice($rows, ($page - 1) * $perPage, $perPage);
         foreach ($rows as &$row) {
             $row['parishes'] = $hierarchy->parishesInDeanery((int) $row['id']);
         }
@@ -58,6 +67,12 @@ class Deaneries extends BaseController
                     ->where('diocese_id', $dioceseId)->where('is_active', 1)
                     ->orderBy('name', 'ASC')->get()->getResultArray(),
                 'can_manage_deaneries' => auth()->user()?->can('deanery.manage') === true,
+                'pagination' => [
+                    'page' => $page,
+                    'per_page' => $perPage,
+                    'total' => $total,
+                    'last_page' => $lastPage,
+                ],
             ]
         ));
     }
