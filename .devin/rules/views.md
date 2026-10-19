@@ -20,6 +20,16 @@ trigger: always_on
 ## Tables
 
 - Never add hardcoded color classes to `<thead>` (`table-light`, `table-dark`, etc.). Leave `<thead>` unstyled so `data-bs-theme` works.
+- Paginated tables use one `card mb-4`: visible `card-header`, `card-body p-0`, responsive table with `mb-0`, and an integrated footer.
+
+## Pagination
+
+- Default to 10 rows; allowed sizes are `[10, 25, 50, 100]` unless documented otherwise.
+- Footer: `d-flex justify-content-between align-items-center flex-wrap gap-2 p-3 border-top`.
+- Left group: size buttons (`btn-group-sm`); active `btn-primary`, others `btn-outline-primary`; changing size resets to page 1.
+- Right group: Previous, disabled `Page X / Y`, Next; use `btn-outline-secondary` and disable boundary actions.
+- Preserve search, filters, dates, and scope in all links; hide the footer for one-page results.
+- Do not use numbered `<ul class="pagination">` controls or per-page selectors in filter forms; migrate them when touching a view.
 
 ## CSRF for Native Fetch
 
