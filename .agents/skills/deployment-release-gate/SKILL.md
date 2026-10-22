@@ -18,7 +18,7 @@ composer validate --strict
 composer audit --locked --no-interaction
 composer install --no-dev --optimize-autoloader --dry-run --no-interaction
 vendor/bin/phpstan analyse --no-progress
-vendor/bin/phpunit --testdox
+vendor/bin/phpunit --no-coverage --testdox
 php spark migrate:status --all
 php spark routes > writable/routes_before_deploy.txt
 sh build/backup_database.sh --check

@@ -7,7 +7,7 @@ This is the canonical go/no-go, deployment, validation, and rollback procedure f
 ## 1. Supported Production Platform
 
 - PHP 8.2–8.5.
-- MySQL 8.0+.
+- MySQL 8.0+ (MariaDB is supported; the optional `idx_profile_birth_month_day` functional index is skipped there because MariaDB has no functional key parts).
 - Composer 2.10.3+ with verification keys configured on the deployment host.
 - PHP extensions: `intl`, `mbstring`, `mysqli`/`mysqlnd`, `gd`, `curl`, `dom`, `xml`, and `zip`.
 - Nginx or Apache document root set to `public/`.
@@ -77,7 +77,7 @@ composer validate --strict
 composer audit --locked --no-interaction
 composer install --no-dev --optimize-autoloader --dry-run --no-interaction
 vendor/bin/phpstan analyse --no-progress
-vendor/bin/phpunit --testdox
+vendor/bin/phpunit --no-coverage --testdox
 php spark migrate:status --all
 php spark routes > /tmp/routes_before_deploy.txt
 sh build/backup_database.sh --check

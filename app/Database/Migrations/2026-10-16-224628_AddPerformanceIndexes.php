@@ -56,13 +56,25 @@ class AddPerformanceIndexes extends Migration
             }
         }
 
-        if ($this->db->tableExists('profile') && ! isset($this->db->getIndexData('profile')['idx_profile_birth_month_day'])) {
+        if ($this->supportsFunctionalIndexes() && $this->db->tableExists('profile') && ! isset($this->db->getIndexData('profile')['idx_profile_birth_month_day'])) {
             $table = $this->db->escapeIdentifiers($this->db->prefixTable('profile'));
             $expression = $this->db->DBDriver === 'SQLite3'
                 ? "(CAST(strftime('%m', birth_date) AS INTEGER) * 100 + CAST(strftime('%d', birth_date) AS INTEGER))"
                 : '((MONTH(birth_date) * 100 + DAYOFMONTH(birth_date)))';
             $this->db->query("CREATE INDEX idx_profile_birth_month_day ON {$table} {$expression}");
         }
+    }
+
+    /**
+     * MariaDB has no functional key parts; skip the optional birthday index there.
+     */
+    private function supportsFunctionalIndexes(): bool
+    {
+        if ($this->db->DBDriver === 'SQLite3') {
+            return true;
+        }
+
+        return stripos($this->db->getVersion(), 'mariadb') === false;
     }
 
     public function down()

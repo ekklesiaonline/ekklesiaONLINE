@@ -10,27 +10,25 @@ This document defines the active seeder strategy for ekklesiaONLINE.
 
 ## Canonical Seeder
 
-- `app/Database/Seeds/UnifiedAppSeeder.php`
+- `app/Database/Seeds/DatabaseSeeder.php`
 
-Responsibilities:
+Responsibilities (idempotent; safe to re-run):
 
-1. Seed sample parish and baseline users (Province Admin + Parish Admin).
-2. Seed profile records for created users.
-3. Sync role-to-menu permission policy via `PermissionRoleSyncSeeder`.
-4. Seed/update liturgical calendar entries.
+1. `PermissionsAndRolesSeeder` — Shield permissions and role grants.
+2. `ProvincesAndDiocesesSeeder` — baseline provinces and dioceses.
+3. `ChartAccountCategorySeeder` / `ChartOfAccountsSeeder` — baseline chart of accounts.
 
 Run command:
 
 ```bash
-php spark db:seed UnifiedAppSeeder
+php spark db:seed DatabaseSeeder
 ```
 
 ## Removed Superseded Seeders
 
+- `app/Database/Seeds/UnifiedAppSeeder.php`
 - `app/Database/Seeds/InitialDataSeeder.php`
 - `app/Database/Seeds/LiturgicalCalendarSeeder.php`
-
-Their logic is now consolidated into `UnifiedAppSeeder`.
 
 ## Role-to-Menu Policy
 

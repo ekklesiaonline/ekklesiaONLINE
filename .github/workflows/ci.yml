@@ -11,8 +11,8 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  test:
-    name: PHPUnit & PHPStan (PHP 8.5)
+  quality:
+    name: Composer & PHPStan (PHP 8.5)
     runs-on: ubuntu-latest
 
     steps:
@@ -25,6 +25,43 @@ jobs:
           php-version: '8.5'
           extensions: intl, mbstring, mysqli, curl, gd, sqlite3, pdo_sqlite
           coverage: none
+          tools: composer:2.10
+          ini-values: memory_limit=512M
+
+      - name: Validate composer.json
+        run: composer validate --strict
+
+      - name: Audit locked dependencies
+        run: composer audit --locked --no-interaction
+
+      - name: Install dependencies
+        run: composer install --prefer-dist --no-progress --no-interaction
+
+      - name: Production install dry-run
+        run: composer install --no-dev --optimize-autoloader --dry-run --no-interaction
+
+      - name: Run PHPStan
+        run: vendor/bin/phpstan analyse --no-progress --memory-limit=512M
+
+  test:
+    name: PHPUnit (PHP ${{ matrix.php }}, SQLite)
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        php: [ '8.2', '8.3', '8.4', '8.5' ]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: intl, mbstring, mysqli, curl, gd, sqlite3, pdo_sqlite
+          coverage: none
+          tools: composer:2.10
           ini-values: memory_limit=512M
 
       - name: Get Composer Cache Directory
@@ -35,19 +72,105 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ${{ steps.composer-cache.outputs.dir }}
-          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
-          restore-keys: ${{ runner.os }}-composer-
+          key: ${{ runner.os }}-php${{ matrix.php }}-composer-${{ hashFiles('**/composer.lock') }}
+          restore-keys: ${{ runner.os }}-php${{ matrix.php }}-composer-
 
       - name: Install dependencies
         run: composer install --prefer-dist --no-progress --no-interaction
 
       - name: Ensure writable directories exist
         run: |
-          mkdir -p writable/cache writable/logs writable/session writable/uploads
+          mkdir -p writable/cache writable/logs writable/session writable/uploads build/logs
           chmod -R 777 writable
-
-      - name: Run PHPStan (Level 4)
-        run: vendor/bin/phpstan analyse --no-progress --memory-limit=512M
 
       - name: Run PHPUnit Test Suite
         run: vendor/bin/phpunit --no-coverage
+
+      - name: Upload test artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: phpunit-php${{ matrix.php }}
+          path: build/logs/
+          if-no-files-found: warn
+
+  mysql:
+    name: Migrations on empty MySQL 8
+    runs-on: ubuntu-latest
+
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: ekklesia_ci
+          MYSQL_USER: ekklesia_ci
+          MYSQL_PASSWORD: ekklesia_ci
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -proot"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=20
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.5'
+          extensions: intl, mbstring, mysqli, curl, gd
+          coverage: none
+          tools: composer:2.10
+          ini-values: memory_limit=512M
+
+      - name: Install dependencies
+        run: composer install --prefer-dist --no-progress --no-interaction
+
+      - name: Configure .env for the CI database
+        run: |
+          mkdir -p writable/cache writable/logs writable/session writable/uploads build/logs
+          grep -v -E "CHANGE_ME|^app\.forceGlobalSecureRequests" .env.example > .env
+          {
+            echo "app.baseURL = 'http://localhost:8080/'"
+            echo "app.forceGlobalSecureRequests = false"
+            echo "database.default.hostname = '127.0.0.1'"
+            echo "database.default.database = 'ekklesia_ci'"
+            echo "database.default.username = 'ekklesia_ci'"
+            echo "database.default.password = 'ekklesia_ci'"
+            echo "encryption.key = 'hex2bin:$(openssl rand -hex 32)'"
+            echo "encryption.blindIndexKey = 'hex2bin:$(openssl rand -hex 32)'"
+          } >> .env
+
+      # spark migrate/db:seed exit 0 even on exceptions, so assert on output.
+      - name: Migrate empty database
+        run: |
+          php spark migrate --all 2>&1 | tee build/logs/migrate.txt
+          grep -q "Migrations complete." build/logs/migrate.txt
+          ! grep -q "Exception" build/logs/migrate.txt
+
+      - name: Verify migration status
+        run: |
+          php spark migrate:status --all 2>&1 | tee build/logs/migrate_status.txt
+          ! grep -q -E "Exception|\| *---  *\|" build/logs/migrate_status.txt
+
+      - name: Seed baseline data
+        run: |
+          php spark db:seed DatabaseSeeder 2>&1 | tee build/logs/seed.txt
+          ! grep -q "Exception" build/logs/seed.txt
+
+      - name: Compile routes
+        run: |
+          php spark routes > build/logs/routes.txt 2>&1
+          ! grep -q "Exception" build/logs/routes.txt
+
+      - name: Upload MySQL evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mysql-migrations
+          path: build/logs/
+          if-no-files-found: warn
