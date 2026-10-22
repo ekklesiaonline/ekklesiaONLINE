@@ -56,13 +56,15 @@ check_get() {
   fi
 }
 
+# Shield's permission filter redirects (302) browser GETs it denies; it does not
+# return 403. Province admins may view /liturgical-source (read-only).
 login_as "$PROVINCE_ADMIN_EMAIL" "$PROVINCE_ADMIN_PASSWORD"
 check_get "PROVINCE_ADMIN_PROVINCE_DASH" "/province/dashboard" "${PROVINCE_DASH_EXPECTED:-200}"
-check_get "PROVINCE_ADMIN_DIOCESAN_CHART" "/chart-accounts" "${PROVINCE_CHART_EXPECTED:-403}"
-check_get "PROVINCE_ADMIN_LITURGICAL_SOURCE" "/liturgical-source" "${PROVINCE_LITURGY_EXPECTED:-403}"
+check_get "PROVINCE_ADMIN_DIOCESAN_CHART" "/chart-accounts" "${PROVINCE_CHART_EXPECTED:-302}"
+check_get "PROVINCE_ADMIN_LITURGICAL_SOURCE" "/liturgical-source" "${PROVINCE_LITURGY_EXPECTED:-200}"
 
 login_as "$DIOCESAN_ADMIN_EMAIL" "$DIOCESAN_ADMIN_PASSWORD"
-check_get "DIOCESAN_ADMIN_PROVINCE_DASH" "/province/dashboard" "${DIOCESAN_PROVINCE_DASH_EXPECTED:-403}"
+check_get "DIOCESAN_ADMIN_PROVINCE_DASH" "/province/dashboard" "${DIOCESAN_PROVINCE_DASH_EXPECTED:-302}"
 check_get "DIOCESAN_ADMIN_DIOCESAN_CHART" "/chart-accounts" "${DIOCESAN_CHART_EXPECTED:-200}"
 check_get "DIOCESAN_ADMIN_LITURGICAL_SOURCE" "/liturgical-source" "${DIOCESAN_LITURGY_EXPECTED:-200}"
 

@@ -96,7 +96,7 @@ end_date=$(date +%Y-%m-%d)
 
 : > "$REPORT"
 benchmark_endpoint "Dashboard" "/dashboard"
-benchmark_endpoint "Pastor Dashboard" "/pastor/dashboard"
+benchmark_endpoint "Clergy Dashboard" "/clergy/dashboard"
 benchmark_endpoint "Province Dashboard" "/province/dashboard"
 benchmark_endpoint_with_query "Members" "/members?status=active&per_page=50"
 benchmark_endpoint_with_query "Services" "/services?per_page=50"

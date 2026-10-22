@@ -20,8 +20,8 @@ cleanup() {
 }
 trap cleanup EXIT
 
-echo "[1/4] Seeding unified app data..."
-php spark db:seed UnifiedAppSeeder >/dev/null
+echo "[1/4] Seeding baseline data..."
+php spark db:seed DatabaseSeeder >/dev/null
 
 echo "[2/4] Starting local server on ${BASE_URL} ..."
 php spark serve --host 127.0.0.1 --port "$PORT" > writable/logs/e2e_smoke_server.log 2>&1 &
@@ -53,7 +53,7 @@ check_route() {
 check_route "/" "^(200|302)$"
 check_route "/login" "^200$"
 check_route "/dashboard" "^(200|302|303|401|403)$"
-check_route "/pastor/dashboard" "^(200|302|303|401|403)$"
+check_route "/clergy/dashboard" "^(200|302|303|401|403)$"
 check_route "/province/dashboard" "^(200|302|303|401|403)$"
 check_route "/members" "^(200|302|303|401|403)$"
 check_route "/services" "^(200|302|303|401|403)$"
