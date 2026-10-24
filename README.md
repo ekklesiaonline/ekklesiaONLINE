@@ -56,7 +56,7 @@ php spark db:seed DatabaseSeeder
 php spark serve
 ```
 
-Open: <http://localhost:8080>
+Open: <http://localhost:80>
 
 ## Bootstrap Accounts
 
