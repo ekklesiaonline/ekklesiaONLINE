@@ -6,7 +6,7 @@ use CodeIgniter\Model;
 
 class LiturgicalCalendarEntryModel extends Model
 {
-    protected $table            = 'liturgical_calendar_entry';
+    protected $table            = 'liturgical_calendar_entries';
     protected $primaryKey       = 'id';
     protected $useAutoIncrement = true;
     protected $returnType       = 'array';
@@ -135,23 +135,21 @@ class LiturgicalCalendarEntryModel extends Model
         return $result;
     }
 
+    public function resolvedTable(): string
+    {
+        return $this->table;
+    }
+
     private function resolveExistingTable(): ?string
     {
         $candidates = [
-            $this->db->getPrefix() . 'liturgical_calendar_entry',
-            'liturgical_calendar_entry',
-            $this->db->getPrefix() . 'liturgical_calendar_entries',
             'liturgical_calendar_entries',
+            'liturgical_calendar_entry',
         ];
 
-        foreach (array_values(array_unique($candidates)) as $table) {
-            try {
-                $columns = $this->db->getFieldNames($table);
-                if ($columns !== []) {
-                    return $table;
-                }
-            } catch (\Throwable $e) {
-                // Try next table-name variant.
+        foreach ($candidates as $unprefixed) {
+            if ($this->db->tableExists($unprefixed)) {
+                return $unprefixed;
             }
         }
 

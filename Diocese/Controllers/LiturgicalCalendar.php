@@ -383,12 +383,13 @@ class LiturgicalCalendar extends BaseController
         }
 
         $db = db_connect();
-        if (!$db->tableExists('liturgical_calendar_entry')) {
+        $table = $this->liturgicalCalendarEntryModel->resolvedTable();
+        if (!$db->tableExists($table)) {
             $this->supportsOwnershipMetadata = false;
             return false;
         }
 
-        $fields = array_map('strtolower', $db->getFieldNames('liturgical_calendar_entry'));
+        $fields = array_map('strtolower', $db->getFieldNames($table));
         $required = ['source_tier', 'is_system_template', 'created_by_user_id', 'owner_province_id', 'owner_diocese_id'];
 
         foreach ($required as $field) {

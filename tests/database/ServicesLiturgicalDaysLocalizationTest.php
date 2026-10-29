@@ -15,13 +15,14 @@ final class ServicesLiturgicalDaysLocalizationTest extends CIUnitTestCase
 
     public function testLiturgicalDaysEndpointReturnsLocalizedLabelsPerLocale(): void
     {
-        if (!$this->db->tableExists('liturgical_calendar_entry')) {
-            $this->markTestSkipped('liturgical_calendar_entry table is not available.');
+        $table = model('LiturgicalCalendarEntryModel', false)->resolvedTable();
+        if (!$this->db->tableExists($table)) {
+            $this->markTestSkipped('liturgical_calendar_entries table is not available.');
         }
 
         $now = date('Y-m-d H:i:s');
 
-        $this->db->table('liturgical_calendar_entry')->insert([
+        $this->db->table($table)->insert([
             'parish_id' => null,
             'code' => 'test_maundy_thursday_locale',
             'name' => 'Maundy Thursday',
