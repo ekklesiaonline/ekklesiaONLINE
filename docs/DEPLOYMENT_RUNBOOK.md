@@ -64,7 +64,7 @@ The current SQLite suite has six classified skips:
 
 - Four `ModuleCrudControllerPathsTest` cases target legacy plural-table fixtures (`parishes`) that are not part of the canonical singular-table SQLite schema. Production behavior is covered by canonical model/integration tests and the MySQL migration job.
 - `ModuleDemoDataSeederTest` targets an optional development fixture that is not shipped.
-- `ServicesLiturgicalDaysLocalizationTest` requires `liturgical_calendar_entry`, which is validated by the MySQL migration job rather than the reduced SQLite fixture.
+- `ServicesLiturgicalDaysLocalizationTest` requires `liturgical_calendar_entries` (created by `CreateCanonicalSchema` on MySQL/MariaDB only), which is validated by the MySQL migration job rather than the reduced SQLite fixture.
 
 Any additional skip is unclassified and blocks release. Schema/order failures and caught controller exceptions must not be converted into skips.
 
@@ -193,6 +193,8 @@ Schedule backups only after the command succeeds under the service account. Exam
 ```
 
 At a scheduled interval, restore the latest backup into an isolated database, verify expected tables and `php spark migrate:status --all`, then destroy the isolated environment through the approved infrastructure process. Never use a production database as a restore-drill target.
+
+`build/restore_database.sh` restores into `backup.db.name` (falling back to `database.default.database`) from `.env`; it has no separate target option. For a drill, take the backup first, then point `backup.db.*` at the empty isolated database before restoring, and point `database.default.*` at it only while running `migrate:status --all` against the restored copy. Restore back to the original `.env` afterwards.
 
 A real restore is destructive and requires explicit approval for the selected target:
 
