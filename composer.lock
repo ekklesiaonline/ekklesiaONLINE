@@ -8,16 +8,16 @@
     "packages": [
         {
             "name": "codeigniter4/framework",
-            "version": "v4.7.5",
+            "version": "v4.7.6",
             "source": {
                 "type": "git",
                 "url": "https://github.com/codeigniter4/framework.git",
-                "reference": "a1f129d56df3278702a8d1048af955d0ebf68c03"
+                "reference": "d755dca632526b116e4611eea9e303505fa6889a"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/codeigniter4/framework/zipball/a1f129d56df3278702a8d1048af955d0ebf68c03",
-                "reference": "a1f129d56df3278702a8d1048af955d0ebf68c03",
+                "url": "https://api.github.com/repos/codeigniter4/framework/zipball/d755dca632526b116e4611eea9e303505fa6889a",
+                "reference": "d755dca632526b116e4611eea9e303505fa6889a",
                 "shasum": ""
             },
             "require": {
@@ -81,7 +81,7 @@
                 "slack": "https://codeigniterchat.slack.com",
                 "source": "https://github.com/codeigniter4/CodeIgniter4"
             },
-            "time": "2026-10-09T15:41:56+00:00"
+            "time": "2026-11-01T18:17:59+00:00"
         },
         {
             "name": "codeigniter4/settings",
@@ -975,11 +975,11 @@
         },
         {
             "name": "phpstan/phpstan",
-            "version": "2.3.2",
+            "version": "2.3.4",
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/phpstan/phpstan/zipball/18bc23a0682f08591529377d271b5c4dfe9ed1dd",
-                "reference": "18bc23a0682f08591529377d271b5c4dfe9ed1dd",
+                "url": "https://api.github.com/repos/phpstan/phpstan/zipball/f20ce6f3c82556cfcfc086b152445a12d1d64fff",
+                "reference": "f20ce6f3c82556cfcfc086b152445a12d1d64fff",
                 "shasum": ""
             },
             "require": {
@@ -1035,7 +1035,7 @@
                     "type": "github"
                 }
             ],
-            "time": "2026-10-24T11:36:00+00:00"
+            "time": "2026-10-28T22:38:53+00:00"
         },
         {
             "name": "phpunit/php-code-coverage",
