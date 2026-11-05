@@ -1142,13 +1142,24 @@ abstract class BaseController extends Controller
         );
     }
 
+    /**
+     * Personal-tier users (plain members, follow-up/worship volunteers,
+     * dashboard.view-only accounts) are limited to /me; the parish dashboard
+     * exposes parish-wide aggregates.
+     */
+    protected function canAccessParishDashboard($user): bool
+    {
+        return $user !== null && $this->resolveDashboardScope($user)['tier'] !== 'personal';
+    }
+
     protected function canAccessDashboardPath($user, string $landingPath): bool
     {
         return match ($landingPath) {
             '/province/dashboard'   => $user->can('province.admin') || $user->inGroup('provinceadmin'),
             '/diocese/dashboard'    => $user->can('diocese.admin') || $user->inGroup('dioceseadmin'),
             '/system/dashboard'     => $user->can('system.admin') || $user->can('admin.system') || $user->inGroup('systemadmin'),
-            '/parish/dashboard'     => $user->inGroup('parishadmin', 'clergy') || $user->can('dashboard.view'),
+            '/parish/dashboard'     => $this->canAccessParishDashboard($user)
+                && ($user->inGroup('parishadmin', 'clergy') || $user->can('dashboard.view')),
             '/parish/finance'       => $user->inGroup('finance') || $user->can('finance.view'),
             '/parish/governance'    => $user->inGroup('vestry_member', 'warden', 'vestry_secretary') || $user->can('governance.vestry.view'),
             '/parish/secretary'     => $user->inGroup('vestry_secretary') || $user->can('report.view'),

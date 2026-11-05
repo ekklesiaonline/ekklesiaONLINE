@@ -14,7 +14,7 @@ This table defines the baseline least-privilege policy used by the canonical sid
 | --- | --- | --- |
 | Province Dashboard | `province.admin` | `provinceadmin` |
 | Diocesan Dashboard + diocesan links | `diocese.admin` | `dioceseadmin` |
-| Dashboard access fallback | `dashboard.view` | all baseline roles |
+| Dashboard access fallback | `dashboard.view` | all baseline roles; personal-tier users (`member`, `followup_volunteer`, `worship_volunteer`, `dashboard.view`-only) are limited to `/me` and `/parish/dashboard` redirects them there |
 | Members / Staff | `member.view` | `provinceadmin`, `dioceseadmin`, `parishadmin`, `clergy`, `finance`, `worship_coordinator` |
 | Members edit actions | `member.edit` | `dioceseadmin`, `parishadmin` and separately assigned operational groups; no province-wide clergy office grant |
 | Families | `family.view` | `parishadmin`, `clergy` |
