@@ -178,6 +178,55 @@ final class DashboardScopeResolverTest extends CIUnitTestCase
         $this->assertFalse($controller->exposeCanAccessMyDashboard(null));
     }
 
+    /**
+     * @dataProvider parishDashboardAccessProvider
+     */
+    public function testParishDashboardIsLimitedToNonPersonalTiers(array $groups, array $permissions, bool $expected): void
+    {
+        $controller = new class extends BaseController {
+            public function exposeCanAccessParishDashboard($user): bool
+            {
+                return $this->canAccessParishDashboard($user);
+            }
+
+            public function exposeCanAccessDashboardPath($user, string $path): bool
+            {
+                return $this->canAccessDashboardPath($user, $path);
+            }
+        };
+
+        $user = $this->createMockUser($groups, $permissions);
+
+        $this->assertSame($expected, $controller->exposeCanAccessParishDashboard($user));
+        $this->assertSame($expected, $controller->exposeCanAccessDashboardPath($user, '/parish/dashboard'));
+    }
+
+    public static function parishDashboardAccessProvider(): array
+    {
+        return [
+            'member is limited to /me'             => [['member'], ['dashboard.view'], false],
+            'followup volunteer is limited to /me' => [['followup_volunteer'], ['dashboard.view'], false],
+            'worship volunteer is limited to /me'  => [['worship_volunteer'], ['dashboard.view'], false],
+            'dashboard.view-only account'          => [[], ['dashboard.view'], false],
+            'parish admin'                         => [['parishadmin'], ['dashboard.view'], true],
+            'parish admin who is also a member'    => [['parishadmin', 'member'], ['dashboard.view'], true],
+            'finance officer'                      => [['finance'], ['dashboard.view'], true],
+            'system admin'                         => [['systemadmin'], ['system.admin', 'dashboard.view'], true],
+        ];
+    }
+
+    public function testParishDashboardDeniesNullUser(): void
+    {
+        $controller = new class extends BaseController {
+            public function exposeCanAccessParishDashboard($user): bool
+            {
+                return $this->canAccessParishDashboard($user);
+            }
+        };
+
+        $this->assertFalse($controller->exposeCanAccessParishDashboard(null));
+    }
+
     private function createMockUser(array $groups, array $permissions): object
     {
         return new class($groups, $permissions) {

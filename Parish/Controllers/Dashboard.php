@@ -24,6 +24,10 @@ class Dashboard extends BaseController
             return redirect()->to('/profile')->with('error', lang('Auth.notEnoughPrivilege'));
         }
 
+        if (!$this->canAccessParishDashboard($user)) {
+            return redirect()->to('/me');
+        }
+
         $parishId = $this->getOperationalParishId();
 
         if (!$parishId) {
