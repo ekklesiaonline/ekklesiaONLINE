@@ -28,7 +28,7 @@ php spark serve --host 127.0.0.1 --port "$PORT" > writable/logs/e2e_smoke_server
 SERVER_PID=$!
 
 for i in {1..20}; do
-  if curl -sS -o /dev/null "$BASE_URL/"; then
+  if curl -s -o /dev/null "$BASE_URL/health"; then
     break
   fi
   sleep 1
@@ -50,12 +50,15 @@ check_route() {
 }
 
 # Public/login and protected module routes should return either 200 (public) or redirect/unauthorized class without crashing.
+check_route "/health" "^200$"
 check_route "/" "^(200|302)$"
 check_route "/login" "^200$"
-check_route "/dashboard" "^(200|302|303|401|403)$"
+check_route "/me" "^(200|302|303|401|403)$"
+check_route "/parish/dashboard" "^(200|302|303|401|403)$"
+check_route "/diocese/dashboard" "^(200|302|303|401|403)$"
 check_route "/clergy/dashboard" "^(200|302|303|401|403)$"
 check_route "/province/dashboard" "^(200|302|303|401|403)$"
-check_route "/members" "^(200|302|303|401|403)$"
+check_route "/people" "^(200|302|303|401|403)$"
 check_route "/services" "^(200|302|303|401|403)$"
 check_route "/attendance/reports" "^(200|302|303|401|403)$"
 check_route "/donations" "^(200|302|303|401|403)$"
