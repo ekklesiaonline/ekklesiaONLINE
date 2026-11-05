@@ -38,4 +38,6 @@ Role-to-route mapping (first match wins, highest tier first):
 
 Old `/dashboard` and `/treasurer/dashboard` are deprecated redirect shims.
 
+Personal-tier users (`member`, `followup_volunteer`, `worship_volunteer`, `dashboard.view`-only) are limited to `/me`: `BaseController::canAccessParishDashboard()` denies them and `/parish/dashboard` redirects them to `/me`.
+
 When answering, cite the actual resolution code and map the user’s role to the correct route.
