@@ -16,6 +16,9 @@ final class DioceseDashboardDataServiceTest extends CIUnitTestCase
 {
     use DatabaseTestTrait;
 
+    private const PERIOD_START = '2026-10-01';
+    private const PERIOD_END   = '2026-10-31';
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -170,7 +173,7 @@ final class DioceseDashboardDataServiceTest extends CIUnitTestCase
         $this->seedMembersAndServices($parishes);
 
         $service = new DioceseDashboardDataService();
-        $rows = $service->getParishSummaryRows('month', null, null, 1);
+        $rows = $service->getParishSummaryRows('custom', self::PERIOD_START, self::PERIOD_END, 1);
 
         $this->assertCount(4, $rows);
         $this->assertSame('Alpha', $rows[0]['parish_name']);
@@ -194,8 +197,8 @@ final class DioceseDashboardDataServiceTest extends CIUnitTestCase
         $this->seedMembersAndServices($parishes);
 
         $service = new DioceseDashboardDataService();
-        $page1 = $service->getParishSummaryRows('month', null, null, 1, null, 2, 0);
-        $page2 = $service->getParishSummaryRows('month', null, null, 1, null, 2, 2);
+        $page1 = $service->getParishSummaryRows('custom', self::PERIOD_START, self::PERIOD_END, 1, null, 2, 0);
+        $page2 = $service->getParishSummaryRows('custom', self::PERIOD_START, self::PERIOD_END, 1, null, 2, 2);
 
         $this->assertCount(2, $page1);
         $this->assertCount(2, $page2);
@@ -211,7 +214,7 @@ final class DioceseDashboardDataServiceTest extends CIUnitTestCase
         $this->seedMembersAndServices($parishes);
 
         $service = new DioceseDashboardDataService();
-        $rows = $service->getParishSummaryRows('month', null, null, 1, 3, 10, 0);
+        $rows = $service->getParishSummaryRows('custom', self::PERIOD_START, self::PERIOD_END, 1, 3, 10, 0);
 
         $this->assertCount(1, $rows);
         $this->assertSame('Charlie', $rows[0]['parish_name']);
@@ -223,8 +226,8 @@ final class DioceseDashboardDataServiceTest extends CIUnitTestCase
         $this->seedMembersAndServices($parishes);
 
         $service = new DioceseDashboardDataService();
-        $allRows = $service->getParishSummaryRows('month', null, null, 1);
-        $totals = $service->getDioceseSummaryTotals('month', null, null, 1);
+        $allRows = $service->getParishSummaryRows('custom', self::PERIOD_START, self::PERIOD_END, 1);
+        $totals = $service->getDioceseSummaryTotals('custom', self::PERIOD_START, self::PERIOD_END, 1);
 
         $expectedMembers = array_sum(array_column($allRows, 'total_members'));
         $expectedAttendance = array_sum(array_column($allRows, 'total_attendance'));
@@ -244,7 +247,7 @@ final class DioceseDashboardDataServiceTest extends CIUnitTestCase
         $this->seedMembersAndServices($parishes);
 
         $service = new DioceseDashboardDataService();
-        $totals = $service->getDioceseSummaryTotals('month', null, null, 1, 2);
+        $totals = $service->getDioceseSummaryTotals('custom', self::PERIOD_START, self::PERIOD_END, 1, 2);
 
         $this->assertSame(1, $totals['total_parishes']);
         $this->assertSame(2, $totals['total_members']);
@@ -256,8 +259,8 @@ final class DioceseDashboardDataServiceTest extends CIUnitTestCase
         $this->seedDioceseWithParishes();
 
         $service = new DioceseDashboardDataService();
-        $rows = $service->getParishSummaryRows('month', null, null, 1, null, 2, 0);
-        $totals = $service->getDioceseSummaryTotals('month', null, null, 1);
+        $rows = $service->getParishSummaryRows('custom', self::PERIOD_START, self::PERIOD_END, 1, null, 2, 0);
+        $totals = $service->getDioceseSummaryTotals('custom', self::PERIOD_START, self::PERIOD_END, 1);
 
         $this->assertCount(2, $rows);
         $this->assertSame(0, $rows[0]['total_members']);
