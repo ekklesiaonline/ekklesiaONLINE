@@ -16,7 +16,7 @@ Use this skill before changing a cross-module feature or explaining where a new 
 
 ## Architecture map
 
-- Framework: CodeIgniter 4.7+, PHP 8.2+, Shield 1.2, MySQL 8, Bootstrap 5.
+- Framework: CodeIgniter 4.7+, PHP 8.5, Shield 1.2, MySQL 8, Bootstrap 5.
 - Organizational hierarchy: **System → Province → Diocese → Parish → Personal**.
 - Shared application code lives under `app/`.
 - Role modules use PSR-4 roots: `Province/`, `Diocese/`, `Clergy/`, `Parish/`, `Worship/`, `Finance/`, `Volunteer/`, and `MemberPortal/`.

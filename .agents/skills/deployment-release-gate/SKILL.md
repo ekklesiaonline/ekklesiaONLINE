@@ -25,7 +25,7 @@ sh build/backup_database.sh --check
 sh build/restore_database.sh --check
 ```
 
-Also verify PHP 8.2–8.5 support, MySQL 8 compatibility, required extensions, `public/` as the web root, writable-directory ownership, HTTPS/trusted proxy settings, independent encryption keys, rate limits, monitoring/audit settings, SMTP configuration, backup settings, and device verification enabled in production.
+Also verify PHP 8.5 support, MySQL 8 compatibility, required extensions, `public/` as the web root, writable-directory ownership, HTTPS/trusted proxy settings, independent encryption keys, rate limits, monitoring/audit settings, SMTP configuration, backup settings, and device verification enabled in production.
 
 Never run `php spark config:check Database`, `Encryption`, or `Email` in logs because resolved secrets may be printed.
 

@@ -6,7 +6,7 @@ This is the canonical go/no-go, deployment, validation, and rollback procedure f
 
 ## 1. Supported Production Platform
 
-- PHP 8.2–8.5.
+- PHP 8.5.
 - MySQL 8.0+ (MariaDB is supported; the optional `idx_profile_birth_month_day` functional index is skipped there because MariaDB has no functional key parts).
 - Composer 2.10.3+ with verification keys configured on the deployment host.
 - PHP extensions: `intl`, `mbstring`, `mysqli`/`mysqlnd`, `gd`, `curl`, `dom`, `xml`, and `zip`.
@@ -14,7 +14,7 @@ This is the canonical go/no-go, deployment, validation, and rollback procedure f
 - The web-service account must own or have group write access to required `writable/` subdirectories. Do not use world-writable permissions.
 - `.env` must be created from `.env.example`; never deploy the example placeholders.
 
-CI uses SQLite for the broad PHP 8.2–8.5 regression matrix. The dedicated MySQL 8 job is authoritative for production migration compatibility.
+CI runs the PHPUnit suite on PHP 8.5 with SQLite. The dedicated MySQL 8 job is authoritative for production migration compatibility.
 
 ## 2. Required Environment Contract
 
@@ -50,7 +50,7 @@ Do not run `config:check` for `Database`, `Encryption`, or `Email` in deployment
 A release is **no-go** if any item fails:
 
 1. The release is an immutable reviewed tag or commit.
-2. All PHP 8.2–8.5 SQLite jobs pass.
+2. The PHP 8.5 SQLite job passes.
 3. The MySQL 8 migration job passes from an empty database.
 4. Composer validation, production install dry-run, audit, and PHPStan pass.
 5. PHPUnit has no failures, warnings, or risky tests.
@@ -255,7 +255,7 @@ Do not run `php spark config:check Email`; it prints resolved secrets.
 - [x] Review `app/Controllers/Health.php` and confirm public liveness is minimal and does not query the database.
 - [x] Confirm protected readiness requires `system.admin`, returns HTTP 503 on component failure, and does not expose SQL, paths, versions, or exceptions.
 - [x] Review health routes and filters: `/health` bypasses maintenance/authentication while secure headers and request monitoring remain; `/health/ready` retains session and permission filters.
-- [x] Review the PHP 8.2–8.5 matrix, Composer pin, audit, production-install dry-run, MySQL migration job, and test artifacts.
+- [x] Review the PHP 8.5 CI job, Composer pin, audit, production-install dry-run, MySQL migration job, and test artifacts.
 - [x] Review backup, restore, role smoke, and rate-limit scripts; database passwords are not command arguments and smoke credentials come from the environment.
 - [x] Review the six classified skips and confirm broad exceptions are not converted into skips.
 - [x] Review `.env.example`, this runbook, and README credential removal.
@@ -300,11 +300,11 @@ Do not run `php spark config:check Email`; it prints resolved secrets.
 - [x] Local PHPStan reports no errors.
 - [x] Local PHPUnit passes with 588 tests, 2,626 assertions, and exactly six classified skips.
 - [ ] Upgrade/confirm Composer 2.10.3 or newer; the assessed local version was 2.10.1.
-- [ ] Confirm CI PHP 8.2, 8.3, 8.4, and 8.5 jobs pass without failures, warnings, or risky tests.
+- [ ] Confirm the CI PHP 8.5 job passes without failures, warnings, or risky tests.
 - [ ] Download and review TestDox and JUnit artifacts; block on any skip beyond the four legacy plural-table, optional development-seeder, and liturgical-calendar fixture skips.
 - [ ] Confirm the MySQL 8 service is healthy, migrations apply to an empty database, route compilation succeeds, and uploaded evidence is reviewed.
 
-**Completion:** [ ] Quality job passes; [ ] all four PHP jobs pass; [ ] MySQL job passes; [ ] exactly six skips; [ ] all artifacts reviewed.
+**Completion:** [ ] Quality job passes; [ ] PHP job passes; [ ] MySQL job passes; [ ] exactly six skips; [ ] all artifacts reviewed.
 
 ### Session 6 — Validate staging application flows
 

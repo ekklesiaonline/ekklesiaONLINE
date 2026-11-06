@@ -130,7 +130,7 @@ Live Search & Filters
 
 ## 3. Technology Stack
 
-Backend: PHP 8.1+, CodeIgniter 4.7
+Backend: PHP 8.5, CodeIgniter 4.7
 Authentication: CodeIgniter Shield 1.2
 Database: MySQL 8.0
 Frontend: Bootstrap 5 (responsive UI), jQuery (or vanilla JS) for AJAX, Chart.js for charts

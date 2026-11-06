@@ -32,7 +32,7 @@ Deliverable:
 
 ## Phase 1 - Environment and Infrastructure Readiness
 
-- [ ] Provision production host with PHP 8.2+, MySQL 8.0+, Composer 2+.
+- [ ] Provision production host with PHP 8.5, MySQL 8.0+, Composer 2+.
 - [ ] Point web root to `public/`.
 - [ ] Configure HTTPS at edge/web server.
 - [ ] Configure process manager and restart policy.

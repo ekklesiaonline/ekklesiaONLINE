@@ -55,7 +55,7 @@ MemberPortal/           → Member self-service (dashboard, profile, family view
 
 ### 1.3 Technology Stack
 
-- **Backend:** PHP 8.2+, CodeIgniter 4.7 (full-stack MVC framework)
+- **Backend:** PHP 8.5, CodeIgniter 4.7 (full-stack MVC framework)
 - **Authentication:** CodeIgniter Shield 1.2 (users, roles, permissions, auth attempts)
 - **Database:** MySQL 8.0+ (strict mode enforced)
 - **Frontend:** Bootstrap 5 (responsive), jQuery (AJAX), Chart.js (analytics charts)
@@ -716,7 +716,7 @@ MEDIUM PRIORITY (NICE TO HAVE)
 **Server Requirements:**
 
 - **OS:** Linux (Ubuntu 20.04 LTS or later preferred)
-- **PHP:** 8.2+ with extensions: `intl`, `mbstring`, `json`, `mysqlnd`, `openssl`, `curl`
+- **PHP:** 8.5 with extensions: `intl`, `mbstring`, `json`, `mysqlnd`, `openssl`, `curl`
 - **MySQL:** 8.0+ (strict mode on, character set utf8mb4)
 - **Web Server:** Nginx or Apache 2.4+ with mod_rewrite
 - **Memory:** 2GB RAM minimum (4GB+ recommended for growth)
