@@ -114,7 +114,6 @@ Create deployment accounts through the approved seeding or administrative bootst
 - Deployment runbook: `docs/DEPLOYMENT_RUNBOOK.md`
 - Database backup script: `build/backup_database.sh`
 - Database restore script: `build/restore_database.sh`
-- Nightly staging rate-limit check: `.github/workflows/nightly-security-rate-limit.yml`
 
 ## Parish Staff Role Actions
 
