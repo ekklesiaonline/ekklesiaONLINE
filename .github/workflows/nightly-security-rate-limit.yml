@@ -4,6 +4,31 @@ on:
   schedule:
     - cron: '17 3 * * *'
   workflow_dispatch:
+    inputs:
+      requests:
+        description: 'Authenticated burst size (REQUESTS)'
+        required: false
+        default: '30'
+      target_path:
+        description: 'Rate-limited write path to probe (TARGET_PATH)'
+        required: false
+        default: 'province/create-admin'
+      login_requests:
+        description: 'Failed-login burst size (LOGIN_REQUESTS)'
+        required: false
+        default: '12'
+      anon_requests:
+        description: 'Anonymous burst size (ANON_REQUESTS)'
+        required: false
+        default: '30'
+      diocese_id:
+        description: 'Override dashboard-scraped diocese id (DIOCESE_ID)'
+        required: false
+        default: ''
+
+permissions:
+  contents: read
+  issues: write
 
 concurrency:
   group: nightly-security-rate-limit
@@ -13,6 +38,7 @@ jobs:
   rate-limit:
     name: Rate-limit smoke against staging
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     environment: staging
 
     steps:
@@ -27,7 +53,23 @@ jobs:
           BASE_URL: ${{ secrets.STAGING_BASE_URL }}
           LOGIN_EMAIL: ${{ secrets.STAGING_RATE_LIMIT_EMAIL }}
           LOGIN_PASSWORD: ${{ secrets.STAGING_RATE_LIMIT_PASSWORD }}
+          REQUESTS: ${{ inputs.requests || '30' }}
+          TARGET_PATH: ${{ inputs.target_path || 'province/create-admin' }}
+          LOGIN_REQUESTS: ${{ inputs.login_requests || '12' }}
+          ANON_REQUESTS: ${{ inputs.anon_requests || '30' }}
+          ANON_PATH: ${{ inputs.target_path || 'province/create-admin' }}
+          DIOCESE_ID: ${{ inputs.diocese_id }}
         run: sh build/stress_rate_limit_test.sh 2>&1 | tee build/logs/rate-limit-report.txt
+
+      - name: Open tracking issue on failure
+        if: failure()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh issue create \
+            --title "Nightly rate-limit check failed ($(date +%Y-%m-%d))" \
+            --body "Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
+            || true
 
       - name: Upload sanitized report
         if: always()
@@ -35,4 +77,5 @@ jobs:
         with:
           name: nightly-rate-limit-report
           path: build/logs/rate-limit-report.txt
+          retention-days: 30
           if-no-files-found: warn
