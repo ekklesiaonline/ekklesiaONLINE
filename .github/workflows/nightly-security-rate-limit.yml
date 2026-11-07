@@ -1,0 +1,38 @@
+name: Nightly Rate-Limit Check
+
+on:
+  schedule:
+    - cron: '17 3 * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: nightly-security-rate-limit
+  cancel-in-progress: false
+
+jobs:
+  rate-limit:
+    name: Rate-limit smoke against staging
+    runs-on: ubuntu-latest
+    environment: staging
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Ensure report directory exists
+        run: mkdir -p build/logs
+
+      - name: Run rate-limit stress test
+        env:
+          BASE_URL: ${{ secrets.STAGING_BASE_URL }}
+          LOGIN_EMAIL: ${{ secrets.STAGING_RATE_LIMIT_EMAIL }}
+          LOGIN_PASSWORD: ${{ secrets.STAGING_RATE_LIMIT_PASSWORD }}
+        run: sh build/stress_rate_limit_test.sh 2>&1 | tee build/logs/rate-limit-report.txt
+
+      - name: Upload sanitized report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: nightly-rate-limit-report
+          path: build/logs/rate-limit-report.txt
+          if-no-files-found: warn
