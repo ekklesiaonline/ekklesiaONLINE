@@ -215,13 +215,19 @@ sh build/restore_database.sh /path/to/backup.sql.gz
 
 ## 10. Nightly Rate-Limit Check
 
-`.github/workflows/nightly-security-rate-limit.yml` runs on schedule and manually against a protected non-production `staging` environment. Configure these secrets:
+`.github/workflows/nightly-security-rate-limit.yml` runs on schedule and manually against a protected non-production `staging` environment. Create the `staging` environment with required reviewers before first use, and configure these secrets:
 
 - `STAGING_BASE_URL`
 - `STAGING_RATE_LIMIT_EMAIL`
 - `STAGING_RATE_LIMIT_PASSWORD`
 
-The workflow runs `build/stress_rate_limit_test.sh`, requires at least one HTTP 429 and a `Retry-After` header, and uploads only the sanitized report. It must never target production.
+The workflow runs `build/stress_rate_limit_test.sh`, which executes three probes:
+
+- `PHASE=auth` — authenticated burst on a rate-limited write path; requires at least one HTTP 429 with a `Retry-After` header.
+- `PHASE=login` — failed-login burst on `POST /login`; requires at least one HTTP 429 with `Retry-After`.
+- `PHASE=anon` — unauthenticated burst; fails if any response is a success status.
+
+Manual runs accept `workflow_dispatch` inputs (`requests`, `target_path`, `login_requests`, `anon_requests`, `diocese_id`) to tune burst size and target without editing the script. On failure the workflow opens a tracking issue. The uploaded report contains status codes only — no cookies, headers, CSRF tokens, or response bodies — and is retained for 30 days. It must never target production.
 
 ## 11. Edge Protection and Monitoring
 
@@ -287,10 +293,11 @@ Do not run `php spark config:check Email`; it prints resolved secrets.
 - [ ] Add `STAGING_BASE_URL`, `STAGING_RATE_LIMIT_EMAIL`, and `STAGING_RATE_LIMIT_PASSWORD`.
 - [ ] Confirm the test account is non-production and has only required permissions.
 - [ ] Manually run the nightly rate-limit workflow against staging.
-- [ ] Confirm validation and login succeed, at least one HTTP 429 and a `Retry-After` header are observed, and concurrent runs are prevented.
-- [ ] Confirm the artifact is sanitized and excludes cookies, credentials, and temporary response bodies.
+- [ ] Confirm validation and login succeed, at least one HTTP 429 and a `Retry-After` header are observed on the authenticated and login probes, the anonymous probe records no success statuses, and concurrent runs are prevented.
+- [ ] Confirm the artifact is sanitized and excludes cookies, credentials, headers, CSRF tokens, and temporary response bodies.
+- [ ] Confirm a scheduled nightly run passes and that a simulated failure opens a tracking issue.
 
-**Completion:** [ ] Protected environment exists; [ ] all secrets configured; [ ] manual run succeeds; [ ] sanitized artifact reviewed; [ ] production not targeted.
+**Completion:** [ ] Protected environment exists; [ ] all secrets configured; [ ] manual run succeeds; [ ] scheduled run verified; [ ] failure notification verified; [ ] sanitized artifact reviewed; [ ] production not targeted.
 
 ### Session 5 — Run the complete CI release gate
 
