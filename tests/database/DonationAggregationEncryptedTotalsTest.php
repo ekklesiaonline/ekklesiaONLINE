@@ -31,7 +31,7 @@ final class DonationAggregationEncryptedTotalsTest extends CIUnitTestCase
         $model = model(DonationModel::class);
 
         $nowMonthDate = date('Y-m-15');
-        $prevMonthDate = date('Y-m-15', strtotime('-1 month'));
+        $prevMonthDate = date('Y-m-15', strtotime('first day of -1 month'));
 
         $entries = [
             ['parish_id' => $parishA, 'fund_id' => $fundA1, 'amount' => '100.00', 'date' => $nowMonthDate, 'category' => 'offering'],
@@ -62,7 +62,7 @@ final class DonationAggregationEncryptedTotalsTest extends CIUnitTestCase
             $this->assertStringStartsWith('enc:v1:', (string) ($row['amount'] ?? ''));
         }
 
-        $start = date('Y-m-01', strtotime('-2 months'));
+        $start = date('Y-m-01', strtotime('first day of -2 months'));
         $end = date('Y-m-t');
 
         $byCategory = $model->getDonationsByCategory($parishA, $start, $end);
@@ -223,7 +223,7 @@ final class DonationAggregationEncryptedTotalsTest extends CIUnitTestCase
         $fundB1 = $this->insertFund($parishB, 'Building Fund');
 
         $nowMonthDate = date('Y-m-15');
-        $prevMonthDate = date('Y-m-15', strtotime('-1 month'));
+        $prevMonthDate = date('Y-m-15', strtotime('first day of -1 month'));
 
         $entries = [
             ['parish_id' => $parishA, 'fund_id' => $fundA1, 'amount' => '100.00', 'date' => $nowMonthDate, 'category' => 'offering'],
