@@ -257,6 +257,12 @@ final class ProvinceDashboardDataServiceTest extends CIUnitTestCase
         $dioceses = $this->seedProvinceWithDioceses();
         $this->seedMembersServicesAndAttendance($dioceses);
         $this->seedActiveDiocesanAdmin(1, 100);
+        // Health compares the last service against "now minus the overdue
+        // window", so the recent service must come from the same clock.
+        $this->db->table('service')->insert([
+            'parish_id'    => 1,
+            'service_date' => date('Y-m-d'),
+        ]);
 
         $service = new ProvinceDashboardDataService();
         $rows = $service->getDioceseSummaryRows('custom', self::PERIOD_START, self::PERIOD_END, 1);

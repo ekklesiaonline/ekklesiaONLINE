@@ -380,7 +380,8 @@ final class LeadershipPositionGateTest extends CIUnitTestCase
         for ($i = 0; $i < $count; $i++) {
             $this->db->table('service')->insert([
                 'parish_id'    => $parishId,
-                'service_date' => date('Y-m-d', strtotime('-' . ($i + 1) . ' weeks')),
+                // Standing counts communions in the current calendar year.
+                'service_date' => max(date('Y-01-01'), date('Y-m-d', strtotime('-' . ($i + 1) . ' weeks'))),
                 'created_at'   => date('Y-m-d H:i:s'),
                 'updated_at'   => date('Y-m-d H:i:s'),
             ]);

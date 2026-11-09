@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\DonationModel;
+use CodeIgniter\I18n\Time;
 use CodeIgniter\Test\CIUnitTestCase;
 use CodeIgniter\Test\DatabaseTestTrait;
 use Config\Services;
@@ -31,7 +32,7 @@ final class DonationAggregationEncryptedTotalsTest extends CIUnitTestCase
         $model = model(DonationModel::class);
 
         $nowMonthDate = date('Y-m-15');
-        $prevMonthDate = date('Y-m-15', strtotime('-1 month'));
+        $prevMonthDate = date('Y-m-15', strtotime('first day of -1 month'));
 
         $entries = [
             ['parish_id' => $parishA, 'fund_id' => $fundA1, 'amount' => '100.00', 'date' => $nowMonthDate, 'category' => 'offering'],
@@ -62,7 +63,7 @@ final class DonationAggregationEncryptedTotalsTest extends CIUnitTestCase
             $this->assertStringStartsWith('enc:v1:', (string) ($row['amount'] ?? ''));
         }
 
-        $start = date('Y-m-01', strtotime('-2 months'));
+        $start = date('Y-m-01', strtotime('first day of -2 months'));
         $end = date('Y-m-t');
 
         $byCategory = $model->getDonationsByCategory($parishA, $start, $end);
@@ -116,6 +117,38 @@ final class DonationAggregationEncryptedTotalsTest extends CIUnitTestCase
         $this->assertEqualsWithDelta(150.50, (float) ($indexed[$fixture['parishA'] . '|' . $fixture['thisMonthKey']] ?? 0.0), 0.0001);
         $this->assertEqualsWithDelta(25.25, (float) ($indexed[$fixture['parishA'] . '|' . $fixture['prevMonthKey']] ?? 0.0), 0.0001);
         $this->assertEqualsWithDelta(75.00, (float) ($indexed[$fixture['parishB'] . '|' . $fixture['thisMonthKey']] ?? 0.0), 0.0001);
+    }
+
+    public function testMonthlyTrendsKeepOldestMonthOnTheLastDayOfAMonth(): void
+    {
+        // On Jan 31, "-11 months" overflows Feb 31 into March, which used to
+        // drop February from the 12-month window.
+        Time::setTestNow('2027-01-31 10:00:00');
+
+        try {
+            $model = model(DonationModel::class);
+            $parishId = $this->insertParish('Parish A');
+            $fundId = $this->insertFund($parishId, 'General Fund');
+            $model->insert([
+                'parish_id' => $parishId,
+                'fund_id' => $fundId,
+                'user_id' => null,
+                'amount' => '40.00',
+                'date' => '2026-02-15',
+                'category' => 'offering',
+                'chart_account_id' => null,
+                'payment_method' => 'cash',
+                'notes' => 'oldest trend month',
+            ]);
+
+            $network = array_column($model->getNetworkMonthlyTrend(12, [$parishId], false), 'total_amount', 'month_key');
+            $this->assertEqualsWithDelta(40.00, (float) ($network['2026-02'] ?? 0.0), 0.0001);
+
+            $byParish = array_column($model->getMonthlyTrendByParish(12, [$parishId], false), 'total_amount', 'month_key');
+            $this->assertEqualsWithDelta(40.00, (float) ($byParish['2026-02'] ?? 0.0), 0.0001);
+        } finally {
+            Time::setTestNow();
+        }
     }
 
     private function configureEncryptionKeys(): void
@@ -223,7 +256,7 @@ final class DonationAggregationEncryptedTotalsTest extends CIUnitTestCase
         $fundB1 = $this->insertFund($parishB, 'Building Fund');
 
         $nowMonthDate = date('Y-m-15');
-        $prevMonthDate = date('Y-m-15', strtotime('-1 month'));
+        $prevMonthDate = date('Y-m-15', strtotime('first day of -1 month'));
 
         $entries = [
             ['parish_id' => $parishA, 'fund_id' => $fundA1, 'amount' => '100.00', 'date' => $nowMonthDate, 'category' => 'offering'],

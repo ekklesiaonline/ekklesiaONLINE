@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use CodeIgniter\I18n\Time;
 use CodeIgniter\Model;
 
 class DiocesanAttendanceMonthlyModel extends Model
@@ -241,7 +242,7 @@ class DiocesanAttendanceMonthlyModel extends Model
                 ];
 
             case 'last_month':
-                $month = date('Y-m-01', strtotime('-1 month'));
+                $month = Time::now()->modify('first day of last month')->format('Y-m-01');
                 return [
                     'start_month' => $month,
                     'end_month' => $month,

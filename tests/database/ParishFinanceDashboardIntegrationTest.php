@@ -4,6 +4,7 @@ namespace Tests\Database;
 
 use App\Libraries\DataEncryption;
 use CodeIgniter\HTTP\RedirectResponse;
+use CodeIgniter\I18n\Time;
 use CodeIgniter\Shield\Auth;
 use CodeIgniter\Shield\Entities\User;
 use CodeIgniter\Test\CIUnitTestCase;
@@ -151,6 +152,30 @@ final class ParishFinanceDashboardIntegrationTest extends CIUnitTestCase
         $this->assertStringContainsString('1,200.00', $outputCustom);
         $this->assertStringContainsString('400.00', $outputCustom);
         $this->assertStringContainsString('800.00', $outputCustom); // Net
+    }
+
+    public function testTrendLabelsCoverTwelveDistinctMonthsOnTheLastDayOfAMonth(): void
+    {
+        // On Oct 31, "-1 months" overflows Sep 31 into Oct 1, which used to
+        // repeat October in the trend labels and drop September.
+        Time::setTestNow('2026-10-31 10:00:00');
+
+        try {
+            $output = $this->makeController('GET')->index();
+        } finally {
+            Time::setTestNow();
+        }
+
+        $this->assertIsString($output);
+        $this->assertMatchesRegularExpression('/const trendLabels = (\[[^\]]*\]);/', $output);
+        preg_match('/const trendLabels = (\[[^\]]*\]);/', $output, $matches);
+        $labels = json_decode($matches[1], true);
+
+        $expected = [];
+        for ($i = 11; $i >= 0; $i--) {
+            $expected[] = date('M Y', strtotime("2026-10-01 -{$i} months"));
+        }
+        $this->assertSame($expected, $labels);
     }
 
     public function testParishTenantIsolation(): void

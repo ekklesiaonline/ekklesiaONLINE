@@ -3,6 +3,7 @@
 namespace Parish\Controllers;
 
 use App\Controllers\BaseController;
+use CodeIgniter\I18n\Time;
 
 /**
  * Parish finance dashboard — scoped to the treasurer's own parish.
@@ -86,7 +87,8 @@ class FinanceDashboard extends BaseController
 
         // 12-Month Trend: single query for income and single query for expenses (optimized from 24 queries)
         $trendMonths = 12;
-        $twelveMonthsAgo = date('Y-m-01', strtotime('-' . ($trendMonths - 1) . ' months'));
+        $currentMonth = Time::now()->modify('first day of this month');
+        $twelveMonthsAgo = $currentMonth->modify('-' . ($trendMonths - 1) . ' months')->format('Y-m-01');
 
         $donationRows = $donationModel->db->table('donation')
             ->select('date, amount')
@@ -119,8 +121,9 @@ class FinanceDashboard extends BaseController
         $incomeTrend = [];
         $expenseTrend = [];
         for ($i = $trendMonths - 1; $i >= 0; $i--) {
-            $m = date('Y-m', strtotime("-{$i} months"));
-            $trendLabels[] = date('M Y', strtotime("-{$i} months"));
+            $month = $currentMonth->modify("-{$i} months");
+            $m = $month->format('Y-m');
+            $trendLabels[] = $month->format('M Y');
             $incomeTrend[] = round($incomeByMonth[$m] ?? 0.0, 2);
             $expenseTrend[] = round($expenseByMonth[$m] ?? 0.0, 2);
         }
