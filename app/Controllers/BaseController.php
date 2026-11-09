@@ -1637,4 +1637,21 @@ abstract class BaseController extends Controller
 
         return ['ok' => $errors === [], 'errors' => $errors];
     }
+
+    /**
+     * Return a strict Y-m-d query value, or $fallback when it is missing or not
+     * a real calendar date. MySQL strict mode rejects comparisons against
+     * literals such as '2026-02-31' or 'abc' with "Incorrect DATE value".
+     */
+    protected function validDateParamOr(mixed $value, string $fallback): string
+    {
+        $value = is_string($value) ? trim($value) : '';
+        if ($value === '') {
+            return $fallback;
+        }
+
+        $date = \DateTimeImmutable::createFromFormat('!Y-m-d', $value);
+
+        return $date !== false && $date->format('Y-m-d') === $value ? $value : $fallback;
+    }
 }

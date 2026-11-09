@@ -40,8 +40,8 @@ class FinanceDashboard extends BaseController
         $thisYearEnd = date('Y-12-31');
 
         $period = (string) ($this->request->getGet('period') ?? 'month');
-        $customStart = (string) ($this->request->getGet('start_date') ?? '');
-        $customEnd = (string) ($this->request->getGet('end_date') ?? '');
+        $customStart = $this->request->getGet('start_date');
+        $customEnd = $this->request->getGet('end_date');
 
         switch ($period) {
             case 'today':
@@ -57,8 +57,8 @@ class FinanceDashboard extends BaseController
                 $endDate = $thisYearEnd;
                 break;
             case 'custom':
-                $startDate = $customStart !== '' ? $customStart : $thisMonthStart;
-                $endDate = $customEnd !== '' ? $customEnd : $thisMonthEnd;
+                $startDate = $this->validDateParamOr($customStart, $thisMonthStart);
+                $endDate = $this->validDateParamOr($customEnd, $thisMonthEnd);
                 break;
             case 'month':
             default:
