@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Libraries\DataEncryption;
+use CodeIgniter\I18n\Time;
 
 class DonationModel extends BaseTenantModel
 {
@@ -337,7 +338,7 @@ class DonationModel extends BaseTenantModel
             return [];
         }
 
-        $startDate = date('Y-m-01', strtotime('-' . ($months - 1) . ' months'));
+        $startDate = Time::now()->modify('first day of -' . ($months - 1) . ' months')->format('Y-m-01');
 
         $builder = $this->db->table('donation')
             ->select('date, amount')
@@ -379,7 +380,7 @@ class DonationModel extends BaseTenantModel
             return [];
         }
 
-        $startDate = date('Y-m-01', strtotime('-' . ($months - 1) . ' months'));
+        $startDate = Time::now()->modify('first day of -' . ($months - 1) . ' months')->format('Y-m-01');
 
         $builder = $this->db->table('donation d')
             ->select('d.parish_id, c.name as parish_name, d.date, d.amount')
