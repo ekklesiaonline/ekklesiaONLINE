@@ -203,6 +203,7 @@ final class FinanceDashboardControllerTest extends CIUnitTestCase
             new UserAgent()
         );
         $request->setMethod('GET');
+        $request->setGlobal('get', $getData);
         Services::injectMock('request', $request);
 
         $controller = new class() extends FinanceDashboard {
@@ -244,4 +245,33 @@ final class FinanceDashboardControllerTest extends CIUnitTestCase
         $this->assertCount(12, $allParishes);
     }
 
+    public function testInvalidCustomRangeFallsBackToCurrentMonth(): void
+    {
+        $this->seedDioceseAndParishes(2);
+        $this->seedAdminUser();
+        $this->injectDiocesanAdminAuth();
+
+        foreach ([
+            ['start_date' => '2026-02-31', 'end_date' => '2026-13-01'],
+            ['start_date' => 'abc', 'end_date' => ''],
+            ['start_date' => ['2026-01-01'], 'end_date' => ['x']],
+        ] as $range) {
+            $this->makeController(['period' => 'custom'] + $range)->index();
+
+            $this->assertSame(date('Y-m-01'), $this->capturedViewData['start_date'] ?? null);
+            $this->assertSame(date('Y-m-t'), $this->capturedViewData['end_date'] ?? null);
+        }
+    }
+
+    public function testValidCustomRangeIsKept(): void
+    {
+        $this->seedDioceseAndParishes(2);
+        $this->seedAdminUser();
+        $this->injectDiocesanAdminAuth();
+
+        $this->makeController(['period' => 'custom', 'start_date' => '2025-02-28', 'end_date' => '2025-12-31'])->index();
+
+        $this->assertSame('2025-02-28', $this->capturedViewData['start_date'] ?? null);
+        $this->assertSame('2025-12-31', $this->capturedViewData['end_date'] ?? null);
+    }
 }

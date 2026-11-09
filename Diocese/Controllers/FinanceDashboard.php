@@ -46,8 +46,8 @@ class FinanceDashboard extends BaseController
                 $endDate = $thisYearEnd;
                 break;
             case 'custom':
-                $startDate = $customStart ?? $thisMonthStart;
-                $endDate = $customEnd ?? $thisMonthEnd;
+                $startDate = $this->validDateParamOr($customStart, $thisMonthStart);
+                $endDate = $this->validDateParamOr($customEnd, $thisMonthEnd);
                 break;
             default:
                 $startDate = $thisMonthStart;

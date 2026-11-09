@@ -154,6 +154,25 @@ final class ParishFinanceDashboardIntegrationTest extends CIUnitTestCase
         $this->assertStringContainsString('800.00', $outputCustom); // Net
     }
 
+    /**
+     * MySQL strict mode raises "Incorrect DATE value" (HTTP 500) when an
+     * impossible or non-date custom range reaches the donation/expense WHERE.
+     */
+    public function testInvalidCustomRangeFallsBackToCurrentMonth(): void
+    {
+        foreach ([
+            ['start_date' => '2026-02-31', 'end_date' => '2026-13-01'],
+            ['start_date' => 'abc', 'end_date' => ''],
+            ['start_date' => ['2026-01-01'], 'end_date' => ['x']],
+        ] as $range) {
+            $output = $this->makeController('GET', [], ['period' => 'custom'] + $range)->index();
+
+            $this->assertIsString($output);
+            $this->assertStringContainsString('name="start_date" class="form-control form-control-sm" value="' . date('Y-m-01') . '"', $output);
+            $this->assertStringContainsString('name="end_date" class="form-control form-control-sm" value="' . date('Y-m-t') . '"', $output);
+        }
+    }
+
     public function testTrendLabelsCoverTwelveDistinctMonthsOnTheLastDayOfAMonth(): void
     {
         // On Oct 31, "-1 months" overflows Sep 31 into Oct 1, which used to
