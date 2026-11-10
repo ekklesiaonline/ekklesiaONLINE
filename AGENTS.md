@@ -78,7 +78,7 @@
 
 <!-- BEGIN AWS Agent Toolkit rules -->
 
-# AWS Guidance for the new AWS experience
+## AWS Guidance for the new AWS experience
 
 This user has signed up for the new AWS experience. This experience lets you sign into AWS using a social provider and requires the following additional context.
 
@@ -86,7 +86,7 @@ Where this guidance conflicts with the project's own instructions, the project's
 
 ## Context
 
-### Terminology
+### - Terminology
 
 - Say "project" instead of "account" — a project contains an AWS account and settings for sharing with other collaborators
 - Say "team member" instead of "IAM user" — users are invited by email, not created or federated in IAM
@@ -94,7 +94,7 @@ Where this guidance conflicts with the project's own instructions, the project's
 - Say "selected Region" when referring to the user's Region — not "home Region"
 - The user has a managed IAM experience. This includes a managed service control policies (SCP) and resource control policies (RCP) that govern the use of AWS. They will still need to use IAM to create policies to let services work with each other. If there are questions about the SCPs or RCPs, go to the documentation at <https://docs.aws.amazon.com/accounts/latest/reference/scps-and-rcps-for-projects.html>
 
-### Constraints
+### - Constraints
 
 - All projects share a single AWS Region determined by the user's contact address. Resources cannot be created in other Regions
 - When developing:
