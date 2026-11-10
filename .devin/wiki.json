@@ -1,0 +1,302 @@
+{
+  "repo_notes": [
+    {
+      "content": "ekklesiaONLINE is a multi‑parish web application designed to streamline administrative tasks for parishes, dioceses and provinces in the Episcopal Church. Each parish has its own administrators (clergy, vestry members[Senior and Junior Guardians, clerk, treasurer], ministry leaders) who manage only their parish’s data. Diocesan bishop and bishops’ staff have read-only access to all parishes in their diocese. The system supports member management, service attendance tracking, financial record-keeping, volunteer coordination, and visitor follow-up."
+    }
+  ],
+  "pages": [
+    {
+      "title": "Overview",
+      "purpose": "Introduce ekklesiaONLINE: a CodeIgniter 4 + Shield multi-tenant church management platform organized by ecclesiastical hierarchy (System → Province → Diocese → Parish → Personal). Summarize modules and link to child pages.",
+      "page_notes": [
+        {
+          "content": "Add emojies and icons to improve the description"
+        }
+      ]
+    },
+    {
+      "title": "Getting Started and Development Workflow",
+      "purpose": "Composer setup, environment config, spark commands, PHPUnit testing, PHPStan, agent rules/skills (.devin, .agents) and repo conventions.",
+      "parent": "Overview",
+      "page_notes": [
+        {
+          "content": ""
+        }
+      ]
+    },
+    {
+      "title": "Module Layout and Routing",
+      "purpose": "PSR-4 module namespaces (Province, Diocese, Clergy, Parish, Worship, Finance, Volunteer, MemberPortal), per-module Routes/Config, layouts, and legacy route retirement.",
+      "parent": "Overview",
+      "page_notes": [
+        {
+          "content": ""
+        }
+      ]
+    },
+    {
+      "title": "Authorization, Scoping and Identity",
+      "purpose": "Overview of Shield-based auth, hierarchical tenant scoping, and canonical identity; links to child pages.",
+      "page_notes": [
+        {
+          "content": ""
+        }
+      ]
+    },
+    {
+      "title": "Dashboard Scope Resolution and Role Policy",
+      "purpose": "BaseController::resolveDashboardScope, operational vs home parish, elevated admins, sidebar role visibility, role/menu permission policy.",
+      "parent": "Authorization, Scoping and Identity",
+      "page_notes": [
+        {
+          "content": ""
+        }
+      ]
+    },
+    {
+      "title": "Authentication, Registration and Session Security",
+      "purpose": "Shield login, magic links, device verification, registration gate filter, approval services, filters pipeline.",
+      "parent": "Authorization, Scoping and Identity",
+      "page_notes": [
+        {
+          "content": ""
+        }
+      ]
+    },
+    {
+      "title": "Canonical Identity Chain and Data Integrity",
+      "purpose": "users → person → user_person → profile → parish_affiliation chain, merge/cleanup/provisioning services, audit diagnostics commands.",
+      "parent": "Authorization, Scoping and Identity",
+      "page_notes": [
+        {
+          "content": ""
+        }
+      ]
+    },
+    {
+      "title": "Audit Logging",
+      "purpose": "Audit log models, AuditLogQueryService, admin audit viewers and finance audit payload contracts.",
+      "parent": "Authorization, Scoping and Identity",
+      "page_notes": [
+        {
+          "content": ""
+        }
+      ]
+    },
+    {
+      "title": "Finance and Accounting",
+      "purpose": "Overview of the parish finance subsystem: donations, funds, ledger, reports. Links to child pages.",
+      "page_notes": [
+        {
+          "content": ""
+        }
+      ]
+    },
+    {
+      "title": "Donations, Funds and Pledges",
+      "purpose": "Donations controller/service, fund types and flags, finance readiness, giving statements, annual pledges.",
+      "parent": "Finance and Accounting",
+      "page_notes": [
+        {
+          "content": ""
+        }
+      ]
+    },
+    {
+      "title": "Expenses, Budgets and Banking",
+      "purpose": "Expense entry and receipt uploads, parish budgets, bank accounts, statement import and reconciliation.",
+      "parent": "Finance and Accounting",
+      "page_notes": [
+        {
+          "content": ""
+        }
+      ]
+    },
+    {
+      "title": "General Ledger, Chart of Accounts and Accounting Periods",
+      "purpose": "Double-entry journal sync, chart of accounts across system/diocese/parish tiers, accounting period locking.",
+      "parent": "Finance and Accounting",
+      "page_notes": [
+        {
+          "content": ""
+        }
+      ]
+    },
+    {
+      "title": "Financial Reports and Parochial Report",
+      "purpose": "Trial balance, balance sheet, statement of activities, exports, and parochial report compilation.",
+      "parent": "Finance and Accounting",
+      "page_notes": [
+        {
+          "content": ""
+        }
+      ]
+    },
+    {
+      "title": "Hierarchy Administration and Dashboards",
+      "purpose": "Overview of System/Province/Diocese/Parish administrative dashboards and scoped management; links to children.",
+      "page_notes": [
+        {
+          "content": ""
+        }
+      ]
+    },
+    {
+      "title": "Province and Diocese Dashboards",
+      "purpose": "Dashboard controllers and data services, ASA/AWA metrics, diocese health, exports, parish/diocese scoping.",
+      "parent": "Hierarchy Administration and Dashboards",
+      "page_notes": [
+        {
+          "content": ""
+        }
+      ]
+    },
+    {
+      "title": "Parish Administration and Staff",
+      "purpose": "Parish dashboard, parish list CRUD, deaneries, staff roles, parish deletion impact, settings models.",
+      "parent": "Hierarchy Administration and Dashboards",
+      "page_notes": [
+        {
+          "content": ""
+        }
+      ]
+    },
+    {
+      "title": "System Administration",
+      "purpose": "System admin users, settings, overview, audit, events, email and diocesan ordinaries screens.",
+      "parent": "Hierarchy Administration and Dashboards",
+      "page_notes": [
+        {
+          "content": ""
+        }
+      ]
+    },
+    {
+      "title": "Clergy and Canonical Governance",
+      "purpose": "Overview of clergy accounts, ordinations, canonical standing and delegated authorization; links to children.",
+      "page_notes": [
+        {
+          "content": ""
+        }
+      ]
+    },
+    {
+      "title": "Clergy Accounts and Review Workflows",
+      "purpose": "Diocesan clergy roster, invitations, work queues, candidate review, ordination verification, standing lift.",
+      "parent": "Clergy and Canonical Governance",
+      "page_notes": [
+        {
+          "content": ""
+        }
+      ]
+    },
+    {
+      "title": "Ordinaries, Delegation and Clergy Authorization",
+      "purpose": "ClergyReviewService/ClergyAuthorizationService, diocesan ordinary bootstrap, grants, ClergyScopeFilter, deanery authorization.",
+      "parent": "Clergy and Canonical Governance",
+      "page_notes": [
+        {
+          "content": ""
+        }
+      ]
+    },
+    {
+      "title": "Leadership Positions and Vestry Governance",
+      "purpose": "LeadershipPositionService eligibility rules, office evidence, vestry votes, member portal leadership UI.",
+      "parent": "Clergy and Canonical Governance",
+      "page_notes": [
+        {
+          "content": ""
+        }
+      ]
+    },
+    {
+      "title": "People, Membership and Visitor Lifecycle",
+      "purpose": "Overview of person directory, membership statuses, visitor follow-up pipelines; links to children.",
+      "page_notes": [
+        {
+          "content": ""
+        }
+      ]
+    },
+    {
+      "title": "People Directory and Member Management",
+      "purpose": "People controller, directory/view data services, member tags, portal access provisioning, exports, families.",
+      "parent": "People, Membership and Visitor Lifecycle",
+      "page_notes": [
+        {
+          "content": ""
+        }
+      ]
+    },
+    {
+      "title": "Membership Status and Affiliation Invariants",
+      "purpose": "parish_affiliation.membership_status pathway, MembershipStatusService, affiliation drift audit, write scoping.",
+      "parent": "People, Membership and Visitor Lifecycle",
+      "page_notes": [
+        {
+          "content": ""
+        }
+      ]
+    },
+    {
+      "title": "Visitors, Conversion and Follow-up Workflow",
+      "purpose": "Visitor directory/lifecycle, conversion prefill, follow-up sequences, templates and call tasks.",
+      "parent": "People, Membership and Visitor Lifecycle",
+      "page_notes": [
+        {
+          "content": ""
+        }
+      ]
+    },
+    {
+      "title": "Sacraments, Standing and Member Portal",
+      "purpose": "Sacramental records, member standing summary, MemberPortal profile/pledges/session security endpoints.",
+      "parent": "People, Membership and Visitor Lifecycle",
+      "page_notes": [
+        {
+          "content": ""
+        }
+      ]
+    },
+    {
+      "title": "Worship, Events and Volunteers",
+      "purpose": "Overview of worship planning, services/attendance, events and volunteer scheduling modules; links to children.",
+      "page_notes": [
+        {
+          "content": ""
+        }
+      ]
+    },
+    {
+      "title": "Services, Attendance and Worship Planning",
+      "purpose": "Worship module controllers, attendance check-in routes, Sunday attendance metrics, liturgical calendar.",
+      "parent": "Worship, Events and Volunteers",
+      "page_notes": [
+        {
+          "content": ""
+        }
+      ]
+    },
+    {
+      "title": "Events and Calendars",
+      "purpose": "EventModel, event visibility/audience rules, system and province event calendars, registrations.",
+      "parent": "Worship, Events and Volunteers",
+      "page_notes": [
+        {
+          "content": ""
+        }
+      ]
+    },
+    {
+      "title": "Volunteer Module",
+      "purpose": "Volunteer dashboard, volunteers, schedules and reminder commands.",
+      "parent": "Worship, Events and Volunteers",
+      "page_notes": [
+        {
+          "content": ""
+        }
+      ]
+    }
+  ]
+}
