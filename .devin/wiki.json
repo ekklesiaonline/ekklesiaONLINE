@@ -1,7 +1,7 @@
 {
   "repo_notes": [
     {
-      "content": "ekklesiaONLINE is a multi‑parish web application designed to streamline administrative tasks for parishes, dioceses and provinces in the Episcopal Church. Each parish has its own administrators (clergy, vestry members[Senior and Junior Guardians, clerk, treasurer], ministry leaders) who manage only their parish’s data. Diocesan bishop and bishops’ staff have read-only access to all parishes in their diocese. The system supports member management, service attendance tracking, financial record-keeping, volunteer coordination, and visitor follow-up."
+      "content": "**ekklesiaONLINE** is a multiparish management system built for Episcopal provinces, dioceses and parish networks. It covers member management, liturgical service tracking, guest follow-up automation, financial accounting, volunteer coordination, event management, and worship planning"
     }
   ],
   "pages": [
@@ -10,7 +10,7 @@
       "purpose": "Introduce ekklesiaONLINE: a CodeIgniter 4 + Shield multi-tenant church management platform organized by ecclesiastical hierarchy (System → Province → Diocese → Parish → Personal). Summarize modules and link to child pages.",
       "page_notes": [
         {
-          "content": "Add emojies and icons to improve the description"
+          "content": ""
         }
       ]
     },
