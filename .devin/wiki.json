@@ -1,7 +1,7 @@
 {
   "repo_notes": [
     {
-      "content": "**ekklesiaONLINE** is a multiparish management system built for Episcopal provinces, dioceses and parish networks. Designed to streamline administrative tasks, it covers member management, liturgical service tracking, guest follow-up automation, financial accounting, volunteer coordination, event management, and worship planning. Each parish has its own administrators (clergy, vestry members[Senior and Junior Wardens, clerk, treasurer, secretary], ministry leaders) who manage only their own parish data. Diocesan bishop and bishops staff have read-only access to all parishes in their diocese."
+      "content": "**ekklesiaONLINE** is a multiparish management system built for Episcopal provinces, dioceses and parish networks. Designed to streamline administrative tasks, it covers member management, liturgical service tracking, guest follow-up automation, financial accounting, volunteer coordination, event management, and worship planning. Each parish has its own administrators (clergy, vestry members[Senior and Junior Wardens, clerk, treasurer, secretary], ministry leaders) who manage only their own parish data. Diocesan bishop and administrative staff have edits permission as set in the system Role policy for their diocese."
     }
   ],
   "pages": [
