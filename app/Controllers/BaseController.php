@@ -1650,8 +1650,7 @@ abstract class BaseController extends Controller
             return $fallback;
         }
 
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
+    //Updated upstream
         // Strict shape first: valid_date alone accepts e.g. '2026-1-5'.
         if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $value) !== 1) {
             return $fallback;
@@ -1660,14 +1659,13 @@ abstract class BaseController extends Controller
         $validation = \Config\Services::validation(null, false);
 
         return $validation->check($value, 'valid_date[Y-m-d]') ? $value : $fallback;
-=======
-=======
->>>>>>> Stashed changes
-<<<<<<< HEAD
+    //=======
+    // Stashed changes
+    // HEAD
         $date = \DateTimeImmutable::createFromFormat('!Y-m-d', $value);
 
         return $date !== false && $date->format('Y-m-d') === $value ? $value : $fallback;
-=======
+
         // Strict shape first: valid_date alone accepts e.g. '2026-1-5'.
         if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $value) !== 1) {
             return $fallback;
@@ -1676,10 +1674,10 @@ abstract class BaseController extends Controller
         $validation = \Config\Services::validation(null, false);
 
         return $validation->check($value, 'valid_date[Y-m-d]') ? $value : $fallback;
->>>>>>> origin/devin/1794230112-runtime-crawl-custom-dates
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
+    // origin/devin/1794230112-runtime-crawl-custom-dates
+    // Updated upstream
+    // Stashed changes
+    //
+    // Stashed changes
     }
 }
