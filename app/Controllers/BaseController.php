@@ -1654,10 +1654,6 @@ abstract class BaseController extends Controller
         $date = \DateTimeImmutable::createFromFormat('!Y-m-d', $value);
 
         return $date !== false && $date->format('Y-m-d') === $value ? $value : $fallback;
-//
-//=======
-//
-// origin/devin/1794230112-runtime-crawl-custom-dates
-        // Strict shape first: valid_date alone accepts e.g. '2026-1-5'.
+//    
     }
 }
