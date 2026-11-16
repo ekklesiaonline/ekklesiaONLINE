@@ -221,7 +221,7 @@ class Filters extends BaseFilters
             ],
         ],
         'after' => [
-            // 'honeypot',
+            'honeypot',
             'secureheaders',
             'requestMonitoring',
             // Returns the rotated CSRF token on AJAX responses so pages can

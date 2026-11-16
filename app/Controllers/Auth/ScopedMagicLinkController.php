@@ -110,19 +110,21 @@ class ScopedMagicLinkController extends MagicLinkController
     {
         $cache = \Config\Services::cache();
         $key   = 'magic_link_rl_' . md5(strtolower($email));
-        $sent  = (int) ($cache->get($key) ?? 0);
 
-        if ($sent >= 3) {
-            return true;
-        }
-
-        if ($sent === 0) {
+        // Single-op increment keeps concurrent sends from double-spending the
+        // same allowance slot; on backends without increment support fall back
+        // to a plain counter.
+        if ($cache->get($key) === null) {
             $cache->save($key, 1, HOUR);
-        } else {
-            $ttl = $cache->getMetaData($key)['expire'] ?? (time() + HOUR);
-            $cache->save($key, $sent + 1, max(1, $ttl - time()));
+            return false;
         }
 
-        return false;
+        $count = $cache->increment($key, 1);
+        if ($count === false) {
+            $count = (int) ($cache->get($key) ?? 0) + 1;
+            $cache->save($key, $count, HOUR);
+        }
+
+        return $count > 3;
     }
 }

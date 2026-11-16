@@ -125,18 +125,22 @@ class ScopedEmailActivator extends EmailActivator
             throw new RuntimeException('Cannot get the pending login User.');
         }
 
-        $identity     = model(UserIdentityModel::class)->getIdentityByType($user, $this->type);
+        $identity     = model(UserIdentityModel::class)->getIdentityByType($user, $this->getType());
         $postedToken  = $request->getVar('token');
         $attemptsKey  = 'activation_attempts_' . (int) $user->id;
 
-        if ($identity !== null && ! $authenticator->checkAction($identity, $postedToken)) {
-            $attempts = (int) (session()->get($attemptsKey) ?? 0) + 1;
-            session()->set($attemptsKey, $attempts);
+        if ($identity === null || ! $authenticator->checkAction($identity, $postedToken)) {
+            // No identity (code already invalidated or never issued) counts as
+            // a rejection without incrementing — only real misses do.
+            if ($identity !== null) {
+                $attempts = (int) (session()->get($attemptsKey) ?? 0) + 1;
+                session()->set($attemptsKey, $attempts);
 
-            if ($attempts >= self::MAX_VERIFY_ATTEMPTS) {
-                $identityModel = model(UserIdentityModel::class);
-                $identityModel->delete($identity->id);
-                session()->remove($attemptsKey);
+                if ($attempts >= self::MAX_VERIFY_ATTEMPTS) {
+                    $identityModel = model(UserIdentityModel::class);
+                    $identityModel->delete($identity->id);
+                    session()->remove($attemptsKey);
+                }
             }
 
             session()->setFlashdata('error', lang('Auth.invalidActivateToken'));
