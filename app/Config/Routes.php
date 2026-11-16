@@ -25,11 +25,11 @@ $routes->addRedirect('chart-of-accounts', 'finance/chart-of-accounts');
 // Public media endpoints
 $routes->get('health', '\\App\\Controllers\\Health::index');
 $routes->get('health/ready', '\\App\\Controllers\\Health::ready', ['filter' => ['session', 'permission:system.admin']]);
-$routes->get('media/event-cover/(:num)', '\\App\\Controllers\\Media::eventCover/$1');
+$routes->get('media/event-cover/(:num)', '\\App\\Controllers\\Media::eventCover/$1', ['filter' => 'session']);
 
 // Force-reset set-password page (session required; excluded from ForcePasswordResetFilter).
-$routes->get('auth/set-password', '\\App\\Controllers\\Auth\\SetPasswordController::show');
-$routes->post('auth/set-password', '\\App\\Controllers\\Auth\\SetPasswordController::save');
+$routes->get('auth/set-password', '\\App\\Controllers\\Auth\\SetPasswordController::show', ['filter' => 'session']);
+$routes->post('auth/set-password', '\\App\\Controllers\\Auth\\SetPasswordController::save', ['filter' => 'session']);
 
 // Explicit register routes: keep named GET route and custom POST validation flow.
 $routes->get('register', '\\App\\Controllers\\Auth\\RegisterController::registerView', ['as' => 'register']);

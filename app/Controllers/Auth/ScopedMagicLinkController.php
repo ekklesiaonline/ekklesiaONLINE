@@ -35,12 +35,19 @@ class ScopedMagicLinkController extends MagicLinkController
             return redirect()->route('magic-link')->with('errors', $this->validator->getErrors());
         }
 
-        // Check if the user exists
+        // Check if the user exists. Never reveal whether the address is
+        // registered: unknown emails get the same success page and return
+        // early so no token is created or email attempted.
         $email = $this->request->getPost('email');
         $user  = $this->provider->findByCredentials(['email' => $email]);
 
         if ($user === null) {
-            return redirect()->route('magic-link')->with('error', lang('Auth.invalidEmail', [$email]));
+            return $this->displayMessage();
+        }
+
+        if ($this->magicLinkSendLimitReached((string) $user->email)) {
+            // Still show the generic success page; silently drop the send.
+            return $this->displayMessage();
         }
 
         $identityModel = model(UserIdentityModel::class);
@@ -92,5 +99,30 @@ class ScopedMagicLinkController extends MagicLinkController
         $email->clear();
 
         return $this->displayMessage();
+    }
+
+    /**
+     * Per-recipient send cap: at most 3 magic-link emails per address per
+     * hour, regardless of source IP. Prevents mail bombing a victim mailbox
+     * by rotating IPs, which the per-IP LoginRateLimitFilter cannot stop.
+     */
+    private function magicLinkSendLimitReached(string $email): bool
+    {
+        $cache = \Config\Services::cache();
+        $key   = 'magic_link_rl_' . md5(strtolower($email));
+        $sent  = (int) ($cache->get($key) ?? 0);
+
+        if ($sent >= 3) {
+            return true;
+        }
+
+        if ($sent === 0) {
+            $cache->save($key, 1, HOUR);
+        } else {
+            $ttl = $cache->getMetaData($key)['expire'] ?? (time() + HOUR);
+            $cache->save($key, $sent + 1, max(1, $ttl - time()));
+        }
+
+        return false;
     }
 }
