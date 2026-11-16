@@ -131,7 +131,8 @@ class Filters extends BaseFilters
                 'except' => [
                     'login',
                     'logout',
-                    'auth/*',
+                    'auth/a/*',
+                    'auth/set-password',
                     'assets/*',
                     'system/settings',
                     'health',
@@ -142,7 +143,7 @@ class Filters extends BaseFilters
             // valid token.
             'csrf',
             'localeSet',
-            // 'honeypot',
+            'honeypot',
             // 'invalidchars',
 
             // Enforce onboarding status (banned/dismissed/pending_profile) on every
@@ -155,7 +156,8 @@ class Filters extends BaseFilters
                     'logout',
                     'forgot-password',
                     'reset-password',
-                    'auth/*',
+                    'auth/a/*',
+                    'auth/set-password',
                     'profile/complete',
                     'locale/set/*',
                     'uploads/*',
@@ -173,7 +175,8 @@ class Filters extends BaseFilters
                     'logout',
                     'forgot-password',
                     'reset-password',
-                    'auth/*',
+                    'auth/a/*',
+                    'auth/set-password',
                     'profile/complete',
                     'uploads/*',
                     'health',
@@ -192,7 +195,7 @@ class Filters extends BaseFilters
                     'logout',
                     'forgot-password',
                     'reset-password',
-                    'auth/*',
+                    'auth/a/*',
                     'auth/set-password',
                     'profile/complete',
                     'uploads/*',
@@ -207,7 +210,8 @@ class Filters extends BaseFilters
                 'except' => [
                     'login',
                     'logout',
-                    'auth/*',
+                    'auth/a/*',
+                    'auth/set-password',
                     'session/device-verify',
                     'session/device-verify/resend',
                     'locale/set/*',
@@ -217,7 +221,7 @@ class Filters extends BaseFilters
             ],
         ],
         'after' => [
-            // 'honeypot',
+            'honeypot',
             'secureheaders',
             'requestMonitoring',
             // Returns the rotated CSRF token on AJAX responses so pages can
@@ -363,6 +367,8 @@ class Filters extends BaseFilters
                 'login',
                 'login/magic-link',
                 'register',
+                'auth/set-password',
+                'auth/a/*',
                 'session/device-verify',
                 'session/device-verify/resend',
             ],

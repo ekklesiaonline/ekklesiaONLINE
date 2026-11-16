@@ -12,6 +12,7 @@ use CodeIgniter\Shield\Authentication\Actions\EmailActivator;
 use CodeIgniter\Shield\Authentication\Authenticators\Session;
 use CodeIgniter\Shield\Exceptions\LogicException;
 use CodeIgniter\Shield\Exceptions\RuntimeException;
+use CodeIgniter\Shield\Models\UserIdentityModel;
 /**
  * ScopedEmailActivator
  *
@@ -29,6 +30,9 @@ class ScopedEmailActivator extends EmailActivator
      * cooldown each page reload would generate a fresh code and email.
      */
     private const RESEND_COOLDOWN_SECONDS = 60;
+
+    /** Maximum wrong-code entries before the activation code is invalidated. */
+    private const MAX_VERIFY_ATTEMPTS = 5;
 
     /**
      * Shows the initial screen to the user and sends the activation email
@@ -104,5 +108,52 @@ class ScopedEmailActivator extends EmailActivator
 
         // Display the info page
         return $this->view(setting('Auth.views')['action_email_activate_show'], ['user' => $user]);
+    }
+
+    /**
+     * Wraps Shield's verify() with a per-user attempt cap. After
+     * MAX_VERIFY_ATTEMPTS wrong codes the stored identity is deleted so the
+     * emailed code becomes invalid; the user must reload auth/a/show (which
+     * issues a new code subject to the send cooldown).
+     */
+    public function verify(IncomingRequest $request)
+    {
+        /** @var Session $authenticator */
+        $authenticator = auth('session')->getAuthenticator();
+        $user          = $authenticator->getPendingUser();
+        if ($user === null) {
+            throw new RuntimeException('Cannot get the pending login User.');
+        }
+
+        $identity     = model(UserIdentityModel::class)->getIdentityByType($user, $this->getType());
+        $postedToken  = $request->getVar('token');
+        $attemptsKey  = 'activation_attempts_' . (int) $user->id;
+
+        if ($identity === null || ! $authenticator->checkAction($identity, $postedToken)) {
+            // No identity (code already invalidated or never issued) counts as
+            // a rejection without incrementing — only real misses do.
+            if ($identity !== null) {
+                $attempts = (int) (session()->get($attemptsKey) ?? 0) + 1;
+                session()->set($attemptsKey, $attempts);
+
+                if ($attempts >= self::MAX_VERIFY_ATTEMPTS) {
+                    $identityModel = model(UserIdentityModel::class);
+                    $identityModel->delete($identity->id);
+                    session()->remove($attemptsKey);
+                }
+            }
+
+            session()->setFlashdata('error', lang('Auth.invalidActivateToken'));
+
+            return $this->view(setting('Auth.views')['action_email_activate_show']);
+        }
+
+        session()->remove($attemptsKey);
+
+        $user = $authenticator->getUser();
+        $user->activate();
+
+        return redirect()->to(config('Auth')->registerRedirect())
+            ->with('message', lang('Auth.registerSuccess'));
     }
 }

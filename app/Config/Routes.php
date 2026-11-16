@@ -6,6 +6,11 @@ use CodeIgniter\Router\RouteCollection;
  * @var RouteCollection $routes
  */
 
+// Scoped magic-link email sender: uses tenant From identity, system transport.
+// Registered BEFORE Shield's routes so this POST shadows Shield's default
+// login/magic-link handler (first registered route wins).
+$routes->post('login/magic-link', '\\App\\Controllers\\Auth\\ScopedMagicLinkController::loginAction');
+
 // Load Shield authentication routes except register (overridden below).
 service('auth')->routes($routes, ['except' => ['register']]);
 
@@ -25,7 +30,7 @@ $routes->addRedirect('chart-of-accounts', 'finance/chart-of-accounts');
 // Public media endpoints
 $routes->get('health', '\\App\\Controllers\\Health::index');
 $routes->get('health/ready', '\\App\\Controllers\\Health::ready', ['filter' => ['session', 'permission:system.admin']]);
-$routes->get('media/event-cover/(:num)', '\\App\\Controllers\\Media::eventCover/$1');
+$routes->get('media/event-cover/(:num)', '\\App\\Controllers\\Media::eventCover/$1', ['filter' => 'session']);
 
 // Force-reset set-password page (session required; excluded from ForcePasswordResetFilter).
 $routes->get('auth/set-password', '\\App\\Controllers\\Auth\\SetPasswordController::show');
@@ -34,9 +39,6 @@ $routes->post('auth/set-password', '\\App\\Controllers\\Auth\\SetPasswordControl
 // Explicit register routes: keep named GET route and custom POST validation flow.
 $routes->get('register', '\\App\\Controllers\\Auth\\RegisterController::registerView', ['as' => 'register']);
 $routes->post('register', '\\App\\Controllers\\Auth\\RegisterController::registerAction');
-
-// Scoped magic-link email sender: uses tenant From identity, system transport.
-$routes->post('login/magic-link', '\\App\\Controllers\\Auth\\ScopedMagicLinkController::loginAction');
 
 // System-level email settings.
 $routes->get('system/email', '\\App\\Controllers\\SystemEmailSettingsController::index', ['filter' => 'permission:system.admin']);
