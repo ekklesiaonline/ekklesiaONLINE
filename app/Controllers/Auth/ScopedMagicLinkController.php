@@ -122,7 +122,10 @@ class ScopedMagicLinkController extends MagicLinkController
         $count = $cache->increment($key, 1);
         if ($count === false) {
             $count = (int) ($cache->get($key) ?? 0) + 1;
-            $cache->save($key, $count, HOUR);
+            // Preserve the existing expiry so rejected requests cannot keep
+            // extending the window indefinitely.
+            $ttl = $cache->getMetaData($key)['expire'] ?? (time() + HOUR);
+            $cache->save($key, $count, max(1, $ttl - time()));
         }
 
         return $count > 3;

@@ -1,0 +1,4 @@
+/usr/lib/python3.10/smtpd.py:105: DeprecationWarning: The asyncore module is deprecated and will be removed in Python 3.12. The recommended replacement is asyncio
+  import asyncore
+/usr/lib/python3.10/smtpd.py:106: DeprecationWarning: The asynchat module is deprecated and will be removed in Python 3.12. The recommended replacement is asyncio
+  import asynchat
