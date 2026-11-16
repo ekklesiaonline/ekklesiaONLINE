@@ -23,7 +23,7 @@ use CodeIgniter\Shield\Authentication\Authenticators\Session;
  */
 class ScopedMagicLinkController extends MagicLinkController
 {
-    public function loginAction(): RedirectResponse
+    public function loginAction(): RedirectResponse|string
     {
         if (! setting('Auth.allowMagicLinkLogins')) {
             return redirect()->route('login')->with('error', lang('Auth.magicLinkDisabled'));
