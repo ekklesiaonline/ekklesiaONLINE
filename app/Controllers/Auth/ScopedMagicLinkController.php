@@ -115,16 +115,17 @@ class ScopedMagicLinkController extends MagicLinkController
         // same allowance slot; on backends without increment support fall back
         // to a plain counter.
         if ($cache->get($key) === null) {
-            $cache->save($key, 1, HOUR);
+            $cache->save($key, 1, 3600);
             return false;
         }
 
         $count = $cache->increment($key, 1);
         if ($count === false) {
-            $count = (int) ($cache->get($key) ?? 0) + 1;
+            $count = (int) $cache->get($key) + 1;
             // Preserve the existing expiry so rejected requests cannot keep
             // extending the window indefinitely.
-            $ttl = $cache->getMetaData($key)['expire'] ?? (time() + HOUR);
+            $meta = $cache->getMetaData($key);
+            $ttl  = is_array($meta) ? ($meta['expire'] ?? time() + 3600) : time() + 3600;
             $cache->save($key, $count, max(1, $ttl - time()));
         }
 
