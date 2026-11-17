@@ -26,6 +26,17 @@ class MyDashboard extends BaseController
             return redirect()->to('/profile')->with('error', lang('Auth.notEnoughPrivilege'));
         }
 
+        // Same hold /dashboard applies: a pending_review member stays on the
+        // approval page even when an earlier profile already has parish data.
+        $registrationRequest = $this->getCurrentRegistrationRequest();
+        if ($registrationRequest
+            && $this->getRegistrationStatus($registrationRequest) === 'pending_review'
+            && !$this->canBypassPendingReviewGate($user)) {
+            return view('MemberPortal\Views\Auth/pending_approval', [
+                'title' => 'Awaiting Approval',
+            ]);
+        }
+
         // Resolve the user's canonical person_id and parish_id from profile.
         $profile = model('ProfileModel')->where('user_id', (int) $user->id)->first();
 
@@ -93,6 +104,17 @@ class MyDashboard extends BaseController
 
         if (!$this->canAccessMyDashboard($user)) {
             return redirect()->to('/profile')->with('error', lang('Auth.notEnoughPrivilege'));
+        }
+
+        // Same hold /dashboard applies: a pending_review member stays on the
+        // approval page even when an earlier profile already has parish data.
+        $registrationRequest = $this->getCurrentRegistrationRequest();
+        if ($registrationRequest
+            && $this->getRegistrationStatus($registrationRequest) === 'pending_review'
+            && !$this->canBypassPendingReviewGate($user)) {
+            return view('MemberPortal\Views\Auth/pending_approval', [
+                'title' => 'Awaiting Approval',
+            ]);
         }
 
         $profile = model('ProfileModel')->where('user_id', (int) $user->id)->first();
@@ -178,6 +200,17 @@ class MyDashboard extends BaseController
 
         if (!$this->canAccessMyDashboard($user)) {
             return redirect()->to('/profile')->with('error', lang('Auth.notEnoughPrivilege'));
+        }
+
+        // Same hold /dashboard applies: a pending_review member stays on the
+        // approval page even when an earlier profile already has parish data.
+        $registrationRequest = $this->getCurrentRegistrationRequest();
+        if ($registrationRequest
+            && $this->getRegistrationStatus($registrationRequest) === 'pending_review'
+            && !$this->canBypassPendingReviewGate($user)) {
+            return view('MemberPortal\Views\Auth/pending_approval', [
+                'title' => 'Awaiting Approval',
+            ]);
         }
 
         $donationId = (int) $donationId;
@@ -368,6 +401,19 @@ class MyDashboard extends BaseController
                 return $this->contractResponse(false, 403, 'FORBIDDEN', lang('Auth.notEnoughPrivilege'));
             }
             return redirect()->to('/profile')->with('error', lang('Auth.notEnoughPrivilege'));
+        }
+
+        // Same hold /dashboard applies: a pending_review member may not pledge.
+        $registrationRequest = $this->getCurrentRegistrationRequest();
+        if ($registrationRequest
+            && $this->getRegistrationStatus($registrationRequest) === 'pending_review'
+            && !$this->canBypassPendingReviewGate($user)) {
+            if ($this->request->isAJAX()) {
+                return $this->contractResponse(false, 403, 'REGISTRATION_PENDING_REVIEW', lang('App.errorForbidden'));
+            }
+            return view('MemberPortal\Views\Auth/pending_approval', [
+                'title' => 'Awaiting Approval',
+            ]);
         }
 
         $profile = model('ProfileModel')->where('user_id', (int) $user->id)->first();

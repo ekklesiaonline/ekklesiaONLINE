@@ -237,13 +237,24 @@ class Profile extends BaseController
         $pendingParishId = (int) ($state['registration_request']['parish_id'] ?? 0);
         $affiliations = $this->request->getPost('affiliations') ?? [];
         $filteredAffiliations = [];
+        $parishModel = model('ParishModel');
         foreach ($affiliations as $affiliation) {
             $affParishId = (int) ($affiliation['parish_id'] ?? 0);
             if ($affParishId === $primaryParishId || $affParishId === $pendingParishId) {
                 return redirect()->back()->withInput()->with('error', lang('Profile.cannotAddDuplicateParish'));
             }
             if ($affParishId > 0) {
-                $filteredAffiliations[] = $affiliation;
+                // Reject parish ids that do not resolve to a real parish.
+                if ($parishModel->find($affParishId) === null) {
+                    return redirect()->back()->withInput()->with('error', lang('App.parishNotFound'));
+                }
+                // Self-service secondary affiliations always start as
+                // visitor: 'member' status is reserved for operator choice
+                // and MembershipPathwayService promotion.
+                $filteredAffiliations[] = [
+                    'parish_id'         => $affParishId,
+                    'membership_status' => 'visitor',
+                ];
             }
         }
 

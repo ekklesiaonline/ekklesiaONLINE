@@ -96,17 +96,20 @@ class PublicLocale extends BaseController
             $normalized = strtolower((string) $config->defaultLocale);
         }
 
+        $isSecure = $this->request instanceof \CodeIgniter\HTTP\IncomingRequest
+            && $this->request->isSecure();
+
         $this->response->setCookie(new Cookie('locale', $normalized, [
             'expires' => YEAR,
             'path' => '/',
-            'secure' => false,
+            'secure' => $isSecure,
             'httponly' => false,
             'samesite' => 'Lax',
         ]));
         $this->response->setCookie(new Cookie('user_locale', $normalized, [
             'expires' => YEAR,
             'path' => '/',
-            'secure' => false,
+            'secure' => $isSecure,
             'httponly' => false,
             'samesite' => 'Lax',
         ]));

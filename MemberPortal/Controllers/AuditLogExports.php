@@ -175,12 +175,17 @@ class AuditLogExports extends AuditLogs
 
         $html = $this->generatePdfHtml($rows);
 
-        $filename = 'audit_logs_' . date('Ymd_His') . '.html';
+        $dompdf = new \Dompdf\Dompdf();
+        $dompdf->loadHtml($html);
+        $dompdf->setPaper('A4', 'landscape');
+        $dompdf->render();
+
+        $filename = 'audit_logs_' . date('Ymd_His') . '.pdf';
 
         return $this->response
-            ->setHeader('Content-Type', 'text/html; charset=UTF-8')
+            ->setHeader('Content-Type', 'application/pdf')
             ->setHeader('Content-Disposition', 'attachment; filename="' . $filename . '"')
-            ->setBody($html);
+            ->setBody($dompdf->output());
     }
 
 
