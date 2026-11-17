@@ -354,12 +354,25 @@ class PublicAssets extends PublicHome
         }
 
         $viewerProfile = model('ProfileModel')->where('user_id', (int) ($viewer->id ?? 0))->first();
-        $profileDioceseId = (int) ($viewerProfile['diocese_id'] ?? 0);
+        $operationalParishId = (int) ($this->getOperationalParishId() ?? 0);
+
+        // Match Clergy::resolveCurrentDioceseId(): diocesan scope first, then
+        // the profile's diocese, then the operational parish's diocese — a
+        // viewer whose profile lacks diocese_id must still see attachments
+        // for diocesan events their parish belongs to.
+        $dioceseId = (int) $this->resolveDiocesanScopeId();
+        if ($dioceseId <= 0) {
+            $dioceseId = (int) ($viewerProfile['diocese_id'] ?? 0);
+        }
+        if ($dioceseId <= 0 && $operationalParishId > 0) {
+            $parish = model('ParishModel')->find($operationalParishId);
+            $dioceseId = (int) ($parish['diocese_id'] ?? 0);
+        }
 
         $context = [
             'user_id'                  => (int) $viewer->id,
-            'parish_id'                => (int) ($this->getOperationalParishId() ?? 0),
-            'diocese_id'               => $profileDioceseId,
+            'parish_id'                => $operationalParishId,
+            'diocese_id'               => $dioceseId,
             'can_edit_events'          => $viewer->can('event.edit'),
             'can_manage_diocese_scope' => $this->isDioceseAdmin() || $viewer->can('diocese.admin'),
         ];
