@@ -88,9 +88,16 @@ class VisitorIntakeService
             return null;
         }
 
+        // builder() does NOT apply PersonModel's soft-delete clause, and a
+        // raw join sees every affiliation state — both must be filtered
+        // explicitly so intake only dedupes against live visitor-pipeline
+        // records (never members, exited, or deleted people).
         $builder = model(PersonModel::class)->builder('person')
             ->join('parish_affiliation', 'parish_affiliation.person_id = person.id')
-            ->where('parish_affiliation.parish_id', $parishId);
+            ->where('parish_affiliation.parish_id', $parishId)
+            ->where('parish_affiliation.deleted_at', null)
+            ->whereIn('parish_affiliation.membership_status', ['visitor', 'regular_attender'])
+            ->where('person.deleted_at', null);
 
         $builder->groupStart();
         if ($emailHash !== null) {

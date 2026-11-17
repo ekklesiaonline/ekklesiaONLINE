@@ -697,4 +697,9 @@ return [
     'interestEvangelism'           => 'Evangelism',
     'createAccountBtn'             => 'Create Member Account',
     'visitorAlreadyConverted'        => 'This visitor has already been converted to a member.',
+    'cardTokenRotate'              => 'Rotate Link',
+    'cardTokenRotateConfirm'       => 'Regenerate the connection card link? Existing QR codes and shared links will stop working immediately.',
+    'cardTokenRotatedTitle'        => 'Connection card link rotated.',
+    'cardTokenRotatedBody'         => 'The previous link and QR code no longer work. Share the new link:',
+    'ccVisitDateOutOfRange'        => 'Please enter a recent visit date.',
 ];

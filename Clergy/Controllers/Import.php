@@ -24,6 +24,21 @@ use App\Controllers\BaseController;
  */
 class Import extends BaseController
 {
+    /** Session-key prefix for the form-render time-trap marker. */
+    private const CARD_ISSUED_PREFIX = 'cc_issued_';
+
+    /** Minimum seconds between form render and submission. */
+    private const CARD_MIN_SECONDS = 2;
+
+    /** Oldest visit date accepted on the public card (days back). */
+    private const CARD_MAX_VISIT_AGE_DAYS = 90;
+
+    /** Interest slugs accepted on the public card form. */
+    private const INTEREST_SLUGS = [
+        'children', 'youth', 'music', 'missions', 'small_groups', 'prayer',
+        'serving', 'mens', 'women', 'seniors', 'counseling', 'evangelism',
+    ];
+
     private \App\Services\VisitorDirectoryService $visitorDirectory;
 
     public function __construct()
@@ -180,6 +195,11 @@ class Import extends BaseController
             return $this->response->setStatusCode(404)->setBody('Connection card not found.');
         }
 
+        // Time-trap: POSTs submitted before this marker is a few seconds old
+        // (or with no marker at all) are silently discarded — a human cannot
+        // have seen the form first.
+        session()->set(self::CARD_ISSUED_PREFIX . $token, time());
+
         $parishName = (string) ($parish['name'] ?? '');
 
         return view('public/connection_card', [
@@ -202,23 +222,42 @@ class Import extends BaseController
 
         $parishName = (string) ($parish['name'] ?? '');
 
+        // Time-trap: the form must have been rendered at least a few seconds
+        // before submission. Respond as if accepted so bots get no signal.
+        $issuedAt = (int) (session()->get(self::CARD_ISSUED_PREFIX . $token) ?? 0);
+        if ($issuedAt === 0 || (time() - $issuedAt) < self::CARD_MIN_SECONDS) {
+            return view('public/connection_card_thanks', [
+                'parish' => $parish,
+                'title'  => 'Thank You',
+            ]);
+        }
+
         $parishId = (int) $parish['id'];
 
         $rules = [
-            'first_name' => 'required|min_length[2]|max_length[100]',
-            'last_name'  => 'required|min_length[2]|max_length[100]',
-            'email'      => 'permit_empty|valid_email|max_length[255]',
-            'phone'      => 'permit_empty|max_length[30]',
-            'visit_date' => 'required|valid_date',
+            'first_name'   => 'required|min_length[2]|max_length[100]',
+            'last_name'    => 'required|min_length[2]|max_length[100]',
+            'email'        => 'permit_empty|valid_email|max_length[255]',
+            'phone'        => 'permit_empty|max_length[30]',
+            'address'      => 'permit_empty|max_length[500]',
+            'interests'    => 'permit_empty',
+            'interests.*'  => 'permit_empty|in_list[' . implode(',', self::INTEREST_SLUGS) . ']',
+            'visit_date'   => 'required|valid_date[Y-m-d]',
         ];
 
         if (! $this->validate($rules)) {
-            return view('public/connection_card', [
-                'parish'      => $parish,
-                'token'       => $token,
-                'title'       => esc($parishName) . ' – Connection Card',
-                'errors'      => $this->validator->getErrors(),
-                'old'         => $this->request->getPost(),
+            return $this->renderCardFormErrors($parish, $token, $parishName, $this->validator->getErrors());
+        }
+
+        // Server-side date bound: the visit must fall within a plausible
+        // recent window. A far-past date would make every scheduled follow-up
+        // due on the next cron run; a future date is meaningless here.
+        $visitTs   = strtotime((string) $this->request->getPost('visit_date'));
+        $todayTs   = strtotime('today');
+        $oldestTs  = strtotime('-' . self::CARD_MAX_VISIT_AGE_DAYS . ' days', $todayTs);
+        if ($visitTs === false || $visitTs > $todayTs || $visitTs < $oldestTs) {
+            return $this->renderCardFormErrors($parish, $token, $parishName, [
+                'visit_date' => lang('Visitors.ccVisitDateOutOfRange'),
             ]);
         }
 
@@ -236,12 +275,51 @@ class Import extends BaseController
 
         // Follow-up scheduling happens in PersonVisitModel::afterInsert —
         // the single scheduling point for every intake path.
-        $this->upsertVisitor($parishId, $data);
+        $intake = $this->upsertVisitor($parishId, $data);
+        session()->remove(self::CARD_ISSUED_PREFIX . $token);
+
+        $this->audit()->log('visitor.digital_card', [
+            'parish_id'   => $parishId,
+            'entity_type' => 'person',
+            'entity_id'   => $intake['person_id'] > 0 ? $intake['person_id'] : null,
+            'new_values'  => ['is_new' => $intake['is_new']],
+            'meta'        => ['ip' => $this->request->getIPAddress()],
+        ]);
 
         return view('public/connection_card_thanks', [
             'parish' => $parish,
             'title'  => 'Thank You',
         ]);
+    }
+
+    /**
+     * POST  visitors/import/rotate-token
+     * Regenerate the parish's public connect-card token. Existing QR codes
+     * and links stop working immediately.
+     */
+    public function rotateToken()
+    {
+        if ($redirect = $this->requirePermission('visitor.create')) {
+            return $redirect;
+        }
+
+        if ($redirect = $this->requireParish()) {
+            return $redirect;
+        }
+
+        $parishId = (int) $this->getOperationalParishId();
+        $token    = bin2hex(random_bytes(16));
+        db_connect()->table('parish')->where('id', $parishId)->update(['public_token' => $token]);
+
+        $this->audit()->log('visitor.card_token_rotated', [
+            'parish_id'   => $parishId,
+            'entity_type' => 'parish',
+            'entity_id'   => $parishId,
+        ]);
+
+        return redirect()
+            ->to('visitors/import')
+            ->with('card_token_rotated', base_url('connect/' . $token));
     }
 
     /**
@@ -274,6 +352,21 @@ class Import extends BaseController
     // ── ── ── ── ── ── ── ── ── ── ── ── ── ── ── ── ── ── ── ──
     // Private helpers
     // ── ── ── ── ── ── ── ── ── ── ── ── ── ── ── ── ── ── ── ──
+
+    /**
+     * Re-render the public card form with validation errors.
+     */
+    private function renderCardFormErrors(array $parish, string $token, string $parishName, array $errors)
+    {
+        return view('public/connection_card', [
+            'parish'      => $parish,
+            'token'       => $token,
+            'title'       => esc($parishName) . ' – Connection Card',
+            'errors'      => $errors,
+            'old'         => $this->request->getPost(),
+        ]);
+    }
+
 
     /**
      * Parse a CSV file and upsert visitors into the given parish.
@@ -392,7 +485,13 @@ class Import extends BaseController
         try {
             $intake = $this->visitorDirectory->intake($data, $parishId);
         } catch (\Throwable $e) {
-            log_message('error', 'Visitor intake failed during import: ' . $e->getMessage());
+            // Log class + code only — DB exception messages can embed bound
+            // values (PII) from the failed write.
+            log_message('error', sprintf(
+                'Visitor intake failed during import: %s #%d',
+                get_class($e),
+                (int) $e->getCode()
+            ));
             return ['person_id' => 0, 'is_new' => false];
         }
 
@@ -449,13 +548,18 @@ class Import extends BaseController
      */
     private function findParishByToken(string $token): ?array
     {
-        if ($token === '') {
+        // Tokens are generated lowercase (bin2hex). The column collation is
+        // case-insensitive, so reject non-canonical casing here — otherwise
+        // case variants of one token get separate rate-limit buckets.
+        if ($token === '' || preg_match('/^[a-z0-9]{1,64}$/', $token) !== 1) {
             return null;
         }
 
         return db_connect()
             ->table('parish')
             ->where('public_token', $token)
+            ->where('is_active', 1)
+            ->where('deleted_at', null)
             ->limit(1)
             ->get()
             ->getRowArray() ?: null;

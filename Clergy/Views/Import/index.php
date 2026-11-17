@@ -5,6 +5,7 @@
 <?php
 $importResult = session('import_result');
 $importErrors = session('import_errors');
+$rotatedUrl   = session('card_token_rotated');
 ?>
 
 <div class="d-flex justify-content-start align-items-center flex-wrap gap-2 mb-3">
@@ -49,6 +50,15 @@ $importErrors = session('import_errors');
         <?php foreach ((array) $importErrors as $msg): ?>
             <div><?= esc($msg) ?></div>
         <?php endforeach; ?>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+<?php endif; ?>
+
+<?php if (! empty($rotatedUrl)): ?>
+    <div class="alert alert-warning alert-dismissible fade show" role="alert">
+        <strong><?= lang('Visitors.cardTokenRotatedTitle') ?></strong>
+        <?= lang('Visitors.cardTokenRotatedBody') ?>
+        <code class="d-block mt-2 small"><?= esc($rotatedUrl) ?></code>
         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
     </div>
 <?php endif; ?>
@@ -193,6 +203,15 @@ $importErrors = session('import_errors');
                         class="btn btn-outline-primary btn-sm">
                         <i class="bi bi-box-arrow-up-right me-1" aria-hidden="true"></i> <?= lang('Visitors.previewCardForm') ?>
                     </a>
+
+                    <!-- Rotate token: invalidates the current link/QR immediately -->
+                    <form method="post" action="<?= base_url('visitors/import/rotate-token') ?>"
+                        onsubmit="return confirm(<?= esc(json_encode(lang('Visitors.cardTokenRotateConfirm')), 'attr') ?>);">
+                        <?= csrf_field() ?>
+                        <button type="submit" class="btn btn-outline-danger btn-sm">
+                            <i class="bi bi-arrow-repeat me-1" aria-hidden="true"></i> <?= lang('Visitors.cardTokenRotate') ?>
+                        </button>
+                    </form>
                 </div>
             </div>
         </div>
