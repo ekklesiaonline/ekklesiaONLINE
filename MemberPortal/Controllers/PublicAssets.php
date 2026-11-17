@@ -374,15 +374,15 @@ class PublicAssets extends PublicHome
         }
 
         $parishId = (int) ($this->getOperationalParishId() ?? 0);
-        if ($parishId <= 0) {
+        $dioceseId = (int) $this->buildEventVisibilityContext()['diocese_id'];
+        if ($parishId <= 0 && $dioceseId <= 0) {
             return null;
         }
 
-        $event = model('EventModel')->getEventWithCountsForParishAudience(
-            $eventId,
-            $parishId,
-            $this->buildEventVisibilityContext()['diocese_id']
-        );
+        // parishId 0 still resolves diocesan-organized events via the diocese
+        // branch of the audience query (e.g. diocesan admins without an
+        // operational parish); parish-organized events stay excluded.
+        $event = model('EventModel')->getEventWithCountsForParishAudience($eventId, $parishId, $dioceseId);
 
         return is_array($event) ? $event : null;
     }
