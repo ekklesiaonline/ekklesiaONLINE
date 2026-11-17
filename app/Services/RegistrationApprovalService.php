@@ -239,6 +239,7 @@ class RegistrationApprovalService
                 'requested_role' => $role,
                 'reviewed_by' => $actorUserId,
                 'reviewed_at' => date('Y-m-d H:i:s'),
+                'updated_at' => date('Y-m-d H:i:s'),
             ]);
 
         if ($this->db->affectedRows() === 0) {
@@ -327,6 +328,7 @@ class RegistrationApprovalService
                 'status' => $status,
                 'reviewed_by' => $actorUserId,
                 'reviewed_at' => date('Y-m-d H:i:s'),
+                'updated_at' => date('Y-m-d H:i:s'),
             ]);
 
         if ($this->db->affectedRows() === 0) {
@@ -507,6 +509,7 @@ class RegistrationApprovalService
             ->update([
                 'reviewed_by' => $actorUserId,
                 'reviewed_at' => date('Y-m-d H:i:s'),
+                'updated_at' => date('Y-m-d H:i:s'),
                 'review_notes' => $notes !== null ? mb_substr($notes, 0, 1000) : lang('Diocesan.escalatedToHigherAdmin'),
             ]);
 
