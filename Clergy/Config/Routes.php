@@ -151,6 +151,7 @@ $routes->group('', ['filter' => 'session'], function ($routes) {
     $routes->group('visitors/import', ['filter' => 'permission:visitor.create'], function ($routes) {
         $routes->get('/',           '\\Clergy\\Controllers\\Import::connectionCards');
         $routes->post('process',    '\\Clergy\\Controllers\\Import::processConnectionCards');
+        $routes->post('rotate-token', '\\Clergy\\Controllers\\Import::rotateToken');
         $routes->get('qr',          '\\Clergy\\Controllers\\Import::qrCode');
         $routes->get('sample-csv',  '\\Clergy\\Controllers\\Import::sampleCsv');
     });

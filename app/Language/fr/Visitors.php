@@ -672,4 +672,9 @@ return [
     'visitorConversionFailed'        => 'Impossible de convertir ce visiteur en membre.',
     'createAccountBtn'             => 'Créer un compte membre',
     'visitorAlreadyConverted'        => 'Ce visiteur a déjà été converti en membre.',
+    'cardTokenRotate'              => 'Renouveler le lien',
+    'cardTokenRotateConfirm'       => 'Régénérer le lien de la carte de connexion ? Les codes QR et liens existants cesseront de fonctionner immédiatement.',
+    'cardTokenRotatedTitle'        => 'Lien de la carte de connexion renouvelé.',
+    'cardTokenRotatedBody'         => "L'ancien lien et le code QR ne fonctionnent plus. Partagez le nouveau lien :",
+    'ccVisitDateOutOfRange'        => 'Veuillez saisir une date de visite récente.',
 ];

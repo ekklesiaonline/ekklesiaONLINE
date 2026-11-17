@@ -30,7 +30,22 @@ class SendFollowups extends BaseCommand
     protected $options     = [
         '--parish'  => 'Scope dispatch to a single parish_id.',
         '--dry-run' => 'Print what would be dispatched without writing any records.',
+        '--limit'   => 'Max dispatches this run (overrides followup.maxDispatchPerRun).',
     ];
+
+    /**
+     * Dispatch caps — flood control for the public connect-card intake.
+     * Rows beyond the cap stay 'pending' and drain on subsequent runs.
+     */
+    private function maxPerRun(): int
+    {
+        return max(1, (int) (env('followup.maxDispatchPerRun') ?: 500));
+    }
+
+    private function maxPerParishPerRun(): int
+    {
+        return max(1, (int) (env('followup.maxPerParishPerRun') ?: 100));
+    }
 
     public function run(array $params): void
     {
@@ -39,6 +54,11 @@ class SendFollowups extends BaseCommand
         $parishId     = ($parishOption !== null && $parishOption !== false)
             ? (int) $parishOption
             : null;
+        $limitOption  = $params['limit'] ?? CLI::getOption('limit');
+        $maxPerRun    = ($limitOption !== null && $limitOption !== false)
+            ? max(1, (int) $limitOption)
+            : $this->maxPerRun();
+        $maxPerParish = $this->maxPerParishPerRun();
 
         $today = date('Y-m-d');
 
@@ -77,8 +97,10 @@ class SendFollowups extends BaseCommand
         // ---------------------------------------------------------------
         // 3. Dispatch each entry
         // ---------------------------------------------------------------
-        $counters = ['sent' => 0, 'failed' => 0, 'skipped' => 0];
+        $counters = ['sent' => 0, 'failed' => 0, 'skipped' => 0, 'deferred' => 0];
         $tableRows = [];
+        $parishSent = [];
+        $dispatched = 0;
 
         /** @var \App\Services\AuditService $audit */
         $audit = service('audit');
@@ -86,7 +108,16 @@ class SendFollowups extends BaseCommand
         foreach ($rows as $row) {
             $logId    = (int) $row['id'];
             $channel  = (string) ($row['channel'] ?? '');
+            $rowParishId = (int) ($row['parish_id'] ?? 0);
             $name     = trim(($row['first_name'] ?? '') . ' ' . ($row['last_name'] ?? ''));
+
+            // Caps: leave overflow rows pending; they drain on later runs.
+            if (! $isDryRun
+                && ($dispatched >= $maxPerRun
+                    || ($parishSent[$rowParishId] ?? 0) >= $maxPerParish)) {
+                $counters['deferred']++;
+                continue;
+            }
 
             // Load template (may be null for call/gift channels)
             $template = null;
@@ -117,6 +148,8 @@ class SendFollowups extends BaseCommand
             }
 
             $result = $dispatcher->dispatch($row, $template, $visitor);
+            $dispatched++;
+            $parishSent[$rowParishId] = ($parishSent[$rowParishId] ?? 0) + 1;
 
             if ($result['success']) {
                 $metadata = $result['metadata'] ?? [];
@@ -191,10 +224,11 @@ class SendFollowups extends BaseCommand
         $colour = $counters['failed'] > 0 ? 'red' : 'green';
         CLI::write(
             sprintf(
-                'Complete — sent: %d | failed: %d | skipped: %d',
+                'Complete — sent: %d | failed: %d | skipped: %d | deferred: %d',
                 $counters['sent'],
                 $counters['failed'],
-                $counters['skipped']
+                $counters['skipped'],
+                $counters['deferred']
             ),
             $colour
         );
@@ -207,6 +241,7 @@ class SendFollowups extends BaseCommand
                 'sent'      => $counters['sent'],
                 'failed'    => $counters['failed'],
                 'skipped'   => $counters['skipped'],
+                'deferred'  => $counters['deferred'],
                 'dry_run'   => $isDryRun,
                 'date'      => $today,
             ],

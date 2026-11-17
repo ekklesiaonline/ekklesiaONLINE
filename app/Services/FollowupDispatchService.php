@@ -95,6 +95,19 @@ class FollowupDispatchService
         return str_replace(array_keys($vars), array_values($vars), $text);
     }
 
+    /**
+     * HTML-escape a var map for substitution into body_html templates.
+     * Visitor-supplied fields (names, interests) are attacker-controllable
+     * and must never land unescaped in outbound HTML or preview panes.
+     *
+     * @param array<string,string> $vars
+     * @return array<string,string>
+     */
+    private function escapedVars(array $vars): array
+    {
+        return array_map(static fn ($v) => esc((string) $v, 'html'), $vars);
+    }
+
     // ------------------------------------------------------------------
     // Channel handlers
     // ------------------------------------------------------------------
@@ -148,8 +161,10 @@ class FollowupDispatchService
 
         $subject  = $this->applyVars((string) ($template['subject'] ?? 'A message for you'), $vars);
         $bodyText = $this->applyVars((string) $template['body_text'], $vars);
+        // Vars substituted into HTML must be escaped — visitor-supplied
+        // fields (names, interests) flow through here verbatim otherwise.
         $bodyHtml = !empty($template['body_html'])
-            ? $this->applyVars((string) $template['body_html'], $vars)
+            ? $this->applyVars((string) $template['body_html'], $this->escapedVars($vars))
             : nl2br(esc($bodyText));
 
         try {
@@ -293,7 +308,7 @@ class FollowupDispatchService
         }
 
         $bodyHtml = !empty($template['body_html'])
-            ? $this->applyVars((string) $template['body_html'], $vars)
+            ? $this->applyVars((string) $template['body_html'], $this->escapedVars($vars))
             : '<pre>' . esc($this->applyVars((string) $template['body_text'], $vars)) . '</pre>';
 
         $queueDir = WRITEPATH . 'mail_queue';

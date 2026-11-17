@@ -382,6 +382,8 @@ class Filters extends BaseFilters
         // API abuse protection for high-risk write endpoints.
         'apiRateLimit' => [
             'before' => [
+                'connect',
+                'connect/*',
                 'members/store',
                 'members/update/*',
                 'members/attach-parish',

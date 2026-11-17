@@ -18,6 +18,8 @@ class ApiRateLimitFilter implements FilterInterface
      * @var array<string, int>
      */
     private array $pathLimits = [
+        // Public unauthenticated intake: strictest cap.
+        '#^connect/#' => 10,
         '#^attendance/(mark|bulk-mark)$#' => 40,
         '#^(diocese/registrations|registrations)/#' => 20,
         '#^members/(store|update|delete|transfer|reassign|attach-parish|detach-parish|set-home-parish)#' => 30,

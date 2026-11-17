@@ -465,12 +465,15 @@ class FollowupTemplates extends BaseController
         // Apply token substitution via the helper
         helper('followup_template');
         $vars = parse_template_vars($visitor, $parishSettings, $parish, $nextEvent);
+        // body_html is rendered via innerHTML in the preview modal — escape
+        // substituted values so visitor-supplied fields can't inject markup.
+        $htmlVars = array_map(static fn ($v) => esc((string) $v, 'html'), $vars);
 
         return $this->jsonResponse([
             'success'   => true,
             'subject'   => str_replace(array_keys($vars), array_values($vars), (string) ($template['subject']   ?? '')),
             'body_text' => str_replace(array_keys($vars), array_values($vars), (string) ($template['body_text'] ?? '')),
-            'body_html' => str_replace(array_keys($vars), array_values($vars), (string) ($template['body_html'] ?? '')),
+            'body_html' => str_replace(array_keys($htmlVars), array_values($htmlVars), (string) ($template['body_html'] ?? '')),
         ]);
     }
 

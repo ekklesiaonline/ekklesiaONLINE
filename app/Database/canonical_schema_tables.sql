@@ -1234,6 +1234,7 @@ CREATE TABLE `parish` (
   `deleted_at` datetime DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `idx_parish_parish_ueid` (`parish_ueid`),
+  UNIQUE KEY `uniq_parish_public_token` (`public_token`),
   KEY `idx_parish_diocese_id` (`diocese_id`),
   KEY `idx_parish_is_active` (`is_active`),
   CONSTRAINT `parish_diocese_id_foreign` FOREIGN KEY (`diocese_id`) REFERENCES `diocese` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
