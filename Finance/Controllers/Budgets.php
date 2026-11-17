@@ -67,6 +67,13 @@ class Budgets extends BaseController
             return redirect()->to('/budgets?year=' . $year)->with('error', lang('Treasurer.budgetSaveFailed'));
         }
 
+        $this->audit()->log('budget.save', [
+            'parish_id'   => $parishId,
+            'entity_type' => 'parish_budget',
+            'entity_id'   => $year,
+            'new_values'  => ['fiscal_year' => $year, 'line_count' => count($sanitized)],
+        ]);
+
         return redirect()->to('/budgets?year=' . $year)->with('success', lang('Treasurer.budgetSaved'));
     }
 
@@ -99,14 +106,14 @@ class Budgets extends BaseController
         }
 
         // Title and Executive Summary
-        fputcsv($output, [lang('Treasurer.fiscalYear'), (string) $year, '', '']);
-        fputcsv($output, [lang('Treasurer.incomeBudget'), number_format((float) $summary['income_budget'], 2, '.', ''), lang('Treasurer.incomeActual'), number_format((float) $summary['income_actual'], 2, '.', '')]);
-        fputcsv($output, [lang('Treasurer.expenseBudget'), number_format((float) $summary['expense_budget'], 2, '.', ''), lang('Treasurer.expenseActual'), number_format((float) $summary['expense_actual'], 2, '.', '')]);
-        fputcsv($output, [lang('Treasurer.plannedNet'), number_format((float) $summary['net_budget'], 2, '.', ''), lang('Treasurer.actualNet'), number_format((float) $summary['net_actual'], 2, '.', '')]);
-        fputcsv($output, []);
+        fputcsv_safe($output, [lang('Treasurer.fiscalYear'), (string) $year, '', '']);
+        fputcsv_safe($output, [lang('Treasurer.incomeBudget'), number_format((float) $summary['income_budget'], 2, '.', ''), lang('Treasurer.incomeActual'), number_format((float) $summary['income_actual'], 2, '.', '')]);
+        fputcsv_safe($output, [lang('Treasurer.expenseBudget'), number_format((float) $summary['expense_budget'], 2, '.', ''), lang('Treasurer.expenseActual'), number_format((float) $summary['expense_actual'], 2, '.', '')]);
+        fputcsv_safe($output, [lang('Treasurer.plannedNet'), number_format((float) $summary['net_budget'], 2, '.', ''), lang('Treasurer.actualNet'), number_format((float) $summary['net_actual'], 2, '.', '')]);
+        fputcsv_safe($output, []);
 
         // Table Columns
-        fputcsv($output, [
+        fputcsv_safe($output, [
             lang('Treasurer.colCode'),
             lang('Treasurer.colAccount'),
             lang('Treasurer.colType'),
@@ -119,7 +126,7 @@ class Budgets extends BaseController
 
         foreach ($budgetLines as $line) {
             $util = $line['utilization_percentage'] !== null ? number_format((float) $line['utilization_percentage'], 1, '.', '') . '%' : '—';
-            fputcsv($output, [
+            fputcsv_safe($output, [
                 $line['code'],
                 $line['name'],
                 ucfirst((string) ($line['account_type'] ?? '')),

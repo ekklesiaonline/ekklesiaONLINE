@@ -329,6 +329,8 @@ return [
     'bankInvalidFileType'       => 'Format de fichier non valide. Veuillez téléverser un fichier OFX, QFX ou CSV.',
     'bankImportModalTitle'      => 'Importer un relevé bancaire',
     'bankFileRequired'          => 'Veuillez sélectionner un fichier de relevé à importer.',
+    'bankFileTooLarge'          => 'Le fichier de relevé est trop volumineux. Veuillez téléverser un fichier de moins de 5 Mo.',
+    'bankInvalidChartAccount'   => 'Veuillez sélectionner un compte d\'actif actif valide pour cette paroisse.',
     'bankAccountRequired'       => 'Veuillez sélectionner un compte bancaire valide.',
 
     // -------------------------------------------------------------------------

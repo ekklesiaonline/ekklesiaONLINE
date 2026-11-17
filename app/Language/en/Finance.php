@@ -362,6 +362,8 @@ return [
     'bankInvalidFileType'       => 'Invalid file format. Please upload an OFX, QFX, or CSV file.',
     'bankImportModalTitle'      => 'Import Bank Statement',
     'bankFileRequired'          => 'Please select a statement file to import.',
+    'bankFileTooLarge'          => 'The statement file is too large. Please upload a file smaller than 5 MB.',
+    'bankInvalidChartAccount'   => 'Please select a valid active asset account for this parish.',
     'bankAccountRequired'       => 'Please select a valid bank account.',
 
     // -------------------------------------------------------------------------

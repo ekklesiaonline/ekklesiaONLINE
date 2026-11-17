@@ -25,6 +25,9 @@ class MonitoringService
         'amount',
         'gift',
         'pledge',
+        'description',
+        'memo',
+        'reference',
     ];
 
     public function log(string $event, array $payload = [], string $level = 'info'): void

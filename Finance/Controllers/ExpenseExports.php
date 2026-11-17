@@ -29,7 +29,7 @@ class ExpenseExports extends Expenses
             ->getResultArray();
 
         $handle = fopen('php://temp', 'w+');
-        fputcsv($handle, [
+        fputcsv_safe($handle, [
             lang('Finance.colDate'),
             lang('Finance.colDescription'),
             lang('Finance.colFund'),
@@ -41,7 +41,7 @@ class ExpenseExports extends Expenses
         ]);
 
         foreach ($expenses as $expense) {
-            fputcsv($handle, [
+            fputcsv_safe($handle, [
                 (string) ($expense['date'] ?? ''),
                 (string) ($expense['description'] ?? ''),
                 (string) ($expense['fund_name'] ?? lang('Finance.unassigned')),

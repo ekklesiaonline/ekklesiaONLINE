@@ -77,11 +77,28 @@ class ParishBudgetModel extends Model
 
     public function saveBudgetLines(int $parishId, int $year, array $amounts, int $userId): bool
     {
+        $dioceseId = 0;
+        $parish = $this->db->table('parish')->select('diocese_id')->where('id', $parishId)->get()->getRowArray();
+        if (is_array($parish)) {
+            $dioceseId = (int) ($parish['diocese_id'] ?? 0);
+        }
+
         $validAccounts = $this->db->table('chart_of_accounts')
             ->select('id')
             ->where('is_active', 1)
             ->where('allow_budget', 1)
             ->whereIn('account_type', ['income', 'expense'])
+            ->groupStart()
+                ->where('scope_type', 'system')
+                ->orGroupStart()
+                    ->where('scope_type', 'diocese')
+                    ->where('scope_id', $dioceseId)
+                ->groupEnd()
+                ->orGroupStart()
+                    ->where('scope_type', 'parish')
+                    ->where('scope_id', $parishId)
+                ->groupEnd()
+            ->groupEnd()
             ->get()
             ->getResultArray();
 

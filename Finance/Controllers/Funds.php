@@ -184,6 +184,10 @@ class Funds extends BaseController
         }
 
         $parishId = (int) ($this->getOperationalParishId() ?? 0);
+        if ($parishId <= 0) {
+            return redirect()->back()->withInput()->with('error', lang('App.errorNoParishScope'));
+        }
+
 
         if (! $this->validate($this->validationRules())) {
             return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
@@ -255,6 +259,10 @@ class Funds extends BaseController
         }
 
         $parishId = (int) ($this->getOperationalParishId() ?? 0);
+        if ($parishId <= 0) {
+            return redirect()->back()->withInput()->with('error', lang('App.errorNoParishScope'));
+        }
+
         $fund     = $this->findInParish((int) $id, $parishId);
 
         if ($fund === null) {

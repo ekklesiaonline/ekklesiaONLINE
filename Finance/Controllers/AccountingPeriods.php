@@ -74,6 +74,9 @@ class AccountingPeriods extends BaseController
         }
 
         $parishId = (int) ($this->getOperationalParishId() ?? 0);
+        if ($parishId <= 0) {
+            return redirect()->to('/accounting-periods')->with('error', lang('App.errorNoParishScope'));
+        }
         $fiscalYear = (int) ($this->request->getPost('fiscal_year') ?? date('Y'));
 
         if ($fiscalYear < 2000 || $fiscalYear > 2100) {
@@ -110,6 +113,9 @@ class AccountingPeriods extends BaseController
         }
 
         $parishId = (int) ($this->getOperationalParishId() ?? 0);
+        if ($parishId <= 0) {
+            return redirect()->to('/accounting-periods')->with('error', lang('App.errorNoParishScope'));
+        }
 
         $rules = [
             'fiscal_year'   => 'required|integer',
@@ -183,6 +189,9 @@ class AccountingPeriods extends BaseController
         }
 
         $parishId = (int) ($this->getOperationalParishId() ?? 0);
+        if ($parishId <= 0) {
+            return redirect()->to('/accounting-periods')->with('error', lang('App.errorNoParishScope'));
+        }
         $period = $this->periodModel->where('id', (int) $id)->where('parish_id', $parishId)->first();
 
         if (!$period) {
@@ -220,6 +229,9 @@ class AccountingPeriods extends BaseController
         }
 
         $parishId = (int) ($this->getOperationalParishId() ?? 0);
+        if ($parishId <= 0) {
+            return redirect()->to('/accounting-periods')->with('error', lang('App.errorNoParishScope'));
+        }
         $period = $this->periodModel->where('id', (int) $id)->where('parish_id', $parishId)->first();
 
         if (!$period) {

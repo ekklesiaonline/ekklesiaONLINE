@@ -34,7 +34,7 @@ class DonationExports extends Donations
         // Stream rows unbuffered into php://temp (spills to disk past 2 MB)
         // so peak memory stays bounded regardless of result size.
         $handle = fopen('php://temp', 'w+');
-        fputcsv($handle, [
+        fputcsv_safe($handle, [
             lang('Finance.colDate'),
             lang('Finance.colDonor'),
             lang('Finance.colFund'),
@@ -48,7 +48,7 @@ class DonationExports extends Donations
 
         $rowCount = 0;
         while ($rowCount < self::CSV_EXPORT_MAX_ROWS && is_array($donation = $query->getUnbufferedRow('array'))) {
-            fputcsv($handle, [
+            fputcsv_safe($handle, [
                 (string) ($donation['date'] ?? ''),
                 $this->formatDonorName($donation),
                 (string) ($donation['fund_name'] ?? lang('Finance.unassigned')),

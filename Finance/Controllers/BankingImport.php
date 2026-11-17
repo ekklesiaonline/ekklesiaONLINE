@@ -30,6 +30,10 @@ class BankingImport extends Banking
         }
 
         $parishId = (int) ($this->getOperationalParishId() ?? 0);
+        if ($parishId <= 0) {
+            return redirect()->back()->withInput()->with('error', lang('App.errorNoParishScope'));
+        }
+
 
         $targetAccountId = (int) ($accountId ?: $this->request->getPost('bank_account_id'));
         if ($targetAccountId <= 0) {
@@ -64,6 +68,14 @@ class BankingImport extends Banking
             $err = lang('Finance.bankInvalidFileType');
             if ($this->request->isAJAX()) {
                 return $this->contractResponse(false, 422, 'INVALID_FILE_TYPE', $err);
+            }
+            return redirect()->back()->withInput()->with('error', $err);
+        }
+
+        if ($file->getSize() === null || $file->getSize() > BankStatementParserService::MAX_FILE_BYTES) {
+            $err = lang('Finance.bankFileTooLarge');
+            if ($this->request->isAJAX()) {
+                return $this->contractResponse(false, 422, 'FILE_TOO_LARGE', $err);
             }
             return redirect()->back()->withInput()->with('error', $err);
         }

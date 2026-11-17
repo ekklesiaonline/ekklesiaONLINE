@@ -330,6 +330,8 @@ return [
     'bankInvalidFileType'       => 'Formato de archivo inválido. Por favor cargue un archivo OFX, QFX o CSV.',
     'bankImportModalTitle'      => 'Importar estado de cuenta bancario',
     'bankFileRequired'          => 'Por favor seleccione un archivo de estado de cuenta para importar.',
+    'bankFileTooLarge'          => 'El archivo de estado de cuenta es demasiado grande. Por favor cargue un archivo menor a 5 MB.',
+    'bankInvalidChartAccount'   => 'Seleccione una cuenta de activo activa válida para esta parroquia.',
     'bankAccountRequired'       => 'Por favor seleccione una cuenta bancaria válida.',
 
     // -------------------------------------------------------------------------
