@@ -426,12 +426,34 @@ class Dashboard extends BaseController
         // Parish follow-up telemetry is operator data — same gate the
         // /parish/followup dashboard applies.
         if (!$this->checkPermission('followup.view')) {
-            return $this->response->setStatusCode(403)->setJSON(['success' => false, 'message' => 'Permission denied']);
+            return $this->response->setStatusCode(403)->setJSON([
+                'success' => false,
+                'status'  => 'error',
+                'message' => 'Permission denied',
+                'error'   => [
+                    'code'    => 'FORBIDDEN',
+                    'message' => 'Permission denied',
+                    'details' => [],
+                ],
+                'errors'  => [],
+                'meta'    => ['http_status' => 403, 'ts' => date('c')],
+            ]);
         }
 
         $parishId = $this->getOperationalParishId();
         if (!$parishId) {
-            return $this->response->setStatusCode(403)->setJSON(['success' => false, 'message' => 'No parish scope']);
+            return $this->response->setStatusCode(403)->setJSON([
+                'success' => false,
+                'status'  => 'error',
+                'message' => 'No parish scope',
+                'error'   => [
+                    'code'    => 'NO_PARISH_SCOPE',
+                    'message' => 'No parish scope',
+                    'details' => [],
+                ],
+                'errors'  => [],
+                'meta'    => ['http_status' => 403, 'ts' => date('c')],
+            ]);
         }
         $parishId = (int) $parishId;
 
