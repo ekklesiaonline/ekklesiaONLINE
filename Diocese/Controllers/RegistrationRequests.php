@@ -14,11 +14,12 @@ class RegistrationRequests extends BaseController
             return $this->redirectModeration('error', lang('Diocesan.accessDeniedDiocesanAdmin'));
         }
 
-        $role = (string) ($this->request->getPost('role') ?? '');
+        // The role is never taken from request input: approval always grants
+        // the request's requested_role (member for self-registrations).
         $actorUserId = (int) (auth()->id() ?? 0);
 
         $service = new RegistrationApprovalService();
-        $error = $service->approve($actorUserId, $requestId, $role !== '' ? $role : null, $scope);
+        $error = $service->approve($actorUserId, $requestId, null, $scope);
 
         if ($error !== null) {
             return $this->redirectModeration('error', $error);
@@ -196,6 +197,13 @@ class RegistrationRequests extends BaseController
     {
         $user = auth()->user();
         if (!$user || !$user->inGroup('parishadmin')) {
+            return null;
+        }
+
+        // Province admins are read-only on parish data: a dual parishadmin +
+        // provinceadmin account may not moderate parish registrations
+        // (matches PROVINCE_WRITE_DISABLED elsewhere).
+        if ($user->inGroup('provinceadmin')) {
             return null;
         }
 
