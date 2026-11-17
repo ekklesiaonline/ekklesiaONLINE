@@ -30,7 +30,9 @@ $routes->addRedirect('chart-of-accounts', 'finance/chart-of-accounts');
 // Public media endpoints
 $routes->get('health', '\\App\\Controllers\\Health::index');
 $routes->get('health/ready', '\\App\\Controllers\\Health::ready', ['filter' => ['session', 'permission:system.admin']]);
-$routes->get('media/event-cover/(:num)', '\\App\\Controllers\\Media::eventCover/$1', ['filter' => 'session']);
+// media/event-cover is served by MemberPortal\Controllers\PublicAssets::eventCover,
+// which enforces EventVisibilityService audience rules (this route previously
+// shadowed it and served covers with authentication only).
 
 // Force-reset set-password page (session required; excluded from ForcePasswordResetFilter).
 $routes->get('auth/set-password', '\\App\\Controllers\\Auth\\SetPasswordController::show');
