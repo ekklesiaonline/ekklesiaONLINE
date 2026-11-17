@@ -206,7 +206,7 @@ $rotatedUrl   = session('card_token_rotated');
 
                     <!-- Rotate token: invalidates the current link/QR immediately -->
                     <form method="post" action="<?= base_url('visitors/import/rotate-token') ?>"
-                        onsubmit="return confirm(<?= json_encode(lang('Visitors.cardTokenRotateConfirm')) ?>);">
+                        onsubmit="return confirm(<?= esc(json_encode(lang('Visitors.cardTokenRotateConfirm')), 'attr') ?>);">
                         <?= csrf_field() ?>
                         <button type="submit" class="btn btn-outline-danger btn-sm">
                             <i class="bi bi-arrow-repeat me-1" aria-hidden="true"></i> <?= lang('Visitors.cardTokenRotate') ?>
