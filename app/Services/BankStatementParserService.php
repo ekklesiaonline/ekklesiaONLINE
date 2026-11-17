@@ -18,7 +18,7 @@ class BankStatementParserService
     /** Maximum statement file size accepted for parsing (5 MB). */
     public const MAX_FILE_BYTES = 5 * 1024 * 1024;
 
-    /** Maximum number of transactions parsed from a single statement file. */
+    /** Maximum number of transactions accepted from a single statement file. */
     public const MAX_TRANSACTIONS = 10000;
 
     /**
@@ -51,10 +51,10 @@ class BankStatementParserService
             stripos($content, '<STMTTRN>') !== false ||
             stripos($content, 'OFXHEADER') !== false
         ) {
-            return array_slice($this->parseOfx($content), 0, self::MAX_TRANSACTIONS);
+            return $this->parseOfx($content);
         }
 
-        return array_slice($this->parseCsv($content), 0, self::MAX_TRANSACTIONS);
+        return $this->parseCsv($content);
     }
 
     /**

@@ -76,11 +76,6 @@
                 </div>
             </div>
 
-            <div class="form-check form-switch mb-4">
-                <input class="form-check-input" type="checkbox" role="switch" id="is_active" name="is_active" value="1" <?= old('is_active', $account['is_active'] ?? 1) ? 'checked' : '' ?>>
-                <label class="form-check-label" for="is_active"><?= lang('Finance.bankIsActiveLabel') ?></label>
-            </div>
-
             <div class="d-flex gap-2">
                 <button type="submit" class="btn btn-outline-primary">
                     <i class="bi bi-check-circle" aria-hidden="true"></i> <?= lang('App.save') ?>

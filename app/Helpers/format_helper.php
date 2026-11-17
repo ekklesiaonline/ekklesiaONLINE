@@ -62,7 +62,16 @@ if (! function_exists('csv_safe_row')) {
             if (! is_string($cell) || $cell === '') {
                 continue;
             }
-            if (in_array($cell[0], ['=', '+', '-', '@', "\t", "\r"], true)) {
+            // Plain signed numbers (e.g. negative amounts) are not formulas.
+            if (preg_match('/^-?\d+(\.\d+)?$/', $cell) === 1) {
+                continue;
+            }
+            // Formulas may hide behind leading whitespace.
+            $trimmed = ltrim($cell);
+            if ($trimmed === '') {
+                continue;
+            }
+            if (in_array($trimmed[0], ['=', '+', '-', '@', "\t", "\r"], true)) {
                 $row[$i] = "'" . $cell;
             }
         }

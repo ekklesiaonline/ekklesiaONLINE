@@ -83,6 +83,14 @@ class BankingImport extends Banking
         $parser = new BankStatementParserService();
         $transactions = $parser->parse($file->getTempName(), $file->getClientName());
 
+        if (count($transactions) > BankStatementParserService::MAX_TRANSACTIONS) {
+            $err = lang('Finance.bankTooManyTransactions', [BankStatementParserService::MAX_TRANSACTIONS]);
+            if ($this->request->isAJAX()) {
+                return $this->contractResponse(false, 422, 'TOO_MANY_TRANSACTIONS', $err);
+            }
+            return redirect()->back()->withInput()->with('error', $err);
+        }
+
         if (empty($transactions)) {
             $err = lang('Finance.bankImportNoTransactions');
             if ($this->request->isAJAX()) {
