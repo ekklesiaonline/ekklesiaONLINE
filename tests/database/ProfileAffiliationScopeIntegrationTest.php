@@ -121,6 +121,54 @@ final class ProfileAffiliationScopeIntegrationTest extends CIUnitTestCase
             'A plain profile save must not demote an approved membership.');
     }
 
+    public function testRevokedStatusIsNotRestoredByProfileSave(): void
+    {
+        $parishA = $this->insertParish('Home Parish F');
+        $parishB = $this->insertParish('Revoked Parish G');
+        $userId = $this->insertUser('aff.scope.revoked');
+        $this->insertProfile($userId, $parishA);
+        $this->insertPrimaryAffiliation($userId, $parishA);
+        // Simulates the post-revocation state: an operator already demoted
+        // this secondary affiliation to visitor (or removed membership).
+        $this->db->table($this->resolveTableName('parish_affiliation'))->insert([
+            'linked_user_id' => $userId,
+            'parish_id' => $parishB,
+            'person_id' => null,
+            'membership_status' => 'visitor',
+            'is_primary' => 0,
+            'source' => 'operator',
+            'start_date' => date('Y-m-d'),
+            'created_at' => date('Y-m-d H:i:s'),
+            'updated_at' => date('Y-m-d H:i:s'),
+        ]);
+        $this->injectMemberAuth($userId);
+
+        $request = service('request');
+        $request->setGlobal('post', [
+            'first_name' => 'Attach',
+            'last_name'  => 'Test',
+            'locale'     => 'en',
+            'affiliations' => [
+                ['parish_id' => (string) $parishB, 'membership_status' => 'member'],
+            ],
+        ]);
+
+        $controller = new \MemberPortal\Controllers\Profile();
+        $controller->initController($request, service('response'), service('logger'));
+        $controller->update();
+
+        $row = $this->db->table($this->resolveTableName('parish_affiliation'))
+            ->where('linked_user_id', $userId)
+            ->where('parish_id', $parishB)
+            ->where('deleted_at', null)
+            ->get()
+            ->getRowArray();
+
+        $this->assertIsArray($row);
+        $this->assertSame('visitor', (string) ($row['membership_status'] ?? ''),
+            'Profile save must not restore a revoked membership status.');
+    }
+
     public function testUnknownParishIdIsRejected(): void
     {
         $parishA = $this->insertParish('Home Parish C');

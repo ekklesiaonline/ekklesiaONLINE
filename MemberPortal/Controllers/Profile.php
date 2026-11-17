@@ -238,17 +238,6 @@ class Profile extends BaseController
         $affiliations = $this->request->getPost('affiliations') ?? [];
         $filteredAffiliations = [];
         $parishModel = model('ParishModel');
-        $existingStatuses = [];
-        $existingRows = db_connect()->table('parish_affiliation')
-            ->select('parish_id, membership_status')
-            ->where('linked_user_id', (int) $user->id)
-            ->where('is_primary', 0)
-            ->where('deleted_at', null)
-            ->get()
-            ->getResultArray();
-        foreach ($existingRows as $row) {
-            $existingStatuses[(int) $row['parish_id']] = (string) $row['membership_status'];
-        }
         foreach ($affiliations as $affiliation) {
             $affParishId = (int) ($affiliation['parish_id'] ?? 0);
             if ($affParishId === $primaryParishId || $affParishId === $pendingParishId) {
@@ -259,14 +248,8 @@ class Profile extends BaseController
                 if ($parishModel->find($affParishId) === null) {
                     return redirect()->back()->withInput()->with('error', lang('App.parishNotFound'));
                 }
-                // Self-service secondary affiliations always start as
-                // visitor: 'member' status is reserved for operator choice
-                // and MembershipPathwayService promotion. An affiliation
-                // that already exists keeps its recorded status — a plain
-                // profile save must not demote an approved membership.
                 $filteredAffiliations[] = [
-                    'parish_id'         => $affParishId,
-                    'membership_status' => $existingStatuses[$affParishId] ?? 'visitor',
+                    'parish_id' => $affParishId,
                 ];
             }
         }
@@ -274,7 +257,16 @@ class Profile extends BaseController
         $personId = (int) ($profile['person_id'] ?? 0) ?: null;
         $affiliationService = new \App\Services\MemberAffiliationService();
         $affiliationService->ensurePrimaryAffiliationForUser((int) $user->id, $primaryParishId, $personId);
-        $affiliationService->replaceSecondaryAffiliationsForUser((int) $user->id, $primaryParishId, $filteredAffiliations, $personId);
+        // Self-service reconciliation only creates missing rows as 'visitor';
+        // existing affiliations keep whatever status operators/pathways set,
+        // so this save can never undo a revocation (CWE-367).
+        $affiliationService->replaceSecondaryAffiliationsForUser(
+            (int) $user->id,
+            $primaryParishId,
+            $filteredAffiliations,
+            $personId,
+            true
+        );
 
         return redirect()->to('profile')->with('success', lang('App.successUpdated'));
     }

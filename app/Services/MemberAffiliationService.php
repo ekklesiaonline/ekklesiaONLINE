@@ -234,8 +234,13 @@ class MemberAffiliationService
      * parish is upserted via attachToParish (status + history handled there).
      *
      * @param array<int, array{parish_id: int, membership_status?: string}> $affiliations
+     * @param bool $onlyCreateMissing When true (self-service reconciliation),
+     *        an existing live affiliation row is left completely untouched —
+     *        membership_status is never rewritten, so a concurrent operator
+     *        revocation cannot be undone by a stale snapshot. New rows are
+     *        always created as 'visitor'.
      */
-    public function replaceSecondaryAffiliationsForUser(int $userId, int $primaryParishId, array $affiliations, ?int $personId = null): void
+    public function replaceSecondaryAffiliationsForUser(int $userId, int $primaryParishId, array $affiliations, ?int $personId = null, bool $onlyCreateMissing = false): void
     {
         $desiredParishIds = [$primaryParishId];
         $desired = [];
@@ -260,6 +265,21 @@ class MemberAffiliationService
             ]);
 
         foreach ($desired as $parishId => $rawStatus) {
+            if ($onlyCreateMissing) {
+                $exists = $this->db->table('parish_affiliation')
+                    ->where('linked_user_id', $userId)
+                    ->where('parish_id', $parishId)
+                    ->where('deleted_at', null)
+                    ->countAllResults() > 0;
+                if ($exists) {
+                    // Never write membership_status for an existing row:
+                    // attachToParish would overwrite whatever status an
+                    // operator or MembershipPathwayService set (e.g. a
+                    // revocation racing this save).
+                    continue;
+                }
+            }
+
             $status = MembershipStatusService::normalizeAffiliationStatus($rawStatus);
             if (! in_array($status, MembershipStatusService::affiliationStatuses(), true)) {
                 $status = 'visitor';
