@@ -140,7 +140,7 @@ class AnnualPledges extends BaseController
             'parish_id' => $attributionParishId,
             'entity_type' => 'annual_pledge',
             'entity_id' => $pledgeId,
-            'new_values' => $payload,
+            'new_values' => $this->redactPledgeForAudit($payload),
             'meta' => $this->buildParishContextMeta($attributionParishId, $attributionPolicy),
         ]);
 
@@ -191,8 +191,8 @@ class AnnualPledges extends BaseController
             'parish_id' => (int) ($pledge['parish_id'] ?? 0),
             'entity_type' => 'annual_pledge',
             'entity_id' => (int) $id,
-            'old_values' => $pledge,
-            'new_values' => $payload,
+            'old_values' => $this->redactPledgeForAudit($pledge),
+            'new_values' => $this->redactPledgeForAudit($payload),
             'meta' => $this->buildParishContextMeta((int) ($pledge['parish_id'] ?? 0), self::ATTRIBUTION_POLICY_OPERATIONAL_DEFAULT),
         ]);
 
@@ -219,13 +219,29 @@ class AnnualPledges extends BaseController
             'parish_id' => (int) ($pledge['parish_id'] ?? 0),
             'entity_type' => 'annual_pledge',
             'entity_id' => (int) $id,
-            'old_values' => $pledge,
+            'old_values' => $this->redactPledgeForAudit($pledge),
             'meta' => $this->buildParishContextMeta((int) ($pledge['parish_id'] ?? 0), self::ATTRIBUTION_POLICY_OPERATIONAL_DEFAULT),
         ]);
 
         $model->delete((int) $id);
 
         return redirect()->to('/pledges?year=' . (int) ($pledge['pledge_year'] ?? date('Y')))->with('success', lang('App.pledgeDeletedSuccess'));
+    }
+
+    /**
+     * Strip financial values and freeform notes before audit logging —
+     * audit entries must never carry pledged/fulfilled amounts or notes.
+     *
+     * @param array<string,mixed> $pledge
+     * @return array<string,mixed>
+     */
+    private function redactPledgeForAudit(array $pledge): array
+    {
+        return array_diff_key($pledge, array_flip([
+            'pledged_amount',
+            'fulfilled_amount',
+            'notes',
+        ]));
     }
 
     private function resolveExistingProfileTable($db): ?string

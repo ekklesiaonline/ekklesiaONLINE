@@ -18,6 +18,12 @@ class PublicAssets extends PublicHome
      */
     public function serveUpload($filename)
     {
+        // Uploads are tenant data: never serve them anonymously, even for
+        // paths outside the sensitive prefixes below.
+        if (!auth()->loggedIn()) {
+            throw \CodeIgniter\Exceptions\PageNotFoundException::forPageNotFound();
+        }
+
         $relativePath = $this->sanitizeRelativeUploadPath((string) $filename);
         if ($relativePath === null) {
             throw \CodeIgniter\Exceptions\PageNotFoundException::forPageNotFound();
@@ -29,7 +35,6 @@ class PublicAssets extends PublicHome
             || str_starts_with($relativePath, 'parish/')
             || str_starts_with($relativePath, 'event/')
             || str_starts_with($relativePath, 'attachment/')
-            || str_starts_with($relativePath, 'parishes/')
             || str_starts_with($relativePath, 'parishes/')
             || str_starts_with($relativePath, 'events/')
         ) {
@@ -180,7 +185,7 @@ class PublicAssets extends PublicHome
             throw \CodeIgniter\Exceptions\PageNotFoundException::forPageNotFound();
         }
 
-        $event = model('EventModel')->find($eventId);
+        $event = $this->loadEventForAudience($eventId);
         if (!is_array($event) || !$this->canAccessEvent($event)) {
             throw \CodeIgniter\Exceptions\PageNotFoundException::forPageNotFound();
         }
@@ -233,7 +238,7 @@ class PublicAssets extends PublicHome
             throw \CodeIgniter\Exceptions\PageNotFoundException::forPageNotFound();
         }
 
-        $event = model('EventModel')->find((int) ($attachment['event_id'] ?? 0));
+        $event = $this->loadEventForAudience((int) ($attachment['event_id'] ?? 0));
         if (!is_array($event) || !$this->canAccessEvent($event)) {
             throw \CodeIgniter\Exceptions\PageNotFoundException::forPageNotFound();
         }
@@ -336,18 +341,81 @@ class PublicAssets extends PublicHome
 
     private function canAccessEvent(array $event): bool
     {
-        $parishId = (int) ($event['parish_id'] ?? 0);
-        if ($parishId > 0 && $this->canAccessParish($parishId)) {
+        // Delegate audience rules to EventVisibilityService — controllers must
+        // not reimplement them.
+        $viewer = auth()->user();
+        if ($viewer === null) {
+            return false;
+        }
+
+        if ($viewer->inGroup('systemadmin')) {
             return true;
         }
 
-        $scopeLevel = (string) ($event['scope_level'] ?? 'parish');
-        if ($scopeLevel === 'diocese') {
-            $dioceseId = (int) ($event['scope_diocese_id'] ?? 0);
-            return $dioceseId > 0 && $this->canAccessDiocese($dioceseId);
+        return (new \App\Services\EventVisibilityService())->isVisibleEvent($event, $this->buildEventVisibilityContext());
+    }
+
+    /**
+     * Load an event through the canonical parish-audience query before
+     * applying EventVisibilityService — EventModel is tenant-scoped, so a
+     * plain find() would hide diocesan events (parish_id NULL) from members
+     * of that diocese, and parish events from sibling parishes.
+     */
+    private function loadEventForAudience(int $eventId): ?array
+    {
+        $viewer = auth()->user();
+        if ($viewer === null || $eventId <= 0) {
+            return null;
         }
 
-        return false;
+        if ($viewer->inGroup('systemadmin')) {
+            $event = model('EventModel')->find($eventId);
+            return is_array($event) ? $event : null;
+        }
+
+        $parishId = (int) ($this->getOperationalParishId() ?? 0);
+        $dioceseId = (int) $this->buildEventVisibilityContext()['diocese_id'];
+        if ($parishId <= 0 && $dioceseId <= 0) {
+            return null;
+        }
+
+        // parishId 0 still resolves diocesan-organized events via the diocese
+        // branch of the audience query (e.g. diocesan admins without an
+        // operational parish); parish-organized events stay excluded.
+        $event = model('EventModel')->getEventWithCountsForParishAudience($eventId, $parishId, $dioceseId);
+
+        return is_array($event) ? $event : null;
+    }
+
+    /**
+     * @return array<string,mixed>
+     */
+    private function buildEventVisibilityContext(): array
+    {
+        $viewer = auth()->user();
+        $viewerProfile = model('ProfileModel')->where('user_id', (int) ($viewer->id ?? 0))->first();
+        $operationalParishId = (int) ($this->getOperationalParishId() ?? 0);
+
+        // Match Clergy::resolveCurrentDioceseId(): diocesan scope first, then
+        // the profile's diocese, then the operational parish's diocese — a
+        // viewer whose profile lacks diocese_id must still see attachments
+        // for diocesan events their parish belongs to.
+        $dioceseId = (int) $this->resolveDiocesanScopeId();
+        if ($dioceseId <= 0) {
+            $dioceseId = (int) ($viewerProfile['diocese_id'] ?? 0);
+        }
+        if ($dioceseId <= 0 && $operationalParishId > 0) {
+            $parish = model('ParishModel')->find($operationalParishId);
+            $dioceseId = (int) ($parish['diocese_id'] ?? 0);
+        }
+
+        return [
+            'user_id'                  => (int) ($viewer->id ?? 0),
+            'parish_id'                => $operationalParishId,
+            'diocese_id'               => $dioceseId,
+            'can_edit_events'          => $viewer !== null && $viewer->can('event.edit'),
+            'can_manage_diocese_scope' => $viewer !== null && ($this->isDioceseAdmin() || $viewer->can('diocese.admin')),
+        ];
     }
 
 
@@ -377,15 +445,9 @@ class PublicAssets extends PublicHome
             return $viewerDioceseId > 0 && $viewerDioceseId === (int) ($parish['diocese_id'] ?? 0);
         }
 
-        if (
-            !$viewer->can('event.view')
-            && !$viewer->can('parishes.manage.official')
-            && !$viewer->can('parishes.edit')
-            && !$viewer->can('member.view')
-        ) {
-            return false;
-        }
-
+        // Parish public identity assets (logo/banner) are visible to anyone
+        // actively affiliated with the parish — including plain members, who
+        // hold no staff permission.
         $viewerUserId = (int) ($viewer->id ?? 0);
         if ($viewerUserId <= 0) {
             return false;
@@ -393,39 +455,6 @@ class PublicAssets extends PublicHome
 
         $affiliationModel = model('MemberParishAffiliationModel');
         return $affiliationModel->isUserAffiliatedWithParish($viewerUserId, $parishId, true);
-    }
-
-
-    private function canAccessDiocese(int $dioceseId): bool
-    {
-        if (!auth()->loggedIn() || $dioceseId <= 0) {
-            return false;
-        }
-
-        $viewer = auth()->user();
-        if ($viewer->inGroup('systemadmin')) {
-            return true;
-        }
-
-        $viewerProfile = model('ProfileModel')->where('user_id', (int) ($viewer->id ?? 0))->first();
-        if (!is_array($viewerProfile)) {
-            return false;
-        }
-
-        if ($viewer->inGroup('provinceadmin')) {
-            $targetProvinceId = (int) ((db_connect()->table('diocese')->select('province_id')->where('id', $dioceseId)->get()->getRowArray())['province_id'] ?? 0);
-            return $targetProvinceId > 0 && $targetProvinceId === (int) ($viewerProfile['province_id'] ?? 0);
-        }
-
-        if ($viewer->inGroup('dioceseadmin')) {
-            return (int) ($viewerProfile['diocese_id'] ?? 0) === $dioceseId;
-        }
-
-        if ($viewer->can('event.view')) {
-            return (int) ($viewerProfile['diocese_id'] ?? 0) === $dioceseId;
-        }
-
-        return false;
     }
 
 

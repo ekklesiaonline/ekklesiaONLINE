@@ -237,20 +237,36 @@ class Profile extends BaseController
         $pendingParishId = (int) ($state['registration_request']['parish_id'] ?? 0);
         $affiliations = $this->request->getPost('affiliations') ?? [];
         $filteredAffiliations = [];
+        $parishModel = model('ParishModel');
         foreach ($affiliations as $affiliation) {
             $affParishId = (int) ($affiliation['parish_id'] ?? 0);
             if ($affParishId === $primaryParishId || $affParishId === $pendingParishId) {
                 return redirect()->back()->withInput()->with('error', lang('Profile.cannotAddDuplicateParish'));
             }
             if ($affParishId > 0) {
-                $filteredAffiliations[] = $affiliation;
+                // Reject parish ids that do not resolve to a real parish.
+                if ($parishModel->find($affParishId) === null) {
+                    return redirect()->back()->withInput()->with('error', lang('App.parishNotFound'));
+                }
+                $filteredAffiliations[] = [
+                    'parish_id' => $affParishId,
+                ];
             }
         }
 
         $personId = (int) ($profile['person_id'] ?? 0) ?: null;
         $affiliationService = new \App\Services\MemberAffiliationService();
         $affiliationService->ensurePrimaryAffiliationForUser((int) $user->id, $primaryParishId, $personId);
-        $affiliationService->replaceSecondaryAffiliationsForUser((int) $user->id, $primaryParishId, $filteredAffiliations, $personId);
+        // Self-service reconciliation only creates missing rows as 'visitor';
+        // existing affiliations keep whatever status operators/pathways set,
+        // so this save can never undo a revocation (CWE-367).
+        $affiliationService->replaceSecondaryAffiliationsForUser(
+            (int) $user->id,
+            $primaryParishId,
+            $filteredAffiliations,
+            $personId,
+            true
+        );
 
         return redirect()->to('profile')->with('success', lang('App.successUpdated'));
     }
