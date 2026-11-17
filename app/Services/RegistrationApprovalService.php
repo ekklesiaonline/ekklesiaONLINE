@@ -95,6 +95,13 @@ class RegistrationApprovalService
             return lang('Diocesan.accessDeniedDiocesanAdmin');
         }
 
+        // Self-approval only: the elevated admin may auto-approve their own
+        // parish-join request, never another user's request.
+        $request = $this->getRequest($requestId);
+        if ($request === null || (int) $request['user_id'] !== $userId) {
+            return lang('Diocesan.registrationRequestMissingOrReviewed');
+        }
+
         return $this->approve($userId, $requestId, $role, null);
     }
 
@@ -105,7 +112,10 @@ class RegistrationApprovalService
      */
     public function dismiss(int $actorUserId, int $requestId, ?array $actorScope = null): ?string
     {
-        return $this->markReviewed($actorUserId, $requestId, 'dismissed', false, $actorScope);
+        // Dismissed accounts are deactivated like banned ones: the gate
+        // already locks them out, and disabling the account keeps
+        // users.active consistent with the terminal status.
+        return $this->markReviewed($actorUserId, $requestId, 'dismissed', true, $actorScope);
     }
 
     /**
@@ -128,6 +138,13 @@ class RegistrationApprovalService
         $request = $this->getRequest($requestId);
         if ($request === null) {
             return lang('Diocesan.registrationRequestNotFound');
+        }
+
+        // Deletion is limited to un-onboarded requests: deleting an approved
+        // (or otherwise terminal) request would destroy a live member account
+        // outside the member-lifecycle removal path.
+        if (!in_array($request['status'], ['pending_profile', 'pending_review'], true)) {
+            return lang('Diocesan.registrationRequestMissingOrReviewed');
         }
 
         if ($actorScope !== null && !$this->requestInParishScope($request, $actorScope)) {
@@ -211,6 +228,24 @@ class RegistrationApprovalService
 
         $this->db->transStart();
 
+        // Atomically claim the request inside the transaction so a concurrent
+        // moderation action (approve/dismiss/ban/escalate) cannot interleave
+        // into an inconsistent state; rollback restores pending_review.
+        model('UserRegistrationRequestModel')->builder()
+            ->where('id', (int) $request['id'])
+            ->where('status', 'pending_review')
+            ->update([
+                'status' => 'approved',
+                'requested_role' => $role,
+                'reviewed_by' => $actorUserId,
+                'reviewed_at' => date('Y-m-d H:i:s'),
+            ]);
+
+        if ($this->db->affectedRows() === 0) {
+            $this->db->transRollback();
+            return lang('Diocesan.registrationRequestMissingOrReviewed');
+        }
+
         $this->setUserGroups($user->id, [$role]);
 
         // Approval affiliates the person but does not confer canonical
@@ -250,13 +285,6 @@ class RegistrationApprovalService
             }
         }
 
-        model('UserRegistrationRequestModel')->update((int) $request['id'], [
-            'status' => 'approved',
-            'requested_role' => $role,
-            'reviewed_by' => $actorUserId,
-            'reviewed_at' => date('Y-m-d H:i:s'),
-        ]);
-
         $this->logModerationAudit(
             $parishId > 0 ? $parishId : null,
             $actorUserId,
@@ -290,6 +318,22 @@ class RegistrationApprovalService
 
         $this->db->transStart();
 
+        // Atomically claim the request so a concurrent moderation action
+        // (approve/dismiss/ban) cannot interleave into an inconsistent state.
+        model('UserRegistrationRequestModel')->builder()
+            ->where('id', (int) $request['id'])
+            ->whereIn('status', ['pending_profile', 'pending_review'])
+            ->update([
+                'status' => $status,
+                'reviewed_by' => $actorUserId,
+                'reviewed_at' => date('Y-m-d H:i:s'),
+            ]);
+
+        if ($this->db->affectedRows() === 0) {
+            $this->db->transRollback();
+            return lang('Diocesan.registrationRequestMissingOrReviewed');
+        }
+
         $this->logModerationAudit(
             $parishId,
             $actorUserId,
@@ -300,12 +344,6 @@ class RegistrationApprovalService
                 ? 'Banned registration request during parish moderation.'
                 : 'Dismissed registration request during parish moderation.'
         );
-
-        model('UserRegistrationRequestModel')->update((int) $request['id'], [
-            'status' => $status,
-            'reviewed_by' => $actorUserId,
-            'reviewed_at' => date('Y-m-d H:i:s'),
-        ]);
 
         if ($deactivateUser) {
             $this->db->table('users')
@@ -376,17 +414,11 @@ class RegistrationApprovalService
 
     private function requestInParishScope(array $request, array $scope): bool
     {
-        $requestParishId = (int) ($request['requested_parish_id'] ?? 0);
-        if ($requestParishId > 0) {
-            return $requestParishId === (int) $scope['parish_id'];
-        }
+        // Parish-scoped actors may only act on requests that named their
+        // parish; a parish-less diocesan request never enters a parish queue.
+        $requestParishId = (int) ($request['requested_parish_id'] ?? $request['parish_id'] ?? 0);
 
-        $requestDioceseId = (int) ($request['diocese_id'] ?? 0);
-        if ($requestDioceseId <= 0) {
-            return false;
-        }
-
-        return $requestDioceseId === (int) $scope['diocese_id'];
+        return $requestParishId > 0 && $requestParishId === (int) $scope['parish_id'];
     }
 
     private function setUserGroups(int $userId, array $newGroups): void
@@ -437,12 +469,21 @@ class RegistrationApprovalService
         // A requester who already holds a top-tier admin role (e.g. a diocese
         // admin who also submitted a personal parish-join request) must never
         // be left stuck in "pending_review" limbo by an escalation — auto-approve
-        // instead, the same way completeSubmit()/joinParishSubmit() do.
-        if ($this->isTopTierAdmin((int) $request['user_id'])) {
+        // instead, the same way completeSubmit()/joinParishSubmit() do. The
+        // shortcut is self-approval only: a parish admin may never mutate a
+        // higher-tier account.
+        if (
+            $this->isTopTierAdmin((int) $request['user_id'])
+            && (int) $request['user_id'] === $actorUserId
+        ) {
             $scope = $actorScope ?? $this->resolveParishScope($request);
             if ($scope !== null) {
                 return $this->performApprove($actorUserId, $request, null, $scope);
             }
+        }
+
+        if ($code = $this->guardTargetUserMutation((int) $request['user_id'], false, $actorUserId)) {
+            return $this->hierarchyGuardMessage($code);
         }
 
         $parishId = $this->resolveAuditParishId((int) $request['user_id'], (int) ($request['requested_parish_id'] ?? 0));
@@ -455,15 +496,24 @@ class RegistrationApprovalService
             (int) $request['user_id'],
             'registration_escalated',
             $request['requested_role'] ?? null,
-            $notes ?? 'Escalated to a higher-level admin for review.'
+            // Freeform moderator notes stay on the request row, out of the
+            // audit log (audit details must not carry freeform text).
+            'Escalated to a higher-level admin for review.'
         );
 
-        model('UserRegistrationRequestModel')->update((int) $request['id'], [
-            'status' => 'pending_review',
-            'reviewed_by' => $actorUserId,
-            'reviewed_at' => date('Y-m-d H:i:s'),
-            'review_notes' => $notes ?? lang('Diocesan.escalatedToHigherAdmin'),
-        ]);
+        model('UserRegistrationRequestModel')->builder()
+            ->where('id', (int) $request['id'])
+            ->where('status', 'pending_review')
+            ->update([
+                'reviewed_by' => $actorUserId,
+                'reviewed_at' => date('Y-m-d H:i:s'),
+                'review_notes' => $notes !== null ? mb_substr($notes, 0, 1000) : lang('Diocesan.escalatedToHigherAdmin'),
+            ]);
+
+        if ($this->db->affectedRows() === 0) {
+            $this->db->transRollback();
+            return lang('Diocesan.registrationRequestMissingOrReviewed');
+        }
 
         $this->db->transComplete();
 
