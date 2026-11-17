@@ -72,6 +72,55 @@ final class ProfileAffiliationScopeIntegrationTest extends CIUnitTestCase
             'Self-service affiliation must not carry member status.');
     }
 
+    public function testExistingApprovedStatusIsPreservedOnSave(): void
+    {
+        $parishA = $this->insertParish('Home Parish D');
+        $parishB = $this->insertParish('Approved Parish E');
+        $userId = $this->insertUser('aff.scope.existing');
+        $this->insertProfile($userId, $parishA);
+        $this->insertPrimaryAffiliation($userId, $parishA);
+        // Operator-approved secondary membership that must survive a profile save.
+        $this->db->table($this->resolveTableName('parish_affiliation'))->insert([
+            'linked_user_id' => $userId,
+            'parish_id' => $parishB,
+            'person_id' => null,
+            'membership_status' => 'member',
+            'is_primary' => 0,
+            'source' => 'operator',
+            'start_date' => date('Y-m-d'),
+            'created_at' => date('Y-m-d H:i:s'),
+            'updated_at' => date('Y-m-d H:i:s'),
+        ]);
+        $this->injectMemberAuth($userId);
+
+        $request = service('request');
+        $request->setGlobal('post', [
+            'first_name' => 'Attach',
+            'last_name'  => 'Test',
+            'locale'     => 'en',
+            'affiliations' => [
+                ['parish_id' => (string) $parishB, 'membership_status' => 'member'],
+            ],
+        ]);
+
+        $controller = new \MemberPortal\Controllers\Profile();
+        $controller->initController($request, service('response'), service('logger'));
+        $result = $controller->update();
+
+        $this->assertInstanceOf(\CodeIgniter\HTTP\RedirectResponse::class, $result);
+
+        $row = $this->db->table($this->resolveTableName('parish_affiliation'))
+            ->where('linked_user_id', $userId)
+            ->where('parish_id', $parishB)
+            ->where('deleted_at', null)
+            ->get()
+            ->getRowArray();
+
+        $this->assertIsArray($row, 'Existing affiliation row disappeared.');
+        $this->assertSame('member', (string) ($row['membership_status'] ?? ''),
+            'A plain profile save must not demote an approved membership.');
+    }
+
     public function testUnknownParishIdIsRejected(): void
     {
         $parishA = $this->insertParish('Home Parish C');

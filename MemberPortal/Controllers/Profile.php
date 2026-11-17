@@ -238,6 +238,17 @@ class Profile extends BaseController
         $affiliations = $this->request->getPost('affiliations') ?? [];
         $filteredAffiliations = [];
         $parishModel = model('ParishModel');
+        $existingStatuses = [];
+        $existingRows = db_connect()->table('parish_affiliation')
+            ->select('parish_id, membership_status')
+            ->where('linked_user_id', (int) $user->id)
+            ->where('is_primary', 0)
+            ->where('deleted_at', null)
+            ->get()
+            ->getResultArray();
+        foreach ($existingRows as $row) {
+            $existingStatuses[(int) $row['parish_id']] = (string) $row['membership_status'];
+        }
         foreach ($affiliations as $affiliation) {
             $affParishId = (int) ($affiliation['parish_id'] ?? 0);
             if ($affParishId === $primaryParishId || $affParishId === $pendingParishId) {
@@ -250,10 +261,12 @@ class Profile extends BaseController
                 }
                 // Self-service secondary affiliations always start as
                 // visitor: 'member' status is reserved for operator choice
-                // and MembershipPathwayService promotion.
+                // and MembershipPathwayService promotion. An affiliation
+                // that already exists keeps its recorded status — a plain
+                // profile save must not demote an approved membership.
                 $filteredAffiliations[] = [
                     'parish_id'         => $affParishId,
-                    'membership_status' => 'visitor',
+                    'membership_status' => $existingStatuses[$affParishId] ?? 'visitor',
                 ];
             }
         }
