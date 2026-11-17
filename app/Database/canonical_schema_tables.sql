@@ -1228,7 +1228,7 @@ CREATE TABLE `parish` (
   `phone` varchar(50) COLLATE utf8mb4_general_ci DEFAULT NULL,
   `email` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
   `website` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
-  `public_token` varchar(64) COLLATE utf8mb4_general_ci NOT NULL DEFAULT '',
+  `public_token` varchar(64) COLLATE utf8mb4_general_ci DEFAULT NULL,
   `created_at` datetime DEFAULT NULL,
   `updated_at` datetime DEFAULT NULL,
   `deleted_at` datetime DEFAULT NULL,

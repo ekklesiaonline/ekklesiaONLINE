@@ -232,6 +232,23 @@ final class ConnectCardIntakeFeatureTest extends CIUnitTestCase
         $this->assertSame(1, $visits);
     }
 
+    public function testConsecutiveParishInsertsWithoutTokenSucceed(): void
+    {
+        // Mirrors Parishes::store and SyncUeidDirectory multi-row imports,
+        // which omit public_token; the unique key must not reject row 2+.
+        foreach (['Parish A', 'Parish B', 'Parish C'] as $name) {
+            $this->assertTrue((bool) $this->db->table('parish')->insert([
+                'name'       => $name,
+                'is_active'  => 1,
+                'created_at' => date('Y-m-d H:i:s'),
+                'updated_at' => date('Y-m-d H:i:s'),
+            ]));
+        }
+
+        $this->assertSame(3, $this->countRows('parish'));
+        $this->assertSame(3, $this->db->table('parish')->where('public_token', null)->countAllResults());
+    }
+
     // -------------------------------------------------------------------
     // Helpers
     // -------------------------------------------------------------------

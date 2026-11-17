@@ -14,17 +14,31 @@ class AddParishPublicTokenUniqueIndex extends Migration
             return;
         }
 
-        // Backfill empty/missing tokens; also rotate any accidental duplicates
-        // so the unique key can be created cleanly.
+        // Uninitialized tokens are NULL (not ''), so the unique key permits any
+        // number of parishes awaiting lazy generation via ensurePublicToken().
+        // Insert paths that omit public_token (Parishes::store,
+        // SyncUeidDirectory) therefore no longer collide.
+        $this->forge->modifyColumn('parish', [
+            'public_token' => [
+                'type'       => 'VARCHAR',
+                'constraint' => 64,
+                'null'       => true,
+                'default'    => null,
+            ],
+        ]);
+        $this->db->table('parish')->where('public_token', '')->update(['public_token' => null]);
+
+        // Rotate any accidental duplicates so the unique key can be created.
         $rows = $this->db->table('parish')
             ->select('id, public_token')
+            ->where('public_token IS NOT NULL')
             ->get()
             ->getResultArray();
 
         $seen = [];
         foreach ($rows as $row) {
-            $token = (string) ($row['public_token'] ?? '');
-            if ($token === '' || isset($seen[$token])) {
+            $token = (string) $row['public_token'];
+            if (isset($seen[$token])) {
                 $token = bin2hex(random_bytes(16));
                 $this->db->table('parish')
                     ->where('id', (int) $row['id'])
