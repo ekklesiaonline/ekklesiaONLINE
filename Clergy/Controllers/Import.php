@@ -548,7 +548,10 @@ class Import extends BaseController
      */
     private function findParishByToken(string $token): ?array
     {
-        if ($token === '') {
+        // Tokens are generated lowercase (bin2hex). The column collation is
+        // case-insensitive, so reject non-canonical casing here — otherwise
+        // case variants of one token get separate rate-limit buckets.
+        if ($token === '' || preg_match('/^[a-z0-9]{1,64}$/', $token) !== 1) {
             return null;
         }
 

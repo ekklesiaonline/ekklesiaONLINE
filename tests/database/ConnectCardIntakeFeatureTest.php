@@ -69,6 +69,14 @@ final class ConnectCardIntakeFeatureTest extends CIUnitTestCase
         $this->get('connect/deletedtokenaaaa1111bbbb2222cccc')->assertStatus(404);
     }
 
+    public function testUppercaseTokenVariantReturns404(): void
+    {
+        $this->seedParish(self::TOKEN);
+
+        $this->get('connect/' . strtoupper(self::TOKEN))->assertStatus(404);
+        $this->get('connect/DeadBeefdeadbeefdeadbeefdeadbeef')->assertStatus(404);
+    }
+
     public function testGetFormRendersForValidToken(): void
     {
         $this->seedParish(self::TOKEN);
@@ -236,6 +244,10 @@ final class ConnectCardIntakeFeatureTest extends CIUnitTestCase
     {
         // Mirrors Parishes::store and SyncUeidDirectory multi-row imports,
         // which omit public_token; the unique key must not reject row 2+.
+        // The SQLite test schema has no unique key, so mirror the production
+        // index here or this test cannot detect a regression.
+        $this->db->query('CREATE UNIQUE INDEX IF NOT EXISTS uniq_parish_public_token ON parish (public_token)');
+
         foreach (['Parish A', 'Parish B', 'Parish C'] as $name) {
             $this->assertTrue((bool) $this->db->table('parish')->insert([
                 'name'       => $name,
@@ -247,6 +259,31 @@ final class ConnectCardIntakeFeatureTest extends CIUnitTestCase
 
         $this->assertSame(3, $this->countRows('parish'));
         $this->assertSame(3, $this->db->table('parish')->where('public_token', null)->countAllResults());
+    }
+
+    public function testUniqueTokenIndexRejectsDuplicateEmptyTokens(): void
+    {
+        // Sanity check that the index is enforced: the old NOT NULL DEFAULT ''
+        // shape would collide on the second insert.
+        $this->db->query('CREATE UNIQUE INDEX IF NOT EXISTS uniq_parish_public_token ON parish (public_token)');
+
+        $row = [
+            'name'         => 'Parish Blank',
+            'is_active'    => 1,
+            'public_token' => '',
+            'created_at'   => date('Y-m-d H:i:s'),
+            'updated_at'   => date('Y-m-d H:i:s'),
+        ];
+        $this->assertTrue((bool) $this->db->table('parish')->insert($row));
+
+        $rejected = false;
+        try {
+            $rejected = ! $this->db->table('parish')->insert($row);
+        } catch (\Throwable $e) {
+            $rejected = true;
+        }
+
+        $this->assertTrue($rejected, 'Duplicate empty public_token must violate the unique key');
     }
 
     // -------------------------------------------------------------------

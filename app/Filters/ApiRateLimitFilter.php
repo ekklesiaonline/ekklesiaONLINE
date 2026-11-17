@@ -61,7 +61,11 @@ class ApiRateLimitFilter implements FilterInterface
         $pathLimit = $this->resolvePathLimit($path, $defaultLimit, $userId !== null);
 
         $identity = $this->resolveIdentity($request, $userId);
-        $cacheKey = 'api_rl_' . sha1($identity . '|' . $path . '|' . $method);
+        // Public connect-card intake shares one bucket per identity across all
+        // tokens — otherwise token case variants or token cycling each get a
+        // fresh quota.
+        $bucketPath = preg_match('#^connect(/|$)#i', $path) === 1 ? 'connect' : $path;
+        $cacheKey = 'api_rl_' . sha1($identity . '|' . $bucketPath . '|' . $method);
 
         $cache = \Config\Services::cache();
         $attempts = (int) ($cache->get($cacheKey) ?? 0);
