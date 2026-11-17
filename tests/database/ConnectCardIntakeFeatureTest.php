@@ -245,8 +245,10 @@ final class ConnectCardIntakeFeatureTest extends CIUnitTestCase
         // Mirrors Parishes::store and SyncUeidDirectory multi-row imports,
         // which omit public_token; the unique key must not reject row 2+.
         // The SQLite test schema has no unique key, so mirror the production
-        // index here or this test cannot detect a regression.
-        $this->db->query('CREATE UNIQUE INDEX IF NOT EXISTS uniq_parish_public_token ON parish (public_token)');
+        // index here or this test cannot detect a regression. Raw SQL needs
+        // the physical (prefixed) table name — 'parish' alone does not exist.
+        $parishTable = $this->db->prefixTable('parish');
+        $this->db->query("CREATE UNIQUE INDEX IF NOT EXISTS uniq_parish_public_token ON {$parishTable} (public_token)");
 
         foreach (['Parish A', 'Parish B', 'Parish C'] as $name) {
             $this->assertTrue((bool) $this->db->table('parish')->insert([
@@ -265,7 +267,8 @@ final class ConnectCardIntakeFeatureTest extends CIUnitTestCase
     {
         // Sanity check that the index is enforced: the old NOT NULL DEFAULT ''
         // shape would collide on the second insert.
-        $this->db->query('CREATE UNIQUE INDEX IF NOT EXISTS uniq_parish_public_token ON parish (public_token)');
+        $parishTable = $this->db->prefixTable('parish');
+        $this->db->query("CREATE UNIQUE INDEX IF NOT EXISTS uniq_parish_public_token ON {$parishTable} (public_token)");
 
         $row = [
             'name'         => 'Parish Blank',
