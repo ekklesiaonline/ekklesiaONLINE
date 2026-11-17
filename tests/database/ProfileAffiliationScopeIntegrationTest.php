@@ -5,6 +5,7 @@ use CodeIgniter\Shield\Entities\User;
 use CodeIgniter\Test\CIUnitTestCase;
 use CodeIgniter\Test\DatabaseTestTrait;
 use Config\Services;
+use Tests\Support\Database\CanonicalTestSchema;
 
 /**
  * Security regression: POST /profile/update previously honored a raw
@@ -27,13 +28,66 @@ final class ProfileAffiliationScopeIntegrationTest extends CIUnitTestCase
         parent::setUp();
         helper('auth');
         Services::reset(true);
-        $this->ensureCoreTablesExist();
+        // CanonicalTestSchema creates the shared tables with the full union
+        // column set and repairs missing columns — a hand-rolled CREATE TABLE
+        // here would poison every later test class in the process.
+        CanonicalTestSchema::ensure($this->db);
     }
 
     protected function tearDown(): void
     {
+        $this->cleanupFixtures();
         Services::reset(true);
         parent::tearDown();
+    }
+
+    /**
+     * DatabaseTestTrait does not roll back between classes in this suite, so
+     * every row this class writes must be removed explicitly — leftover
+     * affiliations/users/parishes poison later classes (observed: orphaned
+     * affiliation rows breaking SystemDiocesanOrdinariesFeatureTest).
+     */
+    private array $createdParishIds = [];
+
+    private function cleanupFixtures(): void
+    {
+        $userIds = array_map('intval', array_column(
+            $this->db->table($this->resolveTableName('users'))
+                ->select('id')
+                ->like('username', 'aff.scope.', 'after')
+                ->get()->getResultArray(),
+            'id'
+        ));
+
+        if ($userIds === []) {
+            return;
+        }
+
+        $personIds = array_map('intval', array_column(
+            $this->db->table($this->resolveTableName('user_person'))
+                ->select('person_id')
+                ->whereIn('user_id', $userIds)
+                ->get()->getResultArray(),
+            'person_id'
+        ));
+        $personIds = array_values(array_unique(array_filter($personIds)));
+
+        $this->db->table($this->resolveTableName('user_person'))->whereIn('user_id', $userIds)->delete();
+        $affiliationBuilder = $this->db->table($this->resolveTableName('parish_affiliation'))
+            ->groupStart()->whereIn('linked_user_id', $userIds);
+        if ($personIds !== []) {
+            $affiliationBuilder->orGroupStart()->whereIn('person_id', $personIds)->groupEnd();
+        }
+        $affiliationBuilder->groupEnd()->delete();
+        $this->db->table($this->resolveTableName('profile'))->whereIn('user_id', $userIds)->delete();
+        if ($personIds !== []) {
+            $this->db->table($this->resolveTableName('person'))->whereIn('id', $personIds)->delete();
+        }
+        $this->db->table($this->resolveTableName('users'))->whereIn('id', $userIds)->delete();
+
+        if ($this->createdParishIds !== []) {
+            $this->db->table($this->resolveTableName('parish'))->whereIn('id', $this->createdParishIds)->delete();
+        }
     }
 
     public function testPostedMemberStatusIsPinnedToVisitor(): void
@@ -268,7 +322,10 @@ final class ProfileAffiliationScopeIntegrationTest extends CIUnitTestCase
             'updated_at' => date('Y-m-d H:i:s'),
         ]);
 
-        return (int) $this->db->insertID();
+        $id = (int) $this->db->insertID();
+        $this->createdParishIds[] = $id;
+
+        return $id;
     }
 
     private function insertUser(string $username): int
@@ -312,141 +369,9 @@ final class ProfileAffiliationScopeIntegrationTest extends CIUnitTestCase
         ]);
     }
 
-    private function ensureCoreTablesExist(): void
-    {
-        if (!$this->tableExists('users')) {
-            $this->db->query('CREATE TABLE IF NOT EXISTS ' . $this->createTableName('users') . ' (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                username TEXT NULL,
-                email TEXT NULL,
-                active INTEGER DEFAULT 1,
-                created_at TEXT NULL,
-                updated_at TEXT NULL,
-                deleted_at TEXT NULL
-            )');
-        }
-
-        if (!$this->tableExists('parish')) {
-            $this->db->query('CREATE TABLE IF NOT EXISTS ' . $this->createTableName('parish') . ' (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                name TEXT NOT NULL,
-                diocese_id INTEGER NULL,
-                created_at TEXT NULL,
-                updated_at TEXT NULL,
-                deleted_at TEXT NULL
-            )');
-        }
-
-        if (!$this->tableExists('profile')) {
-            $this->db->query('CREATE TABLE IF NOT EXISTS ' . $this->createTableName('profile') . ' (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                user_id INTEGER NOT NULL,
-                parish_id INTEGER NULL,
-                first_name TEXT NULL,
-                middle_name TEXT NULL,
-                last_name TEXT NULL,
-                phone TEXT NULL,
-                address TEXT NULL,
-                city TEXT NULL,
-                state TEXT NULL,
-                zip TEXT NULL,
-                country TEXT NULL,
-                birth_date TEXT NULL,
-                baptism_date TEXT NULL,
-                spiritual_gifts TEXT NULL,
-                locale TEXT NULL,
-                profile_picture TEXT NULL,
-                person_id INTEGER NULL,
-                created_at TEXT NULL,
-                updated_at TEXT NULL,
-                deleted_at TEXT NULL
-            )');
-        }
-        $this->ensureColumnExists($this->resolveTableName('profile'), 'person_id', 'INTEGER NULL');
-        $this->ensureColumnExists($this->resolveTableName('profile'), 'locale', 'TEXT NULL');
-        $this->ensureColumnExists($this->resolveTableName('profile'), 'parish_id', 'INTEGER NULL');
-        $this->ensureColumnExists($this->resolveTableName('profile'), 'spiritual_gifts', 'TEXT NULL');
-        $this->ensureColumnExists($this->resolveTableName('profile'), 'baptism_date', 'TEXT NULL');
-        $this->ensureColumnExists($this->resolveTableName('profile'), 'birth_date', 'TEXT NULL');
-        $this->ensureColumnExists($this->resolveTableName('profile'), 'profile_picture', 'TEXT NULL');
-        $this->ensureColumnExists($this->resolveTableName('profile'), 'phone_country_code', 'TEXT NULL');
-        $this->ensureColumnExists($this->resolveTableName('profile'), 'address_line_2', 'TEXT NULL');
-
-        if (!$this->tableExists('parish_affiliation')) {
-            $this->db->query('CREATE TABLE IF NOT EXISTS ' . $this->createTableName('parish_affiliation') . ' (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                linked_user_id INTEGER NULL,
-                parish_id INTEGER NOT NULL,
-                person_id INTEGER NULL,
-                membership_status TEXT NULL,
-                is_primary INTEGER DEFAULT 0,
-                pathway_stage TEXT NULL,
-                source TEXT NULL,
-                start_date TEXT NULL,
-                end_date TEXT NULL,
-                created_at TEXT NULL,
-                updated_at TEXT NULL,
-                deleted_at TEXT NULL
-            )');
-        }
-
-        if (!$this->tableExists('person')) {
-            $this->db->query('CREATE TABLE IF NOT EXISTS ' . $this->createTableName('person') . ' (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                first_name TEXT NULL,
-                last_name TEXT NULL,
-                phone TEXT NULL,
-                address TEXT NULL,
-                birthdate TEXT NULL,
-                email TEXT NULL,
-                created_at TEXT NULL,
-                updated_at TEXT NULL,
-                deleted_at TEXT NULL
-            )');
-        }
-
-        if (!$this->tableExists('user_person')) {
-            $this->db->query('CREATE TABLE IF NOT EXISTS ' . $this->createTableName('user_person') . ' (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                user_id INTEGER NOT NULL,
-                person_id INTEGER NOT NULL,
-                is_primary INTEGER DEFAULT 0,
-                linked_at TEXT NULL,
-                created_at TEXT NULL,
-                updated_at TEXT NULL
-            )');
-        }
-    }
-
-    private function tableExists(string $table): bool
-    {
-        return $this->db->tableExists($table) || $this->db->tableExists($this->db->getPrefix() . $table);
-    }
-
     private function resolveTableName(string $base): string
     {
         return $this->db->getPrefix() !== '' ? $this->db->getPrefix() . $base : $base;
     }
 
-    private function createTableName(string $base): string
-    {
-        return $this->db->getPrefix() . $base;
-    }
-
-    private function ensureColumnExists(string $table, string $column, string $definition): void
-    {
-        try {
-            $columns = $this->db->getFieldNames($table);
-            if (in_array($column, $columns, true)) {
-                return;
-            }
-        } catch (\Throwable $e) {
-        }
-
-        try {
-            $this->db->query('ALTER TABLE ' . $table . ' ADD COLUMN ' . $column . ' ' . $definition);
-            $this->db->resetDataCache();
-        } catch (\Throwable $e) {
-        }
-    }
 }
