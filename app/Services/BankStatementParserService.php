@@ -15,6 +15,12 @@ namespace App\Services;
  */
 class BankStatementParserService
 {
+    /** Maximum statement file size accepted for parsing (5 MB). */
+    public const MAX_FILE_BYTES = 5 * 1024 * 1024;
+
+    /** Maximum number of transactions accepted from a single statement file. */
+    public const MAX_TRANSACTIONS = 10000;
+
     /**
      * Parse an uploaded statement file by detecting its format.
      *
@@ -25,6 +31,10 @@ class BankStatementParserService
     public function parse(string $filePath, string $originalName = ''): array
     {
         if (!is_file($filePath) || !is_readable($filePath)) {
+            return [];
+        }
+
+        if (filesize($filePath) > self::MAX_FILE_BYTES) {
             return [];
         }
 

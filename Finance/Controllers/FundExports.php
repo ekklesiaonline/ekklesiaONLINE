@@ -47,7 +47,7 @@ class FundExports extends Funds
 
         fwrite($handle, "\xEF\xBB\xBF");
 
-        fputcsv($handle, [
+        fputcsv_safe($handle, [
             lang('Finance.fundName'),
             lang('Finance.fundType'),
             lang('Finance.fundRestrictionPurpose'),
@@ -62,7 +62,7 @@ class FundExports extends Funds
         ]);
 
         foreach ($funds as $fund) {
-            fputcsv($handle, [
+            fputcsv_safe($handle, [
                 (string) ($fund['name'] ?? ''),
                 (string) ($fund['fund_type'] ?? ''),
                 (string) ($fund['restriction_purpose'] ?? ''),

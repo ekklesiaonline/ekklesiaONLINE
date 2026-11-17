@@ -190,7 +190,7 @@ class ReportExports extends Reports
         $filename = 'reports_' . $scope . '_' . date('Ymd_His') . '.csv';
         $handle = fopen('php://temp', 'w+');
         foreach ($rows as $row) {
-            fputcsv($handle, $row);
+            fputcsv_safe($handle, $row);
         }
         rewind($handle);
         $csv = stream_get_contents($handle);
@@ -613,7 +613,7 @@ class ReportExports extends Reports
             return redirect()->back()->with('error', lang('App.errorGeneric'));
         }
 
-        fputcsv($output, [
+        fputcsv_safe($output, [
             lang('Finance.colAccountCode'),
             lang('Finance.colAccountName'),
             lang('Finance.colAccountType'),
@@ -622,7 +622,7 @@ class ReportExports extends Reports
         ]);
 
         foreach ($tb['accounts'] as $acc) {
-            fputcsv($output, [
+            fputcsv_safe($output, [
                 $acc['code'],
                 $acc['name'],
                 ucfirst((string) $acc['account_type']),
@@ -631,15 +631,15 @@ class ReportExports extends Reports
             ]);
         }
 
-        fputcsv($output, []);
-        fputcsv($output, [
+        fputcsv_safe($output, []);
+        fputcsv_safe($output, [
             lang('Finance.reportTotal'),
             '',
             '',
             number_format((float) $tb['total_debits'], 2, '.', ''),
             number_format((float) $tb['total_credits'], 2, '.', ''),
         ]);
-        fputcsv($output, [
+        fputcsv_safe($output, [
             lang('Finance.trialBalanceStatus'),
             $tb['is_balanced'] ? lang('Finance.trialBalanceBalanced') : lang('Finance.trialBalanceUnbalanced'),
             '',
@@ -783,52 +783,52 @@ class ReportExports extends Reports
             return redirect()->back()->with('error', lang('App.errorGeneric'));
         }
 
-        fputcsv($output, [lang('Finance.colCategory'), lang('Finance.colAccountCode'), lang('Finance.colAccountName'), lang('Finance.colBalance')]);
+        fputcsv_safe($output, [lang('Finance.colCategory'), lang('Finance.colAccountCode'), lang('Finance.colAccountName'), lang('Finance.colBalance')]);
 
         // Current Assets
-        fputcsv($output, [lang('Finance.currentAssetsHeading'), '', '', '']);
+        fputcsv_safe($output, [lang('Finance.currentAssetsHeading'), '', '', '']);
         foreach ($bs['current_assets'] as $acc) {
-            fputcsv($output, ['', $acc['code'], $acc['name'], number_format((float) $acc['balance'], 2, '.', '')]);
+            fputcsv_safe($output, ['', $acc['code'], $acc['name'], number_format((float) $acc['balance'], 2, '.', '')]);
         }
-        fputcsv($output, ['', '', lang('Finance.totalCurrentAssets'), number_format((float) $bs['total_current_assets'], 2, '.', '')]);
+        fputcsv_safe($output, ['', '', lang('Finance.totalCurrentAssets'), number_format((float) $bs['total_current_assets'], 2, '.', '')]);
 
         // Fixed Assets
-        fputcsv($output, [lang('Finance.fixedAssetsHeading'), '', '', '']);
+        fputcsv_safe($output, [lang('Finance.fixedAssetsHeading'), '', '', '']);
         foreach ($bs['fixed_assets'] as $acc) {
-            fputcsv($output, ['', $acc['code'], $acc['name'], number_format((float) $acc['balance'], 2, '.', '')]);
+            fputcsv_safe($output, ['', $acc['code'], $acc['name'], number_format((float) $acc['balance'], 2, '.', '')]);
         }
-        fputcsv($output, ['', '', lang('Finance.totalFixedAssets'), number_format((float) $bs['total_fixed_assets'], 2, '.', '')]);
-        fputcsv($output, [lang('Finance.totalAssetsHeading'), '', '', number_format((float) $bs['total_assets'], 2, '.', '')]);
-        fputcsv($output, []);
+        fputcsv_safe($output, ['', '', lang('Finance.totalFixedAssets'), number_format((float) $bs['total_fixed_assets'], 2, '.', '')]);
+        fputcsv_safe($output, [lang('Finance.totalAssetsHeading'), '', '', number_format((float) $bs['total_assets'], 2, '.', '')]);
+        fputcsv_safe($output, []);
 
         // Current Liabilities
-        fputcsv($output, [lang('Finance.currentLiabilitiesHeading'), '', '', '']);
+        fputcsv_safe($output, [lang('Finance.currentLiabilitiesHeading'), '', '', '']);
         foreach ($bs['current_liabilities'] as $acc) {
-            fputcsv($output, ['', $acc['code'], $acc['name'], number_format((float) $acc['balance'], 2, '.', '')]);
+            fputcsv_safe($output, ['', $acc['code'], $acc['name'], number_format((float) $acc['balance'], 2, '.', '')]);
         }
-        fputcsv($output, ['', '', lang('Finance.totalCurrentLiabilities'), number_format((float) $bs['total_current_liabilities'], 2, '.', '')]);
+        fputcsv_safe($output, ['', '', lang('Finance.totalCurrentLiabilities'), number_format((float) $bs['total_current_liabilities'], 2, '.', '')]);
 
         // Long-term Liabilities
-        fputcsv($output, [lang('Finance.longTermLiabilitiesHeading'), '', '', '']);
+        fputcsv_safe($output, [lang('Finance.longTermLiabilitiesHeading'), '', '', '']);
         foreach ($bs['long_term_liabilities'] as $acc) {
-            fputcsv($output, ['', $acc['code'], $acc['name'], number_format((float) $acc['balance'], 2, '.', '')]);
+            fputcsv_safe($output, ['', $acc['code'], $acc['name'], number_format((float) $acc['balance'], 2, '.', '')]);
         }
-        fputcsv($output, ['', '', lang('Finance.totalLongTermLiabilities'), number_format((float) $bs['total_long_term_liabilities'], 2, '.', '')]);
-        fputcsv($output, [lang('Finance.totalLiabilitiesHeading'), '', '', number_format((float) $bs['total_liabilities'], 2, '.', '')]);
-        fputcsv($output, []);
+        fputcsv_safe($output, ['', '', lang('Finance.totalLongTermLiabilities'), number_format((float) $bs['total_long_term_liabilities'], 2, '.', '')]);
+        fputcsv_safe($output, [lang('Finance.totalLiabilitiesHeading'), '', '', number_format((float) $bs['total_liabilities'], 2, '.', '')]);
+        fputcsv_safe($output, []);
 
         // Net Assets / Equity
-        fputcsv($output, [lang('Finance.netAssetsHeading'), '', '', '']);
+        fputcsv_safe($output, [lang('Finance.netAssetsHeading'), '', '', '']);
         foreach ($bs['equity_accounts'] as $acc) {
-            fputcsv($output, ['', $acc['code'], $acc['name'], number_format((float) $acc['balance'], 2, '.', '')]);
+            fputcsv_safe($output, ['', $acc['code'], $acc['name'], number_format((float) $acc['balance'], 2, '.', '')]);
         }
-        fputcsv($output, ['', '', lang('Finance.currentPeriodNetChange'), number_format((float) $bs['current_period_net_change'], 2, '.', '')]);
-        fputcsv($output, [lang('Finance.totalNetAssetsHeading'), '', '', number_format((float) $bs['total_net_assets'], 2, '.', '')]);
-        fputcsv($output, []);
+        fputcsv_safe($output, ['', '', lang('Finance.currentPeriodNetChange'), number_format((float) $bs['current_period_net_change'], 2, '.', '')]);
+        fputcsv_safe($output, [lang('Finance.totalNetAssetsHeading'), '', '', number_format((float) $bs['total_net_assets'], 2, '.', '')]);
+        fputcsv_safe($output, []);
 
         // Grand Total
-        fputcsv($output, [lang('Finance.totalLiabilitiesAndNetAssetsHeading'), '', '', number_format((float) $bs['total_liabilities_and_net_assets'], 2, '.', '')]);
-        fputcsv($output, [lang('Finance.trialBalanceStatus'), $bs['is_balanced'] ? lang('Finance.trialBalanceBalanced') : lang('Finance.trialBalanceUnbalanced'), '', '']);
+        fputcsv_safe($output, [lang('Finance.totalLiabilitiesAndNetAssetsHeading'), '', '', number_format((float) $bs['total_liabilities_and_net_assets'], 2, '.', '')]);
+        fputcsv_safe($output, [lang('Finance.trialBalanceStatus'), $bs['is_balanced'] ? lang('Finance.trialBalanceBalanced') : lang('Finance.trialBalanceUnbalanced'), '', '']);
 
         rewind($output);
         $csvContent = stream_get_contents($output);
@@ -996,48 +996,48 @@ class ReportExports extends Reports
             return redirect()->back()->with('error', lang('App.errorGeneric'));
         }
 
-        fputcsv($output, [lang('Finance.colCategory'), lang('Finance.colAccountCode'), lang('Finance.colAccountName'), lang('Finance.colAmount')]);
+        fputcsv_safe($output, [lang('Finance.colCategory'), lang('Finance.colAccountCode'), lang('Finance.colAccountName'), lang('Finance.colAmount')]);
 
         // Revenues
-        fputcsv($output, [lang('Finance.revenuesHeading'), '', '', '']);
-        fputcsv($output, [lang('Finance.unrestrictedRevenuesHeading'), '', '', '']);
+        fputcsv_safe($output, [lang('Finance.revenuesHeading'), '', '', '']);
+        fputcsv_safe($output, [lang('Finance.unrestrictedRevenuesHeading'), '', '', '']);
         foreach ($soa['unrestricted_revenues'] as $acc) {
-            fputcsv($output, ['', $acc['code'], $acc['name'], number_format((float) $acc['amount'], 2, '.', '')]);
+            fputcsv_safe($output, ['', $acc['code'], $acc['name'], number_format((float) $acc['amount'], 2, '.', '')]);
         }
-        fputcsv($output, ['', '', lang('Finance.totalUnrestrictedRevenues'), number_format((float) $soa['total_unrestricted_revenues'], 2, '.', '')]);
+        fputcsv_safe($output, ['', '', lang('Finance.totalUnrestrictedRevenues'), number_format((float) $soa['total_unrestricted_revenues'], 2, '.', '')]);
 
-        fputcsv($output, [lang('Finance.restrictedRevenuesHeading'), '', '', '']);
+        fputcsv_safe($output, [lang('Finance.restrictedRevenuesHeading'), '', '', '']);
         foreach ($soa['restricted_revenues'] as $acc) {
-            fputcsv($output, ['', $acc['code'], $acc['name'], number_format((float) $acc['amount'], 2, '.', '')]);
+            fputcsv_safe($output, ['', $acc['code'], $acc['name'], number_format((float) $acc['amount'], 2, '.', '')]);
         }
-        fputcsv($output, ['', '', lang('Finance.totalRestrictedRevenues'), number_format((float) $soa['total_restricted_revenues'], 2, '.', '')]);
-        fputcsv($output, [lang('Finance.totalRevenuesHeading'), '', '', number_format((float) $soa['total_revenues'], 2, '.', '')]);
-        fputcsv($output, []);
+        fputcsv_safe($output, ['', '', lang('Finance.totalRestrictedRevenues'), number_format((float) $soa['total_restricted_revenues'], 2, '.', '')]);
+        fputcsv_safe($output, [lang('Finance.totalRevenuesHeading'), '', '', number_format((float) $soa['total_revenues'], 2, '.', '')]);
+        fputcsv_safe($output, []);
 
         // Expenses
-        fputcsv($output, [lang('Finance.expensesHeading'), '', '', '']);
-        fputcsv($output, [lang('Finance.outreachExpensesHeading'), '', '', '']);
+        fputcsv_safe($output, [lang('Finance.expensesHeading'), '', '', '']);
+        fputcsv_safe($output, [lang('Finance.outreachExpensesHeading'), '', '', '']);
         foreach ($soa['outreach_expenses'] as $acc) {
-            fputcsv($output, ['', $acc['code'], $acc['name'], number_format((float) $acc['amount'], 2, '.', '')]);
+            fputcsv_safe($output, ['', $acc['code'], $acc['name'], number_format((float) $acc['amount'], 2, '.', '')]);
         }
-        fputcsv($output, ['', '', lang('Finance.totalOutreachExpenses'), number_format((float) $soa['total_outreach_expenses'], 2, '.', '')]);
+        fputcsv_safe($output, ['', '', lang('Finance.totalOutreachExpenses'), number_format((float) $soa['total_outreach_expenses'], 2, '.', '')]);
 
-        fputcsv($output, [lang('Finance.ministryExpensesHeading'), '', '', '']);
+        fputcsv_safe($output, [lang('Finance.ministryExpensesHeading'), '', '', '']);
         foreach ($soa['ministry_expenses'] as $acc) {
-            fputcsv($output, ['', $acc['code'], $acc['name'], number_format((float) $acc['amount'], 2, '.', '')]);
+            fputcsv_safe($output, ['', $acc['code'], $acc['name'], number_format((float) $acc['amount'], 2, '.', '')]);
         }
-        fputcsv($output, ['', '', lang('Finance.totalMinistryExpenses'), number_format((float) $soa['total_ministry_expenses'], 2, '.', '')]);
+        fputcsv_safe($output, ['', '', lang('Finance.totalMinistryExpenses'), number_format((float) $soa['total_ministry_expenses'], 2, '.', '')]);
 
-        fputcsv($output, [lang('Finance.operationsExpensesHeading'), '', '', '']);
+        fputcsv_safe($output, [lang('Finance.operationsExpensesHeading'), '', '', '']);
         foreach ($soa['operations_expenses'] as $acc) {
-            fputcsv($output, ['', $acc['code'], $acc['name'], number_format((float) $acc['amount'], 2, '.', '')]);
+            fputcsv_safe($output, ['', $acc['code'], $acc['name'], number_format((float) $acc['amount'], 2, '.', '')]);
         }
-        fputcsv($output, ['', '', lang('Finance.totalOperationsExpenses'), number_format((float) $soa['total_operations_expenses'], 2, '.', '')]);
-        fputcsv($output, [lang('Finance.totalExpensesHeading'), '', '', number_format((float) $soa['total_expenses'], 2, '.', '')]);
-        fputcsv($output, []);
+        fputcsv_safe($output, ['', '', lang('Finance.totalOperationsExpenses'), number_format((float) $soa['total_operations_expenses'], 2, '.', '')]);
+        fputcsv_safe($output, [lang('Finance.totalExpensesHeading'), '', '', number_format((float) $soa['total_expenses'], 2, '.', '')]);
+        fputcsv_safe($output, []);
 
         // Net Change
-        fputcsv($output, [lang('Finance.changeInNetAssetsHeading'), '', '', number_format((float) $soa['net_change'], 2, '.', '')]);
+        fputcsv_safe($output, [lang('Finance.changeInNetAssetsHeading'), '', '', number_format((float) $soa['net_change'], 2, '.', '')]);
 
         rewind($output);
         $csvContent = stream_get_contents($output);
@@ -1207,74 +1207,74 @@ class ReportExports extends Reports
             return redirect()->back()->with('error', lang('App.errorGeneric'));
         }
 
-        fputcsv($output, [lang('Finance.colParochialLine'), lang('Finance.colDescription'), lang('Finance.colAmount'), lang('Finance.colNotes')]);
+        fputcsv_safe($output, [lang('Finance.colParochialLine'), lang('Finance.colDescription'), lang('Finance.colAmount'), lang('Finance.colNotes')]);
 
         // Stewardship
-        fputcsv($output, [lang('Finance.stewardshipSectionHeading'), '', '', '']);
-        fputcsv($output, ['Line 1', lang('Finance.line1PledgesCount'), (string) $lines['confirmed_pledges_count'], '']);
-        fputcsv($output, ['Line 2', lang('Finance.line2PledgesAmount'), number_format((float) $lines['confirmed_pledges_amount'], 2, '.', ''), '']);
-        fputcsv($output, []);
+        fputcsv_safe($output, [lang('Finance.stewardshipSectionHeading'), '', '', '']);
+        fputcsv_safe($output, ['Line 1', lang('Finance.line1PledgesCount'), (string) $lines['confirmed_pledges_count'], '']);
+        fputcsv_safe($output, ['Line 2', lang('Finance.line2PledgesAmount'), number_format((float) $lines['confirmed_pledges_amount'], 2, '.', ''), '']);
+        fputcsv_safe($output, []);
 
         // Operating Revenue
-        fputcsv($output, [lang('Finance.operatingRevenueHeading'), '', '', '']);
-        fputcsv($output, ['Line 3', lang('Finance.line3PlatePledge'), number_format((float) $lines['line_3_plate_pledge'], 2, '.', ''), '']);
+        fputcsv_safe($output, [lang('Finance.operatingRevenueHeading'), '', '', '']);
+        fputcsv_safe($output, ['Line 3', lang('Finance.line3PlatePledge'), number_format((float) $lines['line_3_plate_pledge'], 2, '.', ''), '']);
         foreach ($lines['revenue_line3_accounts'] as $acc) {
-            fputcsv($output, ['', '  ' . $acc['code'] . ' - ' . $acc['name'], number_format((float) $acc['amount'], 2, '.', ''), '']);
+            fputcsv_safe($output, ['', '  ' . $acc['code'] . ' - ' . $acc['name'], number_format((float) $acc['amount'], 2, '.', ''), '']);
         }
 
-        fputcsv($output, ['Line 4', lang('Finance.line4Restricted'), number_format((float) $lines['line_4_restricted'], 2, '.', ''), '']);
+        fputcsv_safe($output, ['Line 4', lang('Finance.line4Restricted'), number_format((float) $lines['line_4_restricted'], 2, '.', ''), '']);
         foreach ($lines['revenue_line4_accounts'] as $acc) {
-            fputcsv($output, ['', '  ' . $acc['code'] . ' - ' . $acc['name'], number_format((float) $acc['amount'], 2, '.', ''), '']);
+            fputcsv_safe($output, ['', '  ' . $acc['code'] . ' - ' . $acc['name'], number_format((float) $acc['amount'], 2, '.', ''), '']);
         }
 
-        fputcsv($output, ['Line 5', lang('Finance.line5OtherRevenue'), number_format((float) $lines['line_5_other_revenue'], 2, '.', ''), '']);
+        fputcsv_safe($output, ['Line 5', lang('Finance.line5OtherRevenue'), number_format((float) $lines['line_5_other_revenue'], 2, '.', ''), '']);
         foreach ($lines['revenue_line5_accounts'] as $acc) {
-            fputcsv($output, ['', '  ' . $acc['code'] . ' - ' . $acc['name'], number_format((float) $acc['amount'], 2, '.', ''), '']);
+            fputcsv_safe($output, ['', '  ' . $acc['code'] . ' - ' . $acc['name'], number_format((float) $acc['amount'], 2, '.', ''), '']);
         }
 
-        fputcsv($output, ['Line A', lang('Finance.totalOperatingRevenueA'), number_format((float) $lines['total_revenue'], 2, '.', ''), '']);
-        fputcsv($output, []);
+        fputcsv_safe($output, ['Line A', lang('Finance.totalOperatingRevenueA'), number_format((float) $lines['total_revenue'], 2, '.', ''), '']);
+        fputcsv_safe($output, []);
 
         // Operating Expenses
-        fputcsv($output, [lang('Finance.operatingExpensesHeading'), '', '', '']);
-        fputcsv($output, ['Line 6', lang('Finance.line6Noncapital'), number_format((float) $lines['line_6_noncapital'], 2, '.', ''), '']);
+        fputcsv_safe($output, [lang('Finance.operatingExpensesHeading'), '', '', '']);
+        fputcsv_safe($output, ['Line 6', lang('Finance.line6Noncapital'), number_format((float) $lines['line_6_noncapital'], 2, '.', ''), '']);
         foreach ($lines['expense_line6_accounts'] as $acc) {
-            fputcsv($output, ['', '  ' . $acc['code'] . ' - ' . $acc['name'], number_format((float) $acc['amount'], 2, '.', ''), '']);
+            fputcsv_safe($output, ['', '  ' . $acc['code'] . ' - ' . $acc['name'], number_format((float) $acc['amount'], 2, '.', ''), '']);
         }
 
-        fputcsv($output, ['Line 7', lang('Finance.line7Capital'), number_format((float) $lines['line_7_capital'], 2, '.', ''), '']);
+        fputcsv_safe($output, ['Line 7', lang('Finance.line7Capital'), number_format((float) $lines['line_7_capital'], 2, '.', ''), '']);
         foreach ($lines['expense_line7_accounts'] as $acc) {
-            fputcsv($output, ['', '  ' . $acc['code'] . ' - ' . $acc['name'], number_format((float) $acc['amount'], 2, '.', ''), '']);
+            fputcsv_safe($output, ['', '  ' . $acc['code'] . ' - ' . $acc['name'], number_format((float) $acc['amount'], 2, '.', ''), '']);
         }
 
-        fputcsv($output, ['Line B', lang('Finance.totalOperatingExpensesB'), number_format((float) $lines['total_expenses'], 2, '.', ''), '']);
-        fputcsv($output, ['', lang('Finance.netOperatingTotal'), number_format((float) $lines['net_operating'], 2, '.', ''), '']);
-        fputcsv($output, []);
+        fputcsv_safe($output, ['Line B', lang('Finance.totalOperatingExpensesB'), number_format((float) $lines['total_expenses'], 2, '.', ''), '']);
+        fputcsv_safe($output, ['', lang('Finance.netOperatingTotal'), number_format((float) $lines['net_operating'], 2, '.', ''), '']);
+        fputcsv_safe($output, []);
 
         // Cash & Liquid Assets
-        fputcsv($output, [lang('Finance.cashAndInvestmentsHeading'), '', '', '']);
-        fputcsv($output, ['Line 8', lang('Finance.line8Cash'), number_format((float) $lines['cash_balance'], 2, '.', ''), '']);
+        fputcsv_safe($output, [lang('Finance.cashAndInvestmentsHeading'), '', '', '']);
+        fputcsv_safe($output, ['Line 8', lang('Finance.line8Cash'), number_format((float) $lines['cash_balance'], 2, '.', ''), '']);
         foreach ($lines['cash_line8_accounts'] as $acc) {
-            fputcsv($output, ['', '  ' . $acc['code'] . ' - ' . $acc['name'], number_format((float) $acc['balance'], 2, '.', ''), '']);
+            fputcsv_safe($output, ['', '  ' . $acc['code'] . ' - ' . $acc['name'], number_format((float) $acc['balance'], 2, '.', ''), '']);
         }
 
         // Endowments & Investments
-        fputcsv($output, ['Line 9a', lang('Finance.line9aRestrictedEndowment'), number_format((float) $lines['endowment_restricted'], 2, '.', ''), '']);
-        fputcsv($output, ['Line 9b', lang('Finance.line9bUnrestrictedEndowment'), number_format((float) $lines['endowment_unrestricted'], 2, '.', ''), '']);
-        fputcsv($output, ['', lang('Finance.totalEndowmentsInvestments') . ' (Endowments)', number_format((float) $lines['total_endowment'], 2, '.', ''), '']);
-        fputcsv($output, ['Line 9c', lang('Finance.line9cRestrictedInvestments'), number_format((float) $lines['investment_restricted'], 2, '.', ''), '']);
-        fputcsv($output, ['Line 9d', lang('Finance.line9dUnrestrictedInvestments'), number_format((float) $lines['investment_unrestricted'], 2, '.', ''), '']);
-        fputcsv($output, ['', lang('Finance.totalEndowmentsInvestments'), number_format((float) $lines['total_investments'], 2, '.', ''), '']);
-        fputcsv($output, []);
+        fputcsv_safe($output, ['Line 9a', lang('Finance.line9aRestrictedEndowment'), number_format((float) $lines['endowment_restricted'], 2, '.', ''), '']);
+        fputcsv_safe($output, ['Line 9b', lang('Finance.line9bUnrestrictedEndowment'), number_format((float) $lines['endowment_unrestricted'], 2, '.', ''), '']);
+        fputcsv_safe($output, ['', lang('Finance.totalEndowmentsInvestments') . ' (Endowments)', number_format((float) $lines['total_endowment'], 2, '.', ''), '']);
+        fputcsv_safe($output, ['Line 9c', lang('Finance.line9cRestrictedInvestments'), number_format((float) $lines['investment_restricted'], 2, '.', ''), '']);
+        fputcsv_safe($output, ['Line 9d', lang('Finance.line9dUnrestrictedInvestments'), number_format((float) $lines['investment_unrestricted'], 2, '.', ''), '']);
+        fputcsv_safe($output, ['', lang('Finance.totalEndowmentsInvestments'), number_format((float) $lines['total_investments'], 2, '.', ''), '']);
+        fputcsv_safe($output, []);
 
         // Debt & Real Estate
-        fputcsv($output, [lang('Finance.debtAndPropertyHeading'), '', '', '']);
-        fputcsv($output, ['Line 10', lang('Finance.line10Debt'), number_format((float) $lines['debt_amount'], 2, '.', ''), $lines['debt_description']]);
-        fputcsv($output, ['Line 11', lang('Finance.line11Property'), $lines['owns_property'] ? 'Yes' : 'No', '']);
-        fputcsv($output, ['Line 12', lang('Finance.line12Rental'), $lines['rents_to_outside'] ? 'Yes' : 'No', '']);
+        fputcsv_safe($output, [lang('Finance.debtAndPropertyHeading'), '', '', '']);
+        fputcsv_safe($output, ['Line 10', lang('Finance.line10Debt'), number_format((float) $lines['debt_amount'], 2, '.', ''), $lines['debt_description']]);
+        fputcsv_safe($output, ['Line 11', lang('Finance.line11Property'), $lines['owns_property'] ? 'Yes' : 'No', '']);
+        fputcsv_safe($output, ['Line 12', lang('Finance.line12Rental'), $lines['rents_to_outside'] ? 'Yes' : 'No', '']);
         if ($lines['rents_to_outside']) {
-            fputcsv($output, ['', lang('Finance.rentalIncomeLabel'), number_format((float) $lines['rental_income'], 2, '.', ''), '']);
-            fputcsv($output, ['', lang('Finance.rentalExpenseLabel'), number_format((float) $lines['rental_expense'], 2, '.', ''), '']);
+            fputcsv_safe($output, ['', lang('Finance.rentalIncomeLabel'), number_format((float) $lines['rental_income'], 2, '.', ''), '']);
+            fputcsv_safe($output, ['', lang('Finance.rentalExpenseLabel'), number_format((float) $lines['rental_expense'], 2, '.', ''), '']);
         }
 
         rewind($output);

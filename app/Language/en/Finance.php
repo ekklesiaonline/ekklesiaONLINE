@@ -353,7 +353,7 @@ return [
     'bankImportStatementHelp'   => 'Upload an OFX, QFX, or CSV bank statement file to automatically populate transactions and skip duplicates.',
     'bankSelectFile'            => 'Statement file (OFX or CSV)',
     'bankSelectAccount'         => 'Target bank account',
-    'bankFileHelp'              => 'Supported formats: OFX, QFX, and CSV with Date, Amount, and Description (up to 10 MB).',
+    'bankFileHelp'              => 'Supported formats: OFX, QFX, and CSV with Date, Amount, and Description (up to 5 MB).',
     'bankAutoDeduplicateNotice' => 'Transactions with matching dates, amounts, and references/descriptions are automatically detected to prevent duplicates.',
     'bankImportSubmit'          => 'Import Transactions',
     'bankImportSuccess'         => '{0} transactions imported successfully ({1} duplicates skipped).',
@@ -362,6 +362,9 @@ return [
     'bankInvalidFileType'       => 'Invalid file format. Please upload an OFX, QFX, or CSV file.',
     'bankImportModalTitle'      => 'Import Bank Statement',
     'bankFileRequired'          => 'Please select a statement file to import.',
+    'bankFileTooLarge'          => 'The statement file is too large. Please upload a file smaller than 5 MB.',
+    'bankTooManyTransactions'   => 'The statement contains more than {0} transactions. Please split the file and import it in parts.',
+    'bankInvalidChartAccount'   => 'Please select a valid active asset account for this parish.',
     'bankAccountRequired'       => 'Please select a valid bank account.',
 
     // -------------------------------------------------------------------------

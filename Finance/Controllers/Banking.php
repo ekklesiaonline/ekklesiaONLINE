@@ -65,6 +65,10 @@ class Banking extends BaseController
         }
 
         $parishId = (int) ($this->getOperationalParishId() ?? 0);
+        if ($parishId <= 0) {
+            return redirect()->back()->withInput()->with('error', lang('App.errorNoParishScope'));
+        }
+
 
         $rules = [
             'name'                  => 'required|max_length[150]',
@@ -152,6 +156,10 @@ class Banking extends BaseController
         }
 
         $parishId = (int) ($this->getOperationalParishId() ?? 0);
+        if ($parishId <= 0) {
+            return redirect()->back()->withInput()->with('error', lang('App.errorNoParishScope'));
+        }
+
         $account = $this->banking->accountForParish((int) $accountId, $parishId);
 
         if ($account === null) {
@@ -210,9 +218,26 @@ class Banking extends BaseController
             return redirect()->to('/banking')->with('error', lang('Finance.bankAccountNotFound'));
         }
 
+        $dioceseId = 0;
+        $parishRow = model('ParishModel')->find($parishId);
+        if (is_array($parishRow)) {
+            $dioceseId = (int) ($parishRow['diocese_id'] ?? 0);
+        }
+
         $chartAccounts = model('ChartOfAccountModel')
             ->where('account_type', 'asset')
             ->where('is_active', 1)
+            ->groupStart()
+                ->where('scope_type', 'system')
+                ->orGroupStart()
+                    ->where('scope_type', 'diocese')
+                    ->where('scope_id', $dioceseId)
+                ->groupEnd()
+                ->orGroupStart()
+                    ->where('scope_type', 'parish')
+                    ->where('scope_id', $parishId)
+                ->groupEnd()
+            ->groupEnd()
             ->orderBy('code', 'ASC')
             ->findAll();
 
@@ -236,6 +261,10 @@ class Banking extends BaseController
         }
 
         $parishId = (int) ($this->getOperationalParishId() ?? 0);
+        if ($parishId <= 0) {
+            return redirect()->back()->withInput()->with('error', lang('App.errorNoParishScope'));
+        }
+
         $account = $this->banking->accountForParish((int) $id, $parishId);
 
         if ($account === null) {
@@ -251,7 +280,6 @@ class Banking extends BaseController
             'opening_balance'       => 'permit_empty|decimal',
             'opened_on'             => 'permit_empty|valid_date',
             'chart_account_id'      => 'permit_empty|integer',
-            'is_active'             => 'permit_empty|in_list[0,1]',
         ];
 
         if (!$this->validate($rules)) {
@@ -259,6 +287,34 @@ class Banking extends BaseController
         }
 
         $chartAccountId = (int) ($this->request->getPost('chart_account_id') ?? 0);
+        if ($chartAccountId > 0) {
+            $dioceseId = 0;
+            $parishRow = model('ParishModel')->find($parishId);
+            if (is_array($parishRow)) {
+                $dioceseId = (int) ($parishRow['diocese_id'] ?? 0);
+            }
+
+            $chartAccount = model('ChartOfAccountModel')
+                ->where('id', $chartAccountId)
+                ->where('account_type', 'asset')
+                ->where('is_active', 1)
+                ->groupStart()
+                    ->where('scope_type', 'system')
+                    ->orGroupStart()
+                        ->where('scope_type', 'diocese')
+                        ->where('scope_id', $dioceseId)
+                    ->groupEnd()
+                    ->orGroupStart()
+                        ->where('scope_type', 'parish')
+                        ->where('scope_id', $parishId)
+                    ->groupEnd()
+                ->groupEnd()
+                ->first();
+
+            if ($chartAccount === null) {
+                return redirect()->back()->withInput()->with('error', lang('Finance.bankInvalidChartAccount'));
+            }
+        }
 
         $updateData = [
             'parish_id'             => $parishId,
@@ -270,7 +326,6 @@ class Banking extends BaseController
             'opening_balance'       => (float) ($this->request->getPost('opening_balance') ?: 0),
             'opened_on'             => $this->request->getPost('opened_on') ?: null,
             'chart_account_id'      => $chartAccountId > 0 ? $chartAccountId : null,
-            'is_active'             => (int) ($this->request->getPost('is_active') ? 1 : 0),
         ];
 
         $ok = model('BankAccountModel')->update((int) $id, $updateData);
@@ -283,8 +338,8 @@ class Banking extends BaseController
             'parish_id'   => $parishId,
             'entity_type' => 'bank_account',
             'entity_id'   => (int) $id,
-            'old_values'  => ['name' => $account['name'], 'is_active' => $account['is_active']],
-            'new_values'  => ['name' => $updateData['name'], 'is_active' => $updateData['is_active']],
+            'old_values'  => ['name' => $account['name'], 'chart_account_id' => $account['chart_account_id']],
+            'new_values'  => ['name' => $updateData['name'], 'chart_account_id' => $updateData['chart_account_id']],
         ]);
 
         return redirect()->to('/banking/' . (int) $id)->with('success', lang('App.successSaved'));
@@ -304,6 +359,10 @@ class Banking extends BaseController
         }
 
         $parishId = (int) ($this->getOperationalParishId() ?? 0);
+        if ($parishId <= 0) {
+            return redirect()->back()->withInput()->with('error', lang('App.errorNoParishScope'));
+        }
+
         $account = $this->banking->accountForParish((int) $id, $parishId);
 
         if ($account === null) {

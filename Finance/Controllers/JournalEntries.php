@@ -149,7 +149,7 @@ class JournalEntries extends BaseController
         }
 
         // CSV Header
-        fputcsv($output, [
+        fputcsv_safe($output, [
             lang('Finance.colEntryNumber'),
             lang('Finance.colEntryDate'),
             lang('Finance.colSource'),
@@ -161,7 +161,7 @@ class JournalEntries extends BaseController
         ]);
 
         foreach ($entries as $e) {
-            fputcsv($output, [
+            fputcsv_safe($output, [
                 $e['entry_number'] ?? '',
                 $e['entry_date'] ?? '',
                 ucfirst((string) ($e['source_type'] ?? '')),

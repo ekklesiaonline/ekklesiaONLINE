@@ -19,6 +19,60 @@ class ParishBudgetModel extends Model
     protected $createdField  = 'created_at';
     protected $updatedField  = 'updated_at';
 
+    /**
+     * Resolves the diocese that scopes chart-of-account visibility for a parish.
+     */
+    private function dioceseIdForParish(int $parishId): int
+    {
+        $parish = $this->db->table('parish')->select('diocese_id')->where('id', $parishId)->get()->getRowArray();
+
+        return is_array($parish) ? (int) ($parish['diocese_id'] ?? 0) : 0;
+    }
+
+    /**
+     * Restricts a chart-account query to accounts visible to the parish:
+     * system accounts, the parish's diocese accounts, and the parish's own.
+     */
+    private function applyAccountVisibilityScope($builder, int $parishId, string $prefix = ''): void
+    {
+        $column = static fn(string $name): string => $prefix !== '' ? $prefix . '.' . $name : $name;
+        $dioceseId = $this->dioceseIdForParish($parishId);
+
+        $builder->groupStart()
+            ->where($column('scope_type'), 'system')
+            ->orGroupStart()
+                ->where($column('scope_type'), 'diocese')
+                ->where($column('scope_id'), $dioceseId)
+            ->groupEnd()
+            ->orGroupStart()
+                ->where($column('scope_type'), 'parish')
+                ->where($column('scope_id'), $parishId)
+            ->groupEnd()
+        ->groupEnd();
+    }
+
+    /**
+     * Chart-account IDs a parish may budget against: active, budgetable
+     * income/expense accounts in the system, the parish's diocese, or the
+     * parish itself.
+     *
+     * @return list<int>
+     */
+    private function visibleBudgetAccountIds(int $parishId): array
+    {
+        $builder = $this->db->table('chart_of_accounts')
+            ->select('id')
+            ->where('is_active', 1)
+            ->where('allow_budget', 1)
+            ->whereIn('account_type', ['income', 'expense']);
+        $this->applyAccountVisibilityScope($builder, $parishId);
+
+        return array_map(
+            static fn(array $row): int => (int) $row['id'],
+            $builder->get()->getResultArray()
+        );
+    }
+
     public function getBudgetLinesWithActuals(int $parishId, int $year): array
     {
         $startDate = sprintf('%d-01-01', $year);
@@ -35,7 +89,7 @@ class ParishBudgetModel extends Model
 
         $incomeActuals = model(DonationModel::class)->getChartAccountTotalsForParish($parishId, $startDate, $endDate);
 
-        $rows = $this->db->table('chart_of_accounts coa')
+        $query = $this->db->table('chart_of_accounts coa')
             ->select([
                 'coa.id as chart_account_id',
                 'coa.code',
@@ -51,12 +105,19 @@ class ParishBudgetModel extends Model
             ->join('(' . $expenseActualsSql . ') expense_actuals', 'expense_actuals.chart_account_id = coa.id', 'left')
             ->where('coa.is_active', 1)
             ->where('coa.allow_budget', 1)
-            ->whereIn('coa.account_type', ['income', 'expense'])
+            ->whereIn('coa.account_type', ['income', 'expense']);
+        $rows = $query
             ->orderBy('coa.account_type', 'ASC')
             ->orderBy('coa.sort_order', 'ASC')
             ->orderBy('coa.code', 'ASC')
             ->get()
             ->getResultArray();
+
+        $visibleAccountIds = $this->visibleBudgetAccountIds($parishId);
+        $rows = array_values(array_filter(
+            $rows,
+            static fn(array $row): bool => in_array((int) ($row['chart_account_id'] ?? 0), $visibleAccountIds, true)
+        ));
 
         foreach ($rows as &$row) {
             $budgetAmount = (float) ($row['budget_amount'] ?? 0);
@@ -81,7 +142,9 @@ class ParishBudgetModel extends Model
             ->select('id')
             ->where('is_active', 1)
             ->where('allow_budget', 1)
-            ->whereIn('account_type', ['income', 'expense'])
+            ->whereIn('account_type', ['income', 'expense']);
+        $this->applyAccountVisibilityScope($validAccounts, $parishId);
+        $validAccounts = $validAccounts
             ->get()
             ->getResultArray();
 

@@ -50,6 +50,10 @@ class FundFlags extends FundExports
         }
 
         $parishId = (int) ($this->getOperationalParishId() ?? 0);
+        if ($parishId <= 0) {
+            return redirect()->back()->withInput()->with('error', lang('App.errorNoParishScope'));
+        }
+
         $fund     = $this->findInParish($id, $parishId);
 
         if ($fund === null) {

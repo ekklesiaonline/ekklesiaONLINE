@@ -26,6 +26,10 @@ class BankingReconciliation extends Banking
         }
 
         $parishId = (int) ($this->getOperationalParishId() ?? 0);
+        if ($parishId <= 0) {
+            return redirect()->back()->withInput()->with('error', lang('App.errorNoParishScope'));
+        }
+
         $account = $this->banking->accountForParish((int) $accountId, $parishId);
 
         if ($account === null) {
@@ -112,6 +116,10 @@ class BankingReconciliation extends Banking
         }
 
         $parishId = (int) ($this->getOperationalParishId() ?? 0);
+        if ($parishId <= 0) {
+            return redirect()->back()->withInput()->with('error', lang('App.errorNoParishScope'));
+        }
+
         $recon = $this->banking->reconciliationForParish((int) $id, $parishId);
 
         if ($recon === null) {
@@ -147,6 +155,10 @@ class BankingReconciliation extends Banking
         }
 
         $parishId = (int) ($this->getOperationalParishId() ?? 0);
+        if ($parishId <= 0) {
+            return redirect()->back()->withInput()->with('error', lang('App.errorNoParishScope'));
+        }
+
         $recon = $this->banking->reconciliationForParish((int) $id, $parishId);
 
         if ($recon === null) {

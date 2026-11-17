@@ -68,7 +68,7 @@ class AccountingPeriodModel extends BaseTenantModel
             return false;
         }
 
-        return ($period['status'] ?? 'open') === 'closed';
+        return in_array($period['status'] ?? 'open', ['soft_closed', 'closed'], true);
     }
 
     /**
@@ -78,7 +78,7 @@ class AccountingPeriodModel extends BaseTenantModel
     {
         $period = $this->find($periodId);
 
-        return $period !== null && ($period['status'] ?? 'open') === 'closed';
+        return $period !== null && in_array($period['status'] ?? 'open', ['soft_closed', 'closed'], true);
     }
 
     /**

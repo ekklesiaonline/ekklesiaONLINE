@@ -321,7 +321,7 @@ return [
     'bankImportStatementHelp'   => 'Cargue un archivo de estado de cuenta bancario OFX, QFX o CSV para registrar transacciones automáticamente y omitir duplicados.',
     'bankSelectFile'            => 'Archivo de estado de cuenta (OFX o CSV)',
     'bankSelectAccount'         => 'Cuenta bancaria de destino',
-    'bankFileHelp'              => 'Formatos compatibles: OFX, QFX y CSV con Fecha, Monto y Descripción (hasta 10 MB).',
+    'bankFileHelp'              => 'Formatos compatibles: OFX, QFX y CSV con Fecha, Monto y Descripción (hasta 5 MB).',
     'bankAutoDeduplicateNotice' => 'Las transacciones con fechas, montos y referencias/descripciones coincidentes se detectan automáticamente para evitar duplicados.',
     'bankImportSubmit'          => 'Importar transacciones',
     'bankImportSuccess'         => '{0} transacciones importadas exitosamente ({1} duplicadas omitidas).',
@@ -330,6 +330,9 @@ return [
     'bankInvalidFileType'       => 'Formato de archivo inválido. Por favor cargue un archivo OFX, QFX o CSV.',
     'bankImportModalTitle'      => 'Importar estado de cuenta bancario',
     'bankFileRequired'          => 'Por favor seleccione un archivo de estado de cuenta para importar.',
+    'bankFileTooLarge'          => 'El archivo de estado de cuenta es demasiado grande. Por favor cargue un archivo menor a 5 MB.',
+    'bankTooManyTransactions'   => 'El estado de cuenta contiene más de {0} transacciones. Divida el archivo e impórtelo por partes.',
+    'bankInvalidChartAccount'   => 'Seleccione una cuenta de activo activa válida para esta parroquia.',
     'bankAccountRequired'       => 'Por favor seleccione una cuenta bancaria válida.',
 
     // -------------------------------------------------------------------------

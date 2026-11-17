@@ -129,6 +129,10 @@ class ChartOfAccounts extends BaseController
         }
 
         $parishId = (int) $this->getOperationalParishId();
+        if ($parishId <= 0) {
+            return redirect()->back()->withInput()->with('error', lang('App.errorNoParishScope'));
+        }
+
         $dioceseId = (int) $this->resolveDiocesanScopeId();
         if ($dioceseId <= 0 && $parishId > 0) {
             $parish = model('ParishModel')->find($parishId);
@@ -283,6 +287,10 @@ class ChartOfAccounts extends BaseController
         }
 
         $parishId = (int) $this->getOperationalParishId();
+        if ($parishId <= 0) {
+            return redirect()->back()->withInput()->with('error', lang('App.errorNoParishScope'));
+        }
+
         $account = $this->chartOfAccountModel->find($id);
         if (!$account) {
             return redirect()->to('/finance/chart-of-accounts')->with('error', lang('ChartAccounts.parishAccountNotFound'));
@@ -391,6 +399,10 @@ class ChartOfAccounts extends BaseController
         }
 
         $parishId = (int) $this->getOperationalParishId();
+        if ($parishId <= 0) {
+            return redirect()->back()->withInput()->with('error', lang('App.errorNoParishScope'));
+        }
+
         $account = $this->chartOfAccountModel->find($id);
         if (!$account) {
             return redirect()->to('/finance/chart-of-accounts')->with('error', lang('ChartAccounts.parishAccountNotFound'));
