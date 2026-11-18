@@ -406,12 +406,22 @@ class Import extends BaseController
         }
 
         $rowNumber = 1;
+        $maxRows   = 500;
+        $truncated = false;
         while (($row = fgetcsv($handle)) !== false) {
             $rowNumber++;
 
             // Skip blank rows.
             if ($row === [null]) {
                 continue;
+            }
+
+            // Hard row cap — each row runs the full intake chain (person +
+            // affiliation + visit + follow-up scheduling), so unbounded CSVs
+            // exhaust the request and flood the directory.
+            if (($result['inserted'] + $result['updated'] + count($result['row_errors'])) >= $maxRows) {
+                $truncated = true;
+                break;
             }
 
             // Map CSV columns by header name.
@@ -465,6 +475,12 @@ class Import extends BaseController
         }
 
         fclose($handle);
+        if ($truncated) {
+            $result['row_errors'][] = [
+                'row'    => $rowNumber,
+                'errors' => ["Import stopped: file exceeds the {$maxRows}-row limit. Split the CSV and retry."],
+            ];
+        }
         return $result;
     }
 
