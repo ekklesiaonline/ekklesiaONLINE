@@ -257,9 +257,9 @@ return [
     'cannotDeactivatePrimaryDioceseAdmin' => 'The primary diocese admin cannot be deactivated.',
     'cannotDeactivateSelf'          => 'You cannot deactivate your own admin account.',
     'cannotResetPrimaryDioceseAdminPassword' => 'The primary diocese admin password cannot be reset.',
-    'cannotDeletePrimaryParishAdmin' => 'The primary parish admin cannot be deleted.',
-    'cannotDeactivatePrimaryParishAdmin' => 'The primary parish admin cannot be deactivated.',
-    'cannotResetPrimaryParishAdminPassword' => 'The primary parish admin password cannot be reset.',
+    'cannotDeletePrimaryParishAdmin' => 'The primary parish admin cannot be deleted; a system administrator must transfer primacy first.',
+    'cannotDeactivatePrimaryParishAdmin' => 'The primary parish admin cannot be deactivated; a system administrator must transfer primacy first.',
+    'cannotResetPrimaryParishAdminPassword' => 'The primary parish admin password cannot be reset; a system administrator must transfer primacy first.',
 
     'noPendingRegistrations'        => 'Aucune inscription en attente à approuver.',
     'registrationApprovedAll'       => '{0} inscriptions en attente approuvées.',
