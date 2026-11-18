@@ -78,6 +78,7 @@ class Clergy extends BaseController
                 'requests' => $requests,
                 'parish' => $parish,
                 'officeOptions' => self::PROPOSED_OFFICES,
+                'canRequest' => auth()->user()->can('leadership_position.manage') && ! $this->isDioceseAdmin(),
             ]
         ));
     }
