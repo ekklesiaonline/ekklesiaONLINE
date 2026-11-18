@@ -57,7 +57,7 @@
                     <tbody>
                         <?php foreach ($upcoming_schedules as $schedule): ?>
                             <tr>
-                                <td><?= esc($schedule['scheduled_date'] ?? '-') ?></td>
+                                <td><?= esc($schedule['service_date'] ?? '-') ?></td>
                                 <td><?= esc($schedule['team_name'] ?? '-') ?></td>
                             </tr>
                         <?php endforeach; ?>

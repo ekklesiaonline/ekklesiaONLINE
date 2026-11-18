@@ -76,7 +76,7 @@ class VolunteerRemind extends BaseCommand
             $fullName  = trim("{$firstName} {$lastName}");
             $team      = (string) ($row['team_name'] ?? '—');
             $parish    = (string) ($row['parish_name'] ?? '—');
-            $slot      = (string) ($row['time_slot'] ?? '');
+            $slot      = (string) ($row['service_time_slot'] ?? '');
             $status    = (string) ($row['status'] ?? 'scheduled');
 
             if ($toEmail === '') {
