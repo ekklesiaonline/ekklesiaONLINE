@@ -517,8 +517,21 @@ class PublicAssets extends PublicHome
 
         // Only known-safe types render inline; anything else (HTML, SVG,
         // script-capable content) downloads instead of executing on the
-        // app origin. nosniff stops MIME-sniffing upgrades.
-        $inlineSafe = str_starts_with($mimeType, 'image/') || $mimeType === 'application/pdf';
+        // app origin. nosniff stops MIME-sniffing upgrades. SVG is excluded
+        // deliberately: image/svg+xml is script-capable, so an allowlist of
+        // concrete raster types is required — an image/* prefix check would
+        // still let a stored SVG run scripts on this origin.
+        $inlineSafe = in_array($mimeType, [
+            'image/jpeg',
+            'image/png',
+            'image/gif',
+            'image/webp',
+            'image/avif',
+            'image/bmp',
+            'image/x-icon',
+            'image/vnd.microsoft.icon',
+            'application/pdf',
+        ], true);
         $disposition = $inlineSafe ? 'inline' : 'attachment';
 
         return $this->response
