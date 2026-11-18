@@ -13,8 +13,8 @@ use CodeIgniter\HTTP\ResponseInterface;
  * per IP address. Returns HTTP 429 with a Retry-After header when the
  * limit is exceeded.
  *
- * Applied via Filters.php $filters to the 'login', 'login/magic-link',
- * 'register', and 'session/device-verify*' URI patterns.
+ * Applied via Filters.php $filters to 'login', 'login/magic-link',
+ * 'register', 'session/device-verify*', and 'connect/*' URI patterns.
  * Only fires on POST requests; GET requests (showing the form) pass through.
  */
 class LoginRateLimitFilter implements FilterInterface
