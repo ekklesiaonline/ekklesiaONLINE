@@ -26,6 +26,12 @@ final class ReportsFinanceBoundaryIntegrationTest extends CIUnitTestCase
 
         helper('auth');
         Services::reset(true);
+        // FeatureTestTrait only clears $_SESSION between calls; leftover
+        // $_POST/$_GET fields (e.g. parish_id) from earlier tests would leak
+        // into these requests and trip the scope filters.
+        $_GET = [];
+        $_POST = [];
+        $_REQUEST = [];
         // Tests that exercise localization may leave the shared session or
         // language service in another locale. Keep this integration test's
         // rendered-text assertions deterministic regardless of suite order.
@@ -97,29 +103,39 @@ final class ReportsFinanceBoundaryIntegrationTest extends CIUnitTestCase
         ]);
     }
 
-    public function testDiocesanAdminIsRedirectedFromParishListBySystemBoundaryFilter(): void
+    public function testDiocesanAdminSeesParishListScopedToOwnDiocese(): void
     {
         $userId = $this->insertUser('diocesan.parish.boundary.user');
         $this->insertProfileScope($userId, null, 1);
         $this->injectDiocesanAdminAuth($userId);
 
+        $parishTable = $this->createTableName('parish');
+        $now = date('Y-m-d H:i:s');
+        $this->db->table($parishTable)->insert([
+            'diocese_id' => 1,
+            'name' => 'InScope Boundary Parish',
+            'created_at' => $now,
+            'updated_at' => $now,
+        ]);
+        $this->db->table($parishTable)->insert([
+            'diocese_id' => 2,
+            'name' => 'OutOfScope Boundary Parish',
+            'created_at' => $now,
+            'updated_at' => $now,
+        ]);
+
         $response = $this->get('parish_list');
 
-        $response->assertRedirect();
-        $error = (string) session('error');
-        $this->assertContains($error, [
-            lang('Auth.notEnoughPrivilege'),
-            lang('Diocesan.parishManagementAccessDenied'),
-            'Diocesan.parishManagementAccessDenied',
-            'Not enough privilege to access this resource.',
-        ]);
+        $response->assertOK();
+        $response->assertSee('InScope Boundary Parish');
+        $response->assertDontSee('OutOfScope Boundary Parish');
     }
 
     public function testDiocesanAdminCanAccessDioceseFinance(): void
     {
         $userId = $this->insertUser('diocesan.finance.boundary.user');
         $this->insertProfileScope($userId, null, 1);
-        $this->injectDioceseAdminAuth($userId);
+        $this->injectDiocesanAdminAuth($userId);
 
         $response = $this->get('diocese/finance');
 
@@ -200,6 +216,7 @@ final class ReportsFinanceBoundaryIntegrationTest extends CIUnitTestCase
                     'id' => $idForTest,
                     'username' => 'province.reports.boundary.user.' . $idForTest,
                     'email' => 'province.reports.boundary.' . $idForTest . '@example.org',
+                    'active' => 1,
                 ]);
             }
 
@@ -315,6 +332,7 @@ final class ReportsFinanceBoundaryIntegrationTest extends CIUnitTestCase
                     'id' => $idForTest,
                     'username' => 'diocesan.reports.boundary.user.' . $idForTest,
                     'email' => 'diocesan.reports.boundary.' . $idForTest . '@example.org',
+                    'active' => 1,
                 ]);
             }
 
