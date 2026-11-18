@@ -1,5 +1,8 @@
 <?php
 
+use CodeIgniter\HTTP\IncomingRequest;
+use CodeIgniter\HTTP\URI;
+use CodeIgniter\HTTP\UserAgent;
 use CodeIgniter\Test\CIUnitTestCase;
 
 /**
@@ -67,6 +70,42 @@ final class VolunteerSecurityHardeningTest extends CIUnitTestCase
         foreach (['storeTeam', 'store-schedule', 'update-schedule', 'cancel-schedule', 'confirm-schedule'] as $alias) {
             $this->assertStringContainsString($alias, $src, 'legacy alias missing from path limits: ' . $alias);
         }
+    }
+
+    /**
+     * The filter's $pathLimits patterns anchor on the route path. When the
+     * request path still carries the `index.php` entry segment (REQUEST_URI
+     * detection, indexPage enabled) every pattern missed and all endpoints
+     * silently fell back to the 60/min default — verify the normalization.
+     */
+    public function testRateLimitNormalizesIndexPagePrefixedPath(): void
+    {
+        $filter   = new \App\Filters\ApiRateLimitFilter();
+        $normalize = new ReflectionMethod($filter, 'normalizePath');
+        $limit     = new ReflectionMethod($filter, 'resolvePathLimit');
+
+        $previousRequestUri = $_SERVER['REQUEST_URI'] ?? null;
+        $_SERVER['REQUEST_URI'] = '/index.php/volunteers/schedules/confirm/6';
+
+        try {
+            $request = new IncomingRequest(
+                config('App'),
+                new URI('http://localhost:8080/index.php/volunteers/schedules/confirm/6'),
+                'php://input',
+                new UserAgent()
+            );
+
+            $path = $normalize->invoke($filter, $request);
+        } finally {
+            if ($previousRequestUri === null) {
+                unset($_SERVER['REQUEST_URI']);
+            } else {
+                $_SERVER['REQUEST_URI'] = $previousRequestUri;
+            }
+        }
+
+        $this->assertSame('volunteers/schedules/confirm/6', $path);
+        $this->assertSame(30, $limit->invoke($filter, $path, 60, true), 'tighter volunteer limit not applied');
     }
 
     public function testScheduleWritesEnforceTeamMembership(): void
