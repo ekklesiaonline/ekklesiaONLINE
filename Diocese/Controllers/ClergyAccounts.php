@@ -2,6 +2,7 @@
 
 namespace Diocese\Controllers;
 
+use App\Controllers\AdminHierarchyGuard;
 use App\Controllers\BaseController;
 use App\Services\AccountCreationService;
 use App\Services\ClergyAuthorizationService;
@@ -18,6 +19,8 @@ use App\Services\ClergyReviewService;
  */
 class ClergyAccounts extends BaseController
 {
+    use AdminHierarchyGuard;
+
     /**
      * Resolve the acting admin's diocese server-side
      * (same pattern as BaseController::resolveDashboardScope()).
@@ -28,12 +31,17 @@ class ClergyAccounts extends BaseController
         try {
             $row = model('DioceseAdminPrimaryModel')->getByUser((int) auth()->id());
             $dioceseId = (int) ($row['diocese_id'] ?? 0);
-            if ($dioceseId <= 0) {
-                $profile = model('ProfileModel')->where('user_id', (int) auth()->id())->first();
-                $dioceseId = (int) ($profile['diocese_id'] ?? 0);
-            }
         } catch (\Throwable $e) {
             $dioceseId = 0;
+        }
+
+        if ($dioceseId <= 0) {
+            try {
+                $profile = model('ProfileModel')->where('user_id', (int) auth()->id())->first();
+                $dioceseId = (int) ($profile['diocese_id'] ?? 0);
+            } catch (\Throwable $e) {
+                $dioceseId = 0;
+            }
         }
 
         return $dioceseId;
@@ -603,6 +611,10 @@ class ClergyAccounts extends BaseController
             return redirect()->to('/diocese/clergy')->with('error', lang('Clergy.notFound'));
         }
 
+        if ($guardCode = $this->guardTargetUserMutation($id)) {
+            return redirect()->to('/diocese/clergy/' . $id)->with('error', $this->hierarchyGuardMessage($guardCode));
+        }
+
         // Diocese-owned account admin edits only identity fields; canonical
         // fields (ordination, standing) stay on the diocesan review workflow.
         $rules = [
@@ -647,6 +659,17 @@ class ClergyAccounts extends BaseController
             return redirect()->to('/diocese/clergy')->with('error', lang('Clergy.notFound'));
         }
 
+        if ($guardCode = $this->guardTargetUserMutation($id, true)) {
+            return redirect()->to('/diocese/clergy/' . $id)->with('error', $this->hierarchyGuardMessage($guardCode));
+        }
+
+        // Accounts holding an admin group are only mutated through the
+        // dedicated admin flows (which carry primary-account protections) —
+        // never through the clergy view, which would allow peer lockout.
+        if ($this->getUserRolePriority($id) > 0) {
+            return redirect()->to('/diocese/clergy/' . $id)->with('error', lang('Clergy.cannotDeactivateAdmin'));
+        }
+
         db_connect()->table('users')->where('id', $id)->update([
             'active' => 0,
             'updated_at' => date('Y-m-d H:i:s'),
@@ -671,6 +694,10 @@ class ClergyAccounts extends BaseController
         $clergy = $this->clergyInScope($id, $dioceseId);
         if ($clergy === null) {
             return redirect()->to('/diocese/clergy')->with('error', lang('Clergy.notFound'));
+        }
+
+        if ($guardCode = $this->guardTargetUserMutation($id)) {
+            return redirect()->to('/diocese/clergy/' . $id)->with('error', $this->hierarchyGuardMessage($guardCode));
         }
 
         $identity = db_connect()->table('auth_identities')

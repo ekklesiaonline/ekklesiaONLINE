@@ -102,6 +102,7 @@ return [
     'invitationSendFailed' => 'Cuenta de clero creada, pero no se pudo enviar el correo de invitación. Use reenviar invitación.',
     'notFound' => 'Cuenta de clero no encontrada en su diócesis.',
     'portalAccessDisabled' => 'Acceso al portal deshabilitado.',
+    'cannotDeactivateAdmin' => 'Las cuentas con un rol administrativo se gestionan desde las pantallas de usuarios administradores.',
     'accountActions' => 'Acciones de la Cuenta',
     'disablePortalAccessHelp' => 'Deshabilitar el acceso al portal solo bloquea el ingreso. La suspensión canónica es una acción diocesana separada.',
     'ordinationSummary' => 'Resumen de Ordenación',
