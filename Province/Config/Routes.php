@@ -38,7 +38,7 @@ $routes->group('', ['filter' => 'session'], function ($routes) {
         $routes->get('report-export', '\\Province\\Controllers\\Dashboard::exportReport', ['filter' => 'permission:report.export']);
         // Diocese admins are read-only for province admins; creation is centralized under system admins.
         $routes->get('diocese-admins', '\\App\\Controllers\\ProvinceDioceseAdmins::index', ['filter' => 'permission:province.diocese_admin.manage']);
-        $routes->get('diocese-admins/reactivate/(:num)', '\\App\\Controllers\\ProvinceDioceseAdmins::reactivate/$1', ['filter' => 'permission:province.diocese_admin.manage']);
+        $routes->post('diocese-admins/reactivate/(:num)', '\\App\\Controllers\\ProvinceDioceseAdmins::reactivate/$1', ['filter' => 'permission:province.diocese_admin.manage']);
         $routes->post('diocese-admins/store', '\\App\\Controllers\\ProvinceDioceseAdmins::store', ['filter' => 'permission:province.diocese_admin.manage']);
         $routes->post('diocese-admins/update/(:num)', '\\App\\Controllers\\ProvinceDioceseAdmins::update/$1', ['filter' => 'permission:province.diocese_admin.manage']);
         $routes->post('diocese-admins/reset-password/(:num)', '\\App\\Controllers\\ProvinceDioceseAdmins::resetPassword/$1', ['filter' => 'permission:province.diocese_admin.manage']);
