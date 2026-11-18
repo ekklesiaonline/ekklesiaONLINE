@@ -82,6 +82,12 @@ class ApiRateLimitFilter implements FilterInterface
         // tokens — otherwise token case variants or token cycling each get a
         // fresh quota.
         $bucketPath = preg_match('#^connect(/|$)#i', $path) === 1 ? 'connect' : $path;
+
+        // Credential-mail resends share one bucket per identity across all
+        // recipients — per-target quotas would allow 10/min *per account*.
+        if (preg_match('#^diocese/clergy/\d+/resend-invitation$#', $path) === 1) {
+            $bucketPath = 'diocese/clergy/resend-invitation';
+        }
         $cacheKey = 'api_rl_' . sha1($identity . '|' . $bucketPath . '|' . $method);
 
         $cache = \Config\Services::cache();
