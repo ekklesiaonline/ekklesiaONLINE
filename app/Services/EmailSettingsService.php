@@ -115,6 +115,13 @@ class EmailSettingsService
             $errors['smtp_port'] = lang('Email.smtpPortInteger');
         }
 
+        // smtp_crypto is a select of tls/ssl/'' in the UI but is submitted
+        // data — constrain to the known values before persisting.
+        if (array_key_exists('email.smtp_crypto', $values)
+            && !in_array((string) $values['email.smtp_crypto'], ['tls', 'ssl', ''], true)) {
+            $values['email.smtp_crypto'] = 'tls';
+        }
+
         // SMTP all-or-nothing validation against this tier's stored block.
         $storedPass = $this->tierSetting($scope, 'email.smtp_pass');
         $hasStoredPass = $storedPass !== null && $storedPass !== '';
@@ -373,20 +380,25 @@ class EmailSettingsService
 
         // If the user has filled in an SMTP block, build a non-shared mailer
         // with those values so the test reflects what will happen after save.
+        // The stored password is never mixed in: a submitted host/user pair
+        // with an empty smtp_pass must not send the persisted credential to
+        // an arbitrary server (credential exfiltration).
         if (!empty($settings['smtp_host']) && !empty($settings['smtp_user'])) {
             $pass = $settings['smtp_pass'];
-            if ($pass === '') {
-                $pass = (string) ($this->tierSetting($scope, 'email.smtp_pass') ?? '');
-            }
 
             if ($pass !== '') {
+                $crypto = (string) ($settings['smtp_crypto'] ?? 'tls');
+                if (!in_array($crypto, ['tls', 'ssl', ''], true)) {
+                    $crypto = 'tls';
+                }
+
                 $config = [
                     'protocol'   => 'smtp',
                     'SMTPHost'   => $settings['smtp_host'],
                     'SMTPUser'   => $settings['smtp_user'],
                     'SMTPPass'   => $pass,
                     'SMTPPort'   => (int) ($settings['smtp_port'] ?: 587),
-                    'SMTPCrypto' => $settings['smtp_crypto'] ?? 'tls',
+                    'SMTPCrypto' => $crypto,
                     'mailType'   => 'html',
                 ];
 
