@@ -31,7 +31,7 @@ class ApiRateLimitFilter implements FilterInterface
         '#^events/registrations/.+/status$#' => 25,
         '#^donations/(store|delete)#' => 20,
         '#^expenses/(store|update|delete)#' => 20,
-        '#^volunteers/(store-team|add-member|remove-member|schedules/)#' => 30,
+        '#^volunteers/(store-team|add-member|remove-member|schedules/|storeTeam|store-schedule|update-schedule|cancel-schedule|confirm-schedule)#' => 30,
         '#^families/(store|update|delete|addMember|removeMember)#' => 25,
         '#^pledges/(store|update|delete)#' => 20,
         '#^leadership/(store|update|delete)#' => 20,

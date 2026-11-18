@@ -449,6 +449,13 @@ class Filters extends BaseFilters
                 'volunteers/schedules/store',
                 'volunteers/schedules/update/*',
                 'volunteers/schedules/cancel/*',
+                'volunteers/schedules/confirm/*',
+                // Legacy alias mutation routes — kept in parity with canonical paths
+                'volunteers/storeTeam',
+                'volunteers/store-schedule',
+                'volunteers/update-schedule/*',
+                'volunteers/cancel-schedule/*',
+                'volunteers/confirm-schedule/*',
                 'families/store',
                 'families/update/*',
                 'families/delete/*',
