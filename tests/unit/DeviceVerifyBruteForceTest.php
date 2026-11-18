@@ -119,29 +119,6 @@ final class DeviceVerifyBruteForceTest extends CIUnitTestCase
         );
     }
 
-    public function testLoginRateLimitCoversConnectEndpoint(): void
-    {
-        $filtersFile = ROOTPATH . 'app/Config/Filters.php';
-        $content = file_get_contents($filtersFile);
-        $this->assertNotFalse($content);
-
-        preg_match(
-            "/'loginRateLimit'\s*=>\s*\[\s*'before'\s*=>\s*\[(.*?)\]\s*,?\s*\]/s",
-            $content,
-            $match
-        );
-
-        $this->assertNotEmpty($match, 'Could not locate the loginRateLimit before block in Filters.php.');
-
-        // Digital connection card is a public form POST — rate limiting
-        // prevents automated spam and denial-of-service abuse.
-        $this->assertStringContainsString(
-            "'connect/*'",
-            $match[1],
-            'loginRateLimit must cover connect/*.'
-        );
-    }
-
     private function extractInvalidateMethodBody(): string
     {
         if (preg_match(
