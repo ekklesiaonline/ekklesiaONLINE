@@ -37,6 +37,8 @@ class ApiRateLimitFilter implements FilterInterface
         '#^leadership/(store|update|delete)#' => 20,
         '#^standing/refresh$#' => 15,
         '#^profile/(update|delete-picture|complete)$#' => 20,
+        '#^parish/clergy/request$#' => 20,
+        '#^(parish|diocese|province|system)/email-settings/test$#' => 10,
     ];
 
     public function before(RequestInterface $request, $arguments = null)

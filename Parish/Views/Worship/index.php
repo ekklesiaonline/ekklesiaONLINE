@@ -13,6 +13,7 @@ $formatLocalizedDate = static function (?string $value): string {
 ?>
 
 <!-- KPI cards -->
+<?php if (!empty($show_visitor_metrics)): ?>
 <div class="row g-4 mb-4">
     <div class="col-md-4">
         <a href="<?= base_url('visitors?followup_stage=pending') ?>" class="text-decoration-none d-block h-100">
@@ -45,6 +46,7 @@ $formatLocalizedDate = static function (?string $value): string {
         </a>
     </div>
 </div>
+<?php endif; ?>
 
 <div class="row g-4">
     <!-- Recent services -->
