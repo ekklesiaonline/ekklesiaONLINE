@@ -249,7 +249,7 @@ class Volunteers extends BaseController
         if (!$this->request->isAJAX()) {
             return redirect()->back()->with('error', lang('Volunteer.memberAddFailed'));
         }
-        return $this->jsonResponse(['success' => false, 'message' => lang('Volunteer.memberAddFailed')]);
+        return $this->jsonResponse($this->apiErrorPayload(lang('Volunteer.memberAddFailed'), 500, 'REQUEST_FAILED'), 500);
     }
 
     /**
@@ -270,7 +270,7 @@ class Volunteers extends BaseController
             if (!$this->request->isAJAX()) {
                 return redirect()->back()->with('error', lang('Volunteer.memberNotFound'));
             }
-            return $this->jsonResponse(['success' => false, 'message' => lang('Volunteer.memberNotFound')]);
+            return $this->jsonResponse($this->apiErrorPayload(lang('Volunteer.memberNotFound'), 404, 'TEAM_MEMBER_NOT_FOUND'), 404);
         }
 
         // Verify team belongs to parish
@@ -279,7 +279,7 @@ class Volunteers extends BaseController
             if (!$this->request->isAJAX()) {
                 return redirect()->back()->with('error', lang('App.errorUnauthorized'));
             }
-            return $this->jsonResponse(['success' => false, 'message' => lang('App.errorUnauthorized')]);
+            return $this->jsonResponse($this->apiErrorPayload(lang('Volunteer.memberNotFound'), 404, 'TEAM_NOT_FOUND_IN_SCOPE'), 404);
         }
 
         if ($this->teamMemberModel->delete($id)) {
@@ -305,6 +305,6 @@ class Volunteers extends BaseController
         if (!$this->request->isAJAX()) {
             return redirect()->back()->with('error', lang('Volunteer.memberRemoveFailed'));
         }
-        return $this->jsonResponse(['success' => false, 'message' => lang('Volunteer.memberRemoveFailed')]);
+        return $this->jsonResponse($this->apiErrorPayload(lang('Volunteer.memberRemoveFailed'), 500, 'REQUEST_FAILED'), 500);
     }
 }

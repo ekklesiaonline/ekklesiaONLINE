@@ -438,12 +438,16 @@ class VolunteerSchedules extends Volunteers
     public function teamMembersApi(int $teamId)
     {
         if (!$this->checkPermission('volunteer.schedule')) {
-            return $this->response->setStatusCode(403)->setJSON(['error' => lang('App.errorForbidden')]);
+            $this->audit()->logAuthorizationDenial('volunteers/team-members-api', 'VOLUNTEER_PERMISSION_DENIED', [
+                'parish_id' => $this->getOperationalParishId() ?? 0,
+            ]);
+
+            return $this->jsonResponse($this->apiErrorPayload(lang('App.errorForbidden'), 403, 'VOLUNTEER_PERMISSION_DENIED'), 403);
         }
 
         $parishId = (int) ($this->getOperationalParishId() ?? 0);
         if ($parishId <= 0) {
-            return $this->response->setStatusCode(403)->setJSON(['error' => lang('App.errorForbidden')]);
+            return $this->jsonResponse($this->apiErrorPayload(lang('App.errorNoParishScope'), 403, 'PARISH_SCOPE_REQUIRED'), 403);
         }
 
         // Ensure the team belongs to this parish.
