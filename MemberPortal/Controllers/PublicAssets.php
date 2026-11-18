@@ -515,9 +515,16 @@ class PublicAssets extends PublicHome
                 ->setHeader('Last-Modified', gmdate('D, d M Y H:i:s', $lastModifiedTs) . ' GMT');
         }
 
+        // Only known-safe types render inline; anything else (HTML, SVG,
+        // script-capable content) downloads instead of executing on the
+        // app origin. nosniff stops MIME-sniffing upgrades.
+        $inlineSafe = str_starts_with($mimeType, 'image/') || $mimeType === 'application/pdf';
+        $disposition = $inlineSafe ? 'inline' : 'attachment';
+
         return $this->response
             ->setHeader('Content-Type', $mimeType)
-            ->setHeader('Content-Disposition', 'inline; filename="' . $downloadName . '"')
+            ->setHeader('Content-Disposition', $disposition . '; filename="' . $downloadName . '"')
+            ->setHeader('X-Content-Type-Options', 'nosniff')
             ->setHeader('Cache-Control', 'private, max-age=300')
             ->setHeader('ETag', $etag)
             ->setHeader('Last-Modified', gmdate('D, d M Y H:i:s', $lastModifiedTs) . ' GMT')
