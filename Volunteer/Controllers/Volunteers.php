@@ -278,7 +278,7 @@ class Volunteers extends BaseController
                 'new_values' => [
                     'team_id' => (int) $teamId,
                     'user_id' => (int) $userId,
-                    'role' => (string) ($data['role'] ?? 'member'),
+                    'role' => $role,
                 ],
             ]);
 
