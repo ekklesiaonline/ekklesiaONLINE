@@ -30,4 +30,5 @@ return [
     'requestAlreadyPending' => 'A request for this person at this parish is already pending.',
     'requestUnavailable' => 'Appointment requests are not available for this parish.',
     'personOutsideDiocese' => 'That person is not in this diocese\'s canonical registry.',
+    'searchQueryTooShort' => 'Enter at least 2 characters to search.',
 ];

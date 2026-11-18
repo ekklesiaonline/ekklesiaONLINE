@@ -583,6 +583,11 @@ class Filters extends BaseFilters
                 'worship-planning/songs/deactivate/*',
                 'worship-planning/songs/reactivate/*',
                 'worship-planning/songs/delete/*',
+                // Parish: diocesan-queue writes and outbound test sends.
+                'parish/clergy/request',
+                'parish/email-settings/test',
+                'diocese/email-settings/test',
+                'province/email-settings/test',
             ],
         ],
     ];

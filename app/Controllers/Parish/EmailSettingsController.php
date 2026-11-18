@@ -28,6 +28,10 @@ class EmailSettingsController extends BaseController
 
     public function save()
     {
+        if ($this->isDioceseAdmin()) {
+            return redirect()->to('/parish/email-settings')->with('error', lang('App.accessDenied'));
+        }
+
         $parishId = $this->getOperationalParishId();
 
         if (!$parishId) {
@@ -39,6 +43,16 @@ class EmailSettingsController extends BaseController
 
     public function test()
     {
+        if ($this->isDioceseAdmin()) {
+            return $this->response->setJSON([
+                'success' => false,
+                'status'  => 'error',
+                'message' => lang('App.accessDenied'),
+                'error'   => ['code' => 403, 'message' => lang('App.accessDenied')],
+                'meta'    => ['http_status' => 403, 'ts' => date('c')],
+            ])->setStatusCode(403);
+        }
+
         $parishId = $this->getOperationalParishId();
 
         if (!$parishId) {

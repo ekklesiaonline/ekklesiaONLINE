@@ -30,20 +30,31 @@ class WorshipDashboard extends BaseController
         // Recent services
         $recentServices = model('ServiceModel')->getParishServices($parishId, 5);
 
-        // Visitors pending follow-up — same backlog metric as the
-        // parish dashboard tile and /visitors?followup_stage=pending.
-        $pendingFollowUps = (new \App\Services\VisitorFollowupService($db))
-            ->pendingDistinctPersonsCount($parishId);
+        // Visitor/follow-up metrics belong to the visitor/follow-up domain;
+        // service.view alone must not expose them.
+        $canViewVisitorMetrics = auth()->user()->can('visitor.view')
+            || auth()->user()->can('followup.view')
+            || auth()->user()->can('followup.manage');
 
-        // Recent visitors
-        $recentVisitors = (new \App\Services\VisitorDirectoryService())->recentForParish($parishId, 5);
+        $pendingFollowUps = 0;
+        $recentVisitors   = [];
+        $callTasksToday   = 0;
+        if ($canViewVisitorMetrics) {
+            // Visitors pending follow-up — same backlog metric as the
+            // parish dashboard tile and /visitors?followup_stage=pending.
+            $pendingFollowUps = (new \App\Services\VisitorFollowupService($db))
+                ->pendingDistinctPersonsCount($parishId);
 
-        // Call tasks today
-        $callTasksToday = (int) $db->table('call_task')
-            ->where('parish_id', $parishId)
-            ->where('status !=', 'completed')
-            ->where('scheduled_date', date('Y-m-d'))
-            ->countAllResults();
+            // Recent visitors
+            $recentVisitors = (new \App\Services\VisitorDirectoryService())->recentForParish($parishId, 5);
+
+            // Call tasks today
+            $callTasksToday = (int) $db->table('call_task')
+                ->where('parish_id', $parishId)
+                ->where('status !=', 'completed')
+                ->where('scheduled_date', date('Y-m-d'))
+                ->countAllResults();
+        }
 
         // Sunday attendance trend (current year, weekly)
         $sundayAttendanceTrend = $this->getParishSundayAttendanceTrend($parishId);
@@ -51,6 +62,7 @@ class WorshipDashboard extends BaseController
         $data = array_merge($this->getCommonViewData(lang('Dashboard.parishWorshipDashboard')), [
             'parish_id' => $parishId,
             'recent_services' => $recentServices,
+            'show_visitor_metrics' => $canViewVisitorMetrics,
             'pending_followups' => $pendingFollowUps,
             'recent_visitors' => $recentVisitors,
             'call_tasks_today' => $callTasksToday,

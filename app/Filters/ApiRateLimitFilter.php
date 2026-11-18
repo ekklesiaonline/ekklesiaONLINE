@@ -41,6 +41,8 @@ class ApiRateLimitFilter implements FilterInterface
         '#^parochial-report/email-pdf$#' => 10,
         '#^attendance/bulkMark$#' => 40,
         '#^worship-planning/#' => 30,
+        '#^parish/clergy/request$#' => 20,
+        '#^(parish|diocese|province|system)/email-settings/test$#' => 10,
     ];
 
     public function before(RequestInterface $request, $arguments = null)

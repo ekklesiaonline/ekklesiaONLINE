@@ -30,4 +30,5 @@ return [
     'requestAlreadyPending' => 'Une demande pour cette personne dans cette paroisse est déjà en attente.',
     'requestUnavailable' => 'Les demandes de nomination ne sont pas disponibles pour cette paroisse.',
     'personOutsideDiocese' => 'Cette personne n\'est pas dans le registre canonique de ce diocèse.',
+    'searchQueryTooShort' => 'Saisissez au moins 2 caractères pour rechercher.',
 ];
