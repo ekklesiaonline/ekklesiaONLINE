@@ -2022,7 +2022,7 @@ CREATE TABLE `team_member` (
   `created_at` datetime DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `team_members_user_id_foreign` (`user_id`),
-  KEY `team_id_user_id` (`team_id`,`user_id`),
+  UNIQUE KEY `team_id_user_id` (`team_id`,`user_id`),
   CONSTRAINT `team_members_team_id_foreign` FOREIGN KEY (`team_id`) REFERENCES `team` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `team_members_user_id_foreign` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=12 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -2215,8 +2215,6 @@ CREATE TABLE `volunteer_schedule` (
   `team_id` int unsigned NOT NULL,
   `service_id` int unsigned DEFAULT NULL COMMENT 'optional link to a specific service',
   `user_id` int unsigned NOT NULL,
-  `date` date NOT NULL,
-  `time_slot` varchar(100) COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT 'e.g., morning, afternoon',
   `status` enum('scheduled','confirmed','cancelled') COLLATE utf8mb4_general_ci NOT NULL DEFAULT 'scheduled',
   `created_at` datetime DEFAULT NULL,
   `updated_at` datetime DEFAULT NULL,
@@ -2226,7 +2224,6 @@ CREATE TABLE `volunteer_schedule` (
   KEY `volunteer_schedule_service_id_foreign` (`service_id`),
   KEY `team_id` (`team_id`),
   KEY `user_id` (`user_id`),
-  KEY `date` (`date`),
   CONSTRAINT `volunteer_schedule_service_id_foreign` FOREIGN KEY (`service_id`) REFERENCES `service` (`id`) ON DELETE CASCADE ON UPDATE SET NULL,
   CONSTRAINT `volunteer_schedule_team_id_foreign` FOREIGN KEY (`team_id`) REFERENCES `team` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `volunteer_schedule_user_id_foreign` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE CASCADE

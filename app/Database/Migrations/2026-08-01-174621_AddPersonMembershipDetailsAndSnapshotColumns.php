@@ -23,8 +23,10 @@ class AddPersonMembershipDetailsAndSnapshotColumns extends Migration
         $this->dropSnapshotColumns();
         $this->dropPersonMembershipDetailsTable();
 
-        $service = new \App\Services\ParishPeopleRegistryService();
-        $service->syncAll();
+        if (class_exists(\App\Services\ParishPeopleRegistryService::class)) {
+            $service = new \App\Services\ParishPeopleRegistryService();
+            $service->syncAll();
+        }
     }
 
     private function createPersonMembershipDetailsTable(): void

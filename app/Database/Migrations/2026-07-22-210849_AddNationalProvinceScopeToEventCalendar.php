@@ -94,14 +94,13 @@ class AddNationalProvinceScopeToEventCalendar extends Migration
 
     public function down()
     {
-        foreach (['fk_event_calendar_parish', 'fk_event_calendar_province'] as $fk) {
-            $exists = $this->db->query(
-                'SELECT COUNT(*) AS c FROM information_schema.TABLE_CONSTRAINTS
-                 WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ? AND CONSTRAINT_NAME = ? AND CONSTRAINT_TYPE = ?',
-                [$this->db->database, 'event_calendar', $fk, 'FOREIGN KEY']
-            )->getRow('c') > 0;
-            if ($exists) {
-                $this->db->query("ALTER TABLE `event_calendar` DROP FOREIGN KEY `{$fk}`");
+        // Drop every foreign key on the columns being removed; constraint
+        // names have varied across schema versions, so resolve them from
+        // live metadata rather than hardcoding.
+        foreach ($this->db->getForeignKeyData('event_calendar') as $fk) {
+            $fkColumns = (array) ($fk->column_name ?? []);
+            if (array_intersect($fkColumns, ['province_id', 'parish_id']) !== []) {
+                $this->forge->dropForeignKey('event_calendar', $fk->constraint_name);
             }
         }
 

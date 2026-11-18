@@ -39,7 +39,10 @@ class AddFollowupSequenceDefaultFlags extends Migration
 
     public function down()
     {
-        $this->forge->dropColumn('followup_sequence', 'is_default');
-        $this->forge->dropColumn('followup_sequence', 'is_global_default');
+        foreach (['is_default', 'is_global_default'] as $column) {
+            if ($this->db->fieldExists($column, 'followup_sequence')) {
+                $this->forge->dropColumn('followup_sequence', $column);
+            }
+        }
     }
 }

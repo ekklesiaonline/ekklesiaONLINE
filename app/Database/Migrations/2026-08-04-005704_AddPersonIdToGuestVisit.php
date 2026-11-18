@@ -24,6 +24,8 @@ class AddPersonIdToGuestVisit extends Migration
 
     public function down()
     {
-        $this->forge->dropColumn('guest_visit', 'person_id');
+        if ($this->db->tableExists('guest_visit') && $this->db->fieldExists('person_id', 'guest_visit')) {
+            $this->forge->dropColumn('guest_visit', 'person_id');
+        }
     }
 }

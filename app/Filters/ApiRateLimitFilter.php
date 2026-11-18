@@ -31,7 +31,7 @@ class ApiRateLimitFilter implements FilterInterface
         '#^events/registrations/.+/status$#' => 25,
         '#^donations/(store|delete)#' => 20,
         '#^expenses/(store|update|delete)#' => 20,
-        '#^volunteers/(store-team|add-member|remove-member|schedules/)#' => 30,
+        '#^volunteers/(store-team|add-member|remove-member|schedules/|storeTeam|store-schedule|update-schedule|cancel-schedule|confirm-schedule)#' => 30,
         '#^families/(store|update|delete|addMember|removeMember)#' => 25,
         '#^pledges/(store|update|delete)#' => 20,
         '#^leadership/(store|update|delete)#' => 20,
@@ -62,7 +62,7 @@ class ApiRateLimitFilter implements FilterInterface
             $defaultLimit = self::DEFAULT_MAX_ATTEMPTS;
         }
 
-        $path = trim((string) $request->getUri()->getPath(), '/');
+        $path = $this->normalizePath($request);
         $userId = $this->resolveUserId();
         $pathLimit = $this->resolvePathLimit($path, $defaultLimit, $userId !== null);
 
@@ -114,6 +114,31 @@ class ApiRateLimitFilter implements FilterInterface
     public function after(RequestInterface $request, ResponseInterface $response, $arguments = null)
     {
         return null;
+    }
+
+    /**
+     * Route-relative path. When the entry script appears in the request path
+     * (`index.php/volunteers/...` — e.g. `$indexPage` enabled or the URI
+     * resolved via REQUEST_URI), every anchored $pathLimits pattern misses and
+     * endpoints silently fall back to the default limit.
+     */
+    private function normalizePath(RequestInterface $request): string
+    {
+        $path = method_exists($request, 'getPath')
+            ? (string) $request->getPath()
+            : (string) $request->getUri()->getPath();
+
+        $path = trim($path, '/');
+
+        // Strip the front-controller script even when App::$indexPage is ''
+        // (pretty URLs): requests can still arrive via /index.php/... and the
+        // literal segment is never a valid route.
+        $indexPage = basename((string) config('App')->indexPage) ?: 'index.php';
+        if ($path === $indexPage || str_starts_with($path, $indexPage . '/')) {
+            $path = (string) substr($path, strlen($indexPage) + 1);
+        }
+
+        return $path;
     }
 
     private function resolveIdentity(RequestInterface $request, ?string $userId): string

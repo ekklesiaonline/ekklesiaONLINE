@@ -136,21 +136,43 @@ class Volunteers extends BaseController
         }
 
         $rules = [
-            'name' => 'required|min_length[3]',
+            'name'      => 'required|min_length[3]',
+            'leader_id' => 'permit_empty|is_not_unique[users.id]',
         ];
 
         if (!$this->validate($rules)) {
             return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
         }
 
+        $leaderId = (int) ($this->request->getPost('leader_id') ?: 0);
+        if ($leaderId > 0
+            && !$this->getMemberParishAffiliationModel()->isUserAffiliatedWithParish($leaderId, (int) ($this->getOperationalParishId() ?? 0), true)
+        ) {
+            return redirect()->back()->withInput()->with('error', lang('Volunteer.invalidLeader'));
+        }
+
         $data = [
             'parish_id' => $this->getOperationalParishId(),
             'name' => $this->request->getPost('name'),
             'description' => $this->request->getPost('description'),
-            'leader_id' => $this->request->getPost('leader_id') ?: null,
+            'leader_id' => $leaderId > 0 ? $leaderId : null,
         ];
 
-        if ($this->volunteerTeamModel->insert($data)) {
+        $teamId = (int) $this->volunteerTeamModel->insert($data);
+        if ($teamId > 0) {
+            $this->audit()->log('team.create', [
+                'parish_id'      => (int) ($this->getOperationalParishId() ?? 0),
+                'entity_type'    => 'team',
+                'entity_id'      => $teamId,
+                'affected_table' => 'team',
+                'affected_id'    => $teamId,
+                'new_values'     => [
+                    'name'        => $data['name'],
+                    'description' => $data['description'],
+                    'leader_id'   => $data['leader_id'],
+                ],
+            ]);
+
             return redirect()->to('/volunteers')->with('success', lang('Volunteer.teamCreated'));
         }
 
@@ -201,29 +223,49 @@ class Volunteers extends BaseController
             return $this->jsonResponse(['success' => false, 'message' => lang('Volunteer.noParishScope')], 403);
         }
 
-        $teamId = $this->request->getPost('team_id');
-        $userId = $this->request->getPost('user_id');
-        $role = $this->request->getPost('role');
+        $rules = [
+            'team_id' => 'required|integer',
+            'user_id' => 'required|integer',
+            'role'    => 'permit_empty|in_list[member,coordinator,leader]|max_length[100]',
+        ];
+
+        if (!$this->validate($rules)) {
+            if (!$this->request->isAJAX()) {
+                return redirect()->back()->withInput()->with('error', lang('Volunteer.invalidMemberSelection'));
+            }
+            return $this->jsonResponse($this->apiErrorPayload(lang('Volunteer.invalidMemberSelection'), 422, 'VOLUNTEER_MEMBER_SELECTION_INVALID', $this->validator->getErrors()), 422);
+        }
+
+        $teamId = (int) $this->request->getPost('team_id');
+        $userId = (int) $this->request->getPost('user_id');
+        $role = (string) ($this->request->getPost('role') ?: 'member');
 
         // Verify team belongs to parish
         $team = $this->volunteerTeamModel->find($teamId);
         if (!$team || $team['parish_id'] != $this->getOperationalParishId()) {
-            return $this->jsonResponse(['success' => false, 'message' => lang('Volunteer.invalidTeam')]);
+            return $this->jsonResponse($this->apiErrorPayload(lang('Volunteer.invalidTeam'), 403, 'TEAM_NOT_FOUND_IN_SCOPE'), 403);
         }
 
         $isAffiliated = $this->getMemberParishAffiliationModel()
-            ->isUserAffiliatedWithParish((int) $userId, (int) ($this->getOperationalParishId() ?? 0), true);
+            ->isUserAffiliatedWithParish($userId, (int) ($this->getOperationalParishId() ?? 0), true);
         if (!$isAffiliated) {
-            return $this->jsonResponse(['success' => false, 'message' => lang('Volunteer.invalidMemberSelection')]);
+            return $this->jsonResponse($this->apiErrorPayload(lang('Volunteer.memberOutsideScope'), 403, 'MEMBER_OUTSIDE_SCOPE'), 403);
         }
 
-        $personId = $this->resolvePersonIdForUser((int) $userId);
+        if ($this->teamMemberModel->isUserOnTeam($teamId, $userId)) {
+            if (!$this->request->isAJAX()) {
+                return redirect()->back()->withInput()->with('error', lang('Volunteer.memberAlreadyOnTeam'));
+            }
+            return $this->jsonResponse($this->apiErrorPayload(lang('Volunteer.memberAlreadyOnTeam'), 409, 'TEAM_MEMBER_ALREADY_EXISTS'), 409);
+        }
+
+        $personId = $this->resolvePersonIdForUser($userId);
 
         $data = [
             'team_id'   => $teamId,
             'user_id'   => $userId,
             'person_id' => $personId,
-            'role'      => $role ?? 'member',
+            'role'      => $role,
         ];
 
         if ($this->teamMemberModel->insert($data)) {
@@ -236,7 +278,7 @@ class Volunteers extends BaseController
                 'new_values' => [
                     'team_id' => (int) $teamId,
                     'user_id' => (int) $userId,
-                    'role' => (string) ($data['role'] ?? 'member'),
+                    'role' => $role,
                 ],
             ]);
 
@@ -249,7 +291,7 @@ class Volunteers extends BaseController
         if (!$this->request->isAJAX()) {
             return redirect()->back()->with('error', lang('Volunteer.memberAddFailed'));
         }
-        return $this->jsonResponse(['success' => false, 'message' => lang('Volunteer.memberAddFailed')]);
+        return $this->jsonResponse($this->apiErrorPayload(lang('Volunteer.memberAddFailed'), 500, 'REQUEST_FAILED'), 500);
     }
 
     /**
@@ -270,7 +312,7 @@ class Volunteers extends BaseController
             if (!$this->request->isAJAX()) {
                 return redirect()->back()->with('error', lang('Volunteer.memberNotFound'));
             }
-            return $this->jsonResponse(['success' => false, 'message' => lang('Volunteer.memberNotFound')]);
+            return $this->jsonResponse($this->apiErrorPayload(lang('Volunteer.memberNotFound'), 404, 'TEAM_MEMBER_NOT_FOUND'), 404);
         }
 
         // Verify team belongs to parish
@@ -279,7 +321,7 @@ class Volunteers extends BaseController
             if (!$this->request->isAJAX()) {
                 return redirect()->back()->with('error', lang('App.errorUnauthorized'));
             }
-            return $this->jsonResponse(['success' => false, 'message' => lang('App.errorUnauthorized')]);
+            return $this->jsonResponse($this->apiErrorPayload(lang('Volunteer.memberNotFound'), 404, 'TEAM_NOT_FOUND_IN_SCOPE'), 404);
         }
 
         if ($this->teamMemberModel->delete($id)) {
@@ -305,6 +347,6 @@ class Volunteers extends BaseController
         if (!$this->request->isAJAX()) {
             return redirect()->back()->with('error', lang('Volunteer.memberRemoveFailed'));
         }
-        return $this->jsonResponse(['success' => false, 'message' => lang('Volunteer.memberRemoveFailed')]);
+        return $this->jsonResponse($this->apiErrorPayload(lang('Volunteer.memberRemoveFailed'), 500, 'REQUEST_FAILED'), 500);
     }
 }

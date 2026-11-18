@@ -88,11 +88,46 @@ class AddPerformanceIndexes extends Migration
                 continue;
             }
             $existing = $this->db->getIndexData($table);
-            foreach (array_keys($indexes) as $name) {
-                if (isset($existing[$name])) {
-                    $this->forge->dropKey($table, $name);
+            $fkColumnSets = array_map(
+                static fn ($fk) => array_map('strtolower', (array) ($fk->column_name ?? [])),
+                $this->db->getForeignKeyData($table)
+            );
+            foreach ($indexes as $name => $columns) {
+                if (! isset($existing[$name]) || $this->isSoleIndexCoveringForeignKey($existing, $fkColumnSets, $name, $columns)) {
+                    continue;
                 }
+                $this->forge->dropKey($table, $name);
+                unset($existing[$name]);
             }
         }
+    }
+
+    /**
+     * An index whose leftmost columns match a foreign key backs that
+     * constraint; dropping it fails when no sibling index also covers it.
+     */
+    private function isSoleIndexCoveringForeignKey(array $existing, array $fkColumnSets, string $indexName, array $columns): bool
+    {
+        $indexColumns = array_map('strtolower', $columns);
+
+        foreach ($fkColumnSets as $fkColumns) {
+            if ($fkColumns === [] || array_slice($indexColumns, 0, count($fkColumns)) !== $fkColumns) {
+                continue;
+            }
+
+            foreach ($existing as $otherName => $other) {
+                if ($otherName === $indexName) {
+                    continue;
+                }
+                $otherColumns = array_map('strtolower', (array) ($other->fields ?? []));
+                if (array_slice($otherColumns, 0, count($fkColumns)) === $fkColumns) {
+                    continue 2; // another index backs this FK
+                }
+            }
+
+            return true;
+        }
+
+        return false;
     }
 }

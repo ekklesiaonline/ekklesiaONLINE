@@ -21,7 +21,10 @@ class AlignFamilyMemberWithCanonical extends Migration
         }
 
         if ($this->db->fieldExists('person_id', 'family_member')) {
-            $this->db->query('ALTER TABLE `family_member` DROP FOREIGN KEY `fk_fm_person`');
+            if (isset($this->db->getForeignKeyData('family_member')['fk_fm_person'])) {
+                $this->db->query('ALTER TABLE `family_member` DROP FOREIGN KEY `fk_fm_person`');
+            }
+
             $this->db->query('ALTER TABLE `family_member` DROP COLUMN `person_id`');
         }
 
@@ -37,6 +40,13 @@ class AlignFamilyMemberWithCanonical extends Migration
         }
 
         if ($this->db->fieldExists('user_id', 'family_member')) {
+            // MySQL refuses to drop a column that still backs a constraint.
+            foreach ($this->db->getForeignKeyData('family_member') as $fk) {
+                if (in_array('user_id', (array) ($fk->column_name ?? []), true)) {
+                    $this->forge->dropForeignKey('family_member', $fk->constraint_name);
+                }
+            }
+
             $this->db->query('ALTER TABLE `family_member` DROP COLUMN `user_id`');
         }
 
