@@ -561,6 +561,11 @@ class Filters extends BaseFilters
                 'vestry/meeting/*/motion',
                 'vestry/motion/*/vote',
                 'vestry/motion/*/close',
+                // Parish: diocesan-queue writes and outbound test sends.
+                'parish/clergy/request',
+                'parish/email-settings/test',
+                'diocese/email-settings/test',
+                'province/email-settings/test',
             ],
         ],
     ];

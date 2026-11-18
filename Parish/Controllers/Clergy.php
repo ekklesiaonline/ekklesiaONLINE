@@ -96,6 +96,10 @@ class Clergy extends BaseController
         $dioceseId = (int) ($parish['diocese_id'] ?? 0);
         $q = trim((string) $this->request->getGet('q'));
 
+        if (mb_strlen($q) < 2) {
+            return $this->jsonResponse($this->apiErrorPayload(lang('ParishClergy.searchQueryTooShort'), 422, 'QUERY_TOO_SHORT'), 422);
+        }
+
         $persons = array_values(array_filter(
             db_connect()->table('person p')
                 ->distinct()
@@ -124,6 +128,10 @@ class Clergy extends BaseController
         $parish = $this->operationalParish();
         if ($parish === null) {
             return redirect()->to('/parish/dashboard')->with('error', lang('App.accessDenied'));
+        }
+
+        if ($this->isDioceseAdmin()) {
+            return redirect()->to('/parish/clergy')->with('error', lang('App.accessDenied'));
         }
 
         $dioceseId = (int) ($parish['diocese_id'] ?? 0);
