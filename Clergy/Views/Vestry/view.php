@@ -98,7 +98,10 @@ $typeKey = 'vestryMeetingType' . ucfirst($meeting['meeting_type'] ?? 'regular');
 
             <?php if ($status === 'open' && !empty($can_manage)): ?>
             <div class="mt-2">
-                <a href="<?= base_url('vestry/motion/' . (int) ($motion['id'] ?? 0) . '/close') ?>" class="btn btn-sm btn-outline-warning"><?= lang('Dashboard.vestryCloseMotion') ?></a>
+                <form action="<?= base_url('vestry/motion/' . (int) ($motion['id'] ?? 0) . '/close') ?>" method="post" class="d-inline">
+                    <?= csrf_field() ?>
+                    <button type="submit" class="btn btn-sm btn-outline-warning"><?= lang('Dashboard.vestryCloseMotion') ?></button>
+                </form>
             </div>
             <?php endif; ?>
         </div>

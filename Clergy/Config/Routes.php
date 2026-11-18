@@ -272,6 +272,6 @@ $routes->group('', ['filter' => 'session'], function ($routes) {
         $routes->get('view/(:num)', '\\Clergy\\Controllers\\Vestry::view/$1');
         $routes->post('meeting/(:num)/motion', '\\Clergy\\Controllers\\Vestry::storeMotion/$1', ['filter' => 'permission:governance.vestry.manage']);
         $routes->post('motion/(:num)/vote', '\\Clergy\\Controllers\\Vestry::castVote/$1', ['filter' => 'permission:vestry.motion.vote']);
-        $routes->get('motion/(:num)/close', '\\Clergy\\Controllers\\Vestry::closeMotion/$1', ['filter' => 'permission:governance.vestry.manage']);
+        $routes->post('motion/(:num)/close', '\\Clergy\\Controllers\\Vestry::closeMotion/$1', ['filter' => 'permission:governance.vestry.manage']);
     });
 });
