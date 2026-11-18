@@ -227,6 +227,7 @@ final class DioceseDashboardDataServiceTest extends CIUnitTestCase
             // fund_id is NOT NULL when the donation tests' migrated table
             // shares the connection; no FK constrains the value.
             'fund_id'    => 1,
+            'category'   => 'offering',
             'amount'     => '50',
             'date'       => '2026-10-10',
             'created_at' => '2026-10-10 00:00:00',
