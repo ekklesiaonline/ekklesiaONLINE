@@ -609,6 +609,21 @@ class Filters extends BaseFilters
                 // Diocese: admin account mutations (outbound credential mail).
                 'diocese/admins/*',
                 'diocese/parish-admins/*',
+                // Province: diocese-admin account mutations (outbound
+                // credential mail) and email-settings save.
+                'province/diocese-admins/*',
+                'province/email-settings',
+                // Province: event, event-calendar, and legacy calendar writes.
+                'province/events/store',
+                'province/events/update/*',
+                'province/events/delete/*',
+                'province/calendar/create',
+                'province/calendar/edit/*',
+                'province/calendar/delete/*',
+                'province/event-calendars/store',
+                'province/event-calendars/update/*',
+                'province/event-calendars/delete/*',
+                'province/quick-create-parish',
                 // Diocese: chart of accounts, deaneries, congregations.
                 'chart-accounts/store',
                 'chart-accounts/update/*',
