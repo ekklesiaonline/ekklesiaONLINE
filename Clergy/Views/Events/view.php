@@ -173,7 +173,7 @@ $formatLocalizedDateTime = static function (?string $value, string $locale): str
                                         </td>
                                         <td><?= esc($formatLocalizedDateTime((string) ($registration['created_at'] ?? ''), $locale)) ?></td>
                                         <td>
-                                            <?php if (auth()->user()->can('event.checkin')): ?>
+                                            <?php if (auth()->user()->can('event.checkin') && !empty($registration['can_manage'])): ?>
                                                 <form method="post" action="<?= base_url('events/registrations/' . (int) $registration['id'] . '/status') ?>" class="d-flex gap-1 align-items-center">
                                                     <?= csrf_field() ?>
                                                     <select name="status" class="form-select form-select-sm" style="max-width: 140px;">

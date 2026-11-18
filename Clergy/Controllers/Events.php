@@ -182,7 +182,9 @@ class Events extends BaseController
         // own scope manages — other parishes' rows stay name-only.
         $registrations = array_map(
             function (array $registration) use ($event): array {
-                if (! $this->canManageRegistrationForEvent($event, (int) ($registration['parish_id'] ?? 0))) {
+                $manageable = $this->canManageRegistrationForEvent($event, (int) ($registration['parish_id'] ?? 0));
+                $registration['can_manage'] = $manageable;
+                if (! $manageable) {
                     $registration['guest_email'] = null;
                     $registration['guest_phone'] = null;
                     $registration['notes'] = null;
