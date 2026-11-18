@@ -173,7 +173,7 @@ class WorshipServiceDataService
 
             $peopleNames = (array) (service('request')->getPost('people_name') ?? []);
             $peopleRoles = (array) (service('request')->getPost('people_role') ?? []);
-            $maxRows = max(count($peopleNames), count($peopleRoles));
+            $maxRows = min(100, max(count($peopleNames), count($peopleRoles)));
             $people = [];
 
             for ($i = 0; $i < $maxRows; $i++) {

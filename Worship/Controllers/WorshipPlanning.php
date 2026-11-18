@@ -97,7 +97,7 @@ class WorshipPlanning extends BaseController
         $notes = (array) ($this->request->getPost('notes') ?? []);
         $songIds = (array) ($this->request->getPost('song_id') ?? []);
 
-        $rows = max(count($itemTypes), count($titles), count($leaders), count($notes), count($songIds));
+        $rows = min(100, max(count($itemTypes), count($titles), count($leaders), count($notes), count($songIds)));
 
         $db = db_connect();
         $db->transStart();
