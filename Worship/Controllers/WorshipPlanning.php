@@ -127,7 +127,10 @@ class WorshipPlanning extends BaseController
                     ->where('parish_id', $parishId)
                     ->first();
 
-                if (is_array($song) && $title === '') {
+                if (! is_array($song)) {
+                    // Cross-parish or missing song references are dropped.
+                    $songId = 0;
+                } elseif ($title === '') {
                     $title = (string) ($song['title'] ?? '');
                 }
             } else {
