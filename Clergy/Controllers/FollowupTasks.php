@@ -60,6 +60,14 @@ class FollowupTasks extends BaseController
             return $this->jsonResponse(['success' => false, 'message' => 'Action not found.'], 404);
         }
 
+        // The action must belong to a sequence owned by this parish —
+        // otherwise a foreign sequence's template/instructions could be
+        // dispatched against this parish's visitors.
+        $sequence = model('FollowupSequenceModel')->find((int) ($action['sequence_id'] ?? 0));
+        if (!$sequence || (int) ($sequence['parish_id'] ?? 0) !== $parishId) {
+            return $this->jsonResponse(['success' => false, 'message' => 'Action not found.'], 404);
+        }
+
         $currentUserId = (int) auth()->id();
 
         // Prefer dispatching an existing pending row over creating a duplicate.

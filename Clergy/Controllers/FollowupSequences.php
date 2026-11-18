@@ -502,6 +502,17 @@ class FollowupSequences extends BaseController
             ], 422);
         }
 
+        // Scope guard: the referenced template must be upstream (parish_id
+        // NULL) or owned by this parish — otherwise a foreign parish's
+        // template body would be rendered into this parish's outbound mail.
+        if ($templateId !== null) {
+            $template = $this->templateModel->find($templateId);
+            $templateParishId = is_array($template) && $template['parish_id'] !== null ? (int) $template['parish_id'] : null;
+            if ($templateParishId !== null && $templateParishId !== $parishId) {
+                return $this->jsonResponse(['success' => false, 'message' => 'Forbidden.'], 403);
+            }
+        }
+
         $data = [
             'sequence_id'  => $sequenceId,
             'week_number'  => (int) $this->request->getPost('week_number'),
