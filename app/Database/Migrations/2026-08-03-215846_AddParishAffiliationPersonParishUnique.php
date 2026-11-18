@@ -45,9 +45,31 @@ class AddParishAffiliationPersonParishUnique extends Migration
             return;
         }
 
-        $this->db->query('ALTER TABLE `parish_affiliation` DROP INDEX `uniq_parish_affiliation_person_parish`');
+        $existing = $this->db->getIndexData('parish_affiliation');
+        if (! isset($existing['uniq_parish_affiliation_person_parish'])) {
+            if (! isset($existing['parish_id_person_id'])) {
+                $this->db->query('ALTER TABLE `parish_affiliation` ADD KEY `parish_id_person_id` (`parish_id`, `person_id`)');
+            }
 
+            return;
+        }
+
+        $fk = 'parish_affiliation_parish_id_foreign';
+        $fkExists = isset($this->db->getForeignKeyData('parish_affiliation')[$fk]);
+
+        // The unique index is the sole cover for the parish_id foreign key;
+        // MySQL refuses to drop it while the constraint exists.
+        if ($fkExists) {
+            $this->forge->dropForeignKey('parish_affiliation', $fk);
+        }
+
+        $this->db->query('ALTER TABLE `parish_affiliation` DROP INDEX `uniq_parish_affiliation_person_parish`');
         $this->db->query('ALTER TABLE `parish_affiliation` ADD KEY `parish_id_person_id` (`parish_id`, `person_id`)');
+
+        if ($fkExists) {
+            $this->forge->addForeignKey('parish_id', 'parish', 'id', 'CASCADE', 'CASCADE', $fk);
+            $this->forge->processIndexes('parish_affiliation');
+        }
     }
 
     private function backfillPersonIds(): void

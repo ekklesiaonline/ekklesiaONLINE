@@ -62,6 +62,10 @@ class CreateDbSettingsTable extends Migration
 
     public function down()
     {
-        $this->forge->dropTable('settings', true, true);
+        // `settings` is created earlier by the vendor codeigniter4/settings
+        // migrations on installs that run them; this migration only fills
+        // the gap when it is missing. Dropping it here would break the
+        // vendor migration's own rollback — leave its lifecycle to the
+        // vendor migration.
     }
 }

@@ -28,9 +28,11 @@ class CanonicalizeMembershipStatuses extends Migration
         $this->db->query("ALTER TABLE `parish_affiliation` MODIFY COLUMN `membership_status` ENUM('visitor','regular_attender','baptized_member','communicant','leader','inactive','transferred','deceased') NOT NULL DEFAULT 'visitor'");
 
         // Rebuild parish_people snapshot so it reflects the new canonical values
-        $service = new \App\Services\ParishPeopleRegistryService();
-        foreach ($this->db->table('parish')->select('id')->get()->getResultArray() as $row) {
-            $service->syncParish((int) ($row['id'] ?? 0));
+        if (class_exists(\App\Services\ParishPeopleRegistryService::class)) {
+            $service = new \App\Services\ParishPeopleRegistryService();
+            foreach ($this->db->table('parish')->select('id')->get()->getResultArray() as $row) {
+                $service->syncParish((int) ($row['id'] ?? 0));
+            }
         }
     }
 
@@ -50,9 +52,11 @@ class CanonicalizeMembershipStatuses extends Migration
         $this->db->query("ALTER TABLE `profile` MODIFY COLUMN `membership_status` ENUM('active','inactive','visitor','pending','regular_attender') NOT NULL DEFAULT 'regular_attender'");
 
         // Rebuild snapshot after rollback
-        $service = new \App\Services\ParishPeopleRegistryService();
-        foreach ($this->db->table('parish')->select('id')->get()->getResultArray() as $row) {
-            $service->syncParish((int) ($row['id'] ?? 0));
+        if (class_exists(\App\Services\ParishPeopleRegistryService::class)) {
+            $service = new \App\Services\ParishPeopleRegistryService();
+            foreach ($this->db->table('parish')->select('id')->get()->getResultArray() as $row) {
+                $service->syncParish((int) ($row['id'] ?? 0));
+            }
         }
     }
 }

@@ -8,6 +8,10 @@ class AddParishAffiliationForeignKey extends Migration
 {
     public function up()
     {
+        if (isset($this->db->getForeignKeyData('parish_affiliation')['parish_affiliation_parish_id_foreign'])) {
+            return;
+        }
+
         $this->db->query('
             ALTER TABLE `parish_affiliation`
             ADD CONSTRAINT `parish_affiliation_parish_id_foreign`
@@ -19,6 +23,10 @@ class AddParishAffiliationForeignKey extends Migration
 
     public function down()
     {
+        if (! isset($this->db->getForeignKeyData('parish_affiliation')['parish_affiliation_parish_id_foreign'])) {
+            return;
+        }
+
         $this->db->query('
             ALTER TABLE `parish_affiliation`
             DROP FOREIGN KEY `parish_affiliation_parish_id_foreign`

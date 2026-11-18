@@ -23,6 +23,8 @@ class AddProfileLocaleColumn extends Migration
 
     public function down()
     {
-        $this->forge->dropColumn('profile', 'locale');
+        if ($this->db->fieldExists('locale', 'profile')) {
+            $this->forge->dropColumn('profile', 'locale');
+        }
     }
 }
