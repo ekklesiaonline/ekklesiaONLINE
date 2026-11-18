@@ -357,6 +357,8 @@ class Filters extends BaseFilters
                 'groups/*',
                 'messages',
                 'messages/*',
+                'volunteers',
+                'volunteers/*',
             ],
         ],
         // Province and diocesan admins are restricted from finance modules.
