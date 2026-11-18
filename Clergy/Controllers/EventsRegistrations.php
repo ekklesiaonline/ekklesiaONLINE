@@ -85,7 +85,9 @@ class EventsRegistrations extends Events
             // test suite runs on a shared SQLite connection, which has no
             // row-lock syntax — production is MySQL/InnoDB.)
             if ($db->DBDriver === 'MySQLi') {
-                $db->query('SELECT id FROM ' . $db->protectIdentifiers('event') . ' WHERE id = ? FOR UPDATE', [(int) $id]);
+                // protectIdentifiers(..., prefixSingle: true) escapes the
+                // identifier AND applies the configured table prefix.
+                $db->query('SELECT id FROM ' . $db->protectIdentifiers('event', true) . ' WHERE id = ? FOR UPDATE', [(int) $id]);
             }
 
             if ($this->isEventAtCapacity($event)) {
@@ -168,12 +170,16 @@ class EventsRegistrations extends Events
         // A member who re-registered has a newer active row; reactivating
         // this stale row would violate the (event_id, user_id) uniqueness.
         if ($status !== 'cancelled' && (int) ($registration['user_id'] ?? 0) > 0) {
-            $activeSibling = $this->eventRegistrationModel
+            $siblingResult = $this->eventRegistrationModel
                 ->where('event_id', (int) $registration['event_id'])
                 ->where('user_id', (int) $registration['user_id'])
                 ->where('status !=', 'cancelled')
                 ->where('id !=', (int) $registrationId)
-                ->get()->getRowArray();
+                ->get();
+            // get() returns false on query failure (DBDebug off) — treat it
+            // like no sibling so the request degrades to the update result
+            // instead of a fatal.
+            $activeSibling = $siblingResult === false ? null : $siblingResult->getRowArray();
             if ($activeSibling !== null) {
                 // A sibling owned by this row's parish is a plain duplicate;
                 // one belonging to another parish stays a generic failure so
