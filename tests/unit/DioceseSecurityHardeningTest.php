@@ -14,11 +14,11 @@ final class DioceseSecurityHardeningTest extends CIUnitTestCase
     {
         $src = file_get_contents(ROOTPATH . 'app/Controllers/DioceseParishAdmins.php');
 
-        $this->assertStringContainsString('isPrimaryParishAdmin', $src);
+        $this->assertStringContainsString('targetIsPrimaryParishAdmin', $src);
         foreach (['cannotDeletePrimaryParishAdmin', 'cannotDeactivatePrimaryParishAdmin', 'cannotResetPrimaryParishAdminPassword'] as $key) {
             $this->assertStringContainsString($key, $src, 'missing primary guard message: ' . $key);
         }
-        $this->assertSame(3, substr_count($src, 'if ($this->isPrimaryParishAdmin($userId))'), 'delete, deactivate and resetPassword must each check the primary guard');
+        $this->assertSame(3, substr_count($src, 'if ($this->targetIsPrimaryParishAdmin($userId))'), 'delete, deactivate and resetPassword must each check the primary guard');
     }
 
     public function testParishesJsonErrorsCarryErrorCode(): void

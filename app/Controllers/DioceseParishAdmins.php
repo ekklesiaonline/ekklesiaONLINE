@@ -214,7 +214,7 @@ class DioceseParishAdmins extends BaseController
             return redirect()->to(base_url('diocese/parish-admins'))->with('error', lang('App.errorForbidden'));
         }
 
-        if ($this->isPrimaryParishAdmin($userId)) {
+        if ($this->targetIsPrimaryParishAdmin($userId)) {
             return redirect()->to(base_url('diocese/parish-admins'))->with('error', lang('Diocesan.cannotResetPrimaryParishAdminPassword'));
         }
 
@@ -270,7 +270,7 @@ class DioceseParishAdmins extends BaseController
             return redirect()->to(base_url('diocese/parish-admins'))->with('error', lang('App.errorForbidden'));
         }
 
-        if ($this->isPrimaryParishAdmin($userId)) {
+        if ($this->targetIsPrimaryParishAdmin($userId)) {
             return redirect()->to(base_url('diocese/parish-admins'))->with('error', lang('Diocesan.cannotDeletePrimaryParishAdmin'));
         }
 
@@ -312,7 +312,7 @@ class DioceseParishAdmins extends BaseController
             return redirect()->to(base_url('diocese/parish-admins'))->with('error', lang('App.errorForbidden'));
         }
 
-        if ($this->isPrimaryParishAdmin($userId)) {
+        if ($this->targetIsPrimaryParishAdmin($userId)) {
             return redirect()->to(base_url('diocese/parish-admins'))->with('error', lang('Diocesan.cannotDeactivatePrimaryParishAdmin'));
         }
 
@@ -372,8 +372,10 @@ class DioceseParishAdmins extends BaseController
     /**
      * The primary parish admin of a parish cannot be mutated here — the
      * dedicated transfer flow must run first (mirrors DioceseAdminUsers).
+     * Named "target" to avoid colliding with BaseController::isPrimaryParishAdmin(),
+     * which takes a parish id and checks the *current* user instead.
      */
-    private function isPrimaryParishAdmin(int $userId): bool
+    private function targetIsPrimaryParishAdmin(int $userId): bool
     {
         return model('ParishAdminPrimaryModel')->getByUser($userId) !== null;
     }
