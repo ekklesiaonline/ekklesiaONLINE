@@ -22,23 +22,24 @@ final class VolunteerScheduleSchemaIntegrityTest extends CIUnitTestCase
     protected $migrate = false;
     protected $refresh = false;
 
+    // Every fixture write runs inside a transaction that is rolled back in
+    // tearDown(), so pre-existing rows (e.g. a shared id=1 parish/user) are
+    // never deleted and no orphaned roster/schedule rows are left behind.
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        $db = db_connect();
+        if ($db->DBDriver === 'MySQLi') {
+            $db->query('START TRANSACTION');
+        }
+    }
+
     protected function tearDown(): void
     {
         $db = db_connect();
         if ($db->DBDriver === 'MySQLi') {
-            $db->query('SET FOREIGN_KEY_CHECKS=0');
-            if ($db->tableExists('team_member')) {
-                $db->table('team_member')->where('team_id', 1)->delete();
-            }
-            if ($db->tableExists('volunteer_schedule')) {
-                $db->table('volunteer_schedule')->where('team_id', 1)->delete();
-            }
-            foreach (['team', 'users', 'parish', 'diocese', 'province'] as $t) {
-                if ($db->tableExists($t)) {
-                    $db->table($t)->where('id', 1)->delete();
-                }
-            }
-            $db->query('SET FOREIGN_KEY_CHECKS=1');
+            $db->query('ROLLBACK');
         }
 
         parent::tearDown();
