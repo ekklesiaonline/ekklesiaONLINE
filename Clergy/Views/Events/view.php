@@ -77,9 +77,10 @@ $formatLocalizedDateTime = static function (?string $value, string $locale): str
                 </div>
 
                 <div class="mb-2">
-                    <span class="badge border border-info text-info fw-normal"><?= esc(ucfirst((string) ($event['event_type'] ?? 'general'))) ?></span>
+                    <span class="badge border border-info text-info-emphasis fw-normal"><?= esc(ucfirst((string) ($event['event_type'] ?? 'general'))) ?></span>
                     <?php if (!empty($event['calendar_name'])): ?>
-                        <span class="badge border ms-1 fw-normal" style="border-color: <?= esc($calendarColor) ?>; color: <?= esc($calendarColor) ?>;">
+                        <?php // Border carries the calendar color; text stays theme-aware so white/light colors remain readable. ?>
+                        <span class="badge border ms-1 fw-normal text-body" style="border-color: <?= esc($calendarColor) ?>;">
                             <?= esc((string) $event['calendar_name']) ?>
                         </span>
                     <?php endif; ?>
