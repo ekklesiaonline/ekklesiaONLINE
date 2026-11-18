@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-use App\Libraries\DataEncryption;
 use CodeIgniter\Model;
 
 class TeamModel extends Model
@@ -34,36 +33,6 @@ class TeamModel extends Model
     protected $validationMessages   = [];
     protected $skipValidation       = false;
     protected $cleanValidationRules = true;
-
-    /**
-     * Get team with members
-     */
-    public function getTeamWithMembers($teamId)
-    {
-        $team = $this->find($teamId);
-        if (!$team) {
-            return null;
-        }
-
-        $preferredNameExpr = $this->getPreferredProfileNameExpr('p');
-
-        $members = $this->db->table('team_member tm')
-            ->select('tm.*, ' . $preferredNameExpr . ' AS first_name, p.last_name, p.phone, ai.secret as email', false)
-            ->join('profile p', 'p.user_id = tm.user_id')
-            ->join('users u', 'u.id = tm.user_id')
-            ->join('auth_identities ai', 'ai.user_id = u.id AND ai.type = "email_password"', 'left')
-            ->where('tm.team_id', $teamId)
-            ->get()
-            ->getResultArray();
-
-        $members = array_map(static function (array $row): array {
-            $row['phone'] = DataEncryption::decrypt($row['phone'] ?? null);
-            return $row;
-        }, $members);
-
-        $team['members'] = $members;
-        return $team;
-    }
 
     /**
      * Get parish teams

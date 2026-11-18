@@ -20,10 +20,6 @@ $routes->group('', ['filter' => 'session'], function ($routes) {
     $routes->post('volunteers/cancel-schedule/(:num)', '\\Volunteer\\Controllers\\Volunteer::cancelSchedule/$1', ['filter' => 'permission:volunteer.schedule']);
     $routes->post('volunteers/confirm-schedule/(:num)', '\\Volunteer\\Controllers\\Volunteer::confirmSchedule/$1', ['filter' => 'permission:volunteer.schedule']);
 
-    $routes->group('volunteer', ['filter' => 'permission:volunteer.manage'], function ($routes) {
-        $routes->get('dashboard', '\\Volunteer\\Controllers\\Dashboard::index');
-    });
-
     $routes->group('volunteers', ['filter' => 'permission:volunteer.manage'], function ($routes) {
         $routes->get('/', '\\Volunteer\\Controllers\\Volunteer::index');
         $routes->get('view/(:num)', '\\Volunteer\\Controllers\\Volunteer::viewTeam/$1');

@@ -39,50 +39,6 @@ class VolunteerScheduleModel extends Model
     protected $cleanValidationRules = true;
 
     /**
-     * Get user's schedule
-     */
-    public function getUserSchedule($userId, $startDate = null, $endDate = null)
-    {
-        $builder = $this->db->table('volunteer_schedule vs')
-            ->select('vs.*, vt.name as team_name, s.liturgical_day, s.service')
-            ->join('team vt', 'vt.id = vs.team_id')
-            ->join('service s', 's.id = vs.service_id', 'left')
-            ->where('vs.user_id', $userId);
-
-        if ($startDate) {
-            $builder->where('vs.service_date >=', $startDate);
-        }
-
-        if ($endDate) {
-            $builder->where('vs.service_date <=', $endDate);
-        }
-
-        return $builder->orderBy('vs.service_date', 'ASC')->get()->getResultArray();
-    }
-
-    /**
-     * Get team schedule
-     */
-    public function getTeamSchedule($teamId, $startDate = null, $endDate = null)
-    {
-        $builder = $this->db->table('volunteer_schedule vs')
-            ->select('vs.*, COALESCE(p.nickname, p.first_name) AS first_name, p.last_name, s.liturgical_day, s.service')
-            ->join('profile p', 'p.user_id = vs.user_id')
-            ->join('service s', 's.id = vs.service_id', 'left')
-            ->where('vs.team_id', $teamId);
-
-        if ($startDate) {
-            $builder->where('vs.service_date >=', $startDate);
-        }
-
-        if ($endDate) {
-            $builder->where('vs.service_date <=', $endDate);
-        }
-
-        return $builder->orderBy('vs.service_date', 'ASC')->get()->getResultArray();
-    }
-
-    /**
      * Backward-compatible method used by controller.
      */
     public function getTeamSchedules($teamId, $limit = 10)
