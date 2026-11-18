@@ -50,6 +50,13 @@ $routes->group('', ['filter' => 'session'], function ($routes) {
         $routes->post('toggle/(:num)', '\\Diocese\\Controllers\\ChartOfAccounts::toggle/$1');
     });
 
+    // Read-only view of the liturgical source for the three admin tiers
+    // (system, province, diocese). The view gate is a role set that a single
+    // Shield permission cannot express, so this group stays `session`-only
+    // and LiturgicalCalendar::canViewLiturgicalSource() enforces it. Manage
+    // endpoints (store/update/delete) are NOT here — they live under the
+    // `permission:system.admin` group in app/Config/Routes.php and must not
+    // be added to this group.
     $routes->group('liturgical-source', function ($routes) {
         $routes->get('/', '\\Diocese\\Controllers\\LiturgicalCalendar::index');
     });

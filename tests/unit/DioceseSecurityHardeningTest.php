@@ -35,6 +35,23 @@ final class DioceseSecurityHardeningTest extends CIUnitTestCase
         $this->assertStringNotContainsString('min_length[8]', $src);
     }
 
+    public function testLiturgicalSourceReadsStaySessionOnlyAndWritesAreSystemGated(): void
+    {
+        $moduleRoutes = file_get_contents(ROOTPATH . 'Diocese/Config/Routes.php');
+        // No write routes may be added to the session-only liturgical-source group.
+        $pattern = '/group\(\'liturgical-source\'.*?\{(.*?)\}\);/s';
+        self::assertSame(1, preg_match($pattern, $moduleRoutes, $m));
+        $this->assertSame(0, preg_match('/routes->(post|put|delete|patch)\(/', $m[1]), 'write route added to session-only liturgical-source group');
+
+        // Manage endpoints must remain under the permission:system.admin group.
+        $appRoutes = file_get_contents(ROOTPATH . 'app/Config/Routes.php');
+        $sysPattern = '/group\(\'system\',\s*\[\'filter\'\s*=>\s*\'permission:system\.admin\'\].*?\{(.*?)\n    \}\);/s';
+        self::assertSame(1, preg_match($sysPattern, $appRoutes, $sm), 'system group not found or lost its permission filter');
+        $this->assertStringContainsString('liturgical-source/store', $sm[1]);
+        $this->assertStringContainsString('liturgical-source/update/', $sm[1]);
+        $this->assertStringContainsString('liturgical-source/delete/', $sm[1]);
+    }
+
     public function testDioceseRoutesCoveredByDioceseScope(): void
     {
         $src = file_get_contents(ROOTPATH . 'app/Config/Filters.php');
