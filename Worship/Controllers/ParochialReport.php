@@ -34,8 +34,8 @@ class ParochialReport extends BaseController
         }
 
         $parishId = (int) ($this->getOperationalParishId() ?? 0);
-        $year = (int) ($this->request->getGet('year') ?? ((int) date('Y') - 1));
-        $forceRecompute = (string) ($this->request->getGet('recompute') ?? '') === '1';
+        $year = $this->normalizeReportYear($this->request->getGet('year'));
+        $forceRecompute = (string) ($this->request->getGet('recompute') ?? '') === '1' && $this->canForceRecompute();
         $pdfEngine = $this->normalizePdfEngine((string) ($this->request->getGet('pdf_engine') ?? 'dompdf'));
 
         $data = array_merge(
@@ -58,8 +58,8 @@ class ParochialReport extends BaseController
         }
 
         $parishId = (int) ($this->getOperationalParishId() ?? 0);
-        $year = (int) ($this->request->getGet('year') ?? ((int) date('Y') - 1));
-        $forceRecompute = (string) ($this->request->getGet('recompute') ?? '') === '1';
+        $year = $this->normalizeReportYear($this->request->getGet('year'));
+        $forceRecompute = (string) ($this->request->getGet('recompute') ?? '') === '1' && $this->canForceRecompute();
 
         $data = $this->reportData->buildReportViewData($parishId, $year, $forceRecompute);
         $data['paper_size'] = $this->normalizePaperSize((string) ($this->request->getGet('paper_size') ?? 'letter'));
@@ -80,8 +80,8 @@ class ParochialReport extends BaseController
         }
 
         $parishId = (int) ($this->getOperationalParishId() ?? 0);
-        $year = (int) ($this->request->getGet('year') ?? ((int) date('Y') - 1));
-        $forceRecompute = (string) ($this->request->getGet('recompute') ?? '') === '1';
+        $year = $this->normalizeReportYear($this->request->getGet('year'));
+        $forceRecompute = (string) ($this->request->getGet('recompute') ?? '') === '1' && $this->canForceRecompute();
         $paperSize = $this->normalizePaperSize((string) ($this->request->getGet('paper_size') ?? 'letter'));
         $pdfEngine = $this->normalizePdfEngine((string) ($this->request->getGet('pdf_engine') ?? 'dompdf'));
         $pdfDebug = $this->normalizeDebugFlag((string) ($this->request->getGet('pdf_debug') ?? '0'));
@@ -119,8 +119,8 @@ class ParochialReport extends BaseController
         }
 
         $parishId = (int) ($this->getOperationalParishId() ?? 0);
-        $year = (int) ($this->request->getPost('year') ?? ((int) date('Y') - 1));
-        $forceRecompute = (string) ($this->request->getPost('recompute') ?? '') === '1';
+        $year = $this->normalizeReportYear($this->request->getPost('year'));
+        $forceRecompute = (string) ($this->request->getPost('recompute') ?? '') === '1' && $this->canForceRecompute();
         $paperSize = $this->normalizePaperSize((string) ($this->request->getPost('paper_size') ?? 'letter'));
         $pdfEngine = $this->normalizePdfEngine((string) ($this->request->getPost('pdf_engine') ?? 'dompdf'));
         $pdfDebug = $this->normalizeDebugFlag((string) ($this->request->getPost('pdf_debug') ?? '0'));
@@ -394,9 +394,29 @@ class ParochialReport extends BaseController
 
     private function normalizeDebugFlag(string $flag): bool
     {
+        $user = auth()->user();
+        if ($user === null || ! $user->inGroup('systemadmin')) {
+            return false;
+        }
+
         $normalized = strtolower(trim($flag));
 
         return in_array($normalized, ['1', 'true', 'yes', 'on'], true);
+    }
+
+    private function normalizeReportYear($year): int
+    {
+        $value = (int) ($year ?? 0);
+        $currentYear = (int) date('Y');
+
+        return ($value >= 1900 && $value <= $currentYear) ? $value : $currentYear - 1;
+    }
+
+    private function canForceRecompute(): bool
+    {
+        $user = auth()->user();
+
+        return $user !== null && $user->can('report.parochial');
     }
 
     private function buildPdfFilename(string $parishName, int $year): string
