@@ -278,6 +278,8 @@ class Filters extends BaseFilters
                 'chart-accounts/*',
                 'liturgical-source',
                 'liturgical-source/*',
+                'diocese',
+                'diocese/*',
             ],
         ],
         // Enforce strict parish scope for parish-level workflows.

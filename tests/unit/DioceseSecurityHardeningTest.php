@@ -34,4 +34,13 @@ final class DioceseSecurityHardeningTest extends CIUnitTestCase
         $this->assertStringContainsString('required|min_length[12]', $src);
         $this->assertStringNotContainsString('min_length[8]', $src);
     }
+
+    public function testDioceseRoutesCoveredByDioceseScope(): void
+    {
+        $src = file_get_contents(ROOTPATH . 'app/Config/Filters.php');
+        $pattern = '/\'dioceseScope\'\s*=>\s*\[\s*\'before\'\s*=>\s*\[(.*?)\]/s';
+        self::assertSame(1, preg_match($pattern, $src, $m), 'missing dioceseScope before list');
+        $this->assertStringContainsString("'diocese'", $m[1]);
+        $this->assertStringContainsString("'diocese/*'", $m[1]);
+    }
 }
