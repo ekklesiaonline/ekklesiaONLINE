@@ -20,6 +20,9 @@ final class ReportsFinanceBoundaryIntegrationTest extends CIUnitTestCase
     protected $migrate = true;
     protected $refresh = true;
 
+    /** @var list<int> Parish fixture ids to delete in tearDown. */
+    private array $fixtureParishIds = [];
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -44,6 +47,13 @@ final class ReportsFinanceBoundaryIntegrationTest extends CIUnitTestCase
 
     protected function tearDown(): void
     {
+        if ($this->fixtureParishIds !== [] && $this->tableExists('parish')) {
+            $this->db->table($this->createTableName('parish'))
+                ->whereIn('id', $this->fixtureParishIds)
+                ->delete();
+            $this->fixtureParishIds = [];
+        }
+
         Services::reset(true);
 
         parent::tearDown();
@@ -117,12 +127,14 @@ final class ReportsFinanceBoundaryIntegrationTest extends CIUnitTestCase
             'created_at' => $now,
             'updated_at' => $now,
         ]);
+        $this->fixtureParishIds[] = (int) $this->db->insertID();
         $this->db->table($parishTable)->insert([
             'diocese_id' => 2,
             'name' => 'OutOfScope Boundary Parish',
             'created_at' => $now,
             'updated_at' => $now,
         ]);
+        $this->fixtureParishIds[] = (int) $this->db->insertID();
 
         $response = $this->get('parish_list');
 
