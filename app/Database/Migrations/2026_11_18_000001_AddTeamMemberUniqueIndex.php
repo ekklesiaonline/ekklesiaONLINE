@@ -28,7 +28,7 @@ class AddTeamMemberUniqueIndex extends Migration
         }
 
         $index = $this->db->getIndexData('team_member')[self::INDEX_NAME] ?? null;
-        $isUnique = $index !== null && ! (bool) ($index->Non_unique ?? true);
+        $isUnique = $index !== null && strtoupper((string) ($index->type ?? '')) === 'UNIQUE';
         $fkExists = isset($this->db->getForeignKeyData('team_member')[self::FK_NAME]);
 
         if ($isUnique && $fkExists) {
@@ -72,7 +72,7 @@ class AddTeamMemberUniqueIndex extends Migration
         }
 
         $index = $this->db->getIndexData('team_member')[self::INDEX_NAME] ?? null;
-        if ($index === null || (bool) ($index->Non_unique ?? true)) {
+        if ($index === null || strtoupper((string) ($index->type ?? '')) !== 'UNIQUE') {
             return; // already non-unique or absent
         }
 

@@ -230,6 +230,9 @@ class Volunteers extends BaseController
         ];
 
         if (!$this->validate($rules)) {
+            if (!$this->request->isAJAX()) {
+                return redirect()->back()->withInput()->with('error', lang('Volunteer.invalidMemberSelection'));
+            }
             return $this->jsonResponse($this->apiErrorPayload(lang('Volunteer.invalidMemberSelection'), 422, 'VOLUNTEER_MEMBER_SELECTION_INVALID', $this->validator->getErrors()), 422);
         }
 
@@ -250,6 +253,9 @@ class Volunteers extends BaseController
         }
 
         if ($this->teamMemberModel->isUserOnTeam($teamId, $userId)) {
+            if (!$this->request->isAJAX()) {
+                return redirect()->back()->withInput()->with('error', lang('Volunteer.memberAlreadyOnTeam'));
+            }
             return $this->jsonResponse($this->apiErrorPayload(lang('Volunteer.memberAlreadyOnTeam'), 409, 'TEAM_MEMBER_ALREADY_EXISTS'), 409);
         }
 
