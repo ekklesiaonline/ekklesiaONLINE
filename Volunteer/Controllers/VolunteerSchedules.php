@@ -171,7 +171,7 @@ class VolunteerSchedules extends Volunteers
 
         // If returning after a validation error, restore the member list for the previously-selected team.
         $oldTeamId = (int) old('team_id', 0);
-        $members   = $oldTeamId > 0 ? $this->teamMemberModel->getTeamMembers($oldTeamId) : [];
+        $members   = $this->getParishTeamMembersForForm($oldTeamId, $parishId);
 
         return view('Volunteer\Views\Volunteers/create_schedule', array_merge($this->getCommonViewData(lang('Volunteer.pageTitleCreateSchedule')), [
             'teams'    => $teams,
@@ -283,7 +283,7 @@ class VolunteerSchedules extends Volunteers
 
         // Load members scoped to the schedule's team (or old team_id if returning after a validation error).
         $teamId  = (int) old('team_id', (int) ($schedule['team_id'] ?? 0));
-        $members = $teamId > 0 ? $this->teamMemberModel->getTeamMembers($teamId) : [];
+        $members = $this->getParishTeamMembersForForm($teamId, $parishId);
 
         return view('Volunteer\Views\Volunteers/edit_schedule', array_merge($this->getCommonViewData(lang('Volunteer.pageTitleEditSchedule')), [
             'schedule' => $schedule,
@@ -459,6 +459,28 @@ class VolunteerSchedules extends Volunteers
         ], $rows);
 
         return $this->response->setJSON(['members' => $members]);
+    }
+
+
+    /**
+     * Returns roster members for form repopulation only when the requested
+     * team belongs to the operational parish; a tampered `old('team_id')`
+     * never leaks a foreign parish roster into the rendered form.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    private function getParishTeamMembersForForm(int $teamId, ?int $parishId): array
+    {
+        if ($teamId <= 0 || $parishId === null || $parishId <= 0) {
+            return [];
+        }
+
+        $team = $this->volunteerTeamModel->find($teamId);
+        if (!$team || (int) ($team['parish_id'] ?? 0) !== $parishId) {
+            return [];
+        }
+
+        return $this->teamMemberModel->getTeamMembers($teamId);
     }
 
 
