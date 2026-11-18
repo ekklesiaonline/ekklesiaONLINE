@@ -272,6 +272,13 @@ class Events extends BaseController
             $this->syncEventInvitees($eventId, (string) ($payload['visibility'] ?? 'members'));
             $this->handleEventAttachments($eventId);
 
+            $this->audit()->log('event.create', [
+                'parish_id'   => (int) ($payload['parish_id'] ?? 0),
+                'entity_type' => 'event',
+                'entity_id'   => $eventId,
+                'new_values'  => ['title' => (string) ($payload['title'] ?? '')],
+            ]);
+
             return redirect()->to('/events')->with('success', lang('Members.eventCreated'));
         }
 
@@ -353,6 +360,13 @@ class Events extends BaseController
             $this->removeSelectedAttachments((int) $id);
             $this->handleEventAttachments((int) $id);
 
+            $this->audit()->log('event.update', [
+                'parish_id'   => (int) ($event['parish_id'] ?? 0) ?: (int) ($this->getOperationalParishId() ?? 0),
+                'entity_type' => 'event',
+                'entity_id'   => (int) $id,
+                'new_values'  => ['title' => (string) ($payload['title'] ?? '')],
+            ]);
+
             return redirect()->to('/events/view/' . (int) $id)->with('success', lang('Members.eventUpdated'));
         }
 
@@ -383,20 +397,14 @@ class Events extends BaseController
             \App\Services\EventCoverUploadService::removeCoverFile((string) ($event['cover_path'] ?? ''), (int) $id);
             $this->removeAllEventAttachments((int) $id);
 
-            // Log the deletion
-            $auditLogModel = model('AuditLogModel');
-            $auditLogModel->insert([
-                'user_id' => auth()->id(),
-                'parish_id' => $event['parish_id'] ?? null,
-                'action' => 'event.delete',
+            $this->audit()->log('event.delete', [
+                'parish_id'   => (int) ($event['parish_id'] ?? 0) ?: (int) ($this->getOperationalParishId() ?? 0),
                 'entity_type' => 'event',
-                'entity_id' => (int) $id,
-                'old_values' => json_encode($event),
-                'new_values' => json_encode(['deleted' => true, 'reason' => $reason]),
-                'ip_address' => $this->request->getIPAddress(),
-                'user_agent' => (string) $this->request->getUserAgent(),
-                'created_at' => date('Y-m-d H:i:s'),
+                'entity_id'   => (int) $id,
+                'old_values'  => ['title' => (string) ($event['title'] ?? '')],
+                'new_values'  => ['deleted' => true],
             ]);
+
             return $this->jsonResponse(['success' => true, 'message' => lang('Events.errorDeleteMessage')]);
         }
 
@@ -463,10 +471,23 @@ class Events extends BaseController
     private function syncEventInvitees(int $eventId, string $visibility): void
     {
         $inviteeIds = $visibility === 'invited'
-            ? (array) ($this->request->getPost('invited_user_ids') ?? [])
+            ? array_map('intval', (array) ($this->request->getPost('invited_user_ids') ?? []))
             : [];
 
-        $this->eventInviteeModel->syncInvitees($eventId, array_map('intval', $inviteeIds));
+        // Only parish-affiliated users may be attached as invitees —
+        // arbitrary user_ids must not gain visibility of a parish event.
+        if ($inviteeIds !== []) {
+            $affiliated = array_map('intval', array_column(
+                $this->memberParishAffiliationModel->memberOptions(
+                    (int) ($this->getOperationalParishId() ?? 0),
+                    $inviteeIds
+                ),
+                'id'
+            ));
+            $inviteeIds = array_values(array_intersect($inviteeIds, $affiliated));
+        }
+
+        $this->eventInviteeModel->syncInvitees($eventId, $inviteeIds);
     }
 
     private function getAudienceTeams(): array
