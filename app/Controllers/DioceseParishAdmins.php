@@ -46,6 +46,7 @@ class DioceseParishAdmins extends BaseController
         $parishes = $db->table('parish')
             ->select('id, name')
             ->where('diocese_id', $scope['diocese_id'])
+            ->where('deleted_at', null)
             ->orderBy('name', 'ASC')
             ->get()
             ->getResultArray();
