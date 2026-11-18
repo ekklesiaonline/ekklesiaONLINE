@@ -324,6 +324,10 @@ class Filters extends BaseFilters
                 'vestry/*',
                 'event-calendars',
                 'event-calendars/*',
+                'parochial-report',
+                'parochial-report/*',
+                'worship-planning',
+                'worship-planning/*',
             ],
         ],
         // Diocesan admins are restricted from parish-operator modules.
@@ -359,6 +363,12 @@ class Filters extends BaseFilters
                 'messages/*',
                 'volunteers',
                 'volunteers/*',
+                'attendance',
+                'attendance/*',
+                'parochial-report',
+                'parochial-report/*',
+                'worship-planning',
+                'worship-planning/*',
             ],
         ],
         // Province and diocesan admins are restricted from finance modules.
@@ -570,6 +580,18 @@ class Filters extends BaseFilters
                 'vestry/meeting/*/motion',
                 'vestry/motion/*/vote',
                 'vestry/motion/*/close',
+                // Worship: report writes and outbound report sends.
+                'parochial-report/save',
+                'parochial-report/email-pdf',
+                // Legacy camelCase alias — bypassed both the URI list and
+                // the bulk-mark path limit.
+                'attendance/bulkMark',
+                'worship-planning/service/*/save',
+                'worship-planning/songs/store',
+                'worship-planning/songs/update/*',
+                'worship-planning/songs/deactivate/*',
+                'worship-planning/songs/reactivate/*',
+                'worship-planning/songs/delete/*',
                 // Parish: diocesan-queue writes and outbound test sends.
                 'parish/clergy/request',
                 'parish/email-settings/test',
