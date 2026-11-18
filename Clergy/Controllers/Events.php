@@ -172,7 +172,21 @@ class Events extends BaseController
             return redirect()->to('/events')->with('error', lang('Members.eventNotFound'));
         }
 
-        $registrations = $this->eventRegistrationModel->getEventRegistrations((int) $id);
+        // Diocesan events are visible to every parish in the diocese, but a
+        // viewer only sees contact details and notes for registrations their
+        // own scope manages — other parishes' rows stay name-only.
+        $registrations = array_map(
+            function (array $registration) use ($event): array {
+                if (! $this->canManageRegistrationForEvent($event, (int) ($registration['parish_id'] ?? 0))) {
+                    $registration['guest_email'] = null;
+                    $registration['guest_phone'] = null;
+                    $registration['notes'] = null;
+                }
+
+                return $registration;
+            },
+            $this->eventRegistrationModel->getEventRegistrations((int) $id)
+        );
         $parishId = (int) ($this->getOperationalParishId() ?? 0);
         $registerUserId = (int) old('user_id');
         $registerOption = $registerUserId > 0

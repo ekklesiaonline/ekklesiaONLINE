@@ -116,6 +116,13 @@ class EventVisibilityService
             return $registrationParishId === $currentParishId;
         }
 
+        // Parish staff manage their own parish's registrations at diocesan
+        // events (they created them and run door check-in); diocesan-scope
+        // managers manage every parish's rows.
+        if ($registrationParishId === $currentParishId) {
+            return true;
+        }
+
         return $eventDioceseId > 0
             && $eventDioceseId === (int) ($context['diocese_id'] ?? 0)
             && !empty($context['can_manage_diocese_scope']);
