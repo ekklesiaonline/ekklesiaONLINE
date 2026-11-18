@@ -571,6 +571,9 @@ class Filters extends BaseFilters
                 'vestry/meeting/*/motion',
                 'vestry/motion/*/vote',
                 'vestry/motion/*/close',
+                // Worship: report writes and outbound report sends.
+                'parochial-report/save',
+                'parochial-report/email-pdf',
             ],
         ],
     ];

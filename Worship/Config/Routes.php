@@ -33,7 +33,7 @@ $routes->group('', ['filter' => 'session'], function ($routes) {
         $routes->get('/', '\\Worship\\Controllers\\ParochialReport::index');
         $routes->get('print', '\\Worship\\Controllers\\ParochialReport::print');
         $routes->get('export-pdf', '\\Worship\\Controllers\\ParochialReport::exportPdf');
-        $routes->post('email-pdf', '\\Worship\\Controllers\\ParochialReport::emailPdf');
+        $routes->post('email-pdf', '\\Worship\\Controllers\\ParochialReport::emailPdf', ['filter' => 'permission:report.parochial']);
         $routes->post('save', '\\Worship\\Controllers\\ParochialReport::save', ['filter' => 'permission:report.parochial']);
     });
 
