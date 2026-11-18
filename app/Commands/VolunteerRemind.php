@@ -111,10 +111,10 @@ class VolunteerRemind extends BaseCommand
             } else {
                 $tableRows[] = [$fullName, $team, $parish, "failed — {$error}"];
                 $counters['failed']++;
-                log_message('error', '[volunteers:remind] user_id={id} team={team} email={em} error={err}', [
+                // Contact data (email) is intentionally excluded per redaction policy.
+                log_message('error', '[volunteers:remind] user_id={id} team={team} error={err}', [
                     'id'   => (int) ($row['user_id'] ?? 0),
                     'team' => $team,
-                    'em'   => $toEmail,
                     'err'  => $error,
                 ]);
             }

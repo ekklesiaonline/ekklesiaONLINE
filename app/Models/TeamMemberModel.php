@@ -60,10 +60,8 @@ class TeamMemberModel extends Model
     public function getTeamMembers($teamId)
     {
         return $this->db->table('team_member tm')
-            ->select('tm.*, COALESCE(p.nickname, p.first_name) AS first_name, p.last_name, ai.secret as email')
+            ->select('tm.*, COALESCE(p.nickname, p.first_name) AS first_name, p.last_name')
             ->join('profile p', 'p.user_id = tm.user_id', 'left')
-            ->join('users u', 'u.id = tm.user_id', 'left')
-            ->join('auth_identities ai', 'ai.user_id = u.id AND ai.type = "email_password"', 'left')
             ->where('tm.team_id', $teamId)
             ->orderBy('p.last_name', 'ASC')
             ->get()
