@@ -76,7 +76,12 @@ final class ParishClergyPersonSearchValidationTest extends CIUnitTestCase
         $response = $this->withSession(['selected_parish_id' => $parishId])
             ->get('parish/clergy/person-search?q=ab');
 
-        self::assertNotSame(422, $response->response()->getStatusCode());
+        $response->assertStatus(200);
+
+        $json = json_decode((string) $response->response()->getBody(), true);
+        self::assertIsArray($json);
+        self::assertTrue((bool) ($json['success'] ?? false));
+        self::assertIsArray($json['data'] ?? null);
     }
 
     private function seedParishAdmin(): int
