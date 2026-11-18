@@ -195,17 +195,20 @@ final class DioceseDashboardDataServiceTest extends CIUnitTestCase
     {
         $parishes = $this->seedDioceseWithParishes();
         $this->seedMembersAndServices($parishes);
+        // 'Bravo' sorts before the page boundary; soft-deleting it must shift
+        // page contents and the total count, not leave a gap.
+        $this->db->table('parish')->where('id', 2)->update(['deleted_at' => '2026-10-05 00:00:00']);
 
         $service = new DioceseDashboardDataService();
         $page1 = $service->getParishSummaryRows('custom', self::PERIOD_START, self::PERIOD_END, 1, null, 2, 0);
         $page2 = $service->getParishSummaryRows('custom', self::PERIOD_START, self::PERIOD_END, 1, null, 2, 2);
 
         $this->assertCount(2, $page1);
-        $this->assertCount(2, $page2);
+        $this->assertCount(1, $page2);
         $this->assertSame('Alpha', $page1[0]['parish_name']);
-        $this->assertSame('Bravo', $page1[1]['parish_name']);
-        $this->assertSame('Charlie', $page2[0]['parish_name']);
-        $this->assertSame('Delta', $page2[1]['parish_name']);
+        $this->assertSame('Charlie', $page1[1]['parish_name']);
+        $this->assertSame('Delta', $page2[0]['parish_name']);
+        $this->assertSame(3, $service->countParishSummaryRows(1));
     }
 
     public function testGetParishSummaryRowsWithParishFilter(): void
