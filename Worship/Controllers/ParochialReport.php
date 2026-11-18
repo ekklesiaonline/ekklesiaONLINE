@@ -364,6 +364,17 @@ class ParochialReport extends BaseController
 
         model(ParishFinancialSummaryModel::class)->upsertForYear($data);
 
+        // Field values are intentionally omitted from the audit payload —
+        // they include financial figures; log only the action's meta.
+        $this->audit()->log('parochial_report.save', [
+            'parish_id' => $parishId,
+            'entity_type' => 'parochial_report',
+            'meta' => [
+                'report_year' => $year,
+                'mark_done' => $markDone,
+            ],
+        ]);
+
         return redirect()
             ->to(base_url('parochial-report?year=' . $year))
             ->with('success', lang($markDone ? 'App.prReportMarkedDone' : 'App.prReportDraftSaved'));
