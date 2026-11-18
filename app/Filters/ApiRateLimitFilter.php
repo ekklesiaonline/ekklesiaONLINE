@@ -43,6 +43,17 @@ class ApiRateLimitFilter implements FilterInterface
         '#^worship-planning/#' => 30,
         '#^parish/clergy/request$#' => 20,
         '#^(parish|diocese|province|system)/email-settings/test$#' => 10,
+        // Outbound credential mail (clergy invitation resend + admin account
+        // creation/password reset): same strictest tier as email test sends.
+        '#^diocese/clergy/\d+/resend-invitation$#' => 10,
+        '#^diocese/(admins|parish-admins)/#' => 15,
+        '#^diocese/clergy/#' => 20,
+        '#^diocese/clergy-review/#' => 20,
+        '#^diocese/email-settings$#' => 20,
+        '#^diocese/(deaneries|congregations|followup-workflow)/#' => 30,
+        '#^chart-accounts/#' => 30,
+        '#^parish_list/#' => 30,
+        '#^system/liturgical-source/#' => 20,
     ];
 
     public function before(RequestInterface $request, $arguments = null)
