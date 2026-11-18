@@ -265,6 +265,23 @@ class ParochialReport extends BaseController
             'carbon_footprint_notes' => 'permit_empty|max_length[5000]',
             'exemplary_program_text' => 'permit_empty|max_length[5000]',
             'future_hope_text' => 'permit_empty|max_length[5000]',
+            'report_prepared_by_name' => 'permit_empty|max_length[255]',
+            'report_prepared_by_email' => 'permit_empty|valid_email|max_length[255]',
+            'report_prepared_by_phone' => 'permit_empty|max_length[50]',
+            'financial_prepared_by_name' => 'permit_empty|max_length[255]',
+            'financial_prepared_by_email' => 'permit_empty|valid_email|max_length[255]',
+            'financial_prepared_by_phone' => 'permit_empty|max_length[50]',
+            'clerk_certified_date' => 'permit_empty|valid_date',
+            'treasurer_certified_date' => 'permit_empty|valid_date',
+            'clergy_situation.*' => 'permit_empty|max_length[255]',
+            'programs.*' => 'permit_empty|max_length[255]',
+            'subsidiary_organizations.*' => 'permit_empty|max_length[255]',
+            'nonlive_views_estimated' => 'permit_empty|in_list[0,1]',
+            'simultaneous_multilingual_service' => 'permit_empty|in_list[0,1]',
+            'has_debt' => 'permit_empty|in_list[0,1]',
+            'owns_property' => 'permit_empty|in_list[0,1]',
+            'rents_to_outside' => 'permit_empty|in_list[0,1]',
+            'mark_done' => 'permit_empty|in_list[0,1]',
         ])) {
             return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
         }
