@@ -29,6 +29,8 @@ final class EventsControllerFeatureTest extends CIUnitTestCase
             ['GET', 'events/create', '\\Clergy\\Controllers\\Events::create'],
             ['GET', 'events/edit/(:num)', '\\Clergy\\Controllers\\Events::edit/$1'],
             ['GET', 'events/view/(:num)', '\\Clergy\\Controllers\\Events::view/$1'],
+            ['POST', 'events/register/(:num)', '\\Clergy\\Controllers\\EventsRegistrations::register/$1'],
+            ['POST', 'events/registrations/(:num)/status', '\\Clergy\\Controllers\\EventsRegistrations::updateRegistrationStatus/$1'],
         ]);
     }
 
@@ -164,6 +166,138 @@ final class EventsControllerFeatureTest extends CIUnitTestCase
 
         $this->get('events/view/' . $otherParishEventId)->assertRedirectTo('/events');
         $this->get('events/view/' . $otherDioceseEventId)->assertRedirectTo('/events');
+    }
+
+    public function testViewRedactsGuestContactOnOtherParishRowsForDiocesanEvent(): void
+    {
+        [, $dioceseId, $hostParishId] = $this->insertHierarchy();
+        $viewerParishId = $this->insertParish($dioceseId, 'Viewer Parish');
+
+        $viewerId = $this->insertUser('event.feature.redact.viewer');
+        $this->insertProfile($viewerId, $viewerParishId, $dioceseId, 'Parish', 'Viewer');
+        $this->injectEventsAuth($viewerId, ['event.view']);
+        session()->set('selected_parish_id', $viewerParishId);
+
+        $calendarId = $this->insertCalendar($hostParishId, $dioceseId, 'Diocesan Calendar');
+        $eventId = $this->insertEvent($hostParishId, $calendarId, [
+            'organizer_type' => 'diocese',
+            'organizer_diocese_id' => $dioceseId,
+            'organizer_parish_id' => null,
+            'scope_level' => 'diocese',
+            'scope_diocese_id' => $dioceseId,
+            'title' => 'Diocesan Redaction Event',
+            'visibility' => 'public',
+        ]);
+
+        // Registration owned by the host parish — contact must be redacted.
+        $this->insertRegistration($eventId, $hostParishId, [
+            'guest_name' => 'Outside Guest',
+            'guest_email' => 'outside.guest@example.org',
+            'guest_phone' => '555-0199',
+            'notes' => 'confidential-note',
+        ]);
+        // Registration owned by the viewer's parish — contact stays visible.
+        $this->insertRegistration($eventId, $viewerParishId, [
+            'guest_name' => 'Own Guest',
+            'guest_email' => 'own.guest@example.org',
+            'guest_phone' => '555-0100',
+            'notes' => 'own-note',
+        ]);
+
+        $response = $this->get('events/view/' . $eventId);
+
+        $response->assertOK();
+        $body = $response->getBody();
+        // Names remain visible for the shared attendee list.
+        $this->assertStringContainsString('Outside Guest', $body);
+        $this->assertStringContainsString('Own Guest', $body);
+        // Contact details and notes only for rows the viewer's parish manages.
+        $this->assertStringNotContainsString('outside.guest@example.org', $body);
+        $this->assertStringNotContainsString('555-0199', $body);
+        $this->assertStringNotContainsString('confidential-note', $body);
+        $this->assertStringContainsString('own.guest@example.org', $body);
+        $this->assertStringContainsString('555-0100', $body);
+    }
+
+    public function testUpdateRegistrationStatusManagesOnlyOwnParishRowsOnDiocesanEvent(): void
+    {
+        [, $dioceseId, $hostParishId] = $this->insertHierarchy();
+        $viewerParishId = $this->insertParish($dioceseId, 'Checkin Parish');
+
+        $staffId = $this->insertUser('event.feature.checkin.staff');
+        $this->insertProfile($staffId, $viewerParishId, $dioceseId, 'Checkin', 'Staff');
+        $this->injectEventsAuth($staffId, ['event.view', 'event.checkin']);
+        session()->set('selected_parish_id', $viewerParishId);
+
+        $calendarId = $this->insertCalendar($hostParishId, $dioceseId, 'Diocesan Calendar');
+        $eventId = $this->insertEvent($hostParishId, $calendarId, [
+            'organizer_type' => 'diocese',
+            'organizer_diocese_id' => $dioceseId,
+            'organizer_parish_id' => null,
+            'scope_level' => 'diocese',
+            'scope_diocese_id' => $dioceseId,
+            'title' => 'Diocesan Checkin Event',
+            'visibility' => 'public',
+        ]);
+
+        $ownRegId = $this->insertRegistration($eventId, $viewerParishId, ['guest_name' => 'Own Guest']);
+        $otherRegId = $this->insertRegistration($eventId, $hostParishId, ['guest_name' => 'Other Guest']);
+
+        // Own-parish row on a diocesan event: manageable.
+        $this->withHeaders([csrf_header() => csrf_hash()])
+            ->call('post', 'events/registrations/' . $ownRegId . '/status', ['status' => 'checked_in']);
+
+        $row = $this->db->table($this->resolveTableName('event_registration'))
+            ->where('id', $ownRegId)->get()->getRowArray();
+        $this->assertSame('checked_in', (string) ($row['status'] ?? ''));
+
+        // Another parish's row: still out of scope.
+        $this->withHeaders([csrf_header() => csrf_hash()])
+            ->call('post', 'events/registrations/' . $otherRegId . '/status', ['status' => 'cancelled']);
+
+        $row = $this->db->table($this->resolveTableName('event_registration'))
+            ->where('id', $otherRegId)->get()->getRowArray();
+        $this->assertSame('registered', (string) ($row['status'] ?? ''));
+    }
+
+    public function testRegisterRejectsMalformedGuestFields(): void
+    {
+        [, $dioceseId, $parishId] = $this->insertHierarchy();
+
+        $staffId = $this->insertUser('event.feature.register.staff');
+        $this->insertProfile($staffId, $parishId, $dioceseId, 'Register', 'Staff');
+        $this->injectEventsAuth($staffId, ['event.view', 'event.register']);
+        session()->set('selected_parish_id', $parishId);
+
+        $calendarId = $this->insertCalendar($parishId, $dioceseId, 'Feature Calendar');
+        $eventId = $this->insertEvent($parishId, $calendarId, [
+            'title' => 'Registration Validation Event',
+            'visibility' => 'public',
+            'requires_registration' => 1,
+        ]);
+
+        // Malformed email must not persist a row.
+        $this->withHeaders([csrf_header() => csrf_hash()])
+            ->call('post', 'events/register/' . $eventId, [
+                'guest_name' => 'Walk In',
+                'guest_email' => 'not-an-email',
+            ]);
+
+        $count = (int) $this->db->table($this->resolveTableName('event_registration'))
+            ->where('event_id', $eventId)->countAllResults();
+        $this->assertSame(0, $count);
+
+        // Well-formed guest registration persists.
+        $this->withHeaders([csrf_header() => csrf_hash()])
+            ->call('post', 'events/register/' . $eventId, [
+                'guest_name' => 'Walk In',
+                'guest_email' => 'walk.in@example.org',
+            ]);
+
+        $row = $this->db->table($this->resolveTableName('event_registration'))
+            ->where('event_id', $eventId)->get()->getRowArray();
+        $this->assertNotNull($row);
+        $this->assertSame('walk.in@example.org', (string) ($row['guest_email'] ?? ''));
     }
 
     /**
@@ -355,6 +489,29 @@ final class EventsControllerFeatureTest extends CIUnitTestCase
         return (int) $this->db->insertID();
     }
 
+    /**
+     * @param array<string,mixed> $overrides
+     */
+    private function insertRegistration(int $eventId, int $parishId, array $overrides = []): int
+    {
+        $payload = array_merge([
+            'event_id' => $eventId,
+            'parish_id' => $parishId,
+            'user_id' => null,
+            'guest_name' => null,
+            'guest_email' => null,
+            'guest_phone' => null,
+            'status' => 'registered',
+            'notes' => null,
+            'created_at' => date('Y-m-d H:i:s'),
+            'updated_at' => date('Y-m-d H:i:s'),
+        ], $overrides);
+
+        $this->db->table($this->resolveTableName('event_registration'))->insert($payload);
+
+        return (int) $this->db->insertID();
+    }
+
     private function insertEventInvitee(int $eventId, int $userId): void
     {
         $this->db->table($this->resolveTableName('event_invitee'))->insert([
@@ -444,6 +601,11 @@ final class EventsControllerFeatureTest extends CIUnitTestCase
         $this->ensureEventTable();
         $this->ensureEventInviteeTable();
         $this->ensureEventRegistrationTable();
+        $registrationTable = $this->resolveTableName('event_registration');
+        $this->ensureColumnExists($registrationTable, 'guest_name', 'TEXT NULL');
+        $this->ensureColumnExists($registrationTable, 'guest_email', 'TEXT NULL');
+        $this->ensureColumnExists($registrationTable, 'guest_phone', 'TEXT NULL');
+        $this->ensureColumnExists($registrationTable, 'notes', 'TEXT NULL');
         $this->ensureEventAttachmentsTable();
         $this->ensureTeamTable();
         $this->ensureTeamMemberTable();

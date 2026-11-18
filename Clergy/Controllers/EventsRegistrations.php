@@ -32,6 +32,20 @@ class EventsRegistrations extends Events
             return redirect()->to('/events/view/' . (int) $id)->with('error', lang('Members.registrationNotRequired'));
         }
 
+        $rules = [
+            'user_id'     => 'permit_empty|integer|greater_than[0]',
+            'guest_name'  => 'permit_empty|max_length[255]',
+            'guest_email' => 'permit_empty|valid_email|max_length[255]',
+            'guest_phone' => 'permit_empty|max_length[50]',
+            'notes'       => 'permit_empty|max_length[2000]',
+        ];
+
+        // Validate the POST payload itself: validating the merged request
+        // would let query/cookie values stand in for the fields being saved.
+        if (! $this->validateData($this->request->getPost(), $rules)) {
+            return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
+        }
+
         $memberUserId = (int) ($this->request->getPost('user_id') ?? 0);
         $guestName = trim((string) ($this->request->getPost('guest_name') ?? ''));
 
@@ -52,10 +66,6 @@ class EventsRegistrations extends Events
             }
         }
 
-        if ($this->isEventAtCapacity($event)) {
-            return redirect()->back()->withInput()->with('error', lang('Members.capacityReached'));
-        }
-
         $payload = [
             'event_id' => (int) $id,
             'parish_id' => (int) ($this->getOperationalParishId() ?? 0),
@@ -67,8 +77,47 @@ class EventsRegistrations extends Events
             'notes' => trim((string) ($this->request->getPost('notes') ?? '')),
         ];
 
-        if ($this->eventRegistrationModel->insert($payload)) {
+        $db = \Config\Database::connect();
+        $db->transBegin();
+        try {
+            // Serialize concurrent registrations on the event row so the
+            // capacity check and the insert cannot race each other. (The
+            // test suite runs on a shared SQLite connection, which has no
+            // row-lock syntax — production is MySQL/InnoDB.)
+            if ($db->DBDriver === 'MySQLi') {
+                $db->query('SELECT id FROM ' . $db->protectIdentifiers('event') . ' WHERE id = ? FOR UPDATE', [(int) $id]);
+            }
+
+            if ($this->isEventAtCapacity($event)) {
+                $db->transRollback();
+                return redirect()->back()->withInput()->with('error', lang('Members.capacityReached'));
+            }
+
+            $inserted = (bool) $this->eventRegistrationModel->insert($payload);
+            if ($inserted && $db->transCommit() === false) {
+                // Commit failed after a successful insert — nothing was
+                // persisted, so do not report the registration as saved.
+                $db->transRollback();
+                $inserted = false;
+            } elseif (! $inserted) {
+                $db->transRollback();
+            }
+        } catch (\Throwable $e) {
+            $db->transRollback();
+            return redirect()->back()->withInput()->with('error', lang('Members.failedSaveRegistration'));
+        }
+
+        if ($inserted) {
             return redirect()->to('/events/view/' . (int) $id)->with('success', lang('Members.registrationSaved'));
+        }
+
+        // Insert failed: a concurrent request that committed between our
+        // existence check and insert surfaces here — report it as the
+        // duplicate it is (the unique key on (event_id, user_id) is the
+        // hard backstop, and may reject even when DBDebug suppresses errors).
+        if ($memberUserId > 0
+            && $this->eventRegistrationModel->registrationExistsForMember((int) $id, $memberUserId)) {
+            return redirect()->back()->withInput()->with('error', lang('Members.alreadyRegistered'));
         }
 
         return redirect()->back()->withInput()->with('error', lang('Members.failedSaveRegistration'));
@@ -106,6 +155,35 @@ class EventsRegistrations extends Events
 
         if ($status === 'checked_in' && $this->isEventAtCapacity($event, (int) $registrationId)) {
             return redirect()->back()->with('error', lang('Members.cannotCheckIn'));
+        }
+
+        // Reactivating a cancelled row must respect capacity too — a
+        // cancelled → registered transition takes a seat as well.
+        if ($status === 'registered'
+            && (string) ($registration['status'] ?? '') === 'cancelled'
+            && $this->isEventAtCapacity($event)) {
+            return redirect()->back()->with('error', lang('Members.capacityReached'));
+        }
+
+        // A member who re-registered has a newer active row; reactivating
+        // this stale row would violate the (event_id, user_id) uniqueness.
+        if ($status !== 'cancelled' && (int) ($registration['user_id'] ?? 0) > 0) {
+            $activeSibling = $this->eventRegistrationModel
+                ->where('event_id', (int) $registration['event_id'])
+                ->where('user_id', (int) $registration['user_id'])
+                ->where('status !=', 'cancelled')
+                ->where('id !=', (int) $registrationId)
+                ->get()->getRowArray();
+            if ($activeSibling !== null) {
+                // A sibling owned by this row's parish is a plain duplicate;
+                // one belonging to another parish stays a generic failure so
+                // the response doesn't confirm cross-parish registrations.
+                $langKey = (int) ($activeSibling['parish_id'] ?? 0) === (int) ($registration['parish_id'] ?? -1)
+                    ? 'Members.alreadyRegistered'
+                    : 'Members.failedUpdateStatus';
+
+                return redirect()->back()->with('error', lang($langKey));
+            }
         }
 
         if ($this->eventRegistrationModel->update((int) $registrationId, ['status' => $status])) {

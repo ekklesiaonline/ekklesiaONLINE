@@ -18,6 +18,11 @@ class Events extends BaseController
     protected $familyModel;
     protected $eventInviteeModel;
 
+    /**
+     * @var array<string,mixed>|null
+     */
+    private ?array $eventVisibilityContext = null;
+
     public function __construct()
     {
         $this->eventModel = model('EventModel');
@@ -172,7 +177,23 @@ class Events extends BaseController
             return redirect()->to('/events')->with('error', lang('Members.eventNotFound'));
         }
 
-        $registrations = $this->eventRegistrationModel->getEventRegistrations((int) $id);
+        // Diocesan events are visible to every parish in the diocese, but a
+        // viewer only sees contact details and notes for registrations their
+        // own scope manages — other parishes' rows stay name-only.
+        $registrations = array_map(
+            function (array $registration) use ($event): array {
+                $manageable = $this->canManageRegistrationForEvent($event, (int) ($registration['parish_id'] ?? 0));
+                $registration['can_manage'] = $manageable;
+                if (! $manageable) {
+                    $registration['guest_email'] = null;
+                    $registration['guest_phone'] = null;
+                    $registration['notes'] = null;
+                }
+
+                return $registration;
+            },
+            $this->eventRegistrationModel->getEventRegistrations((int) $id)
+        );
         $parishId = (int) ($this->getOperationalParishId() ?? 0);
         $registerUserId = (int) old('user_id');
         $registerOption = $registerUserId > 0
@@ -427,7 +448,10 @@ class Events extends BaseController
      */
     private function getEventVisibilityContext(): array
     {
-        return [
+        // The context is request-scoped and identical for every call —
+        // cache it so per-registration permission checks don't repeat the
+        // diocese/profile lookups for each attendee row.
+        return $this->eventVisibilityContext ??= [
             'user_id' => (int) (auth()->id() ?? 0),
             'parish_id' => (int) ($this->getOperationalParishId() ?? 0),
             'diocese_id' => $this->resolveCurrentDioceseId(),
