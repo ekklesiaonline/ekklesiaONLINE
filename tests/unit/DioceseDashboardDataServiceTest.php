@@ -195,17 +195,54 @@ final class DioceseDashboardDataServiceTest extends CIUnitTestCase
     {
         $parishes = $this->seedDioceseWithParishes();
         $this->seedMembersAndServices($parishes);
+        // 'Bravo' sorts before the page boundary; soft-deleting it must shift
+        // page contents and the total count, not leave a gap.
+        $this->db->table('parish')->where('id', 2)->update(['deleted_at' => '2026-10-05 00:00:00']);
 
         $service = new DioceseDashboardDataService();
         $page1 = $service->getParishSummaryRows('custom', self::PERIOD_START, self::PERIOD_END, 1, null, 2, 0);
         $page2 = $service->getParishSummaryRows('custom', self::PERIOD_START, self::PERIOD_END, 1, null, 2, 2);
 
         $this->assertCount(2, $page1);
-        $this->assertCount(2, $page2);
+        $this->assertCount(1, $page2);
         $this->assertSame('Alpha', $page1[0]['parish_name']);
-        $this->assertSame('Bravo', $page1[1]['parish_name']);
-        $this->assertSame('Charlie', $page2[0]['parish_name']);
-        $this->assertSame('Delta', $page2[1]['parish_name']);
+        $this->assertSame('Charlie', $page1[1]['parish_name']);
+        $this->assertSame('Delta', $page2[0]['parish_name']);
+        $this->assertSame(3, $service->countParishSummaryRows(1));
+    }
+
+    public function testSundayTrendAndActivityFeedExcludeDeletedParishes(): void
+    {
+        $parishes = $this->seedDioceseWithParishes();
+        $this->seedMembersAndServices($parishes);
+
+        // Bravo's Sunday services (ids 4, 5) get a distinct attendance so its
+        // presence would visibly shift the trend average if still counted.
+        $this->db->table('service_metric')->whereIn('service_id', [4, 5])->update(['reported_present_count' => 100]);
+        // The parish activity rows require created_at; a Bravo donation tests
+        // the feed's parish join rather than its own parish row.
+        $this->db->table('parish')->update(['created_at' => '2026-10-01 00:00:00']);
+        $this->db->table('donation')->insert([
+            'parish_id'  => 2,
+            // fund_id is NOT NULL when the donation tests' migrated table
+            // shares the connection; no FK constrains the value.
+            'fund_id'    => 1,
+            'category'   => 'offering',
+            'amount'     => '50',
+            'date'       => '2026-10-10',
+            'created_at' => '2026-10-10 00:00:00',
+        ]);
+        $this->db->table('parish')->where('id', 2)->update(['deleted_at' => '2026-10-05 00:00:00']);
+
+        $service = new DioceseDashboardDataService();
+
+        $trend = $service->getDiocesanSundayAttendanceAverageTrend(1, 'custom_range', self::PERIOD_START, self::PERIOD_END, 'week');
+        $this->assertTrue($trend['has_data']);
+        $this->assertSame(30.0, $trend['sunday_overall_average']);
+
+        $activity = $service->getRecentNetworkActivity(1, 50);
+        $this->assertCount(3, $activity);
+        $this->assertSame(3, $service->countRecentNetworkActivity(1));
     }
 
     public function testGetParishSummaryRowsWithParishFilter(): void

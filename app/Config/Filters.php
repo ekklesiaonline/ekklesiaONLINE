@@ -278,6 +278,8 @@ class Filters extends BaseFilters
                 'chart-accounts/*',
                 'liturgical-source',
                 'liturgical-source/*',
+                'diocese',
+                'diocese/*',
             ],
         ],
         // Enforce strict parish scope for parish-level workflows.
@@ -597,6 +599,42 @@ class Filters extends BaseFilters
                 'parish/email-settings/test',
                 'diocese/email-settings/test',
                 'province/email-settings/test',
+                // Diocese: clergy account writes, invitation resends, and the
+                // ordinary/delegation review queue.
+                'diocese/clergy/store',
+                'diocese/clergy/*/edit',
+                'diocese/clergy/*/deactivate',
+                'diocese/clergy/*/resend-invitation',
+                'diocese/clergy-review/*',
+                // Diocese: admin account mutations (outbound credential mail).
+                'diocese/admins/*',
+                'diocese/parish-admins/*',
+                // Diocese: chart of accounts, deaneries, congregations.
+                'chart-accounts/store',
+                'chart-accounts/update/*',
+                'chart-accounts/toggle/*',
+                'diocese/deaneries/store',
+                'diocese/deaneries/assign/*',
+                'diocese/deaneries/end/*',
+                'diocese/congregations/*/type',
+                // Diocese: follow-up workflow + email-settings save.
+                'diocese/followup-workflow/sequences/*',
+                'diocese/followup-workflow/actions/*',
+                'diocese/followup-workflow/templates/*',
+                'diocese/email-settings',
+                // Diocese-owned parish writes (canonical + staff).
+                'parish_list/store',
+                'parish_list/update/*',
+                'parish_list/delete/*',
+                'parish_list/bulk-delete',
+                'parish_list/*/staff/add',
+                'parish_list/*/staff/promote',
+                'parish_list/*/staff/remove-role',
+                'parish_list/*/staff/demote',
+                // Diocese module writes served under the system group.
+                'system/liturgical-source/store',
+                'system/liturgical-source/update/*',
+                'system/liturgical-source/delete/*',
             ],
         ],
     ];

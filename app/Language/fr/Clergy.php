@@ -102,6 +102,7 @@ return [
     'invitationSendFailed' => 'Compte de clerc créé, mais le courriel d\'invitation n\'a pas pu être envoyé. Utilisez renvoyer l\'invitation.',
     'notFound' => 'Compte de clerc introuvable dans votre diocèse.',
     'portalAccessDisabled' => 'Accès au portail désactivé.',
+    'cannotDeactivateAdmin' => 'Les comptes dotés d’un rôle administratif se gèrent depuis les écrans d’administration.',
     'accountActions' => 'Actions du Compte',
     'disablePortalAccessHelp' => 'Désactiver l\'accès au portail ne bloque que la connexion. La suspension canonique est une action diocésaine séparée.',
     'ordinationSummary' => 'Résumé d\'Ordination',

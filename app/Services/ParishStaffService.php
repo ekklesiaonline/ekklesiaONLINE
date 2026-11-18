@@ -43,7 +43,7 @@ class ParishStaffService
             'first_name' => 'required|min_length[2]|max_length[100]',
             'last_name'  => 'required|min_length[2]|max_length[100]',
             'email'      => 'required|valid_email|max_length[255]',
-            'password'   => $userExists ? 'permit_empty' : 'required|min_length[8]',
+            'password'   => $userExists ? 'permit_empty|min_length[12]' : 'required|min_length[12]',
         ];
     }
 
