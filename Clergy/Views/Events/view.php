@@ -155,8 +155,10 @@ $formatLocalizedDateTime = static function (?string $value, string $locale): str
                                             <?php if (!empty($registration['guest_email']) || !empty($registration['guest_phone'])): ?>
                                                 <?= esc((string) ($registration['guest_email'] ?? '-')) ?><br>
                                                 <small class="text-muted"><?= esc((string) ($registration['guest_phone'] ?? '-')) ?></small>
-                                            <?php else: ?>
+                                            <?php elseif (!empty($registration['user_id'])): ?>
                                                 <span class="text-muted"><?= lang('App.memberRecord') ?></span>
+                                            <?php else: ?>
+                                                <span class="text-muted">-</span>
                                             <?php endif; ?>
                                         </td>
                                         <td>

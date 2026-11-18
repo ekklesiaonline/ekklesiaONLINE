@@ -18,6 +18,11 @@ class Events extends BaseController
     protected $familyModel;
     protected $eventInviteeModel;
 
+    /**
+     * @var array<string,mixed>|null
+     */
+    private ?array $eventVisibilityContext = null;
+
     public function __construct()
     {
         $this->eventModel = model('EventModel');
@@ -441,7 +446,10 @@ class Events extends BaseController
      */
     private function getEventVisibilityContext(): array
     {
-        return [
+        // The context is request-scoped and identical for every call —
+        // cache it so per-registration permission checks don't repeat the
+        // diocese/profile lookups for each attendee row.
+        return $this->eventVisibilityContext ??= [
             'user_id' => (int) (auth()->id() ?? 0),
             'parish_id' => (int) ($this->getOperationalParishId() ?? 0),
             'diocese_id' => $this->resolveCurrentDioceseId(),

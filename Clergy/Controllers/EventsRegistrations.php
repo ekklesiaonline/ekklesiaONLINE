@@ -40,7 +40,9 @@ class EventsRegistrations extends Events
             'notes'       => 'permit_empty|max_length[2000]',
         ];
 
-        if (! $this->validate($rules)) {
+        // Validate the POST payload itself: validating the merged request
+        // would let query/cookie values stand in for the fields being saved.
+        if (! $this->validateData($this->request->getPost(), $rules)) {
             return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
         }
 
@@ -83,7 +85,7 @@ class EventsRegistrations extends Events
             // test suite runs on a shared SQLite connection, which has no
             // row-lock syntax — production is MySQL/InnoDB.)
             if ($db->DBDriver === 'MySQLi') {
-                $db->query('SELECT id FROM ' . $db->protectIdentifiers('event') . ' WHERE id = ? FOR UPDATE', [(int) $id]);
+                $db->query('SELECT id FROM ' . $db->prefixTable('event') . ' WHERE id = ? FOR UPDATE', [(int) $id]);
             }
 
             if ($this->isEventAtCapacity($event)) {
@@ -92,9 +94,12 @@ class EventsRegistrations extends Events
             }
 
             $inserted = (bool) $this->eventRegistrationModel->insert($payload);
-            if ($inserted) {
-                $db->transCommit();
-            } else {
+            if ($inserted && $db->transCommit() === false) {
+                // Commit failed after a successful insert — nothing was
+                // persisted, so do not report the registration as saved.
+                $db->transRollback();
+                $inserted = false;
+            } elseif (! $inserted) {
                 $db->transRollback();
             }
         } catch (\Throwable $e) {
@@ -150,6 +155,28 @@ class EventsRegistrations extends Events
 
         if ($status === 'checked_in' && $this->isEventAtCapacity($event, (int) $registrationId)) {
             return redirect()->back()->with('error', lang('Members.cannotCheckIn'));
+        }
+
+        // Reactivating a cancelled row must respect capacity too — a
+        // cancelled → registered transition takes a seat as well.
+        if ($status === 'registered'
+            && (string) ($registration['status'] ?? '') === 'cancelled'
+            && $this->isEventAtCapacity($event)) {
+            return redirect()->back()->with('error', lang('Members.capacityReached'));
+        }
+
+        // A member who re-registered has a newer active row; reactivating
+        // this stale row would violate the (event_id, user_id) uniqueness.
+        if ($status !== 'cancelled' && (int) ($registration['user_id'] ?? 0) > 0) {
+            $hasActiveSibling = $this->eventRegistrationModel
+                ->where('event_id', (int) $registration['event_id'])
+                ->where('user_id', (int) $registration['user_id'])
+                ->where('status !=', 'cancelled')
+                ->where('id !=', (int) $registrationId)
+                ->countAllResults() > 0;
+            if ($hasActiveSibling) {
+                return redirect()->back()->with('error', lang('Members.alreadyRegistered'));
+            }
         }
 
         if ($this->eventRegistrationModel->update((int) $registrationId, ['status' => $status])) {

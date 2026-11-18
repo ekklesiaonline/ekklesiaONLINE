@@ -29,27 +29,37 @@ class AddEventRegistrationUniqueIndex extends Migration
 
     public function up()
     {
-        if (! $this->db->tableExists('event_registration')) {
+        // Generated columns + this UPDATE...JOIN syntax are MySQL-only;
+        // the SQLite test fixture never reaches this migration.
+        if ($this->db->DBDriver !== 'MySQLi' || ! $this->db->tableExists('event_registration')) {
             return;
         }
 
-        // Cancel newer duplicates so the unique key can be created.
+        $table = $this->db->prefixTable('event_registration');
+
+        // Cancel newer duplicates so the unique key can be created. Keep
+        // the oldest checked-in row when one exists — otherwise a member's
+        // recorded check-in would be lost to the deduplication.
         $this->db->query(
-            'UPDATE event_registration er
+            'UPDATE ' . $table . ' er
              JOIN (
-                 SELECT event_id, user_id, MIN(id) AS keep_id
-                 FROM event_registration
+                 SELECT event_id, user_id,
+                        MIN(CASE WHEN status = \'checked_in\' THEN id END) AS checkin_id,
+                        MIN(id) AS keep_id
+                 FROM ' . $table . '
                  WHERE user_id IS NOT NULL AND status != \'cancelled\'
                  GROUP BY event_id, user_id
                  HAVING COUNT(*) > 1
              ) dup ON dup.event_id = er.event_id AND dup.user_id = er.user_id
              SET er.status = \'cancelled\'
-             WHERE er.user_id IS NOT NULL AND er.id != dup.keep_id AND er.status != \'cancelled\''
+             WHERE er.user_id IS NOT NULL
+               AND er.id != COALESCE(dup.checkin_id, dup.keep_id)
+               AND er.status != \'cancelled\''
         );
 
         if (! in_array(self::COLUMN, $this->db->getFieldNames('event_registration'), true)) {
             $this->db->query(
-                'ALTER TABLE event_registration
+                'ALTER TABLE ' . $table . '
                  ADD COLUMN ' . self::COLUMN . " INT UNSIGNED GENERATED ALWAYS AS (
                      IF(status = 'cancelled', NULL, user_id)
                  ) VIRTUAL"
@@ -66,7 +76,7 @@ class AddEventRegistrationUniqueIndex extends Migration
 
     public function down()
     {
-        if (! $this->db->tableExists('event_registration')) {
+        if ($this->db->DBDriver !== 'MySQLi' || ! $this->db->tableExists('event_registration')) {
             return;
         }
 
