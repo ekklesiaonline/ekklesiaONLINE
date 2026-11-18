@@ -26,6 +26,13 @@ final class ReportsFinanceBoundaryIntegrationTest extends CIUnitTestCase
 
         helper('auth');
         Services::reset(true);
+        // Tests that exercise localization may leave the shared session or
+        // language service in another locale. Keep this integration test's
+        // rendered-text assertions deterministic regardless of suite order.
+        service('request')->setLocale('en');
+        service('language')->setLocale('en');
+        session()->remove('user_locale');
+        session()->set('locale', 'en');
         $this->ensureCoreTablesExist();
     }
 
@@ -330,121 +337,6 @@ final class ReportsFinanceBoundaryIntegrationTest extends CIUnitTestCase
 
             public function inGroup(string ...$groups): bool
             {
-                return in_array('diocesanadmin', $groups, true);
-            }
-        };
-
-        $auth = new class(config('Auth'), $fakeUser, $userId) extends Auth {
-            public function __construct($config, private User $fakeUser, private int $userId)
-            {
-                parent::__construct($config);
-            }
-
-            public function getAuthenticator(): AuthenticatorInterface
-            {
-                return new class($this->fakeUser) implements AuthenticatorInterface {
-                    public function __construct(private User $fakeUser) {}
-
-                    public function attempt(array $credentials): Result
-                    {
-                        return new Result(['success' => false, 'reason' => 'not-used-in-test']);
-                    }
-
-                    public function check(array $credentials): Result
-                    {
-                        return new Result(['success' => false, 'reason' => 'not-used-in-test']);
-                    }
-
-                    public function loggedIn(): bool
-                    {
-                        return true;
-                    }
-
-                    public function login(User $user): void {}
-
-                    public function loginById($userId): void {}
-
-                    public function logout(): void {}
-
-                    public function getUser(): ?User
-                    {
-                        return $this->fakeUser;
-                    }
-
-                    public function recordActiveDate(): void {}
-
-                    public function isPending(): bool
-                    {
-                        return false;
-                    }
-
-                    public function getPendingMessage(): string
-                    {
-                        return '';
-                    }
-
-                    public function startUpAction(string $type, User $user): bool
-                    {
-                        return false;
-                    }
-                };
-            }
-
-            public function setAuthenticator(?string $alias = null): self
-            {
-                return $this;
-            }
-
-            public function loggedIn(): bool
-            {
-                return true;
-            }
-
-            public function id(): ?int
-            {
-                return $this->userId;
-            }
-
-            public function user(): ?User
-            {
-                return $this->fakeUser;
-            }
-        };
-
-        Services::injectMock('auth', $auth);
-    }
-
-    private function injectDioceseAdminAuth(int $userId): void
-    {
-        $fakeUser = new class($userId) extends User {
-            public function __construct(private int $idForTest)
-            {
-                parent::__construct([
-                    'id' => $idForTest,
-                    'username' => 'diocese.reports.boundary.user.' . $idForTest,
-                    'email' => 'diocese.reports.boundary.' . $idForTest . '@example.org',
-                ]);
-            }
-
-            public function can(string ...$permissions): bool
-            {
-                $granted = [
-                    'diocese.admin',
-                    'dashboard.view',
-                    'report.view',
-                ];
-
-                foreach ($permissions as $permission) {
-                    if (! in_array($permission, $granted, true)) {
-                        return false;
-                    }
-                }
-
-                return true;
-            }
-
-            public function inGroup(string ...$groups): bool
-            {
                 return in_array('dioceseadmin', $groups, true);
             }
         };
@@ -592,7 +484,6 @@ final class ReportsFinanceBoundaryIntegrationTest extends CIUnitTestCase
         $this->ensureColumnExists($resolvedSessions, 'user_agent', 'TEXT NULL');
         $this->ensureColumnExists($resolvedSessions, 'device_fingerprint', 'TEXT NULL');
         $this->ensureColumnExists($resolvedSessions, 'is_new_device', 'INTEGER DEFAULT 0');
-        $this->ensureColumnExists($resolvedSessions, 'last_active', 'TEXT NULL');
 
         $registrationRequestsTable = $this->createTableName('user_registration_request');
         if (! $this->tableExists('user_registration_request')) {
@@ -614,7 +505,6 @@ final class ReportsFinanceBoundaryIntegrationTest extends CIUnitTestCase
                 province_id INTEGER NULL,
                 diocese_id INTEGER NULL,
                 parish_id INTEGER NULL,
-                parish_id INTEGER NULL,
                 created_at TEXT NULL,
                 updated_at TEXT NULL,
                 deleted_at TEXT NULL
@@ -626,11 +516,9 @@ final class ReportsFinanceBoundaryIntegrationTest extends CIUnitTestCase
         $this->ensureColumnExists($resolvedProfiles, 'province_id', 'INTEGER NULL');
         $this->ensureColumnExists($resolvedProfiles, 'diocese_id', 'INTEGER NULL');
         $this->ensureColumnExists($resolvedProfiles, 'parish_id', 'INTEGER NULL');
-        $this->ensureColumnExists($resolvedProfiles, 'parish_id', 'INTEGER NULL');
         $prefixedProfiles = $this->createTableName('profile');
         $this->ensureColumnExists($prefixedProfiles, 'province_id', 'INTEGER NULL');
         $this->ensureColumnExists($prefixedProfiles, 'diocese_id', 'INTEGER NULL');
-        $this->ensureColumnExists($prefixedProfiles, 'parish_id', 'INTEGER NULL');
         $this->ensureColumnExists($prefixedProfiles, 'parish_id', 'INTEGER NULL');
         $this->ensureColumnExists($prefixedProfiles, 'locale', 'TEXT NULL');
 
