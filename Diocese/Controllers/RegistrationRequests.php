@@ -15,9 +15,9 @@ use App\Services\RegistrationApprovalService;
  * requests surfaced inside diocesan dashboards; no route may expose it to
  * diocesan or higher scopes.
  *
- * Note: no route currently declares this controller — it is retained for the
- * planned diocesan-dashboard moderation surface. If it is ever wired in, the
- * routes must live under parish-scope enforcement, not `permission:diocese.*`.
+ * Routed under `registrations/*` in Clergy/Config/Routes.php
+ * (`permission:member.edit` / `member.delete`); the parishadmin check below
+ * is the authoritative scope gate.
  */
 class RegistrationRequests extends BaseController
 {

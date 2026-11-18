@@ -181,6 +181,13 @@ final class ScopedEmailSettingsFeatureTest extends CIUnitTestCase
         $response->assertSessionHas('error');
     }
 
+    /**
+     * Note: the stock systemadmin role lacks `diocese.admin`, so the
+     * production `permission:diocese.admin` route filter already denies a
+     * system admin before this controller. This test exercises the
+     * controller-level `isSystemAdmin()` branch of the scope guard (kept for
+     * custom-role setups where a system admin may hold diocese.admin).
+     */
     public function testSystemAdminMayAddressAnyScope(): void
     {
         $otherDioceseId = $this->insertDiocese($this->insertProvince('P8'), 'Arbitrary Diocese');
