@@ -2,14 +2,13 @@
 
 <?= $this->section('content') ?>
 
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h4><?= lang('Volunteer.pageTitleTeams') ?></h4>
-    <?php if (!empty($can_manage)): ?>
-        <a href="<?= base_url('volunteers/createTeam') ?>" class="btn btn-primary btn-sm">
+<?php if (!empty($can_manage)): ?>
+    <div class="d-flex justify-content-start align-items-center mb-3">
+        <a href="<?= base_url('volunteers/createTeam') ?>" class="btn btn-outline-primary btn-sm">
             <i class="bi bi-plus-circle" aria-hidden="true"></i> <?= lang('Volunteer.createTeam') ?>
         </a>
-    <?php endif; ?>
-</div>
+    </div>
+<?php endif; ?>
 
 <!-- Teams -->
 <div class="card mb-4">
@@ -22,7 +21,7 @@
                         <?php foreach ($teams as $team): ?>
                             <tr>
                                 <td><?= esc($team['name'] ?? '') ?></td>
-                                <td><span class="badge bg-secondary"><?= (int) ($team['member_count'] ?? 0) ?></span></td>
+                                <td><span class="badge border border-secondary text-secondary fw-normal"><?= (int) ($team['member_count'] ?? 0) ?></span></td>
                                 <td>
                                     <a href="<?= base_url('volunteers/viewTeam/' . (int) ($team['id'] ?? 0)) ?>" class="btn btn-sm btn-outline-secondary">
                                         <i class="bi bi-eye" aria-hidden="true"></i> <?= lang('App.view') ?>
