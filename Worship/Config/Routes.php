@@ -34,7 +34,7 @@ $routes->group('', ['filter' => 'session'], function ($routes) {
         $routes->get('print', '\\Worship\\Controllers\\ParochialReport::print');
         $routes->get('export-pdf', '\\Worship\\Controllers\\ParochialReport::exportPdf');
         $routes->post('email-pdf', '\\Worship\\Controllers\\ParochialReport::emailPdf');
-        $routes->post('save', '\\Worship\\Controllers\\ParochialReport::save');
+        $routes->post('save', '\\Worship\\Controllers\\ParochialReport::save', ['filter' => 'permission:report.parochial']);
     });
 
     $routes->group('worship-planning', ['filter' => 'permission:worship.view'], function ($routes) {

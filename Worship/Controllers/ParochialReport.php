@@ -3,6 +3,7 @@
 namespace Worship\Controllers;
 
 use App\Controllers\BaseController;
+use App\Models\ParishFinancialSummaryModel;
 use App\Services\ParochialReportDataService;
 
 /**
@@ -211,8 +212,64 @@ class ParochialReport extends BaseController
         }
 
         $parishId = (int) ($this->getOperationalParishId() ?? 0);
+        if ($parishId <= 0) {
+            return redirect()->to('/parochial-report')->with('error', lang('App.accessDenied'));
+        }
+
         $year = (int) ($this->request->getPost('report_year') ?? ((int) date('Y') - 1));
         $markDone = (string) ($this->request->getPost('mark_done') ?? '') === '1';
+
+        $intFields = 'permit_empty|integer|greater_than_equal_to[0]';
+        $amountFields = 'permit_empty|numeric|greater_than_equal_to[0]';
+
+        if (! $this->validate([
+            'report_year' => 'required|integer|greater_than_equal_to[1900]|less_than_equal_to[2100]',
+            'mailing_address_1' => 'permit_empty|max_length[255]',
+            'mailing_address_2' => 'permit_empty|max_length[255]',
+            'rector_certified_date' => 'permit_empty|valid_date',
+            'warden_approved_by_name' => 'permit_empty|max_length[255]',
+            'warden_approved_by_email' => 'permit_empty|valid_email|max_length[255]',
+            'warden_approved_by_phone' => 'permit_empty|max_length[50]',
+            'warden_approved_date' => 'permit_empty|valid_date',
+            'completion_participants_count' => $intFields,
+            'completion_participant_roles' => 'permit_empty|max_length[500]',
+            'outreach_beneficiaries_weekly' => $intFields,
+            'nonmember_volunteers_weekly' => $intFields,
+            'membership_previous_total' => $intFields,
+            'membership_increase_total' => $intFields,
+            'membership_decrease_total' => $intFields,
+            'active_participants_total' => $intFields,
+            'primary_worship_leader' => 'permit_empty|max_length[255]',
+            'programs_other' => 'permit_empty|max_length[500]',
+            'subsidiary_organizations_other' => 'permit_empty|max_length[500]',
+            'languages_other' => 'permit_empty|max_length[255]',
+            'percent_white' => 'permit_empty|numeric|greater_than_equal_to[0]|less_than_equal_to[100]',
+            'average_age_override' => 'permit_empty|numeric|greater_than_equal_to[0]|less_than_equal_to[150]',
+            'reporting_currency' => 'permit_empty|max_length[3]',
+            'confirmed_pledges_count' => $intFields,
+            'confirmed_pledges_amount' => $amountFields,
+            'other_revenue_amount' => $amountFields,
+            'cash_balance' => 'permit_empty|numeric',
+            'endowment_restricted' => $amountFields,
+            'endowment_unrestricted' => $amountFields,
+            'investment_restricted' => $amountFields,
+            'investment_unrestricted' => $amountFields,
+            'pct_draw' => 'permit_empty|numeric|greater_than_equal_to[0]|less_than_equal_to[100]',
+            'amount_drawn_operating' => 'permit_empty|numeric',
+            'amount_drawn_capital' => 'permit_empty|numeric',
+            'investment_net_gain_loss' => 'permit_empty|numeric',
+            'debt_amount' => $amountFields,
+            'debt_description' => 'permit_empty|max_length[5000]',
+            'rental_income' => 'permit_empty|numeric',
+            'rental_expense' => 'permit_empty|numeric',
+            'carbon_footprint_notes' => 'permit_empty|max_length[5000]',
+            'exemplary_program_text' => 'permit_empty|max_length[5000]',
+            'future_hope_text' => 'permit_empty|max_length[5000]',
+        ])) {
+            return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
+        }
+
+        $existing = model(ParishFinancialSummaryModel::class)->getForParishYear($parishId, $year);
 
         $int = fn(string $field): ?int => ($value = $this->request->getPost($field)) !== null && $value !== '' ? (int) $value : null;
         $float = fn(string $field): ?float => ($value = $this->request->getPost($field)) !== null && $value !== '' ? (float) $value : null;
@@ -279,10 +336,12 @@ class ParochialReport extends BaseController
             'carbon_footprint_notes' => $string('carbon_footprint_notes'),
             'exemplary_program_text' => $string('exemplary_program_text'),
             'future_hope_text' => $string('future_hope_text'),
-            'report_status' => $markDone ? 'finalized' : 'draft',
-            'finalized_at' => null,
-            'finalized_by' => null,
-            'frozen_snapshot_json' => null,
+            // A draft save must not demote a finalized report or erase its
+            // frozen snapshot; only mark_done may set finalization fields.
+            'report_status' => $markDone ? 'finalized' : ($existing['report_status'] ?? 'draft'),
+            'finalized_at' => $existing['finalized_at'] ?? null,
+            'finalized_by' => $existing['finalized_by'] ?? null,
+            'frozen_snapshot_json' => $existing['frozen_snapshot_json'] ?? null,
         ];
 
         if ($markDone) {
