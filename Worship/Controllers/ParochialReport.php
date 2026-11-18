@@ -223,7 +223,7 @@ class ParochialReport extends BaseController
         $amountFields = 'permit_empty|numeric|greater_than_equal_to[0]';
 
         if (! $this->validate([
-            'report_year' => 'required|integer|greater_than_equal_to[1900]|less_than_equal_to[2100]',
+            'report_year' => 'required|integer|greater_than[1900]|less_than_equal_to[' . ((int) date('Y') + 1) . ']',
             'mailing_address_1' => 'permit_empty|max_length[255]',
             'mailing_address_2' => 'permit_empty|max_length[255]',
             'rector_certified_date' => 'permit_empty|valid_date',
@@ -362,7 +362,9 @@ class ParochialReport extends BaseController
             $data['finalized_by'] = auth()->id() !== null ? (int) auth()->id() : null;
         }
 
-        model(ParishFinancialSummaryModel::class)->upsertForYear($data);
+        if (! model(ParishFinancialSummaryModel::class)->upsertForYear($data)) {
+            return redirect()->back()->withInput()->with('error', lang('App.accessDenied'));
+        }
 
         // Field values are intentionally omitted from the audit payload —
         // they include financial figures; log only the action's meta.
@@ -409,7 +411,7 @@ class ParochialReport extends BaseController
         $value = (int) ($year ?? 0);
         $currentYear = (int) date('Y');
 
-        return ($value >= 1900 && $value <= $currentYear) ? $value : $currentYear - 1;
+        return ($value > 1900 && $value <= $currentYear + 1) ? $value : $currentYear - 1;
     }
 
     private function canForceRecompute(): bool
