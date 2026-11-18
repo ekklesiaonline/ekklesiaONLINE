@@ -85,7 +85,7 @@ class EventsRegistrations extends Events
             // test suite runs on a shared SQLite connection, which has no
             // row-lock syntax — production is MySQL/InnoDB.)
             if ($db->DBDriver === 'MySQLi') {
-                $db->query('SELECT id FROM ' . $db->prefixTable('event') . ' WHERE id = ? FOR UPDATE', [(int) $id]);
+                $db->query('SELECT id FROM ' . $db->protectIdentifiers('event') . ' WHERE id = ? FOR UPDATE', [(int) $id]);
             }
 
             if ($this->isEventAtCapacity($event)) {
@@ -168,14 +168,21 @@ class EventsRegistrations extends Events
         // A member who re-registered has a newer active row; reactivating
         // this stale row would violate the (event_id, user_id) uniqueness.
         if ($status !== 'cancelled' && (int) ($registration['user_id'] ?? 0) > 0) {
-            $hasActiveSibling = $this->eventRegistrationModel
+            $activeSibling = $this->eventRegistrationModel
                 ->where('event_id', (int) $registration['event_id'])
                 ->where('user_id', (int) $registration['user_id'])
                 ->where('status !=', 'cancelled')
                 ->where('id !=', (int) $registrationId)
-                ->countAllResults() > 0;
-            if ($hasActiveSibling) {
-                return redirect()->back()->with('error', lang('Members.alreadyRegistered'));
+                ->get()->getRowArray();
+            if ($activeSibling !== null) {
+                // A sibling owned by this row's parish is a plain duplicate;
+                // one belonging to another parish stays a generic failure so
+                // the response doesn't confirm cross-parish registrations.
+                $langKey = (int) ($activeSibling['parish_id'] ?? 0) === (int) ($registration['parish_id'] ?? -1)
+                    ? 'Members.alreadyRegistered'
+                    : 'Members.failedUpdateStatus';
+
+                return redirect()->back()->with('error', lang($langKey));
             }
         }
 

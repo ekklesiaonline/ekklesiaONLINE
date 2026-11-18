@@ -35,7 +35,7 @@ class AddEventRegistrationUniqueIndex extends Migration
             return;
         }
 
-        $table = $this->db->prefixTable('event_registration');
+        $table = $this->db->protectIdentifiers('event_registration');
 
         // Cancel newer duplicates so the unique key can be created. Keep
         // the oldest checked-in row when one exists — otherwise a member's

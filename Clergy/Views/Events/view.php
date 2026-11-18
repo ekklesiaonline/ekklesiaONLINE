@@ -41,17 +41,15 @@ $formatLocalizedDateTime = static function (?string $value, string $locale): str
 };
 ?>
 
-<style>
-    .events-type-badge {
-        background-color: #0dcaf0;
-        color: #212529;
-    }
+<?php $calendarColor = (string) ($event['calendar_color'] ?? '#0d6efd'); ?>
 
-    [data-bs-theme="dark"] .events-type-badge {
-        background-color: #3dd5f3;
-        color: #0f172a;
-    }
-</style>
+<div class="d-flex justify-content-start align-items-center gap-2 mb-3">
+    <a href="<?= base_url('events') ?>" class="btn btn-sm btn-outline-secondary"><?= lang('Events.backToEvents') ?></a>
+    <a href="<?= base_url('events/calendar') ?>" class="btn btn-sm btn-outline-primary"><?= lang('Events.calendarBoard') ?></a>
+    <?php if (!empty($can_manage_event)): ?>
+        <a href="<?= base_url('events/edit/' . (int) $event['id']) ?>" class="btn btn-sm btn-outline-warning"><?= lang('Events.edit') ?></a>
+    <?php endif; ?>
+</div>
 
 <div class="row g-3">
     <div class="col-lg-7">
@@ -79,9 +77,9 @@ $formatLocalizedDateTime = static function (?string $value, string $locale): str
                 </div>
 
                 <div class="mb-2">
-                    <span class="badge events-type-badge"><?= esc(ucfirst((string) ($event['event_type'] ?? 'general'))) ?></span>
+                    <span class="badge border border-info text-info fw-normal"><?= esc(ucfirst((string) ($event['event_type'] ?? 'general'))) ?></span>
                     <?php if (!empty($event['calendar_name'])): ?>
-                        <span class="badge ms-1" style="background-color: <?= esc((string) ($event['calendar_color'] ?? '#0d6efd')) ?>; color: #fff;">
+                        <span class="badge border ms-1 fw-normal" style="border-color: <?= esc($calendarColor) ?>; color: <?= esc($calendarColor) ?>;">
                             <?= esc((string) $event['calendar_name']) ?>
                         </span>
                     <?php endif; ?>
@@ -251,16 +249,7 @@ $formatLocalizedDateTime = static function (?string $value, string $locale): str
             </div>
         <?php endif; ?>
 
-        <div class="card mt-3">
-            <div class="card-header bg-light"><strong><?= lang('Events.quickActions') ?></strong></div>
-            <div class="card-body d-grid gap-2">
-                <a href="<?= base_url('events/calendar') ?>" class="btn btn-outline-primary"><?= lang('Events.calendarBoard') ?></a>
-                <?php if (!empty($can_manage_event)): ?>
-                    <a href="<?= base_url('events/edit/' . (int) $event['id']) ?>" class="btn btn-outline-warning"><?= lang('Events.edit') ?></a>
-                <?php endif; ?>
-                <a href="<?= base_url('events') ?>" class="btn btn-outline-secondary"><?= lang('Events.backToEvents') ?></a>
-            </div>
-        </div>
+
     </div>
 </div>
 
