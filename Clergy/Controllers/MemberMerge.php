@@ -124,7 +124,7 @@ class MemberMerge extends BaseController
         // mutation surface too and needs the same hierarchy guard.
         $canonicalProfile = $this->loadProfileForParish($canonicalId, $parishId);
         if ($canonicalProfile !== null) {
-            if ($code = $this->guardTargetUserMutation((int) ($canonicalProfile['user_id'] ?? 0), true)) {
+            if ($code = $this->guardTargetUserMutation((int) ($canonicalProfile['user_id'] ?? 0))) {
                 return $this->response->setJSON(['success' => false, 'message' => $this->hierarchyGuardMessage($code)])->setStatusCode(403);
             }
         }

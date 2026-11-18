@@ -477,13 +477,16 @@ class Events extends BaseController
         // Only parish-affiliated users may be attached as invitees —
         // arbitrary user_ids must not gain visibility of a parish event.
         if ($inviteeIds !== []) {
-            $affiliated = array_map('intval', array_column(
-                $this->memberParishAffiliationModel->memberOptions(
-                    (int) ($this->getOperationalParishId() ?? 0),
-                    $inviteeIds
-                ),
-                'id'
-            ));
+            // memberOptions() caps each lookup at 500 ids — validate in chunks
+            // so large invitee lists are not silently truncated.
+            $parishId   = (int) ($this->getOperationalParishId() ?? 0);
+            $inviteeIds = array_values(array_unique(array_filter($inviteeIds, static fn (int $id): bool => $id > 0)));
+            $affiliated = [];
+            foreach (array_chunk($inviteeIds, 500) as $chunk) {
+                foreach ($this->memberParishAffiliationModel->memberOptions($parishId, $chunk) as $option) {
+                    $affiliated[] = (int) $option['id'];
+                }
+            }
             $inviteeIds = array_values(array_intersect($inviteeIds, $affiliated));
         }
 
