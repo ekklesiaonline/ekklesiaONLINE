@@ -324,6 +324,10 @@ class Filters extends BaseFilters
                 'vestry/*',
                 'event-calendars',
                 'event-calendars/*',
+                'parochial-report',
+                'parochial-report/*',
+                'worship-planning',
+                'worship-planning/*',
             ],
         ],
         // Diocesan admins are restricted from parish-operator modules.
@@ -357,6 +361,12 @@ class Filters extends BaseFilters
                 'groups/*',
                 'messages',
                 'messages/*',
+                'attendance',
+                'attendance/*',
+                'parochial-report',
+                'parochial-report/*',
+                'worship-planning',
+                'worship-planning/*',
             ],
         ],
         // Province and diocesan admins are restricted from finance modules.
