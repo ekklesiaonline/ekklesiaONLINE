@@ -741,23 +741,24 @@ class DioceseDashboardDataService
     public function buildRecentNetworkActivityFeedSql(int $dioceseId): string
     {
         $d = (int) $dioceseId;
+        $prefix = db_connect()->getPrefix();
         return "
             SELECT 'parish' AS activity_type, c.created_at AS happened_at, c.name AS parish_name,
                    c.id AS parish_id, c.name AS activity_subject, NULL AS amount, NULL AS liturgical_context
-            FROM parish c WHERE c.created_at IS NOT NULL AND c.diocese_id = $d AND c.deleted_at IS NULL
+            FROM {$prefix}parish c WHERE c.created_at IS NOT NULL AND c.diocese_id = $d AND c.deleted_at IS NULL
 
             UNION ALL
 
             SELECT 'donation' AS activity_type, d.created_at AS happened_at, c.name AS parish_name,
                    c.id AS parish_id, d.category AS activity_subject, d.amount AS amount, NULL AS liturgical_context
-            FROM donation d JOIN parish c ON c.id = d.parish_id
+            FROM {$prefix}donation d JOIN {$prefix}parish c ON c.id = d.parish_id
             WHERE d.created_at IS NOT NULL AND c.diocese_id = $d AND c.deleted_at IS NULL
 
             UNION ALL
 
             SELECT 'expense' AS activity_type, e.created_at AS happened_at, c.name AS parish_name,
                    c.id AS parish_id, e.category AS activity_subject, e.amount AS amount, NULL AS liturgical_context
-            FROM expense e JOIN parish c ON c.id = e.parish_id
+            FROM {$prefix}expense e JOIN {$prefix}parish c ON c.id = e.parish_id
             WHERE e.created_at IS NOT NULL AND c.diocese_id = $d AND c.deleted_at IS NULL
         ";
     }
