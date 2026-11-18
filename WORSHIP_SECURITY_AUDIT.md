@@ -4,7 +4,7 @@
 
 **Method:** static review of routes, global/route filters, controllers, models, and views. Audit only — no code changed.
 
-**Remediation status:** Pending. Plan + per-commit prompts in §"Remediation plan".
+**Remediation status:** All findings remediated on branch `devin/worship-security-remediation` in 9 commits per the plan below: (1) boundary filters `2131a3b`, (2) parochial-report save hardening `868cd1f`, (3) email-pdf gate+throttle `fc40fda`, (4) cross-parish song fix `895f77a`, (5) apiRateLimit coverage `76318c6`, (6) audit events `7b0ec99`, (7) year/recompute/debug bounds `9bd9bbc`, (8) report date validation `dde95fc`, (9) payload row caps `097a9ac`. `php -l` clean on all touched files. Pre-existing unrelated failures under broad test filters (reproduce on clean `main`): `AccountingJournalSyncServiceTest::testCreateJournalForDonationAutoResolvesAndIsIdempotent` and `HomeRedirectMatrixTest` clergy dataset — both test-ordering/session-state leakage, not caused by these changes.
 
 ---
 
