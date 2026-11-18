@@ -220,6 +220,10 @@ class VolunteerSchedules extends Volunteers
             return redirect()->back()->withInput()->with('error', lang('Volunteer.memberOutsideScope'));
         }
 
+        if (!$this->teamMemberModel->isUserOnTeam($teamId, (int) $this->request->getPost('user_id'))) {
+            return redirect()->back()->withInput()->with('error', lang('Volunteer.memberNotOnTeam'));
+        }
+
         try {
             $data = $this->buildSchedulePayload();
         } catch (\RuntimeException $e) {
@@ -328,6 +332,10 @@ class VolunteerSchedules extends Volunteers
             ->isUserAffiliatedWithParish($userId, (int) ($this->getOperationalParishId() ?? 0), true);
         if (!$isAffiliated) {
             return redirect()->back()->withInput()->with('error', lang('Volunteer.memberOutsideScope'));
+        }
+
+        if (!$this->teamMemberModel->isUserOnTeam($teamId, $userId)) {
+            return redirect()->back()->withInput()->with('error', lang('Volunteer.memberNotOnTeam'));
         }
 
         try {
