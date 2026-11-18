@@ -13,9 +13,11 @@ use CodeIgniter\HTTP\ResponseInterface;
  * per IP address. Returns HTTP 429 with a Retry-After header when the
  * limit is exceeded.
  *
- * Applied via Filters.php $filters to the 'login', 'login/magic-link',
- * 'register', and 'session/device-verify*' URI patterns.
+ * Applied via Filters.php $filters to 'login', 'login/magic-link',
+ * 'register', 'session/device-verify*', and 'connect/*' URI patterns.
  * Only fires on POST requests; GET requests (showing the form) pass through.
+ * 'connect/*' requests are counted in a separate per-IP bucket so public
+ * connect-card submissions cannot block authentication.
  */
 class LoginRateLimitFilter implements FilterInterface
 {
@@ -43,7 +45,7 @@ class LoginRateLimitFilter implements FilterInterface
 
         $cache = \Config\Services::cache();
         $ip    = (string) $request->getIPAddress();
-        $key   = 'login_rl_' . md5($ip);
+        $key   = self::bucketPrefix($request) . md5($ip);
 
         $attempts = (int) ($cache->get($key) ?? 0);
 
@@ -63,6 +65,24 @@ class LoginRateLimitFilter implements FilterInterface
         }
 
         return null;
+    }
+
+    /**
+     * Public connect-card intake uses its own counter so card submissions
+     * cannot exhaust the shared authentication quota (and vice versa).
+     */
+    private static function bucketPrefix(RequestInterface $request): string
+    {
+        $path = method_exists($request, 'getPath')
+            ? (string) $request->getPath()
+            : (string) $request->getUri()->getPath();
+        $path = ltrim($path, '/');
+
+        if ($path === 'connect' || str_starts_with($path, 'connect/')) {
+            return 'connect_rl_';
+        }
+
+        return 'login_rl_';
     }
 
     public function after(RequestInterface $request, ResponseInterface $response, $arguments = null)

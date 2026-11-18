@@ -377,6 +377,7 @@ class Filters extends BaseFilters
                 'auth/a/*',
                 'session/device-verify',
                 'session/device-verify/resend',
+                'connect/*',
             ],
         ],
         // API abuse protection for high-risk write endpoints.
