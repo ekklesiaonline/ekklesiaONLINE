@@ -5,6 +5,20 @@ namespace Diocese\Controllers;
 use App\Controllers\BaseController;
 use App\Services\RegistrationApprovalService;
 
+/**
+ * Registration request moderation for the parishadmin scope.
+ *
+ * Despite living in the Diocese module, this controller deliberately enforces
+ * PARISH-level moderation: the actor must be an active parishadmin (and not
+ * a province admin, who is read-only on parish data) with a resolvable
+ * operational parish. It exists so parish admins can act on registration
+ * requests surfaced inside diocesan dashboards; no route may expose it to
+ * diocesan or higher scopes.
+ *
+ * Note: no route currently declares this controller — it is retained for the
+ * planned diocesan-dashboard moderation surface. If it is ever wired in, the
+ * routes must live under parish-scope enforcement, not `permission:diocese.*`.
+ */
 class RegistrationRequests extends BaseController
 {
     public function approve(int $requestId)

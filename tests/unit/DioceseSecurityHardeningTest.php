@@ -52,6 +52,13 @@ final class DioceseSecurityHardeningTest extends CIUnitTestCase
         $this->assertStringContainsString('liturgical-source/delete/', $sm[1]);
     }
 
+    public function testDeadDiocesanScopeFilterAliasRemoved(): void
+    {
+        $this->assertFileDoesNotExist(ROOTPATH . 'app/Filters/DiocesanScopeFilter.php');
+        $filters = file_get_contents(ROOTPATH . 'app/Config/Filters.php');
+        $this->assertStringNotContainsString('DiocesanScopeFilter', $filters);
+    }
+
     public function testDioceseRoutesCoveredByDioceseScope(): void
     {
         $src = file_get_contents(ROOTPATH . 'app/Config/Filters.php');
