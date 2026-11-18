@@ -213,6 +213,10 @@ class DioceseParishAdmins extends BaseController
             return redirect()->to(base_url('diocese/parish-admins'))->with('error', lang('App.errorForbidden'));
         }
 
+        if ($this->isPrimaryParishAdmin($userId)) {
+            return redirect()->to(base_url('diocese/parish-admins'))->with('error', lang('Diocesan.cannotResetPrimaryParishAdminPassword'));
+        }
+
         $minPasswordLength = service('systemSettings')->get('password_policy.min_length', 12);
         if (!$this->validate([
             'new_password'         => 'required|min_length[' . $minPasswordLength . ']',
@@ -265,6 +269,10 @@ class DioceseParishAdmins extends BaseController
             return redirect()->to(base_url('diocese/parish-admins'))->with('error', lang('App.errorForbidden'));
         }
 
+        if ($this->isPrimaryParishAdmin($userId)) {
+            return redirect()->to(base_url('diocese/parish-admins'))->with('error', lang('Diocesan.cannotDeletePrimaryParishAdmin'));
+        }
+
         $reason = trim((string) $this->request->getPost('delete_reason'));
         if (strlen($reason) < 10) {
             return redirect()->to(base_url('diocese/parish-admins'))->with('error', lang('System.adminDeleteReasonRequired'));
@@ -301,6 +309,10 @@ class DioceseParishAdmins extends BaseController
 
         if (! $this->targetIsInDiocese($userId, $scope['diocese_id']) || (int) auth()->id() === $userId) {
             return redirect()->to(base_url('diocese/parish-admins'))->with('error', lang('App.errorForbidden'));
+        }
+
+        if ($this->isPrimaryParishAdmin($userId)) {
+            return redirect()->to(base_url('diocese/parish-admins'))->with('error', lang('Diocesan.cannotDeactivatePrimaryParishAdmin'));
         }
 
         db_connect()->table('users')->where('id', $userId)->update(['active' => 0, 'updated_at' => date('Y-m-d H:i:s')]);
@@ -354,6 +366,15 @@ class DioceseParishAdmins extends BaseController
         }
 
         return ['user_id' => (int) auth()->id(), 'diocese_id' => $dioceseId];
+    }
+
+    /**
+     * The primary parish admin of a parish cannot be mutated here — the
+     * dedicated transfer flow must run first (mirrors DioceseAdminUsers).
+     */
+    private function isPrimaryParishAdmin(int $userId): bool
+    {
+        return model('ParishAdminPrimaryModel')->getByUser($userId) !== null;
     }
 
     private function targetIsInDiocese(int $userId, int $dioceseId): bool
