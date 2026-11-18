@@ -97,7 +97,7 @@ class WorshipPlanning extends BaseController
         $notes = (array) ($this->request->getPost('notes') ?? []);
         $songIds = (array) ($this->request->getPost('song_id') ?? []);
 
-        $rows = max(count($itemTypes), count($titles), count($leaders), count($notes), count($songIds));
+        $rows = min(100, max(count($itemTypes), count($titles), count($leaders), count($notes), count($songIds)));
 
         $db = db_connect();
         $db->transStart();
@@ -105,6 +105,7 @@ class WorshipPlanning extends BaseController
         $this->serviceWorshipItemModel->where('service_id', (int) $serviceId)->delete();
 
         $parishId = (int) ($this->getOperationalParishId() ?? 0);
+        $insertedItems = 0;
 
         for ($i = 0; $i < $rows; $i++) {
             $itemType = trim((string) ($itemTypes[$i] ?? ''));
@@ -127,7 +128,10 @@ class WorshipPlanning extends BaseController
                     ->where('parish_id', $parishId)
                     ->first();
 
-                if (is_array($song) && $title === '') {
+                if (! is_array($song)) {
+                    // Cross-parish or missing song references are dropped.
+                    $songId = 0;
+                } elseif ($title === '') {
                     $title = (string) ($song['title'] ?? '');
                 }
             } else {
@@ -148,6 +152,7 @@ class WorshipPlanning extends BaseController
                 'notes' => $note !== '' ? $note : null,
                 'sort_order' => $i,
             ]);
+            $insertedItems++;
         }
 
         $db->transComplete();
@@ -155,6 +160,16 @@ class WorshipPlanning extends BaseController
         if ($db->transStatus() === false) {
             return redirect()->back()->withInput()->with('error', lang('Worship.worshipPlanSaveFailed'));
         }
+
+        $this->audit()->log('worship_plan.save', [
+            'parish_id' => $parishId,
+            'entity_type' => 'service_worship_item',
+            'entity_id' => (int) $serviceId,
+            'new_values' => [
+                'service_id' => (int) $serviceId,
+                'item_count' => $insertedItems,
+            ],
+        ]);
 
         return redirect()->to('/worship-planning/service/' . (int) $serviceId)->with('success', lang('Worship.worshipPlanSaved'));
     }
@@ -219,6 +234,16 @@ class WorshipPlanning extends BaseController
         ];
 
         if ($this->worshipSongModel->insert($payload)) {
+            $this->audit()->log('worship_song.create', [
+                'parish_id' => (int) ($this->getOperationalParishId() ?? 0),
+                'entity_type' => 'worship_song',
+                'entity_id' => (int) $this->worshipSongModel->getInsertID(),
+                'new_values' => [
+                    'title' => (string) ($payload['title'] ?? ''),
+                    'artist' => (string) ($payload['artist'] ?? ''),
+                ],
+            ]);
+
             return redirect()->to('/worship-planning/songs')->with('success', lang('Worship.songAdded'));
         }
 
@@ -283,6 +308,20 @@ class WorshipPlanning extends BaseController
         ];
 
         if ($this->worshipSongModel->update((int) $songId, $payload)) {
+            $this->audit()->log('worship_song.update', [
+                'parish_id' => (int) ($this->getOperationalParishId() ?? 0),
+                'entity_type' => 'worship_song',
+                'entity_id' => (int) $songId,
+                'old_values' => [
+                    'title' => (string) ($song['title'] ?? ''),
+                    'artist' => (string) ($song['artist'] ?? ''),
+                ],
+                'new_values' => [
+                    'title' => (string) ($payload['title'] ?? ''),
+                    'artist' => (string) ($payload['artist'] ?? ''),
+                ],
+            ]);
+
             return redirect()->to('/worship-planning/songs')->with('success', lang('Worship.songUpdated'));
         }
 
@@ -309,6 +348,13 @@ class WorshipPlanning extends BaseController
         }
 
         if ($this->worshipSongModel->update((int) $songId, ['is_active' => 0])) {
+            $this->audit()->log('worship_song.deactivate', [
+                'parish_id' => (int) ($this->getOperationalParishId() ?? 0),
+                'entity_type' => 'worship_song',
+                'entity_id' => (int) $songId,
+                'meta' => ['title' => (string) ($song['title'] ?? '')],
+            ]);
+
             return redirect()->to('/worship-planning/songs?status=inactive')->with('success', lang('Worship.songDeactivated'));
         }
 
@@ -335,6 +381,13 @@ class WorshipPlanning extends BaseController
         }
 
         if ($this->worshipSongModel->update((int) $songId, ['is_active' => 1])) {
+            $this->audit()->log('worship_song.reactivate', [
+                'parish_id' => (int) ($this->getOperationalParishId() ?? 0),
+                'entity_type' => 'worship_song',
+                'entity_id' => (int) $songId,
+                'meta' => ['title' => (string) ($song['title'] ?? '')],
+            ]);
+
             return redirect()->to('/worship-planning/songs')->with('success', lang('Worship.songReactivated'));
         }
 
@@ -357,6 +410,13 @@ class WorshipPlanning extends BaseController
         }
 
         if ($this->worshipSongModel->delete((int) $songId)) {
+            $this->audit()->log('worship_song.delete', [
+                'parish_id' => (int) ($this->getOperationalParishId() ?? 0),
+                'entity_type' => 'worship_song',
+                'entity_id' => (int) $songId,
+                'meta' => ['title' => (string) ($song['title'] ?? '')],
+            ]);
+
             return redirect()->to('/worship-planning/songs')->with('success', lang('Worship.songDeleted'));
         }
 

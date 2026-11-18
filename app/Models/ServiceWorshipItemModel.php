@@ -39,7 +39,7 @@ class ServiceWorshipItemModel extends Model
     {
         return $this->db->table('service_worship_item swi')
             ->select('swi.*, ws.title as song_title, ws.artist as song_artist')
-            ->join('worship_song ws', 'ws.id = swi.song_id', 'left')
+            ->join('worship_song ws', 'ws.id = swi.song_id AND ws.parish_id = swi.parish_id', 'left')
             ->where('swi.service_id', $serviceId)
             ->orderBy('swi.sort_order', 'ASC')
             ->get()

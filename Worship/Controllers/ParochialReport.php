@@ -3,6 +3,7 @@
 namespace Worship\Controllers;
 
 use App\Controllers\BaseController;
+use App\Models\ParishFinancialSummaryModel;
 use App\Services\ParochialReportDataService;
 
 /**
@@ -33,8 +34,8 @@ class ParochialReport extends BaseController
         }
 
         $parishId = (int) ($this->getOperationalParishId() ?? 0);
-        $year = (int) ($this->request->getGet('year') ?? ((int) date('Y') - 1));
-        $forceRecompute = (string) ($this->request->getGet('recompute') ?? '') === '1';
+        $year = $this->normalizeReportYear($this->request->getGet('year'));
+        $forceRecompute = (string) ($this->request->getGet('recompute') ?? '') === '1' && $this->canForceRecompute();
         $pdfEngine = $this->normalizePdfEngine((string) ($this->request->getGet('pdf_engine') ?? 'dompdf'));
 
         $data = array_merge(
@@ -57,8 +58,8 @@ class ParochialReport extends BaseController
         }
 
         $parishId = (int) ($this->getOperationalParishId() ?? 0);
-        $year = (int) ($this->request->getGet('year') ?? ((int) date('Y') - 1));
-        $forceRecompute = (string) ($this->request->getGet('recompute') ?? '') === '1';
+        $year = $this->normalizeReportYear($this->request->getGet('year'));
+        $forceRecompute = (string) ($this->request->getGet('recompute') ?? '') === '1' && $this->canForceRecompute();
 
         $data = $this->reportData->buildReportViewData($parishId, $year, $forceRecompute);
         $data['paper_size'] = $this->normalizePaperSize((string) ($this->request->getGet('paper_size') ?? 'letter'));
@@ -79,8 +80,8 @@ class ParochialReport extends BaseController
         }
 
         $parishId = (int) ($this->getOperationalParishId() ?? 0);
-        $year = (int) ($this->request->getGet('year') ?? ((int) date('Y') - 1));
-        $forceRecompute = (string) ($this->request->getGet('recompute') ?? '') === '1';
+        $year = $this->normalizeReportYear($this->request->getGet('year'));
+        $forceRecompute = (string) ($this->request->getGet('recompute') ?? '') === '1' && $this->canForceRecompute();
         $paperSize = $this->normalizePaperSize((string) ($this->request->getGet('paper_size') ?? 'letter'));
         $pdfEngine = $this->normalizePdfEngine((string) ($this->request->getGet('pdf_engine') ?? 'dompdf'));
         $pdfDebug = $this->normalizeDebugFlag((string) ($this->request->getGet('pdf_debug') ?? '0'));
@@ -118,8 +119,8 @@ class ParochialReport extends BaseController
         }
 
         $parishId = (int) ($this->getOperationalParishId() ?? 0);
-        $year = (int) ($this->request->getPost('year') ?? ((int) date('Y') - 1));
-        $forceRecompute = (string) ($this->request->getPost('recompute') ?? '') === '1';
+        $year = $this->normalizeReportYear($this->request->getPost('year'));
+        $forceRecompute = (string) ($this->request->getPost('recompute') ?? '') === '1' && $this->canForceRecompute();
         $paperSize = $this->normalizePaperSize((string) ($this->request->getPost('paper_size') ?? 'letter'));
         $pdfEngine = $this->normalizePdfEngine((string) ($this->request->getPost('pdf_engine') ?? 'dompdf'));
         $pdfDebug = $this->normalizeDebugFlag((string) ($this->request->getPost('pdf_debug') ?? '0'));
@@ -211,8 +212,81 @@ class ParochialReport extends BaseController
         }
 
         $parishId = (int) ($this->getOperationalParishId() ?? 0);
+        if ($parishId <= 0) {
+            return redirect()->to('/parochial-report')->with('error', lang('App.accessDenied'));
+        }
+
         $year = (int) ($this->request->getPost('report_year') ?? ((int) date('Y') - 1));
         $markDone = (string) ($this->request->getPost('mark_done') ?? '') === '1';
+
+        $intFields = 'permit_empty|integer|greater_than_equal_to[0]';
+        $amountFields = 'permit_empty|numeric|greater_than_equal_to[0]';
+
+        if (! $this->validate([
+            'report_year' => 'required|integer|greater_than[1900]|less_than_equal_to[' . ((int) date('Y') + 1) . ']',
+            'mailing_address_1' => 'permit_empty|max_length[255]',
+            'mailing_address_2' => 'permit_empty|max_length[255]',
+            'rector_certified_date' => 'permit_empty|valid_date',
+            'warden_approved_by_name' => 'permit_empty|max_length[255]',
+            'warden_approved_by_email' => 'permit_empty|valid_email|max_length[255]',
+            'warden_approved_by_phone' => 'permit_empty|max_length[50]',
+            'warden_approved_date' => 'permit_empty|valid_date',
+            'completion_participants_count' => $intFields,
+            'completion_participant_roles' => 'permit_empty|max_length[500]',
+            'outreach_beneficiaries_weekly' => $intFields,
+            'nonmember_volunteers_weekly' => $intFields,
+            'membership_previous_total' => $intFields,
+            'membership_increase_total' => $intFields,
+            'membership_decrease_total' => $intFields,
+            'active_participants_total' => $intFields,
+            'primary_worship_leader' => 'permit_empty|max_length[255]',
+            'programs_other' => 'permit_empty|max_length[500]',
+            'subsidiary_organizations_other' => 'permit_empty|max_length[500]',
+            'languages_other' => 'permit_empty|max_length[255]',
+            'percent_white' => 'permit_empty|numeric|greater_than_equal_to[0]|less_than_equal_to[100]',
+            'average_age_override' => 'permit_empty|numeric|greater_than_equal_to[0]|less_than_equal_to[150]',
+            'reporting_currency' => 'permit_empty|max_length[3]',
+            'confirmed_pledges_count' => $intFields,
+            'confirmed_pledges_amount' => $amountFields,
+            'other_revenue_amount' => $amountFields,
+            'cash_balance' => 'permit_empty|numeric',
+            'endowment_restricted' => $amountFields,
+            'endowment_unrestricted' => $amountFields,
+            'investment_restricted' => $amountFields,
+            'investment_unrestricted' => $amountFields,
+            'pct_draw' => 'permit_empty|numeric|greater_than_equal_to[0]|less_than_equal_to[100]',
+            'amount_drawn_operating' => 'permit_empty|numeric',
+            'amount_drawn_capital' => 'permit_empty|numeric',
+            'investment_net_gain_loss' => 'permit_empty|numeric',
+            'debt_amount' => $amountFields,
+            'debt_description' => 'permit_empty|max_length[5000]',
+            'rental_income' => 'permit_empty|numeric',
+            'rental_expense' => 'permit_empty|numeric',
+            'carbon_footprint_notes' => 'permit_empty|max_length[5000]',
+            'exemplary_program_text' => 'permit_empty|max_length[5000]',
+            'future_hope_text' => 'permit_empty|max_length[5000]',
+            'report_prepared_by_name' => 'permit_empty|max_length[255]',
+            'report_prepared_by_email' => 'permit_empty|valid_email|max_length[255]',
+            'report_prepared_by_phone' => 'permit_empty|max_length[50]',
+            'financial_prepared_by_name' => 'permit_empty|max_length[255]',
+            'financial_prepared_by_email' => 'permit_empty|valid_email|max_length[255]',
+            'financial_prepared_by_phone' => 'permit_empty|max_length[50]',
+            'clerk_certified_date' => 'permit_empty|valid_date',
+            'treasurer_certified_date' => 'permit_empty|valid_date',
+            'clergy_situation.*' => 'permit_empty|max_length[255]',
+            'programs.*' => 'permit_empty|max_length[255]',
+            'subsidiary_organizations.*' => 'permit_empty|max_length[255]',
+            'nonlive_views_estimated' => 'permit_empty|in_list[0,1]',
+            'simultaneous_multilingual_service' => 'permit_empty|in_list[0,1]',
+            'has_debt' => 'permit_empty|in_list[0,1]',
+            'owns_property' => 'permit_empty|in_list[0,1]',
+            'rents_to_outside' => 'permit_empty|in_list[0,1]',
+            'mark_done' => 'permit_empty|in_list[0,1]',
+        ])) {
+            return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
+        }
+
+        $existing = model(ParishFinancialSummaryModel::class)->getForParishYear($parishId, $year);
 
         $int = fn(string $field): ?int => ($value = $this->request->getPost($field)) !== null && $value !== '' ? (int) $value : null;
         $float = fn(string $field): ?float => ($value = $this->request->getPost($field)) !== null && $value !== '' ? (float) $value : null;
@@ -279,10 +353,12 @@ class ParochialReport extends BaseController
             'carbon_footprint_notes' => $string('carbon_footprint_notes'),
             'exemplary_program_text' => $string('exemplary_program_text'),
             'future_hope_text' => $string('future_hope_text'),
-            'report_status' => $markDone ? 'finalized' : 'draft',
-            'finalized_at' => null,
-            'finalized_by' => null,
-            'frozen_snapshot_json' => null,
+            // A draft save must not demote a finalized report or erase its
+            // frozen snapshot; only mark_done may set finalization fields.
+            'report_status' => $markDone ? 'finalized' : ($existing['report_status'] ?? 'draft'),
+            'finalized_at' => $existing['finalized_at'] ?? null,
+            'finalized_by' => $existing['finalized_by'] ?? null,
+            'frozen_snapshot_json' => $existing['frozen_snapshot_json'] ?? null,
         ];
 
         if ($markDone) {
@@ -303,7 +379,20 @@ class ParochialReport extends BaseController
             $data['finalized_by'] = auth()->id() !== null ? (int) auth()->id() : null;
         }
 
-        model(ParishFinancialSummaryModel::class)->upsertForYear($data);
+        if (! model(ParishFinancialSummaryModel::class)->upsertForYear($data)) {
+            return redirect()->back()->withInput()->with('error', lang('App.accessDenied'));
+        }
+
+        // Field values are intentionally omitted from the audit payload —
+        // they include financial figures; log only the action's meta.
+        $this->audit()->log('parochial_report.save', [
+            'parish_id' => $parishId,
+            'entity_type' => 'parochial_report',
+            'meta' => [
+                'report_year' => $year,
+                'mark_done' => $markDone,
+            ],
+        ]);
 
         return redirect()
             ->to(base_url('parochial-report?year=' . $year))
@@ -324,9 +413,29 @@ class ParochialReport extends BaseController
 
     private function normalizeDebugFlag(string $flag): bool
     {
+        $user = auth()->user();
+        if ($user === null || ! $user->inGroup('systemadmin')) {
+            return false;
+        }
+
         $normalized = strtolower(trim($flag));
 
         return in_array($normalized, ['1', 'true', 'yes', 'on'], true);
+    }
+
+    private function normalizeReportYear($year): int
+    {
+        $value = (int) ($year ?? 0);
+        $currentYear = (int) date('Y');
+
+        return ($value > 1900 && $value <= $currentYear + 1) ? $value : $currentYear - 1;
+    }
+
+    private function canForceRecompute(): bool
+    {
+        $user = auth()->user();
+
+        return $user !== null && $user->can('report.parochial');
     }
 
     private function buildPdfFilename(string $parishName, int $year): string

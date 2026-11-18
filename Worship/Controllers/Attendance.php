@@ -212,10 +212,14 @@ class Attendance extends BaseController
         $parishId = $this->getOperationalParishId();
 
         // Get date range from query params (default: current year-to-date).
+        // Invalid dates fall back to defaults; an inverted range is swapped.
         $startDateInput = $this->request->getGet('start_date');
         $endDateInput = $this->request->getGet('end_date');
-        $startDate = $startDateInput ?: date('Y-01-01');
-        $endDate = $endDateInput ?: date('Y-m-d');
+        $startDate = $this->isValidReportDate($startDateInput) ? (string) $startDateInput : date('Y-01-01');
+        $endDate = $this->isValidReportDate($endDateInput) ? (string) $endDateInput : date('Y-m-d');
+        if ($startDate > $endDate) {
+            [$startDate, $endDate] = [$endDate, $startDate];
+        }
         $hasCustomFilter = ($startDateInput !== null && $startDateInput !== '')
             || ($endDateInput !== null && $endDateInput !== '');
 
@@ -341,5 +345,16 @@ class Attendance extends BaseController
         ]);
 
         return view('Worship\Views\Attendance/reports', $data);
+    }
+
+    private function isValidReportDate($value): bool
+    {
+        if (!is_string($value) || $value === '') {
+            return false;
+        }
+
+        $parsed = \DateTime::createFromFormat('Y-m-d', $value);
+
+        return $parsed !== false && $parsed->format('Y-m-d') === $value;
     }
 }
