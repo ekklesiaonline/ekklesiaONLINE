@@ -386,24 +386,24 @@ class People extends BaseController
 
         $rows = (new PeopleDirectoryService())->peopleForExport($parishId, $userIds);
 
-        $csvLines = [];
-        $csvLines[] = implode(',', ['First Name', 'Last Name', 'Email', 'Phone', 'Membership Status', 'Is Member', 'Good Standing', 'Portal Access']);
+        $handle = fopen('php://temp', 'w+');
+        fputcsv($handle, ['First Name', 'Last Name', 'Email', 'Phone', 'Membership Status', 'Is Member', 'Good Standing', 'Portal Access']);
 
         foreach ($rows as $row) {
-            $csvLines[] = implode(',', array_map(
-                static fn(mixed $v): string => '"' . str_replace('"', '""', (string) ($v ?? '')) . '"',
-                [
-                    $row['first_name'] ?? '',
-                    $row['last_name'] ?? '',
-                    $row['email'] ?? '',
-                    $row['phone'] ?? '',
-                    $row['membership_status'] ?? '',
-                    (int) ($row['is_member'] ?? 0) === 1 ? 'Yes' : 'No',
-                    (int) ($row['is_good_standing'] ?? 0) === 1 ? 'Yes' : 'No',
-                    $row['portal_access'] ?? 'none',
-                ]
-            ));
+            fputcsv_safe($handle, [
+                $row['first_name'] ?? '',
+                $row['last_name'] ?? '',
+                $row['email'] ?? '',
+                $row['phone'] ?? '',
+                $row['membership_status'] ?? '',
+                (int) ($row['is_member'] ?? 0) === 1 ? 'Yes' : 'No',
+                (int) ($row['is_good_standing'] ?? 0) === 1 ? 'Yes' : 'No',
+                $row['portal_access'] ?? 'none',
+            ]);
         }
+        rewind($handle);
+        $csv = stream_get_contents($handle);
+        fclose($handle);
 
         $filename = 'people-export-' . date('Y-m-d') . '.csv';
 
@@ -411,7 +411,7 @@ class People extends BaseController
             ->setHeader('Content-Type', 'text/csv; charset=UTF-8')
             ->setHeader('Content-Disposition', 'attachment; filename="' . $filename . '"')
             ->setHeader('Cache-Control', 'no-store, no-cache')
-            ->setBody(implode("\r\n", $csvLines));
+            ->setBody($csv);
     }
 
     public function storeNonPortal()

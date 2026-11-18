@@ -336,13 +336,21 @@ class FollowupTemplates extends BaseController
             return $redirect;
         }
 
+        $parishId = (int) $this->getOperationalParishId();
+
         $template = $this->templateModel->find($id);
 
         if (!$template) {
             return redirect()->to('followup-workflow/templates')->with('error', 'Template not found.');
         }
 
-        $parishId = (int) $this->getOperationalParishId();
+        // Scope guard: parish-owned templates may only be previewed by their
+        // own parish (upstream/global templates are shared).
+        $templateParishId = (int) ($template['parish_id'] ?? 0);
+        if ($templateParishId !== 0 && $templateParishId !== $parishId) {
+            return redirect()->to('followup-workflow/templates')->with('error', lang('App.errorUnauthorized'));
+        }
+
         $parish   = db_connect()->table('parish')->where('id', $parishId)->get()->getRowArray();
 
         $sampleVars = [

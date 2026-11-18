@@ -18,7 +18,7 @@ $typeKey = 'vestryMeetingType' . ucfirst($meeting['meeting_type'] ?? 'regular');
 <div class="card mb-4">
     <div class="card-header d-flex justify-content-between align-items-center">
         <h4 class="mb-0"><?= esc($formatLocalizedDate($meeting['meeting_date'] ?? '')) ?></h4>
-        <span class="badge bg-secondary"><?= lang('Dashboard.' . $typeKey) ?></span>
+        <span class="badge border border-secondary text-secondary fw-normal"><?= lang('Dashboard.' . $typeKey) ?></span>
     </div>
     <div class="card-body">
         <?php if (!empty($meeting['minutes_text'])): ?>
@@ -54,7 +54,7 @@ $typeKey = 'vestryMeetingType' . ucfirst($meeting['meeting_type'] ?? 'regular');
     <div class="card mb-3">
         <div class="card-header d-flex justify-content-between align-items-center">
             <h6 class="mb-0"><?= esc($motion['title'] ?? '') ?></h6>
-            <span class="badge bg-<?= $statusColor ?>"><?= lang('Dashboard.motionStatus' . ucfirst($status)) ?></span>
+            <span class="badge border border-<?= $statusColor ?> text-<?= $statusColor ?> fw-normal"><?= lang('Dashboard.motionStatus' . ucfirst($status)) ?></span>
         </div>
         <div class="card-body">
             <?php if (!empty($motion['body_text'])): ?>
@@ -63,13 +63,13 @@ $typeKey = 'vestryMeetingType' . ucfirst($meeting['meeting_type'] ?? 'regular');
 
             <div class="row text-center g-2 mb-3">
                 <div class="col-3">
-                    <span class="badge bg-success"><?= lang('Dashboard.voteYea') ?>: <?= (int) ($tally['yea'] ?? 0) ?></span>
+                    <span class="badge border border-success text-success fw-normal"><?= lang('Dashboard.voteYea') ?>: <?= (int) ($tally['yea'] ?? 0) ?></span>
                 </div>
                 <div class="col-3">
-                    <span class="badge bg-danger"><?= lang('Dashboard.voteNay') ?>: <?= (int) ($tally['nay'] ?? 0) ?></span>
+                    <span class="badge border border-danger text-danger fw-normal"><?= lang('Dashboard.voteNay') ?>: <?= (int) ($tally['nay'] ?? 0) ?></span>
                 </div>
                 <div class="col-3">
-                    <span class="badge bg-secondary"><?= lang('Dashboard.voteAbstain') ?>: <?= (int) ($tally['abstain'] ?? 0) ?></span>
+                    <span class="badge border border-secondary text-secondary fw-normal"><?= lang('Dashboard.voteAbstain') ?>: <?= (int) ($tally['abstain'] ?? 0) ?></span>
                 </div>
                 <div class="col-3">
                     <small class="text-muted"><?= lang('Dashboard.vestryVoteTotal') ?>: <?= (int) ($tally['total'] ?? 0) ?></small>
@@ -98,7 +98,10 @@ $typeKey = 'vestryMeetingType' . ucfirst($meeting['meeting_type'] ?? 'regular');
 
             <?php if ($status === 'open' && !empty($can_manage)): ?>
             <div class="mt-2">
-                <a href="<?= base_url('vestry/motion/' . (int) ($motion['id'] ?? 0) . '/close') ?>" class="btn btn-sm btn-outline-warning"><?= lang('Dashboard.vestryCloseMotion') ?></a>
+                <form action="<?= base_url('vestry/motion/' . (int) ($motion['id'] ?? 0) . '/close') ?>" method="post" class="d-inline">
+                    <?= csrf_field() ?>
+                    <button type="submit" class="btn btn-sm btn-outline-warning"><?= lang('Dashboard.vestryCloseMotion') ?></button>
+                </form>
             </div>
             <?php endif; ?>
         </div>

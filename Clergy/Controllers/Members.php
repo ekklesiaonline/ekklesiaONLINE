@@ -442,12 +442,20 @@ class Members extends BaseController
             return $this->response->setJSON(['success' => false, 'message' => lang('App.notFound')])->setStatusCode(404);
         }
 
+        // The service re-verifies profile.parish_id — pass the parish of the
+        // already scope-verified profile, not the (possibly different or
+        // unset) home parish property.
+        $profileParishId = (int) ($profile['parish_id'] ?? 0);
+        if ($profileParishId <= 0) {
+            return $this->response->setJSON(['success' => false, 'message' => lang('App.notAuthorized')])->setStatusCode(403);
+        }
+
         $userId = (int) ($profile['user_id'] ?? 0);
         if ($code = $this->guardTargetUserMutation($userId, true)) {
             return $this->response->setJSON(['success' => false, 'message' => $this->hierarchyGuardMessage($code)])->setStatusCode(403);
         }
 
-        $result = $this->getNonPortalProvisioningService()->revokePortalAccess($userId, $this->parishId);
+        $result = $this->getNonPortalProvisioningService()->revokePortalAccess($userId, $profileParishId);
 
         if (!$result['ok']) {
             $httpStatus = $result['http_status'] ?? 500;
@@ -460,7 +468,7 @@ class Members extends BaseController
 
         $this->audit()->log('member.revoke_portal_access', array_merge(
             ['profile_id' => $id, 'user_id' => $userId],
-            $this->buildParishContextMeta($this->parishId, self::ATTRIBUTION_POLICY_OPERATIONAL_DEFAULT)
+            $this->buildParishContextMeta($profileParishId, self::ATTRIBUTION_POLICY_OPERATIONAL_DEFAULT)
         ));
 
         return $this->response->setJSON(['success' => true, 'message' => 'Portal access revoked successfully.']);

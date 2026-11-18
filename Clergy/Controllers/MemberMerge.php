@@ -119,6 +119,16 @@ class MemberMerge extends BaseController
             }
         }
 
+        // Duplicate-side field values may be written onto the canonical
+        // profile (field_choice = 'duplicate'), so the canonical target is a
+        // mutation surface too and needs the same hierarchy guard.
+        $canonicalProfile = $this->loadProfileForParish($canonicalId, $parishId);
+        if ($canonicalProfile !== null) {
+            if ($code = $this->guardTargetUserMutation((int) ($canonicalProfile['user_id'] ?? 0))) {
+                return $this->response->setJSON(['success' => false, 'message' => $this->hierarchyGuardMessage($code)])->setStatusCode(403);
+            }
+        }
+
         // Collect per-field override choices (radio buttons: "canonical" or "duplicate")
         $fieldChoices = (array) $this->request->getPost('field_choice');
         $fieldValues  = (array) $this->request->getPost('field_value');

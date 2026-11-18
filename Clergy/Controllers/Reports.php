@@ -202,9 +202,9 @@ class Reports extends BaseController
 
         $filename = 'report_' . $reportType . '_' . date('Ymd') . '.csv';
         $handle   = fopen('php://temp', 'w+');
-        fputcsv($handle, $headers);
+        fputcsv($handle, csv_safe_row($headers));
         foreach ($rows as $row) {
-            fputcsv($handle, $row);
+            fputcsv_safe($handle, $row);
         }
         rewind($handle);
         $csv = stream_get_contents($handle);
