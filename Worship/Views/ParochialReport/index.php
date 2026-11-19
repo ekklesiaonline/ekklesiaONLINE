@@ -186,7 +186,9 @@ $emailRecipient = trim((string) (old('recipient_email', $summary['report_prepare
     <div class="alert alert-success border-0 mb-3">
         <div class="d-flex justify-content-between align-items-center">
             <span><?= lang('App.prReportUsingSnapshot') ?></span>
-            <a href="<?= $recomputeUrl ?>" class="btn btn-sm btn-outline-success"><?= lang('App.prReportRecomputeAction') ?></a>
+            <?php if (auth()->user() !== null && auth()->user()->can('report.parochial')): ?>
+                <a href="<?= $recomputeUrl ?>" class="btn btn-sm btn-outline-success"><?= lang('App.prReportRecomputeAction') ?></a>
+            <?php endif; ?>
         </div>
     </div>
 <?php elseif ($isFinalized && !$usingFrozenSnapshot && $hasFrozenSnapshot): ?>

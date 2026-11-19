@@ -26,8 +26,8 @@ $routes->group('', ['filter' => 'session'], function ($routes) {
         // Read-only clergy visibility + hire requests into the diocesan queue.
         // Parishes never create accounts nor write diocese-owned tables.
         $routes->get('clergy', '\\Parish\\Controllers\\Clergy::index', ['filter' => 'permission:member.view']);
-        $routes->get('clergy/person-search', '\\Parish\\Controllers\\Clergy::personSearch', ['filter' => 'permission:member.view']);
-        $routes->post('clergy/request', '\\Parish\\Controllers\\Clergy::submitRequest', ['filter' => 'permission:member.view']);
+        $routes->get('clergy/person-search', '\\Parish\\Controllers\\Clergy::personSearch', ['filter' => 'permission:leadership_position.manage']);
+        $routes->post('clergy/request', '\\Parish\\Controllers\\Clergy::submitRequest', ['filter' => 'permission:leadership_position.manage']);
         $routes->get('email-settings', '\\App\\Controllers\\Parish\\EmailSettingsController::index', ['filter' => 'permission:parish.edit']);
         $routes->post('email-settings', '\\App\\Controllers\\Parish\\EmailSettingsController::save', ['filter' => 'permission:parish.edit']);
         $routes->post('email-settings/test', '\\App\\Controllers\\Parish\\EmailSettingsController::test', ['filter' => 'permission:parish.edit']);

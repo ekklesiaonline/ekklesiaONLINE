@@ -52,6 +52,7 @@
     </div>
 </div>
 
+<?php if (!empty($canRequest)): ?>
 <div class="card mb-3">
     <div class="card-body">
         <h6 class="card-subtitle mb-2 text-muted"><?= lang('ParishClergy.requestTitle') ?></h6>
@@ -80,6 +81,7 @@
         </form>
     </div>
 </div>
+<?php endif; ?>
 
 <?php if (!empty($requests)): ?>
 <div class="card">
@@ -115,6 +117,7 @@
 </div>
 <?php endif; ?>
 
+<?php if (!empty($canRequest)): ?>
 <script {csp-script-nonce}>
 (function () {
     const input = document.getElementById('request_person_search');
@@ -161,5 +164,6 @@
     });
 })();
 </script>
+<?php endif; ?>
 
 <?= $this->endSection() ?>
