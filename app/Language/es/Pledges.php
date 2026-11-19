@@ -37,6 +37,7 @@ return [
     'pageOf' => 'Pagina {0} de {1}',
     'previous' => 'Anterior',
     'next' => 'Siguiente',
+    'memberNotInParish' => 'El miembro seleccionado no está afiliado a esta parroquia.',
     'saveFailed' => 'No se pudo guardar la promesa.',
     'updateFailed' => 'No se pudo actualizar la promesa.',
     'deleteSuccess' => 'Promesa eliminada exitosamente.',
