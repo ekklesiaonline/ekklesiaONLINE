@@ -38,6 +38,7 @@
     </div>
 </div>
 
+<?php if (!empty($can_refresh)): ?>
 <div class="card mt-3">
     <div class="card-header">
         <h5 class="mb-0"><i class="bi bi-arrow-repeat" aria-hidden="true"></i> <?= lang('Standing.refreshTitle') ?></h5>
@@ -62,5 +63,6 @@
         </form>
     </div>
 </div>
+<?php endif; ?>
 
 <?= $this->endSection() ?>
