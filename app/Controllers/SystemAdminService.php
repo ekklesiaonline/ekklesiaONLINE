@@ -2,6 +2,7 @@
 
 namespace App\Controllers;
 
+use App\Authentication\ScopedEmail2FA;
 use CodeIgniter\Shield\Authentication\Authenticators\Session;
 
 trait SystemAdminService
@@ -464,10 +465,23 @@ trait SystemAdminService
     }
 
     /**
-     * Check if user has MFA enabled.
+     * Check if the user's sign-in satisfies the MFA requirement.
+     *
+     * Shield's Email2FA action deletes the email_2fa identity when the code
+     * verifies, so a completed challenge leaves no database row. The durable
+     * "this session passed 2FA" signal is the flag ScopedEmail2FA::verify()
+     * stamps on success; the identity lookup below still covers a challenge
+     * that is currently pending.
      */
     private function isUserMfaEnabled(int $userId): bool
     {
+        if (
+            $userId > 0
+            && (int) (session()->get(ScopedEmail2FA::SESSION_VERIFIED_USER_ID) ?? 0) === $userId
+        ) {
+            return true;
+        }
+
         $db = db_connect();
 
         $hasTwoFactor = $db->table('auth_identities')

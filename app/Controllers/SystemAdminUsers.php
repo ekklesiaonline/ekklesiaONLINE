@@ -47,7 +47,7 @@ class SystemAdminUsers extends BaseController
 
         // MFA requirement: Check if user has 2FA enabled for sensitive operations
         if ($this->isMfaRequiredForAdminOperations() && !$this->isUserMfaEnabled(auth()->id())) {
-            return redirect()->back()->with('error', 'Multi-factor authentication is required for admin operations. Please enable 2FA in your account settings.');
+            return redirect()->back()->with('error', 'Multi-factor authentication is required for admin operations. This sign-in did not complete the email verification step — sign out and sign back in to verify, then retry.');
         }
 
         // Rate limiting: Allow max 5 admin creation attempts per hour per user

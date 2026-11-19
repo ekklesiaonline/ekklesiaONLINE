@@ -16,6 +16,7 @@ namespace Config;
 use App\Models\UserModel;
 use CodeIgniter\Shield\Config\Auth as ShieldAuth;
 use CodeIgniter\Shield\Authentication\Actions\ActionInterface;
+use App\Authentication\ScopedEmail2FA;
 use App\Authentication\ScopedEmailActivator;
 use CodeIgniter\Shield\Authentication\Actions\EmailActivator;
 use CodeIgniter\Shield\Authentication\AuthenticatorInterface;
@@ -105,7 +106,13 @@ class Auth extends ShieldAuth
      */
     public array $actions = [
         'register' => ScopedEmailActivator::class,
-        'login'    => null,
+        // Login second factor: ScopedEmail2FA challenges only the audience
+        // selected by security.login_2fa_scope (default 'admins' — the four
+        // admin groups; 'all' challenges everyone; 'off' disables). It
+        // implements ConditionalActionInterface, so out-of-scope users and
+        // stale email_2fa identities are skipped automatically. The emailed
+        // code goes out through the scoped credential mailer.
+        'login'    => ScopedEmail2FA::class,
     ];
 
     /**

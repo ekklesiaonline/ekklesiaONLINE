@@ -65,6 +65,26 @@ class SystemSettingService
         return filter_var($value, FILTER_VALIDATE_BOOL, FILTER_NULL_ON_FAILURE) ?? true;
     }
 
+    /**
+     * Audience scope for the login email-2FA challenge
+     * (ScopedEmail2FA::appliesTo):
+     *  - 'admins' (default): only users in systemadmin, provinceadmin,
+     *    dioceseadmin or parishadmin are challenged at login.
+     *  - 'all': every user is challenged.
+     *  - 'off': the challenge is disabled entirely.
+     *
+     * Unrecognized/empty values fall back to 'admins': the setting fails
+     * toward enforcing the challenge on the highest-privilege accounts
+     * rather than silently disabling it or widening it to everyone.
+     */
+    public function getLoginEmail2faScope(): string
+    {
+        $value = $this->get('security.login_2fa_scope', env('SECURITY_LOGIN_2FA_SCOPE', 'admins'));
+        $value = is_string($value) ? strtolower(trim($value)) : 'admins';
+
+        return in_array($value, ['off', 'admins', 'all'], true) ? $value : 'admins';
+    }
+
     public function isPrimaryTransferOtpRequired(): bool
     {
         $value = $this->get('mfa.required_for_primary_transfer', env('SYSTEM_ADMIN_PRIMARY_TRANSFER_OTP_ENABLED', true));
