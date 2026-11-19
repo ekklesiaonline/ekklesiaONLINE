@@ -216,6 +216,11 @@ class ScopedEmail2FA extends Email2FA implements ConditionalActionInterface
         session()->remove($attemptsKey);
         session()->set(self::SESSION_VERIFIED_USER_ID, (int) $user->id);
 
+        // Shield issues the remember-me token in attempt(), before this
+        // action runs. In-scope users get no remember-me: purge it so the
+        // 2FA proof cannot outlive this session.
+        \App\Filters\Login2faSessionFilter::purgeRememberTokens((int) $user->id);
+
         // Get our login redirect url
         return redirect()->to(config('Auth')->loginRedirect());
     }
