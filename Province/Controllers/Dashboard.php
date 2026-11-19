@@ -256,7 +256,7 @@ class Dashboard extends BaseController
         fputcsv($handle, [lang('Dashboard.colDiocese'), lang('Dashboard.colParishes'), lang('Dashboard.colPeople'), lang('Dashboard.colMembers'), lang('Dashboard.colAttendance'), lang('Dashboard.colServices'), lang('Dashboard.lastServiceDate'), lang('Dashboard.adminCoverage'), lang('Dashboard.healthStatus')]);
         foreach ($rows as $row) {
             $health = $healthByDiocese[(int) $row['diocese_id']] ?? [];
-            fputcsv($handle, [$row['diocese_name'], $row['parishes_count'], $row['total_people'], $row['total_members'], $row['total_attendance'], $row['total_services'], $health['last_service_date'] ?? '', !empty($health['has_active_admin']) ? lang('Dashboard.adminCovered') : lang('Dashboard.adminMissing'), lang('Dashboard.health_' . ($health['health_status'] ?? 'attention'))]);
+            fputcsv($handle, array_map([$this, 'csvSafeCell'], [$row['diocese_name'], $row['parishes_count'], $row['total_people'], $row['total_members'], $row['total_attendance'], $row['total_services'], $health['last_service_date'] ?? '', !empty($health['has_active_admin']) ? lang('Dashboard.adminCovered') : lang('Dashboard.adminMissing'), lang('Dashboard.health_' . ($health['health_status'] ?? 'attention'))]));
         }
         rewind($handle);
         $csv = stream_get_contents($handle);
@@ -267,6 +267,20 @@ class Dashboard extends BaseController
             ->setHeader('Content-Type', 'text/csv; charset=UTF-8')
             ->setHeader('Content-Disposition', 'attachment; filename="province-report-' . date('Ymd') . '.csv"')
             ->setBody("\xEF\xBB\xBF" . $csv);
+    }
+
+    /**
+     * Neutralize CSV formula injection: values beginning with =, +, -, @ or
+     * a control character are interpreted as formulas by spreadsheet apps.
+     * A leading single quote makes them display literally.
+     */
+    private function csvSafeCell(mixed $value): mixed
+    {
+        if (is_string($value) && $value !== '' && preg_match('/^[=+\-@\t\r]/', $value) === 1) {
+            return "'" . $value;
+        }
+
+        return $value;
     }
 
     public function quickCreateParish()
