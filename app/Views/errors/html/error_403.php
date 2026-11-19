@@ -4,7 +4,7 @@
 <head>
     <meta charset="utf-8">
     <title><?= lang('Errors.forbidden') ?></title>
-    <style>
+    <style {csp-style-nonce}>
         body {
             margin: 0;
             font-family: "Segoe UI", Tahoma, Arial, sans-serif;

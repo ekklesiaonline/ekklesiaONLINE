@@ -193,7 +193,7 @@ $admins = $admins ?? [];
 <?= $this->endSection() ?>
 
 <?= $this->section('scripts') ?>
-<script>
+<script {csp-script-nonce}>
     document.getElementById('editProvinceAdminModal').addEventListener('show.bs.modal', function(e) {
         const btn = e.relatedTarget;
         document.getElementById('editProvinceAdminForm').action = '<?= base_url('system/admins/update/') ?>' + btn.dataset.id;

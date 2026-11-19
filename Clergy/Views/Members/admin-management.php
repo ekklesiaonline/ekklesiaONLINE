@@ -308,7 +308,7 @@ $staff_roles = $staff_roles ?? [];
         </div>
     </div>
 
-    <script>
+    <script {csp-script-nonce}>
         const CSRF_HEADER = '<?= $csrfHeader ?>';
         let csrfHash = '<?= $csrfHash ?>';
         const staffCreateFailedMsg = <?= json_encode(lang('App.errorFailedCreate')) ?>;

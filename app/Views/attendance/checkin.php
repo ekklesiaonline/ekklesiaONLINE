@@ -71,7 +71,7 @@
 <?= $this->endSection() ?>
 
 <?= $this->section('scripts') ?>
-<script>
+<script {csp-script-nonce}>
     (() => {
         const form = document.getElementById('checkinForm');
         const memberSearch = document.getElementById('member_search');

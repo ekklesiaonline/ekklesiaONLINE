@@ -67,6 +67,7 @@ class Filters extends BaseFilters
         'deviceVerification' => DeviceVerificationFilter::class,
         'forcePasswordReset' => ForcePasswordResetFilter::class,
         'maintenanceMode' => MaintenanceMode::class,
+        'login2faSession' => \App\Filters\Login2faSessionFilter::class,
     ];
 
     public function __construct()
@@ -161,6 +162,21 @@ class Filters extends BaseFilters
                     'profile/complete',
                     'locale/set/*',
                     'uploads/*',
+                    'health',
+                ],
+            ],
+
+            // In-scope (login email-2FA) users must have completed the
+            // challenge in THIS session; remember-me restorations without it
+            // are logged out and their remember tokens purged.
+            'login2faSession' => [
+                'except' => [
+                    'login',
+                    'login/*',
+                    'register',
+                    'logout',
+                    'auth/a/*',
+                    'assets/*',
                     'health',
                 ],
             ],
@@ -410,6 +426,9 @@ class Filters extends BaseFilters
             'before' => [
                 'login',
                 'login/magic-link',
+                // GET — throttled because each request performs a token
+                // lookup + delete (see LoginRateLimitFilter).
+                'login/verify-magic-link',
                 'register',
                 'auth/set-password',
                 'auth/a/*',

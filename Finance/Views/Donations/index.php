@@ -447,7 +447,7 @@ $donationMethodLabelMap = [
     </div>
 </div>
 
-<script>
+<script {csp-script-nonce}>
     function deleteDonation(id) {
         showAppConfirm(
             '<?= esc(lang('App.confirm'), 'js') ?>',

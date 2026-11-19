@@ -169,7 +169,7 @@
 
 <?= $this->endSection() ?>
 
-<script>
+<script {csp-script-nonce}>
     (function() {
         const form = document.querySelector('form[action*="visitors/update"]');
         if (!form) return;

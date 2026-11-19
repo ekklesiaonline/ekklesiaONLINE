@@ -197,7 +197,7 @@ $mergeableFields = [
     </div>
 </div>
 
-<script>
+<script {csp-script-nonce}>
     (function() {
         const mergeForm = document.getElementById('mergeForm');
         const mergeReason = document.getElementById('mergeReason');

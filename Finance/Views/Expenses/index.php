@@ -276,7 +276,7 @@ $formatLocalizedDate = static function (?string $value, string $pattern, string 
     </div>
 </div>
 
-<script>
+<script {csp-script-nonce}>
     function contractErrorMessage(data, fallback) {
         if (!data || typeof data !== 'object') {
             return fallback;

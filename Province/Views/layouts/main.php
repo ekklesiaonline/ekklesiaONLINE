@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="<?= csrf_hash() ?>">
-    <script>
+    <script {csp-script-nonce}>
         (function() {
             var storageKey = 'ekklesiaONLINE-theme';
             var savedTheme = null;
@@ -33,9 +33,9 @@
     <!-- Bootstrap Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
     <!-- Chart.js -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script {csp-script-nonce} src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 
-    <style>
+    <style {csp-style-nonce}>
         :root {
             --app-body-bg: #f1f5f9;
             --app-main-bg: #f8f9fa;
@@ -515,11 +515,11 @@
     </div>
 
     <!-- Bootstrap 5 JS Bundle -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script {csp-script-nonce} src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <!-- jQuery (for AJAX) -->
-    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <script {csp-script-nonce} src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
 
-    <script>
+    <script {csp-script-nonce}>
         function showAppToast(message, level) {
             var container = document.getElementById('appToastContainer');
             if (!container || typeof bootstrap === 'undefined') {
@@ -1062,7 +1062,7 @@
         }());
     </script>
 
-    <script>
+    <script {csp-script-nonce}>
         // -----------------------------------------------------------------------
         // Session idle-timeout manager
         //

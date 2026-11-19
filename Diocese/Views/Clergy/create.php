@@ -55,7 +55,7 @@
     </div>
 </div>
 
-<script>
+<script {csp-script-nonce}>
 (function () {
     const input = document.getElementById('person_search');
     const hidden = document.getElementById('person_id');

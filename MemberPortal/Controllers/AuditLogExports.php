@@ -42,7 +42,7 @@ class AuditLogExports extends AuditLogs
         // Stream rows unbuffered into php://temp (spills to disk past 2 MB)
         // so peak memory stays bounded regardless of audit table size.
         $handle = fopen('php://temp', 'w+');
-        fputcsv($handle, [
+        fputcsv_safe($handle, [
             lang('App.auditCsvCreatedAt'),
             lang('App.auditCsvParish'),
             lang('App.auditCsvActor'),
@@ -63,7 +63,7 @@ class AuditLogExports extends AuditLogs
                 $actorName = lang('App.auditUserFallback', [(int) ($row['user_id'] ?? 0)]);
             }
 
-            fputcsv($handle, [
+            fputcsv_safe($handle, [
                 (string) ($row['created_at'] ?? ''),
                 (string) ($row['parish_name'] ?? ''),
                 $actorName,

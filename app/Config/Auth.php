@@ -16,11 +16,11 @@ namespace Config;
 use App\Models\UserModel;
 use CodeIgniter\Shield\Config\Auth as ShieldAuth;
 use CodeIgniter\Shield\Authentication\Actions\ActionInterface;
+use App\Authentication\ScopedEmail2FA;
 use App\Authentication\ScopedEmailActivator;
 use CodeIgniter\Shield\Authentication\Actions\EmailActivator;
 use CodeIgniter\Shield\Authentication\AuthenticatorInterface;
 use CodeIgniter\Shield\Authentication\Authenticators\AccessTokens;
-use CodeIgniter\Shield\Authentication\Authenticators\HmacSha256;
 use CodeIgniter\Shield\Authentication\Authenticators\JWT;
 use CodeIgniter\Shield\Authentication\Authenticators\Session;
 use App\Authentication\Passwords\SafePwnedValidator;
@@ -106,7 +106,13 @@ class Auth extends ShieldAuth
      */
     public array $actions = [
         'register' => ScopedEmailActivator::class,
-        'login'    => null,
+        // Login second factor: ScopedEmail2FA challenges only the audience
+        // selected by security.login_2fa_scope (default 'admins' — the four
+        // admin groups; 'all' challenges everyone; 'off' disables). It
+        // implements ConditionalActionInterface, so out-of-scope users and
+        // stale email_2fa identities are skipped automatically. The emailed
+        // code goes out through the scoped credential mailer.
+        'login'    => ScopedEmail2FA::class,
     ];
 
     /**
@@ -123,7 +129,10 @@ class Auth extends ShieldAuth
     public array $authenticators = [
         'tokens'  => AccessTokens::class,
         'session' => Session::class,
-        'hmac'    => HmacSha256::class,
+        // 'hmac' is intentionally disabled: no route uses the 'hmac' or
+        // 'chain' filter, and AuthToken::$hmacEncryptionKeys has no key
+        // provisioned, so HMAC identity secrets would be encrypted with
+        // an empty key.
         // 'jwt'     => JWT::class,
     ];
 
@@ -149,7 +158,7 @@ class Auth extends ShieldAuth
     public array $authenticationChain = [
         'session',
         'tokens',
-        'hmac',
+        // 'hmac', // disabled: no HMAC consumers; see $authenticators above.
         // 'jwt',
     ];
 

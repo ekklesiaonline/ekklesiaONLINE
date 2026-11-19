@@ -69,7 +69,7 @@ class SystemSettings extends BaseController
         ];
 
         $rules = [
-            'password_policy.min_length' => 'required|integer|greater_than_equal_to[1]|less_than_equal_to[128]',
+            'password_policy.min_length' => 'required|integer|greater_than_equal_to[12]|less_than_equal_to[128]',
             'password_policy.special_chars' => 'required|max_length[255]',
             'lockout.max_attempts' => 'required|integer|greater_than_equal_to[1]',
             'lockout.window_seconds' => 'required|integer|greater_than_equal_to[60]',

@@ -234,7 +234,7 @@ $currentUserId = (int) (function_exists('auth') && auth()?->id() ? auth()->id() 
 <?= $this->endSection() ?>
 
 <?= $this->section('scripts') ?>
-<script>
+<script {csp-script-nonce}>
     document.getElementById('editDioceseAdminModal').addEventListener('show.bs.modal', function (e) {
         const btn = e.relatedTarget;
         document.getElementById('editDioceseAdminForm').action = '<?= base_url('diocese/admins/update/') ?>' + btn.dataset.id;

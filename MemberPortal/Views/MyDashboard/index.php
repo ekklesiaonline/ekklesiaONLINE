@@ -531,7 +531,7 @@ if (!empty($attendance_summary['total_services']) && $attendance_summary['total_
 <?= $this->endSection() ?>
 
 <?= $this->section('scripts') ?>
-<script>
+<script {csp-script-nonce}>
 document.addEventListener('DOMContentLoaded', function () {
     const pledgeModal = document.getElementById('selfPledgeModal');
     if (!pledgeModal) return;

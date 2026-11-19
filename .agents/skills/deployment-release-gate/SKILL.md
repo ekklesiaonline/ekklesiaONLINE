@@ -27,6 +27,20 @@ sh build/restore_database.sh --check
 
 Also verify PHP 8.5 support, MySQL 8 compatibility, required extensions, `public/` as the web root, writable-directory ownership, HTTPS/trusted proxy settings, independent encryption keys, rate limits, monitoring/audit settings, SMTP configuration, backup settings, and device verification enabled in production.
 
+### Production `.env` verification
+
+Verify the production `.env` without printing secret values:
+
+- [ ] `CI_ENVIRONMENT = production` — this engages `Cookie.secure`, `app.forceGlobalSecureRequests`, and the Security CSRF `redirect` defaults; under any other value they silently stay off.
+- [ ] `app.baseURL` starts with `https://`.
+- [ ] `security.disableDeviceVerificationForTesting` is absent or `0`/`false`.
+- [ ] `app.forceGlobalSecureRequests` resolves true under the production environment.
+- [ ] `database.default.*` credentials are environment-specific — no `.env.example` `CHANGE_ME` placeholders or shared dev defaults.
+- [ ] `encryption.key` is set, high-entropy, and unique per environment; `encryption.blindIndexKey` is independent.
+- [ ] `Config\AuthToken::$hmacEncryptionKeys` is non-empty **if** the `hmac`/`chain` authenticator is enabled (currently disabled, so the keys are inert).
+
+Runtime tripwire: on every production boot, `App\Services\ProductionSecurityPosture` (registered on the `pre_system` event in `app/Config/Events.php`) logs a `critical` warning when `security.disableDeviceVerificationForTesting` is truthy or `app.baseURL` uses `http://`. Check `writable/logs/log-YYYY-MM-DD.log` after deploy — any such warning is a no-go signal.
+
 Never run `php spark config:check Database`, `Encryption`, or `Email` in logs because resolved secrets may be printed.
 
 ## No-go conditions

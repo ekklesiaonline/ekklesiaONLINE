@@ -546,7 +546,7 @@ $queueName = static function (array $row): string {
     </form></div>
 </div>
 
-<script>
+<script {csp-script-nonce}>
 (function () {
     const csrfMeta = document.querySelector('meta[name="csrf-token"]');
     const csrfHeader = document.querySelector('meta[name="csrf-header"]')?.content ?? 'X-CSRF-TOKEN';

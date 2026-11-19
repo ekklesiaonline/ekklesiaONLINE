@@ -248,7 +248,7 @@ $fullName = preg_replace('/\s+/', ' ', $fullName);
 <?= $this->endSection() ?>
 
 <?= $this->section('scripts') ?>
-<script>
+<script {csp-script-nonce}>
 (function () {
     var positiveCount = <?= (int) ($canonical['positive_standing_count'] ?? 0) ?>;
     var modalEl = document.getElementById('liftStandingModal');

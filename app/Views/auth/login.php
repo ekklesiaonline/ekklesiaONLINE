@@ -70,7 +70,7 @@
 <?= $this->endSection() ?>
 
 <?= $this->section('pageScripts') ?>
-<script>
+<script {csp-script-nonce}>
     (function () {
         const passwordInput = document.getElementById('loginPassword');
         const toggleButton = document.getElementById('passwordVisibilityToggle');

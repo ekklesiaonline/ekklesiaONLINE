@@ -1,5 +1,5 @@
 <?php /* Partial: directory bulk-select, member-tag, delete, and portal-enable scripts. Required: none (CSRF via meta/form token) */ ?>
-<script>
+<script {csp-script-nonce}>
     // ── Bulk select ──────────────────────────────────────────────────────────
     const selectAllChk = document.getElementById('people-select-all');
     const exportBtn = document.getElementById('bulk-export-btn');

@@ -69,6 +69,65 @@ final class MaintenanceModeFilterTest extends CIUnitTestCase
         $this->assertNull($result);
     }
 
+    /**
+     * @dataProvider allowedPathProvider
+     */
+    public function testAllowedPathsBypassMaintenance(string $path): void
+    {
+        service('systemSettings')->set('maintenance.enabled', true, 'boolean', 'system');
+        $this->injectUnauthenticatedAuth();
+
+        $filter = new MaintenanceMode();
+        $request = $this->makeRequest($path);
+
+        $result = $filter->before($request);
+
+        $this->assertNull($result);
+    }
+
+    /**
+     * @dataProvider blockedPrefixPathProvider
+     */
+    public function testPrefixOnlyLookalikePathsAreBlockedDuringMaintenance(string $path): void
+    {
+        service('systemSettings')->set('maintenance.enabled', true, 'boolean', 'system');
+        $this->injectUnauthenticatedAuth();
+
+        $filter = new MaintenanceMode();
+        $request = $this->makeRequest($path);
+
+        $result = $filter->before($request);
+
+        $this->assertInstanceOf(Response::class, $result);
+        $this->assertSame(503, $result->getStatusCode());
+    }
+
+    public static function allowedPathProvider(): iterable
+    {
+        yield 'login exact' => ['login'];
+        yield 'login sub-path' => ['login/magic-link'];
+        yield 'login verify sub-path' => ['login/verify-magic-link'];
+        yield 'logout exact' => ['logout'];
+        yield 'auth sub-path' => ['auth/a/show'];
+        yield 'assets sub-path' => ['assets/app.css'];
+        yield 'system settings exact' => ['system/settings'];
+        yield 'system settings sub-path' => ['system/settings/email'];
+        yield 'health exact' => ['health'];
+        yield 'health sub-path' => ['health/ready'];
+    }
+
+    public static function blockedPrefixPathProvider(): iterable
+    {
+        yield 'login prefix lookalike' => ['loginx'];
+        yield 'loginanything lookalike' => ['loginanything'];
+        yield 'health prefix lookalike' => ['healthcare'];
+        yield 'healthcheck lookalike' => ['healthcheck-x'];
+        yield 'system settings lookalike' => ['system/settingsx'];
+        yield 'logout lookalike' => ['logout-everything'];
+        yield 'assets lookalike' => ['assetsx/app.css'];
+        yield 'auth lookalike' => ['authx/a/show'];
+    }
+
     public function testFilterBlocksUnauthenticatedUserDuringMaintenance(): void
     {
         service('systemSettings')->set('maintenance.enabled', true, 'boolean', 'system');

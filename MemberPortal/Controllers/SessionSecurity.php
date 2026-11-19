@@ -23,17 +23,27 @@ class SessionSecurity extends BaseController
         if (!auth()->loggedIn()) {
             return $this->jsonResponse([
                 'success' => false,
+                'status'  => 'error',
                 'message' => 'Not authenticated.',
                 'error' => [
-                    'code' => 'UNAUTHENTICATED',
+                    'code'    => 'UNAUTHENTICATED',
                     'message' => 'Not authenticated.',
+                    'details' => [],
                 ],
+                'errors' => [],
+                'meta'   => ['http_status' => ResponseInterface::HTTP_UNAUTHORIZED, 'ts' => date('c')],
             ], ResponseInterface::HTTP_UNAUTHORIZED);
         }
 
         session()->set('_keepalive_ts', time());
 
-        return $this->jsonResponse(['success' => true, 'ts' => time()]);
+        return $this->jsonResponse([
+            'success' => true,
+            'status'  => 'success',
+            'message' => 'OK',
+            'ts'      => time(),
+            'meta'    => ['http_status' => 200, 'ts' => date('c')],
+        ]);
     }
 
     /**

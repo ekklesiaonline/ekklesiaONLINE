@@ -8,8 +8,14 @@ use CodeIgniter\Router\RouteCollection;
 
 // Scoped magic-link email sender: uses tenant From identity, system transport.
 // Registered BEFORE Shield's routes so this POST shadows Shield's default
-// login/magic-link handler (first registered route wins).
+// login/magic-link handler (first registered route wins). The GET verify
+// route is shadowed the same way so the deactivated-account gate in
+// ScopedMagicLinkController::verify() runs instead of Shield's verify().
 $routes->post('login/magic-link', '\\App\\Controllers\\Auth\\ScopedMagicLinkController::loginAction');
+// Keep Shield's 'verify-magic-link' route name on the shadow — the
+// magic-link email view builds its link via url_to('verify-magic-link'),
+// and a duplicate-URI registration drops the later (named) Shield route.
+$routes->get('login/verify-magic-link', '\\App\\Controllers\\Auth\\ScopedMagicLinkController::verify', ['as' => 'verify-magic-link']);
 
 // Load Shield authentication routes except register (overridden below).
 service('auth')->routes($routes, ['except' => ['register']]);

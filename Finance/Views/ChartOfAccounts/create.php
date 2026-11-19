@@ -98,7 +98,7 @@
 <?= $this->endSection() ?>
 
 <?= $this->section('scripts') ?>
-<script>
+<script {csp-script-nonce}>
 document.addEventListener("DOMContentLoaded", function () {
     const form = document.getElementById("chart-account-form");
     const accountType = document.getElementById("account_type");

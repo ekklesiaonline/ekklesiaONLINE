@@ -2,7 +2,7 @@
 
 <?= $this->section('content') ?>
 
-<style>
+<style {csp-style-nonce}>
     .people-name-link {
         text-decoration: none;
         font-size: inherit;
@@ -515,7 +515,7 @@ if (!in_array($selectedPerPage, [25, 50, 100], true)) {
 <?= $this->endSection() ?>
 
 <?= $this->section('scripts') ?>
-<script>
+<script {csp-script-nonce}>
     function contractErrorMessage(data, fallback) {
         if (!data || typeof data !== 'object') {
             return fallback;

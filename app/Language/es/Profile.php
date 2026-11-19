@@ -13,6 +13,7 @@ return [
     'joinParishSuccess'    => 'Tu solicitud de parroquia ha sido enviada para revisión.',
     'joinParishPendingApproval' => 'Aprobación Pendiente',
     'cannotAddDuplicateParish' => 'No puedes agregar tu parroquia principal o una parroquia que ya hayas solicitado como parroquia adicional.',
+    'affiliationOutsideDiocese' => 'Solo puedes agregar parroquias dentro de tu propia diócesis. Para unirte a una parroquia de otra diócesis, envía una solicitud de ingreso para revisión administrativa.',
     'joinParishPendingReview' => 'Ya tienes una solicitud de parroquia pendiente de revisión.',
     'joinParishAlreadyAssigned' => 'Ya tienes una parroquia asignada.',
     'joinParishRejected'   => 'Tu solicitud de parroquia anterior fue rechazada. Contacta a un administrador.',

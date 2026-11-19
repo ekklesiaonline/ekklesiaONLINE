@@ -59,7 +59,7 @@ $formatLocalizedDateTime = static function (?string $value, string $locale): str
 };
 ?>
 
-<style>
+<style {csp-style-nonce}>
     .dashboard-kpi-link {
         transition: transform 0.15s ease, box-shadow 0.15s ease;
         border-radius: 0.5rem;
@@ -374,7 +374,7 @@ $formatLocalizedDateTime = static function (?string $value, string $locale): str
 <?= $this->endSection() ?>
 
 <?= $this->section('scripts') ?>
-<script>
+<script {csp-script-nonce}>
     const parishLabels = <?= json_encode($sunday_attendance_labels ?? []) ?>;
     const parishAsaValues = <?= json_encode($sunday_attendance_averages ?? []) ?>;
     const parishAscValues = <?= json_encode($communion_attendance_averages ?? []) ?>;

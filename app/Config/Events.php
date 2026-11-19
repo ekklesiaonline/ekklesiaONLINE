@@ -2,6 +2,7 @@
 
 namespace Config;
 
+use App\Services\ProductionSecurityPosture;
 use CodeIgniter\Database\QueryInterface;
 use CodeIgniter\Debug\Toolbar\Collectors\Database as DatabaseCollector;
 use CodeIgniter\Events\Events;
@@ -55,6 +56,18 @@ Events::on('pre_system', static function (): void {
             });
         }
     }
+});
+
+/*
+ * --------------------------------------------------------------------
+ * Production Security Posture Guard.
+ * --------------------------------------------------------------------
+ * Log-only boot check: warns when production runs with dev-only or
+ * insecure configuration (e.g. the device-verification testing bypass
+ * flag, or an http:// app.baseURL). Never breaks the request.
+ */
+Events::on('pre_system', static function (): void {
+    ProductionSecurityPosture::warnIfMisconfigured();
 });
 
 Events::on('DBQuery', static function (QueryInterface $query): void {

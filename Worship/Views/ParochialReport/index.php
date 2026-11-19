@@ -799,7 +799,7 @@ $emailRecipient = trim((string) (old('recipient_email', $summary['report_prepare
     </div>
 </form>
 
-<script>
+<script {csp-script-nonce}>
     (function() {
         function numberValue(selector) {
             var element = document.querySelector(selector);

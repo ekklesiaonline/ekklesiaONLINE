@@ -111,7 +111,7 @@ $templateChannelLabels = $channelLabels + ['any' => 'Messages.channelAny'];
     </button>
 </form>
 
-<script>
+<script {csp-script-nonce}>
 (function () {
     var picker = document.getElementById('template_id');
     if (!picker) {

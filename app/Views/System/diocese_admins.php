@@ -229,7 +229,7 @@ $admins = $admins ?? [];
 <?= $this->endSection() ?>
 
 <?= $this->section('scripts') ?>
-<script>
+<script {csp-script-nonce}>
     function filterDioceseOptions(selectId, provinceId) {
         const sel = document.getElementById(selectId);
         if (!sel) {

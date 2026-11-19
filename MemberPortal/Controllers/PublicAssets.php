@@ -12,14 +12,42 @@ namespace MemberPortal\Controllers;
  */
 class PublicAssets extends PublicHome
 {
+    /**
+     * Upload prefixes readable through the /uploads/* catch-all, each mapped
+     * to a static access-check callable receiving the sanitized relative path.
+     *
+     * INTENTIONALLY EMPTY. Every directory written under writable/uploads is
+     * tenant-scoped private data already served by a dedicated, scope-checked
+     * endpoint:
+     *   profile/{userId}/avatar/**          → media/profile-picture/{userId}
+     *   parish/{id}/logo|banner/**        → media/parish-logo|parish-banner/{id}
+     *   event/{id}/cover|gallery/**       → media/event-cover/{id}
+     *   attachment/event/{id}/**          → media/event-attachment/{id}
+     *   attachment/expense/{parishId}/**  → expenses/receipt/{id} (Finance)
+     *   parishes/** · events/** (legacy)  → same dedicated endpoints
+     *
+     * Never add a prefix here to make an upload type "public": this endpoint
+     * cannot scope to a parish, so any allowlisted tree becomes readable by
+     * every authenticated session. New upload types must get a dedicated
+     * endpoint with its own scope check, following the media/* actions
+     * below — an entry in this map is an explicit, reviewed exception and
+     * must ship with a real access check, never `static fn() => true`.
+     *
+     * @var array<string, callable(string): bool>
+     */
+    private const PUBLIC_UPLOAD_PREFIX_CHECKS = [];
 
     /**
      * Serve uploaded files from writable/uploads directory.
+     *
+     * Allowlist-gated: only prefixes registered in
+     * self::PUBLIC_UPLOAD_PREFIX_CHECKS whose access check passes are
+     * served; everything else 404s.
      */
     public function serveUpload($filename)
     {
         // Uploads are tenant data: never serve them anonymously, even for
-        // paths outside the sensitive prefixes below.
+        // allowlisted prefixes.
         if (!auth()->loggedIn()) {
             throw \CodeIgniter\Exceptions\PageNotFoundException::forPageNotFound();
         }
@@ -29,25 +57,20 @@ class PublicAssets extends PublicHome
             throw \CodeIgniter\Exceptions\PageNotFoundException::forPageNotFound();
         }
 
-        // Sensitive uploads are private and must be served by dedicated endpoints.
-        if (
-            str_starts_with($relativePath, 'profile/')
-            || str_starts_with($relativePath, 'parish/')
-            || str_starts_with($relativePath, 'event/')
-            || str_starts_with($relativePath, 'attachment/')
-            || str_starts_with($relativePath, 'parishes/')
-            || str_starts_with($relativePath, 'events/')
-        ) {
-            throw \CodeIgniter\Exceptions\PageNotFoundException::forPageNotFound();
+        foreach (self::PUBLIC_UPLOAD_PREFIX_CHECKS as $prefix => $accessCheck) {
+            if (!str_starts_with($relativePath, $prefix) || !$accessCheck($relativePath)) {
+                continue;
+            }
+
+            $filepath = $this->resolveUploadPath($relativePath);
+            if ($filepath !== null && is_file($filepath)) {
+                return $this->buildInlineFileResponse($filepath, basename($filepath));
+            }
+
+            break;
         }
 
-        $filepath = $this->resolveUploadPath($relativePath);
-
-        if ($filepath === null || !is_file($filepath)) {
-            throw \CodeIgniter\Exceptions\PageNotFoundException::forPageNotFound();
-        }
-
-        return $this->buildInlineFileResponse($filepath, basename($filepath));
+        throw \CodeIgniter\Exceptions\PageNotFoundException::forPageNotFound();
     }
 
 

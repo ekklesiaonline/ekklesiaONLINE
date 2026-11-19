@@ -47,7 +47,7 @@ class SystemAdminUsers extends BaseController
 
         // MFA requirement: Check if user has 2FA enabled for sensitive operations
         if ($this->isMfaRequiredForAdminOperations() && !$this->isUserMfaEnabled(auth()->id())) {
-            return redirect()->back()->with('error', 'Multi-factor authentication is required for admin operations. Please enable 2FA in your account settings.');
+            return redirect()->back()->with('error', 'Multi-factor authentication is required for admin operations. This sign-in did not complete the email verification step — sign out and sign back in to verify, then retry.');
         }
 
         // Rate limiting: Allow max 5 admin creation attempts per hour per user
@@ -571,7 +571,7 @@ class SystemAdminUsers extends BaseController
         }
 
         $newPassword = (string) $this->request->getPost('new_password');
-        $passwordValidation = $this->validateAdminPassword($newPassword);
+        $passwordValidation = $this->validateAdminPassword($newPassword, (int) $userId);
 
         if (!$passwordValidation['ok']) {
             return redirect()->back()->withInput()->with('errors', ['new_password' => implode(' ', $passwordValidation['errors'])]);
@@ -584,7 +584,11 @@ class SystemAdminUsers extends BaseController
         }
 
         // Update password in auth_identities table
-        $this->adminUserService()->updatePasswordIdentity($userId, service('passwords')->hash($newPassword));
+        $this->adminUserService()->updatePasswordIdentity(
+            $userId,
+            service('passwords')->hash($newPassword),
+            auth()->id()
+        );
 
         $targetIdentity = db_connect()->table('auth_identities')
             ->select('secret')

@@ -12,7 +12,7 @@ class Standing extends BaseController
             return $redirect;
         }
 
-        $year = (int) ($this->request->getGet('year') ?? date('Y'));
+        $year = $this->boundStandingYear((int) ($this->request->getGet('year') ?? date('Y')));
 
         $parishId = (int) ($this->getOperationalParishId() ?? 0);
         if ($parishId <= 0 && !$this->isProvinceAdmin() && !$this->isDioceseAdmin()) {
@@ -32,6 +32,8 @@ class Standing extends BaseController
             'selected_year' => $year,
             'scope' => $scope,
             'summary' => $summary,
+            // Only elevated admins may run the system-wide recompute.
+            'can_refresh' => $this->isSystemAdmin() || $this->isProvinceAdmin() || $this->isDioceseAdmin(),
         ]));
     }
 
@@ -39,6 +41,15 @@ class Standing extends BaseController
     {
         if ($redirect = $this->requirePermission('member.edit')) {
             return $redirect;
+        }
+
+        // refreshForYear() deletes and rebuilds member_standing_summary for
+        // EVERY user in EVERY parish — there is no parish-scoped variant.
+        // Only elevated admins may trigger a system-wide recompute; a
+        // parish-scoped member.edit holder must not be able to rewrite
+        // (or DoS) every other tenant's standing rows.
+        if (!$this->isSystemAdmin() && !$this->isProvinceAdmin() && !$this->isDioceseAdmin()) {
+            return redirect()->to('/standing')->with('error', lang('App.errorUnauthorized'));
         }
 
         $year = (int) ($this->request->getPost('year') ?? date('Y'));
@@ -59,6 +70,7 @@ class Standing extends BaseController
             }
         }
 
+        $year = $this->boundStandingYear($year);
         $count = $standingModel->refreshForYear($year);
 
         return redirect()->to('/standing?year=' . $year)->with('success', lang('Standing.refreshSuccess', [$count, $scope]));
@@ -70,7 +82,7 @@ class Standing extends BaseController
             return $this->jsonResponse($this->apiErrorPayload(lang('App.errorForbidden'), 403, 'FORBIDDEN'), 403);
         }
 
-        $year = (int) ($this->request->getGet('year') ?? date('Y'));
+        $year = $this->boundStandingYear((int) ($this->request->getGet('year') ?? date('Y')));
         $parishId = (int) ($this->getOperationalParishId() ?? 0);
         if ($parishId <= 0 && !$this->isProvinceAdmin() && !$this->isDioceseAdmin()) {
             return $this->jsonResponse($this->apiErrorPayload(lang('App.errorNoParishScope'), 403, 'PARISH_SCOPE_REQUIRED'), 403);
@@ -92,6 +104,20 @@ class Standing extends BaseController
                 'summary' => $this->buildSummary($scope, $parishId, $year),
             ],
         ]);
+    }
+
+    /**
+     * Clamp the requested year to the window standing snapshots can plausibly
+     * cover; unbounded ints would run the global recompute over empty ranges.
+     */
+    private function boundStandingYear(int $year): int
+    {
+        $currentYear = (int) date('Y');
+        if ($year < 2000 || $year > $currentYear) {
+            return $currentYear;
+        }
+
+        return $year;
     }
 
     private function buildSummary(string $scope, int $parishId, int $year): array

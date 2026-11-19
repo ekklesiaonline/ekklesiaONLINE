@@ -152,7 +152,7 @@ $badge = $channelBadge[$template['channel']] ?? 'border border-secondary text-bo
 
 <?php $htmlBody = $preview['body_html'] ?? ''; ?>
 <?php if (!empty($htmlBody)): ?>
-    <script>
+    <script {csp-script-nonce}>
         document.addEventListener('DOMContentLoaded', function() {
             // Inject HTML into iframe once DOM is ready
             const frame = document.getElementById('htmlPreviewFrame');

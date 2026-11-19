@@ -1,4 +1,4 @@
-<style>
+<style {csp-style-nonce}>
     .profile-page {
         --profile-card-radius: 0.75rem;
         --profile-header-min-height: 56px;

@@ -304,7 +304,7 @@
     </div>
 </div>
 
-<script>
+<script {csp-script-nonce}>
     function previewMemberPicture(event) {
         const file = event.target.files[0];
         if (file) {

@@ -2,7 +2,7 @@
 
 <?= $this->section('content') ?>
 
-<style>
+<style {csp-style-nonce}>
     .hover-lift {
         transition: transform .15s ease, box-shadow .15s ease;
     }

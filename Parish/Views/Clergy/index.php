@@ -118,7 +118,7 @@
 <?php endif; ?>
 
 <?php if (!empty($canRequest)): ?>
-<script>
+<script {csp-script-nonce}>
 (function () {
     const input = document.getElementById('request_person_search');
     const hidden = document.getElementById('request_person_id');

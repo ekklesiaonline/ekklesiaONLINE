@@ -128,7 +128,7 @@ if (!in_array($selectedPerPage, [25, 50, 100], true)) {
     </div>
 </div>
 
-<script>
+<script {csp-script-nonce}>
     function contractErrorMessage(data, fallback) {
         if (!data || typeof data !== 'object') {
             return fallback;

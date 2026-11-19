@@ -85,7 +85,7 @@
     </div>
 </div>
 
-<script>
+<script {csp-script-nonce}>
     (function() {
         'use strict';
 

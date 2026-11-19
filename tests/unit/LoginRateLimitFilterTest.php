@@ -70,6 +70,55 @@ final class LoginRateLimitFilterTest extends CIUnitTestCase
         $this->assertNull($this->filter->before($this->makeRequest('GET', 'connect/abc123')));
     }
 
+    public function testGetVerifyMagicLinkIsThrottled(): void
+    {
+        // GET login/verify-magic-link performs a token lookup + delete per
+        // request — it is the one non-POST path this filter must throttle.
+        for ($i = 0; $i < self::LIMIT; $i++) {
+            $this->assertNull(
+                $this->filter->before($this->makeRequest('GET', 'login/verify-magic-link')),
+                "GET #" . ($i + 1) . " to login/verify-magic-link should be allowed."
+            );
+        }
+
+        $result = $this->filter->before($this->makeRequest('GET', 'login/verify-magic-link'));
+
+        $this->assertInstanceOf(ResponseInterface::class, $result);
+        $this->assertSame(429, $result->getStatusCode());
+    }
+
+    public function testGetVerifyMagicLinkSharesLoginBucket(): void
+    {
+        $this->exhaust('login');
+
+        $result = $this->filter->before($this->makeRequest('GET', 'login/verify-magic-link'));
+
+        $this->assertInstanceOf(ResponseInterface::class, $result);
+        $this->assertSame(429, $result->getStatusCode());
+    }
+
+    public function testOtherGetRequestsStillBypassWhenLoginBucketExhausted(): void
+    {
+        $this->exhaust('login');
+
+        // Only login/verify-magic-link is throttled on GET; form-rendering
+        // GETs must still pass through.
+        $this->assertNull($this->filter->before($this->makeRequest('GET', 'login')));
+        $this->assertNull($this->filter->before($this->makeRequest('GET', 'login/magic-link')));
+        $this->assertNull($this->filter->before($this->makeRequest('GET', 'register')));
+    }
+
+    public function testFilterConfigAppliesToVerifyMagicLinkEndpoint(): void
+    {
+        $config = new \Config\Filters();
+
+        $this->assertContains(
+            'login/verify-magic-link',
+            $config->filters['loginRateLimit']['before'] ?? [],
+            'loginRateLimit must cover login/verify-magic-link.'
+        );
+    }
+
     public function testConnectQuotaIsSharedAcrossParishTokens(): void
     {
         $this->exhaust('connect/parish-a');

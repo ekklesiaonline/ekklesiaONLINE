@@ -242,7 +242,7 @@ $status = $status ?? 'all';
 <?= $this->endSection() ?>
 
 <?= $this->section('scripts') ?>
-<script>
+<script {csp-script-nonce}>
     document.getElementById('editParishAdminModal').addEventListener('show.bs.modal', function (e) {
         const btn = e.relatedTarget;
         document.getElementById('editParishAdminForm').action = '<?= base_url('diocese/parish-admins/update/') ?>' + btn.dataset.id;

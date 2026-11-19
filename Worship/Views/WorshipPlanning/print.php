@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= lang('Worship.worshipPlan') ?></title>
-    <style>
+    <style {csp-style-nonce}>
         body {
             font-family: Arial, sans-serif;
             margin: 24px;
@@ -105,7 +105,7 @@
         </tbody>
     </table>
 
-    <script>
+    <script {csp-script-nonce}>
         window.addEventListener('load', function() {
             window.print();
         });

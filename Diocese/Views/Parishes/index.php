@@ -159,7 +159,7 @@ $mailingDiffersOffUrl = base_url('parish_list?' . http_build_query($chipParams))
     </div>
 </div>
 
-<script>
+<script {csp-script-nonce}>
     document.addEventListener('DOMContentLoaded', function() {
         var provinceSelect = document.getElementById('filterProvinceId');
         var dioceseSelect = document.getElementById('filterDioceseId');
@@ -411,7 +411,7 @@ $buildParishPageUrl = static function (int $targetPage, int $targetPerPage) use 
         </div>
     </div>
 
-    <script>
+    <script {csp-script-nonce}>
         const deleteParishUnableLabel = <?= json_encode(lang('Parishes.textUnableDeleteParish')) ?>;
         const deleteParishUnexpectedLabel = <?= json_encode(lang('Parishes.textUnexpectedError')) ?>;
         const deleteParishImpactIntroTemplate = <?= json_encode(lang('Parishes.textDeleteImpactIntro', ['{name}'])) ?>;

@@ -1,5 +1,5 @@
 <?php /* Partial: pending-registrations bulk action modal script. Required: none */ ?>
-<script>
+<script {csp-script-nonce}>
     (function() {
         const modalEl = document.getElementById('pendingActionModal');
         const modalTitle = document.getElementById('pendingActionModalLabel');

@@ -325,7 +325,7 @@
     </div>
 </div>
 
-<script>
+<script {csp-script-nonce}>
     function previewEditMemberPicture(event) {
         const file = event.target.files[0];
         if (file) {

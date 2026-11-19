@@ -524,7 +524,7 @@ $canEdit = auth()->user()->can('visitor.edit');
 <?= $this->endSection() ?>
 
 <?= $this->section('scripts') ?>
-<script>
+<script {csp-script-nonce}>
     (function() {
         'use strict';
 
@@ -967,7 +967,7 @@ $canEdit = auth()->user()->can('visitor.edit');
 <head>
 <meta charset="utf-8">
 <title><?= esc(lang('Visitors.printLabelTitle'), 'js') ?></title>
-<style>
+<style {csp-style-nonce}>
   @page { size: 4in 2in; margin: 0.25in; }
   body { font-family: Arial, sans-serif; font-size: 14pt; margin: 0; padding: 0.25in; }
   .label-name { font-weight: bold; margin-bottom: 4px; }
@@ -987,7 +987,7 @@ $canEdit = auth()->user()->can('visitor.edit');
 </script>
 
 <!-- Inline print for address labels (media print hook) -->
-<style>
+<style {csp-style-nonce}>
     @media print {
         /* Suppress main layout — only #printLabelArea is targeted via popup window */
     }

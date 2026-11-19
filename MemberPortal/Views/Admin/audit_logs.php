@@ -2,7 +2,7 @@
 
 <?= $this->section('content') ?>
 
-<style>
+<style {csp-style-nonce}>
 .audit-action-badge {
     font-size: 0.75rem;
     font-weight: 500;

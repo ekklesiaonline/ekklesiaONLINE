@@ -207,7 +207,7 @@ class ProvinceDioceseAdmins extends BaseController
             return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
         }
         $password = (string) $this->request->getPost('new_password');
-        $validation = $this->validateAdminPassword($password);
+        $validation = $this->validateAdminPassword($password, $userId);
         if (!$validation['ok']) {
             return redirect()->back()->withInput()->with('errors', ['new_password' => implode(' ', $validation['errors'])]);
         }
@@ -224,6 +224,16 @@ class ProvinceDioceseAdmins extends BaseController
             'force_reset' => 1,
             'updated_at' => date('Y-m-d H:i:s'),
         ]);
+
+        // Operator-chosen passwords must be rotated on first login, and any
+        // existing sessions/devices for the target are invalidated so a
+        // reset cannot leave stale access behind.
+        try {
+            (new \App\Services\TrustedDeviceService())->revokeAll($userId, null, (int) auth()->id());
+            model('UserSessionModel')->removeAllForUser($userId);
+        } catch (\Throwable $e) {
+            log_message('warning', 'Post-reset session/trust cleanup failed: {error}', ['error' => $e->getMessage()]);
+        }
 
         if ($identity !== null) {
             (new \App\Services\SecurityNotificationService())

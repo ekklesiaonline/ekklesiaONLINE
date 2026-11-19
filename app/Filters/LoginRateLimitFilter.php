@@ -14,8 +14,11 @@ use CodeIgniter\HTTP\ResponseInterface;
  * limit is exceeded.
  *
  * Applied via Filters.php $filters to 'login', 'login/magic-link',
- * 'register', 'session/device-verify*', and 'connect/*' URI patterns.
- * Only fires on POST requests; GET requests (showing the form) pass through.
+ * 'login/verify-magic-link', 'register', 'session/device-verify*', and
+ * 'connect/*' URI patterns.
+ * Fires on POST requests; GET requests pass through EXCEPT
+ * 'login/verify-magic-link', which performs a token lookup + delete per
+ * request and therefore must also be throttled.
  * 'connect/*' requests are counted in a separate per-IP bucket so public
  * connect-card submissions cannot block authentication.
  */
@@ -29,8 +32,10 @@ class LoginRateLimitFilter implements FilterInterface
 
     public function before(RequestInterface $request, $arguments = null)
     {
-        // Only rate-limit write (POST) requests.
-        if (strtoupper((string) $request->getMethod()) !== 'POST') {
+        // Only rate-limit write (POST) requests, plus GET on the magic-link
+        // verify endpoint (each request performs a token lookup + delete).
+        if (strtoupper((string) $request->getMethod()) !== 'POST'
+            && ! self::isMagicLinkVerifyPath($request)) {
             return null;
         }
 
@@ -68,21 +73,36 @@ class LoginRateLimitFilter implements FilterInterface
     }
 
     /**
+     * GET on the magic-link verify endpoint performs a DB lookup and
+     * delete per request — the only non-POST path this filter throttles.
+     */
+    private static function isMagicLinkVerifyPath(RequestInterface $request): bool
+    {
+        return self::requestPath($request) === 'login/verify-magic-link';
+    }
+
+    /**
      * Public connect-card intake uses its own counter so card submissions
      * cannot exhaust the shared authentication quota (and vice versa).
      */
     private static function bucketPrefix(RequestInterface $request): string
     {
-        $path = method_exists($request, 'getPath')
-            ? (string) $request->getPath()
-            : (string) $request->getUri()->getPath();
-        $path = ltrim($path, '/');
+        $path = self::requestPath($request);
 
         if ($path === 'connect' || str_starts_with($path, 'connect/')) {
             return 'connect_rl_';
         }
 
         return 'login_rl_';
+    }
+
+    private static function requestPath(RequestInterface $request): string
+    {
+        $path = method_exists($request, 'getPath')
+            ? (string) $request->getPath()
+            : (string) $request->getUri()->getPath();
+
+        return ltrim($path, '/');
     }
 
     public function after(RequestInterface $request, ResponseInterface $response, $arguments = null)

@@ -42,7 +42,7 @@ $specialRegexJs     = preg_replace_callback('/[\\\\[\]\-\^]/', static fn($m) => 
     <div id="<?= $feedbackId ?>" class="small text-danger d-none"><?= lang('System.passwordsDoNotMatch') ?></div>
 </div>
 
-<script>
+<script {csp-script-nonce}>
 document.addEventListener('DOMContentLoaded', function () {
     const password = document.getElementById('<?= $passwordId ?>');
     const confirmWrapper = document.getElementById('<?= $confirmWrapperId ?>');

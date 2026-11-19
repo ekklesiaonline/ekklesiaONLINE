@@ -242,7 +242,7 @@ $openModal = (string) session('open_modal');
 <?= $this->endSection() ?>
 
 <?= $this->section('scripts') ?>
-<script>
+<script {csp-script-nonce}>
 document.addEventListener('DOMContentLoaded', function () {
     const modalId = <?= json_encode($openModal) ?>;
     if (!modalId) {

@@ -367,8 +367,8 @@ final class SystemAdminCreateAdminUiIntegrationTest extends CIUnitTestCase
         ]);
 
         $controller = $this->makeController('post', [
-            'new_password' => 'NewPassw0rd!234',
-            'new_password_confirm' => 'NewPassw0rd!234',
+            'new_password' => 'Xq7!mZ9vB2pL4nW8',
+            'new_password_confirm' => 'Xq7!mZ9vB2pL4nW8',
         ]);
         $response = $controller->resetPassword($targetUserId);
 
@@ -382,6 +382,130 @@ final class SystemAdminCreateAdminUiIntegrationTest extends CIUnitTestCase
             ->getRowArray();
         $this->assertNotNull($identity);
         $this->assertNotEmpty($identity['secret2']);
+    }
+
+    public function testResetPasswordSetsForceResetAndRevokesSessionsAndDevices(): void
+    {
+        $actorUserId = $this->insertUser('system.admin.actor.reset2', 'system.admin.actor.reset2@example.org');
+        $this->insertProfile($actorUserId, null, null, 'System', 'Admin');
+        $this->injectSystemAdminAuth($actorUserId);
+
+        $provinceId = $this->insertProvince('Province Reset Sessions');
+        $targetUserId = $this->insertUser('province.admin.reset2', 'province.admin.reset2@example.org');
+        $this->insertProfile($targetUserId, $provinceId, null, 'Paula', 'Province-Reset2');
+        $this->db->table($this->resolveTableName('auth_groups_users'))->insert([
+            'user_id' => $targetUserId,
+            'group' => 'provinceadmin',
+            'created_at' => date('Y-m-d H:i:s'),
+        ]);
+
+        // Seed a tracked session and an active trusted device for the target.
+        // ensureSessionDeviceTables() only creates the tables when the shared
+        // in-memory database does not already provide them via migrations.
+        $this->ensureSessionDeviceTables();
+        $now = date('Y-m-d H:i:s');
+        // Include ip_address/session_id: when another test class has already
+        // created user_session via Forge or a migration, those columns are
+        // NOT NULL in the shared in-memory database.
+        $sessionPayload = [
+            'user_id' => $targetUserId,
+            'session_token' => 'tok-reset-' . $targetUserId,
+            'ip_address' => '127.0.0.1',
+            'user_agent' => 'reset-test-agent',
+            'device_fingerprint' => 'fp-reset-' . $targetUserId,
+            'is_new_device' => 0,
+            'last_active' => $now,
+            'created_at' => $now,
+        ];
+        $sessionTable = $this->resolveTableName('user_session');
+        $sessionColumns = array_map('strtolower', $this->db->getFieldNames($sessionTable));
+        if (in_array('session_id', $sessionColumns, true)) {
+            $sessionPayload['session_id'] = 'sid-reset-' . $targetUserId;
+        }
+        $this->db->table($sessionTable)->insert(
+            array_intersect_key($sessionPayload, array_flip($sessionColumns))
+        );
+        $this->db->table($this->resolveTableName('user_trusted_device'))->insert([
+            'user_id' => $targetUserId,
+            'selector' => 'sel-reset-' . $targetUserId,
+            'token_hash' => hash('sha256', 'validator'),
+            'expires_at' => date('Y-m-d H:i:s', time() + 86400),
+            'first_seen_at' => $now,
+            'last_seen_at' => $now,
+            'created_at' => $now,
+            'updated_at' => $now,
+        ]);
+
+        $controller = $this->makeController('post', [
+            'new_password' => 'Xq7!mZ9vB2pL4nW8',
+            'new_password_confirm' => 'Xq7!mZ9vB2pL4nW8',
+        ]);
+        $response = $controller->resetPassword($targetUserId);
+
+        $this->assertInstanceOf(RedirectResponse::class, $response);
+
+        $identity = $this->db->table($this->resolveTableName('auth_identities'))
+            ->where('user_id', $targetUserId)
+            ->where('type', 'email_password')
+            ->get()
+            ->getRowArray();
+        $this->assertNotNull($identity);
+        $this->assertSame(1, (int) ($identity['force_reset'] ?? 0), 'Operator-chosen password must force rotation on first login.');
+
+        $sessionCount = (int) $this->db->table($this->resolveTableName('user_session'))
+            ->where('user_id', $targetUserId)
+            ->countAllResults();
+        $this->assertSame(0, $sessionCount, 'Admin reset must delete tracked sessions for the target.');
+
+        $device = $this->db->table($this->resolveTableName('user_trusted_device'))
+            ->where('user_id', $targetUserId)
+            ->get()
+            ->getRowArray();
+        $this->assertNotNull($device);
+        $this->assertNotNull($device['revoked_at'] ?? null, 'Admin reset must revoke trusted devices for the target.');
+    }
+
+    /**
+     * Create db_user_session / db_user_trusted_device only when the shared
+     * in-memory database does not already provide them. The query builder
+     * (and the models/services under test) always targets the prefixed
+     * physical name, so only the db_-prefixed table is created here.
+     */
+    private function ensureSessionDeviceTables(): void
+    {
+        if (!$this->db->tableExists($this->createTableName('user_session'))) {
+            $this->db->query('CREATE TABLE IF NOT EXISTS ' . $this->createTableName('user_session') . ' (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER NOT NULL,
+                session_token TEXT NULL,
+                session_id TEXT NULL,
+                ip_address TEXT NULL,
+                user_agent TEXT NULL,
+                device_fingerprint TEXT NULL,
+                is_new_device INTEGER DEFAULT 0,
+                last_active TEXT NULL,
+                created_at TEXT NULL,
+                updated_at TEXT NULL
+            )');
+        }
+
+        if (!$this->db->tableExists($this->createTableName('user_trusted_device'))) {
+            $this->db->query('CREATE TABLE IF NOT EXISTS ' . $this->createTableName('user_trusted_device') . ' (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER NOT NULL,
+                selector TEXT NULL,
+                token_hash TEXT NULL,
+                display_name TEXT NULL,
+                last_ip_address TEXT NULL,
+                first_seen_at TEXT NULL,
+                last_seen_at TEXT NULL,
+                expires_at TEXT NULL,
+                revoked_at TEXT NULL,
+                revoked_by INTEGER NULL,
+                created_at TEXT NULL,
+                updated_at TEXT NULL
+            )');
+        }
     }
 
     public function testStoreAdminUserCreatesSystemAdmin(): void

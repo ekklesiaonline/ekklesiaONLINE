@@ -9,6 +9,9 @@ use CodeIgniter\Router\RouteCollection;
  */
 $routes->get('/', '\\MemberPortal\\Controllers\\PublicHome::index');
 $routes->get('locale/set/(:segment)', '\\MemberPortal\\Controllers\\PublicLocale::set/$1');
+// Upload catch-all is intentionally a hard 404: uploads under
+// writable/uploads are tenant data served only via the scoped media/*
+// endpoints below (see PublicAssets::PUBLIC_UPLOAD_PREFIX_CHECKS).
 $routes->get('uploads/(:any)', '\\MemberPortal\\Controllers\\PublicAssets::serveUpload/$1');
 $routes->get('session/keepalive', '\\MemberPortal\\Controllers\\SessionSecurity::keepalive');
 

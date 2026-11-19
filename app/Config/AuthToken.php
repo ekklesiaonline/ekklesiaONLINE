@@ -100,6 +100,13 @@ class AuthToken extends ShieldAuthToken
      *
      * [key_name => ['key' => key_value]]
      * or [key_name => ['key' => key_value, 'driver' => driver, 'digest' => digest]]
+     *
+     * NOTE: HMAC auth is DISABLED in this application — the 'hmac'
+     * authenticator is not registered in Config\Auth::$authenticators and
+     * no route uses the 'hmac' or 'chain' filter. These keys (and the other
+     * hmac* settings below) are inert. If HMAC is ever re-enabled, a real
+     * key MUST be provisioned here first (e.g. via env), otherwise identity
+     * secret keys would be encrypted with an empty key.
      */
     public $hmacEncryptionKeys = [
         'k1' => [

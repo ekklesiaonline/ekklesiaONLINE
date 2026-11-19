@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <meta name="csrf-token" content="<?= csrf_hash() ?>">
     <meta name="csrf-header" content="X-CSRF-TOKEN">
-    <script>
+    <script {csp-script-nonce}>
         (function () {
             var storageKey = 'ekklesiaONLINE-theme';
             var savedTheme = null;
@@ -78,7 +78,7 @@ $returnUrl = current_url() . ((string) service('request')->getServer('QUERY_STRI
 
     <?= $this->renderSection('pageScripts') ?>
 
-    <script>
+    <script {csp-script-nonce}>
         (function () {
             var storageKey = 'ekklesiaONLINE-theme';
             var root = document.documentElement;
@@ -111,7 +111,7 @@ $returnUrl = current_url() . ((string) service('request')->getServer('QUERY_STRI
     </script>
 
     <!-- Bootstrap core JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+    <script {csp-script-nonce} src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
 </body>
 
 </html>

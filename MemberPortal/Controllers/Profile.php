@@ -236,8 +236,63 @@ class Profile extends BaseController
         $primaryParishId = (int) ($profile['parish_id'] ?? 0);
         $pendingParishId = (int) ($state['registration_request']['parish_id'] ?? 0);
         $affiliations = $this->request->getPost('affiliations') ?? [];
+
+        // Resolve the member's existing live affiliations and permitted
+        // dioceses up front: a posted parish the member is not already
+        // affiliated with is only acceptable inside a diocese the member
+        // already belongs to (registered, pending, primary, or existing
+        // secondary). Anything else must go through the reviewed
+        // join-parish flow — otherwise self-service could inject a live
+        // parish_affiliation row into any parish (cross-tenant IDOR).
+        $db = db_connect();
+        $existingParishIds = array_map('intval', array_column(
+            $db->table('parish_affiliation')
+                ->select('parish_id')
+                ->where('linked_user_id', (int) $user->id)
+                ->where('deleted_at', null)
+                ->get()
+                ->getResultArray(),
+            'parish_id'
+        ));
+
+        $postedParishIds = [];
+        foreach ($affiliations as $affiliation) {
+            $postedId = (int) ($affiliation['parish_id'] ?? 0);
+            if ($postedId > 0) {
+                $postedParishIds[] = $postedId;
+            }
+        }
+
+        $lookupParishIds = array_values(array_filter(array_unique(array_merge(
+            $postedParishIds,
+            $existingParishIds,
+            [$primaryParishId, $pendingParishId]
+        ))));
+
+        $dioceseByParish = [];
+        if ($lookupParishIds !== []) {
+            foreach ($db->table('parish')
+                ->select('id, diocese_id')
+                ->whereIn('id', $lookupParishIds)
+                ->where('deleted_at', null)
+                ->get()
+                ->getResultArray() as $parishRow) {
+                $dioceseByParish[(int) $parishRow['id']] = (int) ($parishRow['diocese_id'] ?? 0);
+            }
+        }
+
+        $allowedDioceses = array_values(array_unique(array_filter(array_merge(
+            [
+                (int) ($profile['diocese_id'] ?? 0),
+                (int) ($state['registration_request']['diocese_id'] ?? 0),
+            ],
+            array_map(
+                static fn(int $parishId): int => $dioceseByParish[$parishId] ?? 0,
+                array_merge($existingParishIds, [$primaryParishId, $pendingParishId])
+            )
+        ))));
+
         $filteredAffiliations = [];
-        $parishModel = model('ParishModel');
         foreach ($affiliations as $affiliation) {
             $affParishId = (int) ($affiliation['parish_id'] ?? 0);
             if ($affParishId === $primaryParishId || $affParishId === $pendingParishId) {
@@ -245,8 +300,12 @@ class Profile extends BaseController
             }
             if ($affParishId > 0) {
                 // Reject parish ids that do not resolve to a real parish.
-                if ($parishModel->find($affParishId) === null) {
+                if (!isset($dioceseByParish[$affParishId])) {
                     return redirect()->back()->withInput()->with('error', lang('App.parishNotFound'));
+                }
+                if (!in_array($affParishId, $existingParishIds, true)
+                    && !in_array($dioceseByParish[$affParishId], $allowedDioceses, true)) {
+                    return redirect()->back()->withInput()->with('error', lang('Profile.affiliationOutsideDiocese'));
                 }
                 $filteredAffiliations[] = [
                     'parish_id' => $affParishId,

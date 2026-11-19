@@ -18,6 +18,9 @@ class AnnualPledges extends BaseController
 
         $parishId = (int) ($this->getOperationalParishId() ?? 0);
         $year = (int) ($this->request->getGet('year') ?? date('Y'));
+        if ($year < 2000 || $year > (int) date('Y') + 1) {
+            $year = (int) date('Y');
+        }
         $search = trim((string) ($this->request->getGet('search') ?? ''));
         $page = max(1, (int) ($this->request->getGet('page') ?? 1));
         $perPage = (int) ($this->request->getGet('per_page') ?? 25);
@@ -110,8 +113,18 @@ class AnnualPledges extends BaseController
             return redirect()->back()->withInput()->with('error', lang('App.errorNoParishScope'));
         }
 
+        // The posted user_id must hold a live affiliation with the attribution
+        // parish — otherwise a finance operator could file pledge rows against
+        // arbitrary users in other parishes (cross-tenant IDOR).
+        $targetUserId = (int) $this->request->getPost('user_id');
+        $isAffiliated = model(\App\Models\MemberParishAffiliationModel::class)
+            ->isUserAffiliatedWithParish($targetUserId, $attributionParishId, false);
+        if (!$isAffiliated) {
+            return redirect()->back()->withInput()->with('error', lang('Pledges.memberNotInParish'));
+        }
+
         $payload = [
-            'user_id' => (int) $this->request->getPost('user_id'),
+            'user_id' => $targetUserId,
             'parish_id' => $attributionParishId,
             'pledge_year' => (int) $this->request->getPost('pledge_year'),
             'pledged_amount' => $this->request->getPost('pledged_amount') !== '' ? (float) $this->request->getPost('pledged_amount') : null,

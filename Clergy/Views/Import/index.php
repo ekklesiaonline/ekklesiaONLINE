@@ -235,7 +235,7 @@ $rotatedUrl   = session('card_token_rotated');
 
 </div><!-- /row -->
 
-<script>
+<script {csp-script-nonce}>
     (function() {
         const i18n = {
             linkCopied: '<?= esc(lang('Visitors.importLinkCopied'), 'js') ?>',

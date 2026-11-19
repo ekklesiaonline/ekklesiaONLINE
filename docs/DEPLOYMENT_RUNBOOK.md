@@ -34,6 +34,18 @@ Validate required values without printing secret values. The deployment must con
 
 `security.disableDeviceVerificationForTesting` must remain `0` in production.
 
+Verify the production `.env` without printing secret values:
+
+- `CI_ENVIRONMENT = production` — this engages `Cookie.secure`, `app.forceGlobalSecureRequests`, and the Security CSRF `redirect` defaults; under any other value all three silently stay off.
+- `app.baseURL` begins with `https://`.
+- `security.disableDeviceVerificationForTesting` is absent or `0`/`false`.
+- `app.forceGlobalSecureRequests` resolves true under the production environment.
+- `database.default.*` uses environment-specific credentials — no `.env.example` `CHANGE_ME` placeholders or shared dev defaults.
+- `encryption.key` is set, high-entropy, and unique per environment; `encryption.blindIndexKey` is independent.
+- `Config\AuthToken::$hmacEncryptionKeys` is non-empty if the `hmac`/`chain` authenticator is enabled (it is currently disabled, so the keys are inert; a real key must be provisioned before HMAC is ever re-enabled).
+
+Runtime tripwire: on every production boot, `App\Services\ProductionSecurityPosture` (registered on the `pre_system` event in `app/Config/Events.php`) logs a `critical` warning when `security.disableDeviceVerificationForTesting` is truthy or `app.baseURL` uses `http://`. A warning in `writable/logs/log-YYYY-MM-DD.log` after deploy is a no-go signal.
+
 Run explicit configuration checks:
 
 ```bash
@@ -276,7 +288,7 @@ Do not run `php spark config:check Email`; it prints resolved secrets.
 - [ ] Replace `family.enforceSingleFamilyMembership` with `families.enforceSingleFamilyMembership` and record the local policy decision.
 - [ ] Confirm local development environment, base URL, database, independent encryption keys, monitoring, and rate limits.
 - [ ] Configure staging with `CI_ENVIRONMENT = production`, HTTPS URL, trusted proxies, MySQL, independent encryption keys, SMTP, monitoring, audit, and backup values.
-- [ ] Confirm staging keeps `security.disableDeviceVerificationForTesting = 0`.
+- [ ] Confirm staging and production keep `security.disableDeviceVerificationForTesting` absent or `0`/`false`, `CI_ENVIRONMENT = production`, and `app.baseURL` on `https://`; confirm the production log contains no critical `ProductionSecurityPosture` warning after boot.
 - [ ] Repeat the environment review with production-specific secrets and confirm no `CHANGE_ME` values remain.
 - [ ] Confirm production `.env` is untracked and writable directories have service-account ownership/group access without world-writable permissions.
 - [ ] Audit and remediate multiple family memberships where necessary.

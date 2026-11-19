@@ -455,7 +455,7 @@ $buildSummaryPageUrl = static function (int $targetPage, int $targetPerPage) use
 </div>
 
 <?php if (!empty($sunday_attendance_has_data)): ?>
-<script>
+<script {csp-script-nonce}>
 document.addEventListener('DOMContentLoaded', function () {
     const ctx = document.getElementById('dioceseSundayChart');
     if (!ctx || typeof Chart === 'undefined') return;
@@ -492,7 +492,7 @@ document.addEventListener('DOMContentLoaded', function () {
 </script>
 <?php endif; ?>
 
-<script>
+<script {csp-script-nonce}>
 // Audit log client-side filter
 document.querySelectorAll('[data-audit-filter]').forEach(function (btn) {
     btn.addEventListener('click', function () {

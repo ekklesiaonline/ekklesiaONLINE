@@ -275,7 +275,7 @@
     </div>
 <?php endif; ?>
 
-<script>
+<script {csp-script-nonce}>
     (function() {
         'use strict';
 

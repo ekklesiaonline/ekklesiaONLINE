@@ -45,7 +45,7 @@ $markNoPortal    = (bool) ($mark_no_portal ?? false);
     <?php endforeach; ?>
 </select>
 
-<script>
+<script {csp-script-nonce}>
 (function() {
     var selectId = <?= json_encode($selectId) ?>;
 

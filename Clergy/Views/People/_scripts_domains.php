@@ -1,5 +1,5 @@
 <?php /* Partial: shared modal/AJAX script for donations, pledges, sacraments, sacrament participants, and family actions. Required: $profileId */ ?>
-<script>
+<script {csp-script-nonce}>
 (function() {
     function getModalInstance(modalEl) {
         if (!modalEl || typeof window.bootstrap === 'undefined' || typeof window.bootstrap.Modal !== 'function') {

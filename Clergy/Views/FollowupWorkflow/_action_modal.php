@@ -111,7 +111,7 @@ $isUpstream = $isUpstream ?? false;
     </div>
 </div>
 
-<script>
+<script {csp-script-nonce}>
     document.addEventListener('DOMContentLoaded', function() {
         const isUpstream = <?= $isUpstream ? 'true' : 'false' ?>;
         const csrfMeta = document.querySelector('meta[name="csrf-token"]');

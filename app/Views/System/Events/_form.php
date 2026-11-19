@@ -216,7 +216,7 @@ $fieldError = static function (string $key) use ($sessionErrors): ?string {
     </div>
 </div>
 
-<script>
+<script {csp-script-nonce}>
     (() => {
         const scheduleInputs = Array.from(document.querySelectorAll('input[name="schedule_mode"]'));
         const schedulePanels = Array.from(document.querySelectorAll('[data-schedule-panel]'));

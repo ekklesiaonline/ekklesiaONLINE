@@ -185,7 +185,7 @@ $eventsFiltersActive = trim((string) ($search ?? '')) !== '' || trim((string) ($
     </nav>
 <?php endif; ?>
 
-<script>
+<script {csp-script-nonce}>
     const eventsDeleteCsrfName = '<?= csrf_token() ?>';
     const eventsDeleteCsrfHash = '<?= csrf_hash() ?>';
 

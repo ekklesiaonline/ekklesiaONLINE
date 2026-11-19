@@ -47,6 +47,8 @@ This file is the single source of truth for which documentation should be retain
   Canonical ordinary/episcopal authorization policy: shared schema boundaries, office approval, delegation, `canon_to_ordinary`, and the migration/activation runbook.
 - `docs/DEANERY_AUTHORIZATION.md`
   Canonical deanery scoping policy: deanery creation/membership, regional-dean office scope, and deanery routes.
+- `docs/CONTENT_SECURITY_POLICY.md`
+  Canonical CSP directive set, approved external origins, and the `{csp-script-nonce}`/`{csp-style-nonce}` view convention.
 
 ## Removed as Redundant or Historical
 
@@ -69,6 +71,7 @@ The following were removed because they were superseded, iterative pass artifact
 - `docs/role_based_mudule_strtucture_report.md`
 - `README_EKKLESIAHELP.md`
 - `docs/EPISCOPAL_PAROCHIAL_REPORT_REFERENCE.md`
+- `MEMBERPORTAL_SECURITY_AUDIT.md` (invariants live in `.devin/skills/member-portal-security/SKILL.md` and `docs/SYSTEM_ADMINS_PAGE_WORKFLOW_2026-07-14.md`)
 
 ## Rule for Future Docs
 

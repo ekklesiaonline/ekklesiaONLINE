@@ -31,6 +31,15 @@ class ScopedEmailActivator extends EmailActivator
      */
     private const RESEND_COOLDOWN_SECONDS = 60;
 
+    /**
+     * Default maximum activation emails per recipient address per rolling
+     * window. Tunable via env('security.activationEmailMaxPerDay').
+     */
+    private const ACTIVATION_EMAIL_MAX_PER_DAY = 5;
+
+    /** Rolling window for the per-recipient send cap, in seconds (24h). */
+    private const ACTIVATION_EMAIL_WINDOW_SECONDS = 86400;
+
     /** Maximum wrong-code entries before the activation code is invalidated. */
     private const MAX_VERIFY_ATTEMPTS = 5;
 
@@ -59,6 +68,14 @@ class ScopedEmailActivator extends EmailActivator
         if ($sentAt > 0 && (time() - $sentAt) < self::RESEND_COOLDOWN_SECONDS) {
             // Within the resend cooldown: keep the previously emailed code
             // valid and just re-render the code-entry form.
+            return $this->view(setting('Auth.views')['action_email_activate_show'], ['user' => $user]);
+        }
+
+        if ($this->activationSendLimitReached($userEmail)) {
+            // Per-recipient daily cap reached: keep the previously emailed
+            // code usable and just re-render the code-entry form — do not
+            // issue a new identity or send another email, and do not reveal
+            // that the cap triggered.
             return $this->view(setting('Auth.views')['action_email_activate_show'], ['user' => $user]);
         }
 
@@ -155,5 +172,31 @@ class ScopedEmailActivator extends EmailActivator
 
         return redirect()->to(config('Auth')->registerRedirect())
             ->with('message', lang('Auth.registerSuccess'));
+    }
+
+    /**
+     * Per-recipient send cap: at most N activation emails per address per
+     * rolling window, regardless of source session/IP. Prevents mail
+     * bombing a victim mailbox by scripting registrations/resends from
+     * fresh sessions, which the per-session resend cooldown cannot stop.
+     * Mirrors ScopedMagicLinkController::magicLinkSendLimitReached().
+     *
+     * Tunable via env('security.activationEmailMaxPerDay'); defaults to 5.
+     */
+    private function activationSendLimitReached(string $email): bool
+    {
+        $key = 'activation_email_rl_' . md5(strtolower($email));
+
+        $maxPerDay = (int) (env('security.activationEmailMaxPerDay') ?: self::ACTIVATION_EMAIL_MAX_PER_DAY);
+        if ($maxPerDay <= 0) {
+            $maxPerDay = self::ACTIVATION_EMAIL_MAX_PER_DAY;
+        }
+
+        // Atomic (locked) fixed-window reservation — see RecipientSendLimiter.
+        return \App\Libraries\RecipientSendLimiter::reserve(
+            $key,
+            $maxPerDay,
+            self::ACTIVATION_EMAIL_WINDOW_SECONDS,
+        );
     }
 }

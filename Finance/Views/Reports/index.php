@@ -418,7 +418,7 @@
     </div>
 <?php endif; ?>
 
-<style>
+<style {csp-style-nonce}>
     @media print {
 
         .sidebar,

@@ -177,7 +177,7 @@ class DioceseAdminUsers extends BaseController
         }
 
         $password = (string) $this->request->getPost('new_password');
-        $validation = $this->validateAdminPassword($password);
+        $validation = $this->validateAdminPassword($password, $userId);
         if (!$validation['ok']) {
             return redirect()->back()->withInput()->with('errors', ['new_password' => implode(' ', $validation['errors'])]);
         }
@@ -194,6 +194,16 @@ class DioceseAdminUsers extends BaseController
             'force_reset' => 1,
             'updated_at'  => date('Y-m-d H:i:s'),
         ]);
+
+        // Operator-chosen passwords must be rotated on first login, and any
+        // existing sessions/devices for the target are invalidated so a
+        // reset cannot leave stale access behind.
+        try {
+            (new \App\Services\TrustedDeviceService())->revokeAll($userId, null, (int) auth()->id());
+            model('UserSessionModel')->removeAllForUser($userId);
+        } catch (\Throwable $e) {
+            log_message('warning', 'Post-reset session/trust cleanup failed: {error}', ['error' => $e->getMessage()]);
+        }
 
         if ($identity !== null) {
             (new \App\Services\SecurityNotificationService())
@@ -342,18 +352,5 @@ class DioceseAdminUsers extends BaseController
     {
         $primary = model('DioceseAdminPrimaryModel')->getByDiocese($dioceseId);
         return $primary && (int) $primary['user_id'] === $userId;
-    }
-
-    protected function validateAdminPassword(string $password): array
-    {
-        $minLength = (int) service('systemSettings')->get('password_policy.min_length', 12);
-
-        $ok = strlen($password) >= $minLength
-            && preg_match('/[A-Z]/', $password)
-            && preg_match('/[a-z]/', $password)
-            && preg_match('/[0-9]/', $password)
-            && preg_match('/[^A-Za-z0-9]/', $password);
-
-        return ['ok' => $ok, 'errors' => $ok ? [] : [lang('System.passwordComplexity')]];
     }
 }

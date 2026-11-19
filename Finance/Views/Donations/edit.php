@@ -150,7 +150,7 @@ $currentMethod      = (string) old('payment_method', $donation['payment_method']
     </div>
 </div>
 
-<script>
+<script {csp-script-nonce}>
     const donationCategory = document.getElementById('category');
     const donationFund = document.getElementById('fund_id');
     const donationChartAccount = document.getElementById('chart_account_id');

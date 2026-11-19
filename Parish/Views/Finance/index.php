@@ -412,7 +412,7 @@ $fundTypeColors = [
 <?= $this->endSection() ?>
 
 <?= $this->section('scripts') ?>
-<script>
+<script {csp-script-nonce}>
     const trendLabels = <?= json_encode($finance_trend_labels ?? []) ?>;
     const incomeTrend = <?= json_encode($finance_income_trend ?? []) ?>;
     const expenseTrend = <?= json_encode($finance_expense_trend ?? []) ?>;

@@ -498,10 +498,13 @@ class Dashboard extends BaseController
 
         return $this->response->setJSON([
             'success' => true,
+            'status'  => 'success',
+            'message' => 'OK',
             'visitors_in_followup' => $visitorsInFollowup,
             'call_tasks_today' => $callTasksToday,
             'failed_messages_7d' => $failedMessages7d,
             'new_visitors_weekly' => $weeklyVisitors,
+            'meta' => ['http_status' => 200, 'ts' => date('c')],
         ]);
     }
 
