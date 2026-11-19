@@ -1602,14 +1602,20 @@ abstract class BaseController extends Controller
     }
 
     /**
-     * Validate a password against the DB-driven policy.
+     * Validate a password against the DB-driven policy plus Shield's
+     * configured passwordValidators chain (composition, nothing-personal,
+     * dictionary, pwned).
      * Returns ['ok' => true] on success, or ['ok' => false, 'errors' => [...]].
      */
     protected function validateAdminPassword(string $password): array
     {
         $policy = $this->getPasswordPolicy();
         $errors = [];
-        $minLength = (int) ($policy['min_length'] ?? 12);
+
+        // The DB policy can never undercut the configured Shield minimum,
+        // which itself is floored at 12.
+        $configMinLength = max(12, (int) (config('Auth')->minimumPasswordLength ?? 12));
+        $minLength = max((int) ($policy['min_length'] ?? 0), $configMinLength);
 
         if (strlen($password) < $minLength) {
             $errors[] = lang('System.passwordTooShort', [$minLength]);
@@ -1635,7 +1641,63 @@ abstract class BaseController extends Controller
             }
         }
 
+        // Shield's validator chain must run on every password write path,
+        // not only self-registration. service('passwords')->check() returns
+        // the first validator failure; merge its reason into the errors.
+        try {
+            $shieldResult = service('passwords')->check($password, $this->passwordValidationUser());
+            if (! $shieldResult->isOK()) {
+                $reason = $shieldResult->reason();
+                $errors[] = is_string($reason) && $reason !== ''
+                    ? $reason
+                    : lang('System.passwordComplexity');
+            }
+        } catch (\Throwable $e) {
+            log_message('warning', 'Shield password validator chain failed: {error}', [
+                'error' => $e->getMessage(),
+            ]);
+        }
+
         return ['ok' => $errors === [], 'errors' => $errors];
+    }
+
+    /**
+     * Resolve the user context for Shield's password validators: the
+     * signed-in user when available, otherwise a request-derived stub so
+     * NothingPersonalValidator still has entity data to compare against.
+     * service('passwords')->check() throws when the entity is null.
+     */
+    private function passwordValidationUser(): \CodeIgniter\Shield\Entities\User
+    {
+        $user = auth()->user();
+        if ($user !== null) {
+            return $user;
+        }
+
+        $authConfig = config('Auth');
+        $fields = array_unique(array_merge(
+            $authConfig->validFields ?? [],
+            $authConfig->personalFields ?? [],
+            ['email', 'username']
+        ));
+
+        $data = [];
+        $request = service('request');
+        if ($request instanceof \CodeIgniter\HTTP\IncomingRequest) {
+            $posted = $request->getPost($fields);
+            $data = is_array($posted) ? $posted : [];
+        }
+
+        // getPost() pads missing keys with null, and the User entity's
+        // setEmail()/setPassword() mutators are string-typed — nulls or
+        // non-scalars would TypeError. Keep only scalar values, then
+        // guarantee string email/username.
+        $data = array_filter($data, 'is_scalar');
+        $data = array_map('strval', $data);
+        $data['email'] = (string) ($data['email'] ?? '');
+        $data['username'] = (string) ($data['username'] ?? '');
+
+        return new \CodeIgniter\Shield\Entities\User($data);
     }
 
     /**

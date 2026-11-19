@@ -367,8 +367,8 @@ final class SystemAdminCreateAdminUiIntegrationTest extends CIUnitTestCase
         ]);
 
         $controller = $this->makeController('post', [
-            'new_password' => 'NewPassw0rd!234',
-            'new_password_confirm' => 'NewPassw0rd!234',
+            'new_password' => 'Xq7!mZ9vB2pL4nW8',
+            'new_password_confirm' => 'Xq7!mZ9vB2pL4nW8',
         ]);
         $response = $controller->resetPassword($targetUserId);
 

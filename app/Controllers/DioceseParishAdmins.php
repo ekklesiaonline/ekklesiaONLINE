@@ -369,16 +369,4 @@ class DioceseParishAdmins extends BaseController
             ->getRow() !== null;
     }
 
-    protected function validateAdminPassword(string $password): array
-    {
-        $minLength = (int) service('systemSettings')->get('password_policy.min_length', 12);
-
-        $ok = strlen($password) >= $minLength
-            && preg_match('/[A-Z]/', $password)
-            && preg_match('/[a-z]/', $password)
-            && preg_match('/[0-9]/', $password)
-            && preg_match('/[^A-Za-z0-9]/', $password);
-
-        return ['ok' => $ok, 'errors' => $ok ? [] : [lang('System.passwordComplexity')]];
-    }
 }
