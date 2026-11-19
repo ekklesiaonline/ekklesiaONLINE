@@ -24,7 +24,11 @@ class MaintenanceMode implements FilterInterface
             $path = ltrim((string) $request->getUri()->getPath(), '/');
 
             foreach ($this->allowedPaths as $allowed) {
-                if ($path === $allowed || str_starts_with($path, $allowed)) {
+                $allowed = rtrim($allowed, '/');
+                if ($allowed === '') {
+                    continue;
+                }
+                if ($path === $allowed || str_starts_with($path, $allowed . '/')) {
                     return;
                 }
             }
