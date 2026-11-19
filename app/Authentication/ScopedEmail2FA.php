@@ -244,24 +244,12 @@ class ScopedEmail2FA extends Email2FA implements ConditionalActionInterface
      */
     private function sendLimitReached(string $email): bool
     {
-        $cache = \Config\Services::cache();
-        $key   = 'login_2fa_rl_' . md5(strtolower($email));
-        $now   = time();
-
-        // Store a fixed window deadline alongside the counter so retries
-        // (including rejected ones) never extend the window. increment()
-        // is avoided because FileHandler resets the TTL on every call.
-        $entry = $cache->get($key);
-        if (! is_array($entry) || (int) ($entry['reset'] ?? 0) <= $now) {
-            $cache->save($key, ['count' => 1, 'reset' => $now + 3600], 3600);
-
-            return false;
-        }
-
-        $entry['count'] = (int) ($entry['count'] ?? 0) + 1;
-        $cache->save($key, $entry, max(1, (int) $entry['reset'] - $now));
-
-        return $entry['count'] > self::SEND_MAX_PER_HOUR;
+        // Atomic (locked) fixed-window reservation — see RecipientSendLimiter.
+        return \App\Libraries\RecipientSendLimiter::reserve(
+            'login_2fa_rl_' . md5(strtolower($email)),
+            self::SEND_MAX_PER_HOUR,
+            3600,
+        );
     }
 
     /**
@@ -269,10 +257,9 @@ class ScopedEmail2FA extends Email2FA implements ConditionalActionInterface
      */
     private function sendLimitExhausted(string $email): bool
     {
-        $entry = \Config\Services::cache()->get('login_2fa_rl_' . md5(strtolower($email)));
-
-        return is_array($entry)
-            && (int) ($entry['reset'] ?? 0) > time()
-            && (int) ($entry['count'] ?? 0) >= self::SEND_MAX_PER_HOUR;
+        return \App\Libraries\RecipientSendLimiter::exhausted(
+            'login_2fa_rl_' . md5(strtolower($email)),
+            self::SEND_MAX_PER_HOUR,
+        );
     }
 }

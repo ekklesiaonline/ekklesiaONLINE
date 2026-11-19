@@ -185,28 +185,18 @@ class ScopedEmailActivator extends EmailActivator
      */
     private function activationSendLimitReached(string $email): bool
     {
-        $cache = \Config\Services::cache();
-        $key   = 'activation_email_rl_' . md5(strtolower($email));
+        $key = 'activation_email_rl_' . md5(strtolower($email));
 
         $maxPerDay = (int) (env('security.activationEmailMaxPerDay') ?: self::ACTIVATION_EMAIL_MAX_PER_DAY);
         if ($maxPerDay <= 0) {
             $maxPerDay = self::ACTIVATION_EMAIL_MAX_PER_DAY;
         }
 
-        // Store a fixed window deadline with the counter so retries
-        // (including rejected ones) never extend the window. increment()
-        // is avoided because FileHandler resets the TTL on every call.
-        $now   = time();
-        $entry = $cache->get($key);
-        if (! is_array($entry) || (int) ($entry['reset'] ?? 0) <= $now) {
-            $cache->save($key, ['count' => 1, 'reset' => $now + self::ACTIVATION_EMAIL_WINDOW_SECONDS], self::ACTIVATION_EMAIL_WINDOW_SECONDS);
-
-            return false;
-        }
-
-        $entry['count'] = (int) ($entry['count'] ?? 0) + 1;
-        $cache->save($key, $entry, max(1, (int) $entry['reset'] - $now));
-
-        return $entry['count'] > $maxPerDay;
+        // Atomic (locked) fixed-window reservation — see RecipientSendLimiter.
+        return \App\Libraries\RecipientSendLimiter::reserve(
+            $key,
+            $maxPerDay,
+            self::ACTIVATION_EMAIL_WINDOW_SECONDS,
+        );
     }
 }
