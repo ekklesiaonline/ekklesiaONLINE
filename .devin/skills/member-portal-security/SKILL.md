@@ -54,3 +54,8 @@ Help with member personal dashboard features, trusted devices, session security,
 
 - **Family Relationships**: Managed via `FamilyService`. Changes sync between heads of household and family members.
 - **Good Standing**: Keyed by `(user_id, year)` on `member_standing_summary`. Requires baptism + communicant attendance (at least 3 recorded communions) + financial pledge or explicit pastoral override.
+
+## Known Gaps (tracked follow-ups)
+
+- **Same-diocese self-service affiliations write instantly**: `Profile::update` rejects parishes outside the member's dioceses (`Profile.affiliationOutsideDiocese`), but a new parish *inside* those dioceses is still written immediately as a live `visitor` row — it lands in that parish's visitor directory and follow-up pipeline without review. `ProfileOnboarding::joinParishSubmit` routes the same action through `pending_review`. Follow-up: route new self-service secondary affiliations through `pending_review` too. Do not widen the diocese allowance in the meantime.
+- **Standing refresh is elevated-admin only**: `Standing::refresh` requires systemadmin/provinceadmin/dioceseadmin because `MemberStandingSummaryModel::refreshForYear($year)` rebuilds every parish. Parish admins cannot recompute their own tenant. Follow-up: add a parish-scoped `refreshForYear($year, $parishId)` and re-enable refresh for parish admins against it only — never re-open the global recompute to parish-scoped roles.
