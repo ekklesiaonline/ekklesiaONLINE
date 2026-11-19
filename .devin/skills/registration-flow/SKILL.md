@@ -19,6 +19,7 @@ Key rules:
 - All approve/dismiss/ban/delete actions should go through `RegistrationApprovalService`.
 - `AdminHierarchyGuard` prevents lower-tier admins from acting on higher-tier admin requests.
 - `RegistrationApprovalService` preserves existing higher-tier Shield groups when assigning a lower role.
+- Activation email sends (`ScopedEmailActivator::show()`) are capped per recipient address: max `env('security.activationEmailMaxPerDay')` (default 5) emails per address per rolling 24h via a cache counter (`activation_email_rl_<md5(email)>`), on top of the 60s per-session resend cooldown. When the cap trips the code-entry form still renders and the previously issued code stays valid — no new code or email is issued.
 
 Pending registration UI:
 - Dashboard alert banner links to `people#pendingRegistrationsCard`.
