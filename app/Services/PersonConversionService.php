@@ -178,7 +178,7 @@ class PersonConversionService
             'user_id'    => $userId,
             'type'       => 'email_password',
             'secret'     => $email,
-            'secret2'    => password_hash($password, PASSWORD_DEFAULT),
+            'secret2'    => service('passwords')->hash($password),
             'created_at' => $now,
             'updated_at' => $now,
         ]);

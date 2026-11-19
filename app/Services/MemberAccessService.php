@@ -206,7 +206,7 @@ class MemberAccessService
                 ],
             ]);
         }
-        $hashedPassword = password_hash($temporaryPassword, PASSWORD_DEFAULT);
+        $hashedPassword = service('passwords')->hash($temporaryPassword);
 
         $this->db->transBegin();
 
