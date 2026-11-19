@@ -386,31 +386,36 @@ class EmailSettingsService
         if (!empty($settings['smtp_host']) && !empty($settings['smtp_user'])) {
             $pass = $settings['smtp_pass'];
 
-            if ($pass !== '') {
-                $crypto = (string) ($settings['smtp_crypto'] ?? 'tls');
-                if (!in_array($crypto, ['tls', 'ssl', ''], true)) {
-                    $crypto = 'tls';
-                }
-
-                $config = [
-                    'protocol'   => 'smtp',
-                    'SMTPHost'   => $settings['smtp_host'],
-                    'SMTPUser'   => $settings['smtp_user'],
-                    'SMTPPass'   => $pass,
-                    'SMTPPort'   => (int) ($settings['smtp_port'] ?: 587),
-                    'SMTPCrypto' => $crypto,
-                    'mailType'   => 'html',
-                ];
-
-                $mailer = new \CodeIgniter\Email\Email(new \Config\Email());
-                $mailer->initialize($config);
-
-                if ($sender['from_email'] !== '') {
-                    $mailer->setFrom($sender['from_email'], $sender['from_name']);
-                }
-
-                return $mailer;
+            // A partially-submitted SMTP block (host+user but no password)
+            // must not silently fall back to the persisted mailer: the test
+            // would report success while exercising the old settings.
+            if ($pass === '') {
+                return null;
             }
+
+            $crypto = (string) ($settings['smtp_crypto'] ?? 'tls');
+            if (!in_array($crypto, ['tls', 'ssl', ''], true)) {
+                $crypto = 'tls';
+            }
+
+            $config = [
+                'protocol'   => 'smtp',
+                'SMTPHost'   => $settings['smtp_host'],
+                'SMTPUser'   => $settings['smtp_user'],
+                'SMTPPass'   => $pass,
+                'SMTPPort'   => (int) ($settings['smtp_port'] ?: 587),
+                'SMTPCrypto' => $crypto,
+                'mailType'   => 'html',
+            ];
+
+            $mailer = new \CodeIgniter\Email\Email(new \Config\Email());
+            $mailer->initialize($config);
+
+            if ($sender['from_email'] !== '') {
+                $mailer->setFrom($sender['from_email'], $sender['from_name']);
+            }
+
+            return $mailer;
         }
 
         // Otherwise test with the currently persisted/resolved configuration.
