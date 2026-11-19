@@ -140,7 +140,7 @@
     </div>
 </div>
 
-<script>
+<script {csp-script-nonce}>
     (function() {
         const expectedName = <?= json_encode(strtolower($profile['first_name'] . ' ' . $profile['last_name'])) ?>;
         const submitBtn = document.getElementById('hardDeleteSubmitBtn');

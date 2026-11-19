@@ -93,7 +93,7 @@ $typeOptions = [
     </div>
 </div>
 
-<script>
+<script {csp-script-nonce}>
     (function () {
         var typeSelect = document.getElementById('fund_type');
         var group = document.getElementById('restrictionPurposeGroup');

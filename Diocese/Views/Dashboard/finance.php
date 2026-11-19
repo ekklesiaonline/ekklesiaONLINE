@@ -13,7 +13,7 @@ $periodLabels = [
 $currentPeriodLabel = $periodLabels[$current_period] ?? $current_period;
 ?>
 
-<style>
+<style {csp-style-nonce}>
     .finance-chart-wrap {
         position: relative;
         height: 320px;
@@ -327,7 +327,7 @@ if ($current_period === 'custom') {
     </nav>
 <?php endif; ?>
 
-<script>
+<script {csp-script-nonce}>
     document.getElementById('periodSelect')?.addEventListener('change', function() {
         const isCustom = this.value === 'custom';
         document.getElementById('customDatesDiv').style.display = isCustom ? 'block' : 'none';

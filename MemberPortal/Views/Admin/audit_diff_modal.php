@@ -32,7 +32,7 @@ if ($colChangeLabel === 'App.colChange' || trim((string) $colChangeLabel) === ''
     </div>
 </div>
 
-<script>
+<script {csp-script-nonce}>
 let activeDiffAbortController = null;
 let activityChartInstance = null;
 let liveUpdatesInterval = null;

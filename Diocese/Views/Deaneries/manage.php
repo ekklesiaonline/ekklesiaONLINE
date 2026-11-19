@@ -108,7 +108,7 @@ $buildDeaneryPageUrl = static fn(int $page, int $size): string => base_url('dioc
     <?php endif; ?>
 </div>
 
-<script>
+<script {csp-script-nonce}>
 document.querySelectorAll('.deanery-action').forEach(function (form) {
     form.addEventListener('submit', function (event) {
         event.preventDefault();

@@ -244,7 +244,7 @@ $renderDelta = static function ($delta, bool $float = false): string {
 <?= $this->endSection() ?>
 
 <?= $this->section('scripts') ?>
-<script>
+<script {csp-script-nonce}>
     (function() {
         const monthLabels = <?= json_encode($monthLabels) ?>;
         const yearLabel = <?= json_encode((string) $year) ?>;

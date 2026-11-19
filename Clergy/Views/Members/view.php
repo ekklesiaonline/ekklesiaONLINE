@@ -7,7 +7,7 @@ $affiliations = $affiliations ?? [];
 
 <?= $this->section('content') ?>
 
-<style>
+<style {csp-style-nonce}>
     .member-profile-avatar {
         width: 80px;
         height: 80px;
@@ -558,7 +558,7 @@ $profilePictureUrl = ($profilePicturePath !== '' && $profileUserId > 0)
 <?= $this->endSection() ?>
 
 <?= $this->section('scripts') ?>
-<script>
+<script {csp-script-nonce}>
     const actionFailedMsg = <?= json_encode(lang('App.errorFailed')) ?>;
     const requestFailedMsg = <?= json_encode(lang('App.httpRequestFailedRetry')) ?>;
     const memberDetachConstraintMsg = <?= json_encode(lang('Clergy.memberMustRemainAttached')) ?>;

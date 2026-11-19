@@ -306,7 +306,7 @@ $statusColorMap = [
     </div>
 </div>
 
-<script>
+<script {csp-script-nonce}>
 document.addEventListener('DOMContentLoaded', function () {
     const modalEl = document.getElementById('entryDetailModal');
     if (!modalEl) return;

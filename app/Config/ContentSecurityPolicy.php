@@ -52,58 +52,77 @@ class ContentSecurityPolicy extends BaseConfig
      *
      * @var list<string>|string|null
      */
-    public $defaultSrc;
+    public $defaultSrc = 'self';
 
     /**
      * Lists allowed scripts' URLs.
      *
+     * External script origins actually used by the views:
+     * cdn.jsdelivr.net (Bootstrap, Chart.js, Select2, SweetAlert2) and
+     * code.jquery.com (jQuery). Inline <script> blocks are authorized
+     * via the per-request nonce (autoNonce + {csp-script-nonce} tags).
+     *
      * @var list<string>|string
      */
-    public $scriptSrc = 'self';
+    public $scriptSrc = ['self', 'https://cdn.jsdelivr.net', 'https://code.jquery.com'];
 
     /**
      * Specifies valid sources for JavaScript <script> elements.
      *
      * @var list<string>|string
      */
-    public array|string $scriptSrcElem = 'self';
+    public array|string $scriptSrcElem = ['self', 'https://cdn.jsdelivr.net', 'https://code.jquery.com'];
 
     /**
      * Specifies valid sources for JavaScript inline event
      * handlers and JavaScript URLs.
      *
+     * NOTE: 'unsafe-inline' is required here — nonces cannot authorize
+     * inline event-handler attributes (onclick=, onsubmit=, onchange=,
+     * onerror=, onload=), which legacy views still use. Nonce-based
+     * blocking of inline <script> blocks is unaffected because this
+     * directive only governs attributes. Migrate handlers to
+     * addEventListener over time and drop this keyword.
+     *
      * @var list<string>|string
      */
-    public array|string $scriptSrcAttr = 'self';
+    public array|string $scriptSrcAttr = 'unsafe-inline';
 
     /**
      * Lists allowed stylesheets' URLs.
      *
      * @var list<string>|string
      */
-    public $styleSrc = 'self';
+    public $styleSrc = ['self', 'https://cdn.jsdelivr.net'];
 
     /**
      * Specifies valid sources for stylesheets <link> elements.
      *
      * @var list<string>|string
      */
-    public array|string $styleSrcElem = 'self';
+    public array|string $styleSrcElem = ['self', 'https://cdn.jsdelivr.net'];
 
     /**
      * Specifies valid sources for stylesheets inline
      * style attributes and `<style>` elements.
      *
+     * NOTE: 'unsafe-inline' is required here — nonces cannot authorize
+     * style="" attributes, which are used pervasively in views.
+     * <style> blocks themselves are authorized by nonce instead.
+     *
      * @var list<string>|string
      */
-    public array|string $styleSrcAttr = 'self';
+    public array|string $styleSrcAttr = 'unsafe-inline';
 
     /**
      * Defines the origins from which images can be loaded.
      *
+     * 'data:' covers inline/data-URI images (avatars, signatures,
+     * generated charts) rendered into <img> or CSS.
+     *
      * @var list<string>|string
      */
-    public $imageSrc = 'self';
+    public $imageSrc = ['self', 'data:'];
 
     /**
      * Restricts the URLs that can appear in a page's `<base>` element.
@@ -112,7 +131,7 @@ class ContentSecurityPolicy extends BaseConfig
      *
      * @var list<string>|string|null
      */
-    public $baseURI;
+    public $baseURI = 'self';
 
     /**
      * Lists the URLs for workers and embedded frame contents
@@ -132,9 +151,12 @@ class ContentSecurityPolicy extends BaseConfig
     /**
      * Specifies the origins that can serve web fonts.
      *
+     * cdn.jsdelivr.net serves the bootstrap-icons woff/woff2 files
+     * referenced by the CDN stylesheet.
+     *
      * @var list<string>|string
      */
-    public $fontSrc;
+    public $fontSrc = ['self', 'https://cdn.jsdelivr.net'];
 
     /**
      * Lists valid endpoints for submission from `<form>` tags.
@@ -151,39 +173,44 @@ class ContentSecurityPolicy extends BaseConfig
      *
      * @var list<string>|string|null
      */
-    public $frameAncestors;
+    public $frameAncestors = 'self';
 
     /**
      * The frame-src directive restricts the URLs which may
      * be loaded into nested browsing contexts.
      *
+     * 'self' covers same-origin iframes and srcdoc previews
+     * (e.g. follow-up template preview).
+     *
      * @var list<string>|string|null
      */
-    public $frameSrc;
+    public $frameSrc = 'self';
 
     /**
      * Restricts the origins allowed to deliver video and audio.
      *
      * @var list<string>|string|null
      */
-    public $mediaSrc;
+    public $mediaSrc = 'self';
 
     /**
      * Allows control over Flash and other plugins.
      *
+     * The app does not embed plugin content.
+     *
      * @var list<string>|string
      */
-    public $objectSrc = 'self';
+    public $objectSrc = 'none';
 
     /**
      * @var list<string>|string|null
      */
-    public $manifestSrc;
+    public $manifestSrc = 'self';
 
     /**
      * @var list<string>|string
      */
-    public array|string $workerSrc = [];
+    public array|string $workerSrc = 'self';
 
     /**
      * Limits the kinds of plugins a page may invoke.

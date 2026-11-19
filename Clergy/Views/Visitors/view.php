@@ -425,7 +425,7 @@ $suggestAttender  = ! $visitorConverted && $visitorStatus === 'visitor' && $visi
 </div>
 <?php endif; ?>
 
-<script>
+<script {csp-script-nonce}>
     (function() {
         'use strict';
 

@@ -31,7 +31,7 @@ $selectedCategoryId = (string) old('category_id', (string) ($selected_category_i
         <?php endforeach; ?>
     </div>
 </details>
-<script>
+<script {csp-script-nonce}>
 document.addEventListener("DOMContentLoaded", function () {
     const accountType = document.getElementById("account_type");
     const parentAccount = document.getElementById("parent_account_id");

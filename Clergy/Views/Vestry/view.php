@@ -149,7 +149,7 @@ $typeKey = 'vestryMeetingType' . ucfirst($meeting['meeting_type'] ?? 'regular');
 <?= $this->endSection() ?>
 
 <?= $this->section('scripts') ?>
-<script>
+<script {csp-script-nonce}>
     document.querySelectorAll('.vote-form').forEach(function(form) {
         form.addEventListener('submit', function(e) {
             e.preventDefault();

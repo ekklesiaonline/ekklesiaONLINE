@@ -384,7 +384,7 @@ $auditEventCount = $has_audit_logs_table ? (int) ($audit_event_count ?? 0) : 0;
     </div>
 </div>
 
-<script>
+<script {csp-script-nonce}>
     document.getElementById('editProvinceModal').addEventListener('show.bs.modal', function (e) {
         const btn = e.relatedTarget;
         document.getElementById('editProvinceForm').action = '<?= base_url('system/provinces/update/') ?>' + btn.dataset.id;
@@ -448,7 +448,7 @@ $auditEventCount = $has_audit_logs_table ? (int) ($audit_event_count ?? 0) : 0;
     });
 </script>
 
-<style>
+<style {csp-style-nonce}>
     .dashboard-tile {
         transition: all 0.3s ease;
         cursor: pointer;

@@ -337,7 +337,7 @@ $formatLocalizedDate = static function (?string $value, string $pattern, string 
     </div>
 <?php endif; ?>
 
-<script>
+<script {csp-script-nonce}>
     <?php if (auth()->user()->can('family.manage')): ?>
 
         function contractErrorMessage(data, fallback) {

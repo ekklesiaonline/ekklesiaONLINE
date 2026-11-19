@@ -103,9 +103,9 @@
 
 <?= $this->section('scripts') ?>
 <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-<script>
+<script {csp-script-nonce} src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script {csp-script-nonce} src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script {csp-script-nonce}>
     (() => {
         const serviceSelect = document.getElementById('service_id');
         const rowsEl = document.getElementById('recentAttendanceRows');

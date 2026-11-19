@@ -2,7 +2,7 @@
 
 <?= $this->section('content') ?>
 
-<style>
+<style {csp-style-nonce}>
     .people-name-link {
         text-decoration: none;
         font-size: inherit;

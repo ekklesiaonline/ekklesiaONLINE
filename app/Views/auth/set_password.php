@@ -99,7 +99,7 @@ if ($requireSpecial) {
 <?= $this->endSection() ?>
 
 <?php $this->section('pageScripts') ?>
-<script>
+<script {csp-script-nonce}>
     const passwordPolicy = <?= json_encode($passwordPolicy, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
     const passwordInput = document.getElementById('new_password');
     const confirmInput = document.getElementById('new_password_confirm');

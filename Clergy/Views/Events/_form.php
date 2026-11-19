@@ -341,7 +341,7 @@ $multiStartDateError = $fieldError('multi_start_date');
     </div>
 </div>
 
-<script>
+<script {csp-script-nonce}>
     (() => {
         const scheduleInputs = Array.from(document.querySelectorAll('input[name="schedule_mode"]'));
         const schedulePanels = Array.from(document.querySelectorAll('[data-schedule-panel]'));

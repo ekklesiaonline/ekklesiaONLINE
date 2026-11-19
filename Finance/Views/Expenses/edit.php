@@ -186,7 +186,7 @@
     </div>
 </div>
 
-<script>
+<script {csp-script-nonce}>
     const editExpenseCategory = document.getElementById('category');
     const editExpenseChartAccount = document.getElementById('chart_account_id');
 

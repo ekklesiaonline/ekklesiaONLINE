@@ -165,7 +165,7 @@
 </div>
 <?php endif; ?>
 
-<script>
+<script {csp-script-nonce}>
     const donationCategory = document.getElementById('category');
     const donationFund = document.getElementById('fund_id');
     const donationChartAccount = document.getElementById('chart_account_id');

@@ -117,7 +117,7 @@
                 </button>
             </div>
 
-            <script>
+            <script {csp-script-nonce}>
                 document.getElementById('btnNoThanks').addEventListener('click', function() {
                     var closed = window.close();
                     if (!closed) {

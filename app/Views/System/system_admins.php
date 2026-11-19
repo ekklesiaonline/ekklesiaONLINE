@@ -357,7 +357,7 @@ $permissionsHierarchy = $permissionsHierarchy ?? [];
 
 <?= $this->section('scripts') ?>
 
-<script>
+<script {csp-script-nonce}>
     document.getElementById('editSystemAdminModal').addEventListener('show.bs.modal', function (e) {
         const btn = e.relatedTarget;
         document.getElementById('editSystemAdminForm').action = '<?= base_url('system/admins/update/') ?>' + btn.dataset.id;

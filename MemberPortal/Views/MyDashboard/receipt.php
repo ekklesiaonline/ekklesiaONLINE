@@ -68,7 +68,7 @@
     </div>
 </div>
 
-<style>
+<style {csp-style-nonce}>
 @media print {
     .no-print, .sidebar, .topbar, footer {
         display: none !important;

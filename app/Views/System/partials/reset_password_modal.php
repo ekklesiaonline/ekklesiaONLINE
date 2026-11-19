@@ -38,7 +38,7 @@
     </div>
 </div>
 
-<script>
+<script {csp-script-nonce}>
     document.getElementById('resetPasswordModal').addEventListener('show.bs.modal', function (e) {
         const btn = e.relatedTarget;
         document.getElementById('resetPasswordForm').action = '<?= base_url('system/admins/reset-password/') ?>' + btn.dataset.id;

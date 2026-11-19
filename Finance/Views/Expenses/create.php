@@ -183,7 +183,7 @@
 </div>
 <?php endif; ?>
 
-<script>
+<script {csp-script-nonce}>
     const expenseCategory = document.getElementById('category');
     const expenseChartAccount = document.getElementById('chart_account_id');
 

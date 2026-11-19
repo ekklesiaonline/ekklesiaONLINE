@@ -89,7 +89,7 @@
     </div>
 </div>
 
-<script>
+<script {csp-script-nonce}>
     function toggleAll(checkbox) {
         const checks = document.querySelectorAll('.attendance-check');
         checks.forEach(check => check.checked = checkbox.checked);

@@ -89,7 +89,7 @@ $selectedParish = (int) old('parish_id', 0);
     </div>
 </div>
 
-<script>
+<script {csp-script-nonce}>
     (function () {
         const diocesesByProvince = <?= json_encode($diocesesByProvince, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
         const parishesByDiocese = <?= json_encode($parishesByDiocese, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;

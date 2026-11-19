@@ -210,7 +210,7 @@
 <?= $this->endSection() ?>
 
 <?= $this->section('scripts') ?>
-<script>
+<script {csp-script-nonce}>
     (function() {
         const modal = document.getElementById('lyricsPreviewModal');
         if (!modal) {

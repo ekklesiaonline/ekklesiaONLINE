@@ -120,7 +120,7 @@
     </div>
 </div>
 
-<script>
+<script {csp-script-nonce}>
     document.addEventListener('DOMContentLoaded', function() {
         const toggle = document.getElementById('same_address_toggle_create');
         const keys = ['street', 'city', 'state', 'zip', 'county', 'country'];

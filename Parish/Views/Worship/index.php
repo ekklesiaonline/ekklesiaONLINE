@@ -104,7 +104,7 @@ $formatLocalizedDate = static function (?string $value): string {
 <?= $this->endSection() ?>
 
 <?= $this->section('scripts') ?>
-<script>
+<script {csp-script-nonce}>
     const worshipLabels = <?= json_encode($sunday_attendance_labels ?? []) ?>;
     const worshipAsa = <?= json_encode($sunday_attendance_averages ?? []) ?>;
     const worshipAsc = <?= json_encode($communion_attendance_averages ?? []) ?>;

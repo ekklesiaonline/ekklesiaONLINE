@@ -157,7 +157,7 @@ if (empty($existingRows)) {
     </div>
 </template>
 
-<script>
+<script {csp-script-nonce}>
     (function() {
         const container = document.getElementById('plan-items');
         const template = document.getElementById('plan-row-template');

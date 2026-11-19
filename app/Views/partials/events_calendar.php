@@ -332,7 +332,7 @@ $canManageCalendars = (bool) ($can_manage_calendars ?? false);
 
 ?>
 
-<style>
+<style {csp-style-nonce}>
     .events-calendar-shell {
         display: grid;
         gap: 1rem;

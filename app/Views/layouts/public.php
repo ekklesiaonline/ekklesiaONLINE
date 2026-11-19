@@ -12,7 +12,7 @@
     <!-- Bootstrap Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
 
-    <style>
+    <style {csp-style-nonce}>
         body {
             background: #f1f5f9;
             min-height: 100vh;
@@ -45,9 +45,9 @@
     <div class="toast-container position-fixed top-0 end-0 p-3" id="appToastContainer" style="z-index: 1100;"></div>
 
     <!-- Bootstrap 5 JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script {csp-script-nonce} src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
-    <script>
+    <script {csp-script-nonce}>
         function showAppToast(msg, level) {
             level = level || 'primary';
             var colorMap = {

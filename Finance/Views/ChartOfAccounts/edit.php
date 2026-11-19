@@ -82,7 +82,7 @@
 <?= $this->endSection() ?>
 
 <?= $this->section('scripts') ?>
-<script>
+<script {csp-script-nonce}>
 document.addEventListener("DOMContentLoaded", function () {
     const accountType = document.getElementById("account_type");
     const parentAccount = document.getElementById("parent_account_id");

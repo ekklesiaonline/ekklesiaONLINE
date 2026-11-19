@@ -1,5 +1,5 @@
 <?php /* Partial: leadership position modal + CRUD script. Required: $profileId */ ?>
-<script>
+<script {csp-script-nonce}>
 (function() {
     const modalEl = document.getElementById('leadershipPositionModal');
     const form = document.getElementById('leadershipPositionForm');

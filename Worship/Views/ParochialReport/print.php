@@ -71,7 +71,7 @@ $pageLabel = static fn(int $page): string => 'Page ' . $page . ' of 9';
 <head>
     <meta charset="UTF-8">
     <title><?= esc(($parish['name'] ?? 'Parish') . ' Parochial Report ' . $year) ?></title>
-    <style>
+    <style {csp-style-nonce}>
         @page {
             size: <?= $paperCss ?> portrait;
             margin: 0.45in;

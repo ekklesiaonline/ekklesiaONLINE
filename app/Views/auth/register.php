@@ -74,7 +74,7 @@ $uiLocale = in_array($uiLocale, ['en', 'es', 'fr'], true) ? $uiLocale : 'en';
     </div>
 </div>
 
-<script>
+<script {csp-script-nonce}>
     (function() {
         const emailInput = document.getElementById('registerEmail');
         const usernameInput = document.getElementById('registerUsername');

@@ -29,7 +29,7 @@ $this->setVar('portalAccess', $portalAccess);
 
 <?= $this->section('content') ?>
 
-<style>
+<style {csp-style-nonce}>
     .people-profile-avatar {
         width: 80px;
         height: 80px;

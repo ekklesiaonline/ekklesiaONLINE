@@ -80,7 +80,7 @@
     </div>
 </div>
 
-<script>
+<script {csp-script-nonce}>
     function renderContractErrors(container, data) {
         if (!container) {
             return;

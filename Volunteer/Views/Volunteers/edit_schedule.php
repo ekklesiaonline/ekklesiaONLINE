@@ -95,7 +95,7 @@
 <?= $this->endSection() ?>
 
 <?= $this->section('scripts') ?>
-<script>
+<script {csp-script-nonce}>
     (function() {
         const teamSel = document.getElementById('team_id');
         const userSel = document.getElementById('user_id');

@@ -346,7 +346,7 @@
                     <i class="bi bi-plus-circle" aria-hidden="true"></i> <?= lang('Profile.addParish') ?>
                 </button>
 
-                <script type="text/template" id="affiliation-row-template">
+                <script {csp-script-nonce} type="text/template" id="affiliation-row-template">
                     <div class="row g-2 align-items-end affiliation-row mb-2" data-index="__IDX__">
                         <div class="col-md-3">
                             <label class="form-label"><?= lang('Profile.province') ?></label>
@@ -431,7 +431,7 @@
 
 </div>
 
-<script>
+<script {csp-script-nonce}>
     (function() {
         const form = document.querySelector('form.needs-validation');
         if (form) {

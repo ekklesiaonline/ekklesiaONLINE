@@ -1,5 +1,5 @@
 <?php /* Partial: membership details inline-edit script. Required: none (CSRF via meta/form token) */ ?>
-<script>
+<script {csp-script-nonce}>
 (function() {
     const toggleBtn = document.getElementById('toggleMembershipDetailsEdit');
     const displayDiv = document.getElementById('membershipDetailsDisplay');

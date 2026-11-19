@@ -337,7 +337,7 @@
     </div>
 <?php endif; ?>
 
-<script>
+<script {csp-script-nonce}>
     const periodSelect = document.getElementById('periodSelect');
     if (periodSelect) {
         periodSelect.addEventListener('change', function() {

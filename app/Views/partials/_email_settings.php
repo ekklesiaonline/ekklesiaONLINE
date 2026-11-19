@@ -216,7 +216,7 @@ $smtpDisabled     = $smtpEditing ? '' : ' disabled';
     </div>
 </div>
 
-<script>
+<script {csp-script-nonce}>
 (function () {
     const sectionForms = Array.from(document.querySelectorAll('form[data-email-section]'));
 
@@ -270,7 +270,7 @@ $smtpDisabled     = $smtpEditing ? '' : ' disabled';
 })();
 </script>
 
-<script>
+<script {csp-script-nonce}>
 (function () {
     const form = document.getElementById('email-test-form');
     const result = document.getElementById('email-test-result');

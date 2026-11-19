@@ -345,7 +345,7 @@
     </div>
 </div>
 
-<script>
+<script {csp-script-nonce}>
     (function() {
         const peopleRows = document.getElementById('people-rows');
         const addBtn = document.getElementById('add-person');
