@@ -56,6 +56,10 @@ return [
     'pendingLogout'           => 'Cerrar sesión',
 
     'badAttempt'          => 'No se pudo iniciar sesión. Verifica tus credenciales.',
+    // Mantén estos idénticos a 'badAttempt' — razones de fallo distintas revelan
+    // si un correo está registrado (enumeración de usuarios).
+    'invalidPassword'     => 'No se pudo iniciar sesión. Verifica tus credenciales.',
+    'notActivated'        => 'No se pudo iniciar sesión. Verifica tus credenciales.',
     'tooManyRequests'     => 'Demasiados intentos de acceso. Por favor, espera antes de intentar de nuevo.',
     'invalidToken'        => 'Token inválido o expirado.',
 

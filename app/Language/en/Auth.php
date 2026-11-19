@@ -78,6 +78,10 @@ return [
     // Errors
     // -------------------------------------------------------------------------
     'badAttempt'          => 'Unable to log in. Please check your credentials.',
+    // Keep these identical to 'badAttempt' — distinct failure reasons reveal
+    // whether an email is registered (user enumeration).
+    'invalidPassword'     => 'Unable to log in. Please check your credentials.',
+    'notActivated'        => 'Unable to log in. Please check your credentials.',
     'tooManyRequests'     => 'Too many login attempts. Please wait before trying again.',
     'invalidToken'        => 'Invalid or expired token.',
 

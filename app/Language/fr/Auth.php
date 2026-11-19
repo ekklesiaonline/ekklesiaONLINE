@@ -56,6 +56,10 @@ return [
     'pendingLogout'           => 'Se déconnecter',
 
     'badAttempt'          => 'Impossible de se connecter. Vérifiez vos identifiants.',
+    // Gardez ces messages identiques à 'badAttempt' — des raisons d'échec
+    // distinctes révèlent si un courriel est enregistré (énumération d'utilisateurs).
+    'invalidPassword'     => 'Impossible de se connecter. Vérifiez vos identifiants.',
+    'notActivated'        => 'Impossible de se connecter. Vérifiez vos identifiants.',
     'tooManyRequests'     => 'Trop de tentatives de connexion. Veuillez patienter avant de réessayer.',
     'invalidToken'        => 'Jeton invalide ou expiré.',
 
