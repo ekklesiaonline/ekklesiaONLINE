@@ -213,7 +213,7 @@ class ProvinceDioceseAdmins extends BaseController
 
         db_connect()->table('auth_identities')->where('user_id', $userId)->where('type', 'email_password')->update([
             'secret2' => service('passwords')->hash($password),
-            'force_reset' => 0,
+            'force_reset' => 1,
             'updated_at' => date('Y-m-d H:i:s'),
         ]);
 

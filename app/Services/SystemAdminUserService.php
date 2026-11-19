@@ -252,7 +252,7 @@ class SystemAdminUserService
             ->where('type', 'email_password')
             ->update([
                 'secret2' => $passwordHash,
-                'force_reset' => 0,
+                'force_reset' => 1,
                 'updated_at' => date('Y-m-d H:i:s'),
             ]);
     }
