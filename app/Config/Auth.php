@@ -20,7 +20,6 @@ use App\Authentication\ScopedEmailActivator;
 use CodeIgniter\Shield\Authentication\Actions\EmailActivator;
 use CodeIgniter\Shield\Authentication\AuthenticatorInterface;
 use CodeIgniter\Shield\Authentication\Authenticators\AccessTokens;
-use CodeIgniter\Shield\Authentication\Authenticators\HmacSha256;
 use CodeIgniter\Shield\Authentication\Authenticators\JWT;
 use CodeIgniter\Shield\Authentication\Authenticators\Session;
 use App\Authentication\Passwords\SafePwnedValidator;
@@ -123,7 +122,10 @@ class Auth extends ShieldAuth
     public array $authenticators = [
         'tokens'  => AccessTokens::class,
         'session' => Session::class,
-        'hmac'    => HmacSha256::class,
+        // 'hmac' is intentionally disabled: no route uses the 'hmac' or
+        // 'chain' filter, and AuthToken::$hmacEncryptionKeys has no key
+        // provisioned, so HMAC identity secrets would be encrypted with
+        // an empty key.
         // 'jwt'     => JWT::class,
     ];
 
@@ -149,7 +151,7 @@ class Auth extends ShieldAuth
     public array $authenticationChain = [
         'session',
         'tokens',
-        'hmac',
+        // 'hmac', // disabled: no HMAC consumers; see $authenticators above.
         // 'jwt',
     ];
 
