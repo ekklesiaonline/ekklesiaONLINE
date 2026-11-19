@@ -37,6 +37,7 @@ return [
     'pageOf' => 'Page {0} sur {1}',
     'previous' => 'Precedent',
     'next' => 'Suivant',
+    'memberNotInParish' => 'Le membre sélectionné n\'est pas affilié à cette paroisse.',
     'saveFailed' => 'Impossible d\'enregistrer l\'engagement.',
     'updateFailed' => 'Impossible de mettre a jour l\'engagement.',
     'deleteSuccess' => 'Engagement supprime avec succes.',
