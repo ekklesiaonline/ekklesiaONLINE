@@ -584,7 +584,11 @@ class SystemAdminUsers extends BaseController
         }
 
         // Update password in auth_identities table
-        $this->adminUserService()->updatePasswordIdentity($userId, service('passwords')->hash($newPassword));
+        $this->adminUserService()->updatePasswordIdentity(
+            $userId,
+            service('passwords')->hash($newPassword),
+            auth()->id()
+        );
 
         $targetIdentity = db_connect()->table('auth_identities')
             ->select('secret')

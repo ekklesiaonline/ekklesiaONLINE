@@ -175,12 +175,14 @@ class PersonConversionService
         }
 
         $db->table('auth_identities')->insert([
-            'user_id'    => $userId,
-            'type'       => 'email_password',
-            'secret'     => $email,
-            'secret2'    => service('passwords')->hash($password),
-            'created_at' => $now,
-            'updated_at' => $now,
+            'user_id'     => $userId,
+            'type'        => 'email_password',
+            'secret'      => $email,
+            'secret2'     => service('passwords')->hash($password),
+            // The operator-chosen password must be rotated on first login.
+            'force_reset' => 1,
+            'created_at'  => $now,
+            'updated_at'  => $now,
         ]);
 
         $db->table('auth_groups_users')->insert([
@@ -190,6 +192,15 @@ class PersonConversionService
         ]);
 
         self::linkToUser($userId, $personId, $parishId, $person, $now);
+
+        // Tell the member where to sign in. Best-effort: a mail failure must
+        // not roll back the conversion since the operator-set password is
+        // already usable (and must be rotated anyway via force_reset).
+        try {
+            (new MemberAccessService($db))->sendPortalInviteEmail($email, $parishId);
+        } catch (\Throwable $e) {
+            log_message('warning', 'Portal invite email failed for converted member: ' . $e->getMessage());
+        }
 
         return $userId;
     }

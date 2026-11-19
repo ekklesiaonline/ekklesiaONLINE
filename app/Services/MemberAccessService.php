@@ -378,7 +378,13 @@ class MemberAccessService
         }
     }
 
-    private function sendPortalInviteEmail(string $recipientEmail, int $parishId): void
+    /**
+     * Send the portal-invite email pointing the member at the magic-link /
+     * password-setup flow. Public so account-creation paths outside this
+     * service (e.g. PersonConversionService::createPortalUser) can reuse the
+     * single canonical sender.
+     */
+    public function sendPortalInviteEmail(string $recipientEmail, int $parishId): void
     {
         if (defined('ENVIRONMENT') && ENVIRONMENT === 'testing') {
             return;

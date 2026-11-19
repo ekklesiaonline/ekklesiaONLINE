@@ -244,17 +244,29 @@ class SystemAdminUserService
 
     /**
      * Replace a user's password identity with a fresh hash.
+     *
+     * Operator-chosen passwords must be rotated on first login, so the
+     * identity is flagged force_reset=1 and every tracked session and
+     * trusted device for the target is invalidated. Cleanup is best-effort:
+     * a missing table must never break the password update.
      */
-    public function updatePasswordIdentity(int $userId, string $passwordHash): void
+    public function updatePasswordIdentity(int $userId, string $passwordHash, ?int $actorUserId = null): void
     {
         $this->db->table('auth_identities')
             ->where('user_id', $userId)
             ->where('type', 'email_password')
             ->update([
                 'secret2' => $passwordHash,
-                'force_reset' => 0,
+                'force_reset' => 1,
                 'updated_at' => date('Y-m-d H:i:s'),
             ]);
+
+        try {
+            (new TrustedDeviceService())->revokeAll($userId, null, $actorUserId);
+            model('UserSessionModel')->removeAllForUser($userId);
+        } catch (\Throwable $e) {
+            log_message('warning', 'Post-reset session/trust cleanup failed: {error}', ['error' => $e->getMessage()]);
+        }
     }
 
     /**

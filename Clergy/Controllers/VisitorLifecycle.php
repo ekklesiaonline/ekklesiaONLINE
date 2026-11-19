@@ -64,7 +64,7 @@ class VisitorLifecycle extends BaseController
             $rules['link_user_id'] = 'required|is_natural_no_zero';
         } elseif ($mode === 'create_account') {
             $rules['account_email']    = 'required|valid_email';
-            $rules['account_password'] = 'required|min_length[8]';
+            $rules['account_password'] = 'required|strong_password';
         }
 
         if (! $this->validate($rules)) {
