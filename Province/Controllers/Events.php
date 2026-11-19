@@ -4,7 +4,6 @@ namespace Province\Controllers;
 
 use App\Controllers\BaseController;
 use App\Services\EventCoverUploadService;
-use App\Services\EventPublishService;
 use App\Services\EventScheduleService;
 
 class Events extends BaseController
@@ -68,8 +67,8 @@ class Events extends BaseController
             return $this->forbiddenResponse(lang('Province.scopeNotConfigured'));
         }
 
-        EventPublishService::publishDueDraftEvents();
-
+        // Draft publishing moved to the `events:publish-due` spark command —
+        // a GET handler must not trigger a global state mutation.
         $mode = in_array((string) ($this->request->getGet('mode') ?? 'month'), ['month', 'week', 'agenda'], true) ? (string) ($this->request->getGet('mode') ?? 'month') : 'month';
         $anchor = trim((string) ($this->request->getGet('date') ?? date('Y-m-d')));
         try {

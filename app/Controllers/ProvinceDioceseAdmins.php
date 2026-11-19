@@ -6,6 +6,8 @@ use App\Libraries\DataEncryption;
 
 class ProvinceDioceseAdmins extends BaseController
 {
+    use AdminHierarchyGuard;
+
     public function index()
     {
         if ($response = $this->authorize()) {
@@ -167,6 +169,9 @@ class ProvinceDioceseAdmins extends BaseController
         if (!$this->targetIsInActorScope($userId) || !$this->dioceseIsInActorScope($dioceseId)) {
             return $this->scopeDenied();
         }
+        if ($guardCode = $this->guardTargetUserMutation($userId)) {
+            return redirect()->to(base_url('province/diocese-admins'))->with('error', $this->hierarchyGuardMessage($guardCode));
+        }
 
         model('ProfileModel')->where('user_id', $userId)->update(null, [
             'diocese_id' => $dioceseId,
@@ -193,6 +198,9 @@ class ProvinceDioceseAdmins extends BaseController
         if (!$this->targetIsInActorScope($userId) || (int) auth()->id() === $userId) {
             return $this->scopeDenied();
         }
+        if ($guardCode = $this->guardTargetUserMutation($userId)) {
+            return redirect()->to(base_url('province/diocese-admins'))->with('error', $this->hierarchyGuardMessage($guardCode));
+        }
 
         $minPasswordLength = service('systemSettings')->get('password_policy.min_length', 12);
         if (!$this->validate(['new_password' => 'required|min_length[' . $minPasswordLength . ']', 'new_password_confirm' => 'required|matches[new_password]'])) {
@@ -213,7 +221,7 @@ class ProvinceDioceseAdmins extends BaseController
 
         db_connect()->table('auth_identities')->where('user_id', $userId)->where('type', 'email_password')->update([
             'secret2' => service('passwords')->hash($password),
-            'force_reset' => 0,
+            'force_reset' => 1,
             'updated_at' => date('Y-m-d H:i:s'),
         ]);
 
@@ -233,6 +241,9 @@ class ProvinceDioceseAdmins extends BaseController
         }
         if (!$this->targetIsInActorScope($userId)) {
             return $this->scopeDenied();
+        }
+        if ($guardCode = $this->guardTargetUserMutation($userId)) {
+            return redirect()->to(base_url('province/diocese-admins'))->with('error', $this->hierarchyGuardMessage($guardCode));
         }
 
         $identity = db_connect()->table('auth_identities')->select('secret, force_reset')->where('user_id', $userId)->where('type', 'email_password')->get()->getRowArray();
@@ -257,6 +268,9 @@ class ProvinceDioceseAdmins extends BaseController
         if (!$this->targetIsInActorScope($userId) || (int) auth()->id() === $userId) {
             return $this->scopeDenied();
         }
+        if ($guardCode = $this->guardTargetUserMutation($userId)) {
+            return redirect()->to(base_url('province/diocese-admins'))->with('error', $this->hierarchyGuardMessage($guardCode));
+        }
 
         db_connect()->table('users')->where('id', $userId)->update(['active' => 0, 'updated_at' => date('Y-m-d H:i:s')]);
         $this->audit()->log('province.diocese_admin.deactivated', ['entity_type' => 'admin_user', 'entity_id' => $userId]);
@@ -270,6 +284,9 @@ class ProvinceDioceseAdmins extends BaseController
         }
         if (!$this->targetIsInActorScope($userId) || (int) auth()->id() === $userId) {
             return $this->scopeDenied();
+        }
+        if ($guardCode = $this->guardTargetUserMutation($userId)) {
+            return redirect()->to(base_url('province/diocese-admins'))->with('error', $this->hierarchyGuardMessage($guardCode));
         }
 
         db_connect()->table('users')->where('id', $userId)->update(['active' => 1, 'updated_at' => date('Y-m-d H:i:s')]);

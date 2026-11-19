@@ -534,9 +534,12 @@
             wrapper.setAttribute('aria-atomic', 'true');
             wrapper.innerHTML = '' +
                 '<div class="d-flex">' +
-                '<div class="toast-body">' + message + '</div>' +
+                '<div class="toast-body"></div>' +
                 '<button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="<?= esc(lang('App.close')) ?>"></button>' +
                 '</div>';
+            // message is caller-controlled (often XHR error payloads) — set as
+            // text so markup in it is never interpreted (DOM XSS sink).
+            wrapper.querySelector('.toast-body').textContent = message;
 
             container.appendChild(wrapper);
             var toast = new bootstrap.Toast(wrapper, {

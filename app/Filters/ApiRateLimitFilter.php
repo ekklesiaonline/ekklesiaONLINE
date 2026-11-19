@@ -47,6 +47,14 @@ class ApiRateLimitFilter implements FilterInterface
         // creation/password reset): same strictest tier as email test sends.
         '#^diocese/clergy/\d+/resend-invitation$#' => 10,
         '#^diocese/(admins|parish-admins)/#' => 15,
+        // Province admin-account mutations: invitation resends share the
+        // strictest credential-mail tier; other mutations match the diocese
+        // admins tier.
+        '#^province/diocese-admins/resend-invitation/#' => 10,
+        '#^province/diocese-admins/#' => 15,
+        '#^province/email-settings$#' => 20,
+        '#^province/quick-create-parish$#' => 15,
+        '#^province/(events|calendar|event-calendars)/#' => 30,
         '#^diocese/clergy/#' => 20,
         '#^diocese/clergy-review/#' => 20,
         '#^diocese/email-settings$#' => 20,
@@ -87,6 +95,9 @@ class ApiRateLimitFilter implements FilterInterface
         // recipients — per-target quotas would allow 10/min *per account*.
         if (preg_match('#^diocese/clergy/\d+/resend-invitation$#', $path) === 1) {
             $bucketPath = 'diocese/clergy/resend-invitation';
+        }
+        if (preg_match('#^province/diocese-admins/resend-invitation/#', $path) === 1) {
+            $bucketPath = 'province/diocese-admins/resend-invitation';
         }
         $cacheKey = 'api_rl_' . sha1($identity . '|' . $bucketPath . '|' . $method);
 
