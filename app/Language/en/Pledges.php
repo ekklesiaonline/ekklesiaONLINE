@@ -37,6 +37,7 @@ return [
     'pageOf' => 'Page {0} of {1}',
     'previous' => 'Previous',
     'next' => 'Next',
+    'memberNotInParish' => 'The selected member is not affiliated with this parish.',
     'saveFailed' => 'Failed to save pledge.',
     'updateFailed' => 'Failed to update pledge.',
     'deleteSuccess' => 'Pledge deleted successfully.',
