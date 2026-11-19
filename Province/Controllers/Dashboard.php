@@ -285,10 +285,22 @@ class Dashboard extends BaseController
 
     public function quickCreateParish()
     {
-        if ($this->isDioceseAdmin()) {
+        // Group membership alone was previously sufficient; mirror the
+        // canonical diocesan gate (Parishes::canCreateParish →
+        // hasParishEditPermission) so a dioceseadmin without a parish-edit
+        // grant cannot create parishes through this shortcut.
+        $canCreate = $this->isDioceseAdmin() && (
+            $this->checkPermission('parishes.edit')
+            || $this->checkPermission('parish.edit')
+            || $this->checkPermission('diocese.admin')
+        );
+
+        if ($canCreate) {
             $rules = [
                 'name' => 'required|min_length[3]|max_length[255]',
                 'email' => 'permit_empty|valid_email',
+                'phone' => 'permit_empty|max_length[50]',
+                'address' => 'permit_empty|max_length[500]',
                 'website' => 'permit_empty|valid_url',
             ];
 
