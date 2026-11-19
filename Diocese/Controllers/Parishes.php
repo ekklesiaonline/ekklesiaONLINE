@@ -218,16 +218,16 @@ class Parishes extends BaseController
     public function store()
     {
         if (!$this->canCreateParish()) {
-            return $this->jsonResponse(['success' => false, 'message' => lang('Diocesan.parishCreateRestricted')], 403);
+            return $this->jsonResponse($this->apiErrorPayload(lang('Diocesan.parishCreateRestricted'), 403, 'PARISH_CREATE_FORBIDDEN'), 403);
         }
 
         $dioceseId = (int) ($this->request->getPost('diocese_id') ?? 0);
         if ($dioceseId <= 0) {
-            return $this->jsonResponse(['success' => false, 'message' => lang('Diocesan.dioceseNotFound')], 400);
+            return $this->jsonResponse($this->apiErrorPayload(lang('Diocesan.dioceseNotFound'), 400, 'MALFORMED_REQUEST'), 400);
         }
 
         if (!$this->canManageDioceseScope($dioceseId)) {
-            return $this->jsonResponse(['success' => false, 'message' => lang('Diocesan.selectedParishOutsideScope')], 403);
+            return $this->jsonResponse($this->apiErrorPayload(lang('Diocesan.selectedParishOutsideScope'), 403, 'SCOPE_FORBIDDEN'), 403);
         }
 
         $rules = [
@@ -252,7 +252,7 @@ class Parishes extends BaseController
         ];
 
         if (!$this->validate($rules)) {
-            return $this->jsonResponse(['success' => false, 'errors' => $this->validator->getErrors()], 400);
+            return $this->jsonResponse($this->apiErrorPayload(lang('App.errorInvalidInput'), 422, 'VALIDATION_FAILED', $this->validator->getErrors()), 422);
         }
 
         $parishId = $this->parishModel->insert([
@@ -315,7 +315,7 @@ class Parishes extends BaseController
         }
 
         if ($this->request->isAJAX()) {
-            return $this->jsonResponse(['success' => false, 'message' => lang('Parishes.storeFailed')], 500);
+            return $this->jsonResponse($this->apiErrorPayload(lang('Parishes.storeFailed'), 500, 'PARISH_STORE_FAILED'), 500);
         }
 
         return redirect()->back()->withInput()->with('error', lang('Parishes.storeFailed'));
@@ -561,25 +561,19 @@ class Parishes extends BaseController
         $purgeNullableRefs = in_array(strtolower((string) $this->request->getVar('purge_nullable_refs')), ['1', 'true', 'yes', 'on'], true);
 
         if (!$this->canDeleteParish()) {
-            return $this->jsonResponse([
-                'success' => false,
-                'message' => lang('Diocesan.parishDeleteRestricted'),
-            ], 403);
+            return $this->jsonResponse($this->apiErrorPayload(lang('Diocesan.parishDeleteRestricted'), 403, 'PARISH_DELETE_FORBIDDEN'), 403);
         }
 
         if (!$this->canManageParish($parishId)) {
-            return $this->jsonResponse([
-                'success' => false,
-                'message' => lang('Diocesan.parishAccessDenied'),
-            ], 403);
+            return $this->jsonResponse($this->apiErrorPayload(lang('Diocesan.parishAccessDenied'), 403, 'SCOPE_FORBIDDEN'), 403);
         }
 
         $result = $this->deleteParishRecord($parishId, $purgeNullableRefs);
         if (!$result['success']) {
-            return $this->jsonResponse([
-                'success' => false,
-                'message' => $result['message'],
-            ], (int) ($result['status'] ?? 500));
+            return $this->jsonResponse(
+                $this->apiErrorPayload((string) $result['message'], (int) ($result['status'] ?? 500), 'PARISH_DELETE_FAILED'),
+                (int) ($result['status'] ?? 500)
+            );
         }
 
         return $this->jsonResponse([
@@ -594,27 +588,18 @@ class Parishes extends BaseController
         $deleteReason = trim((string) $this->request->getPost('delete_reason'));
 
         if (!$this->canDeleteParish()) {
-            return $this->jsonResponse([
-                'success' => false,
-                'message' => lang('Diocesan.parishDeleteRestricted'),
-            ], 403);
+            return $this->jsonResponse($this->apiErrorPayload(lang('Diocesan.parishDeleteRestricted'), 403, 'PARISH_DELETE_FORBIDDEN'), 403);
         }
 
         $requested = (array) $this->request->getPost('parish_ids');
         $parishIds = array_values(array_unique(array_filter(array_map('intval', $requested), static fn(int $item): bool => $item > 0)));
 
         if ($parishIds === []) {
-            return $this->jsonResponse([
-                'success' => false,
-                'message' => lang('Diocesan.bulkDeleteSelectAtLeastOne'),
-            ], 400);
+            return $this->jsonResponse($this->apiErrorPayload(lang('Diocesan.bulkDeleteSelectAtLeastOne'), 400, 'MALFORMED_REQUEST'), 400);
         }
 
         if (strlen($deleteReason) < 8) {
-            return $this->jsonResponse([
-                'success' => false,
-                'message' => lang('App.bulkDeleteReasonRequired'),
-            ], 400);
+            return $this->jsonResponse($this->apiErrorPayload(lang('App.bulkDeleteReasonRequired'), 422, 'VALIDATION_FAILED'), 422);
         }
 
         $deleted = 0;
@@ -731,25 +716,16 @@ class Parishes extends BaseController
         $parishId = (int) $id;
 
         if (!$this->canDeleteParish()) {
-            return $this->jsonResponse([
-                'success' => false,
-                'message' => lang('Diocesan.parishDeleteRestricted'),
-            ], 403);
+            return $this->jsonResponse($this->apiErrorPayload(lang('Diocesan.parishDeleteRestricted'), 403, 'PARISH_DELETE_FORBIDDEN'), 403);
         }
 
         if (!$this->canManageParish($parishId)) {
-            return $this->jsonResponse([
-                'success' => false,
-                'message' => lang('Diocesan.parishAccessDenied'),
-            ], 403);
+            return $this->jsonResponse($this->apiErrorPayload(lang('Diocesan.parishAccessDenied'), 403, 'SCOPE_FORBIDDEN'), 403);
         }
 
         $parish = $this->parishModel->select('id, name')->find($parishId);
         if (!$parish) {
-            return $this->jsonResponse([
-                'success' => false,
-                'message' => lang('Diocesan.parishNotFound'),
-            ], 404);
+            return $this->jsonResponse($this->apiErrorPayload(lang('Diocesan.parishNotFound'), 404, 'PARISH_NOT_FOUND'), 404);
         }
 
         try {

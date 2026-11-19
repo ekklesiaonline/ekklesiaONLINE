@@ -152,7 +152,7 @@ class ProvinceEventsManage extends Events
             'status' => 'required|in_list[draft,published,cancelled,completed]',
             'visibility' => 'required|in_list[public,members,staff]',
             'schedule_mode' => 'required|in_list[one_day,all_day,multi_day]',
-            'publish_at' => 'permit_empty',
+            'publish_at' => 'permit_empty|valid_date[Y-m-d\\TH:i]',
             'recurrence_pattern' => 'permit_empty|in_list[none,daily,weekly,biweekly,monthly]',
             'recurrence_days' => 'permit_empty',
             'recurrence_until' => 'permit_empty',
@@ -208,7 +208,11 @@ class ProvinceEventsManage extends Events
             'requires_registration' => $this->request->getPost('requires_registration') ? 1 : 0,
             'status' => trim((string) $this->request->getPost('status')),
             'visibility' => trim((string) $this->request->getPost('visibility')),
-            'publish_at' => $publishAt !== '' ? date('Y-m-d H:i:s', (int) strtotime($publishAt)) : null,
+            // strtotime() failure previously collapsed to the epoch, which
+            // publishDueDraftEvents() then treated as due and auto-published
+            // the draft. valid_date rejects malformed input; the extra false
+            // guard keeps any residual unparseable value NULL, never 1970.
+            'publish_at' => ($publishAtTs = $publishAt !== '' ? strtotime($publishAt) : false) !== false ? date('Y-m-d H:i:s', $publishAtTs) : null,
             'recurrence_pattern' => $recurrencePattern,
             'recurrence_days_json' => $recurrencePattern !== 'none' ? json_encode($recurrenceDays) : null,
             'recurrence_until' => $recurrencePattern !== 'none' ? $recurrenceUntil : null,

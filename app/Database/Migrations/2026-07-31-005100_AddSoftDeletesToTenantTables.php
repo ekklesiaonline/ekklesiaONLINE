@@ -37,12 +37,6 @@ class AddSoftDeletesToTenantTables extends Migration
 
             $this->forge->addColumn($table, $column);
         }
-
-        if ($this->db->tableExists('parish_people')
-            && ! $this->db->fieldExists('deleted_at', 'parish_people')
-        ) {
-            $this->forge->addColumn('parish_people', $column);
-        }
     }
 
     public function down()
@@ -57,12 +51,6 @@ class AddSoftDeletesToTenantTables extends Migration
             }
 
             $this->forge->dropColumn($table, 'deleted_at');
-        }
-
-        if ($this->db->tableExists('parish_people')
-            && $this->db->fieldExists('deleted_at', 'parish_people')
-        ) {
-            $this->forge->dropColumn('parish_people', 'deleted_at');
         }
     }
 }

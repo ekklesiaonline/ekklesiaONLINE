@@ -40,7 +40,10 @@ class AddParishIdToFamilyTable extends Migration
             return;
         }
 
-        $this->forge->dropForeignKey('family', 'families_parish_id_foreign');
+        if (isset($this->db->getForeignKeyData('family')['families_parish_id_foreign'])) {
+            $this->forge->dropForeignKey('family', 'families_parish_id_foreign');
+        }
+
         $this->forge->dropColumn('family', 'parish_id');
     }
 }

@@ -538,9 +538,29 @@ class PublicAssets extends PublicHome
                 ->setHeader('Last-Modified', gmdate('D, d M Y H:i:s', $lastModifiedTs) . ' GMT');
         }
 
+        // Only known-safe types render inline; anything else (HTML, SVG,
+        // script-capable content) downloads instead of executing on the
+        // app origin. nosniff stops MIME-sniffing upgrades. SVG is excluded
+        // deliberately: image/svg+xml is script-capable, so an allowlist of
+        // concrete raster types is required — an image/* prefix check would
+        // still let a stored SVG run scripts on this origin.
+        $inlineSafe = in_array($mimeType, [
+            'image/jpeg',
+            'image/png',
+            'image/gif',
+            'image/webp',
+            'image/avif',
+            'image/bmp',
+            'image/x-icon',
+            'image/vnd.microsoft.icon',
+            'application/pdf',
+        ], true);
+        $disposition = $inlineSafe ? 'inline' : 'attachment';
+
         return $this->response
             ->setHeader('Content-Type', $mimeType)
-            ->setHeader('Content-Disposition', 'inline; filename="' . $downloadName . '"')
+            ->setHeader('Content-Disposition', $disposition . '; filename="' . $downloadName . '"')
+            ->setHeader('X-Content-Type-Options', 'nosniff')
             ->setHeader('Cache-Control', 'private, max-age=300')
             ->setHeader('ETag', $etag)
             ->setHeader('Last-Modified', gmdate('D, d M Y H:i:s', $lastModifiedTs) . ' GMT')

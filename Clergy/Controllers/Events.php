@@ -594,7 +594,7 @@ class Events extends BaseController
             'capacity' => $capacity > 0 ? $capacity : null,
             'requires_registration' => $this->request->getPost('requires_registration') ? 1 : 0,
             'status' => trim((string) ($this->request->getPost('status') ?? 'published')),
-            'publish_at' => ($publishAt = trim((string) ($this->request->getPost('publish_at') ?? ''))) !== '' ? date('Y-m-d H:i:s', (int) strtotime($publishAt)) : null,
+            'publish_at' => ($publishAtTs = ($publishAt = trim((string) ($this->request->getPost('publish_at') ?? ''))) !== '' ? strtotime($publishAt) : false) !== false ? date('Y-m-d H:i:s', $publishAtTs) : null,
             'recurrence_pattern' => $recurrencePattern,
             'recurrence_days_json' => $recurrencePattern !== 'none' ? json_encode($recurrenceDays) : null,
             'recurrence_until' => $recurrencePattern !== 'none' ? $recurrenceUntil : null,
@@ -615,7 +615,7 @@ class Events extends BaseController
             'audience_family_id' => 'permit_empty|integer',
             'scope_level' => 'required|in_list[parish,diocese]',
             'schedule_mode' => 'required|in_list[one_day,all_day,multi_day]',
-            'publish_at' => 'permit_empty',
+            'publish_at' => 'permit_empty|valid_date[Y-m-d\\TH:i]',
             'recurrence_pattern' => 'permit_empty|in_list[none,daily,weekly,biweekly,monthly]',
             'cover' => 'permit_empty',
         ];

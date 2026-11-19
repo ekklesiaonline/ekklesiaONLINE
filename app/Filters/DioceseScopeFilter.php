@@ -76,6 +76,18 @@ class DioceseScopeFilter implements FilterInterface
      */
     private function resolveDiocesanScopeId(int $userId): int
     {
+        // The primary assignment outranks the profile column — mirrors
+        // BaseController::resolveDiocesanScopeId()'s order, so a stale
+        // profile.diocese_id cannot deny the admin's assigned diocese.
+        try {
+            $primary = model('DioceseAdminPrimaryModel')->getByUser($userId);
+            if (!empty($primary['diocese_id'])) {
+                return (int) $primary['diocese_id'];
+            }
+        } catch (\Throwable $e) {
+            // Table may be absent in older/partial schemas: fall through.
+        }
+
         $profileModel = model('ProfileModel');
         $profile = $profileModel->where('user_id', $userId)->first();
 

@@ -61,8 +61,11 @@
             el.className = 'toast align-items-center border-0 show';
             el.style.borderLeft = '4px solid ' + (colorMap[level] || colorMap.primary);
             el.setAttribute('role', 'alert');
-            el.innerHTML = '<div class="d-flex"><div class="toast-body">' + msg + '</div>' +
+            el.innerHTML = '<div class="d-flex"><div class="toast-body"></div>' +
                 '<button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast"></button></div>';
+            // msg is caller-controlled — set as text so markup is never
+            // interpreted (DOM XSS sink).
+            el.querySelector('.toast-body').textContent = msg;
             container.appendChild(el);
             setTimeout(function() {
                 el.remove();

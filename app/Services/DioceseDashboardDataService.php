@@ -22,7 +22,7 @@ class DioceseDashboardDataService
         $db = db_connect();
 
         // Parish count
-        $parishQuery = $db->table('parish')->where('diocese_id', $dioceseId);
+        $parishQuery = $db->table('parish')->where('diocese_id', $dioceseId)->where('deleted_at', null);
         if ($parishId !== null) {
             $parishQuery->where('id', $parishId);
         }
@@ -39,7 +39,8 @@ class DioceseDashboardDataService
             ", false)
             ->join('parish c', 'c.id = pa.parish_id')
             ->where('pa.deleted_at IS NULL', null, false)
-            ->where('c.diocese_id', $dioceseId);
+            ->where('c.diocese_id', $dioceseId)
+            ->where('c.deleted_at IS NULL', null, false);
 
         if ($hasStandingSummary) {
             // Good standing lives in member_standing_summary (keyed by user +
@@ -68,7 +69,8 @@ class DioceseDashboardDataService
             ->join('parish c', 'c.id = lp.parish_id')
             ->where('lp.active', 1)
             ->where('lp.scope_type', 'parish')
-            ->where('c.diocese_id', $dioceseId);
+            ->where('c.diocese_id', $dioceseId)
+            ->where('c.deleted_at IS NULL', null, false);
         if ($parishId !== null) {
             $leaderQuery->where('lp.parish_id', $parishId);
         }
@@ -89,7 +91,8 @@ class DioceseDashboardDataService
     public function countParishSummaryRows(int $dioceseId, ?int $parishId = null): int
     {
         $query = db_connect()->table('parish')
-            ->where('diocese_id', $dioceseId);
+            ->where('diocese_id', $dioceseId)
+            ->where('deleted_at', null);
 
         if ($parishId !== null) {
             $query->where('id', $parishId);
@@ -109,6 +112,7 @@ class DioceseDashboardDataService
         $query = db_connect()->table('parish')
             ->select('id, name')
             ->where('diocese_id', $dioceseId)
+            ->where('deleted_at', null)
             ->orderBy('name', 'ASC');
 
         if ($parishId !== null) {
@@ -391,6 +395,7 @@ class DioceseDashboardDataService
             ->join('service_metric sm', 'sm.service_id = s.id', 'left')
             ->join('parish c', 'c.id = s.parish_id')
             ->where('c.diocese_id', $dioceseId)
+            ->where('c.deleted_at IS NULL', null, false)
             ->where('s.service_date >=', $start)
             ->where('s.service_date <=', $end);
 
@@ -459,6 +464,7 @@ class DioceseDashboardDataService
             ->join('service_metric sm', 'sm.service_id = s.id', 'left')
             ->join('parish c', 'c.id = s.parish_id')
             ->where('c.diocese_id', $dioceseId)
+            ->where('c.deleted_at IS NULL', null, false)
             ->where('s.service_date >=', $scanStart)
             ->where('s.service_date <=', $scanEnd);
         if ($parishId !== null) {
@@ -545,6 +551,7 @@ class DioceseDashboardDataService
             JOIN {$prefix}parish c ON c.id = s.parish_id
             JOIN {$prefix}service_metric sm ON sm.service_id = s.id
             WHERE c.diocese_id = ?
+              AND c.deleted_at IS NULL
               AND s.service_date >= ?
               AND s.service_date <= ?
               AND {$sundayPredicate}
@@ -734,24 +741,25 @@ class DioceseDashboardDataService
     public function buildRecentNetworkActivityFeedSql(int $dioceseId): string
     {
         $d = (int) $dioceseId;
+        $prefix = db_connect()->getPrefix();
         return "
             SELECT 'parish' AS activity_type, c.created_at AS happened_at, c.name AS parish_name,
                    c.id AS parish_id, c.name AS activity_subject, NULL AS amount, NULL AS liturgical_context
-            FROM parish c WHERE c.created_at IS NOT NULL AND c.diocese_id = $d
+            FROM {$prefix}parish c WHERE c.created_at IS NOT NULL AND c.diocese_id = $d AND c.deleted_at IS NULL
 
             UNION ALL
 
             SELECT 'donation' AS activity_type, d.created_at AS happened_at, c.name AS parish_name,
                    c.id AS parish_id, d.category AS activity_subject, d.amount AS amount, NULL AS liturgical_context
-            FROM donation d JOIN parish c ON c.id = d.parish_id
-            WHERE d.created_at IS NOT NULL AND c.diocese_id = $d
+            FROM {$prefix}donation d JOIN {$prefix}parish c ON c.id = d.parish_id
+            WHERE d.created_at IS NOT NULL AND c.diocese_id = $d AND c.deleted_at IS NULL
 
             UNION ALL
 
             SELECT 'expense' AS activity_type, e.created_at AS happened_at, c.name AS parish_name,
                    c.id AS parish_id, e.category AS activity_subject, e.amount AS amount, NULL AS liturgical_context
-            FROM expense e JOIN parish c ON c.id = e.parish_id
-            WHERE e.created_at IS NOT NULL AND c.diocese_id = $d
+            FROM {$prefix}expense e JOIN {$prefix}parish c ON c.id = e.parish_id
+            WHERE e.created_at IS NOT NULL AND c.diocese_id = $d AND c.deleted_at IS NULL
         ";
     }
 

@@ -122,7 +122,7 @@ $roleLabelMap = [
                     </div>
                     <div class="mb-3">
                         <label class="form-label"><?= lang('Parishes.textTempPasswordOptional') ?></label>
-                        <input type="password" class="form-control" name="password" minlength="8">
+                        <input type="password" class="form-control" name="password" minlength="12">
                         <div class="form-text"><?= lang('Parishes.textTempPasswordOptionalHelp') ?></div>
                     </div>
                     <button type="submit" class="btn btn-outline-primary w-100"><?= lang('Parishes.btn_createAssignRole') ?></button>

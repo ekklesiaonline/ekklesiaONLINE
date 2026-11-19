@@ -107,27 +107,40 @@ class AddFollowupScopeAndCloneLineage extends Migration
 
     public function down()
     {
-        foreach (['source_action_id', 'is_customized'] as $col) {
-            if ($this->db->fieldExists($col, 'followup_action')) {
-                $this->forge->dropColumn('followup_action', $col);
-            }
-        }
-
-        foreach (['diocese_id', 'source_template_id', 'is_customized'] as $col) {
-            if ($this->db->fieldExists($col, 'followup_template')) {
-                $this->forge->dropColumn('followup_template', $col);
-            }
-        }
-
-        foreach ([
+        $this->dropColumnsWithForeignKeys('followup_action', ['source_action_id', 'is_customized']);
+        $this->dropColumnsWithForeignKeys('followup_template', ['diocese_id', 'source_template_id', 'is_customized']);
+        $this->dropColumnsWithForeignKeys('followup_sequence', [
             'diocese_id',
             'source_sequence_id',
             'is_diocese_default',
             'is_customized',
-        ] as $col) {
-            if ($this->db->fieldExists($col, 'followup_sequence')) {
-                $this->forge->dropColumn('followup_sequence', $col);
+        ]);
+    }
+
+    /**
+     * Drops the listed columns after removing any foreign key that
+     * references them; MySQL refuses to drop a column while a
+     * constraint still points at it.
+     */
+    private function dropColumnsWithForeignKeys(string $table, array $columns): void
+    {
+        if (! $this->db->tableExists($table)) {
+            return;
+        }
+
+        $foreignKeys = $this->db->getForeignKeyData($table);
+        foreach ($columns as $column) {
+            if (! $this->db->fieldExists($column, $table)) {
+                continue;
             }
+
+            foreach ($foreignKeys as $fk) {
+                if (in_array($column, (array) ($fk->column_name ?? []), true)) {
+                    $this->forge->dropForeignKey($table, $fk->constraint_name);
+                }
+            }
+
+            $this->forge->dropColumn($table, $column);
         }
     }
 }

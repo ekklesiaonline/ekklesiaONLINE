@@ -68,10 +68,22 @@ class CreateCanonicalSchema extends Migration
 
     private function getAllTables(): array
     {
+        // Tables excluded from the blanket drop: the migration ledger must
+        // survive or the runner cannot record the rollback, and `settings`
+        // is owned by the earlier vendor settings migrations whose own
+        // down() methods manage it.
+        $excluded = [
+            $this->db->DBPrefix . 'migrations',
+            $this->db->DBPrefix . 'settings',
+        ];
+
         $result = $this->db->query("SHOW TABLES")->getResultArray();
         $tables = [];
         foreach ($result as $row) {
-            $tables[] = reset($row);
+            $table = reset($row);
+            if (! in_array($table, $excluded, true)) {
+                $tables[] = $table;
+            }
         }
         return $tables;
     }

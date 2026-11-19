@@ -171,7 +171,7 @@ class VolunteerSchedules extends Volunteers
 
         // If returning after a validation error, restore the member list for the previously-selected team.
         $oldTeamId = (int) old('team_id', 0);
-        $members   = $oldTeamId > 0 ? $this->teamMemberModel->getTeamMembers($oldTeamId) : [];
+        $members   = $this->getParishTeamMembersForForm($oldTeamId, $parishId);
 
         return view('Volunteer\Views\Volunteers/create_schedule', array_merge($this->getCommonViewData(lang('Volunteer.pageTitleCreateSchedule')), [
             'teams'    => $teams,
@@ -218,6 +218,10 @@ class VolunteerSchedules extends Volunteers
             ->isUserAffiliatedWithParish((int) $this->request->getPost('user_id'), (int) ($this->getOperationalParishId() ?? 0), true);
         if (!$isAffiliated) {
             return redirect()->back()->withInput()->with('error', lang('Volunteer.memberOutsideScope'));
+        }
+
+        if (!$this->teamMemberModel->isUserOnTeam($teamId, (int) $this->request->getPost('user_id'))) {
+            return redirect()->back()->withInput()->with('error', lang('Volunteer.memberNotOnTeam'));
         }
 
         try {
@@ -279,7 +283,7 @@ class VolunteerSchedules extends Volunteers
 
         // Load members scoped to the schedule's team (or old team_id if returning after a validation error).
         $teamId  = (int) old('team_id', (int) ($schedule['team_id'] ?? 0));
-        $members = $teamId > 0 ? $this->teamMemberModel->getTeamMembers($teamId) : [];
+        $members = $this->getParishTeamMembersForForm($teamId, $parishId);
 
         return view('Volunteer\Views\Volunteers/edit_schedule', array_merge($this->getCommonViewData(lang('Volunteer.pageTitleEditSchedule')), [
             'schedule' => $schedule,
@@ -328,6 +332,10 @@ class VolunteerSchedules extends Volunteers
             ->isUserAffiliatedWithParish($userId, (int) ($this->getOperationalParishId() ?? 0), true);
         if (!$isAffiliated) {
             return redirect()->back()->withInput()->with('error', lang('Volunteer.memberOutsideScope'));
+        }
+
+        if (!$this->teamMemberModel->isUserOnTeam($teamId, $userId)) {
+            return redirect()->back()->withInput()->with('error', lang('Volunteer.memberNotOnTeam'));
         }
 
         try {
@@ -430,12 +438,16 @@ class VolunteerSchedules extends Volunteers
     public function teamMembersApi(int $teamId)
     {
         if (!$this->checkPermission('volunteer.schedule')) {
-            return $this->response->setStatusCode(403)->setJSON(['error' => lang('App.errorForbidden')]);
+            $this->audit()->logAuthorizationDenial('volunteers/team-members-api', 'VOLUNTEER_PERMISSION_DENIED', [
+                'parish_id' => $this->getOperationalParishId() ?? 0,
+            ]);
+
+            return $this->jsonResponse($this->apiErrorPayload(lang('App.errorForbidden'), 403, 'VOLUNTEER_PERMISSION_DENIED'), 403);
         }
 
         $parishId = (int) ($this->getOperationalParishId() ?? 0);
         if ($parishId <= 0) {
-            return $this->response->setStatusCode(403)->setJSON(['error' => lang('App.errorForbidden')]);
+            return $this->jsonResponse($this->apiErrorPayload(lang('App.errorNoParishScope'), 403, 'PARISH_SCOPE_REQUIRED'), 403);
         }
 
         // Ensure the team belongs to this parish.
@@ -451,6 +463,28 @@ class VolunteerSchedules extends Volunteers
         ], $rows);
 
         return $this->response->setJSON(['members' => $members]);
+    }
+
+
+    /**
+     * Returns roster members for form repopulation only when the requested
+     * team belongs to the operational parish; a tampered `old('team_id')`
+     * never leaks a foreign parish roster into the rendered form.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    private function getParishTeamMembersForForm(int $teamId, ?int $parishId): array
+    {
+        if ($teamId <= 0 || $parishId === null || $parishId <= 0) {
+            return [];
+        }
+
+        $team = $this->volunteerTeamModel->find($teamId);
+        if (!$team || (int) ($team['parish_id'] ?? 0) !== $parishId) {
+            return [];
+        }
+
+        return $this->teamMemberModel->getTeamMembers($teamId);
     }
 
 

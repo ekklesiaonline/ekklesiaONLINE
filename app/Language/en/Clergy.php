@@ -106,6 +106,7 @@ return [
     'invitationSendFailed' => 'Clergy account created, but the invitation email could not be sent. Use resend invitation.',
     'notFound' => 'Clergy account not found in your diocese.',
     'portalAccessDisabled' => 'Portal access disabled.',
+    'cannotDeactivateAdmin' => 'Accounts with an administrative role are managed through the admin user screens.',
     'accountActions' => 'Account Actions',
     'disablePortalAccessHelp' => 'Disabling portal access only blocks sign-in. Canonical suspension is a separate diocesan action.',
     'ordinationSummary' => 'Ordination Summary',

@@ -20,17 +20,40 @@ final class ReportsFinanceBoundaryIntegrationTest extends CIUnitTestCase
     protected $migrate = true;
     protected $refresh = true;
 
+    /** @var list<int> Parish fixture ids to delete in tearDown. */
+    private array $fixtureParishIds = [];
+
     protected function setUp(): void
     {
         parent::setUp();
 
         helper('auth');
         Services::reset(true);
+        // FeatureTestTrait only clears $_SESSION between calls; leftover
+        // $_POST/$_GET fields (e.g. parish_id) from earlier tests would leak
+        // into these requests and trip the scope filters.
+        $_GET = [];
+        $_POST = [];
+        $_REQUEST = [];
+        // Tests that exercise localization may leave the shared session or
+        // language service in another locale. Keep this integration test's
+        // rendered-text assertions deterministic regardless of suite order.
+        service('request')->setLocale('en');
+        service('language')->setLocale('en');
+        session()->remove('user_locale');
+        session()->set('locale', 'en');
         $this->ensureCoreTablesExist();
     }
 
     protected function tearDown(): void
     {
+        if ($this->fixtureParishIds !== [] && $this->tableExists('parish')) {
+            $this->db->table($this->createTableName('parish'))
+                ->whereIn('id', $this->fixtureParishIds)
+                ->delete();
+            $this->fixtureParishIds = [];
+        }
+
         Services::reset(true);
 
         parent::tearDown();
@@ -90,29 +113,41 @@ final class ReportsFinanceBoundaryIntegrationTest extends CIUnitTestCase
         ]);
     }
 
-    public function testDiocesanAdminIsRedirectedFromParishListBySystemBoundaryFilter(): void
+    public function testDiocesanAdminSeesParishListScopedToOwnDiocese(): void
     {
         $userId = $this->insertUser('diocesan.parish.boundary.user');
         $this->insertProfileScope($userId, null, 1);
         $this->injectDiocesanAdminAuth($userId);
 
+        $parishTable = $this->createTableName('parish');
+        $now = date('Y-m-d H:i:s');
+        $this->db->table($parishTable)->insert([
+            'diocese_id' => 1,
+            'name' => 'InScope Boundary Parish',
+            'created_at' => $now,
+            'updated_at' => $now,
+        ]);
+        $this->fixtureParishIds[] = (int) $this->db->insertID();
+        $this->db->table($parishTable)->insert([
+            'diocese_id' => 2,
+            'name' => 'OutOfScope Boundary Parish',
+            'created_at' => $now,
+            'updated_at' => $now,
+        ]);
+        $this->fixtureParishIds[] = (int) $this->db->insertID();
+
         $response = $this->get('parish_list');
 
-        $response->assertRedirect();
-        $error = (string) session('error');
-        $this->assertContains($error, [
-            lang('Auth.notEnoughPrivilege'),
-            lang('Diocesan.parishManagementAccessDenied'),
-            'Diocesan.parishManagementAccessDenied',
-            'Not enough privilege to access this resource.',
-        ]);
+        $response->assertOK();
+        $response->assertSee('InScope Boundary Parish');
+        $response->assertDontSee('OutOfScope Boundary Parish');
     }
 
     public function testDiocesanAdminCanAccessDioceseFinance(): void
     {
         $userId = $this->insertUser('diocesan.finance.boundary.user');
         $this->insertProfileScope($userId, null, 1);
-        $this->injectDioceseAdminAuth($userId);
+        $this->injectDiocesanAdminAuth($userId);
 
         $response = $this->get('diocese/finance');
 
@@ -193,6 +228,7 @@ final class ReportsFinanceBoundaryIntegrationTest extends CIUnitTestCase
                     'id' => $idForTest,
                     'username' => 'province.reports.boundary.user.' . $idForTest,
                     'email' => 'province.reports.boundary.' . $idForTest . '@example.org',
+                    'active' => 1,
                 ]);
             }
 
@@ -308,121 +344,7 @@ final class ReportsFinanceBoundaryIntegrationTest extends CIUnitTestCase
                     'id' => $idForTest,
                     'username' => 'diocesan.reports.boundary.user.' . $idForTest,
                     'email' => 'diocesan.reports.boundary.' . $idForTest . '@example.org',
-                ]);
-            }
-
-            public function can(string ...$permissions): bool
-            {
-                $granted = [
-                    'diocese.admin',
-                    'dashboard.view',
-                    'report.view',
-                ];
-
-                foreach ($permissions as $permission) {
-                    if (! in_array($permission, $granted, true)) {
-                        return false;
-                    }
-                }
-
-                return true;
-            }
-
-            public function inGroup(string ...$groups): bool
-            {
-                return in_array('diocesanadmin', $groups, true);
-            }
-        };
-
-        $auth = new class(config('Auth'), $fakeUser, $userId) extends Auth {
-            public function __construct($config, private User $fakeUser, private int $userId)
-            {
-                parent::__construct($config);
-            }
-
-            public function getAuthenticator(): AuthenticatorInterface
-            {
-                return new class($this->fakeUser) implements AuthenticatorInterface {
-                    public function __construct(private User $fakeUser) {}
-
-                    public function attempt(array $credentials): Result
-                    {
-                        return new Result(['success' => false, 'reason' => 'not-used-in-test']);
-                    }
-
-                    public function check(array $credentials): Result
-                    {
-                        return new Result(['success' => false, 'reason' => 'not-used-in-test']);
-                    }
-
-                    public function loggedIn(): bool
-                    {
-                        return true;
-                    }
-
-                    public function login(User $user): void {}
-
-                    public function loginById($userId): void {}
-
-                    public function logout(): void {}
-
-                    public function getUser(): ?User
-                    {
-                        return $this->fakeUser;
-                    }
-
-                    public function recordActiveDate(): void {}
-
-                    public function isPending(): bool
-                    {
-                        return false;
-                    }
-
-                    public function getPendingMessage(): string
-                    {
-                        return '';
-                    }
-
-                    public function startUpAction(string $type, User $user): bool
-                    {
-                        return false;
-                    }
-                };
-            }
-
-            public function setAuthenticator(?string $alias = null): self
-            {
-                return $this;
-            }
-
-            public function loggedIn(): bool
-            {
-                return true;
-            }
-
-            public function id(): ?int
-            {
-                return $this->userId;
-            }
-
-            public function user(): ?User
-            {
-                return $this->fakeUser;
-            }
-        };
-
-        Services::injectMock('auth', $auth);
-    }
-
-    private function injectDioceseAdminAuth(int $userId): void
-    {
-        $fakeUser = new class($userId) extends User {
-            public function __construct(private int $idForTest)
-            {
-                parent::__construct([
-                    'id' => $idForTest,
-                    'username' => 'diocese.reports.boundary.user.' . $idForTest,
-                    'email' => 'diocese.reports.boundary.' . $idForTest . '@example.org',
+                    'active' => 1,
                 ]);
             }
 
@@ -592,7 +514,6 @@ final class ReportsFinanceBoundaryIntegrationTest extends CIUnitTestCase
         $this->ensureColumnExists($resolvedSessions, 'user_agent', 'TEXT NULL');
         $this->ensureColumnExists($resolvedSessions, 'device_fingerprint', 'TEXT NULL');
         $this->ensureColumnExists($resolvedSessions, 'is_new_device', 'INTEGER DEFAULT 0');
-        $this->ensureColumnExists($resolvedSessions, 'last_active', 'TEXT NULL');
 
         $registrationRequestsTable = $this->createTableName('user_registration_request');
         if (! $this->tableExists('user_registration_request')) {
@@ -614,7 +535,6 @@ final class ReportsFinanceBoundaryIntegrationTest extends CIUnitTestCase
                 province_id INTEGER NULL,
                 diocese_id INTEGER NULL,
                 parish_id INTEGER NULL,
-                parish_id INTEGER NULL,
                 created_at TEXT NULL,
                 updated_at TEXT NULL,
                 deleted_at TEXT NULL
@@ -626,11 +546,9 @@ final class ReportsFinanceBoundaryIntegrationTest extends CIUnitTestCase
         $this->ensureColumnExists($resolvedProfiles, 'province_id', 'INTEGER NULL');
         $this->ensureColumnExists($resolvedProfiles, 'diocese_id', 'INTEGER NULL');
         $this->ensureColumnExists($resolvedProfiles, 'parish_id', 'INTEGER NULL');
-        $this->ensureColumnExists($resolvedProfiles, 'parish_id', 'INTEGER NULL');
         $prefixedProfiles = $this->createTableName('profile');
         $this->ensureColumnExists($prefixedProfiles, 'province_id', 'INTEGER NULL');
         $this->ensureColumnExists($prefixedProfiles, 'diocese_id', 'INTEGER NULL');
-        $this->ensureColumnExists($prefixedProfiles, 'parish_id', 'INTEGER NULL');
         $this->ensureColumnExists($prefixedProfiles, 'parish_id', 'INTEGER NULL');
         $this->ensureColumnExists($prefixedProfiles, 'locale', 'TEXT NULL');
 

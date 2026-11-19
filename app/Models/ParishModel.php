@@ -85,7 +85,7 @@ class ParishModel extends Model
             ->select('c.*, d.name as diocese_name, pz.name as province_name, pz.province_number, COUNT(DISTINCT mca.linked_user_id) as member_count')
             ->join('diocese d', 'd.id = c.diocese_id', 'left')
             ->join('province pz', 'pz.id = d.province_id', 'left')
-            ->join('parish_affiliation mca', 'mca.parish_id = c.id AND mca.is_member = 1 AND mca.deleted_at IS NULL', 'left', false)
+            ->join($this->db->prefixTable('parish_affiliation') . ' mca', 'mca.parish_id = c.id AND mca.is_member = 1 AND mca.deleted_at IS NULL', 'left', false)
             ->join('auth_groups_users agu', 'agu.user_id = mca.linked_user_id AND agu.group IN ("provinceadmin","dioceseadmin")', 'left')
             ->where('agu.id IS NULL') // Exclude province/diocesan admin users from parish member counts
             ->where('c.deleted_at', null)
@@ -129,67 +129,57 @@ class ParishModel extends Model
         $search     = ($search !== null) ? trim($search) : '';
         $letter     = ($letter  !== null) ? strtoupper(trim($letter)) : '';
 
-        $builder = $this->db->table('parish c')
-            ->select('c.*, d.name as diocese_name, pz.name as province_name, pz.province_number, COUNT(DISTINCT mca.linked_user_id) as member_count')
-            ->join('diocese d', 'd.id = c.diocese_id', 'left')
-            ->join('province pz', 'pz.id = d.province_id', 'left')
-            ->join('parish_affiliation mca', 'mca.parish_id = c.id AND mca.is_member = 1 AND mca.deleted_at IS NULL', 'left', false)
-            ->join('auth_groups_users agu', 'agu.user_id = mca.linked_user_id AND agu.group IN ("provinceadmin","dioceseadmin")', 'left')
-            ->where('agu.id IS NULL')
-            ->where('c.deleted_at', null)
-            ->groupBy('c.id');
+        // countAllResults() resets the connection's shared table-alias
+        // registry, so the count query must finish before the list builder is
+        // constructed — otherwise the list query's aliases are prefixed as if
+        // they were table names under a non-empty DBPrefix.
+        $applyFilters = static function ($query) use ($dioceseId, $provinceId, $search, $letter, $mailingDiffersOnly): void {
+            if ($dioceseId) {
+                $query->where('c.diocese_id', $dioceseId);
+            } elseif ($provinceId) {
+                $query->where('d.province_id', $provinceId);
+            }
+
+            if ($search !== '') {
+                $query->groupStart()
+                    ->like('c.name', $search)
+                    ->orLike('c.email', $search)
+                    ->orLike('c.parish_ueid', $search)
+                    ->groupEnd();
+            } elseif ($letter !== '') {
+                $query->like('c.name', $letter, 'after');
+            }
+
+            if ($mailingDiffersOnly) {
+                $query->groupStart()
+                    ->where('TRIM(COALESCE(c.street, "")) <> TRIM(COALESCE(c.mailing_street, ""))')
+                    ->orWhere('TRIM(COALESCE(c.city, "")) <> TRIM(COALESCE(c.mailing_city, ""))')
+                    ->orWhere('TRIM(COALESCE(c.state, "")) <> TRIM(COALESCE(c.mailing_state, ""))')
+                    ->orWhere('TRIM(COALESCE(c.zip, "")) <> TRIM(COALESCE(c.mailing_zip, ""))')
+                    ->orWhere('TRIM(COALESCE(c.county, "")) <> TRIM(COALESCE(c.mailing_county, ""))')
+                    ->orWhere('TRIM(COALESCE(c.country, "")) <> TRIM(COALESCE(c.mailing_country, ""))')
+                    ->groupEnd();
+            }
+        };
 
         $countBuilder = $this->db->table('parish c')
             ->select('c.id')
             ->join('diocese d', 'd.id = c.diocese_id', 'left')
             ->join('province pz', 'pz.id = d.province_id', 'left')
             ->where('c.deleted_at', null);
-
-        if ($dioceseId) {
-            $builder->where('c.diocese_id', $dioceseId);
-            $countBuilder->where('c.diocese_id', $dioceseId);
-        } elseif ($provinceId) {
-            $builder->where('d.province_id', $provinceId);
-            $countBuilder->where('d.province_id', $provinceId);
-        }
-
-        if ($search !== '') {
-            $builder->groupStart()
-                ->like('c.name', $search)
-                ->orLike('c.email', $search)
-                ->orLike('c.parish_ueid', $search)
-                ->groupEnd();
-            $countBuilder->groupStart()
-                ->like('c.name', $search)
-                ->orLike('c.email', $search)
-                ->orLike('c.parish_ueid', $search)
-                ->groupEnd();
-        } elseif ($letter !== '') {
-            $builder->like('c.name', $letter, 'after');
-            $countBuilder->like('c.name', $letter, 'after');
-        }
-
-        if ($mailingDiffersOnly) {
-            $builder->groupStart()
-                ->where('TRIM(COALESCE(c.street, "")) <> TRIM(COALESCE(c.mailing_street, ""))')
-                ->orWhere('TRIM(COALESCE(c.city, "")) <> TRIM(COALESCE(c.mailing_city, ""))')
-                ->orWhere('TRIM(COALESCE(c.state, "")) <> TRIM(COALESCE(c.mailing_state, ""))')
-                ->orWhere('TRIM(COALESCE(c.zip, "")) <> TRIM(COALESCE(c.mailing_zip, ""))')
-                ->orWhere('TRIM(COALESCE(c.county, "")) <> TRIM(COALESCE(c.mailing_county, ""))')
-                ->orWhere('TRIM(COALESCE(c.country, "")) <> TRIM(COALESCE(c.mailing_country, ""))')
-                ->groupEnd();
-
-            $countBuilder->groupStart()
-                ->where('TRIM(COALESCE(c.street, "")) <> TRIM(COALESCE(c.mailing_street, ""))')
-                ->orWhere('TRIM(COALESCE(c.city, "")) <> TRIM(COALESCE(c.mailing_city, ""))')
-                ->orWhere('TRIM(COALESCE(c.state, "")) <> TRIM(COALESCE(c.mailing_state, ""))')
-                ->orWhere('TRIM(COALESCE(c.zip, "")) <> TRIM(COALESCE(c.mailing_zip, ""))')
-                ->orWhere('TRIM(COALESCE(c.county, "")) <> TRIM(COALESCE(c.mailing_county, ""))')
-                ->orWhere('TRIM(COALESCE(c.country, "")) <> TRIM(COALESCE(c.mailing_country, ""))')
-                ->groupEnd();
-        }
-
+        $applyFilters($countBuilder);
         $total = $countBuilder->countAllResults();
+
+        $builder = $this->db->table('parish c')
+            ->select('c.*, d.name as diocese_name, pz.name as province_name, pz.province_number, COUNT(DISTINCT mca.linked_user_id) as member_count')
+            ->join('diocese d', 'd.id = c.diocese_id', 'left')
+            ->join('province pz', 'pz.id = d.province_id', 'left')
+            ->join($this->db->prefixTable('parish_affiliation') . ' mca', 'mca.parish_id = c.id AND mca.is_member = 1 AND mca.deleted_at IS NULL', 'left', false)
+            ->join('auth_groups_users agu', 'agu.user_id = mca.linked_user_id AND agu.group IN ("provinceadmin","dioceseadmin")', 'left')
+            ->where('agu.id IS NULL')
+            ->where('c.deleted_at', null)
+            ->groupBy('c.id');
+        $applyFilters($builder);
 
         $page = max(1, $page);
         $offset = ($page - 1) * $perPage;

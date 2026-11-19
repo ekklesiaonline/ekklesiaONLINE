@@ -17,9 +17,9 @@ class EmailSettingsController extends BaseController
         if ($provinceId <= 0) {
             $provinceId = (int) ($this->request->getGet('province_id') ?? 0);
         }
-        if ($provinceId <= 0) {
-            $profile = $this->getProfile();
-            $provinceId = (int) ($profile['province_id'] ?? 0);
+        $provinceId = $this->guardProvinceScope($provinceId);
+        if ($provinceId === null) {
+            return redirect()->to(base_url('province/dashboard'))->with('error', lang('App.errorForbidden'));
         }
 
         return $this->emailSettingsIndex('province', $provinceId, 'province.admin', true, base_url('province/dashboard'), lang('Email.provinceSettingsTitle'));
@@ -30,9 +30,9 @@ class EmailSettingsController extends BaseController
         if ($provinceId <= 0) {
             $provinceId = (int) ($this->request->getPost('scope_id') ?? 0);
         }
-        if ($provinceId <= 0) {
-            $profile = $this->getProfile();
-            $provinceId = (int) ($profile['province_id'] ?? 0);
+        $provinceId = $this->guardProvinceScope($provinceId);
+        if ($provinceId === null) {
+            return redirect()->back()->with('error', lang('App.errorForbidden'));
         }
 
         return $this->emailSettingsSave('province', $provinceId, 'province.admin', true, base_url('province/dashboard'), lang('Email.provinceSettingsTitle'));
@@ -43,11 +43,37 @@ class EmailSettingsController extends BaseController
         if ($provinceId <= 0) {
             $provinceId = (int) ($this->request->getPost('scope_id') ?? 0);
         }
-        if ($provinceId <= 0) {
-            $profile = $this->getProfile();
-            $provinceId = (int) ($profile['province_id'] ?? 0);
+        $provinceId = $this->guardProvinceScope($provinceId);
+        if ($provinceId === null) {
+            return $this->jsonResponse($this->apiErrorPayload(lang('App.errorForbidden'), 403, 'SCOPE_FORBIDDEN'), 403)
+                ->setHeader(config('Security')->headerName, csrf_hash());
         }
 
         return $this->emailSettingsTest('province', $provinceId, 'province.admin', true);
+    }
+
+    /**
+     * Resolve the province this admin may manage, rejecting any
+     * request-supplied scope outside their own province. System admins may
+     * address any province explicitly; everyone else is pinned to the
+     * server-resolved admin province.
+     */
+    private function guardProvinceScope(int $provinceId): ?int
+    {
+        if ($this->isSystemAdmin()) {
+            if ($provinceId <= 0) {
+                $profile = $this->getProfile();
+                $provinceId = (int) ($profile['province_id'] ?? 0);
+            }
+
+            return $provinceId > 0 ? $provinceId : null;
+        }
+
+        $scopeId = $this->resolveAdminProvinceId();
+        if ($scopeId <= 0 || ($provinceId > 0 && $provinceId !== $scopeId)) {
+            return null;
+        }
+
+        return $scopeId;
     }
 }

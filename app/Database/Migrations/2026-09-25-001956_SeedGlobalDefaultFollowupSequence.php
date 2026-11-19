@@ -209,7 +209,7 @@ class SeedGlobalDefaultFollowupSequence extends Migration
         $templateIds = array_values(array_unique(array_filter(array_column($templateIds, 'template_id'))));
 
         $db->table('followup_action')->where('sequence_id', $sequenceId)->delete();
-        $db->table('followup_sequence')->delete($sequenceId);
+        $db->table('followup_sequence')->where('id', $sequenceId)->delete();
 
         if ($templateIds !== []) {
             $db->table('followup_template')->whereIn('id', $templateIds)->delete();
