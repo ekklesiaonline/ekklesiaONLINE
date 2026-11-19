@@ -40,6 +40,7 @@ Help with member personal dashboard features, trusted devices, session security,
 - **Concurrent Session Cap**: A user can have at most **3 active sessions** simultaneously. Logins beyond this cap evict the oldest tracked session via `SessionTrackingFilter`.
 - **Device Verification**: Unrecognized devices are prompted for a 6-digit email verification challenge via `DeviceVerificationFilter` unless disabled for testing (`security.disableDeviceVerificationForTesting = true`).
 - **Session Revocation**: Users can view their active browser sessions and remotely revoke other sessions at `/me/security`.
+- **Magic Links**: Handled by `App\Controllers\Auth\ScopedMagicLinkController` (shadows Shield's `MagicLinkController` routes). Deactivated accounts (`users.active = 0`, e.g. ban/dismiss) receive **no** magic-link email and see the same generic "check your email" page as unknown addresses — the flow never reveals account existence or state. The verify endpoint (`GET login/verify-magic-link`) re-checks `active`/`isBanned` before `loginById()`, so a link issued before deactivation cannot log the account in. It is also rate-limited on GET via `LoginRateLimitFilter` (10/min per IP, shared login bucket), and each recipient address is capped at 3 sends/hour.
 
 ## Password Write Paths
 

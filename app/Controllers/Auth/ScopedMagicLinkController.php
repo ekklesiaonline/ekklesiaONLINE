@@ -6,10 +6,14 @@ namespace App\Controllers\Auth;
 
 use App\Libraries\EmailFailureClassifier;
 use App\Services\EmailScopeService;
+use CodeIgniter\Events\Events;
+use CodeIgniter\Exceptions\PageNotFoundException;
 use CodeIgniter\HTTP\IncomingRequest;
 use CodeIgniter\HTTP\RedirectResponse;
 use CodeIgniter\I18n\Time;
 use CodeIgniter\Shield\Controllers\MagicLinkController;
+use CodeIgniter\Shield\Entities\User;
+use CodeIgniter\Shield\Models\LoginModel;
 use CodeIgniter\Shield\Models\UserIdentityModel;
 use CodeIgniter\Shield\Authentication\Authenticators\Session;
 
@@ -42,6 +46,13 @@ class ScopedMagicLinkController extends MagicLinkController
         $user  = $this->provider->findByCredentials(['email' => $email]);
 
         if ($user === null) {
+            return $this->displayMessage();
+        }
+
+        // Deactivated accounts (ban/dismiss sets users.active = 0) get no
+        // usable link — and the identical response, so the mailbox check
+        // cannot distinguish account existence from account state.
+        if (! $user->active) {
             return $this->displayMessage();
         }
 
@@ -92,13 +103,133 @@ class ScopedMagicLinkController extends MagicLinkController
                 'code' => EmailFailureClassifier::classify((string) $email->printDebugger(['headers'])),
             ]);
 
-            return redirect()->route('magic-link')->with('error', lang('Auth.unableSendEmailToUser', [$user->email]));
+            // Same generic page as the success path: a distinct send-failure
+            // response would let callers enumerate which addresses belong to
+            // registered, active accounts.
+            return $this->displayMessage();
         }
 
         // Clear the email
         $email->clear();
 
         return $this->displayMessage();
+    }
+
+    /**
+     * Handles the GET request from the email.
+     *
+     * Copied from the parent because Shield provides no hook between token
+     * lookup and loginById(). Adds a deactivated/banned gate: ban and
+     * dismiss flows set users.active = 0, and loginById() performs no such
+     * check, which would otherwise grant a deactivated account one
+     * authenticated hop (plus a 'success' row in auth_logins) until
+     * RegistrationGateFilter evicts it on the next request. Single-use
+     * delete and expiry semantics are unchanged.
+     */
+    public function verify(): RedirectResponse
+    {
+        if (! setting('Auth.allowMagicLinkLogins')) {
+            return redirect()->route('login')->with('error', lang('Auth.magicLinkDisabled'));
+        }
+
+        if ($this->request->getUserAgent()->isRobot()) {
+            throw PageNotFoundException::forPageNotFound();
+        }
+
+        $token = $this->request->getGet('token');
+
+        $identityModel = model(UserIdentityModel::class);
+
+        $identity = $identityModel->getIdentityBySecret(Session::ID_TYPE_MAGIC_LINK, $token);
+
+        $identifier = $token ?? '';
+
+        // No token found?
+        if ($identity === null) {
+            $this->recordLoginAttempt($identifier, false);
+
+            $credentials = ['magicLinkToken' => $token];
+            Events::trigger('failedLogin', $credentials);
+
+            return redirect()->route('magic-link')->with('error', lang('Auth.magicTokenNotFound'));
+        }
+
+        // Delete the db entry so it cannot be used again.
+        $identityModel->delete($identity->id);
+
+        // Token expired?
+        if (Time::now()->isAfter($identity->expires)) {
+            $this->recordLoginAttempt($identifier, false);
+
+            $credentials = ['magicLinkToken' => $token];
+            Events::trigger('failedLogin', $credentials);
+
+            return redirect()->route('magic-link')->with('error', lang('Auth.magicLinkExpired'));
+        }
+
+        $user = $this->provider->findById($identity->user_id);
+
+        // Reject deactivated or banned accounts before any login/action
+        // path — the generic token error does not reveal account state.
+        if (! $user instanceof User || ! $user->active || $user->isBanned()) {
+            $this->recordLoginAttempt($identifier, false);
+
+            $credentials = ['magicLinkToken' => $token];
+            Events::trigger('failedLogin', $credentials);
+
+            return redirect()->route('magic-link')->with('error', lang('Auth.magicTokenNotFound'));
+        }
+
+        /** @var Session $authenticator */
+        $authenticator = auth('session')->getAuthenticator();
+
+        // If an action has been defined
+        if ($authenticator->hasAction($identity->user_id)) {
+            return redirect()->route('auth-action-show')->with('error', lang('Auth.needActivate'));
+        }
+
+        // Start any login action that has been defined.
+        if ($authenticator->startUpAction('login', $user) && $authenticator->hasAction($user->id)) {
+            $this->recordLoginAttempt($identifier, true, $user->id);
+            $authenticator->setPendingLoginMethod(Session::ID_TYPE_MAGIC_LINK);
+
+            return redirect()->route('auth-action-show');
+        }
+
+        $authenticator->setPendingLoginMethod(Session::ID_TYPE_MAGIC_LINK);
+
+        // Log the user in.
+        $authenticator->loginById($identity->user_id);
+
+        $user = $authenticator->getUser();
+
+        $this->recordLoginAttempt($identifier, true, $user->id);
+
+        // Get our login redirect url
+        return redirect()->to(config('Auth')->loginRedirect());
+    }
+
+    /**
+     * Records a login attempt in auth_logins. Private in the parent, so the
+     * same pattern is duplicated here for the verify() override.
+     *
+     * @param int|string|null $userId
+     */
+    private function recordLoginAttempt(
+        string $identifier,
+        bool $success,
+        $userId = null,
+    ): void {
+        $loginModel = model(LoginModel::class);
+
+        $loginModel->recordLoginAttempt(
+            Session::ID_TYPE_MAGIC_LINK,
+            $identifier,
+            $success,
+            $this->request->getIPAddress(),
+            (string) $this->request->getUserAgent(),
+            $userId,
+        );
     }
 
     /**

@@ -406,6 +406,9 @@ class Filters extends BaseFilters
             'before' => [
                 'login',
                 'login/magic-link',
+                // GET — throttled because each request performs a token
+                // lookup + delete (see LoginRateLimitFilter).
+                'login/verify-magic-link',
                 'register',
                 'auth/set-password',
                 'auth/a/*',

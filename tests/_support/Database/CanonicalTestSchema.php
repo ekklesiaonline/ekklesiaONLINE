@@ -162,6 +162,15 @@ final class CanonicalTestSchema
             'created_at'   => 'TEXT',
             'updated_at'   => 'TEXT',
         ],
+        'auth_logins' => [
+            'ip_address' => 'TEXT',
+            'user_agent' => 'TEXT',
+            'id_type'    => 'TEXT',
+            'identifier' => 'TEXT',
+            'user_id'    => 'INTEGER',
+            'date'       => 'TEXT',
+            'success'    => 'INTEGER',
+        ],
         'auth_groups_users' => [
             'user_id'    => 'INTEGER',
             '"group"'    => 'TEXT',
