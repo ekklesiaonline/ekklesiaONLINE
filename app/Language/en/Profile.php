@@ -16,6 +16,7 @@ return [
     'joinParishSuccess'   => 'Your parish request has been submitted for review.',
     'joinParishPendingApproval' => 'Pending Approval',
     'cannotAddDuplicateParish' => 'You cannot add your primary parish or a parish you have already requested as an additional parish.',
+    'affiliationOutsideDiocese' => 'You can only add parishes within your own diocese. To join a parish in another diocese, submit a parish join request for administrator review.',
     'joinParishPendingReview' => 'You already have a pending parish request under review.',
     'joinParishAlreadyAssigned' => 'You already have a parish assigned.',
     'joinParishRejected'  => 'Your previous parish request was rejected. Contact an administrator.',
