@@ -11,8 +11,10 @@ use Tests\Support\Database\CanonicalTestSchema;
  * Security regression: POST /profile/update previously honored a raw
  * `affiliations[]` array, letting a self-registered member attach themselves
  * to ANY parish with a self-chosen membership_status (including 'member').
- * Self-service secondary affiliations must be pinned to 'visitor' and the
- * parish must resolve to a real parish row.
+ * Self-service secondary affiliations must be pinned to 'visitor', the
+ * parish must resolve to a real parish row, and NEW parishes must sit inside
+ * a diocese the member already belongs to (cross-diocese self-attach is a
+ * cross-tenant IDOR — reviewed join-parish is the only path).
  *
  * @internal
  */
@@ -88,12 +90,16 @@ final class ProfileAffiliationScopeIntegrationTest extends CIUnitTestCase
         if ($this->createdParishIds !== []) {
             $this->db->table($this->resolveTableName('parish'))->whereIn('id', $this->createdParishIds)->delete();
         }
+        if ($this->createdDioceseIds !== []) {
+            $this->db->table($this->resolveTableName('diocese'))->whereIn('id', $this->createdDioceseIds)->delete();
+        }
     }
 
     public function testPostedMemberStatusIsPinnedToVisitor(): void
     {
-        $parishA = $this->insertParish('Home Parish A');
-        $parishB = $this->insertParish('Foreign Parish B');
+        $dioceseId = $this->insertDiocese('Test Diocese');
+        $parishA = $this->insertParish('Home Parish A', $dioceseId);
+        $parishB = $this->insertParish('Sibling Parish B', $dioceseId);
         $userId = $this->insertUser('aff.scope.member');
         $this->insertProfile($userId, $parishA);
         $this->insertPrimaryAffiliation($userId, $parishA);
@@ -128,8 +134,9 @@ final class ProfileAffiliationScopeIntegrationTest extends CIUnitTestCase
 
     public function testExistingApprovedStatusIsPreservedOnSave(): void
     {
-        $parishA = $this->insertParish('Home Parish D');
-        $parishB = $this->insertParish('Approved Parish E');
+        $dioceseId = $this->insertDiocese('Test Diocese 2');
+        $parishA = $this->insertParish('Home Parish D', $dioceseId);
+        $parishB = $this->insertParish('Approved Parish E', $dioceseId);
         $userId = $this->insertUser('aff.scope.existing');
         $this->insertProfile($userId, $parishA);
         $this->insertPrimaryAffiliation($userId, $parishA);
@@ -177,8 +184,9 @@ final class ProfileAffiliationScopeIntegrationTest extends CIUnitTestCase
 
     public function testRevokedStatusIsNotRestoredByProfileSave(): void
     {
-        $parishA = $this->insertParish('Home Parish F');
-        $parishB = $this->insertParish('Revoked Parish G');
+        $dioceseId = $this->insertDiocese('Test Diocese 3');
+        $parishA = $this->insertParish('Home Parish F', $dioceseId);
+        $parishB = $this->insertParish('Revoked Parish G', $dioceseId);
         $userId = $this->insertUser('aff.scope.revoked');
         $this->insertProfile($userId, $parishA);
         $this->insertPrimaryAffiliation($userId, $parishA);
@@ -223,9 +231,45 @@ final class ProfileAffiliationScopeIntegrationTest extends CIUnitTestCase
             'Profile save must not restore a revoked membership status.');
     }
 
+    public function testCrossDioceseAffiliationIsRejected(): void
+    {
+        $dioceseA = $this->insertDiocese('Home Diocese');
+        $dioceseB = $this->insertDiocese('Foreign Diocese');
+        $parishA = $this->insertParish('Home Parish X', $dioceseA);
+        $parishB = $this->insertParish('Foreign Parish Y', $dioceseB);
+        $userId = $this->insertUser('aff.scope.xdiocese');
+        $this->insertProfile($userId, $parishA);
+        $this->insertPrimaryAffiliation($userId, $parishA);
+        $this->injectMemberAuth($userId);
+
+        $request = service('request');
+        $request->setGlobal('post', [
+            'first_name' => 'Attach',
+            'last_name'  => 'Test',
+            'locale'     => 'en',
+            'affiliations' => [
+                ['parish_id' => (string) $parishB, 'membership_status' => 'visitor'],
+            ],
+        ]);
+
+        $controller = new \MemberPortal\Controllers\Profile();
+        $controller->initController($request, service('response'), service('logger'));
+        $result = $controller->update();
+
+        $this->assertInstanceOf(\CodeIgniter\HTTP\RedirectResponse::class, $result);
+
+        $count = $this->db->table($this->resolveTableName('parish_affiliation'))
+            ->where('linked_user_id', $userId)
+            ->where('parish_id', $parishB)
+            ->countAllResults();
+
+        $this->assertSame(0, $count, 'Self-service must not inject an affiliation into another diocese.');
+    }
+
     public function testUnknownParishIdIsRejected(): void
     {
-        $parishA = $this->insertParish('Home Parish C');
+        $dioceseId = $this->insertDiocese('Test Diocese 4');
+        $parishA = $this->insertParish('Home Parish C', $dioceseId);
         $userId = $this->insertUser('aff.scope.badparish');
         $this->insertProfile($userId, $parishA);
         $this->insertPrimaryAffiliation($userId, $parishA);
@@ -314,10 +358,27 @@ final class ProfileAffiliationScopeIntegrationTest extends CIUnitTestCase
         Services::injectMock('auth', $auth);
     }
 
-    private function insertParish(string $name): int
+    private array $createdDioceseIds = [];
+
+    private function insertDiocese(string $name): int
+    {
+        $this->db->table($this->resolveTableName('diocese'))->insert([
+            'name' => $name,
+            'created_at' => date('Y-m-d H:i:s'),
+            'updated_at' => date('Y-m-d H:i:s'),
+        ]);
+
+        $id = (int) $this->db->insertID();
+        $this->createdDioceseIds[] = $id;
+
+        return $id;
+    }
+
+    private function insertParish(string $name, ?int $dioceseId = null): int
     {
         $this->db->table($this->resolveTableName('parish'))->insert([
             'name' => $name,
+            'diocese_id' => $dioceseId,
             'created_at' => date('Y-m-d H:i:s'),
             'updated_at' => date('Y-m-d H:i:s'),
         ]);
