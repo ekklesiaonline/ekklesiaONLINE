@@ -118,9 +118,9 @@ final class LoginEmail2FATest extends CIUnitTestCase
 
         $this->seedIdentity($userId, Session::ID_TYPE_EMAIL_2FA, '123456');
 
-        $this->assertTrue(
+        $this->assertFalse(
             $this->gate->mfaEnabled($userId),
-            'An email_2fa identity must satisfy the MFA gate.'
+            'A pending (unverified) email_2fa identity must not satisfy the MFA gate.'
         );
     }
 

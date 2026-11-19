@@ -227,7 +227,7 @@ class DioceseParishAdmins extends BaseController
         }
 
         $password = (string) $this->request->getPost('new_password');
-        $validation = $this->validateAdminPassword($password);
+        $validation = $this->validateAdminPassword($password, $userId);
         if (!$validation['ok']) {
             return redirect()->back()->withInput()->with('errors', ['new_password' => implode(' ', $validation['errors'])]);
         }

@@ -84,6 +84,28 @@ class ScopedEmail2FA extends Email2FA implements ConditionalActionInterface
     }
 
     /**
+     * Shows the challenge screen. Upstream show() always rotates the code;
+     * when the send cap is exhausted and a code is already pending, keep it
+     * so the last emailed code stays valid (handle() will not send another).
+     */
+    public function show(): string
+    {
+        /** @var Session $authenticator */
+        $authenticator = auth('session')->getAuthenticator();
+
+        $user = $authenticator->getPendingUser();
+        if ($user === null) {
+            throw new RuntimeException('Cannot get the pending login User.');
+        }
+
+        if (! ($this->sendLimitExhausted((string) $user->email) && $this->getUserIdentity($user) instanceof UserIdentity)) {
+            $this->createIdentity($user);
+        }
+
+        return $this->view(setting('Auth.views')['action_email_2fa'], ['user' => $user]);
+    }
+
+    /**
      * Sends the 6-digit code via the scoped credential mailer.
      *
      * Body copied from Shield's Email2FA::handle() (no sender hook exists);
@@ -219,26 +241,33 @@ class ScopedEmail2FA extends Email2FA implements ConditionalActionInterface
     {
         $cache = \Config\Services::cache();
         $key   = 'login_2fa_rl_' . md5(strtolower($email));
+        $now   = time();
 
-        // Single-op increment keeps concurrent sends from double-spending
-        // the same allowance slot; on backends without increment support
-        // fall back to a plain counter.
-        if ($cache->get($key) === null) {
-            $cache->save($key, 1, 3600);
+        // Store a fixed window deadline alongside the counter so retries
+        // (including rejected ones) never extend the window. increment()
+        // is avoided because FileHandler resets the TTL on every call.
+        $entry = $cache->get($key);
+        if (! is_array($entry) || (int) ($entry['reset'] ?? 0) <= $now) {
+            $cache->save($key, ['count' => 1, 'reset' => $now + 3600], 3600);
 
             return false;
         }
 
-        $count = $cache->increment($key, 1);
-        if ($count === false) {
-            $count = (int) $cache->get($key) + 1;
-            // Preserve the existing expiry so rejected requests cannot keep
-            // extending the window indefinitely.
-            $meta = $cache->getMetaData($key);
-            $ttl  = is_array($meta) ? ($meta['expire'] ?? time() + 3600) : time() + 3600;
-            $cache->save($key, $count, max(1, $ttl - time()));
-        }
+        $entry['count'] = (int) ($entry['count'] ?? 0) + 1;
+        $cache->save($key, $entry, max(1, (int) $entry['reset'] - $now));
 
-        return $count > self::SEND_MAX_PER_HOUR;
+        return $entry['count'] > self::SEND_MAX_PER_HOUR;
+    }
+
+    /**
+     * Read-only check of the send cap (does not consume an allowance slot).
+     */
+    private function sendLimitExhausted(string $email): bool
+    {
+        $entry = \Config\Services::cache()->get('login_2fa_rl_' . md5(strtolower($email)));
+
+        return is_array($entry)
+            && (int) ($entry['reset'] ?? 0) > time()
+            && (int) ($entry['count'] ?? 0) >= self::SEND_MAX_PER_HOUR;
     }
 }

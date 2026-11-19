@@ -49,7 +49,7 @@ final class ScopedEmailActivatorTest extends CIUnitTestCase
         // happened within the rolling window).
         $cache = Services::cache();
         $key   = 'activation_email_rl_' . md5(strtolower(self::RECIPIENT));
-        $cache->save($key, self::DAILY_CAP, 86400);
+        $cache->save($key, ['count' => self::DAILY_CAP, 'reset' => time() + 86400], 86400);
 
         $activator = $this->newActivator();
 
@@ -63,7 +63,7 @@ final class ScopedEmailActivatorTest extends CIUnitTestCase
         $this->assertSame(0, $activator->identityCreates);
 
         // The rejected attempt still counts against the allowance.
-        $this->assertSame(self::DAILY_CAP + 1, $cache->get($key));
+        $this->assertSame(self::DAILY_CAP + 1, $cache->get($key)['count']);
     }
 
     public function testShowBelowCapProceedsToIssueCode(): void

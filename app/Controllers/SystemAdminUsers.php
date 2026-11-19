@@ -571,7 +571,7 @@ class SystemAdminUsers extends BaseController
         }
 
         $newPassword = (string) $this->request->getPost('new_password');
-        $passwordValidation = $this->validateAdminPassword($newPassword);
+        $passwordValidation = $this->validateAdminPassword($newPassword, (int) $userId);
 
         if (!$passwordValidation['ok']) {
             return redirect()->back()->withInput()->with('errors', ['new_password' => implode(' ', $passwordValidation['errors'])]);

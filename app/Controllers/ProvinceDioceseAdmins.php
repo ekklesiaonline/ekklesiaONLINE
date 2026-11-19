@@ -207,7 +207,7 @@ class ProvinceDioceseAdmins extends BaseController
             return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
         }
         $password = (string) $this->request->getPost('new_password');
-        $validation = $this->validateAdminPassword($password);
+        $validation = $this->validateAdminPassword($password, $userId);
         if (!$validation['ok']) {
             return redirect()->back()->withInput()->with('errors', ['new_password' => implode(' ', $validation['errors'])]);
         }

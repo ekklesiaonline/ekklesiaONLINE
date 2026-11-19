@@ -79,7 +79,7 @@ class SystemSettingService
      */
     public function getLoginEmail2faScope(): string
     {
-        $value = $this->get('security.login_2fa_scope', env('SECURITY_LOGIN_2FA_SCOPE', 'admins'));
+        $value = $this->get('security.login_2fa_scope', env('security.login_2fa_scope', env('SECURITY_LOGIN_2FA_SCOPE', 'admins')));
         $value = is_string($value) ? strtolower(trim($value)) : 'admins';
 
         return in_array($value, ['off', 'admins', 'all'], true) ? $value : 'admins';

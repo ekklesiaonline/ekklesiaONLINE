@@ -1607,7 +1607,7 @@ abstract class BaseController extends Controller
      * dictionary, pwned).
      * Returns ['ok' => true] on success, or ['ok' => false, 'errors' => [...]].
      */
-    protected function validateAdminPassword(string $password): array
+    protected function validateAdminPassword(string $password, ?int $targetUserId = null): array
     {
         $policy = $this->getPasswordPolicy();
         $errors = [];
@@ -1645,7 +1645,7 @@ abstract class BaseController extends Controller
         // not only self-registration. service('passwords')->check() returns
         // the first validator failure; merge its reason into the errors.
         try {
-            $shieldResult = service('passwords')->check($password, $this->passwordValidationUser());
+            $shieldResult = service('passwords')->check($password, $this->passwordValidationUser($targetUserId));
             if (! $shieldResult->isOK()) {
                 $reason = $shieldResult->reason();
                 $errors[] = is_string($reason) && $reason !== ''
@@ -1667,8 +1667,17 @@ abstract class BaseController extends Controller
      * NothingPersonalValidator still has entity data to compare against.
      * service('passwords')->check() throws when the entity is null.
      */
-    private function passwordValidationUser(): \CodeIgniter\Shield\Entities\User
+    private function passwordValidationUser(?int $targetUserId = null): \CodeIgniter\Shield\Entities\User
     {
+        // Operator resets validate against the account receiving the
+        // password, not the signed-in operator.
+        if ($targetUserId !== null && $targetUserId > 0) {
+            $target = auth()->getProvider()->findById($targetUserId);
+            if ($target instanceof \CodeIgniter\Shield\Entities\User) {
+                return $target;
+            }
+        }
+
         $user = auth()->user();
         if ($user !== null) {
             return $user;

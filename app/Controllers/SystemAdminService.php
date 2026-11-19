@@ -475,21 +475,10 @@ trait SystemAdminService
      */
     private function isUserMfaEnabled(int $userId): bool
     {
-        if (
-            $userId > 0
-            && (int) (session()->get(ScopedEmail2FA::SESSION_VERIFIED_USER_ID) ?? 0) === $userId
-        ) {
-            return true;
-        }
-
-        $db = db_connect();
-
-        $hasTwoFactor = $db->table('auth_identities')
-            ->where('user_id', $userId)
-            ->where('type', Session::ID_TYPE_EMAIL_2FA)
-            ->countAllResults() > 0;
-
-        return $hasTwoFactor;
+        // Only a challenge completed in THIS session counts. A pending
+        // email_2fa identity is unverified and must never unlock admin ops.
+        return $userId > 0
+            && (int) (session()->get(ScopedEmail2FA::SESSION_VERIFIED_USER_ID) ?? 0) === $userId;
     }
 
     /**

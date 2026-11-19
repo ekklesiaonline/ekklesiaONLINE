@@ -193,29 +193,20 @@ class ScopedEmailActivator extends EmailActivator
             $maxPerDay = self::ACTIVATION_EMAIL_MAX_PER_DAY;
         }
 
-        // Single-op increment keeps concurrent sends from double-spending
-        // the same allowance slot; on backends without increment support
-        // fall back to a plain counter.
-        if ($cache->get($key) === null) {
-            $cache->save($key, 1, self::ACTIVATION_EMAIL_WINDOW_SECONDS);
+        // Store a fixed window deadline with the counter so retries
+        // (including rejected ones) never extend the window. increment()
+        // is avoided because FileHandler resets the TTL on every call.
+        $now   = time();
+        $entry = $cache->get($key);
+        if (! is_array($entry) || (int) ($entry['reset'] ?? 0) <= $now) {
+            $cache->save($key, ['count' => 1, 'reset' => $now + self::ACTIVATION_EMAIL_WINDOW_SECONDS], self::ACTIVATION_EMAIL_WINDOW_SECONDS);
 
             return false;
         }
 
-        $incremented = $cache->increment($key, 1);
-        if (is_int($incremented)) {
-            return $incremented > $maxPerDay;
-        }
+        $entry['count'] = (int) ($entry['count'] ?? 0) + 1;
+        $cache->save($key, $entry, max(1, (int) $entry['reset'] - $now));
 
-        // Handlers whose increment() does not return the new value: re-read
-        // the counter (bool-true handlers already applied the +1; false
-        // means they did not). Preserve the existing expiry so rejected
-        // requests cannot keep extending the window indefinitely.
-        $count = (int) $cache->get($key) + ($incremented === false ? 1 : 0);
-        $meta  = $cache->getMetaData($key);
-        $ttl   = is_array($meta) ? ($meta['expire'] ?? time() + self::ACTIVATION_EMAIL_WINDOW_SECONDS) : time() + self::ACTIVATION_EMAIL_WINDOW_SECONDS;
-        $cache->save($key, $count, max(1, $ttl - time()));
-
-        return $count > $maxPerDay;
+        return $entry['count'] > $maxPerDay;
     }
 }
