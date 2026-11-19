@@ -143,6 +143,22 @@ final class SystemSettingsControllerTest extends CIUnitTestCase
         $this->assertInstanceOf(RedirectResponse::class, $response);
     }
 
+    public function testUpdateRejectsMinLengthBelowShieldFloor(): void
+    {
+        $userId = $this->insertUser('system.settings.floor', 'system.settings.floor@example.org');
+        $this->insertProfile($userId, null, null, 'System', 'Floor');
+        $this->injectSystemAdminAuth($userId);
+
+        // The DB policy can never undercut config('Auth')->minimumPasswordLength.
+        $controller = $this->makeController('post', [
+            'password_policy.min_length' => '8',
+        ]);
+        $response = $controller->update();
+
+        $this->assertInstanceOf(RedirectResponse::class, $response);
+        $this->assertNotSame(8, model(SystemSettingModel::class)->getValue('password_policy.min_length'));
+    }
+
     public function testUpdatePersistsValuesFromUnderscorePostKeys(): void
     {
         $userId = $this->insertUser('system.settings.underscore', 'system.settings.underscore@example.org');

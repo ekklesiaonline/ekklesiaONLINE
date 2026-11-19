@@ -495,3 +495,9 @@ $canDelete           = $canDelete ?? true;
 | `app/Views/System/partials/admin_actions.php` | Per-row button group (Edit, Reset PW, Transfer Primary, Delete) |
 | `app/Views/System/partials/admin_password_create.php` | Password strength input (used in Create and Reset PW modals) |
 | `app/Views/System/partials/reset_password_modal.php` | Reset Password modal HTML + JS listener |
+
+---
+
+## 6. Password Policy Enforcement (remediation note)
+
+Operator-chosen passwords are never permanent. `POST system/admins/reset-password/{id}` and the equivalent diocese/province admin reset endpoints write `force_reset=1` (rotation required on first login), revoke all trusted devices via `TrustedDeviceService::revokeAll`, and delete all tracked sessions via `UserSessionModel::removeAllForUser`. Every candidate password — admin resets, `SetPasswordController::save`, and visitor→member `create_account` — is validated through Shield's full `passwordValidators` chain (`BaseController::validateAdminPassword` / the `strong_password` rule), and `password_policy.min_length` is floored at `config('Auth')->minimumPasswordLength` (12).
