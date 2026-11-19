@@ -13,6 +13,7 @@ return [
     'joinParishSuccess'    => 'Votre demande de paroisse a été soumise pour examen.',
     'joinParishPendingApproval' => 'Approbation en Attente',
     'cannotAddDuplicateParish' => 'Vous ne pouvez pas ajouter votre paroisse principale ou une paroisse que vous avez déjà demandée comme paroisse supplémentaire.',
+    'affiliationOutsideDiocese' => 'Vous ne pouvez ajouter que des paroisses de votre propre diocèse. Pour rejoindre une paroisse d\'un autre diocèse, soumettez une demande d\'adhésion pour examen par un administrateur.',
     'joinParishPendingReview' => 'Vous avez déjà une demande de paroisse en cours d\'examen.',
     'joinParishAlreadyAssigned' => 'Vous avez déjà une paroisse assignée.',
     'joinParishRejected'   => 'Votre demande de paroisse précédente a été rejetée. Contactez un administrateur.',
