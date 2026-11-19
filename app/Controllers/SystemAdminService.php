@@ -2,6 +2,8 @@
 
 namespace App\Controllers;
 
+use CodeIgniter\Shield\Authentication\Authenticators\Session;
+
 trait SystemAdminService
 {
     /**
@@ -470,7 +472,7 @@ trait SystemAdminService
 
         $hasTwoFactor = $db->table('auth_identities')
             ->where('user_id', $userId)
-            ->where('type', '2fa')
+            ->where('type', Session::ID_TYPE_EMAIL_2FA)
             ->countAllResults() > 0;
 
         return $hasTwoFactor;
