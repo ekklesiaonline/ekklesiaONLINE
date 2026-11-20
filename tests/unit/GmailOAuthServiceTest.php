@@ -187,7 +187,7 @@ final class GmailOAuthServiceTest extends CIUnitTestCase
         $this->service->accessToken('parish', 5);
     }
 
-    public function testDisconnectRevokesAndClearsGrant(): void
+    public function testDisconnectClearsGrantWithoutRemoteRevocation(): void
     {
         $this->config->store['parish:5:email.gmail_refresh_token'] = 'rt-live';
         $this->config->store['parish:5:email.gmail_account_email']   = 'admin@gmail.com';
@@ -195,8 +195,7 @@ final class GmailOAuthServiceTest extends CIUnitTestCase
 
         $this->service->disconnect(['type' => 'parish', 'id' => 5]);
 
-        // Shared mailboxes: remote revocation would break other tiers' grants.
-        $this->assertSame([], $this->service->revokedTokens);
+        // Remote revocation would break other tiers sharing the mailbox.
         $this->assertSame('', $this->config->store['parish:5:email.gmail_refresh_token'] ?? null);
         $this->assertSame('', $this->config->store['parish:5:email.gmail_account_email'] ?? null);
         $this->assertSame('smtp_password', $this->config->store['parish:5:email.mail_transport'] ?? null);
@@ -278,9 +277,6 @@ class TestableGmailOAuthService extends GmailOAuthService
     /** @var list<string> refresh tokens passed to fetchAccessToken */
     public array $refreshCalls = [];
 
-    /** @var list<string> tokens passed to revokeGrant */
-    public array $revokedTokens = [];
-
     public ?array $exchangeResult  = null;
     public ?string $discoveredEmail = null;
     public ?array $tokenResponse    = null;
@@ -337,10 +333,5 @@ class TestableGmailOAuthService extends GmailOAuthService
         }
 
         return $this->tokenResponse;
-    }
-
-    protected function revokeGrant(string $refreshToken): void
-    {
-        $this->revokedTokens[] = $refreshToken;
     }
 }

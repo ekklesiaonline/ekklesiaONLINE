@@ -553,19 +553,6 @@ class GmailOAuthService
         $this->config->setSettingForTier($tier, $id, self::SETTING_TRANSPORT, self::TRANSPORT_GMAIL_API, false);
     }
 
-    /**
-     * Best-effort grant revocation at Google. Never throws — disconnect must
-     * still clear local credentials when the network call fails.
-     */
-    protected function revokeGrant(string $refreshToken): void
-    {
-        try {
-            $this->makeClient()->revokeToken($refreshToken);
-        } catch (\Throwable) {
-            log_message('warning', '[GmailOAuth] Grant revocation request failed; local credentials were still cleared.');
-        }
-    }
-
     protected function signState(array $payload): string
     {
         $encoded = rtrim(strtr(base64_encode((string) json_encode($payload)), '+/', '-_'), '=');
