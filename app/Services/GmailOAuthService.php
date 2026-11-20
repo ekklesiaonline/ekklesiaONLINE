@@ -363,8 +363,8 @@ class GmailOAuthService
     }
 
     /**
-     * Revoke the Google grant and clear all stored credentials for the tier,
-     * resetting the transport selector to SMTP password auth.
+     * Clear all stored credentials for the tier (no remote revocation — see
+     * body), resetting the transport selector to SMTP password auth.
      *
      * @param array{type: string, id: int|null} $scope
      */
@@ -376,15 +376,12 @@ class GmailOAuthService
             return;
         }
 
-        // Google revocation invalidates every token for that mailbox across
-        // the OAuth project. Only revoke remotely when no other tier we can
-        // see is connected to the same account; otherwise clear locally.
-        $refreshToken = $this->refreshToken($tier, $scopeId);
-        $account      = $this->accountEmail($tier, $scopeId);
-        if ($refreshToken !== null && !$this->accountSharedByOtherTier($tier, $scopeId, $account)) {
-            $this->revokeGrant($refreshToken);
-        }
-
+        // Never revoke at Google here: revocation invalidates every token the
+        // mailbox granted to this OAuth client, so it would silently break any
+        // other tier (System credential mail included) connected to the same
+        // account. Deleting this tier's encrypted token makes it unusable to
+        // us; the account owner can revoke app access from their Google
+        // account if desired.
         $this->config->setSettingForTier($tier, $scopeId, self::SETTING_REFRESH_TOKEN, '', true);
         $this->config->setSettingForTier($tier, $scopeId, self::SETTING_ACCOUNT_EMAIL, '', false);
         $this->config->setSettingForTier($tier, $scopeId, self::SETTING_TRANSPORT, self::TRANSPORT_SMTP, false);
@@ -395,32 +392,6 @@ class GmailOAuthService
     // ------------------------------------------------------------------
     // Internals
     // ------------------------------------------------------------------
-
-    /**
-     * Whether another tier (currently: system/organisation, which carry
-     * credential mail) holds a grant for the same mailbox. Conservative:
-     * tenant tiers are not enumerated here.
-     */
-    protected function accountSharedByOtherTier(string $tier, ?int $id, ?string $account): bool
-    {
-        if ($account === null) {
-            return false;
-        }
-
-        foreach ([['system', null], ['organisation', null]] as [$otherTier, $otherId]) {
-            if ($otherTier === $tier && $otherId === $id) {
-                continue;
-            }
-            $other = $this->accountEmail($otherTier, $otherId);
-            if ($other !== null && strcasecmp($other, $account) === 0
-                && $this->refreshToken($otherTier, $otherId) !== null
-            ) {
-                return true;
-            }
-        }
-
-        return false;
-    }
 
     private function assertValidScope(string $tier, ?int $scopeId): void
     {

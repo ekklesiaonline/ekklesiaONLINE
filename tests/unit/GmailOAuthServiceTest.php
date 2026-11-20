@@ -195,7 +195,8 @@ final class GmailOAuthServiceTest extends CIUnitTestCase
 
         $this->service->disconnect(['type' => 'parish', 'id' => 5]);
 
-        $this->assertSame(['rt-live'], $this->service->revokedTokens);
+        // Shared mailboxes: remote revocation would break other tiers' grants.
+        $this->assertSame([], $this->service->revokedTokens);
         $this->assertSame('', $this->config->store['parish:5:email.gmail_refresh_token'] ?? null);
         $this->assertSame('', $this->config->store['parish:5:email.gmail_account_email'] ?? null);
         $this->assertSame('smtp_password', $this->config->store['parish:5:email.mail_transport'] ?? null);
