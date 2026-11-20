@@ -52,6 +52,13 @@ $routes->post('register', '\\App\\Controllers\\Auth\\RegisterController::registe
 $routes->get('system/email', '\\App\\Controllers\\SystemEmailSettingsController::index', ['filter' => 'permission:system.admin']);
 $routes->post('system/email', '\\App\\Controllers\\SystemEmailSettingsController::save', ['filter' => 'permission:system.admin']);
 $routes->post('system/email/test', '\\App\\Controllers\\SystemEmailSettingsController::test', ['filter' => 'permission:system.admin']);
+$routes->get('system/email/google/connect', '\\App\\Controllers\\SystemEmailSettingsController::googleConnect', ['filter' => 'permission:system.admin']);
+$routes->post('system/email/google/disconnect', '\\App\\Controllers\\SystemEmailSettingsController::googleDisconnect', ['filter' => 'permission:system.admin']);
+
+// Shared Google OAuth callback for every email-settings tier. Session-gated;
+// tier + scope authorization is re-verified inside the controller against
+// the HMAC-signed state payload.
+$routes->get('email/oauth/google/callback', '\\App\\Controllers\\EmailOAuthController::callback', ['filter' => 'session']);
 
 // System-level follow-up workflow management (global sequences/templates).
 $routes->group('system/followup-workflow', ['filter' => 'permission:system.admin'], static function ($routes) {
