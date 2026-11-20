@@ -31,5 +31,7 @@ $routes->group('', ['filter' => 'session'], function ($routes) {
         $routes->get('email-settings', '\\App\\Controllers\\Parish\\EmailSettingsController::index', ['filter' => 'permission:parish.edit']);
         $routes->post('email-settings', '\\App\\Controllers\\Parish\\EmailSettingsController::save', ['filter' => 'permission:parish.edit']);
         $routes->post('email-settings/test', '\\App\\Controllers\\Parish\\EmailSettingsController::test', ['filter' => 'permission:parish.edit']);
+        $routes->get('email-settings/google/connect', '\\App\\Controllers\\Parish\\EmailSettingsController::googleConnect', ['filter' => 'permission:parish.edit']);
+        $routes->post('email-settings/google/disconnect', '\\App\\Controllers\\Parish\\EmailSettingsController::googleDisconnect', ['filter' => 'permission:parish.edit']);
     });
 });

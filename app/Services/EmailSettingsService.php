@@ -27,6 +27,8 @@ class EmailSettingsService
         'email.smtp_user',
         'email.smtp_pass',
         'email.smtp_crypto',
+        'email.mail_transport',
+        'email.gmail_account_email',
     ];
 
     private ConfigurationService $config;
@@ -59,9 +61,15 @@ class EmailSettingsService
         }
         $values['smtp_pass'] = '';
 
+        $gmail = (new GmailOAuthService($this->config))->statusForSettings(
+            (string) $scope['type'],
+            isset($scope['id']) ? (int) $scope['id'] : null
+        );
+
         return [
             'values'        => $values,
             'has_smtp_pass' => $hasPass,
+            'gmail'         => $gmail,
         ];
     }
 
@@ -84,6 +92,10 @@ class EmailSettingsService
             }
         }
 
+        // The connected Gmail address is written only by the OAuth callback —
+        // never accept it from a settings form POST.
+        unset($values['email.gmail_account_email']);
+
         // The enabled flag only persists when the form submits it (hidden
         // '0' + checkbox '1' pair); otherwise the stored value is kept.
         if (array_key_exists('enabled', $data)) {
@@ -99,7 +111,8 @@ class EmailSettingsService
                 $values['email.smtp_user'],
                 $values['email.smtp_pass'],
                 $values['email.smtp_port'],
-                $values['email.smtp_crypto']
+                $values['email.smtp_crypto'],
+                $values['email.mail_transport']
             );
         }
 
@@ -120,6 +133,24 @@ class EmailSettingsService
         if (array_key_exists('email.smtp_crypto', $values)
             && !in_array((string) $values['email.smtp_crypto'], ['tls', 'ssl', ''], true)) {
             $values['email.smtp_crypto'] = 'tls';
+        }
+
+        // Transport selector: whitelist values; gmail_api additionally
+        // requires a stored grant at this exact tier.
+        if (array_key_exists('email.mail_transport', $values)) {
+            if (!in_array((string) $values['email.mail_transport'], [
+                GmailOAuthService::TRANSPORT_SMTP,
+                GmailOAuthService::TRANSPORT_GMAIL_API,
+            ], true)) {
+                $values['email.mail_transport'] = GmailOAuthService::TRANSPORT_SMTP;
+            }
+
+            if ($values['email.mail_transport'] === GmailOAuthService::TRANSPORT_GMAIL_API) {
+                $tierId = isset($scope['id']) ? (int) $scope['id'] : null;
+                if (!(new GmailOAuthService($this->config))->hasGrant((string) $scope['type'], $tierId)) {
+                    $errors['mail_transport'] = lang('Email.gmailNotConnectedSave');
+                }
+            }
         }
 
         // SMTP all-or-nothing validation against this tier's stored block.
@@ -211,6 +242,12 @@ class EmailSettingsService
             'RECIPIENT_POLICY_REJECTED'  => lang('Email.recipientPolicyRejected'),
             'SMTP_CONNECTION_FAILED'     => lang('Email.smtpConnectionFailed'),
             'SMTP_TLS_FAILED'            => lang('Email.smtpTlsFailed'),
+            'GMAIL_GRANT_INVALID'        => lang('Email.gmailGrantInvalid'),
+            'GMAIL_SCOPE_INSUFFICIENT'   => lang('Email.gmailScopeInsufficient'),
+            'GMAIL_RATE_LIMITED'         => lang('Email.gmailRateLimited'),
+            'GMAIL_API_UNREACHABLE'      => lang('Email.gmailApiUnreachable'),
+            'GMAIL_API_ERROR'            => lang('Email.gmailApiError'),
+            'GMAIL_SENDER_NOT_PERMITTED' => lang('Email.gmailSenderNotPermitted'),
             default                      => lang('Email.testSendFailed'),
         };
     }
@@ -328,27 +365,13 @@ class EmailSettingsService
      */
     private function persistValue(array $scope, string $key, mixed $value, bool $encrypt): void
     {
-        switch ($scope['type']) {
-            case 'system':
-                $this->systemModel->setValue($key, $value, 'string', 'email');
-                break;
-
-            case 'organisation':
-                $this->config->setOrganisationSetting($key, $value, $encrypt);
-                break;
-
-            case 'province':
-                $this->config->setProvinceSetting((int) $scope['id'], $key, $value, $encrypt);
-                break;
-
-            case 'diocese':
-                $this->config->setDioceseSetting((int) $scope['id'], $key, $value, $encrypt);
-                break;
-
-            case 'parish':
-                $this->config->setParishSetting((int) $scope['id'], $key, $value, $encrypt);
-                break;
-        }
+        $this->config->setSettingForTier(
+            (string) $scope['type'],
+            isset($scope['id']) ? (int) $scope['id'] : null,
+            $key,
+            $value,
+            $encrypt
+        );
     }
 
     /**
@@ -377,6 +400,31 @@ class EmailSettingsService
         $emailScopeService = new EmailScopeService($this->config);
         $emailScope        = $this->emailScopeFor($scope);
         $sender            = $emailScopeService->senderConfig($emailScope);
+
+        // Gmail API transport: credentials come only from the persisted
+        // OAuth grant at this exact tier — never from submitted form data.
+        // transport_override makes the test exercise the tier being edited
+        // even before mail_transport has been persisted.
+        if (($settings['mail_transport'] ?? '') === GmailOAuthService::TRANSPORT_GMAIL_API) {
+            $tier    = (string) $scope['type'];
+            $tierId  = isset($scope['id']) ? (int) $scope['id'] : null;
+            $gmailOAuth = new GmailOAuthService($this->config);
+            if (!$gmailOAuth->hasGrant($tier, $tierId)) {
+                return null;
+            }
+            try {
+                return $emailScopeService->mailer($emailScope, [
+                    'overrides' => ['mailType' => 'html'],
+                    'transport_override' => [
+                        'kind' => EmailScopeService::TRANSPORT_GMAIL_API,
+                        'tier' => $tier,
+                        'id'   => $tierId,
+                    ],
+                ]);
+            } catch (\Throwable) {
+                return null;
+            }
+        }
 
         // If the user has filled in an SMTP block, build a non-shared mailer
         // with those values so the test reflects what will happen after save.

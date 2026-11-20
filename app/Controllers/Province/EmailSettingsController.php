@@ -52,6 +52,42 @@ class EmailSettingsController extends BaseController
         return $this->emailSettingsTest('province', $provinceId, 'province.admin', true);
     }
 
+    public function googleConnect(int $provinceId = 0)
+    {
+        if ($provinceId <= 0) {
+            $provinceId = (int) ($this->request->getGet('province_id') ?? 0);
+        }
+        $provinceId = $this->guardProvinceScope($provinceId);
+        if ($provinceId === null) {
+            return redirect()->to(base_url('province/dashboard'))->with('error', lang('App.errorForbidden'));
+        }
+
+        return $this->gmailConnectRedirect(
+            ['type' => 'province', 'id' => $provinceId],
+            'province.admin',
+            true,
+            base_url('province/email-settings')
+        );
+    }
+
+    public function googleDisconnect(int $provinceId = 0)
+    {
+        if ($provinceId <= 0) {
+            $provinceId = (int) ($this->request->getPost('scope_id') ?? 0);
+        }
+        $provinceId = $this->guardProvinceScope($provinceId);
+        if ($provinceId === null) {
+            return redirect()->back()->with('error', lang('App.errorForbidden'));
+        }
+
+        return $this->gmailDisconnectRedirect(
+            ['type' => 'province', 'id' => $provinceId],
+            'province.admin',
+            true,
+            base_url('province/email-settings')
+        );
+    }
+
     /**
      * Resolve the province this admin may manage, rejecting any
      * request-supplied scope outside their own province. System admins may

@@ -311,6 +311,95 @@ final class EmailScopeServiceTest extends CIUnitTestCase
         $this->assertInstanceOf(\CodeIgniter\Email\Email::class, $mailer);
         $this->assertSame($this->service->systemMailer(), $mailer);
     }
+
+    public function testGmailTransportSelectsDedicatedMailerAtTier(): void
+    {
+        $this->config->scopedValues = [
+            ['email.mail_transport', ['parish_id' => 30], 'gmail_api'],
+        ];
+
+        $mailer = $this->service->mailer(['parish_id' => 30]);
+
+        $this->assertInstanceOf(\App\Libraries\Email\GmailApiEmail::class, $mailer);
+        // Never the shared service('email') singleton — tenant grants must
+        // not contaminate shared state.
+        $this->assertNotSame(service('email'), $mailer);
+    }
+
+    public function testGmailTransportFailsClosedWithoutParentSmtpFallback(): void
+    {
+        // Parish selects gmail_api; the diocese has a complete SMTP block.
+        // The Gmail selection must win at its own tier and must NOT fall
+        // through to the diocese SMTP transport.
+        $this->config->scopedValues = [
+            ['email.mail_transport', ['parish_id' => 30], 'gmail_api'],
+            ['email.smtp_host', ['diocese_id' => 20], 'smtp.diocese.test'],
+            ['email.smtp_user', ['diocese_id' => 20], 'dio-user'],
+            ['email.smtp_pass', ['diocese_id' => 20], 'dio-secret'],
+        ];
+
+        $mailer = $this->service->mailer(['parish_id' => 30, 'diocese_id' => 20]);
+
+        $this->assertInstanceOf(\App\Libraries\Email\GmailApiEmail::class, $mailer);
+    }
+
+    public function testSmtpPasswordTransportKeepsExistingBlockSemantics(): void
+    {
+        $this->config->scopedValues = [
+            ['email.mail_transport', ['parish_id' => 30], 'smtp_password'],
+            ['email.smtp_host', ['parish_id' => 30], 'smtp.parish.test'],
+            ['email.smtp_user', ['parish_id' => 30], 'user'],
+            ['email.smtp_pass', ['parish_id' => 30], 'secret'],
+        ];
+
+        $mailer = $this->service->mailer(['parish_id' => 30]);
+
+        $this->assertNotInstanceOf(\App\Libraries\Email\GmailApiEmail::class, $mailer);
+        $this->assertInstanceOf(\CodeIgniter\Email\Email::class, $mailer);
+    }
+
+    public function testCredentialMailerNeverUsesTenantGmailGrant(): void
+    {
+        // Parish has an active gmail_api selection; credential mail must
+        // still resolve transport from organisation/system tiers only.
+        $this->config->scopedValues = [
+            ['email.mail_transport', ['parish_id' => 30], 'gmail_api'],
+            ['email.mail_transport', ['diocese_id' => 20], 'gmail_api'],
+            ['email.mail_transport', ['province_id' => 10], 'gmail_api'],
+        ];
+
+        $mailer = $this->service->credentialMailer(['parish_id' => 30]);
+
+        $this->assertNotInstanceOf(\App\Libraries\Email\GmailApiEmail::class, $mailer);
+        $this->assertSame($this->service->systemMailer(), $mailer);
+    }
+
+    public function testSystemGmailTransportCarriesCredentialMail(): void
+    {
+        // When the System tier itself selects gmail_api, credential mail
+        // legitimately rides the System Gmail grant.
+        $this->config->values = [
+            'email.mail_transport' => 'gmail_api',
+        ];
+
+        $mailer = $this->service->credentialMailer(['parish_id' => 30]);
+
+        $this->assertInstanceOf(\App\Libraries\Email\GmailApiEmail::class, $mailer);
+    }
+
+    public function testLockedMailTransportForcesSystemTier(): void
+    {
+        // A locked transport selector means only the System tier's choice
+        // applies — a parish gmail_api selection is ignored.
+        $this->config->locked = ['email.mail_transport' => true];
+        $this->config->scopedValues = [
+            ['email.mail_transport', ['parish_id' => 30], 'gmail_api'],
+        ];
+
+        $mailer = $this->service->mailer(['parish_id' => 30]);
+
+        $this->assertNotInstanceOf(\App\Libraries\Email\GmailApiEmail::class, $mailer);
+    }
 }
 
 // ------------------------------------------------------------------

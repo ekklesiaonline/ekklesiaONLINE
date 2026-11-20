@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Libraries\Email\GmailApiEmail;
 use Config\Email as EmailConfig;
 
 /**
@@ -33,6 +34,14 @@ class EmailScopeService
     private const ENABLED_KEY = 'email.enabled';
 
     /**
+     * Outbound transport selector values stored under email.mail_transport.
+     */
+    public const TRANSPORT_SMTP_PASSWORD = 'smtp_password';
+    public const TRANSPORT_GMAIL_API     = 'gmail_api';
+
+    private const MAIL_TRANSPORT_KEY = 'email.mail_transport';
+
+    /**
      * SMTP transport keys resolved as a single atomic block per tier.
      * Maps the outbound mailer config key to the stored setting suffix.
      */
@@ -59,15 +68,18 @@ class EmailScopeService
     private ConfigurationService $config;
     private HierarchyService $hierarchy;
     private EmailConfig $emailConfig;
+    private ?GmailOAuthService $gmailOAuth;
 
     public function __construct(
         ?ConfigurationService $config = null,
         ?HierarchyService $hierarchy = null,
-        ?EmailConfig $emailConfig = null
+        ?EmailConfig $emailConfig = null,
+        ?GmailOAuthService $gmailOAuth = null
     ) {
         $this->config      = $config ?? new ConfigurationService();
         $this->hierarchy   = $hierarchy ?? new HierarchyService();
         $this->emailConfig = $emailConfig ?? new EmailConfig();
+        $this->gmailOAuth  = $gmailOAuth;
     }
 
     /**
@@ -342,6 +354,81 @@ class EmailScopeService
     }
 
     /**
+     * Resolve the outbound transport for a scope, atomically per tier.
+     *
+     * The transport selector (email.mail_transport) and its credentials are
+     * always read from the SAME tier — a parish Gmail grant never mixes with
+     * a diocese SMTP block and vice versa.
+     *
+     * Semantics:
+     *   - transport 'gmail_api' at a tier → Gmail transport for that tier.
+     *     A missing/invalid grant does NOT fall through to a parent tier;
+     *     the returned GmailApiEmail fails closed with GMAIL_GRANT_INVALID.
+     *   - transport 'smtp_password' (or unset) → existing all-or-nothing
+     *     SMTP block semantics: a partial block skips to the next tier.
+     *   - no tier yields a transport → kind smtp_password with smtp=null,
+     *     which mailer() resolves to Config\Email / shared service('email').
+     *
+     * When the transport selector or a core SMTP key is locked at the
+     * System tier, only the System tier is evaluated — tenants cannot
+     * substitute their own transport.
+     *
+     * @param array<string,int|null> $scope
+     * @return array{kind: string, smtp?: array<string,mixed>|null, tier?: string, id?: int|null}
+     */
+    private function resolveTransport(array $scope): array
+    {
+        $tiers = ($this->transportLocked() || $this->smtpTransportLocked())
+            ? [['system', null]]
+            : $this->scopeTiers($scope);
+
+        foreach ($tiers as [$tier, $id]) {
+            if (!$this->isTierEnabled($tier, $id)) {
+                continue;
+            }
+
+            if ($this->transportAtTier($tier, $id) === self::TRANSPORT_GMAIL_API) {
+                return [
+                    'kind' => self::TRANSPORT_GMAIL_API,
+                    'tier' => $tier,
+                    'id'   => $id,
+                ];
+            }
+
+            $block = $this->smtpBlockAtTier($tier, $id);
+            if ($block !== null) {
+                return ['kind' => self::TRANSPORT_SMTP_PASSWORD, 'smtp' => $block];
+            }
+        }
+
+        return ['kind' => self::TRANSPORT_SMTP_PASSWORD, 'smtp' => null];
+    }
+
+    /**
+     * Transport selector stored at exactly one tier. Anything other than
+     * 'gmail_api' resolves to password SMTP (safe default).
+     */
+    private function transportAtTier(string $tier, ?int $id): string
+    {
+        $value = $this->config->getSettingForTier($tier, $id, self::MAIL_TRANSPORT_KEY, null);
+
+        return $value === self::TRANSPORT_GMAIL_API ? self::TRANSPORT_GMAIL_API : self::TRANSPORT_SMTP_PASSWORD;
+    }
+
+    /**
+     * Whether the transport selector is locked at the System tier.
+     */
+    private function transportLocked(): bool
+    {
+        return $this->config->isSettingLocked(self::MAIL_TRANSPORT_KEY);
+    }
+
+    private function gmailOAuthService(): GmailOAuthService
+    {
+        return $this->gmailOAuth ??= new GmailOAuthService($this->config, $this->emailConfig);
+    }
+
+    /**
      * Build a CI4 Email instance configured for the scope.
      *
      * Options:
@@ -358,23 +445,48 @@ class EmailScopeService
         $forceSystem = (bool) ($options['force_system_transport'] ?? false);
         $overrides   = (array) ($options['overrides'] ?? []);
 
-        $sender = $this->senderConfig($scope);
-        // Forced system transport resolves SMTP only from the System tier so that
-        // credential-bearing mail never rides a tenant-controlled relay.
-        $smtp   = $forceSystem ? $this->smtpConfig([]) : $this->smtpConfig($scope);
+        $sender   = $this->senderConfig($scope);
+        // Forced system transport resolves credentials only from the
+        // organisation/system tiers so credential-bearing mail never rides
+        // a tenant-controlled transport. 'transport_override' pins an
+        // explicit transport+tier (used by the settings test mailer to
+        // exercise the tier being edited before it is persisted).
+        $resolved = $options['transport_override'] ?? $this->resolveTransport($forceSystem ? [] : $scope);
+        $isGmail  = $resolved['kind'] === self::TRANSPORT_GMAIL_API;
 
-        $config = $this->buildEmailConfig($sender, $smtp);
+        $config = $this->buildEmailConfig($sender, $isGmail ? null : $resolved['smtp']);
+        if ($isGmail) {
+            // The Gmail API transport owns the protocol end-to-end; a stored
+            // or overridden 'protocol' value must never downgrade the grant
+            // to sendmail/mail.
+            $config['protocol'] = self::TRANSPORT_GMAIL_API;
+        }
         $config = array_merge($config, $overrides);
+        if ($isGmail) {
+            $config['protocol'] = self::TRANSPORT_GMAIL_API;
+        }
 
-        // If a tenant is providing their own SMTP credentials, use a
-        // non-shared instance so those credentials cannot leak into the
-        // shared service('email') state.
-        if ($forceSystem || $smtp === null) {
+        if ($isGmail) {
+            // Gmail grants are per-tier credentials — always a dedicated
+            // instance, never the shared service('email') singleton.
+            $mailer = new GmailApiEmail(new EmailConfig());
+        } elseif ($forceSystem || $resolved['smtp'] === null) {
             $mailer = service('email');
         } else {
+            // If a tenant is providing their own SMTP credentials, use a
+            // non-shared instance so those credentials cannot leak into the
+            // shared service('email') state.
             $mailer = new \CodeIgniter\Email\Email(new EmailConfig());
         }
         $mailer->initialize($config);
+
+        if ($isGmail && $mailer instanceof GmailApiEmail) {
+            $mailer->setGmailTransport(
+                $this->gmailOAuthService(),
+                (string) $resolved['tier'],
+                isset($resolved['id']) ? (int) $resolved['id'] : null
+            );
+        }
 
         if ($sender['from_email'] !== '') {
             $mailer->setFrom($sender['from_email'], $sender['from_name']);

@@ -50,5 +50,7 @@ $routes->group('', ['filter' => 'session'], function ($routes) {
         $routes->get('email-settings', '\\App\\Controllers\\Province\\EmailSettingsController::index');
         $routes->post('email-settings', '\\App\\Controllers\\Province\\EmailSettingsController::save');
         $routes->post('email-settings/test', '\\App\\Controllers\\Province\\EmailSettingsController::test');
+        $routes->get('email-settings/google/connect', '\\App\\Controllers\\Province\\EmailSettingsController::googleConnect');
+        $routes->post('email-settings/google/disconnect', '\\App\\Controllers\\Province\\EmailSettingsController::googleDisconnect');
     });
 });

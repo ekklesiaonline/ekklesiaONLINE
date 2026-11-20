@@ -201,6 +201,94 @@ trace. Absence from an Outlook recipient's mailbox is not evidence that the
 message was absent from the Gmail sender's Sent folder; those are separate
 mailboxes.
 
+## Gmail API OAuth2 transport
+
+Each email-settings tier (System, Province, Diocese, Parish) can select
+`Gmail API (OAuth2)` as its outbound transport (`email.mail_transport =
+gmail_api`). Mail is then submitted through the Gmail REST API
+(`users.messages.send`) with a lazily refreshed OAuth2 access token — no
+App Password or SMTP credential is stored for that tier. The transport
+selector and its grant are always resolved atomically at the same tier;
+a tenant grant never mixes with another tier's SMTP block, and an invalid
+grant fails closed instead of falling back to a parent transport.
+
+Credential-bearing mail (activation, magic links, OTP, device verification,
+password notices) still resolves transport only from the
+organisation/system tiers via `credentialMailer()` — a tenant Gmail grant
+is never used for credential mail. When the System tier selects
+`gmail_api`, credential mail legitimately rides the System Gmail grant.
+
+### Google Cloud setup
+
+1. Create (or select) a Google Cloud project and enable the **Gmail API**.
+2. Configure the OAuth consent screen:
+   - **User type**: *Internal* is strongly recommended for Google Workspace
+     deployments — it skips verification and does not expire refresh
+     tokens. For consumer `@gmail.com` accounts or external users, the app
+     must be published and verified before production use.
+   - **Publishing status**: while the consent screen is in *Testing* mode,
+     refresh tokens expire after **7 days** — reconnect weekly or publish
+     the app. `gmail.send` is a **sensitive** scope, so production use
+     requires Google's OAuth verification (and possibly a security
+     assessment for restricted-scope adjacent reviews).
+3. Create OAuth 2.0 credentials (Web application) and register the exact
+   authorized redirect URI:
+   `https://<your-host>/email/oauth/google/callback`
+   (local dev: `http://ekklesiaonline.local/email/oauth/google/callback`).
+4. Put the client ID/secret in `.env` only — they are never editable via
+   settings forms:
+   ```
+   email.googleClientId = <client id>.apps.googleusercontent.com
+   email.googleClientSecret = <client secret>
+   ```
+
+### Connect / disconnect flow
+
+- `GET …/email-settings/google/connect` (per-tier route) starts the consent
+  flow with scope `openid email gmail.send`, `access_type=offline`,
+  `prompt=consent`. The `state` parameter is HMAC-signed, time-boxed
+  (15 minutes), nonce-bound to the session (single use), and carries the
+  tier + scope id + initiating user id.
+- `GET /email/oauth/google/callback` re-verifies the session user's
+  permission for that exact scope before exchanging the code — state is
+  never trusted alone. Only the **refresh token** is persisted, encrypted
+  (`enc:v1:`) with `is_encrypted=1`; access tokens are never stored.
+  The connected mailbox address is stored as `email.gmail_account_email`
+  and is writable only by the callback, never by settings forms.
+- `POST …/email-settings/google/disconnect` revokes the grant at Google
+  (best effort), clears the stored token/account, and resets
+  `email.mail_transport` to `smtp_password`.
+
+### Sender alignment
+
+Gmail API sends as the authenticated account (`me`); send-as aliases are
+not supported. The resolved `From` address must equal
+`email.gmail_account_email` — mismatches fail before dispatch with
+`GMAIL_SENDER_NOT_PERMITTED`. Align `email.from_email` at that tier (or a
+parent tier) with the connected account, or reconnect with the correct
+account.
+
+### Gmail failure codes
+
+| Code | Meaning | Action |
+| --- | --- | --- |
+| `GMAIL_GRANT_INVALID` | Refresh token revoked/expired (`invalid_grant`, 401) | Reconnect the account |
+| `GMAIL_SCOPE_INSUFFICIENT` | Missing `gmail.send` scope (403) | Reconnect and approve all scopes |
+| `GMAIL_RATE_LIMITED` | 429 / quota exhaustion | Retry later |
+| `GMAIL_API_UNREACHABLE` | Network/timeout to Google | Check connectivity |
+| `GMAIL_API_ERROR` | Other Google 5xx/API errors | Retry or reconnect |
+| `GMAIL_SENDER_NOT_PERMITTED` | From ≠ connected account | Align sender or reconnect |
+
+Only these sanitized codes enter the CI4 debugger transcript; raw Google
+responses, tokens, and recipient addresses never do.
+
+### Migration note
+
+After the System tier is stable on `gmail_api`, remove the plaintext Gmail
+App Password from `.env` (`email.SMTPPass`) and revoke the app password in
+the Google account. CodeIgniter does not DKIM-sign Gmail API messages —
+Google signs them server-side for the authenticated account.
+
 ## Logging and audit rules
 
 Test-send failures may log only:
@@ -225,4 +313,11 @@ not the recipient or credentials.
 - `app/Libraries/DataEncryption.php`: text-safe encrypted credential envelope.
 - `app/Libraries/EmailFailureClassifier.php`: shared transcript-to-code
   classifier; all send paths log/store only the classified code.
+- `app/Libraries/Email/GmailApiEmail.php`: CI4 Email subclass that submits
+  the assembled RFC 822 message via `users.messages.send`.
+- `app/Services/GmailOAuthService.php`: OAuth2 consent URL, signed
+  single-use state, code exchange, encrypted refresh-token persistence,
+  lazy access-token refresh, and grant revocation.
+- `app/Controllers/EmailOAuthController.php`: shared OAuth callback with
+  per-tier re-authorization.
 - `docs/OBSERVABILITY_POLICY.md`: redaction and retention requirements.

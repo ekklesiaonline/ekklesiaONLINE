@@ -36,7 +36,7 @@ This file is the single source of truth for which documentation should be retain
 - `docs/PROFILE_PICTURE_SECURITY_AND_DELIVERY.md`
   Canonical private profile picture model (per-user folders, random names, guarded delivery, path hardening, and cache behavior).
 - `docs/EMAIL_DELIVERABILITY.md`
-  Canonical scoped SMTP, SPF, DKIM, DMARC, provider alignment, and safe diagnostic guidance.
+  Canonical scoped SMTP, Gmail API OAuth2, SPF, DKIM, DMARC, provider alignment, and safe diagnostic guidance.
 - `docs/VISITOR_LIFECYCLE.md`
   Canonical visitor lifecycle (`visitor → regular_attender → member`), intake paths, directory scope, promotion modes, and permissions.
 - `docs/FOLLOWUP_WORKFLOW_SYSTEM.md`
