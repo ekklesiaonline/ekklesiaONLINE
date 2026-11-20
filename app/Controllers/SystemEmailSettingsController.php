@@ -28,4 +28,24 @@ class SystemEmailSettingsController extends BaseController
     {
         return $this->emailSettingsTest('system', null, 'system.admin', true);
     }
+
+    public function googleConnect()
+    {
+        return $this->gmailConnectRedirect(
+            ['type' => 'system', 'id' => null],
+            'system.admin',
+            true,
+            base_url('system/email')
+        );
+    }
+
+    public function googleDisconnect()
+    {
+        return $this->gmailDisconnectRedirect(
+            ['type' => 'system', 'id' => null],
+            'system.admin',
+            true,
+            base_url('system/email')
+        );
+    }
 }
