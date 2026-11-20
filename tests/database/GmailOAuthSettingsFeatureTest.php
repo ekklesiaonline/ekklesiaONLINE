@@ -7,6 +7,7 @@ use CodeIgniter\Test\CIUnitTestCase;
 use CodeIgniter\Test\DatabaseTestTrait;
 use CodeIgniter\Test\FeatureTestTrait;
 use Config\Services;
+use Tests\Support\Database\SystemSettingsTestHelper;
 
 /**
  * Feature coverage for the Gmail API OAuth2 email transport:
@@ -32,6 +33,7 @@ final class GmailOAuthSettingsFeatureTest extends CIUnitTestCase
 
         helper(['auth', 'form']);
         Services::reset(true);
+        SystemSettingsTestHelper::createAuditLogTable($this->db);
         $this->withRoutes([
             ['POST', 'diocese/email-settings', '\\App\\Controllers\\Diocese\\EmailSettingsController::save'],
             ['GET', 'diocese/email-settings/google/connect', '\\App\\Controllers\\Diocese\\EmailSettingsController::googleConnect'],
@@ -238,7 +240,6 @@ final class GmailOAuthSettingsFeatureTest extends CIUnitTestCase
             'nonce'    => $nonce,
             'ts'       => time() - 2000,
         ]);
-        session()->set('gmail_oauth_nonces', [$nonce]);
 
         $response = $this->get('email/oauth/google/callback?state=' . $state . '&code=x');
 
@@ -281,12 +282,24 @@ final class GmailOAuthSettingsFeatureTest extends CIUnitTestCase
             'nonce'    => $nonce,
             'ts'       => time(),
         ]);
-        session()->set('gmail_oauth_nonces', [$nonce]);
-
-        $response = $this->get('email/oauth/google/callback?state=' . $state . '&code=x');
-
+        // FeatureTestTrait::call() only seeds $_SESSION; if the session
+        // service is (re)created during the request, session_start()
+        // repopulates it from the handler and wipes the seed. Start the
+        // session first so the request reuses the active one.
+        service('session')->set('gmail_oauth_nonces', [$nonce]);
+        $response = $this->withSession(['gmail_oauth_nonces' => [$nonce]])
+            ->get('email/oauth/google/callback?state=' . $state . '&code=x');
         $response->assertRedirect();
         $response->assertSessionHas('error');
+        // The scope guard itself must be the rejection path: an unrelated
+        // failure (e.g. unconfigured OAuth client) audits a different action.
+        $audit = $this->db->table('audit_log')
+            ->where('action', 'email_settings.gmail_oauth_denied')
+            ->where('entity_id', $otherDiocese)
+            ->where('user_id', $adminId)
+            ->get()
+            ->getRowArray();
+        self::assertNotNull($audit, 'Scope re-authorization must deny the foreign scope');
         // The foreign scope's grant table must stay empty.
         $this->assertStoredSetting($otherDiocese, 'email.gmail_refresh_token', null);
         $this->assertStoredSetting($otherDiocese, 'email.mail_transport', null);
@@ -305,9 +318,10 @@ final class GmailOAuthSettingsFeatureTest extends CIUnitTestCase
             'nonce'    => $nonce,
             'ts'       => time(),
         ]);
-        session()->set('gmail_oauth_nonces', [$nonce]);
-
-        $response = $this->get('email/oauth/google/callback?state=' . $state);
+        // Same session seeding contract as the scope test above.
+        service('session')->set('gmail_oauth_nonces', [$nonce]);
+        $response = $this->withSession(['gmail_oauth_nonces' => [$nonce]])
+            ->get('email/oauth/google/callback?state=' . $state);
 
         $response->assertRedirect();
         $response->assertSessionHas('error');
