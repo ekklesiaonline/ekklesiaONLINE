@@ -83,12 +83,18 @@ final class EmailFailureClassifier
             return 'GMAIL_GRANT_INVALID';
         }
 
-        if ($status === 403 || str_contains($message, 'insufficient')) {
-            return 'GMAIL_SCOPE_INSUFFICIENT';
+        // Gmail returns 403 for rateLimitExceeded/userRateLimitExceeded too —
+        // check throttling signals before the generic 403 permission branch.
+        if ($status === 429
+            || str_contains($message, 'rate limit')
+            || str_contains($message, 'ratelimitexceeded')
+            || str_contains($message, 'quota')
+        ) {
+            return 'GMAIL_RATE_LIMITED';
         }
 
-        if ($status === 429 || str_contains($message, 'rate limit') || str_contains($message, 'quota')) {
-            return 'GMAIL_RATE_LIMITED';
+        if ($status === 403 || str_contains($message, 'insufficient')) {
+            return 'GMAIL_SCOPE_INSUFFICIENT';
         }
 
         if ($status !== null && $status >= 500) {

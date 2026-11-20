@@ -376,8 +376,12 @@ class GmailOAuthService
             return;
         }
 
+        // Google revocation invalidates every token for that mailbox across
+        // the OAuth project. Only revoke remotely when no other tier we can
+        // see is connected to the same account; otherwise clear locally.
         $refreshToken = $this->refreshToken($tier, $scopeId);
-        if ($refreshToken !== null) {
+        $account      = $this->accountEmail($tier, $scopeId);
+        if ($refreshToken !== null && !$this->accountSharedByOtherTier($tier, $scopeId, $account)) {
             $this->revokeGrant($refreshToken);
         }
 
@@ -391,6 +395,32 @@ class GmailOAuthService
     // ------------------------------------------------------------------
     // Internals
     // ------------------------------------------------------------------
+
+    /**
+     * Whether another tier (currently: system/organisation, which carry
+     * credential mail) holds a grant for the same mailbox. Conservative:
+     * tenant tiers are not enumerated here.
+     */
+    protected function accountSharedByOtherTier(string $tier, ?int $id, ?string $account): bool
+    {
+        if ($account === null) {
+            return false;
+        }
+
+        foreach ([['system', null], ['organisation', null]] as [$otherTier, $otherId]) {
+            if ($otherTier === $tier && $otherId === $id) {
+                continue;
+            }
+            $other = $this->accountEmail($otherTier, $otherId);
+            if ($other !== null && strcasecmp($other, $account) === 0
+                && $this->refreshToken($otherTier, $otherId) !== null
+            ) {
+                return true;
+            }
+        }
+
+        return false;
+    }
 
     private function assertValidScope(string $tier, ?int $scopeId): void
     {

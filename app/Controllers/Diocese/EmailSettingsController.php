@@ -76,7 +76,7 @@ class EmailSettingsController extends BaseController
             ['type' => 'diocese', 'id' => $dioceseId],
             'diocese.admin',
             $this->canEditSmtp(),
-            base_url('diocese/email-settings')
+            base_url('diocese/email-settings') . '?diocese_id=' . $dioceseId
         );
     }
 
@@ -94,7 +94,7 @@ class EmailSettingsController extends BaseController
             ['type' => 'diocese', 'id' => $dioceseId],
             'diocese.admin',
             $this->canEditSmtp(),
-            base_url('diocese/email-settings')
+            base_url('diocese/email-settings') . '?diocese_id=' . $dioceseId
         );
     }
 

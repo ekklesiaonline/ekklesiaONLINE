@@ -65,6 +65,9 @@ class EmailSettingsService
             (string) $scope['type'],
             isset($scope['id']) ? (int) $scope['id'] : null
         );
+        // The transport selector is tier-local (it must pair with this
+        // tier's own grant) — never display an inherited parent selection.
+        $values['mail_transport'] = $gmail['transport'];
 
         return [
             'values'        => $values,
@@ -151,6 +154,18 @@ class EmailSettingsService
                     $errors['mail_transport'] = lang('Email.gmailNotConnectedSave');
                 }
             }
+        }
+
+        // Gmail-only submission: SMTP fields are hidden/inactive, so drop
+        // them instead of validating or persisting an unrelated SMTP block.
+        if (($values['email.mail_transport'] ?? '') === GmailOAuthService::TRANSPORT_GMAIL_API) {
+            unset(
+                $values['email.smtp_host'],
+                $values['email.smtp_user'],
+                $values['email.smtp_pass'],
+                $values['email.smtp_port'],
+                $values['email.smtp_crypto']
+            );
         }
 
         // SMTP all-or-nothing validation against this tier's stored block.

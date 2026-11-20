@@ -66,7 +66,7 @@ class EmailSettingsController extends BaseController
             ['type' => 'province', 'id' => $provinceId],
             'province.admin',
             true,
-            base_url('province/email-settings')
+            base_url('province/email-settings') . '?province_id=' . $provinceId
         );
     }
 
@@ -84,7 +84,7 @@ class EmailSettingsController extends BaseController
             ['type' => 'province', 'id' => $provinceId],
             'province.admin',
             true,
-            base_url('province/email-settings')
+            base_url('province/email-settings') . '?province_id=' . $provinceId
         );
     }
 
