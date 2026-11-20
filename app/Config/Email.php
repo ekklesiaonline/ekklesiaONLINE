@@ -123,4 +123,16 @@ class Email extends BaseConfig
      * Enable notify message from server
      */
     public bool $DSN = false;
+
+    /**
+     * Google OAuth2 client ID for the Gmail API transport.
+     * Configure via .env: email.googleClientId — never store in db_settings.
+     */
+    public string $googleClientId = '';
+
+    /**
+     * Google OAuth2 client secret for the Gmail API transport.
+     * Configure via .env: email.googleClientSecret — never store in db_settings.
+     */
+    public string $googleClientSecret = '';
 }
