@@ -62,6 +62,42 @@ class EmailSettingsController extends BaseController
         return $this->emailSettingsTest('diocese', $dioceseId, 'diocese.admin', $canEditSmtp);
     }
 
+    public function googleConnect(int $dioceseId = 0)
+    {
+        if ($dioceseId <= 0) {
+            $dioceseId = (int) ($this->request->getGet('diocese_id') ?? 0);
+        }
+        $dioceseId = $this->guardDioceseScope($dioceseId);
+        if ($dioceseId === null) {
+            return redirect()->to(base_url('diocese/dashboard'))->with('error', lang('App.errorForbidden'));
+        }
+
+        return $this->gmailConnectRedirect(
+            ['type' => 'diocese', 'id' => $dioceseId],
+            'diocese.admin',
+            $this->canEditSmtp(),
+            base_url('diocese/email-settings') . '?diocese_id=' . $dioceseId
+        );
+    }
+
+    public function googleDisconnect(int $dioceseId = 0)
+    {
+        if ($dioceseId <= 0) {
+            $dioceseId = (int) ($this->request->getPost('scope_id') ?? 0);
+        }
+        $dioceseId = $this->guardDioceseScope($dioceseId);
+        if ($dioceseId === null) {
+            return redirect()->back()->with('error', lang('App.errorForbidden'));
+        }
+
+        return $this->gmailDisconnectRedirect(
+            ['type' => 'diocese', 'id' => $dioceseId],
+            'diocese.admin',
+            $this->canEditSmtp(),
+            base_url('diocese/email-settings') . '?diocese_id=' . $dioceseId
+        );
+    }
+
     /**
      * Resolve the diocese this admin may manage, rejecting any
      * request-supplied scope outside their own diocese. System admins may

@@ -105,6 +105,25 @@ class ConfigurationService
     }
 
     /**
+     * Write a setting to exactly one tier, with no hierarchy fallback.
+     * Counterpart to getSettingForTier() — used when a block of settings
+     * must be written atomically to a single tier.
+     *
+     * @param string   $tier 'parish'|'diocese'|'province'|'organisation'|'system'
+     */
+    public function setSettingForTier(string $tier, ?int $id, string $key, $value, bool $isEncrypted = false): bool
+    {
+        return match ($tier) {
+            'parish'       => $id !== null ? $this->parishModel->setSetting($id, $key, $value, $isEncrypted) : false,
+            'diocese'      => $id !== null ? $this->dioceseModel->setValue($id, $key, $value, $isEncrypted) : false,
+            'province'     => $id !== null ? $this->provinceModel->setValue($id, $key, $value, $isEncrypted) : false,
+            'organisation' => $this->organisationModel->setValue($key, $value, $isEncrypted),
+            'system'       => $this->systemModel->setValue($key, $value, 'string', 'email'),
+            default        => false,
+        };
+    }
+
+    /**
      * Backward-compatible single-key lookup without parish scope.
      */
     public function getSetting(string $key, ?int $dioceseId = null, ?int $provinceId = null, $default = null)

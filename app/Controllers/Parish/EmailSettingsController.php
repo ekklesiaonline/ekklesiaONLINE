@@ -68,6 +68,46 @@ class EmailSettingsController extends BaseController
         return $this->emailSettingsTest('parish', $parishId, 'parish.edit', $this->canEditSmtp($parishId));
     }
 
+    public function googleConnect()
+    {
+        if ($this->isDioceseAdmin()) {
+            return redirect()->to('/parish/email-settings')->with('error', lang('App.accessDenied'));
+        }
+
+        $parishId = $this->getOperationalParishId();
+
+        if (!$parishId) {
+            return redirect()->to('/profile')->with('error', lang('App.noParishSelected'));
+        }
+
+        return $this->gmailConnectRedirect(
+            ['type' => 'parish', 'id' => $parishId],
+            'parish.edit',
+            $this->canEditSmtp($parishId),
+            base_url('parish/email-settings')
+        );
+    }
+
+    public function googleDisconnect()
+    {
+        if ($this->isDioceseAdmin()) {
+            return redirect()->to('/parish/email-settings')->with('error', lang('App.accessDenied'));
+        }
+
+        $parishId = $this->getOperationalParishId();
+
+        if (!$parishId) {
+            return redirect()->to('/profile')->with('error', lang('App.noParishSelected'));
+        }
+
+        return $this->gmailDisconnectRedirect(
+            ['type' => 'parish', 'id' => $parishId],
+            'parish.edit',
+            $this->canEditSmtp($parishId),
+            base_url('parish/email-settings')
+        );
+    }
+
     private function canEditSmtp(int $parishId): bool
     {
         $user = auth()->user();

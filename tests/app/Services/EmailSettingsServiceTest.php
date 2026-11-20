@@ -1,5 +1,6 @@
 <?php
 
+use App\Libraries\DataEncryption;
 use App\Models\SystemSettingModel;
 use App\Services\EmailSettingsService;
 use CodeIgniter\Test\CIUnitTestCase;
@@ -113,5 +114,70 @@ final class EmailSettingsServiceTest extends CIUnitTestCase
         ], true);
 
         $this->assertArrayHasKey('from_email', $errors);
+    }
+
+    public function testGmailTransportRejectedWithoutGrant(): void
+    {
+        $service = new EmailSettingsService();
+        $errors  = $service->save(self::SCOPE, [
+            'section'        => 'smtp',
+            'enabled'        => '1',
+            'mail_transport' => 'gmail_api',
+        ], true);
+
+        $this->assertArrayHasKey('mail_transport', $errors);
+
+        $settings = model(SystemSettingModel::class);
+        $this->assertNotSame('gmail_api', (string) $settings->getValue('email.mail_transport'));
+    }
+
+    public function testGmailTransportPersistsWhenGrantExists(): void
+    {
+        $settings = model(SystemSettingModel::class);
+        $settings->setValue('email.gmail_refresh_token', (string) DataEncryption::encrypt('rt-1'), 'string', 'email');
+        $settings->setValue('email.gmail_account_email', 'admin@gmail.com', 'string', 'email');
+
+        $service = new EmailSettingsService();
+        $errors  = $service->save(self::SCOPE, [
+            'section'        => 'smtp',
+            'enabled'        => '1',
+            'mail_transport' => 'gmail_api',
+        ], true);
+
+        $this->assertSame([], $errors);
+        $this->assertSame('gmail_api', (string) $settings->getValue('email.mail_transport'));
+    }
+
+    public function testGmailAccountEmailIsNotWritableViaSave(): void
+    {
+        $settings = model(SystemSettingModel::class);
+        $settings->setValue('email.gmail_refresh_token', (string) DataEncryption::encrypt('rt-1'), 'string', 'email');
+        $settings->setValue('email.gmail_account_email', 'real@gmail.com', 'string', 'email');
+
+        $service = new EmailSettingsService();
+        $errors  = $service->save(self::SCOPE, [
+            'section'              => 'smtp',
+            'enabled'              => '1',
+            'mail_transport'       => 'gmail_api',
+            'gmail_account_email'  => 'attacker@evil.example',
+        ], true);
+
+        $this->assertSame([], $errors);
+        // The callback-owned address must survive a hostile POST untouched.
+        $this->assertSame('real@gmail.com', (string) $settings->getValue('email.gmail_account_email'));
+    }
+
+    public function testUnknownTransportValueCoercesToSmtp(): void
+    {
+        $service = new EmailSettingsService();
+        $errors  = $service->save(self::SCOPE, [
+            'section'        => 'smtp',
+            'enabled'        => '1',
+            'mail_transport' => 'pigeon_post',
+        ], true);
+
+        $this->assertSame([], $errors);
+        $settings = model(SystemSettingModel::class);
+        $this->assertSame('smtp_password', (string) $settings->getValue('email.mail_transport'));
     }
 }

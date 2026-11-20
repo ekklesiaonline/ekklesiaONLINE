@@ -13,7 +13,9 @@
 		"php": "^8.5",
 		"codeigniter4/framework": "^4.7",
 		"codeigniter4/shield": "^1.2",
-		"dompdf/dompdf": "^3.1"
+		"dompdf/dompdf": "^3.1",
+		"google/apiclient": "^2.20.1",
+		"google/apiclient-services": "0.465.1"
 	},
 	"require-dev": {
 		"fakerphp/faker": "^1.9",
@@ -43,12 +45,18 @@
 			"Tests\\Support\\": "tests/_support"
 		}
 	},
+	"extra": {
+		"google/apiclient-services": [
+			"Gmail"
+		]
+	},
 	"config": {
 		"optimize-autoloader": true,
 		"preferred-install": "dist",
 		"sort-packages": true
 	},
 	"scripts": {
+		"pre-autoload-dump": "Google\\Task\\Composer::cleanup",
 		"test": "phpunit --no-coverage",
 		"phpstan": "phpstan analyse",
 		"check": [

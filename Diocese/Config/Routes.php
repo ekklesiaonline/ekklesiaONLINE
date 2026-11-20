@@ -123,5 +123,7 @@ $routes->group('', ['filter' => 'session'], function ($routes) {
         $routes->get('email-settings', '\\App\\Controllers\\Diocese\\EmailSettingsController::index');
         $routes->post('email-settings', '\\App\\Controllers\\Diocese\\EmailSettingsController::save');
         $routes->post('email-settings/test', '\\App\\Controllers\\Diocese\\EmailSettingsController::test');
+        $routes->get('email-settings/google/connect', '\\App\\Controllers\\Diocese\\EmailSettingsController::googleConnect');
+        $routes->post('email-settings/google/disconnect', '\\App\\Controllers\\Diocese\\EmailSettingsController::googleDisconnect');
     });
 });

@@ -11,8 +11,11 @@
  *   - scope_type       string  'system'|'organisation'|'province'|'diocese'|'parish'
  *   - scope_id         int|null
  *   - can_edit_smtp    bool
- *   - settings         array   keyed by short key (from_email, from_name, reply_to, smtp_*, smtp_crypto)
+ *   - settings         array   keyed by short key (from_email, from_name, reply_to, smtp_*, smtp_crypto, mail_transport, gmail_account_email)
  *   - has_smtp_pass    bool    whether an encrypted password already exists
+ *   - gmail            array   ['configured','transport','connected','account_email']
+ *   - google_connect_url    string
+ *   - google_disconnect_url string
  *   - effective_sender array   ['from_email','from_name','reply_to']
  *   - save_url         string
  *   - test_url         string
@@ -24,6 +27,9 @@
 
 $settings    = $settings ?? [];
 $errors      = $errors ?? [];
+$gmail       = $gmail ?? ['configured' => false, 'transport' => 'smtp_password', 'connected' => false, 'account_email' => null];
+$googleConnectUrl    = $google_connect_url ?? '';
+$googleDisconnectUrl = $google_disconnect_url ?? '';
 $effective   = $effective_sender ?? ['from_email' => '', 'from_name' => '', 'reply_to' => ''];
 $canEditSmtp = $can_edit_smtp ?? false;
 $value       = static fn(string $key): string => esc((string) ($settings[$key] ?? ''), 'attr');
@@ -131,6 +137,18 @@ $smtpDisabled     = $smtpEditing ? '' : ' disabled';
                     <?php endif; ?>
 
                     <div class="mb-3">
+                        <label for="mail_transport" class="form-label"><?= lang('Email.transportLabel') ?></label>
+                        <select class="form-select<?= $hasError('mail_transport') ? ' is-invalid' : '' ?>" id="mail_transport" name="mail_transport"<?= $smtpDisabled ?>>
+                            <?php $transport = (string) ($settings['mail_transport'] ?? 'smtp_password'); ?>
+                            <option value="smtp_password"<?= $transport === 'smtp_password' ? ' selected' : '' ?>><?= lang('Email.transportSmtp') ?></option>
+                            <option value="gmail_api"<?= $transport === 'gmail_api' ? ' selected' : '' ?><?= !($gmail['configured'] ?? false) ? ' disabled' : '' ?>><?= lang('Email.transportGmail') ?></option>
+                        </select>
+                        <div class="form-text"><?= lang('Email.transportHelp') ?></div>
+                        <?= $errorFor('mail_transport') ?>
+                    </div>
+
+                    <div id="smtp-transport-fields" class="<?= $transport === 'gmail_api' ? 'd-none' : '' ?>">
+                    <div class="mb-3">
                         <label for="smtp_host" class="form-label"><?= lang('Email.smtpHost') ?></label>
                         <input type="text" class="form-control<?= $hasError('smtp_host') ? ' is-invalid' : '' ?>" id="smtp_host" name="smtp_host" value="<?= $value('smtp_host') ?>"<?= $smtpDisabled ?>>
                         <?= $errorFor('smtp_host') ?>
@@ -163,6 +181,7 @@ $smtpDisabled     = $smtpEditing ? '' : ' disabled';
                         </select>
                         <?= $errorFor('smtp_crypto') ?>
                     </div>
+                    </div>
                 </div>
                 <?php if ($canEditSmtp): ?>
                     <div class="card-footer<?= $smtpEditing ? '' : ' d-none' ?>" data-edit-actions>
@@ -176,6 +195,48 @@ $smtpDisabled     = $smtpEditing ? '' : ' disabled';
                 <?php endif; ?>
             </div>
         </form>
+
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <strong><?= lang('Email.gmailCard') ?></strong>
+                <?php if ($gmail['connected'] ?? false): ?>
+                    <span class="badge border border-success text-success fw-normal"><?= lang('Email.gmailConnectedBadge') ?></span>
+                <?php endif; ?>
+            </div>
+            <div class="card-body">
+                <?php if (!($gmail['configured'] ?? false)): ?>
+                    <p class="text-muted small mb-0"><?= lang('Email.gmailNotConfiguredAdmin') ?></p>
+                <?php else: ?>
+                    <p class="small mb-2">
+                        <?php if ($gmail['connected'] ?? false): ?>
+                            <?= lang('Email.gmailConnectedAs', [esc((string) ($gmail['account_email'] ?? ''), 'attr')]) ?>
+                        <?php else: ?>
+                            <span class="text-muted"><?= lang('Email.gmailNotConnectedStatus') ?></span>
+                        <?php endif; ?>
+                    </p>
+                    <?php if ($canEditSmtp): ?>
+                        <div class="d-flex gap-2 flex-wrap">
+                            <?php if ($googleConnectUrl !== ''): ?>
+                                <a href="<?= esc($googleConnectUrl) ?>" class="btn btn-sm btn-outline-primary">
+                                    <i class="bi bi-google me-1" aria-hidden="true"></i><?= ($gmail['connected'] ?? false) ? lang('Email.gmailReconnect') : lang('Email.gmailConnect') ?>
+                                </a>
+                            <?php endif; ?>
+                            <?php if (($gmail['connected'] ?? false) && $googleDisconnectUrl !== ''): ?>
+                                <form method="post" action="<?= esc($googleDisconnectUrl) ?>" class="d-inline" onsubmit="return confirm('<?= esc(lang('Email.gmailDisconnectConfirm'), 'js') ?>');">
+                                    <?= csrf_field() ?>
+                                    <?php if ($scope_id !== null): ?>
+                                        <input type="hidden" name="scope_id" value="<?= (int) $scope_id ?>">
+                                    <?php endif; ?>
+                                    <button type="submit" class="btn btn-sm btn-outline-danger">
+                                        <i class="bi bi-box-arrow-right me-1" aria-hidden="true"></i><?= lang('Email.gmailDisconnect') ?>
+                                    </button>
+                                </form>
+                            <?php endif; ?>
+                        </div>
+                    <?php endif; ?>
+                <?php endif; ?>
+            </div>
+        </div>
     </div>
 
     <div class="col-12 col-xl-6">
@@ -267,6 +328,16 @@ $smtpDisabled     = $smtpEditing ? '' : ' disabled';
             lockOtherSections(sectionForm);
         }
     });
+
+    const transportSelect = document.getElementById('mail_transport');
+    const smtpFields = document.getElementById('smtp-transport-fields');
+    if (transportSelect && smtpFields) {
+        const syncTransportFields = function () {
+            smtpFields.classList.toggle('d-none', transportSelect.value === 'gmail_api');
+        };
+        transportSelect.addEventListener('change', syncTransportFields);
+        syncTransportFields();
+    }
 })();
 </script>
 
