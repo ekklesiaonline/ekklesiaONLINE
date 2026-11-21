@@ -136,8 +136,6 @@ return [
     'membersSelected'           => 'membre(s) sélectionné(s).',
     'transferMembers'           => 'Transférer des membres',
     'colMemberSince'            => 'Membre depuis',
-    'createAdminAccount'        => 'Créer un compte administrateur',
-    'createFirstAdminAccount'   => 'Créer le premier compte administrateur',
     'createStandaloneNonPortal' => 'Créer un membre autonome sans portail',
     'createStandaloneNonPortalSubmit' => 'Créer un membre sans portail',
     'usernameOptional'          => 'Nom d\'utilisateur (optionnel)',
