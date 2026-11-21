@@ -109,11 +109,12 @@ jobs:
         run: |
           run_url="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
           body="Latest failure: $run_url (commit ${{ github.sha }}, event ${{ github.event_name }}, $(date -u +'%Y-%m-%d %H:%M UTC')). See the run log and the rate-limit-report artifact for the sanitized probe output."
-          # Look up by label (direct issue listing) rather than --search, which
-          # depends on the search index and can miss a just-created issue.
+          # Look up via the REST issues endpoint (direct listing, not the search
+          # index), so a just-created tracker is always found. Pull requests
+          # are excluded because this endpoint returns them too.
           label="nightly-rate-limit"
           gh label create "$label" --color B60205 --description "Nightly rate-limit check tracking issue" --force >/dev/null
-          existing="$(gh issue list --state open --label "$label" --limit 1 --json number --jq '.[0].number // empty')"
+          existing="$(gh api -X GET "repos/${{ github.repository }}/issues" -f state=open -f labels="$label" -f per_page=100 --jq '[.[] | select(.pull_request == null)][0].number // empty')"
           if [ -n "$existing" ]; then
             gh issue comment "$existing" --body "$body"
           else
