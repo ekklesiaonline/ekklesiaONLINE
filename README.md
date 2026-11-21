@@ -125,7 +125,7 @@ On parish staff management pages (`/parishes/{id}/staff`):
 
 ## Security
 
-See `SECURITY.md` for the vulnerability-reporting policy, severity taxonomy, security invariants enforced on every merge, and the production hardening checklist.
+See [SECURITY.md](SECURITY.md) for the vulnerability-reporting policy, severity taxonomy, security invariants enforced on every merge, and the production hardening checklist.
 
 ## Canonical Documentation
 

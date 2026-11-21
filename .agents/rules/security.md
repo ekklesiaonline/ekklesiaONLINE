@@ -45,5 +45,6 @@ Canonical policy: `SECURITY.md` at repo root (reporting, severity taxonomy, SDLC
 
 ## Security-Sensitive Changes
 
-- Changes to filters, authz, uploads, mail, or crypto require maintainer sign-off and a regression test reproducing the finding (`SECURITY.md` §5).
+- Changes to filters, authz, uploads, mail, or crypto require maintainer sign-off (`SECURITY.md` §5).
+- Security-fix PRs must include a regression test reproducing the finding (`SECURITY.md` §5).
 - Vulnerability reports go through GitHub private vulnerability reporting — never a public issue or PR (`SECURITY.md` §3).
