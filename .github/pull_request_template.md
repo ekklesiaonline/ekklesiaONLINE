@@ -13,7 +13,7 @@
 - [ ] **Output:** `esc()`/`textContent` on server-derived strings; CSP nonces for any new inline script/style.
 - [ ] **Secrets:** no credentials, keys, or PII in code, logs, fixtures, or `.env` changes.
 - [ ] **Audit:** sensitive mutations emit `AuditService` events with the standard redaction set.
-- [ ] **Tests:** `vendor/bin/phpunit --no-coverage` passes; security-touching changes (filters, authz, uploads, mail, crypto) include a regression test.
+- [ ] **Tests:** `vendor/bin/phpunit --no-coverage` passes; security-fix PRs include a regression test reproducing the finding; security-touching changes (filters, authz, uploads, mail, crypto) have maintainer sign-off.
 
 ## Notes for reviewers
 
