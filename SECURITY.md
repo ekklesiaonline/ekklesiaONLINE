@@ -89,7 +89,7 @@ These are enforced today and are the acceptance criteria for any new feature:
 
 ## 6. Data Protection
 
-- **Encryption at rest:** governed by `docs/ENCRYPTION_AT_REST_RELEASE_GATE.md` — the gate checklist is a hard release blocker. `encryption.key` and `encryption.blindIndexKey` are distinct high-entropy values; `encryption.previousKeys` supports rotation without re-encryption downtime.
+- **Encryption at rest:** governed by `docs/ENCRYPTION_AT_REST_RELEASE_GATE.md` — the gate checklist is a hard release blocker. `encryption.key` and `encryption.blindIndexKey` are distinct high-entropy values; `encryption.previousKeys` lets CI4 decrypt data written under a retired `encryption.key`, enabling rotation without re-encryption downtime. It does **not** apply to blind indexes: `DataEncryption::blindIndex` reads only the current `blindIndexKey`, so rotating it invalidates stored email/phone indexes until they are rebuilt.
 - **PII classes:** member contact data, sacramental records, household/children data, donor financial data. Access requires the scoped-authorization formula above; exports are permission-gated, rate-limited, and formula-injection-safe.
 - **Backups:** `backup.*` env config, 30-day retention default, stored under `writable/backups` outside `public/`. Backup credentials are least-privilege and distinct from the app DB user.
 - **Canonical standing** (`clergy_canonical_status` suspended/inhibited) hard-blocks ministerial, signatory, and office functions system-wide — a data-integrity control, not just a business rule.
@@ -108,7 +108,7 @@ Before any production promotion (complements `docs/DEPLOYMENT_RUNBOOK.md` and th
 
 ## 8. Incident Response
 
-1. **Contain:** revoke sessions (`sessionTracking`), disable compromised accounts, rotate `encryption.key`/`blindIndexKey` and SMTP/DB credentials if exfiltration is suspected.
+1. **Contain:** revoke sessions (`sessionTracking`), disable compromised accounts, rotate `encryption.key`/`blindIndexKey` and SMTP/DB credentials if exfiltration is suspected. When rotating `encryption.key`, move the old value to `encryption.previousKeys`; when rotating `blindIndexKey`, plan a rebuild of every stored blind index (searches on stale hashes return no matches until re-indexed).
 2. **Assess blast radius by tenant:** enumerate affected `parish_id`/`diocese_id` from `AuditService` logs and request monitoring.
 3. **Notify:** affected parish/diocese administrators; data-subject notification follows applicable church and civil requirements.
 4. **Remediate:** fix on a hotfix branch, regression test, expedited review, deploy, and record a post-incident note alongside the module audit files.
