@@ -1,9 +1,6 @@
 ---
 description: Sacramental record source-of-truth and flag-sync rules
-trigger: glob
-globs:
-  - "**/Sacrament*"
-  - "**/sacrament*"
+trigger: always_on
 ---
 
 # Sacramental Records
