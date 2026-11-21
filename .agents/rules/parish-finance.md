@@ -1,14 +1,6 @@
 ---
 description: Parish finance and canonical stewardship invariants
-trigger: glob
-globs:
-  - "Finance/**"
-  - "**/Donation*"
-  - "**/Fund*"
-  - "**/Expense*"
-  - "**/donation*"
-  - "**/fund*"
-  - "**/expense*"
+trigger: always_on
 ---
 
 # Parish Finance & Canonical Stewardship
