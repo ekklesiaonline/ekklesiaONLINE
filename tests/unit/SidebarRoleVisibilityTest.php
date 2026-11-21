@@ -25,9 +25,7 @@ final class SidebarRoleVisibilityTest extends CIUnitTestCase
         parent::tearDown();
     }
 
-    /**
-     * @dataProvider roleVisibilityProvider
-     */
+    #[\PHPUnit\Framework\Attributes\DataProvider('roleVisibilityProvider')]
     public function testSidebarLinkVisibilityByRole(
         array $groups,
         array $permissions,

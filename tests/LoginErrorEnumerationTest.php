@@ -25,9 +25,7 @@ final class LoginErrorEnumerationTest extends CIUnitTestCase
         return [['en'], ['es'], ['fr']];
     }
 
-    /**
-     * @dataProvider localeProvider
-     */
+    #[\PHPUnit\Framework\Attributes\DataProvider('localeProvider')]
     public function testBadAttemptAndInvalidPasswordAreIdentical(string $locale): void
     {
         service('request')->setLocale($locale);
@@ -38,9 +36,7 @@ final class LoginErrorEnumerationTest extends CIUnitTestCase
         $this->assertSame($badAttempt, $invalidPassword);
     }
 
-    /**
-     * @dataProvider localeProvider
-     */
+    #[\PHPUnit\Framework\Attributes\DataProvider('localeProvider')]
     public function testNotActivatedIsIdenticalToBadAttempt(string $locale): void
     {
         service('request')->setLocale($locale);
@@ -48,9 +44,7 @@ final class LoginErrorEnumerationTest extends CIUnitTestCase
         $this->assertSame(lang('Auth.badAttempt'), lang('Auth.notActivated'));
     }
 
-    /**
-     * @dataProvider localeProvider
-     */
+    #[\PHPUnit\Framework\Attributes\DataProvider('localeProvider')]
     public function testLoginFailureKeysResolveToRealMessages(string $locale): void
     {
         service('request')->setLocale($locale);

@@ -20,9 +20,7 @@ final class ModuleOwnershipClosureTest extends CIUnitTestCase
         ];
     }
 
-    /**
-     * @dataProvider moduleRouteFilesProvider
-     */
+    #[\PHPUnit\Framework\Attributes\DataProvider('moduleRouteFilesProvider')]
     public function testModuleRoutesAvoidAppControllerFallbackAndRedirectShims(string $routeFilePath): void
     {
         $content = file_get_contents($routeFilePath);
@@ -52,9 +50,7 @@ final class ModuleOwnershipClosureTest extends CIUnitTestCase
         ];
     }
 
-    /**
-     * @dataProvider moduleViewRootsProvider
-     */
+    #[\PHPUnit\Framework\Attributes\DataProvider('moduleViewRootsProvider')]
     public function testNonMemberPortalViewsDoNotDependOnSharedAppLayout(string $viewRoot): void
     {
         $directory = ROOTPATH . $viewRoot;

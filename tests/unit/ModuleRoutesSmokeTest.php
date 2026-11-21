@@ -57,9 +57,7 @@ final class ModuleRoutesSmokeTest extends CIUnitTestCase
         ];
     }
 
-    /**
-     * @dataProvider moduleRouteProvider
-     */
+    #[\PHPUnit\Framework\Attributes\DataProvider('moduleRouteProvider')]
     public function testModuleRoutesContainExpectedHandlers(string $routeFilePath, array $expectedHandlers): void
     {
         $content = file_get_contents($routeFilePath);

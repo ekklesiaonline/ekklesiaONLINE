@@ -34,9 +34,7 @@ final class SidebarLandingPathAlignmentTest extends CIUnitTestCase
         parent::tearDown();
     }
 
-    /**
-     * @dataProvider roleLandingProvider
-     */
+    #[\PHPUnit\Framework\Attributes\DataProvider('roleLandingProvider')]
     public function testSidebarDashboardLinkMatchesResolvedLandingPath(
         array $groups,
         array $permissions,

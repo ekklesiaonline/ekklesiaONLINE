@@ -81,9 +81,7 @@ final class FamiliesIntegrityRemediationTest extends CIUnitTestCase
         $this->assertStringNotContainsString('getParishProfiles(', $content);
     }
 
-    /**
-     * @dataProvider singleFamilyPolicyProvider
-     */
+    #[\PHPUnit\Framework\Attributes\DataProvider('singleFamilyPolicyProvider')]
     public function testSingleFamilyPolicyParsesDocumentedValues(string $value, bool $expected): void
     {
         $previous = $_ENV['families.enforceSingleFamilyMembership'] ?? null;

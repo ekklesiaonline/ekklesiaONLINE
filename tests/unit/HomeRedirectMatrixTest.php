@@ -41,9 +41,7 @@ final class HomeRedirectMatrixTest extends CIUnitTestCase
         ];
     }
 
-    /**
-     * @dataProvider dashboardRedirectMatrixProvider
-     */
+    #[\PHPUnit\Framework\Attributes\DataProvider('dashboardRedirectMatrixProvider')]
     public function testDashboardRedirectMatrix(array $groups, ?array $registrationRequest, string $expectedPath): void
     {
         $user = new class($groups) {

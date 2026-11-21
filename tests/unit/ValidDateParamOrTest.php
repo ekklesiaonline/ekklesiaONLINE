@@ -40,9 +40,7 @@ final class ValidDateParamOrTest extends CIUnitTestCase
         $this->assertSame('2028-02-29', $this->controller->validDateParamOrForTest(' 2028-02-29 ', self::FALLBACK));
     }
 
-    /**
-     * @dataProvider invalidDateProvider
-     */
+    #[\PHPUnit\Framework\Attributes\DataProvider('invalidDateProvider')]
     public function testInvalidInputReturnsFallback(mixed $value): void
     {
         $this->assertSame(self::FALLBACK, $this->controller->validDateParamOrForTest($value, self::FALLBACK));

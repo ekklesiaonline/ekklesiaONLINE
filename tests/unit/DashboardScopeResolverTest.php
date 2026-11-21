@@ -11,9 +11,7 @@ use CodeIgniter\Test\CIUnitTestCase;
  */
 final class DashboardScopeResolverTest extends CIUnitTestCase
 {
-    /**
-     * @dataProvider scopeResolverProvider
-     */
+    #[\PHPUnit\Framework\Attributes\DataProvider('scopeResolverProvider')]
     public function testResolveDashboardScopeReturnsCorrectTierAndRoute(
         array $groups,
         array $permissions,
@@ -178,9 +176,7 @@ final class DashboardScopeResolverTest extends CIUnitTestCase
         $this->assertFalse($controller->exposeCanAccessMyDashboard(null));
     }
 
-    /**
-     * @dataProvider parishDashboardAccessProvider
-     */
+    #[\PHPUnit\Framework\Attributes\DataProvider('parishDashboardAccessProvider')]
     public function testParishDashboardIsLimitedToNonPersonalTiers(array $groups, array $permissions, bool $expected): void
     {
         $controller = new class extends BaseController {
