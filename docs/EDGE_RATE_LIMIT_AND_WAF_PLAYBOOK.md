@@ -6,7 +6,7 @@ This playbook configures reverse-proxy and CDN/WAF protections for section 2.5 o
 
 ## 1. Nginx Reverse-Proxy Controls
 
-1. Include [build/nginx/ekklesiaONLINE-rate-limit.conf](build/nginx/ekklesiaONLINE-rate-limit.conf) in the target `server {}` block.
+1. Include [build/nginx/ekklesiaONLINE-rate-limit-http.conf](build/nginx/ekklesiaONLINE-rate-limit-http.conf) in the `http {}` block (zones and maps are only valid there), then include [build/nginx/ekklesiaONLINE-rate-limit.conf](build/nginx/ekklesiaONLINE-rate-limit.conf) in the target `server {}` block.
 2. Reload and validate:
    - `nginx -t`
    - `systemctl reload nginx`
