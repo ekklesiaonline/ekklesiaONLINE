@@ -21,7 +21,7 @@ set -eu
 : "${LOGIN_EMAIL:?Set LOGIN_EMAIL}"
 : "${LOGIN_PASSWORD:?Set LOGIN_PASSWORD}"
 REQUESTS="${REQUESTS:-30}"
-TARGET_PATH="${TARGET_PATH:-province/create-admin}"
+TARGET_PATH="${TARGET_PATH:-province/quick-create-parish}"
 LOGIN_REQUESTS="${LOGIN_REQUESTS:-12}"
 ANON_REQUESTS="${ANON_REQUESTS:-30}"
 ANON_PATH="${ANON_PATH:-$TARGET_PATH}"
@@ -53,12 +53,24 @@ err() {
   exit 1
 }
 
+# Prints the CSRF hidden-input pair ("name=... value=..."). Prefers the
+# configured token name (csrf_token in app/Config/Security.php) so unrelated
+# name/value inputs earlier in the markup cannot be mistaken for the token;
+# falls back to the first pair for forward compatibility.
+extract_csrf_pair() {
+  _csrf_pair="$(grep -m1 -o 'name="csrf_token" value="[A-Za-z0-9]*"' "$1" || true)"
+  if [ -z "$_csrf_pair" ]; then
+    _csrf_pair="$(grep -m1 -o 'name="[A-Za-z0-9_]*" value="[A-Za-z0-9]*"' "$1" || true)"
+  fi
+  printf '%s\n' "$_csrf_pair"
+}
+
 extract_csrf_name() {
-  grep -m1 -o 'name="[A-Za-z0-9_]*" value="[A-Za-z0-9]*"' "$1" | sed -E 's/name="([A-Za-z0-9_]*)" value="([A-Za-z0-9]*)"/\1/'
+  extract_csrf_pair "$1" | sed -E 's/name="([A-Za-z0-9_]*)" value="([A-Za-z0-9]*)"/\1/'
 }
 
 extract_csrf_value() {
-  grep -m1 -o 'name="[A-Za-z0-9_]*" value="[A-Za-z0-9]*"' "$1" | sed -E 's/name="([A-Za-z0-9_]*)" value="([A-Za-z0-9]*)"/\2/'
+  extract_csrf_pair "$1" | sed -E 's/name="([A-Za-z0-9_]*)" value="([A-Za-z0-9]*)"/\2/'
 }
 
 extract_ajax_token() {
@@ -87,8 +99,13 @@ curl -s -i --connect-timeout "$CURL_CONNECT_TIMEOUT" --max-time "$CURL_MAX_TIME"
   --data-urlencode "password=$LOGIN_PASSWORD" \
   --data-urlencode "$csrf_name=$csrf_val" > "$LOGIN_RESP"
 
-if ! grep -Eq 'HTTP/[0-9.]+ (302|303|200)' "$LOGIN_RESP"; then
-  err "login failed (non-success status)"
+# Shield answers both successful and failed logins with a redirect, so the
+# status line alone cannot prove authentication. Verify the session by
+# loading a page that requires it: unauthenticated or challenged requests
+# are bounced (3xx, empty body) instead of returning 200 + markup.
+dash_probe="$(curl -s --connect-timeout "$CURL_CONNECT_TIMEOUT" --max-time "$CURL_MAX_TIME" -o "$DASH_HTML" -w '%{http_code}' -b "$COOKIE_FILE" -c "$COOKIE_FILE" "$BASE_URL/$DASHBOARD_PATH" || true)"
+if [ "$dash_probe" != "200" ] || [ ! -s "$DASH_HTML" ]; then
+  err "login did not establish an authenticated session (dashboard status=$dash_probe path=$DASHBOARD_PATH)"
 fi
 
 run_stamp="$(date +%s)"
@@ -107,6 +124,12 @@ while [ "$i" -le "$REQUESTS" ]; do
   csrf_val="$(extract_csrf_value "$DASH_HTML" || true)"
   ajax_token="$(extract_ajax_token "$DASH_HTML" || true)"
   [ -z "$ajax_token" ] && ajax_token="$csrf_val"
+  # The province layout exposes the token only via <meta name="csrf-token">;
+  # fall back to it under the configured field name when no hidden input exists.
+  if { [ -z "$csrf_name" ] || [ -z "$csrf_val" ]; } && [ -n "$ajax_token" ]; then
+    csrf_name="csrf_token"
+    csrf_val="$ajax_token"
+  fi
 
   if [ -z "$csrf_name" ] || [ -z "$csrf_val" ]; then
     err "unable to parse dashboard CSRF token on auth iteration $i (status=$dashboard_status path=$DASHBOARD_PATH)"
@@ -191,7 +214,9 @@ while [ "$i" -le "$ANON_REQUESTS" ]; do
     anon_429=$((anon_429 + 1))
     [ -n "$retry_after" ] && anon_retry=$((anon_retry + 1))
   fi
-  if [ "$http_code" -ge 200 ] && [ "$http_code" -lt 400 ] && [ "$http_code" != "000" ]; then
+  # Only 2xx counts as an accepted anonymous write. CSRF/auth filters reject
+  # tokenless or unauthenticated writes with a 3xx redirect, which is a denial.
+  if [ "$http_code" -ge 200 ] && [ "$http_code" -lt 300 ]; then
     anon_success=$((anon_success + 1))
   fi
 

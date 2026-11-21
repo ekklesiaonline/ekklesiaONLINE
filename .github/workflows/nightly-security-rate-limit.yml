@@ -12,7 +12,7 @@ on:
       target_path:
         description: 'Rate-limited write path to probe (TARGET_PATH)'
         required: false
-        default: 'province/create-admin'
+        default: 'province/quick-create-parish'
       login_requests:
         description: 'Failed-login burst size (LOGIN_REQUESTS)'
         required: false
@@ -34,6 +34,10 @@ concurrency:
   group: nightly-security-rate-limit
   cancel-in-progress: false
 
+defaults:
+  run:
+    shell: bash
+
 jobs:
   rate-limit:
     name: Rate-limit smoke against staging
@@ -45,6 +49,43 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Validate probe inputs
+        id: inputs
+        env:
+          REQUESTS: ${{ inputs.requests || '30' }}
+          LOGIN_REQUESTS: ${{ inputs.login_requests || '12' }}
+          ANON_REQUESTS: ${{ inputs.anon_requests || '30' }}
+        run: |
+          for value in "$REQUESTS" "$LOGIN_REQUESTS" "$ANON_REQUESTS"; do
+            case "$value" in
+              ''|*[!0-9]*)
+                echo "Burst sizes must be positive integers, got: '$value'"
+                exit 1
+                ;;
+              *[1-9]*)
+                ;;
+              *)
+                echo "Burst sizes must be positive integers, got: '$value'"
+                exit 1
+                ;;
+            esac
+          done
+
+      - name: Verify staging secrets are configured
+        env:
+          BASE_URL: ${{ secrets.STAGING_BASE_URL }}
+          LOGIN_EMAIL: ${{ secrets.STAGING_RATE_LIMIT_EMAIL }}
+          LOGIN_PASSWORD: ${{ secrets.STAGING_RATE_LIMIT_PASSWORD }}
+        run: |
+          missing=""
+          [ -n "$BASE_URL" ] || missing="$missing STAGING_BASE_URL"
+          [ -n "$LOGIN_EMAIL" ] || missing="$missing STAGING_RATE_LIMIT_EMAIL"
+          [ -n "$LOGIN_PASSWORD" ] || missing="$missing STAGING_RATE_LIMIT_PASSWORD"
+          if [ -n "$missing" ]; then
+            echo "Missing staging environment secrets:$missing"
+            exit 1
+          fi
+
       - name: Ensure report directory exists
         run: mkdir -p build/logs
 
@@ -54,22 +95,31 @@ jobs:
           LOGIN_EMAIL: ${{ secrets.STAGING_RATE_LIMIT_EMAIL }}
           LOGIN_PASSWORD: ${{ secrets.STAGING_RATE_LIMIT_PASSWORD }}
           REQUESTS: ${{ inputs.requests || '30' }}
-          TARGET_PATH: ${{ inputs.target_path || 'province/create-admin' }}
+          TARGET_PATH: ${{ inputs.target_path || 'province/quick-create-parish' }}
           LOGIN_REQUESTS: ${{ inputs.login_requests || '12' }}
           ANON_REQUESTS: ${{ inputs.anon_requests || '30' }}
-          ANON_PATH: ${{ inputs.target_path || 'province/create-admin' }}
+          ANON_PATH: ${{ inputs.target_path || 'province/quick-create-parish' }}
           DIOCESE_ID: ${{ inputs.diocese_id }}
         run: sh build/stress_rate_limit_test.sh 2>&1 | tee build/logs/rate-limit-report.txt
 
-      - name: Open tracking issue on failure
-        if: failure()
+      - name: Update tracking issue on failure
+        if: failure() && steps.inputs.outcome == 'success'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh issue create \
-            --title "Nightly rate-limit check failed ($(date +%Y-%m-%d))" \
-            --body "Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
-            || true
+          run_url="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          body="Latest failure: $run_url (commit ${{ github.sha }}, event ${{ github.event_name }}, $(date -u +'%Y-%m-%d %H:%M UTC')). See the run log and the rate-limit-report artifact for the sanitized probe output."
+          # Look up via the REST issues endpoint (direct listing, not the search
+          # index), so a just-created tracker is always found. Pull requests
+          # are excluded because this endpoint returns them too.
+          label="nightly-rate-limit"
+          gh label create "$label" --color B60205 --description "Nightly rate-limit check tracking issue" --force >/dev/null
+          existing="$(gh api -X GET "repos/${{ github.repository }}/issues" -f state=open -f labels="$label" -f per_page=100 --jq '[.[] | select(.pull_request == null)][0].number // empty')"
+          if [ -n "$existing" ]; then
+            gh issue comment "$existing" --body "$body"
+          else
+            gh issue create --title "Nightly rate-limit check failing" --label "$label" --body "$body"
+          fi
 
       - name: Upload sanitized report
         if: always()
