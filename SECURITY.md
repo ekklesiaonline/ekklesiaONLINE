@@ -1,6 +1,6 @@
 # ekklesiaONLINE — Recommended Security Policy
 
-**Status:** Recommendation for adoption (drafted 2026-11-21)
+**Status:** Adopted (drafted 2026-11-21)
 **Scope:** `ekklesiaonline/ekklesiaONLINE` — CodeIgniter 4.7 / Shield 1.4 / PHP 8.5 multi-parish management system.
 **Basis:** Completed per-module security audits (`PROVINCE_SECURITY_AUDIT.md`, `DIOCESE_SECURITY_AUDIT.md`, `PARISH_SECURITY_AUDIT.md`, `CLERGY_SECURITY_AUDIT.md`, `FINANCE_SECURITY_AUDIT.md`, `VOLUNTEER_SECURITY_AUDIT.md`, `WORSHIP_SECURITY_AUDIT.md`) and their remediations.
 
@@ -125,7 +125,7 @@ From the audits — accepted/deferred items that this policy treats as tracked d
 
 ## 10. Adoption Checklist
 
-- [ ] Publish as `SECURITY.md` at repo root (GitHub surfaces it in the Security tab) and link from `README.md`.
-- [ ] Enable GitHub private vulnerability reporting + Dependabot alerts for `composer.lock`.
+- [x] Publish as `SECURITY.md` at repo root (GitHub surfaces it in the Security tab) and link from `README.md`.
+- [x] Enable GitHub private vulnerability reporting + Dependabot alerts for `composer.lock`.
 - [ ] Configure a `security@` contact address routed to maintainers.
-- [ ] Add this policy's invariant list to `.devin/rules/` and the PR template checklist.
+- [x] Add this policy's invariant list to `.devin/rules/` and the PR template checklist.
