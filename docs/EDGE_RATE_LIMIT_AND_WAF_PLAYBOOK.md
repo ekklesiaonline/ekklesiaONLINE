@@ -6,7 +6,8 @@ This playbook configures reverse-proxy and CDN/WAF protections for section 2.5 o
 
 ## 1. Nginx Reverse-Proxy Controls
 
-1. Include [build/nginx/ekklesiaONLINE-rate-limit-http.conf](build/nginx/ekklesiaONLINE-rate-limit-http.conf) in the `http {}` block (zones and maps are only valid there), then include [build/nginx/ekklesiaONLINE-rate-limit.conf](build/nginx/ekklesiaONLINE-rate-limit.conf) in the target `server {}` block.
+1. Include [build/nginx/ekklesiaONLINE-rate-limit-http.conf](../build/nginx/ekklesiaONLINE-rate-limit-http.conf) in the `http {}` block (zones and maps are only valid there), then include [build/nginx/ekklesiaONLINE-rate-limit.conf](../build/nginx/ekklesiaONLINE-rate-limit.conf) in the target `server {}` block.
+   - The authenticated write quota is keyed on the `X-Authenticated-User` header. Only rely on it behind a trusted auth gateway that overwrites/strips any client-supplied value and is the only path to this listener; otherwise clients can claim the higher quota. Without such a gateway, remove that header mapping so every client gets the anonymous quota.
 2. Reload and validate:
    - `nginx -t`
    - `systemctl reload nginx`
@@ -49,7 +50,7 @@ Create these rules in Cloudflare (Security -> WAF -> Custom Rules / Rate Limitin
 
 ## 3. Staging Stress Test Procedure
 
-Run from repository root:
+Run from repository root. `BASE_URL` must reach the application without the Nginx edge limits above (e.g. a staging-only origin listener): the probe reloads the login form before every failed login, and edge `login_per_ip`/anonymous write throttling would answer with 503 before the application limiter returns 429 + `Retry-After`. Validate the edge quotas separately.
 
 ```bash
 chmod +x build/stress_rate_limit_test.sh

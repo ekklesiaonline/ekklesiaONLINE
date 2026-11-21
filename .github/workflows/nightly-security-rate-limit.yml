@@ -58,7 +58,13 @@ jobs:
         run: |
           for value in "$REQUESTS" "$LOGIN_REQUESTS" "$ANON_REQUESTS"; do
             case "$value" in
-              ''|*[!0-9]*|0|0*)
+              ''|*[!0-9]*)
+                echo "Burst sizes must be positive integers, got: '$value'"
+                exit 1
+                ;;
+              *[1-9]*)
+                ;;
+              *)
                 echo "Burst sizes must be positive integers, got: '$value'"
                 exit 1
                 ;;
