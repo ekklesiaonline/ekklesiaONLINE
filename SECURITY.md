@@ -126,6 +126,10 @@ there.
   `app.forceGlobalSecureRequests`, and
   `security.disableDeviceVerificationForTesting` absent or `0`.
 - `encryption.key` and `encryption.blindIndexKey` must be independent,
-  high-entropy values; retain prior keys only during rotation.
+  high-entropy values. When rotating `encryption.key`, move the old value to
+  `encryption.previousKeys` so existing ciphertext still decrypts. Blind
+  indexes have no previous-key fallback: rotating `encryption.blindIndexKey`
+  (or `encryption.key` when no blind-index key is set) invalidates every
+  stored email/phone hash, and lookups fail until the indexes are rebuilt.
 - Set `app.CSPEnabled = true` (the `App` config default); `.env.example`
   ships it disabled for local development — do not carry that into production.
