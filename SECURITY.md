@@ -1,131 +1,135 @@
-# ekklesiaONLINE — Recommended Security Policy
+# Security Policy
 
-**Status:** Recommendation for adoption (drafted 2026-11-21)
-**Scope:** `ekklesiaonline/ekklesiaONLINE` — CodeIgniter 4.7 / Shield 1.4 / PHP 8.5 multi-parish management system.
-**Basis:** Completed per-module security audits (`PROVINCE_SECURITY_AUDIT.md`, `DIOCESE_SECURITY_AUDIT.md`, `PARISH_SECURITY_AUDIT.md`, `CLERGY_SECURITY_AUDIT.md`, `FINANCE_SECURITY_AUDIT.md`, `VOLUNTEER_SECURITY_AUDIT.md`, `WORSHIP_SECURITY_AUDIT.md`) and their remediations.
+## Supported Versions
 
----
-
-## 1. Purpose
-
-ekklesiaONLINE stores sacramental records, member PII, financial ledgers, and clergy canonical data for multiple parishes under a strict tenant hierarchy (system → province → diocese → parish → personal). This policy defines how vulnerabilities are reported and triaged, which releases are supported, the security invariants every change must preserve, and the operational controls required in production.
-
-## 2. Supported Versions
+ekklesiaONLINE is developed and deployed continuously from the `main` branch.
+There are no maintained release branches or tags; security fixes land on `main`
+and reach production through the standard deployment runbook
+(`docs/DEPLOYMENT_RUNBOOK.md`).
 
 | Version | Supported |
-|---|---|
-| `main` (current release) | Yes — security fixes land here first |
-| Previous minor release | Critical/high fixes only, until next release +30 days |
-| Older releases | No |
+| ------- | --------- |
+| Latest `main` (deployed production) | :white_check_mark: |
+| Older deployments | :x: — upgrade to current `main` |
 
-Security fixes are never backported to closed accounting-period migrations or retired modules (`MemberPortal` legacy paths, deprecated tables such as `user_scope_assignment`).
+## Reporting a Vulnerability
 
-## 3. Reporting a Vulnerability
+**Do not open a public issue, pull request, or discussion for security
+vulnerabilities.**
 
-**Do not open a public issue or PR for a suspected vulnerability.**
+Report privately using one of the following channels:
 
-1. Report privately to the maintainers via GitHub private vulnerability reporting (or the security contact configured in repository settings).
-2. Include: affected route/module, actor role needed to exploit, tenant-scope impact, reproduction steps, and whether data crosses a `parish_id`/`diocese_id`/`province_id` boundary.
-3. Expected response:
-   - Acknowledgement within **3 business days**.
-   - Triage and severity assignment within **7 days**.
-   - Critical/high: fix target **14 days**; medium/low: next scheduled remediation batch.
-4. Reporters are credited in the release notes unless they request anonymity. No bug bounty is offered at this time.
+1. **GitHub Private Vulnerability Reporting** — if enabled on this repository,
+   use *Security → Advisories → Report a vulnerability*.
+2. **Email** — `security@ekklesiaonline.org`. Include enough detail for us to
+   reproduce and assess the issue.
 
-### Severity taxonomy (matches the audit convention)
+Please include in your report:
 
-| Severity | Definition | Example from repo audits |
-|---|---|---|
-| **High** | Cross-tenant data access or privilege bypass without insider knowledge | Filter-coverage gaps (`diocesanOperationalBoundary`, `adminFinanceBoundary`), IDOR across scopes |
-| **Medium** | State change or data exposure reachable by an authenticated actor abusing a legitimate route | Unthrottled credential/test mailers, CSV formula injection, state-changing GETs |
-| **Low** | Hardening gaps requiring chained conditions | Missing audit events, weak validation on non-critical fields |
-| **Info** | Dead code, schema drift, documentation gaps | Unused filters, deprecated helpers |
+- A description of the vulnerability and its impact.
+- Affected module, route, or component (e.g. `Parish`, `Finance`,
+  `MemberPortal`, a specific controller or filter).
+- Steps to reproduce, proof-of-concept code or requests, and screenshots if
+  applicable.
+- Your assessment of severity and any suggested remediation.
+- Whether the issue involves tenant/scope isolation, authentication, or
+  sensitive data exposure (see *Priority Areas* below).
 
-## 4. Security Invariants (must hold on every merge)
+## What to Expect
 
-These are enforced today and are the acceptance criteria for any new feature:
+- We aim to acknowledge reports within **5 business days**.
+- We will triage, reproduce, and assign a severity; we may ask for additional
+  information during this phase.
+- Critical and high-severity issues are remediated on a prioritized basis and
+  deployed per the release gate in `docs/DEPLOYMENT_RUNBOOK.md`.
+- Coordinated disclosure: once a fix is deployed, we will credit reporters who
+  wish to be named (unless you prefer anonymity). Please give us reasonable
+  time to remediate before any public disclosure.
 
-### Tenant isolation
-- Every query is scoped by `parish_id` (or the actor's derived diocese/province) unless the actor holds an elevated Shield permission. Scopes are re-derived server-side from `profile.*` — **never** from request parameters.
-- Route coverage: `parishScope`, `dioceseScope`, `provinceScope`, `diocesanOperationalBoundary`, `adminFinanceBoundary` before-lists must include every new route prefix at creation time. Filter-coverage gaps were the single largest audit finding class (W-1, F-1, F-2, D3) — add a route/filter regression test with any new prefix.
+## Scope
 
-### Authorization
-- Sensitive pastoral/governance actions require: authenticated user + Shield route permission + verified order (when ordained) + approved office/delegation + exact scope + uninhibited canonical standing. Account mutations must pass `AdminHierarchyGuard::guardTargetUserMutation`.
-- Read permissions (`*.view`) never gate writes (see W-2, P-2).
-- Legacy/alias routes must carry the same granular `permission:*` filters as their canonical counterparts, or be deleted (Province F1).
+**In scope:**
 
-### Input handling
-- All state changes via POST/PUT/DELETE through `$this->validate()` / `Validation` rules; no mutations in GET handlers (F2, F3, F8 audits).
-- CI4 Models / Query Builder only; no unescaped raw SQL. `parish_id` scoping on every tenant query.
-- CSV/export sinks neutralize formula injection (`csvSafe`-style prefix for `=`, `+`, `-`, `@`, tab, CR).
-- Uploads: allowlisted MIME/extension, size caps, stored outside web root under `writable/uploads`, served only through scoped controller endpoints (the `uploads/*` 404 + `media/*` pattern). Row-count caps on imports.
+- The ekklesiaONLINE application code under `app/` and the feature modules
+  (`Province/`, `Diocese/`, `Clergy/`, `Parish/`, `Worship/`, `Finance/`,
+  `Volunteer/`, `MemberPortal/`).
+- Authentication and session handling (CodeIgniter Shield integration,
+  magic-link login, device verification, login email 2FA).
+- Multi-tenant authorization: Shield permissions, scope filters
+  (`provinceScope`, `dioceseScope`, `parishScope`), boundary filters, managed
+  `clergy_access_grant` provenance, and `AdminHierarchyGuard`.
+- Exposure of member, visitor, sacramental, or financial data across
+  parish/diocese/province boundaries.
+- Injection, XSS, CSRF bypass, insecure file upload/download, and other
+  web-application vulnerabilities.
+- Cryptographic or secrets-handling flaws (encryption keys, blind-index keys,
+  SMTP/OAuth credentials, session tokens).
+- Dependency vulnerabilities in `composer.lock` (we run `composer audit` in
+  CI; still report unpatched advisories that affect this codebase).
 
-### Sessions & credentials
-- Shield `session` filter on all authenticated routes; `sessionTracking` enforces max 3 concurrent sessions.
-- `deviceVerification` and `forcePasswordReset` are global before-filters in production; `security.disableDeviceVerificationForTesting` must never be enabled in production (guarded by `ProductionSecurityPosture`).
-- Admin-initiated password resets always set `force_reset = 1` and revoke the target's sessions and trusted devices (`SystemAdminUserService::updatePasswordIdentity`).
-- `loginRateLimit` on auth and device-verification endpoints; `apiRateLimit` on every mutation, credential-mail, and outbound-send endpoint.
+**Out of scope:**
 
-### Output & browser protections
-- `esc()` on all rendered output; `textContent` (not `innerHTML`) for server-derived strings in JS (`showAppToast` fix, F11).
-- CSP is enforced in every environment (`default-src 'self'`); new inline scripts/styles require `{csp-script-nonce}` / `{csp-style-nonce}` placeholders; `script-src-attr 'unsafe-inline'` is a documented temporary concession.
-- CSRF: `tokenRandomize = true`; native `fetch()` POSTs must use the meta-tag token pattern in `.devin/rules/views.md`.
+- Vulnerabilities in third-party services we integrate with (SMTP providers,
+  Google APIs, hosting/CDN platforms) — report those to the vendor.
+- Issues requiring physical access to a server or compromise of the hosting
+  environment.
+- Findings from automated scanners without demonstrated impact.
+- Social-engineering attacks against staff or congregants.
 
-### Secrets & config
-- No secrets in the repo. `.env` is never committed; `.env.example` uses `CHANGE_ME` placeholders. SMTP passwords are encrypted at rest and never re-rendered into forms (F4).
-- Test mailers must never fall back to a stored `smtp_pass` when host/user were submitted (F4 — prevents credential exfiltration to a rogue host).
+## Priority Areas
 
-### Audit & observability
-- Mutations on sensitive entities (accounts, positions, finance, reports, teams) emit `AuditService` events with the standard redaction set: credentials, contact data, financial values, freeform notes.
-- Permission-denied logs are rate-limited; PII never appears in application logs (Volunteer F6).
+Given the sensitivity of the data this system holds, we treat the following as
+highest priority:
 
-## 5. Secure Development Lifecycle
+1. **Tenant isolation failures** — any path that lets a parish-, diocese-, or
+   province-scoped actor read or mutate another tenant's data.
+2. **Authorization bypasses** — Shield permission checks, scope/boundary
+   filters, pending-review gating, or `AdminHierarchyGuard` evasion.
+3. **Authentication weaknesses** — credential brute force, session fixation,
+   magic-link or OTP weaknesses, device-verification bypass in production.
+4. **PII and financial data exposure** — member/visitor records, sacramental
+   records, donation and banking data leaking via logs, exports, email, or
+   API responses.
 
-1. **CI gates** (`.github/workflows/ci.yml`): `composer validate --strict`, `composer audit --locked` (blocks on vulnerable locked dependencies), PHPStan, PHPUnit. `nightly-security-rate-limit.yml` probes the live rate limits nightly. Security-fix PRs must include a regression test reproducing the finding.
-2. **Review:** every PR requires review; security-touching changes (filters, authz, uploads, mail, crypto) require sign-off from a maintainer familiar with the module's audit.
-3. **Per-module audits:** the seven root-module audits are complete and remediated. New modules get an audit before enabling in production; audits repeat on a **quarterly** cadence or after any authz-model change.
-4. **Dependencies:** CI4 framework/Shield track latest minor; `composer audit` failures block merge. PHP version floor follows CI4 requirements (currently 8.5).
-5. **Branch protection:** `main` requires passing CI; direct pushes disabled.
+## Security Practices
 
-## 6. Data Protection
+This repository already enforces a defense-in-depth baseline; reports that
+contradict it are especially valuable:
 
-- **Encryption at rest:** governed by `docs/ENCRYPTION_AT_REST_RELEASE_GATE.md` — the gate checklist is a hard release blocker. `encryption.key` and `encryption.blindIndexKey` are distinct high-entropy values; `encryption.previousKeys` lets CI4 decrypt data written under a retired `encryption.key`, enabling rotation without re-encryption downtime. It does **not** apply to blind indexes: `DataEncryption::blindIndex` reads only the current `blindIndexKey`, so rotating it invalidates stored email/phone indexes until they are rebuilt.
-- **PII classes:** member contact data, sacramental records, household/children data, donor financial data. Access requires the scoped-authorization formula above; exports are permission-gated, rate-limited, and formula-injection-safe.
-- **Backups:** `backup.*` env config, 30-day retention default, stored under `writable/backups` outside `public/`. Backup credentials are least-privilege and distinct from the app DB user.
-- **Canonical standing** (`clergy_canonical_status` suspended/inhibited) hard-blocks ministerial, signatory, and office functions system-wide — a data-integrity control, not just a business rule.
+- **Access control:** Shield groups for coarse tiers plus scoped permissions;
+  canonical standing checks for clergy; `AdminHierarchyGuard` on account
+  mutations.
+- **Request hardening:** session-based CSRF with token randomization and
+  per-request regeneration, `SecureHeaders`, nonce-based CSP
+  (`docs/CONTENT_SECURITY_POLICY.md`), `ForceHTTPS` in production, honeypot
+  filtering.
+- **Abuse controls:** login and API rate-limit filters, concurrent-session
+  limits, trusted-device verification, admin login email 2FA.
+- **Auditability:** structured audit logging with credential/contact/financial
+  redaction; permission-denied logging is rate-limited.
+- **Supply chain & CI:** `composer validate --strict`, `composer audit
+  --locked`, PHPStan, PHPUnit on PHP 8.5, a dedicated MySQL 8 migration job,
+  and a production install dry-run — all gating `main`.
+- **Operations:** nightly staging rate-limit probe
+  (`.github/workflows/nightly-security-rate-limit.yml`), deployment go/no-go
+  gate, and the encryption-at-rest release gate
+  (`docs/ENCRYPTION_AT_REST_RELEASE_GATE.md`).
 
-## 7. Production Deployment Checklist
+Module-level security audits live at the repository root
+(`*_SECURITY_AUDIT.md`); their findings and remediation status are tracked
+there.
 
-Before any production promotion (complements `docs/DEPLOYMENT_RUNBOOK.md` and the edge playbook):
+## Secure Configuration Reminders for Deployers
 
-- [ ] `CI_ENVIRONMENT=production`, `app.baseURL` is `https://`, `app.forceGlobalSecureRequests=true`, `app.CSPEnabled=true`.
-- [ ] `security.disableDeviceVerificationForTesting` absent/false; `ProductionSecurityPosture` emits no critical log on boot.
-- [ ] Edge layer: `build/nginx/ekklesiaONLINE-rate-limit.conf` applied (login 10/min, writes 60/min auth / 20/min anon, `client_max_body_size 12m`); WAF rules per `docs/EDGE_RATE_LIMIT_AND_WAF_PLAYBOOK.md`.
-- [ ] Encryption-at-rest release gate passed (max 2 conditional items).
-- [ ] Scheduled jobs live: `events:publish-due` (replaces GET-side lazy publishing), backup, reminder queues.
-- [ ] Credential-mail transport verified on system scope only; scoped tenant mail uses `EmailScopeService` sender identity.
-- [ ] `writable/` not web-accessible; `uploads/*` catch-all returns 404 outside scoped serving.
-
-## 8. Incident Response
-
-1. **Contain:** revoke sessions (`sessionTracking`), disable compromised accounts, rotate `encryption.key`/`blindIndexKey` and SMTP/DB credentials if exfiltration is suspected. When rotating `encryption.key`, move the old value to `encryption.previousKeys`; when rotating `blindIndexKey`, plan a rebuild of every stored blind index (searches on stale hashes return no matches until re-indexed).
-2. **Assess blast radius by tenant:** enumerate affected `parish_id`/`diocese_id` from `AuditService` logs and request monitoring.
-3. **Notify:** affected parish/diocese administrators; data-subject notification follows applicable church and civil requirements.
-4. **Remediate:** fix on a hotfix branch, regression test, expedited review, deploy, and record a post-incident note alongside the module audit files.
-5. **Post-incident:** add the finding class to this policy's invariants if novel; update the relevant audit document's "verified clean" section.
-
-## 9. Residual Known Gaps (track to closure)
-
-From the audits — accepted/deferred items that this policy treats as tracked debt:
-
-- `SystemEvents` and `Clergy\Controllers\Events` still lazy-publish drafts on GET (Province F8 residual) — move them to the scheduled `events:publish-due` command, which already exists and covers Province.
-- `script-src-attr 'unsafe-inline'` CSP concession — migrate inline handlers to `addEventListener`, then drop the keyword.
-- `upgrade-insecure-requests` disabled for local HTTP dev — enable at production rollout.
-- `diocese-admins` mutation routes were kept and hardened (granular `province.diocese_admin.manage` filter, `apiRateLimit`, `AdminHierarchyGuard`, POST-only); `quick-create-parish` likewise kept behind the canonical diocesan gate with validation. If product intent is read-only province access to parish staff, deleting them remains the lower-risk option.
-
-## 10. Adoption Checklist
-
-- [ ] Publish as `SECURITY.md` at repo root (GitHub surfaces it in the Security tab) and link from `README.md`.
-- [ ] Enable GitHub private vulnerability reporting + Dependabot alerts for `composer.lock`.
-- [ ] Configure a `security@` contact address routed to maintainers.
-- [ ] Add this policy's invariant list to `.devin/rules/` and the PR template checklist.
+- Never commit `.env`; copy `.env.example` and replace every `CHANGE_ME`.
+- Production requires `CI_ENVIRONMENT = production`, HTTPS `app.baseURL`,
+  `app.forceGlobalSecureRequests`, and
+  `security.disableDeviceVerificationForTesting` absent or `0`.
+- `encryption.key` and `encryption.blindIndexKey` must be independent,
+  high-entropy values. When rotating `encryption.key`, move the old value to
+  `encryption.previousKeys` so existing ciphertext still decrypts. Blind
+  indexes have no previous-key fallback: rotating `encryption.blindIndexKey`
+  (or `encryption.key` when no blind-index key is set) invalidates every
+  stored email/phone hash, and lookups fail until the indexes are rebuilt.
+- Set `app.CSPEnabled = true` (the `App` config default); `.env.example`
+  ships it disabled for local development — do not carry that into production.

@@ -8,6 +8,8 @@ This file is the single source of truth for which documentation should be retain
 
 - `README.md`
   Canonical root project guide for setup, runtime, and references.
+- `SECURITY.md`
+  Vulnerability disclosure policy, supported versions, reporting channel, and security-control summary.
 
 ### docs/ folder
 
