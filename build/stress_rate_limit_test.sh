@@ -124,6 +124,12 @@ while [ "$i" -le "$REQUESTS" ]; do
   csrf_val="$(extract_csrf_value "$DASH_HTML" || true)"
   ajax_token="$(extract_ajax_token "$DASH_HTML" || true)"
   [ -z "$ajax_token" ] && ajax_token="$csrf_val"
+  # The province layout exposes the token only via <meta name="csrf-token">;
+  # fall back to it under the configured field name when no hidden input exists.
+  if { [ -z "$csrf_name" ] || [ -z "$csrf_val" ]; } && [ -n "$ajax_token" ]; then
+    csrf_name="csrf_token"
+    csrf_val="$ajax_token"
+  fi
 
   if [ -z "$csrf_name" ] || [ -z "$csrf_val" ]; then
     err "unable to parse dashboard CSRF token on auth iteration $i (status=$dashboard_status path=$DASHBOARD_PATH)"
@@ -208,7 +214,9 @@ while [ "$i" -le "$ANON_REQUESTS" ]; do
     anon_429=$((anon_429 + 1))
     [ -n "$retry_after" ] && anon_retry=$((anon_retry + 1))
   fi
-  if [ "$http_code" -ge 200 ] && [ "$http_code" -lt 400 ] && [ "$http_code" != "000" ]; then
+  # Only 2xx counts as an accepted anonymous write. CSRF/auth filters reject
+  # tokenless or unauthenticated writes with a 3xx redirect, which is a denial.
+  if [ "$http_code" -ge 200 ] && [ "$http_code" -lt 300 ]; then
     anon_success=$((anon_success + 1))
   fi
 

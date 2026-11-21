@@ -58,7 +58,7 @@ jobs:
         run: |
           for value in "$REQUESTS" "$LOGIN_REQUESTS" "$ANON_REQUESTS"; do
             case "$value" in
-              ''|*[!0-9]*)
+              ''|*[!0-9]*|0|0*)
                 echo "Burst sizes must be positive integers, got: '$value'"
                 exit 1
                 ;;
@@ -103,7 +103,7 @@ jobs:
         run: |
           run_url="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
           body="Latest failure: $run_url (commit ${{ github.sha }}, event ${{ github.event_name }}, $(date -u +'%Y-%m-%d %H:%M UTC')). See the run log and the rate-limit-report artifact for the sanitized probe output."
-          existing="$(gh issue list --state open --limit 100 --json number,title --jq '.[] | select(.title == "Nightly rate-limit check failing") | .number' | head -n 1)"
+          existing="$(gh issue list --state open --search 'in:title "Nightly rate-limit check failing"' --limit 100 --json number,title --jq '.[] | select(.title == "Nightly rate-limit check failing") | .number' | head -n 1)"
           if [ -n "$existing" ]; then
             gh issue comment "$existing" --body "$body"
           else
