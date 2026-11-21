@@ -7,7 +7,7 @@ This playbook configures reverse-proxy and CDN/WAF protections for section 2.5 o
 ## 1. Nginx Reverse-Proxy Controls
 
 1. Include [build/nginx/ekklesiaONLINE-rate-limit-http.conf](../build/nginx/ekklesiaONLINE-rate-limit-http.conf) in the `http {}` block (zones and maps are only valid there), then include [build/nginx/ekklesiaONLINE-rate-limit.conf](../build/nginx/ekklesiaONLINE-rate-limit.conf) in the target `server {}` block.
-   - The authenticated write quota is keyed on the `X-Authenticated-User` header. Only rely on it behind a trusted auth gateway that overwrites/strips any client-supplied value and is the only path to this listener; otherwise clients can claim the higher quota. Without such a gateway, remove that header mapping so every client gets the anonymous quota.
+   - The authenticated write quota is keyed on the `X-Authenticated-User` header. Only rely on it behind a trusted auth gateway that overwrites/strips any client-supplied value and is the only path to this listener; otherwise clients can claim the higher quota. Without such a gateway, delete only the `"1" 1;` entry from the `$is_authenticated` map (keep the map and its `default 0;` line, since the write-key maps reference `$is_authenticated`) so every client gets the anonymous quota.
 2. Reload and validate:
    - `nginx -t`
    - `systemctl reload nginx`
