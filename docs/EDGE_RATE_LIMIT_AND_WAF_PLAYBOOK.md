@@ -6,7 +6,8 @@ This playbook configures reverse-proxy and CDN/WAF protections for section 2.5 o
 
 ## 1. Nginx Reverse-Proxy Controls
 
-1. Include [build/nginx/ekklesiaONLINE-rate-limit.conf](build/nginx/ekklesiaONLINE-rate-limit.conf) in the target `server {}` block.
+1. Include [build/nginx/ekklesiaONLINE-rate-limit-http.conf](../build/nginx/ekklesiaONLINE-rate-limit-http.conf) in the `http {}` block (zones and maps are only valid there), then include [build/nginx/ekklesiaONLINE-rate-limit.conf](../build/nginx/ekklesiaONLINE-rate-limit.conf) in the target `server {}` block.
+   - The authenticated write quota is keyed on the `X-Authenticated-User` header. Only rely on it behind a trusted auth gateway that overwrites/strips any client-supplied value and is the only path to this listener; otherwise clients can claim the higher quota. Without such a gateway, delete only the `"1" 1;` entry from the `$is_authenticated` map (keep the map and its `default 0;` line, since the write-key maps reference `$is_authenticated`) so every client gets the anonymous quota.
 2. Reload and validate:
    - `nginx -t`
    - `systemctl reload nginx`
@@ -35,7 +36,7 @@ Create these rules in Cloudflare (Security -> WAF -> Custom Rules / Rate Limitin
 
 - Name: `ekklesiaONLINE-bot-write-paths`
 - Expression:
-  - `(http.host eq "ekklesiaONLINE.local" and http.request.method in {"POST" "PUT" "PATCH" "DELETE"} and cf.bot_management.score lt 30 and http.request.uri.path matches "^/(province/(create-diocese|assign-diocesan-admin|create-admin)|diocesan/registrations/|members/|guests/|followup/|events/|services/|attendance/|donations/|expenses/|budgets/save|volunteers/|families/|pledges/|leadership/|standing/refresh|profile/|guest-conversions/)")`
+  - `(http.host eq "ekklesiaONLINE.local" and http.request.method in {"POST" "PUT" "PATCH" "DELETE"} and cf.bot_management.score lt 30 and http.request.uri.path matches "^/(province/((diocese-admins|events|calendar|event-calendars)/|(email-settings|quick-create-parish))|members/|guests/|followup/|events/|services/|attendance/|donations/|expenses/|budgets/save|volunteers/|families/|pledges/|leadership/|standing/refresh|profile/|guest-conversions/)")`
 - Action: `Managed Challenge`
 
 ### 2.3 Rule: Absolute Burst Guard
@@ -49,7 +50,7 @@ Create these rules in Cloudflare (Security -> WAF -> Custom Rules / Rate Limitin
 
 ## 3. Staging Stress Test Procedure
 
-Run from repository root:
+Run from repository root. `BASE_URL` must reach the application without the Nginx edge limits above (e.g. a staging-only origin listener): the probe reloads the login form before every failed login, and edge `login_per_ip`/anonymous write throttling would answer with 503 before the application limiter returns 429 + `Retry-After`. Validate the edge quotas separately.
 
 ```bash
 chmod +x build/stress_rate_limit_test.sh
@@ -57,7 +58,7 @@ BASE_URL=https://staging.ekklesiaONLINE.local \
 REQUESTS=50 \
 LOGIN_EMAIL=your-staging-admin@example.org \
 LOGIN_PASSWORD='your-staging-password' \
-TARGET_PATH='province/create-admin' \
+TARGET_PATH='province/quick-create-parish' \
 sh build/stress_rate_limit_test.sh
 ```
 
