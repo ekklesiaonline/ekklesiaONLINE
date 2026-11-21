@@ -35,7 +35,7 @@ Create these rules in Cloudflare (Security -> WAF -> Custom Rules / Rate Limitin
 
 - Name: `ekklesiaONLINE-bot-write-paths`
 - Expression:
-  - `(http.host eq "ekklesiaONLINE.local" and http.request.method in {"POST" "PUT" "PATCH" "DELETE"} and cf.bot_management.score lt 30 and http.request.uri.path matches "^/(province/(create-diocese|assign-diocesan-admin|create-admin)|diocesan/registrations/|members/|guests/|followup/|events/|services/|attendance/|donations/|expenses/|budgets/save|volunteers/|families/|pledges/|leadership/|standing/refresh|profile/|guest-conversions/)")`
+  - `(http.host eq "ekklesiaONLINE.local" and http.request.method in {"POST" "PUT" "PATCH" "DELETE"} and cf.bot_management.score lt 30 and http.request.uri.path matches "^/(province/((diocese-admins|events|calendar|event-calendars)/|(email-settings|quick-create-parish))|members/|guests/|followup/|events/|services/|attendance/|donations/|expenses/|budgets/save|volunteers/|families/|pledges/|leadership/|standing/refresh|profile/|guest-conversions/)")`
 - Action: `Managed Challenge`
 
 ### 2.3 Rule: Absolute Burst Guard
@@ -57,7 +57,7 @@ BASE_URL=https://staging.ekklesiaONLINE.local \
 REQUESTS=50 \
 LOGIN_EMAIL=your-staging-admin@example.org \
 LOGIN_PASSWORD='your-staging-password' \
-TARGET_PATH='province/create-admin' \
+TARGET_PATH='province/quick-create-parish' \
 sh build/stress_rate_limit_test.sh
 ```
 

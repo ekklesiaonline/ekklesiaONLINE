@@ -227,7 +227,7 @@ sh build/restore_database.sh /path/to/backup.sql.gz
 
 ## 10. Nightly Rate-Limit Check
 
-`.github/workflows/nightly-security-rate-limit.yml` runs on schedule and manually against a protected non-production `staging` environment. Create the `staging` environment with required reviewers before first use, and configure these secrets:
+`.github/workflows/nightly-security-rate-limit.yml` runs on schedule and manually against a protected non-production `staging` environment. Create the `staging` environment before first use and configure these secrets (do **not** require reviewers — scheduled runs cannot be approved interactively and would stall indefinitely):
 
 - `STAGING_BASE_URL`
 - `STAGING_RATE_LIMIT_EMAIL`
@@ -301,7 +301,7 @@ Do not run `php spark config:check Email`; it prints resolved secrets.
 ### Session 4 — Configure protected GitHub staging
 
 - [ ] Create a protected GitHub environment named `staging`.
-- [ ] Restrict staging-secret modification and add required reviewers where appropriate.
+- [ ] Restrict staging-secret modification; do not add required reviewers (they would block the scheduled run — approve manually-triggered runs another way if needed).
 - [ ] Add `STAGING_BASE_URL`, `STAGING_RATE_LIMIT_EMAIL`, and `STAGING_RATE_LIMIT_PASSWORD`.
 - [ ] Confirm the test account is non-production and has only required permissions.
 - [ ] Manually run the nightly rate-limit workflow against staging.
