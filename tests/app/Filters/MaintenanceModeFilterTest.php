@@ -69,9 +69,7 @@ final class MaintenanceModeFilterTest extends CIUnitTestCase
         $this->assertNull($result);
     }
 
-    /**
-     * @dataProvider allowedPathProvider
-     */
+    #[\PHPUnit\Framework\Attributes\DataProvider('allowedPathProvider')]
     public function testAllowedPathsBypassMaintenance(string $path): void
     {
         service('systemSettings')->set('maintenance.enabled', true, 'boolean', 'system');
@@ -85,9 +83,7 @@ final class MaintenanceModeFilterTest extends CIUnitTestCase
         $this->assertNull($result);
     }
 
-    /**
-     * @dataProvider blockedPrefixPathProvider
-     */
+    #[\PHPUnit\Framework\Attributes\DataProvider('blockedPrefixPathProvider')]
     public function testPrefixOnlyLookalikePathsAreBlockedDuringMaintenance(string $path): void
     {
         service('systemSettings')->set('maintenance.enabled', true, 'boolean', 'system');

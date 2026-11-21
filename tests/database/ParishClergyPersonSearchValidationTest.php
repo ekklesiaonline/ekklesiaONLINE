@@ -50,9 +50,7 @@ final class ParishClergyPersonSearchValidationTest extends CIUnitTestCase
         yield 'single multibyte character' => ['é'];
     }
 
-    /**
-     * @dataProvider shortQueryProvider
-     */
+    #[\PHPUnit\Framework\Attributes\DataProvider('shortQueryProvider')]
     public function testShortQueryIsRejectedWith422Envelope(string $q): void
     {
         $parishId = $this->seedParishAdmin();

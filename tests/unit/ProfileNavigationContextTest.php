@@ -52,10 +52,10 @@ final class ProfileNavigationContextTest extends CIUnitTestCase
     }
 
     /**
-     * @dataProvider contextProvider
      * @param array<string,mixed>|null $profile
      * @param array<string,mixed>|null $registrationRequest
      */
+    #[\PHPUnit\Framework\Attributes\DataProvider('contextProvider')]
     public function testProfileNavigationContext(?array $profile, ?array $registrationRequest, bool $expectedPending, string $expectedUrl): void
     {
         $controller = new ProfileNavigationContextTestController();

@@ -40,9 +40,7 @@ final class FinanceAuditParishContextContractTest extends CIUnitTestCase
         $this->assertSame(BaseController::ATTRIBUTION_POLICY_OPERATIONAL_DEFAULT, $meta['parish_context']['attribution_policy']);
     }
 
-    /**
-     * @dataProvider financeAuditEventContractProvider
-     */
+    #[\PHPUnit\Framework\Attributes\DataProvider('financeAuditEventContractProvider')]
     public function testFinanceAuditEventsIncludeParishContextMeta(
         string $filePath,
         string $eventName
