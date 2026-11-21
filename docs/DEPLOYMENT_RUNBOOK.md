@@ -301,7 +301,9 @@ Do not run `php spark config:check Email`; it prints resolved secrets.
 ### Session 4 — Configure protected GitHub staging
 
 - [ ] Create a protected GitHub environment named `staging`.
-- [ ] Restrict staging-secret modification; do not add required reviewers (they would block the scheduled run — approve manually-triggered runs another way if needed).
+- [ ] Set the `staging` deployment branch policy to **Selected branches** allowing only the protected default branch (`main`), so workflows dispatched from unreviewed branches cannot receive staging secrets. Do this before relying on the no-reviewer setup below.
+- [ ] Confirm `main` branch protection requires pull-request review (including for `.github/workflows/**` changes, e.g. via CODEOWNERS), since workflow code on `main` receives staging secrets without an approval gate.
+- [ ] Restrict staging-secret modification; do not add required reviewers (they would block the scheduled run). If manual runs from other branches are needed, use a separate environment with its own secrets and required reviewers instead of widening the `staging` branch policy.
 - [ ] Add `STAGING_BASE_URL`, `STAGING_RATE_LIMIT_EMAIL`, and `STAGING_RATE_LIMIT_PASSWORD`.
 - [ ] Confirm the test account is non-production and has only required permissions.
 - [ ] Manually run the nightly rate-limit workflow against staging.
