@@ -221,7 +221,7 @@ trait EmailSettingsTrait
             ? array_merge($this->getCommonViewData($title), $data)
             : $data;
 
-        return view('partials/_email_settings', $viewData)->with('errors', $errors);
+        return view('partials/_email_settings', $viewData);
     }
 
     /**
