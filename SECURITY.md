@@ -1,6 +1,8 @@
 # Security Policy
 
-## Supported Versions
+**Status:** Adopted (drafted 2026-11-21)
+**Scope:** `ekklesiaonline/ekklesiaONLINE` — CodeIgniter 4.7 / Shield 1.4 / PHP 8.5 multi-parish management system.
+**Basis:** Completed per-module security audits (`PROVINCE_SECURITY_AUDIT.md`, `DIOCESE_SECURITY_AUDIT.md`, `PARISH_SECURITY_AUDIT.md`, `CLERGY_SECURITY_AUDIT.md`, `FINANCE_SECURITY_AUDIT.md`, `VOLUNTEER_SECURITY_AUDIT.md`, `WORSHIP_SECURITY_AUDIT.md`) and their remediations.
 
 ekklesiaONLINE is developed and deployed continuously from the `main` branch.
 There are no maintained release branches or tags; security fixes land on `main`

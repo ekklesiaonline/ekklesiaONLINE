@@ -123,6 +123,10 @@ On parish staff management pages (`/parishes/{id}/staff`):
 - `Remove Role` removes only the selected leadership role from a user.
 - `Demote` removes all parish leadership roles (`parishadmin`, `pastor`, `treasurer`, `volunteer_coordinator`) and ensures the user remains in `member`.
 
+## Security
+
+See [SECURITY.md](SECURITY.md) for the vulnerability-reporting policy, severity taxonomy, security invariants enforced on every merge, and the production hardening checklist.
+
 ## Canonical Documentation
 
 - Documentation index: `docs/DOCUMENTATION_CANONICAL.md`
