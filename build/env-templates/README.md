@@ -26,11 +26,16 @@ Annotated `.env` templates for staging and production, used by
    switching. Never switch the key without a verified rebuild.
    Cutover: `DataEncryption` hashes lookups with whichever key is
    configured, so an in-place rebuild while the app serves traffic makes
-   already-rebuilt rows unfindable. Do it in a maintenance window: enable
-   maintenance mode, take a verified backup, rebuild every blind index with
-   the new key, set `encryption.blindIndexKey` to the new key, restart PHP,
-   verify email/phone lookups, then disable maintenance mode. On failure,
-   restore the old key and the backup.
+   already-rebuilt rows unfindable. Do it in a maintenance window: block
+   **all** application traffic at the edge (Nginx maintenance page / deny
+   upstream) — the app `MaintenanceMode` filter still lets system admins
+   through, so it alone does not stop contact writes — then take a verified
+   backup, rebuild every blind index with the new key, set
+   `encryption.blindIndexKey` to the new key, restart PHP, verify
+   email/phone lookups from an operator-only path, then lift the edge block.
+   On failure, restore the old key; restore the backup only per
+   `docs/DEPLOYMENT_RUNBOOK.md` rollback rules (explicit operator approval
+   and confirmed database target before any restore).
 4. Verify without printing secrets: `php spark config:check App`,
    `config:check Logger`, `config:check Session`,
    `config:check 'CodeIgniter\Shield\Config\Auth'`. Never run
