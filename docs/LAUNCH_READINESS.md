@@ -204,7 +204,7 @@ Verified via GitHub public API 2026-11-21 (repo is public; secrets/workflow logs
 #### E3 — Final review + launch-day execution (Session 8 + go-live Phase 7) — JOINT
 
 - [ ] `git status`, review every modified file, `git diff --check`, secret scan of tracked changes; `.env`/runtime/backup artifacts untracked.
-- [ ] Re-run composer validate/audit, PHPStan, PHPUnit, `php spark routes`, shell syntax checks (`for f in build/*.sh; do sh -n "$f" || echo "FAIL: $f"; done`), workflow YAML validation.
+- [ ] Re-run composer validate/audit, PHPStan, PHPUnit, `php spark routes`, shell syntax checks (`fail=0; for f in build/*.sh; do sh -n "$f" || { echo "FAIL: $f"; fail=1; }; done; [ "$fail" -eq 0 ]`), workflow YAML validation.
 - [ ] In approved release window: verified backup → `php spark migrate --all` (incl. `ConvertSqlsrvValueColumn` on prod) → `php spark cache:clear` → route compile → `sh build/e2e_admin_levels_smoke.sh` → `GET /health/ready` as systemadmin → disable maintenance mode → watch logs/5xx for 2h.
 - [ ] Record rollback owner + maintenance window; commit per git rules (push to `main` immediately per `AGENTS.md`); execute launch-day runbook.
 

@@ -60,8 +60,9 @@ mkdir -p "$OUTPUT_DIR"
 
 require_cmd mysqladmin
 DEFAULTS_FILE=$(mktemp "${TMPDIR:-/tmp}/ekk-mysql.XXXXXX")
-DUMP_FILE=''
-trap 'rm -f "$DEFAULTS_FILE" ${DUMP_FILE:+"$DUMP_FILE"}' EXIT HUP INT TERM
+TMP_GZ=''
+STATUS_FILE=''
+trap 'rm -f "$DEFAULTS_FILE" ${TMP_GZ:+"$TMP_GZ"} ${STATUS_FILE:+"$STATUS_FILE"}' EXIT HUP INT TERM
 chmod 600 "$DEFAULTS_FILE"
 printf '[client]\nhost=%s\nport=%s\nuser=%s\npassword=%s\n' "$DB_HOST" "$DB_PORT" "$DB_USER" "$DB_PASS" > "$DEFAULTS_FILE"
 mysqladmin --defaults-extra-file="$DEFAULTS_FILE" ping --silent >/dev/null
@@ -76,19 +77,20 @@ require_cmd gzip
 require_cmd find
 STAMP=$(date +%Y%m%d_%H%M%S)
 OUT_FILE="$OUTPUT_DIR/${DB_NAME}_${STAMP}.sql.gz"
-# Dump to a temp file first: POSIX sh has no pipefail, so piping into gzip
-# would mask a mysqldump failure (e.g. insufficient privileges).
-DUMP_FILE=$(mktemp "$OUTPUT_DIR/.ekk-dump.XXXXXX")
-chmod 600 "$DUMP_FILE"
-if ! mysqldump --defaults-extra-file="$DEFAULTS_FILE" --single-transaction --quick --routines --triggers "$DB_NAME" > "$DUMP_FILE"; then
+# Stream straight into a temporary compressed archive (no uncompressed copy
+# on disk). POSIX sh has no pipefail, so mysqldump's failure is recorded in
+# a status file; gzip's failure is the pipeline status (caught by set -e).
+TMP_GZ=$(mktemp "$OUTPUT_DIR/.ekk-dump.XXXXXX")
+STATUS_FILE=$(mktemp "${TMPDIR:-/tmp}/ekk-dump-status.XXXXXX")
+chmod 600 "$TMP_GZ"
+{ mysqldump --defaults-extra-file="$DEFAULTS_FILE" --single-transaction --quick --routines --triggers "$DB_NAME" || echo failed > "$STATUS_FILE"; } | gzip > "$TMP_GZ"
+if [ -s "$STATUS_FILE" ]; then
   echo 'mysqldump failed; no backup written' >&2
   exit 1
 fi
-[ -s "$DUMP_FILE" ] || { echo 'mysqldump produced no output' >&2; exit 1; }
-gzip -c "$DUMP_FILE" > "$OUT_FILE"
-rm -f "$DUMP_FILE"
-DUMP_FILE=''
-gzip -t "$OUT_FILE"
-[ -s "$OUT_FILE" ] || { echo 'Backup output is empty' >&2; exit 1; }
+gzip -t "$TMP_GZ"
+[ "$(gzip -dc "$TMP_GZ" | head -c 1 | wc -c)" -gt 0 ] || { echo 'mysqldump produced no output' >&2; exit 1; }
+mv "$TMP_GZ" "$OUT_FILE"
+TMP_GZ=''
 find "$OUTPUT_DIR" -type f -name "${DB_NAME}_*.sql.gz" -mtime +"$RETENTION_DAYS" -delete
 echo "Backup created: $OUT_FILE"

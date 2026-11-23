@@ -302,17 +302,16 @@ Do not run `php spark config:check Email`; it prints resolved secrets.
 
 ### Session 4 — Configure protected GitHub staging
 
-- [ ] Create a protected GitHub environment named `staging`.
-- [ ] Set the `staging` deployment branch policy to **Selected branches** allowing only the protected default branch (`main`), so workflows dispatched from unreviewed branches cannot receive staging secrets. Do this before relying on the no-reviewer setup below.
-- [ ] Confirm `main` branch protection requires pull-request review (including for `.github/workflows/**` changes, e.g. via CODEOWNERS), since workflow code on `main` receives staging secrets without an approval gate.
-- [ ] Restrict staging-secret modification.
+No workflow consumes the GitHub `staging` environment any more; the probe runs manually with shell variables. If a `staging` environment still exists, keep its branch policy restricted to `main` or delete it — it is not a completion requirement.
+
+- [ ] Store the staging test credentials (`BASE_URL`, `LOGIN_EMAIL`, `LOGIN_PASSWORD`) in the operator secret manager, with modification restricted to maintainers.
 - [ ] Point `BASE_URL` at a staging origin that bypasses Nginx edge rate limits, so the probe exercises the application limiter (see the edge playbook, section 3).
 - [ ] Confirm the test account (`LOGIN_EMAIL`/`LOGIN_PASSWORD`) is non-production and has only required permissions.
 - [ ] Manually run `sh build/stress_rate_limit_test.sh` against staging (see §10).
 - [ ] Confirm validation and login succeed, at least one HTTP 429 and a `Retry-After` header are observed on the authenticated and login probes, and the anonymous probe records no success statuses.
 - [ ] If the output is archived, confirm it is sanitized and excludes cookies, credentials, headers, CSRF tokens, and temporary response bodies.
 
-**Completion:** [ ] Protected environment exists; [ ] test credentials configured; [ ] manual run succeeds; [ ] sanitized output reviewed; [ ] production not targeted.
+**Completion:** [ ] Test credentials stored and access-restricted; [ ] manual run succeeds; [ ] sanitized output reviewed; [ ] production not targeted.
 
 ### Session 5 — Run the complete CI release gate
 

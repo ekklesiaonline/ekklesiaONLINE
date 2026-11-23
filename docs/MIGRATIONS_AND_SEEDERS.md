@@ -164,4 +164,4 @@ and `localhost.sql` dumps were retired for exactly that reason.)
 - [ ] Test authentication: Create a test user and verify role assignment
 - [ ] Verify permissions: Check that roles have expected permissions
 - [ ] Check environment: `.env` SMTP, encryption key, app URL configured
-- [ ] Test backup/restore: Run `build/backup_database.sh` and verify restore works
+- [ ] Test backup/restore: Run `sh build/backup_database.sh` and verify restore works
