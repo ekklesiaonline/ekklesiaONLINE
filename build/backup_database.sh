@@ -60,7 +60,8 @@ mkdir -p "$OUTPUT_DIR"
 
 require_cmd mysqladmin
 DEFAULTS_FILE=$(mktemp "${TMPDIR:-/tmp}/ekk-mysql.XXXXXX")
-trap 'rm -f "$DEFAULTS_FILE"' EXIT HUP INT TERM
+DUMP_FILE=''
+trap 'rm -f "$DEFAULTS_FILE" ${DUMP_FILE:+"$DUMP_FILE"}' EXIT HUP INT TERM
 chmod 600 "$DEFAULTS_FILE"
 printf '[client]\nhost=%s\nport=%s\nuser=%s\npassword=%s\n' "$DB_HOST" "$DB_PORT" "$DB_USER" "$DB_PASS" > "$DEFAULTS_FILE"
 mysqladmin --defaults-extra-file="$DEFAULTS_FILE" ping --silent >/dev/null
@@ -75,7 +76,18 @@ require_cmd gzip
 require_cmd find
 STAMP=$(date +%Y%m%d_%H%M%S)
 OUT_FILE="$OUTPUT_DIR/${DB_NAME}_${STAMP}.sql.gz"
-mysqldump --defaults-extra-file="$DEFAULTS_FILE" --single-transaction --quick --routines --triggers "$DB_NAME" | gzip > "$OUT_FILE"
+# Dump to a temp file first: POSIX sh has no pipefail, so piping into gzip
+# would mask a mysqldump failure (e.g. insufficient privileges).
+DUMP_FILE=$(mktemp "$OUTPUT_DIR/.ekk-dump.XXXXXX")
+chmod 600 "$DUMP_FILE"
+if ! mysqldump --defaults-extra-file="$DEFAULTS_FILE" --single-transaction --quick --routines --triggers "$DB_NAME" > "$DUMP_FILE"; then
+  echo 'mysqldump failed; no backup written' >&2
+  exit 1
+fi
+[ -s "$DUMP_FILE" ] || { echo 'mysqldump produced no output' >&2; exit 1; }
+gzip -c "$DUMP_FILE" > "$OUT_FILE"
+rm -f "$DUMP_FILE"
+DUMP_FILE=''
 gzip -t "$OUT_FILE"
 [ -s "$OUT_FILE" ] || { echo 'Backup output is empty' >&2; exit 1; }
 find "$OUTPUT_DIR" -type f -name "${DB_NAME}_*.sql.gz" -mtime +"$RETENTION_DAYS" -delete
