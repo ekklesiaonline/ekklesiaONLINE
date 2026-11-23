@@ -221,7 +221,7 @@ sh build/restore_database.sh /path/to/backup.sql.gz
 3. For code-only rollback, check out the previous known-good immutable release, reinstall production dependencies, clear caches, and compile routes.
 4. Do not run down-migrations or restore a database automatically. A restore can discard writes accepted after deployment and requires explicit operator approval.
 5. If approved, restore the selected verified backup into the confirmed target.
-6. Re-run liveness, protected readiness, migration status, login, and admin-level smoke checks.
+6. Re-run liveness, protected readiness, migration status, login, and admin-level smoke checks. If the rollback touched `encryption.key`, `encryption.previousKeys`, or `encryption.blindIndexKey`, also confirm that every blind index matches the restored key (rebuilt with it, or restored from backup) and that email and phone lookups pass from an operator-only path.
 7. Disable maintenance mode only after all checks pass.
 8. Record the incident, selected backup, data-loss window assessment, and operator approvals.
 
