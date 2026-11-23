@@ -86,7 +86,7 @@ Dormant-table tranches per `docs/DORMANT_NOT_WIRED_DEFER_PLAN_2026-05-10.md` and
 - [x] Agent: draft staging/prod env templates — done 2026-11-21: `build/env-templates/staging.env.template`, `production.env.template`, `README.md`. Verified: exact key parity with `.env.example` (no missing/extra keys). Also added commented `email.googleClientId`/`googleClientSecret` to `.env.example` (keys existed in `app/Config/Email.php` but were undocumented).
 - [x] Agent: local config sanity — `php spark config:check App|Logger|Session|'CodeIgniter\Shield\Config\Auth'` all pass (2026-11-21).
 - [ ] Operator: `families.enforceSingleFamilyMembership` — **decision recorded 2026-11-22: enable `=1`** on deployed envs. Duplicate audit so far: local dev DB only, 0 rows (dev DB has 0 `family`/`family_member` rows — not representative). **Still required:** run audit on staging + prod DBs (`SELECT user_id, COUNT(DISTINCT family_id) AS family_count FROM family_member GROUP BY user_id HAVING family_count > 1;`) to find legacy duplicates for remediation — the flag only gates *new* writes and does not clean existing rows. Set `families.enforceSingleFamilyMembership = 1` in each deployed `.env`.
-- [ ] Operator: fill staging `.env` from `build/env-templates/staging.env.template` — `CI_ENVIRONMENT=production`, `https://` `app.baseURL`, `app.forceGlobalSecureRequests=true`, trusted proxy IPs, MySQL creds, independent `encryption.key`/`encryption.blindIndexKey` (`hex2bin:` 32-byte), SMTP, `backup.db.*`, monitoring/rate-limit values. *(A staging deployment is live — the nightly rate-limit workflow passes against `STAGING_BASE_URL` — but its `.env` contract is not verifiable from the repo.)*
+- [ ] Operator: fill staging `.env` from `build/env-templates/staging.env.template` — `CI_ENVIRONMENT=production`, `https://` `app.baseURL`, `app.forceGlobalSecureRequests=true`, trusted proxy IPs, MySQL creds, independent `encryption.key`/`encryption.blindIndexKey` (`hex2bin:` 32-byte), SMTP, `backup.db.*`, monitoring/rate-limit values. *(A staging deployment is live — the former nightly rate-limit workflow passed against it before decommissioning — but its `.env` contract is not verifiable from the repo.)*
 - [ ] Operator: fill production `.env` from `build/env-templates/production.env.template` with production-specific secrets; confirm zero `CHANGE_ME` remain.
 - [ ] Confirm `security.disableDeviceVerificationForTesting` absent or `0`/`false` in both deployed envs.
 - [ ] Confirm writable directories owned by service account, group-writable, not world-writable on deployed hosts.
@@ -108,9 +108,9 @@ Verified via GitHub public API 2026-11-21 (repo is public; secrets/workflow logs
 - [ ] Confirm staging-secret modification is restricted (needs admin).
 - [ ] Review artifact sanitization if reports are archived manually (script sanitizes by design).
 
-**Verification:** all Session 4 completion boxes checked with run URLs as evidence.
+**Verification:** all Session 4 completion boxes checked, with the date and sanitized output of a manual `build/stress_rate_limit_test.sh` run against staging as evidence.
 
-> **OPS prompt:** Follow `docs/DEPLOYMENT_RUNBOOK.md` §10 + §12 Session 4. Requires GitHub repo admin. Record run URLs in the Evidence register; ask to move to B1.
+> **OPS prompt:** Follow `docs/DEPLOYMENT_RUNBOOK.md` §10 + §12 Session 4. Run `sh build/stress_rate_limit_test.sh` manually against staging (`BASE_URL`, `LOGIN_EMAIL`, `LOGIN_PASSWORD`); no scheduled run or automated failure issue is required. Secret-restriction check requires GitHub repo admin. Record the run date and sanitized status-code output in the Evidence register; ask to move to B1.
 
 ### Phase B — Database & recovery
 
