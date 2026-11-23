@@ -60,7 +60,9 @@ mkdir -p "$OUTPUT_DIR"
 
 require_cmd mysqladmin
 DEFAULTS_FILE=$(mktemp "${TMPDIR:-/tmp}/ekk-mysql.XXXXXX")
-trap 'rm -f "$DEFAULTS_FILE"' EXIT HUP INT TERM
+TMP_GZ=''
+STATUS_FILE=''
+trap 'rm -f "$DEFAULTS_FILE" ${TMP_GZ:+"$TMP_GZ"} ${STATUS_FILE:+"$STATUS_FILE"}' EXIT HUP INT TERM
 chmod 600 "$DEFAULTS_FILE"
 printf '[client]\nhost=%s\nport=%s\nuser=%s\npassword=%s\n' "$DB_HOST" "$DB_PORT" "$DB_USER" "$DB_PASS" > "$DEFAULTS_FILE"
 mysqladmin --defaults-extra-file="$DEFAULTS_FILE" ping --silent >/dev/null
@@ -75,8 +77,21 @@ require_cmd gzip
 require_cmd find
 STAMP=$(date +%Y%m%d_%H%M%S)
 OUT_FILE="$OUTPUT_DIR/${DB_NAME}_${STAMP}.sql.gz"
-mysqldump --defaults-extra-file="$DEFAULTS_FILE" --single-transaction --quick --routines --triggers "$DB_NAME" | gzip > "$OUT_FILE"
-gzip -t "$OUT_FILE"
-[ -s "$OUT_FILE" ] || { echo 'Backup output is empty' >&2; exit 1; }
+# Stream straight into a temporary compressed archive (no uncompressed copy
+# on disk). POSIX sh has no pipefail, so mysqldump's success is recorded as
+# a positive marker in a status file (a missing/empty marker = failure);
+# gzip's failure is the pipeline status (caught by set -e).
+TMP_GZ=$(mktemp "$OUTPUT_DIR/.ekk-dump.XXXXXX")
+STATUS_FILE=$(mktemp "${TMPDIR:-/tmp}/ekk-dump-status.XXXXXX")
+chmod 600 "$TMP_GZ"
+{ mysqldump --defaults-extra-file="$DEFAULTS_FILE" --single-transaction --quick --routines --triggers "$DB_NAME" && printf '%s\n' ok > "$STATUS_FILE"; } | gzip > "$TMP_GZ"
+if [ "$(cat "$STATUS_FILE" 2>/dev/null)" != 'ok' ]; then
+  echo 'mysqldump failed; no backup written' >&2
+  exit 1
+fi
+gzip -t "$TMP_GZ"
+[ "$(gzip -dc "$TMP_GZ" | head -c 1 | wc -c)" -gt 0 ] || { echo 'mysqldump produced no output' >&2; exit 1; }
+mv "$TMP_GZ" "$OUT_FILE"
+TMP_GZ=''
 find "$OUTPUT_DIR" -type f -name "${DB_NAME}_*.sql.gz" -mtime +"$RETENTION_DAYS" -delete
 echo "Backup created: $OUT_FILE"

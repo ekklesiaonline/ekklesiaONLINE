@@ -221,25 +221,27 @@ sh build/restore_database.sh /path/to/backup.sql.gz
 3. For code-only rollback, check out the previous known-good immutable release, reinstall production dependencies, clear caches, and compile routes.
 4. Do not run down-migrations or restore a database automatically. A restore can discard writes accepted after deployment and requires explicit operator approval.
 5. If approved, restore the selected verified backup into the confirmed target.
-6. Re-run liveness, protected readiness, migration status, login, and admin-level smoke checks.
+6. Re-run liveness, protected readiness, migration status, login, and admin-level smoke checks. If the rollback touched `encryption.key`, `encryption.previousKeys`, or `encryption.blindIndexKey`, also confirm that every blind index matches the restored key (rebuilt with it, or restored from backup) and that email and phone lookups pass from an operator-only path.
 7. Disable maintenance mode only after all checks pass.
 8. Record the incident, selected backup, data-loss window assessment, and operator approvals.
 
-## 10. Nightly Rate-Limit Check
+## 10. Staging Rate-Limit Smoke Check
 
-`.github/workflows/nightly-security-rate-limit.yml` runs on schedule and manually against a protected non-production `staging` environment. Create the `staging` environment before first use and configure these secrets (do **not** require reviewers — scheduled runs cannot be approved interactively and would stall indefinitely):
+Rate-limit enforcement can be verified against a non-production `staging` environment using `build/stress_rate_limit_test.sh` (see `docs/EDGE_RATE_LIMIT_AND_WAF_PLAYBOOK.md`).
 
-- `STAGING_BASE_URL`
-- `STAGING_RATE_LIMIT_EMAIL`
-- `STAGING_RATE_LIMIT_PASSWORD`
+The script requires these environment variables:
 
-The workflow runs `build/stress_rate_limit_test.sh`, which executes three probes:
+- `BASE_URL`
+- `LOGIN_EMAIL`
+- `LOGIN_PASSWORD`
+
+The probe executes three checks:
 
 - `PHASE=auth` — authenticated burst on a rate-limited write path; requires at least one HTTP 429 with a `Retry-After` header.
 - `PHASE=login` — failed-login burst on `POST /login`; requires at least one HTTP 429 with `Retry-After`.
 - `PHASE=anon` — unauthenticated burst; fails if any response is a success status.
 
-Manual runs accept `workflow_dispatch` inputs (`requests`, `target_path`, `login_requests`, `anon_requests`, `diocese_id`) to tune burst size and target without editing the script. On failure the workflow opens a tracking issue. The uploaded report contains status codes only — no cookies, headers, CSRF tokens, or response bodies — and is retained for 30 days. It must never target production.
+Custom parameters (`REQUESTS`, `TARGET_PATH`, `LOGIN_REQUESTS`, `ANON_REQUESTS`, `DIOCESE_ID`) can be passed via environment variables to tune burst size and target. The output report contains status codes only — no cookies, headers, CSRF tokens, or response bodies. It must never target production.
 
 ## 11. Edge Protection and Monitoring
 
@@ -300,19 +302,16 @@ Do not run `php spark config:check Email`; it prints resolved secrets.
 
 ### Session 4 — Configure protected GitHub staging
 
-- [ ] Create a protected GitHub environment named `staging`.
-- [ ] Set the `staging` deployment branch policy to **Selected branches** allowing only the protected default branch (`main`), so workflows dispatched from unreviewed branches cannot receive staging secrets. Do this before relying on the no-reviewer setup below.
-- [ ] Confirm `main` branch protection requires pull-request review (including for `.github/workflows/**` changes, e.g. via CODEOWNERS), since workflow code on `main` receives staging secrets without an approval gate.
-- [ ] Restrict staging-secret modification; do not add required reviewers (they would block the scheduled run). If manual runs from other branches are needed, add a separate environment with its own secrets and required reviewers and a workflow (or dispatch input) that explicitly targets it, instead of widening the `staging` branch policy; the nightly workflow always uses `staging`.
-- [ ] Point `STAGING_BASE_URL` at an origin that bypasses Nginx edge rate limits, so the probe exercises the application limiter (see the edge playbook, section 3).
-- [ ] Add `STAGING_BASE_URL`, `STAGING_RATE_LIMIT_EMAIL`, and `STAGING_RATE_LIMIT_PASSWORD`.
-- [ ] Confirm the test account is non-production and has only required permissions.
-- [ ] Manually run the nightly rate-limit workflow against staging.
-- [ ] Confirm validation and login succeed, at least one HTTP 429 and a `Retry-After` header are observed on the authenticated and login probes, the anonymous probe records no success statuses, and concurrent runs are prevented.
-- [ ] Confirm the artifact is sanitized and excludes cookies, credentials, headers, CSRF tokens, and temporary response bodies.
-- [ ] Confirm a scheduled nightly run passes and that a simulated failure opens a tracking issue.
+No workflow consumes the GitHub `staging` environment any more; the probe runs manually with shell variables. If a `staging` environment still exists, keep its branch policy restricted to `main` or delete it — it is not a completion requirement.
 
-**Completion:** [ ] Protected environment exists; [ ] all secrets configured; [ ] manual run succeeds; [ ] scheduled run verified; [ ] failure notification verified; [ ] sanitized artifact reviewed; [ ] production not targeted.
+- [ ] Store the staging test credentials (`BASE_URL`, `LOGIN_EMAIL`, `LOGIN_PASSWORD`) in the operator secret manager, with modification restricted to maintainers.
+- [ ] Point `BASE_URL` at a staging origin that bypasses Nginx edge rate limits, so the probe exercises the application limiter (see the edge playbook, section 3).
+- [ ] Confirm the test account (`LOGIN_EMAIL`/`LOGIN_PASSWORD`) is non-production and has only required permissions.
+- [ ] Manually run `sh build/stress_rate_limit_test.sh` against staging (see §10).
+- [ ] Confirm validation and login succeed, at least one HTTP 429 and a `Retry-After` header are observed on the authenticated and login probes, and the anonymous probe records no success statuses.
+- [ ] If the output is archived, confirm it is sanitized and excludes cookies, credentials, headers, CSRF tokens, and temporary response bodies.
+
+**Completion:** [ ] Test credentials stored and access-restricted; [ ] manual run succeeds; [ ] sanitized output reviewed; [ ] production not targeted.
 
 ### Session 5 — Run the complete CI release gate
 

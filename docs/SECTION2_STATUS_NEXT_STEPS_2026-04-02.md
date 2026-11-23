@@ -18,7 +18,7 @@ Overall assessment: major hardening progress has been made since 2026-03-31, but
 | --- | --- | --- | --- |
 | 2.1 | Complete modularization cutover | Completed | [docs/MODULARIZATION_CUTOVER_EXECUTION_PLAN.md](docs/MODULARIZATION_CUTOVER_EXECUTION_PLAN.md#L5), [tests/unit/ModuleOwnershipClosureTest.php](tests/unit/ModuleOwnershipClosureTest.php#L1), [app/Config/Routing.php](app/Config/Routing.php#L1) |
 | 2.2 | Data encryption at rest | Partial | [app/Libraries/DataEncryption.php](app/Libraries/DataEncryption.php#L1), [tests/database/DataEncryptionAtRestTest.php](tests/database/DataEncryptionAtRestTest.php#L1), [app/Models/DonationModel.php](app/Models/DonationModel.php#L1), [tests/database/DonationAggregationEncryptedTotalsTest.php](tests/database/DonationAggregationEncryptedTotalsTest.php#L1) |
-| 2.3 | Comprehensive automated testing + CI gates | Partial | [tests](tests), [phpunit.xml.dist](phpunit.xml.dist), [.github/workflows/ci.yml](.github/workflows/ci.yml#L1), [.github/workflows/nightly-security-rate-limit.yml](.github/workflows/nightly-security-rate-limit.yml#L1) |
+| 2.3 | Comprehensive automated testing + CI gates | Partial | [tests](tests), [phpunit.xml.dist](phpunit.xml.dist), [.github/workflows/ci.yml](.github/workflows/ci.yml#L1) |
 | 2.4 | Audit logging and monitoring | Partial | [app/Services/AuditService.php](app/Services/AuditService.php#L1), [app/Database/Migrations/2026_03_31_000006_CreateAuditLogs.php](app/Database/Migrations/2026_03_31_000006_CreateAuditLogs.php#L1), [app/Filters/RequestMonitoringFilter.php](app/Filters/RequestMonitoringFilter.php#L1), [docs/OBSERVABILITY_POLICY.md](docs/OBSERVABILITY_POLICY.md#L1) |
 | 2.5 | API rate limiting and DDoS protection | Partial | [app/Filters/ApiRateLimitFilter.php](app/Filters/ApiRateLimitFilter.php#L1), [app/Config/Filters.php](app/Config/Filters.php#L1), [docs/EDGE_RATE_LIMIT_AND_WAF_PLAYBOOK.md](docs/EDGE_RATE_LIMIT_AND_WAF_PLAYBOOK.md#L1) |
 | 2.6 | Error handling and user feedback | Partial | [app/Views/errors/html/error_403.php](app/Views/errors/html/error_403.php#L1), [app/Views/errors/html/error_404.php](app/Views/errors/html/error_404.php#L1), [app/Views/errors/html/production.php](app/Views/errors/html/production.php#L1), [docs/API_AJAX_ERROR_CONTRACT.md](docs/API_AJAX_ERROR_CONTRACT.md#L1) |
@@ -47,9 +47,9 @@ References: [tests/database/DataEncryptionAtRestTest.php](tests/database/DataEnc
 ### 2.3 Testing maturity (expanded substantially, still below target state)
 
 - Test inventory is no longer minimal; there are unit and database tests for modularization, scoping, audit redaction, sessions, and encryption.
-- Repository now includes a baseline push/pull_request CI workflow plus nightly stress workflow.
+- Repository now includes a baseline push/pull_request CI workflow plus manual staging stress test script.
 
-References: [tests](tests), [.github/workflows/ci.yml](.github/workflows/ci.yml#L1), [.github/workflows/nightly-security-rate-limit.yml](.github/workflows/nightly-security-rate-limit.yml#L1)
+References: [tests](tests), [.github/workflows/ci.yml](.github/workflows/ci.yml#L1), [build/stress_rate_limit_test.sh](build/stress_rate_limit_test.sh#L1)
 
 ### 2.4 Audit and monitoring (core implementation present)
 

@@ -51,6 +51,8 @@ This file is the single source of truth for which documentation should be retain
   Canonical deanery scoping policy: deanery creation/membership, regional-dean office scope, and deanery routes.
 - `docs/CONTENT_SECURITY_POLICY.md`
   Canonical CSP directive set, approved external origins, and the `{csp-script-nonce}`/`{csp-style-nonce}` view convention.
+- `docs/LAUNCH_READINESS.md`
+  Active launch-readiness execution plan: findings summary, phased implementation steps with prompts, verification gates, and evidence register. Operationalizes `docs/DEPLOYMENT_RUNBOOK.md` §12.
 
 ## Removed as Redundant or Historical
 

@@ -112,8 +112,7 @@ contradict it are especially valuable:
 - **Supply chain & CI:** `composer validate --strict`, `composer audit
   --locked`, PHPStan, PHPUnit on PHP 8.5, a dedicated MySQL 8 migration job,
   and a production install dry-run — all gating `main`.
-- **Operations:** nightly staging rate-limit probe
-  (`.github/workflows/nightly-security-rate-limit.yml`), deployment go/no-go
+- **Operations:** staging rate-limit stress testing (`build/stress_rate_limit_test.sh`, `docs/EDGE_RATE_LIMIT_AND_WAF_PLAYBOOK.md`), deployment go/no-go
   gate, and the encryption-at-rest release gate
   (`docs/ENCRYPTION_AT_REST_RELEASE_GATE.md`).
 
