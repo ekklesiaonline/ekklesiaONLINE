@@ -33,9 +33,13 @@ Annotated `.env` templates for staging and production, used by
    backup, rebuild every blind index with the new key, set
    `encryption.blindIndexKey` to the new key, restart PHP, verify
    email/phone lookups from an operator-only path, then lift the edge block.
-   On failure, restore the old key; restore the backup only per
-   `docs/DEPLOYMENT_RUNBOOK.md` rollback rules (explicit operator approval
-   and confirmed database target before any restore).
+   On failure, keep the edge block in place and restore the old key. Any
+   rows already rebuilt still hold new-key indexes, so also rebuild every
+   blind index with the old key (or restore the backup, only per
+   `docs/DEPLOYMENT_RUNBOOK.md` rollback rules: explicit operator approval
+   and confirmed database target before any restore). Restart PHP and
+   verify email/phone lookups pass from an operator-only path **before**
+   lifting the edge block.
 4. Verify without printing secrets: `php spark config:check App`,
    `config:check Logger`, `config:check Session`,
    `config:check 'CodeIgniter\Shield\Config\Auth'`. Never run
