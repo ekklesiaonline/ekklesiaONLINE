@@ -11,6 +11,12 @@ Annotated `.env` templates for staging and production, used by
 3. `encryption.key` and `encryption.blindIndexKey` must be independent and
    unique per environment. `blindIndexKey` falls back to `encryption.key`
    when unset — set it explicitly regardless.
+   **Existing deployments (e.g. live staging): do NOT generate new keys.**
+   Carry over the current `encryption.key` and the effective blind-index key
+   (if `blindIndexKey` was unset, set it to the current `encryption.key`).
+   Replacing `encryption.key` without moving the old value to
+   `encryption.previousKeys` breaks decryption; changing `blindIndexKey`
+   breaks email/phone lookups until all blind indexes are rebuilt.
 4. Verify without printing secrets: `php spark config:check App`,
    `config:check Logger`, `config:check Session`,
    `config:check 'CodeIgniter\Shield\Config\Auth'`. Never run
