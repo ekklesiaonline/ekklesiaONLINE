@@ -78,13 +78,14 @@ require_cmd find
 STAMP=$(date +%Y%m%d_%H%M%S)
 OUT_FILE="$OUTPUT_DIR/${DB_NAME}_${STAMP}.sql.gz"
 # Stream straight into a temporary compressed archive (no uncompressed copy
-# on disk). POSIX sh has no pipefail, so mysqldump's failure is recorded in
-# a status file; gzip's failure is the pipeline status (caught by set -e).
+# on disk). POSIX sh has no pipefail, so mysqldump's success is recorded as
+# a positive marker in a status file (a missing/empty marker = failure);
+# gzip's failure is the pipeline status (caught by set -e).
 TMP_GZ=$(mktemp "$OUTPUT_DIR/.ekk-dump.XXXXXX")
 STATUS_FILE=$(mktemp "${TMPDIR:-/tmp}/ekk-dump-status.XXXXXX")
 chmod 600 "$TMP_GZ"
-{ mysqldump --defaults-extra-file="$DEFAULTS_FILE" --single-transaction --quick --routines --triggers "$DB_NAME" || echo failed > "$STATUS_FILE"; } | gzip > "$TMP_GZ"
-if [ -s "$STATUS_FILE" ]; then
+{ mysqldump --defaults-extra-file="$DEFAULTS_FILE" --single-transaction --quick --routines --triggers "$DB_NAME" && printf '%s\n' ok > "$STATUS_FILE"; } | gzip > "$TMP_GZ"
+if [ "$(cat "$STATUS_FILE" 2>/dev/null)" != 'ok' ]; then
   echo 'mysqldump failed; no backup written' >&2
   exit 1
 fi

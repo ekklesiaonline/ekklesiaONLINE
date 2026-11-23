@@ -24,6 +24,13 @@ Annotated `.env` templates for staging and production, used by
    exception and schedule a migration: generate an independent
    `blindIndexKey`, rebuild all blind indexes, and verify lookups before
    switching. Never switch the key without a verified rebuild.
+   Cutover: `DataEncryption` hashes lookups with whichever key is
+   configured, so an in-place rebuild while the app serves traffic makes
+   already-rebuilt rows unfindable. Do it in a maintenance window: enable
+   maintenance mode, take a verified backup, rebuild every blind index with
+   the new key, set `encryption.blindIndexKey` to the new key, restart PHP,
+   verify email/phone lookups, then disable maintenance mode. On failure,
+   restore the old key and the backup.
 4. Verify without printing secrets: `php spark config:check App`,
    `config:check Logger`, `config:check Session`,
    `config:check 'CodeIgniter\Shield\Config\Auth'`. Never run
