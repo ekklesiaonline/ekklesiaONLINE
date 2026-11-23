@@ -225,21 +225,23 @@ sh build/restore_database.sh /path/to/backup.sql.gz
 7. Disable maintenance mode only after all checks pass.
 8. Record the incident, selected backup, data-loss window assessment, and operator approvals.
 
-## 10. Nightly Rate-Limit Check
+## 10. Staging Rate-Limit Smoke Check
 
-`.github/workflows/nightly-security-rate-limit.yml` runs on schedule and manually against a protected non-production `staging` environment. Create the `staging` environment before first use and configure these secrets (do **not** require reviewers — scheduled runs cannot be approved interactively and would stall indefinitely):
+Rate-limit enforcement can be verified against a non-production `staging` environment using `build/stress_rate_limit_test.sh` (see `docs/EDGE_RATE_LIMIT_AND_WAF_PLAYBOOK.md`).
 
-- `STAGING_BASE_URL`
-- `STAGING_RATE_LIMIT_EMAIL`
-- `STAGING_RATE_LIMIT_PASSWORD`
+The script requires these environment variables:
 
-The workflow runs `build/stress_rate_limit_test.sh`, which executes three probes:
+- `BASE_URL`
+- `LOGIN_EMAIL`
+- `LOGIN_PASSWORD`
+
+The probe executes three checks:
 
 - `PHASE=auth` — authenticated burst on a rate-limited write path; requires at least one HTTP 429 with a `Retry-After` header.
 - `PHASE=login` — failed-login burst on `POST /login`; requires at least one HTTP 429 with `Retry-After`.
 - `PHASE=anon` — unauthenticated burst; fails if any response is a success status.
 
-Manual runs accept `workflow_dispatch` inputs (`requests`, `target_path`, `login_requests`, `anon_requests`, `diocese_id`) to tune burst size and target without editing the script. On failure the workflow opens a tracking issue. The uploaded report contains status codes only — no cookies, headers, CSRF tokens, or response bodies — and is retained for 30 days. It must never target production.
+Custom parameters (`REQUESTS`, `TARGET_PATH`, `LOGIN_REQUESTS`, `ANON_REQUESTS`, `DIOCESE_ID`) can be passed via environment variables to tune burst size and target. The output report contains status codes only — no cookies, headers, CSRF tokens, or response bodies. It must never target production.
 
 ## 11. Edge Protection and Monitoring
 
