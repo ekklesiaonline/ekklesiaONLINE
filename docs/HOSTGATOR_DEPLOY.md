@@ -87,8 +87,14 @@ never seeds, clears cache, or compiles routes after a failure:
     || { echo 'ABORTED: backup verification failed — nothing migrated or seeded' >&2; exit 1; }
   echo "Verified backup: $BACKUP_FILE"
 
-  php spark migrate --all \
-    || { echo "ABORTED: migration FAILED after backup — restore from $BACKUP_FILE if needed; not seeded" >&2; exit 1; }
+  # `spark migrate` can catch a DB exception, print it, and still exit 0, so
+  # the exit code alone is not trusted: the output is scanned for errors too.
+  MIGRATE_OUT="$(php spark migrate --all 2>&1)" && MIGRATE_RC=0 || MIGRATE_RC=$?
+  printf '%s\n' "$MIGRATE_OUT"
+  if [ "$MIGRATE_RC" -ne 0 ] || printf '%s\n' "$MIGRATE_OUT" | grep -Eqi 'error|exception|failed'; then
+    echo "ABORTED: migration FAILED after backup — restore from $BACKUP_FILE if needed; not seeded" >&2
+    exit 1
+  fi
   php spark db:seed DatabaseSeeder
   php spark cache:clear
   php spark routes > /tmp/routes_after.txt
@@ -102,10 +108,16 @@ restore, so no backup step) — run instead of the block above:
 ```bash
 (
   set -e
-  php spark migrate --all
+  MIGRATE_OUT="$(php spark migrate --all 2>&1)" && MIGRATE_RC=0 || MIGRATE_RC=$?
+  printf '%s\n' "$MIGRATE_OUT"
+  if [ "$MIGRATE_RC" -ne 0 ] || printf '%s\n' "$MIGRATE_OUT" | grep -Eqi 'error|exception|failed'; then
+    echo 'ABORTED: migration FAILED — not seeded' >&2
+    exit 1
+  fi
   php spark db:seed DatabaseSeeder
   php spark cache:clear
   php spark routes > /tmp/routes_after.txt
+  echo 'Database bootstrap complete.'
 )
 ```
 
