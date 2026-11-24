@@ -234,8 +234,13 @@ host defaults apply (the hPanel editor does not expose them either).
 
 **Verify loading:** CloudLinux mod_lsapi only reads `.user.ini` when
 `lsapi_enable_user_ini On` is set by the host (default `Off`). After deploy,
-check a web-SAPI `phpinfo()` (not CLI); if values aren't applied, ask
-HostGator support to enable it or rely on the hPanel editor values.
+check the effective values via the web SAPI (not CLI). Do **not** upload a
+full `phpinfo()` page. Use a temporary probe with a random filename that
+prints only the needed directives, e.g.
+`<?php foreach (['memory_limit','post_max_size','opcache.validate_timestamps','date.timezone'] as $k) echo $k, '=', ini_get($k), "\n";`,
+fetch it once, and **delete it immediately** (`rm public/<random>.php`).
+If values aren't applied, ask HostGator support to enable it or rely on the
+hPanel editor values.
 
 **hPanel php.ini editor** (the field list shown in hPanel for this domain)
 overwrites/augments docroot php config and covers the same resource limits —
