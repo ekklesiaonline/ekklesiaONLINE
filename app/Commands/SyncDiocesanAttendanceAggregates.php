@@ -38,10 +38,11 @@ class SyncDiocesanAttendanceAggregates extends BaseCommand
             return;
         }
 
-        // Monthly summaries are replaced whole; a mid-month start would
-        // rebuild the first month from partial data. Reject before any write.
-        if (substr($fromDate, 8, 2) !== '01') {
-            CLI::error('--from must be the first day of a month (e.g. ' . substr($fromDate, 0, 8) . '01) because monthly summaries are replaced whole.');
+        // Monthly summaries are replaced whole; a mid-month start or end would
+        // rebuild a month from partial data. Reject before any write.
+        $rangeError = \App\Libraries\MonthRangeGuard::check($fromDate, $toDate);
+        if ($rangeError !== null) {
+            CLI::error($rangeError);
             return;
         }
 
