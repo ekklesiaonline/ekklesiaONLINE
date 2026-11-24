@@ -52,12 +52,12 @@ after sign-off; verify the first run of each job in its log.
 
 | Job | Command | Frequency | Rationale | Log |
 |---|---|---|---|---|
-| Service metrics | `service-metrics:refresh --rolling-days 35 --rebuild-period-buckets` (wrapper) | Daily 01:30 | Documented in `SERVICE_METRICS_REFRESH_SCHEDULING_2026-04-10.md`; feeds Sunday dashboards. The command snaps the 35-day start back to the 1st of its month, so the rebuild window is the 1st of the month containing (today − 34 days) → today — usually the previous month, but up to two months back (e.g. on Mar 1 it starts Jan 1) | `service_metrics_refresh_cron.log` |
+| Service metrics | `service-metrics:refresh --rolling-days 35 --rebuild-period-buckets` (wrapper) | Daily 01:30 | Documented in `SERVICE_METRICS_REFRESH_SCHEDULING_2026-04-10.md`; rebuilds the `diocesan_sunday_weekly_metrics`/`diocesan_sunday_monthly_metrics` rollups (note: the diocesan Sunday dashboard chart currently reads `service_metric` directly, not these rollups — see caveat below). The command snaps the 35-day start back to the 1st of its month, so the rebuild window is the 1st of the month containing (today − 34 days) → today — usually the previous month, but up to two months back (e.g. on Mar 1 it starts Jan 1) | `service_metrics_refresh_cron.log` |
 | Diocesan aggregates | `attendance:sync-diocesan-aggregates --rolling-days 35` | Daily 01:45 | Dashboard monthly aggregates. Same month-snapped window as above (computed in the app timezone), so month-keyed summaries are always rebuilt from complete months; staggered after service-metrics, before backup | `attendance_aggregates_cron.log` |
 | Backup | `sh build/backup_database.sh` | Daily 02:00 | Documented runbook §8; captures post-refresh aggregates | `backup-cron.log` |
 | Journal history | `finance:sync-journal-history` | Daily 03:00 | GL entries track daily donation/expense activity; after backup so nightly snapshot stays consistent | `finance_journal_sync_cron.log` |
 | Pledge fulfillment | `pledge:sync-fulfillment` | Daily 03:10 | Fulfilled amounts track tithe donations; staggered after journal sync | `pledge_sync_cron.log` |
-| Sunday service metrics | `attendance:sync-sunday-service-metrics` (wrapper; default window Jan 1 → today, previous year's Jan 1 during the first week of January) | Weekly Sun 21:30 | Sunday-only data; full-range sync via existing wrapper; feeds diocesan Sunday dashboards. (Independent of `standing:refresh`, which reads member `attendance` rows directly via `MemberStandingSummaryModel`, not these metrics) | `sunday_service_metrics_cron.log` |
+| Sunday service metrics | `attendance:sync-sunday-service-metrics` (wrapper; default window Jan 1 → today, previous year's Jan 1 during the first week of January) | Weekly Sun 21:30 | Sunday-only data; full-range sync via existing wrapper; populates `diocesan_sunday_service_metrics` and the weekly/monthly rollups (not read by the current dashboard chart — see caveat below). (Independent of `standing:refresh`, which reads member `attendance` rows directly via `MemberStandingSummaryModel`, not these metrics) | `sunday_service_metrics_cron.log` |
 | Good standing | `standing:refresh --year $(date +\%Y)` | Weekly Sun 23:00 | Documented in `STANDING_SUMMARY_SCHEDULING_TODO_2026-04-10.md` | `standing_refresh_cron.log` |
 | Volunteer reminders | `volunteers:remind` (default `--days 2`) | Daily 07:30 | Day-granular shift reminders; morning send before volunteers check email | `volunteers_remind_cron.log` |
 | Follow-up dispatch | `followup:send` | Daily 08:00 | `followup_log.scheduled_date` is `DATE` — once daily covers "due today or earlier"; morning send = same-business-day follow-up | `followup_send_cron.log` |
@@ -79,6 +79,19 @@ after sign-off; verify the first run of each job in its log.
 - `clergy:reconcile-grants` hourly-or-daily — set to **hourly** per the
   wrapper's own recommendation (`15 * * * *`) and `ORDINARY_AUTHORIZATION.md`.
 - Backup daily 02:00 — matches runbook §8 example (`0 2 * * *`).
+
+## Known caveat — Sunday rollups have no reader
+
+`DioceseDashboardDataService::getDiocesanSundayAttendanceAverageTrend()`
+(`app/Services/DioceseDashboardDataService.php`) builds the diocesan Sunday
+chart by querying `service` + `service_metric` directly. No application code
+reads the `diocesan_sunday_service_metrics`, `diocesan_sunday_weekly_metrics`
+or `diocesan_sunday_monthly_metrics` tables written by
+`attendance:sync-sunday-service-metrics` / `service-metrics:refresh`. The chart
+is therefore always live (it does not depend on these cron jobs), and
+re-running the sync does **not** change what the chart shows. Track as a
+follow-up: either switch the chart to the rollups (the original intent: "fast
+chart reads") or retire the rollup jobs.
 
 ## Known caveat — `events:publish-due`
 
