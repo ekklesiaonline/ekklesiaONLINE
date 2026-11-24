@@ -162,12 +162,14 @@ class SyncDiocesanSundayServiceMetrics extends BaseCommand
                 return [null, null];
             }
 
-            return [$fromOpt, $toOpt];
+            // Monthly period buckets are replaced whole, so always recompute
+            // from the 1st of the oldest touched month to avoid truncating it.
+            return [substr($fromOpt, 0, 8) . '01', $toOpt];
         }
 
         if ($rollingDays > 0) {
             $toDate = date('Y-m-d');
-            $fromDate = date('Y-m-d', strtotime('-' . ($rollingDays - 1) . ' days'));
+            $fromDate = date('Y-m-01', strtotime('-' . ($rollingDays - 1) . ' days'));
 
             return [$fromDate, $toDate];
         }
