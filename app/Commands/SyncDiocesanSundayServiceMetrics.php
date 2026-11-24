@@ -28,7 +28,10 @@ class SyncDiocesanSundayServiceMetrics extends BaseCommand
         $parishId = (int) ($this->optionValue('parish', $params) ?? 0);
         $rebuildPeriodBuckets = filter_var($this->optionValue('rebuild-period-buckets', $params) ?? false, FILTER_VALIDATE_BOOLEAN);
 
-        [$fromDate, $toDate] = $this->resolveDateRange($fromOpt, $toOpt, $rollingDays);
+        // Only snap --rolling-days to a month start when diocesan buckets will be
+        // rebuilt; parish-only syncs skip buckets, so they keep the exact window.
+        $snapToMonth = $rebuildPeriodBuckets || $parishId <= 0;
+        [$fromDate, $toDate] = $this->resolveDateRange($fromOpt, $toOpt, $rollingDays, $snapToMonth);
         if ($fromDate === null || $toDate === null) {
             CLI::error('Invalid date range. Use --from YYYY-MM-DD and --to YYYY-MM-DD.');
             return;
@@ -166,7 +169,7 @@ class SyncDiocesanSundayServiceMetrics extends BaseCommand
     /**
      * @return array{0: ?string, 1: ?string}
      */
-    private function resolveDateRange(string $fromOpt, string $toOpt, int $rollingDays): array
+    private function resolveDateRange(string $fromOpt, string $toOpt, int $rollingDays, bool $snapToMonth = true): array
     {
         if ($fromOpt !== '' || $toOpt !== '') {
             if (!$this->isValidDate($fromOpt) || !$this->isValidDate($toOpt)) {
@@ -180,7 +183,7 @@ class SyncDiocesanSundayServiceMetrics extends BaseCommand
 
         if ($rollingDays > 0) {
             $toDate = date('Y-m-d');
-            $fromDate = date('Y-m-01', strtotime('-' . ($rollingDays - 1) . ' days'));
+            $fromDate = date($snapToMonth ? 'Y-m-01' : 'Y-m-d', strtotime('-' . ($rollingDays - 1) . ' days'));
 
             return [$fromDate, $toDate];
         }
