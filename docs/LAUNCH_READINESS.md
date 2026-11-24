@@ -195,7 +195,7 @@ Verified via GitHub public API 2026-11-21 (repo is public; secrets/workflow logs
 
 #### D3 — Encryption-at-rest release gate evidence — JOINT
 
-- [ ] Agent: draft evidence narratives for gate items answerable from code (1 data inventory, 2 crypto design, 6 blind-index query strategy, 7 decrypt access boundaries, 8 perf/error paths).
+- [x] Agent: draft evidence narratives for gate items answerable from code (1 data inventory, 2 crypto design, 6 blind-index query strategy, 7 decrypt access boundaries, 8 perf/error paths). **Done 2026-11-24** — `docs/ENCRYPTION_AT_REST_RELEASE_GATE.md` Evidence Register rows 1/2/4/6/7/8/9/10 drafted with code-verified links; gaps flagged honestly (no tamper tests, no per-decrypt audit, no rotation SOP).
 - [ ] Operator: supply items 3 (KMS/secret manager), 4 (key versioning), 5 (rotation drill), 9 (backup/restore with encryption), 10 (monitoring) evidence.
 - [ ] Complete Approval Matrix; any `Fail` on items 1–5 or 9 = release blocker; >2 Conditional Pass = blocker.
 
