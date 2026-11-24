@@ -38,6 +38,14 @@ class SyncDiocesanAttendanceAggregates extends BaseCommand
             return;
         }
 
+        // Monthly summaries are replaced whole; a mid-month start or end would
+        // rebuild a month from partial data. Reject before any write.
+        $rangeError = \App\Libraries\MonthRangeGuard::check($fromDate, $toDate);
+        if ($rangeError !== null) {
+            CLI::error($rangeError);
+            return;
+        }
+
         $scope = $this->resolveScopeParishIds($db, $parishId, $dioceseId);
         $scopeParishIds = $scope['parish_ids'];
         $scopeDioceseIds = $scope['diocese_ids'];
@@ -129,6 +137,8 @@ class SyncDiocesanAttendanceAggregates extends BaseCommand
                 return [null, null];
             }
 
+            // Explicit ranges are used as given (the caller owns month
+            // alignment); only --rolling-days is snapped to a month start.
             return [$fromOpt, $toOpt];
         }
 
@@ -137,7 +147,7 @@ class SyncDiocesanAttendanceAggregates extends BaseCommand
         }
 
         $toDate = date('Y-m-d');
-        $fromDate = date('Y-m-d', strtotime('-' . ($rollingDays - 1) . ' days'));
+        $fromDate = date('Y-m-01', strtotime('-' . ($rollingDays - 1) . ' days'));
 
         return [$fromDate, $toDate];
     }

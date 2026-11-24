@@ -18,7 +18,7 @@ class SyncDiocesanSundayServiceMetrics extends BaseCommand
 
         if (!$db->tableExists('diocesan_sunday_service_metrics')) {
             CLI::error('Table diocesan_sunday_service_metrics does not exist. Run migrations first.');
-            return;
+            return EXIT_ERROR;
         }
 
         $fromOpt = trim((string) ($this->optionValue('from', $params) ?? ''));
@@ -28,26 +28,40 @@ class SyncDiocesanSundayServiceMetrics extends BaseCommand
         $parishId = (int) ($this->optionValue('parish', $params) ?? 0);
         $rebuildPeriodBuckets = filter_var($this->optionValue('rebuild-period-buckets', $params) ?? false, FILTER_VALIDATE_BOOLEAN);
 
-        [$fromDate, $toDate] = $this->resolveDateRange($fromOpt, $toOpt, $rollingDays);
+        // Only snap --rolling-days to a month start when diocesan buckets will be
+        // rebuilt; parish-only syncs skip buckets, so they keep the exact window.
+        $snapToMonth = \App\Libraries\MonthRangeGuard::rebuildsMonthlyBuckets($rebuildPeriodBuckets, $parishId);
+        [$fromDate, $toDate] = $this->resolveDateRange($fromOpt, $toOpt, $rollingDays, $snapToMonth);
         if ($fromDate === null || $toDate === null) {
             CLI::error('Invalid date range. Use --from YYYY-MM-DD and --to YYYY-MM-DD.');
-            return;
+            return EXIT_ERROR;
         }
 
         if ($fromDate > $toDate) {
             CLI::error('--from cannot be later than --to.');
-            return;
+            return EXIT_ERROR;
+        }
+
+        // Diocesan monthly buckets are replaced whole whenever they are rebuilt
+        // (explicit --rebuild-period-buckets, or any non-parish-scoped sync).
+        // A mid-month start or end would rebuild a month from partial data,
+        // so reject it before any write. Parish-only syncs skip bucket rebuilds.
+        $willRebuildBuckets = $snapToMonth;
+        $rangeError = $willRebuildBuckets ? \App\Libraries\MonthRangeGuard::check($fromDate, $toDate) : null;
+        if ($rangeError !== null) {
+            CLI::error($rangeError . ' Use --parish for per-service-only updates.');
+            return EXIT_ERROR;
         }
 
         if ($rebuildPeriodBuckets) {
             if ($parishId > 0) {
                 CLI::error('--rebuild-period-buckets cannot be combined with --parish because period buckets are diocesan totals.');
-                return;
+                return EXIT_ERROR;
             }
 
             if (!$db->tableExists('diocesan_sunday_weekly_metrics') || !$db->tableExists('diocesan_sunday_monthly_metrics')) {
                 CLI::error('Period bucket tables do not exist. Run migrations first.');
-                return;
+                return EXIT_ERROR;
             }
 
             CLI::write('Rebuild diocesan weekly/monthly period buckets', 'cyan');
@@ -59,7 +73,7 @@ class SyncDiocesanSundayServiceMetrics extends BaseCommand
             $result = $this->rebuildPeriodBucketsFromServiceAggregate($db, $fromDate, $toDate, $dioceseId, date('Y-m-d H:i:s'));
             if (!$result['ok']) {
                 CLI::error('Period bucket rebuild failed.');
-                return;
+                return EXIT_ERROR;
             }
 
             CLI::write('Upserted weekly buckets: ' . $result['weekly_count'], 'green');
@@ -131,7 +145,7 @@ class SyncDiocesanSundayServiceMetrics extends BaseCommand
 
         if ($db->transStatus() === false) {
             CLI::error('Sync failed. Transaction rolled back.');
-            return;
+            return EXIT_ERROR;
         }
 
         // Build and persist diocesan weekly/monthly buckets for fast chart reads.
@@ -142,7 +156,7 @@ class SyncDiocesanSundayServiceMetrics extends BaseCommand
             $result = $this->rebuildPeriodBucketsFromServiceAggregate($db, $fromDate, $toDate, $dioceseId, $syncStartedAt);
             if (!$result['ok']) {
                 CLI::error('Weekly/monthly diocesan aggregate upsert failed.');
-                return;
+                return EXIT_ERROR;
             }
 
             CLI::write('Upserted weekly buckets: ' . $result['weekly_count'], 'green');
@@ -155,25 +169,32 @@ class SyncDiocesanSundayServiceMetrics extends BaseCommand
     /**
      * @return array{0: ?string, 1: ?string}
      */
-    private function resolveDateRange(string $fromOpt, string $toOpt, int $rollingDays): array
+    private function resolveDateRange(string $fromOpt, string $toOpt, int $rollingDays, bool $snapToMonth = true): array
     {
         if ($fromOpt !== '' || $toOpt !== '') {
             if (!$this->isValidDate($fromOpt) || !$this->isValidDate($toOpt)) {
                 return [null, null];
             }
 
+            // Explicit ranges are used as given (the caller owns month
+            // alignment); only --rolling-days is snapped to a month start.
             return [$fromOpt, $toOpt];
         }
 
         if ($rollingDays > 0) {
             $toDate = date('Y-m-d');
-            $fromDate = date('Y-m-d', strtotime('-' . ($rollingDays - 1) . ' days'));
+            $fromDate = \App\Libraries\MonthRangeGuard::rollingStart($rollingDays, $snapToMonth, $toDate);
 
             return [$fromDate, $toDate];
         }
 
-        // Default cron window requested by product: Jan 1 -> today.
-        return [date('Y') . '-01-01', date('Y-m-d')];
+        // Default cron window requested by product: Jan 1 -> today. Anchor the
+        // year on a week ago so the first run(s) of January still cover the
+        // previous year's final Sunday (e.g. a Dec 31 service whose cron fires
+        // on Jan 1 in the app timezone). Still starts on a month boundary.
+        $anchorYear = date('Y', strtotime('-7 days'));
+
+        return [$anchorYear . '-01-01', date('Y-m-d')];
     }
 
     private function isValidDate(string $value): bool

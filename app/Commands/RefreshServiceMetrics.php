@@ -19,14 +19,25 @@ class RefreshServiceMetrics extends BaseCommand
         CLI::write('Starting service-metrics refresh flow (separate from member attendance registration)...', 'cyan');
 
         try {
-            service('commands')->run('attendance:sync-sunday-service-metrics', $params);
+            $exitCode = service('commands')->run('attendance:sync-sunday-service-metrics', $params);
         } catch (\Throwable $e) {
             CLI::error('service-metrics:refresh failed: ' . $e->getMessage());
             log_message('error', 'service-metrics:refresh failed. error={error}', [
                 'error' => $e->getMessage(),
             ]);
 
-            return;
+            return EXIT_ERROR;
+        }
+
+        // The sync signals rejection (e.g. a range that would truncate a
+        // month) via a non-zero exit code; don't report that as completion.
+        if (is_int($exitCode) && $exitCode !== EXIT_SUCCESS) {
+            CLI::error('service-metrics:refresh failed: sync exited with code ' . $exitCode . ' (nothing rebuilt).');
+            log_message('error', 'service-metrics:refresh failed. sync exit={code}', [
+                'code' => $exitCode,
+            ]);
+
+            return $exitCode;
         }
 
         $elapsedSeconds = microtime(true) - $start;
