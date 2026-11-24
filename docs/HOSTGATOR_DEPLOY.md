@@ -14,7 +14,7 @@ items can be checked from the repo or via curl after deploy.
 | # | Check | How | Status |
 |---|-------|-----|--------|
 | 1.1 | PHP 8.5 selected for `ekklessia.online` | hPanel → Select PHP Version → domain dropdown | ✅ confirmed by operator |
-| 1.2 | Required extensions enabled | hPanel → Select PHP Version → domain → **Extensions** tab (checkboxes — extensions CANNOT be loaded via php.ini/.user.ini; `extension=` is PHP_INI_SYSTEM). Enable: `intl`, `mbstring`, `mysqli`, `gd`, `curl`, `dom`, `xml` (+`xmlreader`/`xmlwriter`/`simplexml`/`libxml`), `zip`, `openssl`, `fileinfo`. `intl` is the riskiest — confirm it exists on the plan | [OPERATOR] |
+| 1.2 | Required extensions enabled | hPanel → Select PHP Version → domain → **Extensions** tab (checkboxes — `extension=` is PHP_INI_SYSTEM, so it cannot be set in `.user.ini`; the startup php.ini is host-managed, so use the selector). Enable: `intl`, `mbstring`, `mysqli`, `gd`, `curl`, `dom`, `xml` (+`xmlreader`/`xmlwriter`/`simplexml`/`libxml`), `zip`, `openssl`, `fileinfo`. `intl` is the riskiest — confirm it exists on the plan | [OPERATOR] |
 | 1.3 | SSH access enabled | hPanel → Advanced → SSH Access → enable; note shell user + port (usually 22) | [OPERATOR] |
 | 1.4 | MySQL database + user created | hPanel → MySQL Databases. DB/user names are prefixed with the cPanel username (e.g. `user_ekklesia`). Host is `localhost`, port 3306 | [OPERATOR] |
 | 1.5 | Backup DB credentials | Either a second MySQL user on the same DB with `SELECT, SHOW VIEW, TRIGGER, EVENT, LOCK TABLES` (mysqldump needs these; a SELECT-only user is NOT sufficient), or reuse the app user for `backup.db.*`. **Restore caveat:** `build/restore_database.sh` reads the same `backup.db.*` keys and imports with them, so a dump-only account **cannot restore** (needs `CREATE, DROP, ALTER, INSERT, INDEX, REFERENCES, CREATE VIEW, TRIGGER, LOCK TABLES, CREATE ROUTINE, ALTER ROUTINE` — see §7). `restore_database.sh --check` only pings MySQL and will not catch this. For a restore, temporarily point `backup.db.*` at the app/owner user (or leave it unset to fall back to `database.default.*`) | [OPERATOR] |
@@ -224,21 +224,28 @@ eventually hit limits — monitor `writable/logs/` after first scheduled runs.
 Web-SAPI overrides ship in the repo at `public/.user.ini` (LSAPI/FPM reads it
 per-directory; mod_php ignores it, so local dev is unaffected). It sets
 `memory_limit=512M`, `max_execution_time=120`, `max_input_time=120`,
-`max_input_vars=3000`, `post_max_size=32M`, `upload_max_filesize=32M`,
+`max_input_vars=3000`, `post_max_size=40M`, `upload_max_filesize=32M`,
+`opcache.validate_timestamps=1`, `opcache.revalidate_freq=2`,
 `date.timezone=UTC`, `display_errors=Off`, `log_errors=On`,
 `error_reporting=E_ALL & ~E_DEPRECATED & ~E_STRICT`, `expose_php=Off`.
-Only `PHP_INI_PERDIR`/`PHP_INI_ALL` directives are honored — `opcache.*`,
+Only `PHP_INI_PERDIR`/`PHP_INI_ALL` directives are honored — OPcache sizing,
 `realpath_cache_*`, `allow_url_*` are `PHP_INI_SYSTEM` and silently ignored;
 host defaults apply (the hPanel editor does not expose them either).
+
+**Verify loading:** CloudLinux mod_lsapi only reads `.user.ini` when
+`lsapi_enable_user_ini On` is set by the host (default `Off`). After deploy,
+check a web-SAPI `phpinfo()` (not CLI); if values aren't applied, ask
+HostGator support to enable it or rely on the hPanel editor values.
 
 **hPanel php.ini editor** (the field list shown in hPanel for this domain)
 overwrites/augments docroot php config and covers the same resource limits —
 set it to match `.user.ini`: `max_execution_time=120`, `max_input_time=120`,
-`max_input_vars=3000`, `memory_limit=512M`, `post_max_size=32M`,
+`max_input_vars=3000`, `memory_limit=512M`, `post_max_size=40M`,
 `upload_max_filesize=32M`; leave `display_errors=Disabled`,
 `zlib.output_compression=Disabled`, and leave `session.gc_maxlifetime` /
-`session.save_path` blank (CI4's FileHandler manages `writable/session` and
-its own expiry — PHP session GC does not apply). If the editor writes its own
+`session.save_path` blank (CI4 sets `session.gc_maxlifetime` from its session
+expiration at runtime and its FileHandler uses that during PHP's session GC
+in `writable/session`; blank fields keep the app in control). If the editor writes its own
 `.user.ini`/`php.ini` into `public/`, it may replace the committed file —
 the hPanel values then carry the resource limits; `.user.ini`'s unique
 contributions are `date.timezone`, `error_reporting`, `log_errors`, and
