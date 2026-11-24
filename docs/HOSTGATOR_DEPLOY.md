@@ -137,9 +137,15 @@ with a real send during validation (runbook §7).
 Per `DEPLOYMENT_RUNBOOK.md` §7 "First-boot account bootstrap":
 
 ```bash
-php spark shield:user create -n <admin-user> -e <admin-email> -g systemadmin
-php spark shield:user activate -e <admin-email>    # users.active defaults to 0
-php spark user:check <user_id>
+# Set these first (quoted shell variables, so the block runs as pasted):
+ADMIN_USER='CHANGE_ME'
+ADMIN_EMAIL='CHANGE_ME@example.org'
+
+php spark shield:user create -n "$ADMIN_USER" -e "$ADMIN_EMAIL" -g systemadmin
+php spark shield:user activate -e "$ADMIN_EMAIL"    # users.active defaults to 0
+# Note the numeric id printed by `create` (or look it up), then:
+ADMIN_USER_ID='CHANGE_ME'
+php spark user:check "$ADMIN_USER_ID"
 php spark db:seed PermissionRoleSyncSeeder          # after users/groups exist
 ```
 
