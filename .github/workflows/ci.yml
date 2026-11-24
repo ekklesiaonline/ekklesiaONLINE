@@ -151,6 +151,7 @@ jobs:
             echo "database.tests.DBDriver = 'MySQLi'"
             echo "database.tests.DBPrefix = ''"
             echo "database.tests.port = 3306"
+            echo "database.tests.strictOn = true"
             echo "encryption.key = 'hex2bin:$(openssl rand -hex 32)'"
             echo "encryption.blindIndexKey = 'hex2bin:$(openssl rand -hex 32)'"
           } >> .env
@@ -180,7 +181,7 @@ jobs:
       # MySQL-fixture tests: database.tests.* in .env flips the tests group to
       # MySQLi so schema tests that skip under SQLite actually execute here.
       - name: Run MySQL-fixture PHPUnit tests
-        run: vendor/bin/phpunit --no-coverage tests/database/VolunteerScheduleSchemaIntegrityTest.php
+        run: vendor/bin/phpunit --no-coverage --fail-on-skipped tests/database/VolunteerScheduleSchemaIntegrityTest.php
 
       - name: Upload MySQL evidence
         if: always()
