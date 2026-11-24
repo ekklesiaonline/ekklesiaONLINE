@@ -98,6 +98,15 @@ never seeds, clears cache, or compiles routes after a failure:
     exit 1
   fi
 
+  # Same post-migration check as CI: no Exception and no unapplied row
+  # (an empty "---" migrated-on cell) in migrate:status.
+  STATUS_OUT="$(php spark migrate:status --all 2>&1)" || true
+  printf '%s\n' "$STATUS_OUT"
+  if printf '%s\n' "$STATUS_OUT" | grep -q -E 'Exception|\| *---  *\|'; then
+    echo "ABORTED: migrations still pending after migrate — restore from $BACKUP_FILE if needed; not seeded" >&2
+    exit 1
+  fi
+
   SEED_OUT="$(php spark db:seed DatabaseSeeder 2>&1)" && SEED_RC=0 || SEED_RC=$?
   printf '%s\n' "$SEED_OUT"
   if [ "$SEED_RC" -ne 0 ] || printf '%s\n' "$SEED_OUT" | grep -q 'Exception'; then
@@ -122,6 +131,13 @@ restore, so no backup step) — run instead of the block above:
     || ! printf '%s\n' "$MIGRATE_OUT" | grep -q 'Migrations complete.' \
     || printf '%s\n' "$MIGRATE_OUT" | grep -q 'Exception'; then
     echo 'ABORTED: migration FAILED — not seeded' >&2
+    exit 1
+  fi
+
+  STATUS_OUT="$(php spark migrate:status --all 2>&1)" || true
+  printf '%s\n' "$STATUS_OUT"
+  if printf '%s\n' "$STATUS_OUT" | grep -q -E 'Exception|\| *---  *\|'; then
+    echo 'ABORTED: migrations still pending after migrate — not seeded' >&2
     exit 1
   fi
 
