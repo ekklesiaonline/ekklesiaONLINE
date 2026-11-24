@@ -25,7 +25,10 @@ items can be checked from the repo or via curl after deploy.
 ## 2. Deploy method (no Composer on shared hosting)
 
 HostGator shared has **no `composer` CLI**. Build artifacts locally, upload via
-SSH/rsync (preferred) or FTP.
+an encrypted, authenticated transport only: **rsync over SSH** (preferred) or
+**SFTP**. Verify the server's SSH host key fingerprint on first connect (compare
+against hPanel → SSH Access). **Never use plain FTP** — it sends credentials and
+release files unencrypted, exposing them to capture or tampering.
 
 ```bash
 # Local build machine — from repo root, on the release commit:
