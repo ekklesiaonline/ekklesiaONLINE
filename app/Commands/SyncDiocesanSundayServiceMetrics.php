@@ -50,7 +50,7 @@ class SyncDiocesanSundayServiceMetrics extends BaseCommand
         $rangeError = $willRebuildBuckets ? \App\Libraries\MonthRangeGuard::check($fromDate, $toDate) : null;
         if ($rangeError !== null) {
             CLI::error($rangeError . ' Use --parish for per-service-only updates.');
-            return;
+            return EXIT_ERROR;
         }
 
         if ($rebuildPeriodBuckets) {
