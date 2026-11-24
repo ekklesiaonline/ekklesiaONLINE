@@ -3,7 +3,6 @@
 use App\Services\ProductionSecurityPosture;
 use CodeIgniter\Config\Factories;
 use CodeIgniter\Test\CIUnitTestCase;
-use CodeIgniter\Test\ReflectionHelper;
 use CodeIgniter\Test\TestLogger;
 use Config\Services;
 
@@ -29,7 +28,7 @@ final class ProductionSecurityPostureTest extends CIUnitTestCase
 
         // TestLogger history is process-wide static state; clear it so
         // "did not log" assertions stay deterministic.
-        ReflectionHelper::setPrivateProperty(TestLogger::class, 'op_logs', []);
+        $this->setPrivateProperty(TestLogger::class, 'op_logs', []);
     }
 
     protected function tearDown(): void
@@ -38,7 +37,7 @@ final class ProductionSecurityPostureTest extends CIUnitTestCase
         putenv(self::FLAG);
         putenv(self::BASE_URL);
 
-        ReflectionHelper::setPrivateProperty(TestLogger::class, 'op_logs', []);
+        $this->setPrivateProperty(TestLogger::class, 'op_logs', []);
         Services::reset(true);
         Factories::reset('config');
 

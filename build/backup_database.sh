@@ -84,7 +84,20 @@ OUT_FILE="$OUTPUT_DIR/${DB_NAME}_${STAMP}.sql.gz"
 TMP_GZ=$(mktemp "$OUTPUT_DIR/.ekk-dump.XXXXXX")
 STATUS_FILE=$(mktemp "${TMPDIR:-/tmp}/ekk-dump-status.XXXXXX")
 chmod 600 "$TMP_GZ"
-{ mysqldump --defaults-extra-file="$DEFAULTS_FILE" --single-transaction --quick --routines --triggers "$DB_NAME" && printf '%s\n' ok > "$STATUS_FILE"; } | gzip > "$TMP_GZ"
+# MySQL 8.4+/9 mysqldump dumps masking-policy catalog rows and fails for
+# least-privilege users; --skip-masking-policies only exists on those
+# versions, so add it conditionally (MariaDB/MySQL 8.0 lack the flag).
+# --set-gtid-purged=OFF keeps dumps portable: without it, GTID-enabled
+# servers embed SET @@GLOBAL.GTID_PURGED, which requires global admin
+# rights and mutates server GTID state on restore.
+DUMP_OPTS='--single-transaction --quick --routines --triggers'
+if mysqldump --help 2>/dev/null | grep -q 'masking-policies'; then
+  DUMP_OPTS="$DUMP_OPTS --skip-masking-policies"
+fi
+if mysqldump --help 2>/dev/null | grep -q 'set-gtid-purged'; then
+  DUMP_OPTS="$DUMP_OPTS --set-gtid-purged=OFF"
+fi
+{ mysqldump --defaults-extra-file="$DEFAULTS_FILE" $DUMP_OPTS "$DB_NAME" && printf '%s\n' ok > "$STATUS_FILE"; } | gzip > "$TMP_GZ"
 if [ "$(cat "$STATUS_FILE" 2>/dev/null)" != 'ok' ]; then
   echo 'mysqldump failed; no backup written' >&2
   exit 1

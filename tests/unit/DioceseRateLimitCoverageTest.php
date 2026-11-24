@@ -160,7 +160,7 @@ final class DioceseRateLimitCoverageTest extends CIUnitTestCase
 
     private function makeRequest(string $method, string $path, string $ip = '203.0.113.7'): IncomingRequest
     {
-        $request = $this->createMock(IncomingRequest::class);
+        $request = $this->createStub(IncomingRequest::class);
         $request->method('getMethod')->willReturn($method);
         $request->method('getIPAddress')->willReturn($ip);
         $request->method('getPath')->willReturn($path);

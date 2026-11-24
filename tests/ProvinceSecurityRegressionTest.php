@@ -147,7 +147,6 @@ final class ProvinceSecurityRegressionTest extends CIUnitTestCase
         $controller = new \Province\Controllers\Dashboard();
 
         $method = new \ReflectionMethod($controller, 'csvSafeCell');
-        $method->setAccessible(true);
 
         $this->assertSame("'=SUM(1)", $method->invoke($controller, '=SUM(1)'));
         $this->assertSame("'+evil", $method->invoke($controller, '+evil'));

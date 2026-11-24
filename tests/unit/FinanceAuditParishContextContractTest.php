@@ -30,7 +30,6 @@ final class FinanceAuditParishContextContractTest extends CIUnitTestCase
 
         $reflection = new ReflectionClass($controller);
         $buildMetaMethod = $reflection->getMethod('buildParishContextMeta');
-        $buildMetaMethod->setAccessible(true);
         $meta = $buildMetaMethod->invoke($controller, 99, BaseController::ATTRIBUTION_POLICY_OPERATIONAL_DEFAULT);
 
         $this->assertArrayHasKey('parish_context', $meta);

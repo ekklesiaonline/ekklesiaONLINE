@@ -90,7 +90,6 @@ final class ParishDashboardDataServiceTest extends CIUnitTestCase
         $service = new ParishDashboardDataService();
         $ref = new \ReflectionClass($service);
         $method = $ref->getMethod('countBirthdaysThisWeek');
-        $method->setAccessible(true);
 
         $weekStart = $today->modify('monday this week')->setTime(0, 0, 0);
         $weekEnd = $weekStart->modify('+6 days')->setTime(23, 59, 59);
@@ -135,7 +134,6 @@ final class ParishDashboardDataServiceTest extends CIUnitTestCase
 
         $service = new ParishDashboardDataService();
         $method = (new \ReflectionClass($service))->getMethod('countBirthdaysThisWeek');
-        $method->setAccessible(true);
 
         $count = $method->invoke(
             $service,

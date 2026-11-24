@@ -85,7 +85,6 @@ final class PermissionRoleSyncSeederTest extends CIUnitTestCase
     {
         $seeder = new PermissionRoleSyncSeeder(config('Database'), $this->db);
         $matrixMethod = new \ReflectionMethod(PermissionRoleSyncSeeder::class, 'rolePermissionMatrix');
-        $matrixMethod->setAccessible(true);
 
         /** @var array<string, array<int, string>> $roleMap */
         $roleMap = $matrixMethod->invoke($seeder);

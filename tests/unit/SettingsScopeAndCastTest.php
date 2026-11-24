@@ -194,7 +194,6 @@ final class SettingsScopeAndCastTest extends CIUnitTestCase
     {
         $reflection = new ReflectionClass($model);
         $castsProperty = $reflection->getProperty('casts');
-        $castsProperty->setAccessible(true);
 
         return (array) $castsProperty->getValue($model);
     }

@@ -522,9 +522,6 @@ class PublicAssets extends PublicHome
     {
         $finfo = finfo_open(FILEINFO_MIME_TYPE);
         $mimeType = $finfo ? finfo_file($finfo, $filepath) : 'application/octet-stream';
-        if ($finfo) {
-            finfo_close($finfo);
-        }
 
         $lastModifiedTs = (int) (filemtime($filepath) ?: time());
         $etag = '"' . sha1($filepath . '|' . (string) $lastModifiedTs . '|' . (string) filesize($filepath)) . '"';

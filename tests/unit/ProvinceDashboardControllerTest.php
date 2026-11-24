@@ -263,7 +263,6 @@ final class ProvinceDashboardControllerTest extends CIUnitTestCase
 
         $reflection = new \ReflectionClass(ProvinceDashboard::class);
         $property = $reflection->getProperty('dashboardData');
-        $property->setAccessible(true);
         $property->setValue($controller, $fakeService);
 
         return $controller;

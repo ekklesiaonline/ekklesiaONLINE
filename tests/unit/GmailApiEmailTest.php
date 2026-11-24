@@ -119,7 +119,6 @@ final class GmailApiEmailTest extends CIUnitTestCase
         // The subclass whitelist must keep 'gmail_api' — getProtocol() would
         // otherwise silently coerce it to 'mail' (sendmail).
         $method = new ReflectionMethod(Email::class, 'getProtocol');
-        $method->setAccessible(true);
         $this->assertSame('gmail_api', $method->invoke($mailer));
     }
 
