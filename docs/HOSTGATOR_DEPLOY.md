@@ -35,8 +35,10 @@ release files unencrypted, exposing them to capture or tampering.
 composer install --no-dev --optimize-autoloader --no-interaction
 
 # Upload everything EXCEPT:
-#   .git/, tests/, .env, writable/{cache,logs,session,uploads,debugbar}/*,
+#   .git/, tests/, .env, writable/{cache,logs,session,uploads,debugbar,backups}/*,
 #   node_modules/
+# writable/backups/* is excluded so local/dev dumps (e.g. restore-drill
+# archives) never land in the production backup directory.
 # Keep build/env-templates/ — the server-side `cp` below needs
 # production.env.template (it contains only CHANGE_ME placeholders).
 rsync -avz \
@@ -44,7 +46,7 @@ rsync -avz \
   --exclude='node_modules/' \
   --exclude='writable/cache/*' --exclude='writable/logs/*' \
   --exclude='writable/session/*' --exclude='writable/uploads/*' \
-  --exclude='writable/debugbar/*' \
+  --exclude='writable/debugbar/*' --exclude='writable/backups/*' \
   ./ user@host:/home/user/ekklesia/
 ```
 
