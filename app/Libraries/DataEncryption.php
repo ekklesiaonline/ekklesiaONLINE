@@ -45,11 +45,13 @@ class DataEncryption
 
         $payload = substr($value, strlen(self::PREFIX));
         if ($payload === '') {
+            log_message('error', 'Failed to decrypt protected field: empty envelope payload');
             return null;
         }
 
         $decoded = base64_decode($payload, true);
         if ($decoded === false) {
+            log_message('error', 'Failed to decrypt protected field: invalid base64 envelope payload');
             return null;
         }
 
