@@ -188,8 +188,13 @@ class SyncDiocesanSundayServiceMetrics extends BaseCommand
             return [$fromDate, $toDate];
         }
 
-        // Default cron window requested by product: Jan 1 -> today.
-        return [date('Y') . '-01-01', date('Y-m-d')];
+        // Default cron window requested by product: Jan 1 -> today. Anchor the
+        // year on a week ago so the first run(s) of January still cover the
+        // previous year's final Sunday (e.g. a Dec 31 service whose cron fires
+        // on Jan 1 in the app timezone). Still starts on a month boundary.
+        $anchorYear = date('Y', strtotime('-7 days'));
+
+        return [$anchorYear . '-01-01', date('Y-m-d')];
     }
 
     private function isValidDate(string $value): bool
