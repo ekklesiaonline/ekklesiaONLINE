@@ -60,23 +60,48 @@ php spark config:check App
 php spark config:check Logger
 php spark config:check Session
 php spark config:check 'CodeIgniter\Shield\Config\Auth'
-sh build/backup_database.sh --check                   # needs backup.db.* filled
-sh build/restore_database.sh --check
-php spark migrate:status --all
-# Fresh, verified restore point BEFORE migrating (runbook §5). Fail-closed:
-# the migration only starts if the backup succeeds and the exact archive it
-# reports (honours backup.outputDir) exists, is non-empty, and passes gzip -t.
-BACKUP_OUT="$(sh build/backup_database.sh)" \
-  && BACKUP_FILE="$(printf '%s\n' "$BACKUP_OUT" | sed -n 's/^Backup created: //p')" \
-  && [ -s "$BACKUP_FILE" ] && gzip -t "$BACKUP_FILE" \
-  && echo "Verified backup: $BACKUP_FILE" \
-  && php spark migrate --all \
-  || echo 'ABORTED: backup or verification failed — migration NOT run' >&2
-# Very first deploy into a CONFIRMED EMPTY database only (nothing to restore):
-#   php spark migrate --all
-php spark db:seed DatabaseSeeder
-php spark cache:clear
-php spark routes > /tmp/routes_after.txt
+```
+
+Then run the database release as **one guarded block** (runbook §5). It stops
+at the first failure, reports whether the backup or the migration failed, and
+never seeds, clears cache, or compiles routes after a failure:
+
+```bash
+(
+  set -e
+  sh build/backup_database.sh --check                 # needs backup.db.* filled
+  sh build/restore_database.sh --check
+  php spark migrate:status --all
+
+  # Fresh, verified restore point BEFORE migrating. Validates the exact
+  # archive the script reports (honours backup.outputDir).
+  BACKUP_OUT="$(sh build/backup_database.sh)" \
+    || { echo 'ABORTED: backup failed — nothing migrated or seeded' >&2; exit 1; }
+  BACKUP_FILE="$(printf '%s\n' "$BACKUP_OUT" | sed -n 's/^Backup created: //p')"
+  { [ -n "$BACKUP_FILE" ] && [ -s "$BACKUP_FILE" ] && gzip -t "$BACKUP_FILE"; } \
+    || { echo 'ABORTED: backup verification failed — nothing migrated or seeded' >&2; exit 1; }
+  echo "Verified backup: $BACKUP_FILE"
+
+  php spark migrate --all \
+    || { echo "ABORTED: migration FAILED after backup — restore from $BACKUP_FILE if needed; not seeded" >&2; exit 1; }
+  php spark db:seed DatabaseSeeder
+  php spark cache:clear
+  php spark routes > /tmp/routes_after.txt
+  echo 'Database release complete.'
+)
+```
+
+**Very first deploy into a CONFIRMED EMPTY database only** (nothing to
+restore, so no backup step) — run instead of the block above:
+
+```bash
+(
+  set -e
+  php spark migrate --all
+  php spark db:seed DatabaseSeeder
+  php spark cache:clear
+  php spark routes > /tmp/routes_after.txt
+)
 ```
 
 Create `.env` values:
