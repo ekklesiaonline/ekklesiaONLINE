@@ -26,8 +26,13 @@ items can be checked from the repo or via curl after deploy.
 
 HostGator shared has **no `composer` CLI**. Build artifacts locally, upload via
 an encrypted, authenticated transport only: **rsync over SSH** (preferred) or
-**SFTP**. Verify the server's SSH host key fingerprint on first connect (compare
-against hPanel → SSH Access). **Never use plain FTP** — it sends credentials and
+**SFTP**. Verify the server's SSH host key fingerprint on first connect against
+a value obtained **out of band**. The hPanel/cPanel SSH Access screen manages
+account keys and does not reliably show the server fingerprint, so ask HostGator
+support (via the authenticated support portal) for the host's SSH fingerprint
+for this plan and record it here before the first connect:
+`SSH host fingerprint: CHANGE_ME (source/date: CHANGE_ME)`. Do not accept an
+unverified key on first connect. **Never use plain FTP** — it sends credentials and
 release files unencrypted, exposing them to capture or tampering.
 
 ```bash
