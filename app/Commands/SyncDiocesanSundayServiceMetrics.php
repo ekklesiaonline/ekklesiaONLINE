@@ -39,6 +39,16 @@ class SyncDiocesanSundayServiceMetrics extends BaseCommand
             return;
         }
 
+        // Diocesan monthly buckets are replaced whole whenever they are rebuilt
+        // (explicit --rebuild-period-buckets, or any non-parish-scoped sync).
+        // A mid-month start would rebuild the first month from partial data,
+        // so reject it before any write. Parish-only syncs skip bucket rebuilds.
+        $willRebuildBuckets = $rebuildPeriodBuckets || $parishId <= 0;
+        if ($willRebuildBuckets && substr($fromDate, 8, 2) !== '01') {
+            CLI::error('--from must be the first day of a month (e.g. ' . substr($fromDate, 0, 8) . '01) when diocesan monthly buckets are rebuilt; use --parish for per-service-only updates.');
+            return;
+        }
+
         if ($rebuildPeriodBuckets) {
             if ($parishId > 0) {
                 CLI::error('--rebuild-period-buckets cannot be combined with --parish because period buckets are diocesan totals.');

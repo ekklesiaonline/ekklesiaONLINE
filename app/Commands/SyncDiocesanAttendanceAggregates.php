@@ -38,6 +38,13 @@ class SyncDiocesanAttendanceAggregates extends BaseCommand
             return;
         }
 
+        // Monthly summaries are replaced whole; a mid-month start would
+        // rebuild the first month from partial data. Reject before any write.
+        if (substr($fromDate, 8, 2) !== '01') {
+            CLI::error('--from must be the first day of a month (e.g. ' . substr($fromDate, 0, 8) . '01) because monthly summaries are replaced whole.');
+            return;
+        }
+
         $scope = $this->resolveScopeParishIds($db, $parishId, $dioceseId);
         $scopeParishIds = $scope['parish_ids'];
         $scopeDioceseIds = $scope['diocese_ids'];
