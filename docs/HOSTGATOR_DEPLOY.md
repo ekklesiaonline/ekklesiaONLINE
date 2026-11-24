@@ -58,6 +58,11 @@ php spark config:check 'CodeIgniter\Shield\Config\Auth'
 sh build/backup_database.sh --check                   # needs backup.db.* filled
 sh build/restore_database.sh --check
 php spark migrate:status --all
+# Fresh, verified restore point BEFORE migrating (runbook §5). Skippable only
+# on the very first deploy into an empty database.
+sh build/backup_database.sh
+LATEST_BACKUP="$(ls -t writable/backups/*.sql.gz | head -1)"
+gzip -t "$LATEST_BACKUP" && ls -l "$LATEST_BACKUP"   # must exist, non-empty, pass gzip -t
 php spark migrate --all
 php spark db:seed DatabaseSeeder
 php spark cache:clear
