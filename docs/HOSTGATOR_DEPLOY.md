@@ -61,12 +61,17 @@ php spark config:check 'CodeIgniter\Shield\Config\Auth'
 sh build/backup_database.sh --check                   # needs backup.db.* filled
 sh build/restore_database.sh --check
 php spark migrate:status --all
-# Fresh, verified restore point BEFORE migrating (runbook §5). Skippable only
-# on the very first deploy into an empty database.
-sh build/backup_database.sh
-LATEST_BACKUP="$(ls -t writable/backups/*.sql.gz | head -1)"
-gzip -t "$LATEST_BACKUP" && ls -l "$LATEST_BACKUP"   # must exist, non-empty, pass gzip -t
-php spark migrate --all
+# Fresh, verified restore point BEFORE migrating (runbook §5). Fail-closed:
+# the migration only starts if the backup succeeds and the exact archive it
+# reports (honours backup.outputDir) exists, is non-empty, and passes gzip -t.
+BACKUP_OUT="$(sh build/backup_database.sh)" \
+  && BACKUP_FILE="$(printf '%s\n' "$BACKUP_OUT" | sed -n 's/^Backup created: //p')" \
+  && [ -s "$BACKUP_FILE" ] && gzip -t "$BACKUP_FILE" \
+  && echo "Verified backup: $BACKUP_FILE" \
+  && php spark migrate --all \
+  || echo 'ABORTED: backup or verification failed — migration NOT run' >&2
+# Very first deploy into a CONFIRMED EMPTY database only (nothing to restore):
+#   php spark migrate --all
 php spark db:seed DatabaseSeeder
 php spark cache:clear
 php spark routes > /tmp/routes_after.txt
