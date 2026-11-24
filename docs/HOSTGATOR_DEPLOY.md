@@ -214,7 +214,13 @@ HostGator has no blue/green. Keep the previous release as a sibling directory
 (`~/ekklesia-prev/`) or rely on hPanel backup/JetBackup snapshots. Docroot swap
 = update the domain's document root or rename dirs. Database rollback =
 `sh build/restore_database.sh <latest .sql.gz>` — requires explicit approval
-per runbook §8 (destructive).
+per runbook §8 (destructive). **Restore credentials:** the script imports with
+`backup.db.*` (falling back to `database.default.*`). If `backup.db.*` points
+at a dump-only account (§1.5), the import will fail mid-restore — and
+`restore_database.sh --check` only pings MySQL, so it will not warn you.
+Before restoring, comment out `backup.db.*` in `.env` (so the app/owner user
+is used) or point it at an account with `CREATE, DROP, ALTER, INSERT, INDEX,
+REFERENCES, CREATE VIEW, TRIGGER` on the database.
 
 ---
 
