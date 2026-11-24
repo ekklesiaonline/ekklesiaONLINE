@@ -7,4 +7,5 @@ cd "$ROOT_DIR"
 FROM_DATE="$(date +%Y-01-01)"
 TO_DATE="$(date +%F)"
 
-php spark attendance:sync-sunday-service-metrics --from "$FROM_DATE" --to "$TO_DATE"
+PHP_BIN="${PHP_BIN:-php}"
+"$PHP_BIN" spark attendance:sync-sunday-service-metrics --from "$FROM_DATE" --to "$TO_DATE"

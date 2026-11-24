@@ -210,6 +210,7 @@ Then sign in at `/login` and confirm the system dashboard loads.
 **2. First diocesan ordinary (bishop)** — after the system admin can log in:
 
 - Ensure the bishop has a `users` account (create via `shield:user create` or the people/clergy intake flow, with portal access enabled) and the target diocese exists.
+- **Before installing**, complete the authorized, audited **two-person diocesan record review** required by [`docs/ORDINARY_AUTHORIZATION.md` § Controlled rollout](ORDINARY_AUTHORIZATION.md#controlled-rollout): two reviewers independently confirm identity, ordination documents, standing, current ordinary, and appointment, and the review record (both reviewers, date, documents examined) is filed. Use that record's identifier as the `evidenceReference`. `installOrdinary()` itself does not enforce a second reviewer, so a single system admin must not proceed without this record.
 - In the UI: **System → Diocesan Ordinaries → Install** (`installOrdinaryModal`). `ClergyReviewService::installOrdinary(actorId, dioceseId, userId, ordainedOn, officeStartedOn, evidenceReference)` requires the actor to be a system admin, the diocese to exist, and records the office as a managed `leadership_position` with evidence reference — the canonical-ordination invariant applies (verified order in `clergy_ordination` for sacramental functions).
 
 **3. Role-permission sync** — after users and groups exist:

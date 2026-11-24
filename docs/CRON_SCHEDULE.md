@@ -11,7 +11,10 @@ after sign-off; verify the first run of each job in its log.
 1. Replace `/path/to/ekklesiaONLINE` with the deployed app root and `php`
    with the absolute PHP 8.5 binary (cron `PATH` is minimal — on HostGator
    EA4 this is typically `/opt/alt/php85/usr/bin/php`; confirm with
-   `which php` over SSH).
+   `which php` over SSH). The `build/*.sh` wrappers do **not** see the
+   crontab's inline `php` path — set `PHP_BIN=/opt/alt/php85/usr/bin/php`
+   as an environment line at the top of the crontab (shown below); the
+   wrappers use `$PHP_BIN` and fall back to `php` on `PATH`.
 2. All times are **server-local**. Check `date` on the host — if it runs
    UTC, shift the "morning" jobs (`followup:send`, `volunteers:remind`)
    into parish-local business hours.
@@ -24,6 +27,8 @@ after sign-off; verify the first run of each job in its log.
 ## Crontab
 
 ```cron
+PHP_BIN=/opt/alt/php85/usr/bin/php
+
 # ── Overnight batch (order matters: metrics → aggregates → backup) ──
 30 1 * * *   /path/to/ekklesiaONLINE/build/service_metrics_refresh_cron.sh
 45 1 * * *   cd /path/to/ekklesiaONLINE && php spark attendance:sync-diocesan-aggregates --from $(date -d "$(date +\%Y-\%m-01) -1 month" +\%Y-\%m-01) --to $(date +\%Y-\%m-\%d) >> writable/logs/attendance_aggregates_cron.log 2>&1
