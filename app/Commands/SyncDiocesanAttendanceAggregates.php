@@ -129,9 +129,9 @@ class SyncDiocesanAttendanceAggregates extends BaseCommand
                 return [null, null];
             }
 
-            // Monthly summaries are replaced whole, so always recompute from
-            // the 1st of the oldest touched month to avoid truncating it.
-            return [substr($fromOpt, 0, 8) . '01', $toOpt];
+            // Explicit ranges are used as given (the caller owns month
+            // alignment); only --rolling-days is snapped to a month start.
+            return [$fromOpt, $toOpt];
         }
 
         if ($rollingDays < 1) {
