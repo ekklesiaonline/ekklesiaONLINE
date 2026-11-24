@@ -180,10 +180,19 @@ Install** in the UI (requires the bishop's `users` account + diocese to exist).
 Install the approved matrix from `docs/CRON_SCHEDULE.md` via hPanel → Cron Jobs.
 **Use the absolute PHP 8.5 path** (see §3.2) and absolute script paths:
 
+hPanel adds one command per job, so set `PHP_BIN` **inline on each wrapper
+job** (the `build/*.sh` wrappers read `$PHP_BIN`; don't rely on a crontab-level
+environment line). Direct `php spark` jobs use the absolute binary instead:
+
 ```cron
-30 1 * * *   cd /home/user/ekklesia && /opt/alt/php85/usr/bin/php spark service-metrics:refresh --rolling-days 35 --rebuild-period-buckets >> writable/logs/service_metrics_refresh_cron.log 2>&1
-# ... full matrix in docs/CRON_SCHEDULE.md — substitute PHP binary + ROOT_DIR
+30 1 * * *   PHP_BIN=/opt/alt/php85/usr/bin/php bash /home/user/ekklesia/build/service_metrics_refresh_cron.sh
+45 1 * * *   cd /home/user/ekklesia && /opt/alt/php85/usr/bin/php spark attendance:sync-diocesan-aggregates --from $(date -d "$(date +\%Y-\%m-01) -1 month" +\%Y-\%m-01) --to $(date +\%Y-\%m-\%d) >> writable/logs/attendance_aggregates_cron.log 2>&1
+# ... full matrix in docs/CRON_SCHEDULE.md — substitute PHP binary + app root
 ```
+
+After saving, confirm the wrappers picked up 8.5: run one manually as
+`PHP_BIN=/opt/alt/php85/usr/bin/php bash build/clergy_reconcile_grants_cron.sh`
+and check its log, then inspect `crontab -l` to see exactly what hPanel stored.
 
 Verify server timezone first (`date` via SSH) — morning jobs assume
 server-local time. Do NOT install `build/cron_sync_church_people.sh` (dead —

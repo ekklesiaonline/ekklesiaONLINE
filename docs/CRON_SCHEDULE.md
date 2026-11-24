@@ -12,9 +12,11 @@ after sign-off; verify the first run of each job in its log.
    with the absolute PHP 8.5 binary (cron `PATH` is minimal — on HostGator
    EA4 this is typically `/opt/alt/php85/usr/bin/php`; confirm with
    `which php` over SSH). The `build/*.sh` wrappers do **not** see the
-   crontab's inline `php` path — set `PHP_BIN=/opt/alt/php85/usr/bin/php`
-   as an environment line at the top of the crontab (shown below); the
-   wrappers use `$PHP_BIN` and fall back to `php` on `PATH`.
+   crontab's inline `php` path — they use `$PHP_BIN` and fall back to `php`
+   on `PATH`. Each wrapper line below sets `PHP_BIN=...` **inline** so it
+   works whether jobs are added via `crontab -e` or the hPanel/cPanel Cron
+   Jobs panel (which adds one command per job and may not honour
+   crontab-level environment lines). Replace the path on every wrapper line.
 2. All times are **server-local**. Check `date` on the host — if it runs
    UTC, shift the "morning" jobs (`followup:send`, `volunteers:remind`)
    into parish-local business hours.
@@ -27,17 +29,15 @@ after sign-off; verify the first run of each job in its log.
 ## Crontab
 
 ```cron
-PHP_BIN=/opt/alt/php85/usr/bin/php
-
 # ── Overnight batch (order matters: metrics → aggregates → backup) ──
-30 1 * * *   bash /path/to/ekklesiaONLINE/build/service_metrics_refresh_cron.sh
+30 1 * * *   PHP_BIN=/opt/alt/php85/usr/bin/php bash /path/to/ekklesiaONLINE/build/service_metrics_refresh_cron.sh
 45 1 * * *   cd /path/to/ekklesiaONLINE && php spark attendance:sync-diocesan-aggregates --from $(date -d "$(date +\%Y-\%m-01) -1 month" +\%Y-\%m-01) --to $(date +\%Y-\%m-\%d) >> writable/logs/attendance_aggregates_cron.log 2>&1
 00 2 * * *   cd /path/to/ekklesiaONLINE && sh build/backup_database.sh >> writable/logs/backup-cron.log 2>&1
 00 3 * * *   cd /path/to/ekklesiaONLINE && php spark finance:sync-journal-history >> writable/logs/finance_journal_sync_cron.log 2>&1
 10 3 * * *   cd /path/to/ekklesiaONLINE && php spark pledge:sync-fulfillment >> writable/logs/pledge_sync_cron.log 2>&1
 
 # ── Sunday evening (after services, before standing:refresh) ──
-30 21 * * 0  cd /path/to/ekklesiaONLINE && bash build/cron_sync_sunday_service_metrics.sh >> writable/logs/sunday_service_metrics_cron.log 2>&1
+30 21 * * 0  cd /path/to/ekklesiaONLINE && PHP_BIN=/opt/alt/php85/usr/bin/php bash build/cron_sync_sunday_service_metrics.sh >> writable/logs/sunday_service_metrics_cron.log 2>&1
 00 23 * * 0  cd /path/to/ekklesiaONLINE && php spark standing:refresh --year $(date +\%Y) >> writable/logs/standing_refresh_cron.log 2>&1
 
 # ── Daytime operations ──
@@ -45,7 +45,7 @@ PHP_BIN=/opt/alt/php85/usr/bin/php
 00 8 * * *   cd /path/to/ekklesiaONLINE && php spark followup:send >> writable/logs/followup_send_cron.log 2>&1
 */15 * * * * cd /path/to/ekklesiaONLINE && php spark events:publish-due >> writable/logs/events_publish_cron.log 2>&1
 */30 * * * * cd /path/to/ekklesiaONLINE && php spark sms:process >> writable/logs/sms_process_cron.log 2>&1
-15 * * * *   bash /path/to/ekklesiaONLINE/build/clergy_reconcile_grants_cron.sh
+15 * * * *   PHP_BIN=/opt/alt/php85/usr/bin/php bash /path/to/ekklesiaONLINE/build/clergy_reconcile_grants_cron.sh
 ```
 
 ## Job matrix
