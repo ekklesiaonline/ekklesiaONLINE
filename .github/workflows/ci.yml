@@ -144,6 +144,13 @@ jobs:
             echo "database.default.database = 'ekklesia_ci'"
             echo "database.default.username = 'ekklesia_ci'"
             echo "database.default.password = 'ekklesia_ci'"
+            echo "database.tests.hostname = '127.0.0.1'"
+            echo "database.tests.database = 'ekklesia_ci'"
+            echo "database.tests.username = 'ekklesia_ci'"
+            echo "database.tests.password = 'ekklesia_ci'"
+            echo "database.tests.DBDriver = 'MySQLi'"
+            echo "database.tests.DBPrefix = ''"
+            echo "database.tests.port = 3306"
             echo "encryption.key = 'hex2bin:$(openssl rand -hex 32)'"
             echo "encryption.blindIndexKey = 'hex2bin:$(openssl rand -hex 32)'"
           } >> .env
@@ -169,6 +176,11 @@ jobs:
         run: |
           php spark routes > build/logs/routes.txt 2>&1
           ! grep -q "Exception" build/logs/routes.txt
+
+      # MySQL-fixture tests: database.tests.* in .env flips the tests group to
+      # MySQLi so schema tests that skip under SQLite actually execute here.
+      - name: Run MySQL-fixture PHPUnit tests
+        run: vendor/bin/phpunit --no-coverage tests/database/VolunteerScheduleSchemaIntegrityTest.php
 
       - name: Upload MySQL evidence
         if: always()

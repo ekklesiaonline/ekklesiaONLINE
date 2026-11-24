@@ -60,7 +60,10 @@ final class MonitoringBehaviorTest extends CIUnitTestCase
     public function testSlowQueryLoggingWritesSanitizedStructuredEntry(): void
     {
         $query = $this->createMock(QueryInterface::class);
-        $query->method('getDuration')->with(6)->willReturn('0.150000');
+        $query->expects($this->once())
+            ->method('getDuration')
+            ->with(6)
+            ->willReturn('0.150000');
         $query->method('getQuery')->willReturn("SELECT * FROM donation WHERE email = 'alice@example.org' AND amount > 45.50 AND user_id = 99");
         $query->method('isWriteType')->willReturn(false);
         $query->method('hasError')->willReturn(false);
@@ -81,18 +84,18 @@ final class MonitoringBehaviorTest extends CIUnitTestCase
     public function testRequestMonitoringLogsSlowRequestsAndServerErrors(): void
     {
         $filter = new RequestMonitoringFilter();
-        $request = $this->createMock(RequestInterface::class);
+        $request = $this->createStub(RequestInterface::class);
         $request->method('getMethod')->willReturn('post');
         $request->method('getUri')->willReturn(new URI('https://example.test/follow-up/tasks'));
         $request->method('getIPAddress')->willReturn('127.0.0.1');
 
-        $slowResponse = $this->createMock(ResponseInterface::class);
+        $slowResponse = $this->createStub(ResponseInterface::class);
         $slowResponse->method('getStatusCode')->willReturn(200);
 
         $_SERVER['REQUEST_TIME_FLOAT'] = microtime(true) - 1.2;
         $filter->after($request, $slowResponse);
 
-        $errorResponse = $this->createMock(ResponseInterface::class);
+        $errorResponse = $this->createStub(ResponseInterface::class);
         $errorResponse->method('getStatusCode')->willReturn(503);
 
         $_SERVER['REQUEST_TIME_FLOAT'] = microtime(true);

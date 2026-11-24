@@ -15,7 +15,6 @@ final class EmailSettingsSecurityTest extends CIUnitTestCase
     {
         $service = new EmailSettingsService();
         $method = new ReflectionMethod($service, 'classifySendFailure');
-        $method->setAccessible(true);
 
         $code = $method->invoke($service, '535-5.7.8 Username and Password not accepted. Failed to authenticate password.');
 

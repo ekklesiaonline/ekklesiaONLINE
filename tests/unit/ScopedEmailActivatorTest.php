@@ -96,10 +96,10 @@ final class ScopedEmailActivatorTest extends CIUnitTestCase
         $user->id    = 4242;
         $user->email = $email;
 
-        $authenticator = $this->createMock(Session::class);
+        $authenticator = $this->createStub(Session::class);
         $authenticator->method('getPendingUser')->willReturn($user);
 
-        $auth = $this->createMock(Auth::class);
+        $auth = $this->createStub(Auth::class);
         $auth->method('setAuthenticator')->willReturnSelf();
         $auth->method('getAuthenticator')->willReturn($authenticator);
 

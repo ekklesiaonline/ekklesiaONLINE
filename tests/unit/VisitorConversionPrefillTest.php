@@ -269,7 +269,6 @@ final class VisitorConversionPrefillTest extends CIUnitTestCase
         $service = new PersonConversionService();
         $ref = new \ReflectionClass($service);
         $method = $ref->getMethod('linkToUser');
-        $method->setAccessible(true);
 
         $person = $this->db->table('person')->where('id', $personId)->get()->getRowArray();
         $method->invoke(null, $userId, $personId, 301, $person, date('Y-m-d H:i:s'));

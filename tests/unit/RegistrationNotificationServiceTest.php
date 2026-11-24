@@ -139,6 +139,7 @@ final class RegistrationNotificationServiceTest extends CIUnitTestCase
         $this->assertContains('province.admin@example.org', $recipients);
     }
 
+    #[\PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations]
     public function testNotifyAdminsPendingReviewPreservesFromHeaderPerRecipient(): void
     {
         $capturedSenders = [];
@@ -159,7 +160,6 @@ final class RegistrationNotificationServiceTest extends CIUnitTestCase
                 {
                     $ref = new \ReflectionClass(\CodeIgniter\Email\Email::class);
                     $headersProp = $ref->getProperty('headers');
-                    $headersProp->setAccessible(true);
                     $headers = $headersProp->getValue($this);
 
                     $this->recorder[] = [

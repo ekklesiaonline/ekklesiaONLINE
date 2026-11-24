@@ -54,10 +54,10 @@ final class VolunteerScheduleSchemaIntegrityTest extends CIUnitTestCase
 
         $this->seedTeamFixtures($db);
 
-        $db->table('team_member')->insert(['team_id' => 1, 'user_id' => 1, 'role' => 'member']);
+        $db->table('team_member')->insert(['team_id' => 1, 'user_id' => 1, 'person_id' => 1, 'role' => 'member']);
 
         $this->expectException(\Throwable::class);
-        $db->table('team_member')->insert(['team_id' => 1, 'user_id' => 1, 'role' => 'member']);
+        $db->table('team_member')->insert(['team_id' => 1, 'user_id' => 1, 'person_id' => 1, 'role' => 'member']);
     }
 
     public function testVolunteerScheduleInsertSucceedsWithServiceColumnsOnly(): void
@@ -104,6 +104,9 @@ final class VolunteerScheduleSchemaIntegrityTest extends CIUnitTestCase
         }
         if (! $db->table('users')->where('id', 1)->countAllResults(false)) {
             $db->query('INSERT INTO users (id, username, active, created_at) VALUES (1, \'vtest1\', 1, NOW())');
+        }
+        if (! $db->table('person')->where('id', 1)->countAllResults(false)) {
+            $db->query('INSERT INTO person (id, first_name, created_at) VALUES (1, \'Test Person\', NOW())');
         }
         if (! $db->table('team')->where('id', 1)->countAllResults(false)) {
             $db->table('team')->insert(['id' => 1, 'parish_id' => 1, 'name' => 'Test Team']);

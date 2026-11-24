@@ -27,6 +27,7 @@ use Tests\Support\Database\CanonicalTestSchema;
  *
  * @internal
  */
+#[\PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations]
 final class MagicLinkSecurityTest extends CIUnitTestCase
 {
     use DatabaseTestTrait;

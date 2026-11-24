@@ -174,7 +174,7 @@ class BankStatementParserService
             if (trim($line) === '') {
                 continue;
             }
-            $cols = str_getcsv($line, $delimiter);
+            $cols = str_getcsv($line, $delimiter, escape: '');
             $map = $this->detectColumns($cols);
             if (isset($map['date']) && (isset($map['amount']) || (isset($map['debit']) && isset($map['credit'])))) {
                 $headerIndex = $idx;
@@ -196,7 +196,7 @@ class BankStatementParserService
                 continue;
             }
 
-            $cols = str_getcsv($line, $delimiter);
+            $cols = str_getcsv($line, $delimiter, escape: '');
             if (count($cols) < 2) {
                 continue;
             }

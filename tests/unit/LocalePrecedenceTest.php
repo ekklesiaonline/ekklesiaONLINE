@@ -83,10 +83,8 @@ final class LocalePrecedenceTest extends CIUnitTestCase
 
     private function mockRequestWithHeader(string $acceptLanguage): RequestInterface
     {
-        $request = $this->createMock(RequestInterface::class);
-        $request->method('getHeaderLine')
-            ->with('Accept-Language')
-            ->willReturn($acceptLanguage);
+        $request = $this->createStub(RequestInterface::class);
+        $request->method('getHeaderLine')->willReturn($acceptLanguage);
 
         return $request;
     }

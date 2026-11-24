@@ -1,7 +1,7 @@
 # ekklesiaONLINE — Launch Readiness
 
 **Date:** 2026-11-21
-**Status:** In progress — Phase A (A1 done; A2/A3 operator items open)
+**Status:** In progress — Phase A (A1 done; A2/A3 operator items open). **2026-11-23:** operator elected to fully decommission the existing staging deployment (GitHub `staging` environment + hosting) and re-provision a fresh staging from `build/env-templates/` before launch validation. A2/A3 staging items now apply to the *replacement* staging.
 **Canonical gate:** `docs/DEPLOYMENT_RUNBOOK.md` §3 (go/no-go) and §12 (Sessions 1–8)
 **Execution plan for:** `docs/GO_LIVE_TODO_AND_ORPHAN_TABLE_EXPANSION_2026-05-10.md` (its phases map onto the runbook sessions below)
 
@@ -85,8 +85,8 @@ Dormant-table tranches per `docs/DORMANT_NOT_WIRED_DEFER_PLAN_2026-05-10.md` and
 - [x] Agent: diff local `.env` keys vs `.env.example` (names only, never values) — done 2026-11-21; 35 example keys absent locally (all have code defaults; `encryption.blindIndexKey`, `backup.db.*`, monitoring/rate-limit keys must be set explicitly in deployed envs). Findings in `build/env-templates/README.md`.
 - [x] Agent: draft staging/prod env templates — done 2026-11-21: `build/env-templates/staging.env.template`, `production.env.template`, `README.md`. Verified: exact key parity with `.env.example` (no missing/extra keys). Also added commented `email.googleClientId`/`googleClientSecret` to `.env.example` (keys existed in `app/Config/Email.php` but were undocumented).
 - [x] Agent: local config sanity — `php spark config:check App|Logger|Session|'CodeIgniter\Shield\Config\Auth'` all pass (2026-11-21).
-- [ ] Operator: `families.enforceSingleFamilyMembership` — **decision recorded 2026-11-22: enable `=1`** on deployed envs. Duplicate audit so far: local dev DB only, 0 rows (dev DB has 0 `family`/`family_member` rows — not representative). **Still required:** run audit on staging + prod DBs (`SELECT user_id, COUNT(DISTINCT family_id) AS family_count FROM family_member GROUP BY user_id HAVING family_count > 1;`) to find legacy duplicates for remediation — the flag only gates *new* writes and does not clean existing rows. Set `families.enforceSingleFamilyMembership = 1` in each deployed `.env`.
-- [ ] Operator: fill staging `.env` from `build/env-templates/staging.env.template` — `CI_ENVIRONMENT=production`, `https://` `app.baseURL`, `app.forceGlobalSecureRequests=true`, trusted proxy IPs, MySQL creds, independent `encryption.key`/`encryption.blindIndexKey` (`hex2bin:` 32-byte), SMTP, `backup.db.*`, monitoring/rate-limit values. *(A staging deployment is live — the former nightly rate-limit workflow passed against it before decommissioning — but its `.env` contract is not verifiable from the repo.)*
+- [ ] Operator: `families.enforceSingleFamilyMembership` — **decision recorded 2026-11-22: enable `=1`** on deployed envs. Duplicate audit so far: local dev DB only, 0 rows (dev DB has 0 `family`/`family_member` rows — not representative). **Still required:** run audit on the **production** DB (`SELECT user_id, COUNT(DISTINCT family_id) AS family_count FROM family_member GROUP BY user_id HAVING family_count > 1;`) to find legacy duplicates for remediation — the flag only gates *new* writes and does not clean existing rows. (Staging-DB audit is moot — staging is being decommissioned 2026-11-23.) Set `families.enforceSingleFamilyMembership = 1` in each deployed `.env` after audit+remediation.
+- [ ] Operator: decommission existing staging (decided 2026-11-23 — full deletion incl. hosting; staging will be re-provisioned fresh before launch validation). Then provision new staging `.env` from `build/env-templates/staging.env.template` — `CI_ENVIRONMENT=production`, `https://` `app.baseURL`, `app.forceGlobalSecureRequests=true`, trusted proxy IPs, MySQL creds, independent `encryption.key`/`encryption.blindIndexKey` (`hex2bin:` 32-byte), SMTP, `backup.db.*`, monitoring/rate-limit values.
 - [ ] Operator: fill production `.env` from `build/env-templates/production.env.template` with production-specific secrets; confirm zero `CHANGE_ME` remain.
 - [ ] Confirm `security.disableDeviceVerificationForTesting` absent or `0`/`false` in both deployed envs.
 - [ ] Confirm writable directories owned by service account, group-writable, not world-writable on deployed hosts.
@@ -97,10 +97,16 @@ Dormant-table tranches per `docs/DORMANT_NOT_WIRED_DEFER_PLAN_2026-05-10.md` and
 
 #### A3 — Configure protected GitHub staging environment (Session 4) — USER/OPS
 
+**2026-11-23 decommission decision:** the existing `staging` environment and its secrets will be deleted along with the staging hosting; a fresh `staging` environment + secrets will be created when the replacement staging is provisioned. Items below describe the *previous* environment's verified state — re-verify all of them on the new environment.
+
+**Decommission complete 2026-11-23:** GitHub `staging` environment + secrets deleted (verified via public API) and old staging hosting cleaned up by operator. HostGator confirmed to offer **PHP 8.5** — `ekklessia.online` is a viable deployment target. Fresh `staging` environment + secrets will be created when the replacement staging is provisioned.
+
+**Deployment target confirmed 2026-11-23:** HostGator shared hosting, domain `ekklessia.online` (NS `hgns1/2.hostgator.com`, IP `129.121.81.160`), **PHP 8.5 available** (operator-confirmed via hPanel). Currently serves a bare CodeIgniter 4.7.4 skeleton at `/public/` — placeholder pending deployment. HTTPS exists but does not enforce (redirects to HTTP) — must be fixed at deploy time (`app.forceGlobalSecureRequests`, HSTS, HostGator SSL/TLS settings).
+
 Verified via GitHub public API 2026-11-21 (repo is public; secrets/workflow logs need auth):
 
-- [x] GitHub environment `staging` exists (created 2026-09-20); deployment branch policy = **`main` only** (custom branch policy, single `main` entry — verified via API).
-- [x] No required reviewers on the environment (only `branch_policy` protection rule; `can_admins_bypass=true`).
+- [x] ~~GitHub environment `staging` exists~~ — **deleted 2026-11-23** (verified via public API); will be recreated with replacement staging (branch policy `main` only, no required reviewers).
+- [x] ~~No required reviewers on the environment~~ — moot; re-verify on recreation.
 - [x] Secrets functionally proven: 15 scheduled nightly runs, 14 success — the auth probe requires a valid login, so `STAGING_BASE_URL` + `STAGING_RATE_LIMIT_EMAIL` + `STAGING_RATE_LIMIT_PASSWORD` are all configured and working. (Secret *names* not listable without auth.)
 - [x] `STAGING_BASE_URL` reaches the app bypassing edge rate limits (probes observe application 429 + `Retry-After`, not edge 503).
 - [x] Scheduled nightly runs decommissioned — `.github/workflows/nightly-security-rate-limit.yml` deleted; staging rate-limit verification retained via manual `build/stress_rate_limit_test.sh`.
@@ -114,23 +120,28 @@ Verified via GitHub public API 2026-11-21 (repo is public; secrets/workflow logs
 
 ### Phase B — Database & recovery
 
-#### B1 — Apply pending migrations locally — AGENT
+#### B1 — Apply pending migrations locally — AGENT — ✅ DONE 2026-11-24
 
-- [ ] Run `php spark migrate --all`.
-- [ ] Run `php spark migrate:status --all` → zero `| --- |` pending rows.
-- [ ] Run `php spark routes > /tmp/routes_after_migrate.txt` → compiles without Exception.
-- [ ] Smoke: `curl -sf http://ekklesiaonline.local/health` → 200.
+- [x] Run `php spark migrate --all` — all 3 applied cleanly (`AddEventRegistrationUniqueIndex`, `AddTeamMemberUniqueIndex`, `DropVolunteerScheduleLegacyDateColumns`).
+- [x] Run `php spark migrate:status --all` → zero `| --- |` pending rows.
+- [x] Run `php spark routes` → exit 0, 729 lines compiled (`/tmp/routes_after_migrate.txt`).
+- [x] Smoke: `curl -sf http://ekklesiaonline.local/health` → 200; `/` → 200.
 
 > **AGENT prompt:** In `/Users/juanrosariodelacruz/Sites/ekklesiaONLINE`, run `php spark migrate --all`, then `php spark migrate:status --all` and confirm no pending rows remain (the three expected: `2026_11_17_000002 AddEventRegistrationUniqueIndex`, `2026_11_18_000001 AddTeamMemberUniqueIndex`, `2026_11_18_000002 DropVolunteerScheduleLegacyDateColumns`). Re-run `php spark routes` and `curl -sf http://ekklesiaonline.local/health`. If any migration errors, STOP and report — do not force. On success, mark B1 done and ask to move to B2.
 
-#### B2 — Backup/restore validation (Session 7) — JOINT
+#### B2 — Backup/restore validation (Session 7) — JOINT — ✅ DONE locally 2026-11-24
 
-- [ ] Configure `backup.db.*` (or a real `database.default.password`) so `sh build/backup_database.sh --check` and `sh build/restore_database.sh --check` pass.
-- [ ] Create a staging backup; record filename; verify non-empty, `gzip -t` passes, checksum recorded, retention settings correct.
-- [ ] Create a separate empty MySQL database; confirm it is neither staging nor production.
-- [ ] Configure isolated restore credentials; **obtain explicit operator approval for the selected target** before restoring.
-- [ ] Restore; verify core tables, `php spark migrate:status --all`, representative row counts, authentication.
-- [ ] Record results; remove isolated environment via approved infrastructure process.
+- [x] Configure `backup.db.*` — done: dedicated least-privilege `ekklesia_backup@localhost` MySQL user (SELECT/SHOW VIEW/TRIGGER/EVENT/LOCK TABLES on `ekklesiaRD`, ALL on scratch DB, PROCESS/RELOAD/FLUSH_TABLES/SET_ANY_DEFINER global — all required by mysqldump/restore); credentials in untracked local `.env`. Both `--check` preflights pass.
+- [x] Backup created — `writable/backups/ekklesiaRD_20261123_204350.sql.gz` (710K, non-empty, `gzip -t` OK, SHA-256 `ccc8baac99d56750018a856153ffda67eeef7271ee992512bf56a9095b5dec67`, 187 tables + 2 views, `backup.retentionDays=30`). *(Local dev DB — staging is decommissioned; repeat on staging/prod at deploy.)*
+- [x] Separate empty MySQL DB — `ekklesiaRD_restore_drill` created empty (0 tables), neither staging nor production.
+- [x] Explicit operator approval obtained before restore (2026-11-24).
+- [x] Restore verified — `Restore complete.`; 189 objects (187 tables + 2 views); `migrate:status --all` → 0 pending; row counts match source exactly (users=27, auth_identities=24, auth_groups_users=25, profile=34, parish_affiliation=19).
+- [x] Isolated environment removed — scratch DB dropped; `.env` reverted (`backup.db.name = ekklesiaRD`); preflights re-verified.
+
+**Issues found & fixed during drill:**
+- `build/backup_database.sh` patched — conditional `--skip-masking-policies` (MySQL 8.4+/9 mysqldump fails on masking-policy catalog for least-privilege users) and `--set-gtid-purged=OFF` (prevents `SET @@GLOBAL.GTID_PURGED` in dumps, which needs global admin on restore). Both flags added only when `mysqldump --help` advertises them — no-ops on MySQL 8.0/MariaDB.
+- Two dev-only views (`vw_current_clergy_appointment`, `vw_open_vendor_bills` — manual artifacts, not in repo migrations) referenced dead schema `ekklesiaonline`; recreated with portable unqualified table refs and `DEFINER=ekklesia_backup@localhost` (non-system definer so `SET_ANY_DEFINER` suffices — no `SYSTEM_USER` needed).
+- **Production caveat:** if prod ever has views/triggers/routines with `DEFINER=root@…`, restores need `SET_ANY_DEFINER` + `SYSTEM_USER` or definer stripping. Canonical migrations create none — fresh prod deploy unaffected.
 
 **Verification:** both `--check` preflights pass; backup integrity verified; isolated restore verified; production untouched.
 
@@ -140,26 +151,27 @@ Verified via GitHub public API 2026-11-21 (repo is public; secrets/workflow logs
 
 #### C1 — Resolve unclassified test skips + CI MySQL coverage — AGENT
 
-- [ ] Add a PHPUnit step to the `mysql` job in `.github/workflows/ci.yml` that runs `tests/database/VolunteerScheduleSchemaIntegrityTest.php` against the migrated MySQL 8 service via scoped `database.tests.*` env overrides (`DBDriver=MySQLi`, `DBPrefix` empty, `database=ekklesia_ci`, service creds). Do **not** put these overrides in `phpunit.xml.dist` (the SQLite job must keep its fixture).
-- [ ] Verify locally that the env-override approach works (optional: temporary local MySQL `tests` group) or reason through CI env propagation; the CI run is the real verification.
-- [ ] Update `docs/DEPLOYMENT_RUNBOOK.md` §3 "Approved skip classifications": reclassify the suite as **eight** skips — add the two `VolunteerScheduleSchemaIntegrityTest` cases as "requires MySQLi; executed by the CI MySQL job PHPUnit step". Update every "exactly six"/"six classified skips" reference (incl. §12 Session 5 completion text).
-- [ ] Re-run `vendor/bin/phpunit --no-coverage` → still 0 failures; skips remain 8 on SQLite (now all classified).
+- [x] Add a PHPUnit step to the `mysql` job in `.github/workflows/ci.yml` that runs `tests/database/VolunteerScheduleSchemaIntegrityTest.php` against the migrated MySQL 8 service via scoped `database.tests.*` env overrides (`DBDriver=MySQLi`, `DBPrefix` empty, `database=ekklesia_ci`, service creds). Do **not** put these overrides in `phpunit.xml.dist` (the SQLite job must keep its fixture). **Implementation note:** overrides were appended to the job's generated `.env` (not per-step `env:`) — equivalent effect, single source, and verified that CI4 parses empty values (`DBPrefix = ''` → `''`).
+- [x] Verify locally that the env-override approach works (optional: temporary local MySQL `tests` group) or reason through CI env propagation; the CI run is the real verification. **Done:** local MySQL fixture `ekklesia_ci_local` + env overrides → `OK (2 tests, 7 assertions)`; CI4 `BaseConfig`/`DotEnv` source path traced for `database.tests.*` propagation incl. empty-value handling.
+- [x] Update `docs/DEPLOYMENT_RUNBOOK.md` §3 "Approved skip classifications": reclassify the suite as **eight** skips — add the two `VolunteerScheduleSchemaIntegrityTest` cases as "requires MySQLi; executed by the CI MySQL job PHPUnit step". Update every "exactly six"/"six classified skips" reference (incl. §12 Session 5 completion text).
+- [x] Re-run `vendor/bin/phpunit --no-coverage` → still 0 failures; skips remain 8 on SQLite (now all classified). **Result:** 1,349 tests, 6,305 assertions, 8 skipped, 0 failures; `phpstan analyse` clean.
 
-**Verification:** CI mysql job shows the 2 tests executed (not skipped) and passing; runbook skip count = observed skip count.
+**Verification:** CI mysql job shows the 2 tests executed (not skipped) and passing — *pending first post-merge CI run*; equivalent local MySQL verification passed 2026-11-24; runbook skip count = observed skip count (8 = 8).
 
 > **AGENT prompt:** In `ekklesiaonline/ekklesiaONLINE`: (1) edit `.github/workflows/ci.yml` — in the `mysql` job after "Compile routes", add a step `Run MySQL-fixture PHPUnit tests` executing `vendor/bin/phpunit --no-coverage tests/database/VolunteerScheduleSchemaIntegrityTest.php` with env `database.tests.hostname=127.0.0.1`, `database.tests.database=ekklesia_ci`, `database.tests.username=ekklesia_ci`, `database.tests.password=ekklesia_ci`, `database.tests.DBDriver=MySQLi`, `database.tests.DBPrefix=` (empty), `database.tests.port=3306`. Confirm CI4 env override semantics for the `tests` group first (`app/Config/Database.php` `$tests` + `ENVIRONMENT=testing` default-group switch); if `DBPrefix` cannot be emptied via env, add a `phpunit.mysql.xml` config instead — choose the simpler working option and explain. (2) Update `docs/DEPLOYMENT_RUNBOOK.md` skip classifications and counts. (3) Run `vendor/bin/phpunit --no-coverage` locally (SQLite) to confirm no regressions, and `vendor/bin/phpstan analyse`. Do NOT push. Mark C1 done only after CI evidence or an equivalent local MySQL verification; ask to move to C2.
 
 #### C2 — PHP 8.5 deprecation cleanup + phpunit config — AGENT
 
-- [ ] `app/Services/BankStatementParserService.php` (~lines 177, 199): pass `escape: ''` explicitly to `str_getcsv()` (PHP 8.5 deprecation; matches the future default).
-- [ ] `MemberPortal/Controllers/PublicAssets.php` (~line 526): remove the deprecated `finfo_close($finfo)` call (finfo objects free automatically).
-- [ ] Tests: remove no-op `->setAccessible(true)` calls on `ReflectionMethod`/`ReflectionProperty` (deprecated since PHP 8.5, no-op since 8.1) in: `tests/EmailSettingsSecurityTest.php`, `tests/ProvinceSecurityRegressionTest.php`, `tests/app/Services/ProductionSecurityPostureTest.php`, `tests/database/PermissionRoleSyncSeederTest.php`, `tests/unit/DioceseDashboardControllerTest.php`, `tests/unit/FinanceAuditParishContextContractTest.php`, `tests/unit/GmailApiEmailTest.php`, `tests/unit/ParishAuditLoggingTest.php`, `tests/unit/ParishDashboardDataServiceTest.php`, `tests/unit/ProvinceDashboardControllerTest.php`, `tests/unit/RegistrationNotificationServiceTest.php`, `tests/unit/SettingsScopeAndCastTest.php`, `tests/unit/VisitorConversionPrefillTest.php`.
-- [ ] `ProductionSecurityPostureTest`: replace static `ReflectionHelper::setPrivateProperty(...)` calls with instance calls (`$this->setPrivateProperty(...)`) per the deprecation notice.
-- [ ] PHPUnit notices (19): mocks created without expectations in `LoginRateLimitFilterTest`, `MonitoringBehaviorTest`, `ParishAuditLoggingTest`, `RegistrationNotificationServiceTest`, `ScopedEmailActivatorTest`, and others — apply `#[AllowMockObjectsWithoutExpectations]` where mocking without expectations is intentional (PHPUnit's documented opt-out), or convert to stubs where trivial.
-- [ ] `phpunit.xml.dist`: update `xsi:noNamespaceSchemaLocation` to the PHPUnit 13 schema; replace `failOnWarning="true"` with the PHPUnit 13 granular flags (`failOnPhpunitDeprecation`, `failOnPhpunitNotice`) **only after** the suite is clean — enabling them on a dirty suite breaks CI.
-- [ ] Re-run `vendor/bin/phpstan analyse` and `vendor/bin/phpunit --no-coverage --display-deprecations --display-phpunit-deprecations --display-phpunit-notices`; target: 0 failures, 0 deprecations, 0 PHPUnit deprecations/notices, 8 classified skips.
+- [x] `app/Services/BankStatementParserService.php` (~lines 177, 199): pass `escape: ''` explicitly to `str_getcsv()` (PHP 8.5 deprecation; matches the future default).
+- [x] `MemberPortal/Controllers/PublicAssets.php` (~line 526): remove the deprecated `finfo_close($finfo)` call (finfo objects free automatically).
+- [x] Tests: remove no-op `->setAccessible(true)` calls on `ReflectionMethod`/`ReflectionProperty` (deprecated since PHP 8.5, no-op since 8.1) in: `tests/EmailSettingsSecurityTest.php`, `tests/ProvinceSecurityRegressionTest.php`, `tests/app/Services/ProductionSecurityPostureTest.php`, `tests/database/PermissionRoleSyncSeederTest.php`, `tests/unit/DioceseDashboardControllerTest.php`, `tests/unit/FinanceAuditParishContextContractTest.php`, `tests/unit/GmailApiEmailTest.php`, `tests/unit/ParishAuditLoggingTest.php`, `tests/unit/ParishDashboardDataServiceTest.php`, `tests/unit/ProvinceDashboardControllerTest.php`, `tests/unit/RegistrationNotificationServiceTest.php`, `tests/unit/SettingsScopeAndCastTest.php`, `tests/unit/VisitorConversionPrefillTest.php`.
+- [x] `ProductionSecurityPostureTest`: replace static `ReflectionHelper::setPrivateProperty(...)` calls with instance calls (`$this->setPrivateProperty(...)`) per the deprecation notice.
+- [x] PHPUnit notices (19): mocks created without expectations in `LoginRateLimitFilterTest`, `MonitoringBehaviorTest`, `ParishAuditLoggingTest`, `RegistrationNotificationServiceTest`, `ScopedEmailActivatorTest`, and others — apply `#[AllowMockObjectsWithoutExpectations]` where mocking without expectations is intentional (PHPUnit's documented opt-out), or convert to stubs where trivial. **Done:** `createMock`→`createStub` in 6 files (stubs allow `method()->willReturn*` without expects and emit no notice); `#[AllowMockObjectsWithoutExpectations]` on `MagicLinkSecurityTest` (class) and `RegistrationNotificationServiceTest::testNotifyAdminsPendingReviewPreservesFromHeaderPerRecipient` (partial `getMockBuilder` doubles can't be stubs).
+- [x] PHPUnit deprecations (9): `with()` without `expects()` — `LocalePrecedenceTest` helper → stub + unconditional `willReturn` (SUT calls `getHeaderLine` 0–1× depending on profile path); `MonitoringBehaviorTest` → `expects($this->once())` (SUT calls `getDuration(6)` exactly once). `any()` invoked count — `ParishAuditLoggingTest` ×4 → `createStub`; the `with()` payload callbacks were dead config (`invokeAudit` only resolves the service, `log()` is never invoked) and were removed.
+- [x] `phpunit.xml.dist`: update `xsi:noNamespaceSchemaLocation` to the PHPUnit 13 schema (`13.4`); replace `failOnWarning="true"` with the PHPUnit 13 granular flags (`failOnPhpunitDeprecation`, `failOnPhpunitNotice`) **only after** the suite is clean — enabling them on a dirty suite breaks CI. **Done:** schema → `13.4`; added `failOnDeprecation`, `failOnNotice`, `failOnPhpunitDeprecation`, `failOnPhpunitNotice`, `failOnPhpunitWarning` (kept `failOnRisky`, `failOnWarning`; verified full config against PHPUnit 13.4 XSD — all elements/attributes valid).
+- [x] Re-run `vendor/bin/phpstan analyse` and `vendor/bin/phpunit --no-coverage --display-deprecations --display-phpunit-deprecations --display-phpunit-notices`; target: 0 failures, 0 deprecations, 0 PHPUnit deprecations/notices, 8 classified skips. **Result:** `Tests: 1349, Assertions: 6303, Skipped: 8` — zero issues of every category; PHPStan clean.
 
-**Verification:** clean PHPUnit summary; PHPStan clean; parser and asset-delivery tests still pass.
+**Verification:** clean PHPUnit summary; PHPStan clean; parser and asset-delivery tests still pass (`BankStatementImportIntegrationTest`, `ProfilePicturePrivateDeliveryIntegrationTest`, `LayoutAndAssetExtractionTest`, `UploadCatchAllGateIntegrationTest` — 27 tests green).
 
 > **AGENT prompt:** Execute the C2 checklist above in `ekklesiaonline/ekklesiaONLINE`. Rules: minimal diffs; no behavior change beyond the deprecation fixes; `escape: ''` must keep `BankStatementImportIntegrationTest` green; do not suppress notices globally — fix per-file. Run `php -l` on touched files, PHPStan, and the full suite. Commit nothing; report the before/after issue counts. Mark C2 done on a clean run; ask to move to D1.
 
@@ -237,10 +249,10 @@ Verified via GitHub public API 2026-11-21 (repo is public; secrets/workflow logs
 | A1 | Operator attestation (provider revocation, new credential, test email); agent-verified: logs clean of SMTP password, `.env` untracked | 2026-11-21 | Operator + agent (repo-side checks) |
 | A2 | Env-template key parity verified; `config:check` App/Logger/Session/Shield-Auth pass; family-flag decision = enable `=1`; duplicate audit 0 rows on **local dev DB only** — staging/prod audit still pending | 2026-11-21/22 | Agent (repo checks) + operator (audit, decision) |
 | A3 | `staging` env exists, main-only branch policy, no required reviewers; 3 secrets functionally proven by 14/15 nightly passes; failure-issue tracking verified (#79); **run 45018067784 failed 2026-11-22 — under investigation** | 2026-11-21 | Agent via GitHub public API |
-| B1 | | | |
-| B2 | | | |
-| C1 | | | |
-| C2 | | | |
+| B1 | `php spark migrate --all` applied 3/3 cleanly; `migrate:status` 0 pending; `spark routes` exit 0 (729 lines); `/health` + `/` → 200 | 2026-11-24 | Agent |
+| B2 | Local drill complete: `ekklesia_backup` user + `backup.db.*` configured; preflights pass; backup `ekklesiaRD_20261123_204350.sql.gz` (SHA-256 `ccc8baac…`); isolated restore into `ekklesiaRD_restore_drill` verified (189 objects, 0 pending migrations, row counts match); scratch dropped, `.env` reverted; `backup_database.sh` patched for MySQL 9 (masking-policies, gtid-purged) | 2026-11-24 | Agent + operator approval |
+| C1 | `ci.yml` mysql job: `database.tests.*`→MySQLi overrides in generated `.env` + PHPUnit step after route compile; test fixture fixed (`team_member.person_id` FK); runbook reclassified to 8 skips; local SQLite suite 1,349 tests/6,305 assertions/8 skips/0 failures; PHPStan clean; local MySQLi run of target file OK (2 tests, 7 assertions). CI run pending first push. | 2026-11-24 | Agent |
+| C2 | PHP 8.5 deprecations eliminated: `str_getcsv(escape: '')` ×2, `finfo_close` removed, 13 `setAccessible` calls removed, `ReflectionHelper` static→instance ×2; PHPUnit 13 cleanup: 6 files `createMock`→`createStub`, 2 `#[AllowMockObjectsWithoutExpectations]`, `with()`-without-`expects()` fixed (stub/`once()`), dead `any()`+`with()` config removed; `phpunit.xml.dist` schema→13.4 + granular fail flags. Suite: 1,349 tests, 6,303 assertions, **0 failures/0 deprecations/0 PHPUnit issues**, 8 classified skips; PHPStan clean | 2026-11-24 | Agent |
 | D1 | | | |
 | D2 | | | |
 | D3 | | | |

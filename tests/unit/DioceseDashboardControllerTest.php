@@ -259,7 +259,6 @@ final class DioceseDashboardControllerTest extends CIUnitTestCase
 
         $reflection = new \ReflectionClass(DioceseDashboard::class);
         $property = $reflection->getProperty('dashboardData');
-        $property->setAccessible(true);
         $property->setValue($controller, $fakeService);
 
         return $controller;
