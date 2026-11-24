@@ -186,7 +186,7 @@ environment line). Direct `php spark` jobs use the absolute binary instead:
 
 ```cron
 30 1 * * *   PHP_BIN=/opt/alt/php85/usr/bin/php bash /home/user/ekklesia/build/service_metrics_refresh_cron.sh
-45 1 * * *   cd /home/user/ekklesia && /opt/alt/php85/usr/bin/php spark attendance:sync-diocesan-aggregates --from $(date -d "$(date +\%Y-\%m-01) -1 month" +\%Y-\%m-01) --to $(date +\%Y-\%m-\%d) >> writable/logs/attendance_aggregates_cron.log 2>&1
+45 1 * * *   cd /home/user/ekklesia && /opt/alt/php85/usr/bin/php spark attendance:sync-diocesan-aggregates --rolling-days 35 >> writable/logs/attendance_aggregates_cron.log 2>&1
 # ... full matrix in docs/CRON_SCHEDULE.md — substitute PHP binary + app root
 ```
 

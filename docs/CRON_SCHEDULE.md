@@ -31,7 +31,7 @@ after sign-off; verify the first run of each job in its log.
 ```cron
 # ── Overnight batch (order matters: metrics → aggregates → backup) ──
 30 1 * * *   PHP_BIN=/opt/alt/php85/usr/bin/php bash /path/to/ekklesiaONLINE/build/service_metrics_refresh_cron.sh
-45 1 * * *   cd /path/to/ekklesiaONLINE && php spark attendance:sync-diocesan-aggregates --from $(date -d "$(date +\%Y-\%m-01) -1 month" +\%Y-\%m-01) --to $(date +\%Y-\%m-\%d) >> writable/logs/attendance_aggregates_cron.log 2>&1
+45 1 * * *   cd /path/to/ekklesiaONLINE && php spark attendance:sync-diocesan-aggregates --rolling-days 35 >> writable/logs/attendance_aggregates_cron.log 2>&1
 00 2 * * *   cd /path/to/ekklesiaONLINE && sh build/backup_database.sh >> writable/logs/backup-cron.log 2>&1
 00 3 * * *   cd /path/to/ekklesiaONLINE && php spark finance:sync-journal-history >> writable/logs/finance_journal_sync_cron.log 2>&1
 10 3 * * *   cd /path/to/ekklesiaONLINE && php spark pledge:sync-fulfillment >> writable/logs/pledge_sync_cron.log 2>&1

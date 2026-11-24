@@ -6,8 +6,8 @@ cd "$ROOT_DIR"
 
 # Recommended cron: daily 01:30 server-local, e.g.
 #   30 1 * * * /path/to/ekklesiaONLINE/build/service_metrics_refresh_cron.sh
-# Start at the 1st of the previous month so month-keyed buckets are never
-# rebuilt from a partial month (a mid-month --rolling-days start truncates them).
-FROM_DATE="$(date -d "$(date +%Y-%m-01) -1 month" +%Y-%m-01)"
+# --rolling-days is resolved inside the command in the app timezone and its
+# start is snapped to the 1st of the month, so buckets are never rebuilt from
+# a partial month and the end date always matches the guard's "today".
 PHP_BIN="${PHP_BIN:-php}"
-"$PHP_BIN" spark service-metrics:refresh --from "$FROM_DATE" --to "$(date +%Y-%m-%d)" --rebuild-period-buckets >> writable/logs/service_metrics_refresh_cron.log 2>&1
+"$PHP_BIN" spark service-metrics:refresh --rolling-days 35 --rebuild-period-buckets >> writable/logs/service_metrics_refresh_cron.log 2>&1
