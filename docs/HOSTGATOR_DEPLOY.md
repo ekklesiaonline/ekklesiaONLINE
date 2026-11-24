@@ -87,15 +87,23 @@ never seeds, clears cache, or compiles routes after a failure:
     || { echo 'ABORTED: backup verification failed — nothing migrated or seeded' >&2; exit 1; }
   echo "Verified backup: $BACKUP_FILE"
 
-  # `spark migrate` can catch a DB exception, print it, and still exit 0, so
-  # the exit code alone is not trusted: the output is scanned for errors too.
+  # `spark migrate` and `db:seed` can print an exception and still exit 0, so
+  # output is checked the same way the CI mysql job does (.github/workflows/ci.yml).
   MIGRATE_OUT="$(php spark migrate --all 2>&1)" && MIGRATE_RC=0 || MIGRATE_RC=$?
   printf '%s\n' "$MIGRATE_OUT"
-  if [ "$MIGRATE_RC" -ne 0 ] || printf '%s\n' "$MIGRATE_OUT" | grep -Eqi 'error|exception|failed'; then
+  if [ "$MIGRATE_RC" -ne 0 ] \
+    || ! printf '%s\n' "$MIGRATE_OUT" | grep -q 'Migrations complete.' \
+    || printf '%s\n' "$MIGRATE_OUT" | grep -q 'Exception'; then
     echo "ABORTED: migration FAILED after backup — restore from $BACKUP_FILE if needed; not seeded" >&2
     exit 1
   fi
-  php spark db:seed DatabaseSeeder
+
+  SEED_OUT="$(php spark db:seed DatabaseSeeder 2>&1)" && SEED_RC=0 || SEED_RC=$?
+  printf '%s\n' "$SEED_OUT"
+  if [ "$SEED_RC" -ne 0 ] || printf '%s\n' "$SEED_OUT" | grep -q 'Exception'; then
+    echo "ABORTED: seeding FAILED after migration — restore from $BACKUP_FILE if needed" >&2
+    exit 1
+  fi
   php spark cache:clear
   php spark routes > /tmp/routes_after.txt
   echo 'Database release complete.'
@@ -110,11 +118,19 @@ restore, so no backup step) — run instead of the block above:
   set -e
   MIGRATE_OUT="$(php spark migrate --all 2>&1)" && MIGRATE_RC=0 || MIGRATE_RC=$?
   printf '%s\n' "$MIGRATE_OUT"
-  if [ "$MIGRATE_RC" -ne 0 ] || printf '%s\n' "$MIGRATE_OUT" | grep -Eqi 'error|exception|failed'; then
+  if [ "$MIGRATE_RC" -ne 0 ] \
+    || ! printf '%s\n' "$MIGRATE_OUT" | grep -q 'Migrations complete.' \
+    || printf '%s\n' "$MIGRATE_OUT" | grep -q 'Exception'; then
     echo 'ABORTED: migration FAILED — not seeded' >&2
     exit 1
   fi
-  php spark db:seed DatabaseSeeder
+
+  SEED_OUT="$(php spark db:seed DatabaseSeeder 2>&1)" && SEED_RC=0 || SEED_RC=$?
+  printf '%s\n' "$SEED_OUT"
+  if [ "$SEED_RC" -ne 0 ] || printf '%s\n' "$SEED_OUT" | grep -q 'Exception'; then
+    echo 'ABORTED: seeding FAILED — bootstrap incomplete' >&2
+    exit 1
+  fi
   php spark cache:clear
   php spark routes > /tmp/routes_after.txt
   echo 'Database bootstrap complete.'
