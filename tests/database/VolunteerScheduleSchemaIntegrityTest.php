@@ -106,7 +106,7 @@ final class VolunteerScheduleSchemaIntegrityTest extends CIUnitTestCase
             $db->query('INSERT INTO users (id, username, active, created_at) VALUES (1, \'vtest1\', 1, NOW())');
         }
         if (! $db->table('person')->where('id', 1)->countAllResults(false)) {
-            $db->query('INSERT INTO person (id, first_name, created_at) VALUES (1, \'Test Person\', NOW())');
+            $db->query('INSERT INTO person (id, first_name, last_name, created_at) VALUES (1, \'Test\', \'Person\', NOW())');
         }
         if (! $db->table('team')->where('id', 1)->countAllResults(false)) {
             $db->table('team')->insert(['id' => 1, 'parish_id' => 1, 'name' => 'Test Team']);
