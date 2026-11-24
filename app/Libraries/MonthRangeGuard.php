@@ -32,4 +32,26 @@ final class MonthRangeGuard
 
         return null;
     }
+
+    /**
+     * Whether attendance:sync-sunday-service-metrics will replace diocesan
+     * monthly buckets: explicit --rebuild-period-buckets, or any sync that is
+     * not scoped to a single parish.
+     */
+    public static function rebuildsMonthlyBuckets(bool $rebuildPeriodBuckets, int $parishId): bool
+    {
+        return $rebuildPeriodBuckets || $parishId <= 0;
+    }
+
+    /**
+     * Start date for a --rolling-days window ending on $today. Snapped to the
+     * 1st of its month when monthly buckets will be rebuilt.
+     */
+    public static function rollingStart(int $rollingDays, bool $snapToMonth, ?string $today = null): string
+    {
+        $today ??= date('Y-m-d');
+        $start = strtotime($today . ' -' . max(0, $rollingDays - 1) . ' days');
+
+        return date($snapToMonth ? 'Y-m-01' : 'Y-m-d', $start);
+    }
 }

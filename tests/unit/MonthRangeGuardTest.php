@@ -54,6 +54,46 @@ final class MonthRangeGuardTest extends CIUnitTestCase
         $this->assertStringContainsString('2025-07-31', $error);
     }
 
+    public function testDiocesanSyncRebuildsBuckets(): void
+    {
+        $this->assertTrue(MonthRangeGuard::rebuildsMonthlyBuckets(false, 0));
+        $this->assertTrue(MonthRangeGuard::rebuildsMonthlyBuckets(true, 0));
+    }
+
+    public function testParishOnlySyncSkipsBuckets(): void
+    {
+        $this->assertFalse(MonthRangeGuard::rebuildsMonthlyBuckets(false, 9));
+    }
+
+    public function testMidMonthStartRejectedOnDiocesanPathOnly(): void
+    {
+        // Diocesan path: guard applies and rejects.
+        $this->assertTrue(MonthRangeGuard::rebuildsMonthlyBuckets(false, 0));
+        $this->assertNotNull(MonthRangeGuard::check('2025-07-15', '2025-07-31', self::TODAY));
+
+        // Parish path: command skips the guard, so the same range is allowed.
+        $this->assertFalse(MonthRangeGuard::rebuildsMonthlyBuckets(false, 9));
+    }
+
+    public function testScheduledRollingWindowSnapsAndPassesGuard(): void
+    {
+        // Nightly refresh: --rolling-days 35 --rebuild-period-buckets.
+        $from = MonthRangeGuard::rollingStart(35, true, self::TODAY);
+
+        $this->assertSame('2026-05-01', $from); // raw start would be 2026-05-17
+        $this->assertNull(MonthRangeGuard::check($from, self::TODAY, self::TODAY));
+    }
+
+    public function testParishRollingWindowKeepsExactStart(): void
+    {
+        $this->assertSame('2026-05-17', MonthRangeGuard::rollingStart(35, false, self::TODAY));
+    }
+
+    public function testRollingWindowCrossingYearBoundarySnaps(): void
+    {
+        $this->assertSame('2025-12-01', MonthRangeGuard::rollingStart(35, true, '2026-01-10'));
+    }
+
     public function testNonLeapFebruaryEndBeforeThe28thIsRejected(): void
     {
         // 2025-02-28 is the month end; 2025-02-27 must be rejected.

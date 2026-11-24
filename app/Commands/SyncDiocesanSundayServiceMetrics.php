@@ -30,7 +30,7 @@ class SyncDiocesanSundayServiceMetrics extends BaseCommand
 
         // Only snap --rolling-days to a month start when diocesan buckets will be
         // rebuilt; parish-only syncs skip buckets, so they keep the exact window.
-        $snapToMonth = $rebuildPeriodBuckets || $parishId <= 0;
+        $snapToMonth = \App\Libraries\MonthRangeGuard::rebuildsMonthlyBuckets($rebuildPeriodBuckets, $parishId);
         [$fromDate, $toDate] = $this->resolveDateRange($fromOpt, $toOpt, $rollingDays, $snapToMonth);
         if ($fromDate === null || $toDate === null) {
             CLI::error('Invalid date range. Use --from YYYY-MM-DD and --to YYYY-MM-DD.');
@@ -46,7 +46,7 @@ class SyncDiocesanSundayServiceMetrics extends BaseCommand
         // (explicit --rebuild-period-buckets, or any non-parish-scoped sync).
         // A mid-month start or end would rebuild a month from partial data,
         // so reject it before any write. Parish-only syncs skip bucket rebuilds.
-        $willRebuildBuckets = $rebuildPeriodBuckets || $parishId <= 0;
+        $willRebuildBuckets = $snapToMonth;
         $rangeError = $willRebuildBuckets ? \App\Libraries\MonthRangeGuard::check($fromDate, $toDate) : null;
         if ($rangeError !== null) {
             CLI::error($rangeError . ' Use --parish for per-service-only updates.');
@@ -183,7 +183,7 @@ class SyncDiocesanSundayServiceMetrics extends BaseCommand
 
         if ($rollingDays > 0) {
             $toDate = date('Y-m-d');
-            $fromDate = date($snapToMonth ? 'Y-m-01' : 'Y-m-d', strtotime('-' . ($rollingDays - 1) . ' days'));
+            $fromDate = \App\Libraries\MonthRangeGuard::rollingStart($rollingDays, $snapToMonth, $toDate);
 
             return [$fromDate, $toDate];
         }
