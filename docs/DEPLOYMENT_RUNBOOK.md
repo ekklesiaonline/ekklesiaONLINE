@@ -189,6 +189,37 @@ export DIOCESAN_ADMIN_PASSWORD='...'
 
 Retain the release SHA/tag, CI run URL, PHP/Composer/MySQL versions, migration reports, route report, sanitized health/smoke reports, backup filename/checksum, skip review, and operator sign-off.
 
+### First-boot account bootstrap
+
+Run once on a freshly migrated + seeded database (`php spark migrate --all` then `php spark db:seed DatabaseSeeder` — the seeder creates the Shield groups/permissions the steps below depend on).
+
+**1. First system administrator** — `shield:user create` is the only bootstrap path (there is no admin yet to use the admin-creation UI):
+
+```bash
+php spark shield:user create -n <username> -e <admin-email> -g systemadmin
+# prompts interactively for password + confirmation (must satisfy the
+# configured password policy); -g assigns the group at creation
+php spark shield:user activate -e <admin-email>   # users.active defaults to 0; answer y
+php spark user:check <user_id>                  # verify profile + group membership
+```
+
+Then sign in at `/login` and confirm the system dashboard loads.
+
+`App\Services\AdminCreationService::createAdmin()` is **not** a bootstrap path — it generates a random password and is used by existing admins creating further admin accounts through the UI (credential-email flow). Do not use it for the first account.
+
+**2. First diocesan ordinary (bishop)** — after the system admin can log in:
+
+- Ensure the bishop has a `users` account (create via `shield:user create` or the people/clergy intake flow, with portal access enabled) and the target diocese exists.
+- In the UI: **System → Diocesan Ordinaries → Install** (`installOrdinaryModal`). `ClergyReviewService::installOrdinary(actorId, dioceseId, userId, ordainedOn, officeStartedOn, evidenceReference)` requires the actor to be a system admin, the diocese to exist, and records the office as a managed `leadership_position` with evidence reference — the canonical-ordination invariant applies (verified order in `clergy_ordination` for sacramental functions).
+
+**3. Role-permission sync** — after users and groups exist:
+
+```bash
+php spark db:seed PermissionRoleSyncSeeder
+```
+
+`PermissionRoleSyncSeeder` reconciles `auth_groups_users` memberships into user-level `auth_permissions_users` grants, tracking provenance in `permission_role_sync_managed` so it can also revoke stale role-synced grants when membership changes. It is intentionally **not** in `DatabaseSeeder` (which runs before any users exist). Run it once after bootstrap provisioning; re-run it after bulk group/role changes or role-definition updates. It is idempotent and safe to repeat.
+
 ## 8. Backups and Restore Drills
 
 Manual backup and non-destructive checks:

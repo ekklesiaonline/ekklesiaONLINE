@@ -187,9 +187,9 @@ Verified via GitHub public API 2026-11-21 (repo is public; secrets/workflow logs
 
 #### D2 — First-admin bootstrap + PermissionRoleSyncSeeder documentation — AGENT
 
-- [ ] Verify actual CLI syntax (`php spark shield:user --help`, related commands) before writing.
-- [ ] Document: create first system admin (`shield:user create` + activate + `systemadmin` group), `AdminCreationService` alternative for admin-created accounts, `ClergyReviewService::installOrdinary()` for the first bishop, and when `php spark db:seed PermissionRoleSyncSeeder` runs (post-bootstrap user/group provisioning; it is intentionally not in `DatabaseSeeder`).
-- [ ] Add the section to `docs/DEPLOYMENT_RUNBOOK.md` (post-deploy bootstrap) or README "Bootstrap Accounts".
+- [x] Verify actual CLI syntax (`php spark shield:user --help`, related commands) before writing. **Verified 2026-11-24:** `shield:user create -n -e -g` (interactive password prompt, no `-p` flag), `activate` (users.active defaults 0), `addgroup`, `user:check <id>`; `AdminCreationService::createAdmin()` generates random password (admin-UI path, not bootstrap); `installOrdinary(actorId, dioceseId, userId, ordainedOn, officeStartedOn, evidenceReference)` via System → Diocesan Ordinaries UI.
+- [x] Document: create first system admin (`shield:user create` + activate + `systemadmin` group), `AdminCreationService` alternative for admin-created accounts, `ClergyReviewService::installOrdinary()` for the first bishop, and when `php spark db:seed PermissionRoleSyncSeeder` runs (post-bootstrap user/group provisioning; it is intentionally not in `DatabaseSeeder`).
+- [x] Add the section to `docs/DEPLOYMENT_RUNBOOK.md` (post-deploy bootstrap) or README "Bootstrap Accounts". **Added as "First-boot account bootstrap" under runbook §7.**
 
 > **AGENT prompt:** Verify command syntax against `php spark list`/`shield:user` help and `app/Services/AdminCreationService.php`, `ClergyReviewService::installOrdinary()`, then write the bootstrap section. Mark D2 done on review; ask to move to D3.
 
@@ -254,7 +254,7 @@ Verified via GitHub public API 2026-11-21 (repo is public; secrets/workflow logs
 | C1 | `ci.yml` mysql job: `database.tests.*`→MySQLi overrides in generated `.env` + PHPUnit step (`--fail-on-skipped`) after route compile; test fixture fixed (`team_member.person_id` FK); runbook reclassified to 8 skips; local SQLite suite 1,349 tests/6,305 assertions/8 skips/0 failures; PHPStan clean; **CI-verified: PR #81 run 45309265749 → OK (2 tests, 7 assertions)** | 2026-11-24 | Agent + CI |
 | C2 | PHP 8.5 deprecations eliminated: `str_getcsv(escape: '')` ×2, `finfo_close` removed, 13 `setAccessible` calls removed, `ReflectionHelper` static→instance ×2; PHPUnit 13 cleanup: 6 files `createMock`→`createStub`, 2 `#[AllowMockObjectsWithoutExpectations]`, `with()`-without-`expects()` fixed (stub/`once()`), dead `any()`+`with()` config removed; `phpunit.xml.dist` schema→13.4 + granular fail flags. Suite: 1,349 tests, 6,303 assertions, **0 failures/0 deprecations/0 PHPUnit issues**, 8 classified skips; PHPStan clean | 2026-11-24 | Agent |
 | D1 | `docs/CRON_SCHEDULE.md`: 12-job matrix (freq/command/log/owner/rationale), all 4 documented schedules reconciled, `service_metrics_refresh_cron.sh` path fix, `publish_at` schema-drift caveat, dead `cron_sync_church_people.sh` flagged. **Operator-approved 2026-11-24; host install pending deploy.** | 2026-11-24 | Agent + operator approval |
-| D2 | | | |
+| D2 | Runbook §7 "First-boot account bootstrap": shield:user create/activate/user:check sequence for first systemadmin, AdminCreationService marked non-bootstrap, installOrdinary UI path for first bishop, PermissionRoleSyncSeeder timing (post-provisioning, idempotent, not in DatabaseSeeder) | 2026-11-24 | Agent |
 | D3 | | | |
 | E1 | | | |
 | E2 | | | |
