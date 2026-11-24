@@ -100,10 +100,10 @@ never seeds, clears cache, or compiles routes after a failure:
 
   # Same post-migration check as CI: no Exception and no unapplied row
   # (an empty "---" migrated-on cell) in migrate:status.
-  STATUS_OUT="$(php spark migrate:status --all 2>&1)" || true
+  STATUS_OUT="$(php spark migrate:status --all 2>&1)" && STATUS_RC=0 || STATUS_RC=$?
   printf '%s\n' "$STATUS_OUT"
-  if printf '%s\n' "$STATUS_OUT" | grep -q -E 'Exception|\| *---  *\|'; then
-    echo "ABORTED: migrations still pending after migrate — restore from $BACKUP_FILE if needed; not seeded" >&2
+  if [ "$STATUS_RC" -ne 0 ] || printf '%s\n' "$STATUS_OUT" | grep -q -E 'Exception|\| *---  *\|'; then
+    echo "ABORTED: migration status check failed or migrations pending — restore from $BACKUP_FILE if needed; not seeded" >&2
     exit 1
   fi
 
@@ -134,10 +134,10 @@ restore, so no backup step) — run instead of the block above:
     exit 1
   fi
 
-  STATUS_OUT="$(php spark migrate:status --all 2>&1)" || true
+  STATUS_OUT="$(php spark migrate:status --all 2>&1)" && STATUS_RC=0 || STATUS_RC=$?
   printf '%s\n' "$STATUS_OUT"
-  if printf '%s\n' "$STATUS_OUT" | grep -q -E 'Exception|\| *---  *\|'; then
-    echo 'ABORTED: migrations still pending after migrate — not seeded' >&2
+  if [ "$STATUS_RC" -ne 0 ] || printf '%s\n' "$STATUS_OUT" | grep -q -E 'Exception|\| *---  *\|'; then
+    echo 'ABORTED: migration status check failed or migrations pending — not seeded' >&2
     exit 1
   fi
 
