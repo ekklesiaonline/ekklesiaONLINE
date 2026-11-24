@@ -33,8 +33,16 @@ composer install --no-dev --optimize-autoloader --no-interaction
 
 # Upload everything EXCEPT:
 #   .git/, tests/, .env, writable/{cache,logs,session,uploads,debugbar}/*,
-#   node_modules/, *.md (optional), build/env-templates/
-# Suggested: rsync -avz --exclude-from=.deployignore ./ user@host:/home/user/ekklesia/
+#   node_modules/
+# Keep build/env-templates/ — the server-side `cp` below needs
+# production.env.template (it contains only CHANGE_ME placeholders).
+rsync -avz \
+  --exclude='.git/' --exclude='tests/' --exclude='.env' \
+  --exclude='node_modules/' \
+  --exclude='writable/cache/*' --exclude='writable/logs/*' \
+  --exclude='writable/session/*' --exclude='writable/uploads/*' \
+  --exclude='writable/debugbar/*' \
+  ./ user@host:/home/user/ekklesia/
 ```
 
 Then on the server (SSH):
