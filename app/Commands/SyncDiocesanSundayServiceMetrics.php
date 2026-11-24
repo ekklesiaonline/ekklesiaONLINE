@@ -18,7 +18,7 @@ class SyncDiocesanSundayServiceMetrics extends BaseCommand
 
         if (!$db->tableExists('diocesan_sunday_service_metrics')) {
             CLI::error('Table diocesan_sunday_service_metrics does not exist. Run migrations first.');
-            return;
+            return EXIT_ERROR;
         }
 
         $fromOpt = trim((string) ($this->optionValue('from', $params) ?? ''));
@@ -34,12 +34,12 @@ class SyncDiocesanSundayServiceMetrics extends BaseCommand
         [$fromDate, $toDate] = $this->resolveDateRange($fromOpt, $toOpt, $rollingDays, $snapToMonth);
         if ($fromDate === null || $toDate === null) {
             CLI::error('Invalid date range. Use --from YYYY-MM-DD and --to YYYY-MM-DD.');
-            return;
+            return EXIT_ERROR;
         }
 
         if ($fromDate > $toDate) {
             CLI::error('--from cannot be later than --to.');
-            return;
+            return EXIT_ERROR;
         }
 
         // Diocesan monthly buckets are replaced whole whenever they are rebuilt
@@ -56,12 +56,12 @@ class SyncDiocesanSundayServiceMetrics extends BaseCommand
         if ($rebuildPeriodBuckets) {
             if ($parishId > 0) {
                 CLI::error('--rebuild-period-buckets cannot be combined with --parish because period buckets are diocesan totals.');
-                return;
+                return EXIT_ERROR;
             }
 
             if (!$db->tableExists('diocesan_sunday_weekly_metrics') || !$db->tableExists('diocesan_sunday_monthly_metrics')) {
                 CLI::error('Period bucket tables do not exist. Run migrations first.');
-                return;
+                return EXIT_ERROR;
             }
 
             CLI::write('Rebuild diocesan weekly/monthly period buckets', 'cyan');
@@ -73,7 +73,7 @@ class SyncDiocesanSundayServiceMetrics extends BaseCommand
             $result = $this->rebuildPeriodBucketsFromServiceAggregate($db, $fromDate, $toDate, $dioceseId, date('Y-m-d H:i:s'));
             if (!$result['ok']) {
                 CLI::error('Period bucket rebuild failed.');
-                return;
+                return EXIT_ERROR;
             }
 
             CLI::write('Upserted weekly buckets: ' . $result['weekly_count'], 'green');
@@ -145,7 +145,7 @@ class SyncDiocesanSundayServiceMetrics extends BaseCommand
 
         if ($db->transStatus() === false) {
             CLI::error('Sync failed. Transaction rolled back.');
-            return;
+            return EXIT_ERROR;
         }
 
         // Build and persist diocesan weekly/monthly buckets for fast chart reads.
@@ -156,7 +156,7 @@ class SyncDiocesanSundayServiceMetrics extends BaseCommand
             $result = $this->rebuildPeriodBucketsFromServiceAggregate($db, $fromDate, $toDate, $dioceseId, $syncStartedAt);
             if (!$result['ok']) {
                 CLI::error('Weekly/monthly diocesan aggregate upsert failed.');
-                return;
+                return EXIT_ERROR;
             }
 
             CLI::write('Upserted weekly buckets: ' . $result['weekly_count'], 'green');
