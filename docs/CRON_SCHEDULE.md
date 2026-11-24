@@ -26,13 +26,13 @@ after sign-off; verify the first run of each job in its log.
 ```cron
 # ── Overnight batch (order matters: metrics → aggregates → backup) ──
 30 1 * * *   /path/to/ekklesiaONLINE/build/service_metrics_refresh_cron.sh
-45 1 * * *   cd /path/to/ekklesiaONLINE && php spark attendance:sync-diocesan-aggregates --rolling-days 35 >> writable/logs/attendance_aggregates_cron.log 2>&1
+45 1 * * *   cd /path/to/ekklesiaONLINE && php spark attendance:sync-diocesan-aggregates --from $(date -d "$(date +\%Y-\%m-01) -1 month" +\%Y-\%m-01) --to $(date +\%Y-\%m-\%d) >> writable/logs/attendance_aggregates_cron.log 2>&1
 00 2 * * *   cd /path/to/ekklesiaONLINE && sh build/backup_database.sh >> writable/logs/backup-cron.log 2>&1
 00 3 * * *   cd /path/to/ekklesiaONLINE && php spark finance:sync-journal-history >> writable/logs/finance_journal_sync_cron.log 2>&1
 10 3 * * *   cd /path/to/ekklesiaONLINE && php spark pledge:sync-fulfillment >> writable/logs/pledge_sync_cron.log 2>&1
 
 # ── Sunday evening (after services, before standing:refresh) ──
-30 21 * * 0  /path/to/ekklesiaONLINE/build/cron_sync_sunday_service_metrics.sh >> writable/logs/sunday_service_metrics_cron.log 2>&1
+30 21 * * 0  cd /path/to/ekklesiaONLINE && build/cron_sync_sunday_service_metrics.sh >> writable/logs/sunday_service_metrics_cron.log 2>&1
 00 23 * * 0  cd /path/to/ekklesiaONLINE && php spark standing:refresh --year $(date +\%Y) >> writable/logs/standing_refresh_cron.log 2>&1
 
 # ── Daytime operations ──
@@ -47,8 +47,8 @@ after sign-off; verify the first run of each job in its log.
 
 | Job | Command | Frequency | Rationale | Log |
 |---|---|---|---|---|
-| Service metrics | `service-metrics:refresh --rolling-days 35 --rebuild-period-buckets` (wrapper) | Daily 01:30 | Documented in `SERVICE_METRICS_REFRESH_SCHEDULING_2026-04-10.md`; feeds Sunday dashboards | `service_metrics_refresh_cron.log` |
-| Diocesan aggregates | `attendance:sync-diocesan-aggregates --rolling-days 35` | Daily 01:45 | Dashboard monthly aggregates; staggered after service-metrics, before backup | `attendance_aggregates_cron.log` |
+| Service metrics | `service-metrics:refresh --from <1st of prev month> --to <today> --rebuild-period-buckets` (wrapper) | Daily 01:30 | Documented in `SERVICE_METRICS_REFRESH_SCHEDULING_2026-04-10.md`; feeds Sunday dashboards | `service_metrics_refresh_cron.log` |
+| Diocesan aggregates | `attendance:sync-diocesan-aggregates --from <1st of prev month> --to <today>` | Daily 01:45 | Dashboard monthly aggregates; window starts on a month boundary because month-keyed summaries are replaced whole (a mid-month `--rolling-days` start would truncate them); staggered after service-metrics, before backup | `attendance_aggregates_cron.log` |
 | Backup | `sh build/backup_database.sh` | Daily 02:00 | Documented runbook §8; captures post-refresh aggregates | `backup-cron.log` |
 | Journal history | `finance:sync-journal-history` | Daily 03:00 | GL entries track daily donation/expense activity; after backup so nightly snapshot stays consistent | `finance_journal_sync_cron.log` |
 | Pledge fulfillment | `pledge:sync-fulfillment` | Daily 03:10 | Fulfilled amounts track tithe donations; staggered after journal sync | `pledge_sync_cron.log` |
