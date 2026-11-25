@@ -55,8 +55,8 @@ release files unencrypted, exposing them to capture or tampering.
 composer install --no-dev --optimize-autoloader --no-interaction
 
 # Defaults: private root ~/ekklesia, docroot ~/public_html.
-# Review the transfer first:
-HOSTGATOR_SSH='user@host' bash build/hostgator_sync.sh --dry-run
+# Review the exact first-transfer plan, including docroot deletions:
+HOSTGATOR_SSH='user@host' bash build/hostgator_sync.sh --dry-run --delete-public
 
 # First real sync. --delete-public removes the Softaculous skeleton and any
 # other docroot files that are not part of public/. Use it only when this
