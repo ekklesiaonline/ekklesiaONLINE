@@ -14,6 +14,16 @@ This is the canonical go/no-go, deployment, validation, and rollback procedure f
 - The web-service account must own or have group write access to required `writable/` subdirectories. Do not use world-writable permissions.
 - `.env` must be created from `.env.example`; never deploy the example placeholders.
 
+Host-specific exception: when a shared-hosting control panel does not provide
+Composer or does not permit a primary domain's document root to point directly
+at `public/`, `docs/HOSTGATOR_DEPLOY.md` is the approved HostGator adaptation.
+Under that exception, Composer runs on a clean build machine and the immutable
+production `vendor/` tree is uploaded over SSH; the web document root contains
+only the contents of `public/`, while the application root remains outside the
+webroot. The invariant is that no project/config/vendor path is publicly
+reachable. Every other requirement and release gate in this runbook still
+applies.
+
 CI runs the PHPUnit suite on PHP 8.5 with SQLite. The dedicated MySQL 8 job is authoritative for production migration compatibility.
 
 ## 2. Required Environment Contract

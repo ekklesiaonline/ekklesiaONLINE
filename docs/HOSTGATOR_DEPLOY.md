@@ -3,6 +3,21 @@
 Target: `ekklessia.online` on HostGator shared hosting (cPanel/hPanel, CloudLinux
 PHP selector, nginx cache layer in front of Apache). PHP 8.5 confirmed available.
 
+Because HostGator does not support changing a primary domain away from
+`public_html`, the canonical HostGator layout is split:
+
+```text
+~/ekklesia/       private application root (app/, vendor/, writable/, modules, spark, .env)
+~/public_html/    web docroot containing only the contents of public/
+```
+
+Do not upload the repository directly into `public_html`: a 2026-11-25 probe of
+the Softaculous skeleton showed project files such as `composer.json`,
+`composer.lock`, `spark`, and `env` reachable over HTTP. If `ekklessia.online`
+is an addon/subdomain whose document root can be changed, the standard
+`<project>/public` docroot is also acceptable; this checklist uses the split
+layout because it works in both cases.
+
 This checklist adapts `DEPLOYMENT_RUNBOOK.md` §4–§9 to HostGator's constraints.
 Items marked **[OPERATOR]** require hPanel/SSH access; **[AGENT-verifiable]**
 items can be checked from the repo or via curl after deploy.
@@ -18,8 +33,8 @@ items can be checked from the repo or via curl after deploy.
 | 1.3 | SSH access enabled | hPanel → Advanced → SSH Access → enable; note shell user + port (usually 22) | [OPERATOR] |
 | 1.4 | MySQL database + user created | hPanel → MySQL Databases. DB/user names are prefixed with the cPanel username (e.g. `user_ekklesia`). Host is `localhost`, port 3306 | [OPERATOR] |
 | 1.5 | Backup DB credentials | Either a second MySQL user on the same DB with `SELECT, SHOW VIEW, TRIGGER, EVENT, LOCK TABLES` (mysqldump needs these; a SELECT-only user is NOT sufficient), or reuse the app user for `backup.db.*`. **Restore caveat:** `build/restore_database.sh` reads the same `backup.db.*` keys and imports with them, so a dump-only account **cannot restore** (needs `CREATE, DROP, ALTER, INSERT, INDEX, REFERENCES, CREATE VIEW, TRIGGER, LOCK TABLES, CREATE ROUTINE, ALTER ROUTINE` — see §7). `restore_database.sh --check` only pings MySQL and will not catch this. For a restore, temporarily point `backup.db.*` at the app/owner user (or leave it unset to fall back to `database.default.*`) | [OPERATOR] |
-| 1.6 | Document root points at `public/` | hPanel → Domains → `ekklessia.online` document root. App layout is `<root>/public/index.php` — the domain docroot MUST be the app's `public/` directory, not the project root | [OPERATOR] |
-| 1.7 | SSL certificate active | AutoSSL/Let's Encrypt issued for `ekklessia.online` + `www`. Currently HTTPS→HTTP redirect observed — must end as HTTP→HTTPS only | [OPERATOR] |
+| 1.6 | Split-layout paths confirmed | Decide whether `ekklessia.online` is primary or addon. Primary domain: keep `public_html` as docroot and use the split layout. Addon/subdomain: either use the same split layout or point its docroot directly at the private app's `public/`. Never leave the project root web-accessible | [OPERATOR] |
+| 1.7 | SSL certificate active + HTTPS forced | AutoSSL/Let's Encrypt issued for `ekklessia.online` + `www`. Enable HostGator's HTTPS redirect/force-HTTPS feature; direct HTTP requests must end at HTTPS, and the cached `/` → `/public` 301 from the Softaculous probe must be purged or expire | [OPERATOR] |
 | 1.8 | Cron job feature available | hPanel → Advanced → Cron Jobs | [OPERATOR] |
 
 ## 2. Deploy method (no Composer on shared hosting)
@@ -36,31 +51,47 @@ unverified key on first connect. **Never use plain FTP** — it sends credential
 release files unencrypted, exposing them to capture or tampering.
 
 ```bash
-# Local build machine — from repo root, on the release commit:
+# Local build machine — from a clean repo copy on the release commit:
 composer install --no-dev --optimize-autoloader --no-interaction
 
-# Upload everything EXCEPT:
-#   .git/, tests/, .env, writable/{cache,logs,session,uploads,debugbar,backups}/*,
-#   node_modules/
-# writable/backups/* is excluded so local/dev dumps (e.g. restore-drill
-# archives) never land in the production backup directory.
-# Keep build/env-templates/ — the server-side `cp` below needs
-# production.env.template (it contains only CHANGE_ME placeholders).
-rsync -avz \
-  --exclude='.git/' --exclude='tests/' --exclude='.env' \
-  --exclude='node_modules/' \
-  --exclude='writable/cache/*' --exclude='writable/logs/*' \
-  --exclude='writable/session/*' --exclude='writable/uploads/*' \
-  --exclude='writable/debugbar/*' --exclude='writable/backups/*' \
-  ./ user@host:/home/user/ekklesia/
+# Defaults: private root ~/ekklesia, docroot ~/public_html.
+# Review the exact first-transfer plan, including docroot deletions:
+HOSTGATOR_SSH='user@host' bash build/hostgator_sync.sh --dry-run --delete-public
+
+# First real sync. --delete-public removes the Softaculous skeleton and any
+# other docroot files that are not part of public/. Use it only when this
+# docroot is dedicated to ekklessia.online; it must not be used when addon
+# domains or unrelated applications live below the same public_html.
+# .well-known/ (AutoSSL) and cgi-bin/ are preserved.
+HOSTGATOR_SSH='user@host' bash build/hostgator_sync.sh --delete-public
+
+# Later routine deploys, after the docroot is clean/dedicated:
+HOSTGATOR_SSH='user@host' bash build/hostgator_sync.sh
 ```
+
+`build/hostgator_sync.sh` performs two separate rsync transfers:
+
+1. the repository (including the locally built production `vendor/`) to the
+   private `~/ekklesia/` root, excluding `.env`, tests, runtime logs/sessions,
+   backups, uploads, and local dev artifacts; and
+2. only `public/` contents to `~/public_html/`.
+
+While syncing, the script injects an absolute `SetEnv EKKLESIA_APP_ROOT` line
+into the temporary `.htaccess` copy. `public/index.php` then boots the private
+application root even though the web docroot is `public_html`. It also has a
+`~/ekklesia` sibling fallback for manual deployments that use the default path.
+The script refuses to sync a `vendor/` tree containing PHPUnit/PHPStan; use a
+clean release copy rather than destroying the dependencies in a daily-use dev
+checkout. If `HOSTGATOR_APP_ROOT` or `HOSTGATOR_PUBLIC_HTML` must differ from
+the defaults, set both environment variables before running the script and
+verify the injected `SetEnv` path after upload.
 
 Then on the server (SSH):
 
 ```bash
 cd ~/ekklesia
 cp build/env-templates/production.env.template .env   # then edit every CHANGE_ME
-php -v                                                # MUST be 8.5 — see §3.2
+php -v                                                # MUST be 8.5 — see §3.3
 php spark config:check App
 php spark config:check Logger
 php spark config:check Session
@@ -167,7 +198,32 @@ Create `.env` values:
 
 ## 3. HostGator-specific risks (verify during deploy)
 
-### 3.1 HTTPS detection through the nginx proxy — HIGHEST RISK
+### 3.1 Split layout and cached `/public` redirect — HIGHEST RISK
+
+The Softaculous skeleton installed on 2026-11-25 proved that PHP can execute a
+stock CodeIgniter welcome page, but it also demonstrated the unsafe layout:
+`/` redirected to `/public/`, project files were web-accessible, and the 301
+was cached by HostGator's nginx edge (`X-Proxy-Cache: HIT`). The production
+deploy must not reuse that layout.
+
+After syncing, verify the split layout from outside the host:
+
+```bash
+curl -fsS https://ekklessia.online/health    # application health: 200
+for path in /composer.json /composer.lock /spark /env /.env /app/Config/App.php; do
+  curl -sS -o /dev/null -w "%{http_code} $path\\n" "https://ekklessia.online$path"
+done
+# None of the probe paths may return 200. 403/404/406 are acceptable edge or
+# Apache denial forms; 200 means the private project root is exposed.
+```
+
+If `/` still redirects to `/public/` after the docroot is corrected, purge the
+HostGator/nginx cache or ask support to clear it. Do not treat a cached 301 as
+an application redirect loop. Direct `http://ekklessia.online/` and
+`http://ekklessia.online/<path>` must ultimately land on HTTPS without a
+`/public/` path segment.
+
+### 3.2 HTTPS detection through the nginx proxy — HIGHEST RISK
 
 HostGator puts an **nginx caching proxy in front of Apache**. TLS may terminate
 at nginx, meaning Apache/PHP may see plain HTTP (`$_SERVER['HTTPS']` unset).
@@ -189,10 +245,11 @@ curl -sI https://ekklessia.online/health | head -5
 #      proxy overwrites client-supplied X-Forwarded-Proto)
 ```
 
-Also confirm the current skeleton's HTTPS→HTTP redirect is gone — the new
-`.htaccess`/app config must produce HTTP→HTTPS only.
+Also confirm the cached Softaculous `/public` redirect is gone (§3.1) — the
+new `.htaccess`/app config must produce HTTP→HTTPS only, without exposing the
+front-controller directory in the public URL.
 
-### 3.2 PHP CLI version for `spark` and cron
+### 3.3 PHP CLI version for `spark` and cron
 
 hPanel's PHP selector governs the **web** SAPI. The SSH/cron `php` binary may
 resolve to a different version. Verify:
@@ -207,19 +264,26 @@ If `php -v` ≠ 8.5, find the 8.5 binary (`ls /opt/alt/php*/usr/bin/php`,
 the `build/*_cron.sh` wrappers call bare `php spark` and inherit cron's
 minimal PATH.
 
-### 3.3 Writable permissions
+### 3.4 Writable permissions
 
 `fix-permissions.sh` sets `writable/` dirs to 775/664 assuming group-write.
 On HostGator, PHP (lsapi/suPHP) runs as the account user, so **owner-write
 (755/644) is sufficient** — run the script or `chmod -R u+rwX,g+rX,o-rwx
 writable/` and ensure the deploy user owns the files. Never 777.
 
-### 3.4 Resource limits
+### 3.5 Resource limits
 
 Shared hosting caps `max_execution_time`, `memory_limit`, and MySQL
-`max_allowed_packet`/timeouts. Migrations and `mysqldump` run under CLI limits
-(often higher), but the nightly `backup_database.sh` on a growing DB could
-eventually hit limits — monitor `writable/logs/` after first scheduled runs.
+`max_allowed_packet`/timeouts. HostGator's published shared-hosting maximums
+are currently lower than the `.user.ini` targets (`memory_limit` 256M max vs
+512M requested; `max_execution_time` 30s max vs 120 requested;
+`max_input_time` 60s max vs 120 requested), so treat those entries as
+requested ceilings, not guaranteed effective values. Migrations and
+`mysqldump` run under CLI limits (often higher), but the nightly
+`backup_database.sh` on a growing DB could eventually hit limits — monitor
+`writable/logs/` after first scheduled runs. Batch giving-statement PDF/ZIP
+exports and other long web requests must be validated under the effective 30s
+cap before launch; if they exceed it, move them to CLI/cron or use VPS hosting.
 
 Web-SAPI overrides ship in the repo at `public/.user.ini` (LSAPI/FPM reads it
 per-directory; mod_php ignores it, so local dev is unaffected). It sets
@@ -238,15 +302,17 @@ check the effective values via the web SAPI (not CLI). Do **not** upload a
 full `phpinfo()` page. Use a temporary probe with a random filename that
 prints only the needed directives, e.g.
 `<?php foreach (['memory_limit','post_max_size','opcache.validate_timestamps','date.timezone'] as $k) echo $k, '=', ini_get($k), "\n";`,
-fetch it once, and **delete it immediately** (`rm public/<random>.php`).
+fetch it once, and **delete it immediately** (`rm ~/public_html/<random>.php`).
 If values aren't applied, ask HostGator support to enable it or rely on the
 hPanel editor values.
 
 **hPanel php.ini editor** (the field list shown in hPanel for this domain)
 overwrites/augments docroot php config and covers the same resource limits —
-set it to match `.user.ini`: `max_execution_time=120`, `max_input_time=120`,
-`max_input_vars=3000`, `memory_limit=512M`, `post_max_size=40M`,
-`upload_max_filesize=32M`; leave `display_errors=Disabled`,
+set the highest values HostGator actually permits, targeting
+`max_execution_time=120`, `max_input_time=120`, `max_input_vars=3000`,
+`memory_limit=512M`, `post_max_size=40M`, and `upload_max_filesize=32M` only
+when the plan allows them; otherwise record the enforced lower values and treat
+them as launch constraints. Leave `display_errors=Disabled`,
 `zlib.output_compression=Disabled`, and leave `session.gc_maxlifetime` /
 `session.save_path` blank (CI4 sets `session.gc_maxlifetime` from its session
 expiration at runtime and its FileHandler uses that during PHP's session GC
@@ -264,7 +330,7 @@ after rsync).
 Version → Options; if `php spark` commands hit memory/time limits, raise
 them there.
 
-### 3.5 Outbound connectivity
+### 3.6 Outbound connectivity
 
 SMTP (587/TLS), Google APIs (Gmail OAuth), and Twilio (if enabled) require
 outbound 443/587 — open on HostGator shared, but verify SMTP auth succeeds
@@ -293,7 +359,7 @@ Install** in the UI (requires the bishop's `users` account + diocese to exist).
 ## 5. Cron install
 
 Install the approved matrix from `docs/CRON_SCHEDULE.md` via hPanel → Cron Jobs.
-**Use the absolute PHP 8.5 path** (see §3.2) and absolute script paths:
+**Use the absolute PHP 8.5 path** (see §3.3) and absolute script paths:
 
 hPanel adds one command per job, so set `PHP_BIN` **inline on each wrapper
 job** (the `build/*.sh` wrappers read `$PHP_BIN`; don't rely on a crontab-level
@@ -329,16 +395,35 @@ curl -fsS "$BASE_URL/health"           # 200
 
 Go/no-go signals specific to this host:
 
-- No HTTPS redirect loop (§3.1)
+- `/health` is 200 at the canonical root URL without `/public`
+- No HTTPS redirect loop (§3.2)
+- `/composer.json`, `/composer.lock`, `/spark`, `/env`, `/.env`, and `/app/Config/App.php` never return 200 (§3.1)
 - `ProductionSecurityPosture` critical log absent from `writable/logs/`
 - `php spark migrate:status --all` shows 0 pending
 - First cron entries produce log output within their window
 
 ## 7. Rollback
 
-HostGator has no blue/green. Keep the previous release as a sibling directory
-(`~/ekklesia-prev/`) or rely on hPanel backup/JetBackup snapshots. Docroot swap
-= update the domain's document root or rename dirs. Database rollback =
+HostGator has no blue/green. In the split layout a release has two coupled
+parts: the private app root (`~/ekklesia/`) and the public docroot
+(`~/public_html/`). Before each deploy, retain timestamped copies or archives
+of both (for example `~/release-backups/YYYYMMDD-HHMMSS-ekklesia/` and
+`...-public_html/`), or rely on hPanel backup/JetBackup snapshots after
+confirming they cover both locations. Treat whole-root archives as
+disaster-recovery evidence, not as a routine code-rollback input: they may
+contain `.env`, uploads, sessions, and other live application data.
+
+For a routine code-only rollback, redeploy the previous reviewed commit with
+`build/hostgator_sync.sh` when that release contains the script. That is the
+preferred path because it replaces the matched private code root and public
+docroot while excluding `.env` and writable runtime data. The first release
+created with this checklist may need to roll back to a pre-split release that
+predates the script; use the matched-snapshot procedure below for that case.
+If a manual restore is unavoidable, restore only code
+and public assets from matched snapshots while preserving `.env` and writable
+application data. Never roll back only the private root or only the docroot,
+because `index.php`, `.htaccess`, assets, and application code can become
+mismatched. Database rollback =
 `sh build/restore_database.sh <latest .sql.gz>` — requires explicit approval
 per runbook §8 (destructive). **Restore credentials:** the script imports with
 `backup.db.*` (falling back to `database.default.*`). If `backup.db.*` points
@@ -356,9 +441,9 @@ it the import stops after recreating a table but before loading its rows.
 
 ## Open items blocking deploy
 
-1. **[OPERATOR]** §1.2–1.8 hPanel checks (extensions, SSH, MySQL, docroot, SSL, cron)
+1. **[OPERATOR]** §1.2–1.8 hPanel checks (extensions, SSH, MySQL, split-layout paths, SSL, cron)
 2. **[OPERATOR]** SSH credentials + confirm `php -v` on server
-3. **[AGENT+OPERATOR]** §3.1 proxy/HTTPS verification — may need a code change
-   (`proxyIPs` config) discovered only after first request
-4. **[OPERATOR]** `.env` secret generation (encryption keys, SMTP already rotated)
-5. **[JOINT]** D3 encryption-gate operator rows complete against this environment
+3. **[OPERATOR]** Remove/isolate the Softaculous skeleton and purge the cached `/` → `/public` redirect
+4. **[AGENT+OPERATOR]** §3.1 split-layout exposure probes and §3.2 proxy/HTTPS verification — `proxyIPs` may still need HostGator-specific configuration after the first request
+5. **[OPERATOR]** `.env` secret generation (encryption keys, SMTP already rotated)
+6. **[JOINT]** D3 encryption-gate operator rows complete against this environment
