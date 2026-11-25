@@ -406,14 +406,21 @@ Go/no-go signals specific to this host:
 
 HostGator has no blue/green. In the split layout a release has two coupled
 parts: the private app root (`~/ekklesia/`) and the public docroot
-(`~/public_html/`). Keep timestamped copies or archives of both before each
-deploy (for example `~/release-backups/YYYYMMDD-HHMMSS-ekklesia/` and
+(`~/public_html/`). Before each deploy, retain timestamped copies or archives
+of both (for example `~/release-backups/YYYYMMDD-HHMMSS-ekklesia/` and
 `...-public_html/`), or rely on hPanel backup/JetBackup snapshots after
-confirming they cover both locations. A code-only rollback restores both parts
-from the same release — never roll back only the private root or only the
-docroot, because `index.php`, `.htaccess`, assets, and application code can
-become mismatched. Redeploying the previous reviewed commit with
-`build/hostgator_sync.sh` is also acceptable. Database rollback =
+confirming they cover both locations. Treat whole-root archives as
+disaster-recovery evidence, not as a routine code-rollback input: they may
+contain `.env`, uploads, sessions, and other live application data.
+
+For a routine code-only rollback, redeploy the previous reviewed commit with
+`build/hostgator_sync.sh`. That is the preferred path because it replaces the
+matched private code root and public docroot while excluding `.env` and
+writable runtime data. If a manual restore is unavoidable, restore only code
+and public assets from matched snapshots while preserving `.env` and writable
+application data. Never roll back only the private root or only the docroot,
+because `index.php`, `.htaccess`, assets, and application code can become
+mismatched. Database rollback =
 `sh build/restore_database.sh <latest .sql.gz>` — requires explicit approval
 per runbook §8 (destructive). **Restore credentials:** the script imports with
 `backup.db.*` (falling back to `database.default.*`). If `backup.db.*` points
