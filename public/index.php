@@ -47,19 +47,9 @@ if (getcwd() . DIRECTORY_SEPARATOR !== FCPATH) {
  */
 
 // LOAD OUR PATHS CONFIG FILE
-$appRoot = getenv('EKKLESIA_APP_ROOT') ?: ($_SERVER['EKKLESIA_APP_ROOT'] ?? '');
+require FCPATH . 'paths_bootstrap.php';
 
-if (is_string($appRoot) && $appRoot !== '') {
-    $pathsFile = rtrim($appRoot, '/\\') . DIRECTORY_SEPARATOR . 'app' . DIRECTORY_SEPARATOR . 'Config' . DIRECTORY_SEPARATOR . 'Paths.php';
-} else {
-    $pathsFile = FCPATH . '../app/Config/Paths.php';
-
-    if (! is_file($pathsFile)) {
-        // HostGator split layout: public_html and the private ~/ekklesia app
-        // root are siblings.
-        $pathsFile = FCPATH . '../ekklesia/app/Config/Paths.php';
-    }
-}
+$pathsFile = ekklesiaResolvePathsFile(FCPATH);
 
 if (! is_file($pathsFile)) {
     http_response_code(500);
