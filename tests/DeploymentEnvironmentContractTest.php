@@ -71,4 +71,38 @@ final class DeploymentEnvironmentContractTest extends CIUnitTestCase
             $this->assertStringNotContainsString("env('family.enforceSingleFamilyMembership')", $content, $path);
         }
     }
+
+    public function testFrontControllerSupportsHostGatorSplitLayout(): void
+    {
+        $content = (string) file_get_contents(ROOTPATH . 'public/index.php');
+
+        $this->assertStringContainsString('EKKLESIA_APP_ROOT', $content);
+        $this->assertStringContainsString("\$minPhpVersion = '8.5';", $content);
+        $this->assertStringContainsString("FCPATH . '../app/Config/Paths.php'", $content);
+        $this->assertStringContainsString("FCPATH . '../ekklesia/app/Config/Paths.php'", $content);
+        $this->assertStringContainsString('Application paths are not configured.', $content);
+
+        $spark = (string) file_get_contents(ROOTPATH . 'spark');
+        $this->assertStringContainsString("\$minPhpVersion = '8.5';", $spark);
+    }
+
+    public function testHostGatorSyncScriptUsesSeparatePrivateAndPublicTransfers(): void
+    {
+        $content = (string) file_get_contents(ROOTPATH . 'build/hostgator_sync.sh');
+
+        foreach ([
+            'HOSTGATOR_APP_ROOT',
+            'HOSTGATOR_PUBLIC_HTML',
+            'PUBLIC_STAGE',
+            'EKKLESIA_APP_ROOT',
+            '--delete-public',
+            '.well-known/',
+            'cgi-bin/',
+        ] as $required) {
+            $this->assertStringContainsString($required, $content);
+        }
+
+        $this->assertStringContainsString('"$SSH_TARGET:$APP_ROOT/"', $content);
+        $this->assertStringContainsString('"$SSH_TARGET:$PUBLIC_HTML/"', $content);
+    }
 }
