@@ -107,9 +107,12 @@ PRIVATE_EXCLUDES=(
     --exclude='build/.phpunit.cache/'
 )
 
-PUBLIC_DELETE=()
+PUBLIC_ARGS=(
+    --exclude='.well-known/'
+    --exclude='cgi-bin/'
+)
 if [ "$DELETE_PUBLIC" -eq 1 ]; then
-    PUBLIC_DELETE=(--delete)
+    PUBLIC_ARGS=(--delete "${PUBLIC_ARGS[@]}")
 fi
 
 REMOTE_HOME="$(ssh -p "$SSH_PORT" "$SSH_TARGET" 'printf %s "$HOME"')"
@@ -136,9 +139,7 @@ echo "Syncing private app root to $SSH_TARGET:$APP_ROOT/"
 "${RSYNC_BASE[@]}" --delete "${PRIVATE_EXCLUDES[@]}" ./ "$SSH_TARGET:$APP_ROOT/"
 
 echo "Syncing public docroot to $SSH_TARGET:$PUBLIC_HTML/"
-"${RSYNC_BASE[@]}" "${PUBLIC_DELETE[@]}" \
-    --exclude='.well-known/' \
-    --exclude='cgi-bin/' \
+"${RSYNC_BASE[@]}" "${PUBLIC_ARGS[@]}" \
     "$PUBLIC_STAGE/" "$SSH_TARGET:$PUBLIC_HTML/"
 
 if [ "$DRY_RUN" -eq 0 ]; then
