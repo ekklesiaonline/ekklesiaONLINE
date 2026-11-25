@@ -414,9 +414,12 @@ disaster-recovery evidence, not as a routine code-rollback input: they may
 contain `.env`, uploads, sessions, and other live application data.
 
 For a routine code-only rollback, redeploy the previous reviewed commit with
-`build/hostgator_sync.sh`. That is the preferred path because it replaces the
-matched private code root and public docroot while excluding `.env` and
-writable runtime data. If a manual restore is unavoidable, restore only code
+`build/hostgator_sync.sh` when that release contains the script. That is the
+preferred path because it replaces the matched private code root and public
+docroot while excluding `.env` and writable runtime data. The first release
+created with this checklist may need to roll back to a pre-split release that
+predates the script; use the matched-snapshot procedure below for that case.
+If a manual restore is unavoidable, restore only code
 and public assets from matched snapshots while preserving `.env` and writable
 application data. Never roll back only the private root or only the docroot,
 because `index.php`, `.htaccess`, assets, and application code can become
