@@ -253,8 +253,11 @@ expiration at runtime and its FileHandler uses that during PHP's session GC
 in `writable/session`; blank fields keep the app in control). If the editor writes its own
 `.user.ini`/`php.ini` into `public/`, it may replace the committed file —
 the hPanel values then carry the resource limits; `.user.ini`'s unique
-contributions are `date.timezone`, `error_reporting`, `log_errors`, and
-`expose_php` (re-add those lines if the file is overwritten).
+contributions are `date.timezone`, `error_reporting`, `log_errors`,
+`expose_php`, `opcache.validate_timestamps`, and `opcache.revalidate_freq`
+(re-add those lines if the file is overwritten — without the OPcache lines,
+a host default of `validate_timestamps=0` would keep serving stale code
+after rsync).
 
 `.user.ini` changes take up to `user_ini.cache_ttl` (~300s) to apply and do
 **not** affect CLI/cron — those use the php.ini from hPanel → Select PHP
