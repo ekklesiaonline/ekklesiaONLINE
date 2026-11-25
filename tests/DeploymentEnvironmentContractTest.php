@@ -172,6 +172,8 @@ final class DeploymentEnvironmentContractTest extends CIUnitTestCase
                 static fn (string $line): bool => str_starts_with($line, 'rsync'),
             ));
             $this->assertCount(2, $rsyncLines);
+            $this->assertStringContainsString('--dry-run', $rsyncLines[0]);
+            $this->assertStringContainsString('--dry-run', $rsyncLines[1]);
             $this->assertStringContainsString('<test@example:ekklesia/>', $rsyncLines[0]);
             $this->assertStringContainsString('<test@example:public_html/>', $rsyncLines[1]);
             $this->assertStringContainsString('--delete', $rsyncLines[1]);
