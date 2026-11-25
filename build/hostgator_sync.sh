@@ -62,6 +62,9 @@ validate_relative_path() {
 
 validate_relative_path HOSTGATOR_APP_ROOT "$APP_ROOT"
 validate_relative_path HOSTGATOR_PUBLIC_HTML "$PUBLIC_HTML"
+if [[ "$APP_ROOT" == "$PUBLIC_HTML" || "$APP_ROOT" == "$PUBLIC_HTML"/* || "$PUBLIC_HTML" == "$APP_ROOT"/* ]]; then
+    die 'HOSTGATOR_APP_ROOT and HOSTGATOR_PUBLIC_HTML must be separate, non-nested paths'
+fi
 [[ "$SSH_PORT" =~ ^[0-9]+$ ]] || die 'HOSTGATOR_SSH_PORT must be numeric'
 
 command -v rsync >/dev/null 2>&1 || die 'rsync is required on the local machine'
