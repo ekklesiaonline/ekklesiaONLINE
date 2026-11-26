@@ -101,7 +101,7 @@ Dormant-table tranches per `docs/DORMANT_NOT_WIRED_DEFER_PLAN_2026-05-10.md` and
 
 **Decommission complete 2026-11-23:** GitHub `staging` environment + secrets deleted (verified via public API) and old staging hosting cleaned up by operator. HostGator confirmed to offer **PHP 8.5** — `ekklessia.online` is a viable deployment target. Fresh `staging` environment + secrets will be created when the replacement staging is provisioned.
 
-**Deployment target confirmed 2026-11-23:** HostGator shared hosting, domain `ekklessia.online` (NS `hgns1/2.hostgator.com`, IP `129.121.81.160`), **PHP 8.5 available** (operator-confirmed via hPanel). Currently serves a bare CodeIgniter 4.7.4 skeleton at `/public/` — placeholder pending deployment. HTTPS exists but does not enforce (redirects to HTTP) — must be fixed at deploy time (`app.forceGlobalSecureRequests`, HSTS, HostGator SSL/TLS settings).
+**Deployment target confirmed 2026-11-23:** HostGator shared hosting, domain `ekklessia.online` (NS `hgns1/2.hostgator.com`, IP `129.121.81.160`), **PHP 8.5 available** (operator-confirmed via cPanel). Currently serves a bare CodeIgniter 4.7.4 skeleton at `/public/` — placeholder pending deployment. HTTPS exists but does not enforce (redirects to HTTP) — must be fixed at deploy time (`app.forceGlobalSecureRequests`, HSTS, HostGator SSL/TLS settings).
 
 Verified via GitHub public API 2026-11-21 (repo is public; secrets/workflow logs need auth):
 
