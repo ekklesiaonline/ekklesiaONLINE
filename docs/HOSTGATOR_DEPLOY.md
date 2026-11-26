@@ -274,6 +274,19 @@ intl, mysqli, gd, curl, dom/xml, zip, openssl, fileinfo). `/opt/alt/` on this
 host only ships php74 — do not use the `/opt/alt/php85` path guessed in older
 revisions of this document.
 
+**Every `php spark …` command in this document assumes `php` is 8.5.** On this
+host it is not: bare `php` runs 8.3, and `spark`'s version gate prints a
+warning and exits **0** without running the command, so the failure looks like
+success. Before running any command in §4 onward over SSH, pin the binary for
+the session:
+
+```bash
+alias php=/opt/cpanel/ea-php85/root/usr/bin/php
+php -v   # must report 8.5.x
+```
+
+In crontab entries, always write the absolute path (aliases do not apply there).
+
 ### 3.4 Writable permissions
 
 `fix-permissions.sh` sets `writable/` dirs to 775/664 assuming group-write.

@@ -32,20 +32,20 @@ after sign-off; verify the first run of each job in its log.
 ```cron
 # ── Overnight batch (order matters: metrics → aggregates → backup) ──
 30 1 * * *   PHP_BIN=/opt/cpanel/ea-php85/root/usr/bin/php bash /path/to/ekklesiaONLINE/build/service_metrics_refresh_cron.sh
-45 1 * * *   cd /path/to/ekklesiaONLINE && php spark attendance:sync-diocesan-aggregates --rolling-days 35 >> writable/logs/attendance_aggregates_cron.log 2>&1
+45 1 * * *   cd /path/to/ekklesiaONLINE && /opt/cpanel/ea-php85/root/usr/bin/php spark attendance:sync-diocesan-aggregates --rolling-days 35 >> writable/logs/attendance_aggregates_cron.log 2>&1
 00 2 * * *   cd /path/to/ekklesiaONLINE && sh build/backup_database.sh >> writable/logs/backup-cron.log 2>&1
-00 3 * * *   cd /path/to/ekklesiaONLINE && php spark finance:sync-journal-history >> writable/logs/finance_journal_sync_cron.log 2>&1
-10 3 * * *   cd /path/to/ekklesiaONLINE && php spark pledge:sync-fulfillment >> writable/logs/pledge_sync_cron.log 2>&1
+00 3 * * *   cd /path/to/ekklesiaONLINE && /opt/cpanel/ea-php85/root/usr/bin/php spark finance:sync-journal-history >> writable/logs/finance_journal_sync_cron.log 2>&1
+10 3 * * *   cd /path/to/ekklesiaONLINE && /opt/cpanel/ea-php85/root/usr/bin/php spark pledge:sync-fulfillment >> writable/logs/pledge_sync_cron.log 2>&1
 
 # ── Sunday evening (after services, before standing:refresh) ──
 30 21 * * 0  cd /path/to/ekklesiaONLINE && PHP_BIN=/opt/cpanel/ea-php85/root/usr/bin/php bash build/cron_sync_sunday_service_metrics.sh >> writable/logs/sunday_service_metrics_cron.log 2>&1
-00 23 * * 0  cd /path/to/ekklesiaONLINE && php spark standing:refresh --year $(date +\%Y) >> writable/logs/standing_refresh_cron.log 2>&1
+00 23 * * 0  cd /path/to/ekklesiaONLINE && /opt/cpanel/ea-php85/root/usr/bin/php spark standing:refresh --year $(date +\%Y) >> writable/logs/standing_refresh_cron.log 2>&1
 
 # ── Daytime operations ──
-30 7 * * *   cd /path/to/ekklesiaONLINE && php spark volunteers:remind >> writable/logs/volunteers_remind_cron.log 2>&1
-00 8 * * *   cd /path/to/ekklesiaONLINE && php spark followup:send >> writable/logs/followup_send_cron.log 2>&1
-*/15 * * * * cd /path/to/ekklesiaONLINE && php spark events:publish-due >> writable/logs/events_publish_cron.log 2>&1
-*/30 * * * * cd /path/to/ekklesiaONLINE && php spark sms:process >> writable/logs/sms_process_cron.log 2>&1
+30 7 * * *   cd /path/to/ekklesiaONLINE && /opt/cpanel/ea-php85/root/usr/bin/php spark volunteers:remind >> writable/logs/volunteers_remind_cron.log 2>&1
+00 8 * * *   cd /path/to/ekklesiaONLINE && /opt/cpanel/ea-php85/root/usr/bin/php spark followup:send >> writable/logs/followup_send_cron.log 2>&1
+*/15 * * * * cd /path/to/ekklesiaONLINE && /opt/cpanel/ea-php85/root/usr/bin/php spark events:publish-due >> writable/logs/events_publish_cron.log 2>&1
+*/30 * * * * cd /path/to/ekklesiaONLINE && /opt/cpanel/ea-php85/root/usr/bin/php spark sms:process >> writable/logs/sms_process_cron.log 2>&1
 15 * * * *   PHP_BIN=/opt/cpanel/ea-php85/root/usr/bin/php bash /path/to/ekklesiaONLINE/build/clergy_reconcile_grants_cron.sh
 ```
 
