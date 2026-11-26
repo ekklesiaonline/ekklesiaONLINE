@@ -83,6 +83,8 @@ final class DeploymentEnvironmentContractTest extends CIUnitTestCase
 
         $spark = (string) file_get_contents(ROOTPATH . 'spark');
         $this->assertStringContainsString("\$minPhpVersion = '8.5';", $spark);
+        $this->assertStringContainsString('fwrite(STDERR, $message . PHP_EOL);', $spark);
+        $this->assertStringContainsString('exit(1);', $spark);
     }
 
     public function testPathsBootstrapResolvesStandardSplitAndConfiguredLayouts(): void
@@ -185,6 +187,45 @@ final class DeploymentEnvironmentContractTest extends CIUnitTestCase
             );
         } finally {
             $this->removeDirectory($base);
+        }
+    }
+
+    public function testSparkVersionGateExitsNonZeroOnUnsupportedPhp(): void
+    {
+        $sparkSource = (string) file_get_contents(ROOTPATH . 'spark');
+        $patched     = str_replace("\$minPhpVersion = '8.5';", "\$minPhpVersion = '99.0';", $sparkSource, $count);
+        $this->assertSame(1, $count);
+
+        $tempSpark = sys_get_temp_dir() . '/ekk-spark-gate-' . bin2hex(random_bytes(4)) . '.php';
+        file_put_contents($tempSpark, $patched);
+
+        try {
+            $process = proc_open(
+                [PHP_BINARY, $tempSpark],
+                [
+                    0 => ['pipe', 'r'],
+                    1 => ['pipe', 'w'],
+                    2 => ['pipe', 'w'],
+                ],
+                $pipes,
+                ROOTPATH,
+            );
+            $this->assertIsResource($process);
+
+            fclose($pipes[0]);
+            $stdout   = (string) stream_get_contents($pipes[1]);
+            $stderr   = (string) stream_get_contents($pipes[2]);
+            fclose($pipes[1]);
+            fclose($pipes[2]);
+            $exitCode = proc_close($process);
+
+            $this->assertSame(1, $exitCode);
+            $this->assertSame('', $stdout);
+            $this->assertStringContainsString('Your PHP version must be 99.0 or higher to run CodeIgniter.', $stderr);
+        } finally {
+            if (is_file($tempSpark)) {
+                unlink($tempSpark);
+            }
         }
     }
 
