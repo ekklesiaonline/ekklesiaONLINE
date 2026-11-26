@@ -286,7 +286,10 @@ alias php=/opt/cpanel/ea-php85/root/usr/bin/php
 php -v   # must report 8.5.x
 ```
 
-In crontab entries, always write the absolute path (aliases do not apply there).
+The alias lasts only for the current interactive shell: re-run it after every
+new SSH login, and do not rely on it inside `bash script.sh` (non-interactive
+Bash does not expand aliases). In scripts and crontab entries, always write the
+absolute path.
 
 ### 3.4 Writable permissions
 
