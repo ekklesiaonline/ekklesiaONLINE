@@ -400,32 +400,48 @@ active, non-deleted `parish` linked to a valid `diocese` → `province` chain.
 
 Choose **one** of the following population paths before enabling public traffic:
 
-#### Path A — Moving an already-populated local/staging system to webhosting (preferred when moving existing data)
+#### Path A — Moving an already-populated local/staging system to a fresh webhosting DB (preferred for initial cutover)
+
+Use this path **only when seeding a fresh destination database** (after
+`migrate --all` and `db:seed DatabaseSeeder`, before any production users,
+profiles, or affiliations exist). Never use `mysqldump --replace` against a
+live database with existing `profile`/`parish_affiliation` rows: `REPLACE INTO`
+deletes and re-inserts conflicting `parish_ueid` rows while FK checks are
+disabled, which can orphan existing profile/affiliation references. For updates
+to an already-live database, use Path B (`directory:sync-ueid --apply`), which
+updates in place by `parish_ueid` without deleting IDs.
 
 Export only the canonical hierarchy tables in strict foreign-key order
 (`province` → `diocese` → `diocese_alias` if present → `parish`) so existing
 IDs, `parish_ueid`, `public_token`, addresses, and province-to-diocese mappings
 are preserved identically on webhosting:
 
-1. **Pre-export check on source DB** (confirm clean parent chain and no placeholder dioceses):
+1. **Pre-export check on source DB** (confirm clean parent chain and record expected counts):
    ```bash
    php spark directory:verify-readiness --strict
    ```
-2. **Export hierarchy tables from source DB** (data-only, repeatable, no schema overwrite):
+2. **Export hierarchy tables from source DB** (data-only, fail-fast pipeline, no `--replace`):
    ```bash
-   mysqldump --single-transaction --no-create-info --skip-triggers --replace \
-     -u <src_user> -p <src_db> province diocese parish \
-     | gzip > parish_hierarchy_$(date +%Y%m%d).sql.gz
+   (
+     set -euo pipefail
+     OUT="parish_hierarchy_$(date +%Y%m%d).sql.gz"
+     mysqldump --single-transaction --no-create-info --skip-triggers --insert-ignore \
+       -u <src_user> -p <src_db> province diocese parish \
+       | gzip > "$OUT"
+     test -s "$OUT" && gzip -t "$OUT"
+   )
    # Include diocese_alias after diocese if populated in source DB.
    ```
 3. **Transfer over SSH/SFTP** to `~/ekklesia/writable/backups/` (never plain FTP, never into `public_html/`).
-4. **Take a HostGator pre-import backup** (`sh build/backup_database.sh` + `gzip -t`), then import into the HostGator DB after `php spark migrate --all` and `php spark db:seed DatabaseSeeder`:
+4. **Take a HostGator pre-import backup** (`sh build/backup_database.sh` + `gzip -t`), confirm `parish` and `profile` are empty, remove the two unused placeholder sample dioceses (`Sample Diocese One`, `Sample Diocese Two`), then import into the HostGator DB:
    ```bash
-   # Remove placeholder sample dioceses if present and unused, then import:
-   gzip -dc ~/ekklesia/writable/backups/parish_hierarchy_YYYYMMDD.sql.gz \
-     | mysql -u <hg_db_user> -p <hg_db_name>
+   (
+     set -euo pipefail
+     gzip -dc ~/ekklesia/writable/backups/parish_hierarchy_YYYYMMDD.sql.gz \
+       | mysql -u <hg_db_user> -p <hg_db_name>
+   )
    ```
-5. **Verify on HostGator**:
+5. **Verify on HostGator** and confirm the reported `Provinces`, `Dioceses`, and `Parishes` counts match step 1:
    ```bash
    PHP_BIN='/opt/cpanel/ea-php85/root/usr/bin/php'
    "$PHP_BIN" spark directory:verify-readiness --strict
