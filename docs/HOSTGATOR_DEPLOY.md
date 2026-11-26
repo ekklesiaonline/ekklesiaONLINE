@@ -402,14 +402,17 @@ Choose **one** of the following population paths before enabling public traffic:
 
 #### Path A — Moving an already-populated local/staging system to a fresh webhosting DB (preferred for initial cutover)
 
-Use this path **only when seeding a fresh destination database** (after
-`migrate --all` and `db:seed DatabaseSeeder`, before any production users,
-profiles, or affiliations exist). Never use `mysqldump --replace` against a
-live database with existing `profile`/`parish_affiliation` rows: `REPLACE INTO`
-deletes and re-inserts conflicting `parish_ueid` rows while FK checks are
-disabled, which can orphan existing profile/affiliation references. For updates
-to an already-live database, use Path B (`directory:sync-ueid --apply`), which
-updates in place by `parish_ueid` without deleting IDs.
+Use this path **only when seeding a fresh destination database** (immediately
+after `migrate --all` and `db:seed DatabaseSeeder`, **before** creating any
+users, profiles, or affiliations in §4.2). Never use `mysqldump --replace`
+against a live database with existing `profile`/`parish_affiliation` rows:
+`REPLACE INTO` deletes and re-inserts conflicting `parish_ueid` rows while FK
+checks are disabled, which can orphan existing profile/affiliation references.
+For updates to an already-live database, use Path B (`directory:sync-ueid --apply`),
+which updates in place by `parish_ueid` without deleting IDs (note:
+`directory:sync-ueid --apply` sets `is_active = 1` on every matched parish, so
+always inspect the dry-run report in `writable/reports/` if any parishes were
+intentionally deactivated).
 
 Export only the canonical hierarchy tables in strict foreign-key order
 (`province` → `diocese` → `diocese_alias` if present → `parish`) so existing
@@ -420,12 +423,12 @@ are preserved identically on webhosting:
    ```bash
    php spark directory:verify-readiness --strict
    ```
-2. **Export hierarchy tables from source DB** (data-only, fail-fast pipeline, no `--replace`):
+2. **Export hierarchy tables from source DB** (data-only, fail-fast pipeline, plain `INSERT` so unexpected conflicts fail loudly):
    ```bash
    (
      set -euo pipefail
      OUT="parish_hierarchy_$(date +%Y%m%d).sql.gz"
-     mysqldump --single-transaction --no-create-info --skip-triggers --insert-ignore \
+     mysqldump --single-transaction --no-create-info --skip-triggers \
        -u <src_user> -p <src_db> province diocese parish \
        | gzip > "$OUT"
      test -s "$OUT" && gzip -t "$OUT"
@@ -433,10 +436,12 @@ are preserved identically on webhosting:
    # Include diocese_alias after diocese if populated in source DB.
    ```
 3. **Transfer over SSH/SFTP** to `~/ekklesia/writable/backups/` (never plain FTP, never into `public_html/`).
-4. **Take a HostGator pre-import backup** (`sh build/backup_database.sh` + `gzip -t`), confirm `parish` and `profile` are empty, remove the two unused placeholder sample dioceses (`Sample Diocese One`, `Sample Diocese Two`), then import into the HostGator DB:
+4. **Take a HostGator pre-import backup** (`sh build/backup_database.sh` + `gzip -t`), confirm `users`, `profile`, and `parish` are empty, clear the baseline-seeded `diocese` and `province` rows so source `province.id` and `diocese.id` values are preserved 1:1 with no ID drift, then import into the HostGator DB:
    ```bash
    (
      set -euo pipefail
+     mysql -u <hg_db_user> -p <hg_db_name> \
+       -e "DELETE FROM diocese; DELETE FROM province;"
      gzip -dc ~/ekklesia/writable/backups/parish_hierarchy_YYYYMMDD.sql.gz \
        | mysql -u <hg_db_user> -p <hg_db_name>
    )
