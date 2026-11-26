@@ -1,6 +1,6 @@
 # HostGator Production Deploy Checklist
 
-Target: `ekklessia.online` on HostGator shared hosting (cPanel/hPanel, CloudLinux
+Target: `ekklessia.online` on HostGator shared hosting (cPanel, CloudLinux
 PHP selector, nginx cache layer in front of Apache). PHP 8.5 confirmed available.
 
 Because HostGator does not support changing a primary domain away from
@@ -19,30 +19,30 @@ is an addon/subdomain whose document root can be changed, the standard
 layout because it works in both cases.
 
 This checklist adapts `DEPLOYMENT_RUNBOOK.md` §4–§9 to HostGator's constraints.
-Items marked **[OPERATOR]** require hPanel/SSH access; **[AGENT-verifiable]**
+Items marked **[OPERATOR]** require cPanel/SSH access; **[AGENT-verifiable]**
 items can be checked from the repo or via curl after deploy.
 
 ---
 
-## 1. hPanel pre-flight (before any upload)
+## 1. cPanel pre-flight (before any upload)
 
 | # | Check | How | Status |
 |---|-------|-----|--------|
-| 1.1 | PHP 8.5 selected for `ekklessia.online` | hPanel → Select PHP Version → domain dropdown | ✅ confirmed by operator |
-| 1.2 | Required extensions enabled | hPanel → Select PHP Version → domain → **Extensions** tab (checkboxes — `extension=` is PHP_INI_SYSTEM, so it cannot be set in `.user.ini`; the startup php.ini is host-managed, so use the selector). Enable: `intl`, `mbstring`, `mysqli`, `gd`, `curl`, `dom`, `xml` (+`xmlreader`/`xmlwriter`/`simplexml`/`libxml`), `zip`, `openssl`, `fileinfo`. `intl` is the riskiest — confirm it exists on the plan | [OPERATOR] |
-| 1.3 | SSH access enabled | hPanel → Advanced → SSH Access → enable; note shell user + port (usually 22) | [OPERATOR] |
-| 1.4 | MySQL database + user created | hPanel → MySQL Databases. DB/user names are prefixed with the cPanel username (e.g. `user_ekklesia`). Host is `localhost`, port 3306 | [OPERATOR] |
+| 1.1 | PHP 8.5 selected for `ekklessia.online` | cPanel → Select PHP Version → domain dropdown | ✅ confirmed by operator |
+| 1.2 | Required extensions enabled | cPanel → Select PHP Version → domain → **Extensions** tab (checkboxes — `extension=` is PHP_INI_SYSTEM, so it cannot be set in `.user.ini`; the startup php.ini is host-managed, so use the selector). Enable: `intl`, `mbstring`, `mysqli`, `gd`, `curl`, `dom`, `xml` (+`xmlreader`/`xmlwriter`/`simplexml`/`libxml`), `zip`, `openssl`, `fileinfo`. `intl` is the riskiest — confirm it exists on the plan | [OPERATOR] |
+| 1.3 | SSH access enabled | cPanel → Advanced → SSH Access → enable; note shell user + port (usually 22) | [OPERATOR] |
+| 1.4 | MySQL database + user created | cPanel → MySQL Databases. DB/user names are prefixed with the cPanel username (e.g. `user_ekklesia`). Host is `localhost`, port 3306 | [OPERATOR] |
 | 1.5 | Backup DB credentials | Either a second MySQL user on the same DB with `SELECT, SHOW VIEW, TRIGGER, EVENT, LOCK TABLES` (mysqldump needs these; a SELECT-only user is NOT sufficient), or reuse the app user for `backup.db.*`. **Restore caveat:** `build/restore_database.sh` reads the same `backup.db.*` keys and imports with them, so a dump-only account **cannot restore** (needs `CREATE, DROP, ALTER, INSERT, INDEX, REFERENCES, CREATE VIEW, TRIGGER, LOCK TABLES, CREATE ROUTINE, ALTER ROUTINE` — see §7). `restore_database.sh --check` only pings MySQL and will not catch this. For a restore, temporarily point `backup.db.*` at the app/owner user (or leave it unset to fall back to `database.default.*`) | [OPERATOR] |
 | 1.6 | Split-layout paths confirmed | Decide whether `ekklessia.online` is primary or addon. Primary domain: keep `public_html` as docroot and use the split layout. Addon/subdomain: either use the same split layout or point its docroot directly at the private app's `public/`. Never leave the project root web-accessible | [OPERATOR] |
 | 1.7 | SSL certificate active + HTTPS forced | AutoSSL/Let's Encrypt issued for `ekklessia.online` + `www`. Enable HostGator's HTTPS redirect/force-HTTPS feature; direct HTTP requests must end at HTTPS, and the cached `/` → `/public` 301 from the Softaculous probe must be purged or expire | [OPERATOR] |
-| 1.8 | Cron job feature available | hPanel → Advanced → Cron Jobs | [OPERATOR] |
+| 1.8 | Cron job feature available | cPanel → Advanced → Cron Jobs | [OPERATOR] |
 
 ## 2. Deploy method (no Composer on shared hosting)
 
 HostGator shared has **no `composer` CLI**. Build artifacts locally, upload via
 an encrypted, authenticated transport only: **rsync over SSH** (preferred) or
 **SFTP**. Verify the server's SSH host key fingerprint on first connect against
-a value obtained **out of band**. The hPanel/cPanel SSH Access screen manages
+a value obtained **out of band**. The cPanel SSH Access screen manages
 account keys and does not reliably show the server fingerprint, so ask HostGator
 support (via the authenticated support portal) for the host's SSH fingerprint
 for this plan and record it here before the first connect:
@@ -187,7 +187,7 @@ restore, so no backup step) — run instead of the block above:
 Create `.env` values:
 
 - `app.baseURL = 'https://ekklessia.online/'`
-- `database.default.*` from hPanel MySQL credentials (host `localhost`)
+- `database.default.*` from cPanel MySQL credentials (host `localhost`)
 - `encryption.key` + `encryption.blindIndexKey` — generate independently:
   `php -r "echo 'hex2bin:' . bin2hex(random_bytes(32)) . PHP_EOL;"` (run locally)
 - `backup.db.*` per §1.5
@@ -251,7 +251,7 @@ front-controller directory in the public URL.
 
 ### 3.3 PHP CLI version for `spark` and cron
 
-hPanel's PHP selector governs the **web** SAPI. The SSH/cron `php` binary may
+cPanel's PHP selector governs the **web** SAPI. The SSH/cron `php` binary may
 resolve to a different version. Verify:
 
 ```bash
@@ -294,7 +294,7 @@ per-directory; mod_php ignores it, so local dev is unaffected). It sets
 `error_reporting=E_ALL & ~E_DEPRECATED & ~E_STRICT`, `expose_php=Off`.
 Only `PHP_INI_PERDIR`/`PHP_INI_ALL` directives are honored — OPcache sizing,
 `realpath_cache_*`, `allow_url_*` are `PHP_INI_SYSTEM` and silently ignored;
-host defaults apply (the hPanel editor does not expose them either).
+host defaults apply (the cPanel editor does not expose them either).
 
 **Verify loading:** CloudLinux mod_lsapi only reads `.user.ini` when
 `lsapi_enable_user_ini On` is set by the host (default `Off`). After deploy,
@@ -304,9 +304,9 @@ prints only the needed directives, e.g.
 `<?php foreach (['memory_limit','post_max_size','opcache.validate_timestamps','date.timezone'] as $k) echo $k, '=', ini_get($k), "\n";`,
 fetch it once, and **delete it immediately** (`rm ~/public_html/<random>.php`).
 If values aren't applied, ask HostGator support to enable it or rely on the
-hPanel editor values.
+cPanel editor values.
 
-**hPanel php.ini editor** (the field list shown in hPanel for this domain)
+**cPanel php.ini editor** (the field list shown in cPanel for this domain)
 overwrites/augments docroot php config and covers the same resource limits —
 set the highest values HostGator actually permits, targeting
 `max_execution_time=120`, `max_input_time=120`, `max_input_vars=3000`,
@@ -318,7 +318,7 @@ them as launch constraints. Leave `display_errors=Disabled`,
 expiration at runtime and its FileHandler uses that during PHP's session GC
 in `writable/session`; blank fields keep the app in control). If the editor writes its own
 `.user.ini`/`php.ini` into `public/`, it may replace the committed file —
-the hPanel values then carry the resource limits; `.user.ini`'s unique
+the cPanel values then carry the resource limits; `.user.ini`'s unique
 contributions are `date.timezone`, `error_reporting`, `log_errors`,
 `expose_php`, `opcache.validate_timestamps`, and `opcache.revalidate_freq`
 (re-add those lines if the file is overwritten — without the OPcache lines,
@@ -326,7 +326,7 @@ a host default of `validate_timestamps=0` would keep serving stale code
 after rsync).
 
 `.user.ini` changes take up to `user_ini.cache_ttl` (~300s) to apply and do
-**not** affect CLI/cron — those use the php.ini from hPanel → Select PHP
+**not** affect CLI/cron — those use the php.ini from cPanel → Select PHP
 Version → Options; if `php spark` commands hit memory/time limits, raise
 them there.
 
@@ -358,10 +358,10 @@ Install** in the UI (requires the bishop's `users` account + diocese to exist).
 
 ## 5. Cron install
 
-Install the approved matrix from `docs/CRON_SCHEDULE.md` via hPanel → Cron Jobs.
+Install the approved matrix from `docs/CRON_SCHEDULE.md` via cPanel → Cron Jobs.
 **Use the absolute PHP 8.5 path** (see §3.3) and absolute script paths:
 
-hPanel adds one command per job, so set `PHP_BIN` **inline on each wrapper
+cPanel adds one command per job, so set `PHP_BIN` **inline on each wrapper
 job** (the `build/*.sh` wrappers read `$PHP_BIN`; don't rely on a crontab-level
 environment line). Direct `php spark` jobs use the absolute binary instead:
 
@@ -373,7 +373,7 @@ environment line). Direct `php spark` jobs use the absolute binary instead:
 
 After saving, confirm the wrappers picked up 8.5: run one manually as
 `PHP_BIN=/opt/alt/php85/usr/bin/php bash build/clergy_reconcile_grants_cron.sh`
-and check its log, then inspect `crontab -l` to see exactly what hPanel stored.
+and check its log, then inspect `crontab -l` to see exactly what cPanel stored.
 
 Verify server timezone first (`date` via SSH) — morning jobs assume
 server-local time. Do NOT install `build/cron_sync_church_people.sh` (dead —
@@ -408,7 +408,7 @@ HostGator has no blue/green. In the split layout a release has two coupled
 parts: the private app root (`~/ekklesia/`) and the public docroot
 (`~/public_html/`). Before each deploy, retain timestamped copies or archives
 of both (for example `~/release-backups/YYYYMMDD-HHMMSS-ekklesia/` and
-`...-public_html/`), or rely on hPanel backup/JetBackup snapshots after
+`...-public_html/`), or rely on cPanel backup/JetBackup snapshots after
 confirming they cover both locations. Treat whole-root archives as
 disaster-recovery evidence, not as a routine code-rollback input: they may
 contain `.env`, uploads, sessions, and other live application data.
@@ -441,7 +441,7 @@ it the import stops after recreating a table but before loading its rows.
 
 ## Open items blocking deploy
 
-1. **[OPERATOR]** §1.2–1.8 hPanel checks (extensions, SSH, MySQL, split-layout paths, SSL, cron)
+1. **[OPERATOR]** §1.2–1.8 cPanel checks (extensions, SSH, MySQL, split-layout paths, SSL, cron)
 2. **[OPERATOR]** SSH credentials + confirm `php -v` on server
 3. **[OPERATOR]** Remove/isolate the Softaculous skeleton and purge the cached `/` → `/public` redirect
 4. **[AGENT+OPERATOR]** §3.1 split-layout exposure probes and §3.2 proxy/HTTPS verification — `proxyIPs` may still need HostGator-specific configuration after the first request

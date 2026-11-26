@@ -14,7 +14,7 @@ after sign-off; verify the first run of each job in its log.
    `which php` over SSH). The `build/*.sh` wrappers do **not** see the
    crontab's inline `php` path — they use `$PHP_BIN` and fall back to `php`
    on `PATH`. Each wrapper line below sets `PHP_BIN=...` **inline** so it
-   works whether jobs are added via `crontab -e` or the hPanel/cPanel Cron
+   works whether jobs are added via `crontab -e` or the cPanel Cron
    Jobs panel (which adds one command per job and may not honour
    crontab-level environment lines). Replace the path on every wrapper line.
 2. All times are **server-local**. Check `date` on the host — if it runs
