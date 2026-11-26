@@ -83,6 +83,8 @@ final class DeploymentEnvironmentContractTest extends CIUnitTestCase
 
         $spark = (string) file_get_contents(ROOTPATH . 'spark');
         $this->assertStringContainsString("\$minPhpVersion = '8.5';", $spark);
+        $this->assertStringContainsString('fwrite(STDERR, $message . PHP_EOL);', $spark);
+        $this->assertStringContainsString('exit(1);', $spark);
     }
 
     public function testPathsBootstrapResolvesStandardSplitAndConfiguredLayouts(): void

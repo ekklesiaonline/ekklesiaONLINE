@@ -91,12 +91,12 @@ Then on the server (SSH):
 ```bash
 cd ~/ekklesia
 cp build/env-templates/production.env.template .env   # then edit every CHANGE_ME
-alias php=/opt/cpanel/ea-php85/root/usr/bin/php       # bare php is 8.3 here — see §3.3
-php -v                                                # MUST be 8.5 — see §3.3
-php spark config:check App
-php spark config:check Logger
-php spark config:check Session
-php spark config:check 'CodeIgniter\Shield\Config\Auth'
+PHP_BIN='/opt/cpanel/ea-php85/root/usr/bin/php'       # bare php is 8.3 here — see §3.3
+"$PHP_BIN" -v                                         # MUST be 8.5 — see §3.3
+"$PHP_BIN" spark config:check App
+"$PHP_BIN" spark config:check Logger
+"$PHP_BIN" spark config:check Session
+"$PHP_BIN" spark config:check 'CodeIgniter\Shield\Config\Auth'
 ```
 
 Then run the database release as **one guarded block** (runbook §5). It stops
@@ -106,9 +106,10 @@ never seeds, clears cache, or compiles routes after a failure:
 ```bash
 (
   set -e
+  PHP_BIN="${PHP_BIN:-/opt/cpanel/ea-php85/root/usr/bin/php}"
   sh build/backup_database.sh --check                 # needs backup.db.* filled
   sh build/restore_database.sh --check
-  php spark migrate:status --all
+  "$PHP_BIN" spark migrate:status --all
 
   # Fresh, verified restore point BEFORE migrating. Validates the exact
   # archive the script reports (honours backup.outputDir).
@@ -121,7 +122,7 @@ never seeds, clears cache, or compiles routes after a failure:
 
   # `spark migrate` and `db:seed` can print an exception and still exit 0, so
   # output is checked the same way the CI mysql job does (.github/workflows/ci.yml).
-  MIGRATE_OUT="$(php spark migrate --all 2>&1)" && MIGRATE_RC=0 || MIGRATE_RC=$?
+  MIGRATE_OUT="$("$PHP_BIN" spark migrate --all 2>&1)" && MIGRATE_RC=0 || MIGRATE_RC=$?
   printf '%s\n' "$MIGRATE_OUT"
   if [ "$MIGRATE_RC" -ne 0 ] \
     || ! printf '%s\n' "$MIGRATE_OUT" | grep -q 'Migrations complete.' \
@@ -132,21 +133,21 @@ never seeds, clears cache, or compiles routes after a failure:
 
   # Same post-migration check as CI: no Exception and no unapplied row
   # (an empty "---" migrated-on cell) in migrate:status.
-  STATUS_OUT="$(php spark migrate:status --all 2>&1)" && STATUS_RC=0 || STATUS_RC=$?
+  STATUS_OUT="$("$PHP_BIN" spark migrate:status --all 2>&1)" && STATUS_RC=0 || STATUS_RC=$?
   printf '%s\n' "$STATUS_OUT"
   if [ "$STATUS_RC" -ne 0 ] || printf '%s\n' "$STATUS_OUT" | grep -q -E 'Exception|\| *---  *\|'; then
     echo "ABORTED: migration status check failed or migrations pending — restore from $BACKUP_FILE if needed; not seeded" >&2
     exit 1
   fi
 
-  SEED_OUT="$(php spark db:seed DatabaseSeeder 2>&1)" && SEED_RC=0 || SEED_RC=$?
+  SEED_OUT="$("$PHP_BIN" spark db:seed DatabaseSeeder 2>&1)" && SEED_RC=0 || SEED_RC=$?
   printf '%s\n' "$SEED_OUT"
   if [ "$SEED_RC" -ne 0 ] || printf '%s\n' "$SEED_OUT" | grep -q 'Exception'; then
     echo "ABORTED: seeding FAILED after migration — restore from $BACKUP_FILE if needed" >&2
     exit 1
   fi
-  php spark cache:clear
-  php spark routes > /tmp/routes_after.txt
+  "$PHP_BIN" spark cache:clear
+  "$PHP_BIN" spark routes > /tmp/routes_after.txt
   echo 'Database release complete.'
 )
 ```
@@ -157,7 +158,8 @@ restore, so no backup step) — run instead of the block above:
 ```bash
 (
   set -e
-  MIGRATE_OUT="$(php spark migrate --all 2>&1)" && MIGRATE_RC=0 || MIGRATE_RC=$?
+  PHP_BIN="${PHP_BIN:-/opt/cpanel/ea-php85/root/usr/bin/php}"
+  MIGRATE_OUT="$("$PHP_BIN" spark migrate --all 2>&1)" && MIGRATE_RC=0 || MIGRATE_RC=$?
   printf '%s\n' "$MIGRATE_OUT"
   if [ "$MIGRATE_RC" -ne 0 ] \
     || ! printf '%s\n' "$MIGRATE_OUT" | grep -q 'Migrations complete.' \
@@ -166,21 +168,21 @@ restore, so no backup step) — run instead of the block above:
     exit 1
   fi
 
-  STATUS_OUT="$(php spark migrate:status --all 2>&1)" && STATUS_RC=0 || STATUS_RC=$?
+  STATUS_OUT="$("$PHP_BIN" spark migrate:status --all 2>&1)" && STATUS_RC=0 || STATUS_RC=$?
   printf '%s\n' "$STATUS_OUT"
   if [ "$STATUS_RC" -ne 0 ] || printf '%s\n' "$STATUS_OUT" | grep -q -E 'Exception|\| *---  *\|'; then
     echo 'ABORTED: migration status check failed or migrations pending — not seeded' >&2
     exit 1
   fi
 
-  SEED_OUT="$(php spark db:seed DatabaseSeeder 2>&1)" && SEED_RC=0 || SEED_RC=$?
+  SEED_OUT="$("$PHP_BIN" spark db:seed DatabaseSeeder 2>&1)" && SEED_RC=0 || SEED_RC=$?
   printf '%s\n' "$SEED_OUT"
   if [ "$SEED_RC" -ne 0 ] || printf '%s\n' "$SEED_OUT" | grep -q 'Exception'; then
     echo 'ABORTED: seeding FAILED — bootstrap incomplete' >&2
     exit 1
   fi
-  php spark cache:clear
-  php spark routes > /tmp/routes_after.txt
+  "$PHP_BIN" spark cache:clear
+  "$PHP_BIN" spark routes > /tmp/routes_after.txt
   echo 'Database bootstrap complete.'
 )
 ```
@@ -275,21 +277,13 @@ intl, mysqli, gd, curl, dom/xml, zip, openssl, fileinfo). `/opt/alt/` on this
 host only ships php74 — do not use the `/opt/alt/php85` path guessed in older
 revisions of this document.
 
-**Every `php spark …` command in this document assumes `php` is 8.5.** On this
-host it is not: bare `php` runs 8.3, and `spark`'s version gate prints a
-warning and exits **0** without running the command, so the failure looks like
-success. Before running any command in §4 onward over SSH, pin the binary for
-the session:
-
-```bash
-alias php=/opt/cpanel/ea-php85/root/usr/bin/php
-php -v   # must report 8.5.x
-```
-
-The alias lasts only for the current interactive shell: re-run it after every
-new SSH login, and do not rely on it inside `bash script.sh` (non-interactive
-Bash does not expand aliases). In scripts and crontab entries, always write the
-absolute path.
+**Never rely on bare `php` on this host:** bare `php` runs 8.3 and `spark`'s
+version gate aborts with exit code `1` on `STDERR`. All SSH commands in §2 and
+§4 therefore use `PHP_BIN='/opt/cpanel/ea-php85/root/usr/bin/php'` (`"$PHP_BIN"
+spark …`), which works in both interactive shells and non-interactive scripts/subshells
+(unlike `alias php=...`, which does not persist across SSH logins or expand in
+non-interactive Bash). In crontab entries, always write the absolute path
+`/opt/cpanel/ea-php85/root/usr/bin/php`.
 
 ### 3.4 Writable permissions
 
@@ -397,15 +391,16 @@ Per `DEPLOYMENT_RUNBOOK.md` §7 "First-boot account bootstrap":
 
 ```bash
 # Set these first (quoted shell variables, so the block runs as pasted):
+PHP_BIN="${PHP_BIN:-/opt/cpanel/ea-php85/root/usr/bin/php}"
 ADMIN_USER='CHANGE_ME'
 ADMIN_EMAIL='CHANGE_ME@example.org'
 
-php spark shield:user create -n "$ADMIN_USER" -e "$ADMIN_EMAIL" -g systemadmin
-php spark shield:user activate -e "$ADMIN_EMAIL"    # users.active defaults to 0
+"$PHP_BIN" spark shield:user create -n "$ADMIN_USER" -e "$ADMIN_EMAIL" -g systemadmin
+"$PHP_BIN" spark shield:user activate -e "$ADMIN_EMAIL"    # users.active defaults to 0
 # Note the numeric id printed by `create` (or look it up), then:
 ADMIN_USER_ID='CHANGE_ME'
-php spark user:check "$ADMIN_USER_ID"
-php spark db:seed PermissionRoleSyncSeeder          # after users/groups exist
+"$PHP_BIN" spark user:check "$ADMIN_USER_ID"
+"$PHP_BIN" spark db:seed PermissionRoleSyncSeeder          # after users/groups exist
 ```
 
 Then install the first diocesan ordinary via **System → Diocesan Ordinaries →
