@@ -91,6 +91,7 @@ Then on the server (SSH):
 ```bash
 cd ~/ekklesia
 cp build/env-templates/production.env.template .env   # then edit every CHANGE_ME
+alias php=/opt/cpanel/ea-php85/root/usr/bin/php       # bare php is 8.3 here — see §3.3
 php -v                                                # MUST be 8.5 — see §3.3
 php spark config:check App
 php spark config:check Logger
