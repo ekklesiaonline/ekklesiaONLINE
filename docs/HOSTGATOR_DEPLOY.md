@@ -433,9 +433,12 @@ After install, watch `writable/logs/*_cron.log` for the first scheduled runs.
 
 ## 6. Post-deploy validation
 
-Runbook §5/§7 verbatim, plus:
+Run `DEPLOYMENT_RUNBOOK.md` §5/§7, substituting `PHP_BIN='/opt/cpanel/ea-php85/root/usr/bin/php'`
+(`"$PHP_BIN" spark …`) for every bare `php spark` command, plus:
 
 ```bash
+PHP_BIN="${PHP_BIN:-/opt/cpanel/ea-php85/root/usr/bin/php}"
+"$PHP_BIN" spark migrate:status --all
 export BASE_URL='https://ekklessia.online'
 # + PROVINCE_ADMIN_*/DIOCESAN_ADMIN_* creds created via admin UI after bootstrap
 sh build/e2e_admin_levels_smoke.sh
@@ -449,7 +452,7 @@ Go/no-go signals specific to this host:
 - No HTTPS redirect loop (§3.2)
 - `/composer.json`, `/composer.lock`, `/spark`, `/env`, `/.env`, and `/app/Config/App.php` never return 200 (§3.1)
 - `ProductionSecurityPosture` critical log absent from `writable/logs/`
-- `php spark migrate:status --all` shows 0 pending
+- `PHP_BIN='/opt/cpanel/ea-php85/root/usr/bin/php' && "$PHP_BIN" spark migrate:status --all` shows 0 pending
 - First cron entries produce log output within their window
 
 ## 7. Rollback
