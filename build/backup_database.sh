@@ -97,6 +97,13 @@ fi
 if mysqldump --help 2>/dev/null | grep -q 'set-gtid-purged'; then
   DUMP_OPTS="$DUMP_OPTS --set-gtid-purged=OFF"
 fi
+# --no-tablespaces suppresses the PROCESS-privilege warning when dumping
+# tablespace metadata. PROCESS is global and cannot be granted on shared
+# hosting; tablespace metadata is irrelevant to a logical restore. MariaDB
+# lacks the flag, so add it conditionally like the others.
+if mysqldump --help 2>/dev/null | grep -q 'no-tablespaces'; then
+  DUMP_OPTS="$DUMP_OPTS --no-tablespaces"
+fi
 { mysqldump --defaults-extra-file="$DEFAULTS_FILE" $DUMP_OPTS "$DB_NAME" && printf '%s\n' ok > "$STATUS_FILE"; } | gzip > "$TMP_GZ"
 if [ "$(cat "$STATUS_FILE" 2>/dev/null)" != 'ok' ]; then
   echo 'mysqldump failed; no backup written' >&2
