@@ -221,7 +221,7 @@ Then sign in at `/login` and confirm the system dashboard loads.
 
 **2. Populate the `parish` hierarchy (`province` → `diocese` → `parish`) — REQUIRED before go-live**
 
-Before installing an ordinary or enabling public traffic, populate `province`, `diocese`, and `parish` using one of the approved paths in [`docs/HOSTGATOR_DEPLOY.md` §4.1](HOSTGATOR_DEPLOY.md#41-parish-hierarchy-population--webhosting-migration-plan-no-go-gate) (CLI Paths A/B may run before or after step 1; manual UI Path C runs here after the first `systemadmin` exists), then verify:
+Before installing an ordinary or enabling public traffic, populate `province`, `diocese`, and `parish` using one of the approved paths in [`docs/HOSTGATOR_DEPLOY.md` §4.1](HOSTGATOR_DEPLOY.md#41-parish-hierarchy-population--webhosting-migration-plan-no-go-gate) (**Path A** source-DB cutover must run **before step 1** while `users`/`profile`/`parish` are empty; **Path B** `directory:sync-ueid --apply` may run before or after step 1; **Path C** manual UI creation runs here after the first `systemadmin` exists), then verify:
 
 ```bash
 php spark directory:verify-readiness --strict
