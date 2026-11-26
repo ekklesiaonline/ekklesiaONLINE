@@ -437,7 +437,7 @@ Run `DEPLOYMENT_RUNBOOK.md` §5/§7, substituting `PHP_BIN='/opt/cpanel/ea-php85
 (`"$PHP_BIN" spark …`) for every bare `php spark` command, plus:
 
 ```bash
-PHP_BIN="${PHP_BIN:-/opt/cpanel/ea-php85/root/usr/bin/php}"
+PHP_BIN='/opt/cpanel/ea-php85/root/usr/bin/php'
 "$PHP_BIN" spark migrate:status --all
 export BASE_URL='https://ekklessia.online'
 # + PROVINCE_ADMIN_*/DIOCESAN_ADMIN_* creds created via admin UI after bootstrap
