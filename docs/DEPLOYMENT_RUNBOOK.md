@@ -205,16 +205,6 @@ Retain the release SHA/tag, CI run URL, PHP/Composer/MySQL versions, migration r
 
 Run once on a freshly migrated + seeded database (`php spark migrate --all` then `php spark db:seed DatabaseSeeder` — the seeder creates the Shield groups/permissions and baseline provinces/sample dioceses, but **does not populate `parish`**).
 
-**0. Populate the `parish` hierarchy (`province` → `diocese` → `parish`) — REQUIRED before go-live**
-
-Before enabling public traffic, populate `province`, `diocese`, and `parish` using one of the approved paths in [`docs/HOSTGATOR_DEPLOY.md` §4.1](HOSTGATOR_DEPLOY.md#41-parish-hierarchy-population--webhosting-migration-plan-no-go-gate) (source-DB hierarchy export/import in FK order `province` → `diocese` → `parish`, `php spark directory:sync-ueid --apply`, or manual System Admin UI creation), then verify:
-
-```bash
-php spark directory:verify-readiness --strict
-```
-
-Do not go live while `directory:verify-readiness` fails or `GET /health/ready` reports `directory: unavailable`.
-
 **1. First system administrator** — `shield:user create` is the only bootstrap path (there is no admin yet to use the admin-creation UI):
 
 ```bash
@@ -229,13 +219,23 @@ Then sign in at `/login` and confirm the system dashboard loads.
 
 `App\Services\AdminCreationService::createAdmin()` is **not** a bootstrap path — it generates a random password and is used by existing admins creating further admin accounts through the UI (credential-email flow). Do not use it for the first account.
 
-**2. First diocesan ordinary (bishop)** — after the system admin can log in:
+**2. Populate the `parish` hierarchy (`province` → `diocese` → `parish`) — REQUIRED before go-live**
+
+Before installing an ordinary or enabling public traffic, populate `province`, `diocese`, and `parish` using one of the approved paths in [`docs/HOSTGATOR_DEPLOY.md` §4.1](HOSTGATOR_DEPLOY.md#41-parish-hierarchy-population--webhosting-migration-plan-no-go-gate) (CLI Paths A/B may run before or after step 1; manual UI Path C runs here after the first `systemadmin` exists), then verify:
+
+```bash
+php spark directory:verify-readiness --strict
+```
+
+Do not go live while `directory:verify-readiness` fails or `GET /health/ready` reports `directory: unavailable`.
+
+**3. First diocesan ordinary (bishop)** — after the system admin can log in and the target diocese exists:
 
 - Ensure the bishop has a `users` account (create via `shield:user create` or the people/clergy intake flow, with portal access enabled) and the target diocese exists.
 - **Before installing**, complete the authorized, audited **two-person diocesan record review** required by [`docs/ORDINARY_AUTHORIZATION.md` § Controlled rollout](ORDINARY_AUTHORIZATION.md#controlled-rollout): two reviewers independently confirm identity, ordination documents, standing, current ordinary, and appointment, and the review record (both reviewers, date, documents examined) is filed. Use that record's identifier as the `evidenceReference`. `installOrdinary()` itself does not enforce a second reviewer, so a single system admin must not proceed without this record.
 - In the UI: **System → Diocesan Ordinaries → Install** (`installOrdinaryModal`). `ClergyReviewService::installOrdinary(actorId, dioceseId, userId, ordainedOn, officeStartedOn, evidenceReference)` requires the actor to be a system admin, the diocese to exist, and records the office as a managed `leadership_position` with evidence reference — the canonical-ordination invariant applies (verified order in `clergy_ordination` for sacramental functions).
 
-**3. Role-permission sync** — after users and groups exist:
+**4. Role-permission sync** — after users and groups exist:
 
 ```bash
 php spark db:seed PermissionRoleSyncSeeder
