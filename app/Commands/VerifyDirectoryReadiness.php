@@ -18,9 +18,8 @@ class VerifyDirectoryReadiness extends BaseCommand
 
     public function run(array $params)
     {
-        $strict = CLI::getOption('strict') !== null;
-        $service = new DirectoryReadinessService();
-        $result = $service->evaluate();
+        $strict = $this->isStrictMode($params);
+        $result = $this->evaluateReadiness();
         $counts = $result['counts'];
 
         CLI::write('Directory Hierarchy Readiness Check', 'cyan');
@@ -55,5 +54,32 @@ class VerifyDirectoryReadiness extends BaseCommand
 
         CLI::write('Directory readiness PASSED.', 'green');
         return EXIT_SUCCESS;
+    }
+
+    protected function isStrictMode(array $params): bool
+    {
+        return array_key_exists('strict', $params) || CLI::getOption('strict') !== null;
+    }
+
+    /**
+     * @return array{
+     *     ready: bool,
+     *     counts: array{
+     *         provinces: int,
+     *         dioceses: int,
+     *         linked_dioceses: int,
+     *         orphaned_dioceses: int,
+     *         parishes: int,
+     *         active_parishes: int,
+     *         linked_active_parishes: int,
+     *         unlinked_active_parishes: int
+     *     },
+     *     blocking_issues: list<string>,
+     *     warnings: list<string>
+     * }
+     */
+    protected function evaluateReadiness(): array
+    {
+        return (new DirectoryReadinessService())->evaluate();
     }
 }

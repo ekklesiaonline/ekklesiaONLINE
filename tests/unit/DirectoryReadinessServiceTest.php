@@ -160,4 +160,77 @@ final class DirectoryReadinessServiceTest extends CIUnitTestCase
         );
         $this->assertSame(['Diocese of the Dominican Republic'], $names);
     }
+
+    public function testVerifyCommandReturnsExitErrorWhenHierarchyIsEmpty(): void
+    {
+        $command = $this->makeVerifyCommand();
+
+        ob_start();
+        $exitCode = $command->run([]);
+        ob_end_clean();
+
+        $this->assertSame(EXIT_ERROR, $exitCode);
+    }
+
+    public function testVerifyCommandExitCodesWithWarningsInDefaultAndStrictModes(): void
+    {
+        $this->connection->table('province')->insert(['province_number' => '9', 'name' => 'Province IX']);
+        $provinceId = (int) $this->connection->insertID();
+        $this->connection->table('diocese')->insert([
+            'province_id' => $provinceId,
+            'name' => 'Diocese of the Dominican Republic',
+            'alias_norm' => 'diocese of the dominican republic',
+        ]);
+        $dioceseId = (int) $this->connection->insertID();
+        $this->connection->table('parish')->insert([
+            'diocese_id' => $dioceseId,
+            'name' => 'Iglesia Episcopal La Transfiguracion',
+            'is_active' => 1,
+            'deleted_at' => null,
+        ]);
+        // Second active parish without a diocese produces a warning while keeping the chain valid.
+        $this->connection->table('parish')->insert([
+            'diocese_id' => null,
+            'name' => 'Unlinked Active Parish',
+            'is_active' => 1,
+            'deleted_at' => null,
+        ]);
+
+        $command = $this->makeVerifyCommand();
+
+        ob_start();
+        $defaultExitCode = $command->run([]);
+        ob_end_clean();
+        $this->assertSame(EXIT_SUCCESS, $defaultExitCode);
+
+        ob_start();
+        $strictExitCode = $command->run(['strict' => true]);
+        ob_end_clean();
+        $this->assertSame(EXIT_ERROR, $strictExitCode);
+
+        // Removing the unlinked parish makes --strict pass with EXIT_SUCCESS.
+        $this->connection->table('parish')->where('diocese_id', null)->delete();
+
+        ob_start();
+        $cleanStrictExitCode = $command->run(['strict' => true]);
+        ob_end_clean();
+        $this->assertSame(EXIT_SUCCESS, $cleanStrictExitCode);
+    }
+
+    private function makeVerifyCommand(): VerifyDirectoryReadiness
+    {
+        $connection = $this->connection;
+
+        return new class (Services::logger(), new Commands(), $connection) extends VerifyDirectoryReadiness {
+            public function __construct($logger, $commands, private readonly BaseConnection $testConnection)
+            {
+                parent::__construct($logger, $commands);
+            }
+
+            protected function evaluateReadiness(): array
+            {
+                return (new DirectoryReadinessService())->evaluate($this->testConnection);
+            }
+        };
+    }
 }
