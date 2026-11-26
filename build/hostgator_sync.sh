@@ -11,6 +11,14 @@ Environment:
   HOSTGATOR_SSH_PORT     SSH port (default: 22)
   HOSTGATOR_APP_ROOT     Private app root relative to the SSH home directory (default: ekklesia)
   HOSTGATOR_PUBLIC_HTML  Web docroot relative to the SSH home directory (default: public_html)
+  HOSTGATOR_PHP_HANDLER  Apache handler cPanel MultiPHP pins in .htaccess
+                         (default: application/x-httpd-ea-php85___lsphp).
+                         The docroot .htaccess is the ONLY mechanism that selects
+                         a non-default PHP version on non-FPM cPanel/lsapi hosts:
+                         if a sync ever replaced .htaccess without this block, the
+                         site silently falls back to the system default PHP and
+                         fails the 8.5 version gate. Set to empty only when the
+                         host enforces the version another way (e.g. PHP-FPM).
 
 Run this first from the repository root:
   composer install --no-dev --optimize-autoloader --no-interaction
@@ -115,6 +123,11 @@ if [ "$DELETE_PUBLIC" -eq 1 ]; then
     PUBLIC_ARGS=(--delete "${PUBLIC_ARGS[@]}")
 fi
 
+PHP_HANDLER="${HOSTGATOR_PHP_HANDLER-application/x-httpd-ea-php85___lsphp}"
+if [ -n "$PHP_HANDLER" ]; then
+    [[ "$PHP_HANDLER" =~ ^[A-Za-z0-9._-]+$ ]] || die "HOSTGATOR_PHP_HANDLER contains unsupported characters: $PHP_HANDLER"
+fi
+
 REMOTE_HOME="$(ssh -p "$SSH_PORT" "$SSH_TARGET" 'printf %s "$HOME"')"
 [[ "$REMOTE_HOME" =~ ^/[A-Za-z0-9._/-]+$ ]] || die 'Unable to determine a safe remote HOME path'
 REMOTE_APP_ROOT="$REMOTE_HOME/$APP_ROOT"
@@ -128,6 +141,22 @@ cat >> "$PUBLIC_STAGE/.htaccess" <<EOF
     SetEnv EKKLESIA_APP_ROOT $REMOTE_APP_ROOT
 </IfModule>
 EOF
+
+# Pin the cPanel MultiPHP lsapi handler byte-identically to the block cPanel
+# itself writes (same begin/end markers), so a sync never strips the PHP 8.5
+# selection and cPanel still manages the block cleanly when the operator
+# re-selects the version in hPanel.
+if [ -n "$PHP_HANDLER" ]; then
+    cat >> "$PUBLIC_STAGE/.htaccess" <<EOF
+
+# php -- BEGIN cPanel-generated handler, do not edit
+# Set the "ea-php85" package as the default "PHP" programming language.
+<IfModule mime_module>
+  AddHandler $PHP_HANDLER .php .php8 .phtml
+</IfModule>
+# php -- END cPanel-generated handler, do not edit
+EOF
+fi
 
 if [ "$DRY_RUN" -eq 0 ]; then
     ssh -p "$SSH_PORT" "$SSH_TARGET" "mkdir -p -- $APP_ROOT $PUBLIC_HTML"

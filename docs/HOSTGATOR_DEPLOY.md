@@ -187,6 +187,9 @@ restore, so no backup step) — run instead of the block above:
 Create `.env` values:
 
 - `app.baseURL = 'https://ekklessia.online/'`
+- `app.indexPage =` (empty — REQUIRED: `App::$indexPage` defaults to `'index.php'`;
+  without this override every generated link and redirect gains a visible
+  `/index.php/` prefix, as observed on the first 2026-11-25 deploy)
 - `database.default.*` from cPanel MySQL credentials (host `localhost`)
 - `encryption.key` + `encryption.blindIndexKey` — generate independently:
   `php -r "echo 'hex2bin:' . bin2hex(random_bytes(32)) . PHP_EOL;"` (run locally)
@@ -259,10 +262,17 @@ php -v          # via SSH
 which php
 ```
 
-If `php -v` ≠ 8.5, find the 8.5 binary (`ls /opt/alt/php*/usr/bin/php`,
-`/usr/local/bin/php*`) and use its **absolute path in every cron entry** —
-the `build/*_cron.sh` wrappers call bare `php spark` and inherit cron's
-minimal PATH.
+If `php -v` ≠ 8.5, find the 8.5 binary (`ls /opt/cpanel/ea-php85/root/usr/bin/php`,
+`ls /opt/alt/php*/usr/bin/php`, `/usr/local/bin/php*`) and use its **absolute
+path in every cron entry** — the `build/*_cron.sh` wrappers call bare `php spark`
+and inherit cron's minimal PATH.
+
+**Verified on `sh00162.hostgator.com` (2026-11-25):** default SSH `php` is
+ea-php83 (8.3.37) and fails the app's 8.5 gate; the correct CLI binary is
+`/opt/cpanel/ea-php85/root/usr/bin/php` (8.5.13, all required extensions:
+intl, mysqli, gd, curl, dom/xml, zip, openssl, fileinfo). `/opt/alt/` on this
+host only ships php74 — do not use the `/opt/alt/php85` path guessed in older
+revisions of this document.
 
 ### 3.4 Writable permissions
 
@@ -336,6 +346,34 @@ SMTP (587/TLS), Google APIs (Gmail OAuth), and Twilio (if enabled) require
 outbound 443/587 — open on HostGator shared, but verify SMTP auth succeeds
 with a real send during validation (runbook §7).
 
+### 3.7 PHP version selection lives in the docroot `.htaccess` — DEPLOY HAZARD
+
+`uapi LangPHP php_get_vhost_versions` reports the vhost (`zhv.deq.temporary.site`)
+as ea-php85, but with `php_fpm: 0` that setting does **not** reach the web SAPI.
+On non-FPM cPanel/lsapi hosts the per-domain PHP version is enforced only by an
+`AddHandler` block that cPanel writes into the docroot `.htaccess`:
+
+```apache
+# php -- BEGIN cPanel-generated handler, do not edit
+# Set the "ea-php85" package as the default "PHP" programming language.
+<IfModule mime_module>
+  AddHandler application/x-httpd-ea-php85___lsphp .php .php8 .phtml
+</IfModule>
+# php -- END cPanel-generated handler, do not edit
+```
+
+The plain handler name (`application/x-httpd-ea-php85`, without `___lsphp`)
+does NOT exist on lsapi hosts — forcing it produces edge 404s for every PHP
+request (static files still serve). Never append it manually.
+
+Because rsync replaces `.htaccess` whenever its content changes, a sync could
+strip cPanel's block and silently revert the site to the system default PHP
+(ea-php83 → 503 version gate). `build/hostgator_sync.sh` therefore injects the
+byte-identical block itself (see `HOSTGATOR_PHP_HANDLER`); verify after every
+sync that the live `.htaccess` still ends with the cPanel markers. If the plan
+ever enables PHP-FPM for the domain, the vhost setting takes over and
+`HOSTGATOR_PHP_HANDLER=` (empty) skips injection.
+
 ## 4. First-boot bootstrap (after migrate + seed)
 
 Per `DEPLOYMENT_RUNBOOK.md` §7 "First-boot account bootstrap":
@@ -366,13 +404,13 @@ job** (the `build/*.sh` wrappers read `$PHP_BIN`; don't rely on a crontab-level
 environment line). Direct `php spark` jobs use the absolute binary instead:
 
 ```cron
-30 1 * * *   PHP_BIN=/opt/alt/php85/usr/bin/php bash /home/user/ekklesia/build/service_metrics_refresh_cron.sh
-45 1 * * *   cd /home/user/ekklesia && /opt/alt/php85/usr/bin/php spark attendance:sync-diocesan-aggregates --rolling-days 35 >> writable/logs/attendance_aggregates_cron.log 2>&1
+30 1 * * *   PHP_BIN=/opt/cpanel/ea-php85/root/usr/bin/php bash /home/user/ekklesia/build/service_metrics_refresh_cron.sh
+45 1 * * *   cd /home/user/ekklesia && /opt/cpanel/ea-php85/root/usr/bin/php spark attendance:sync-diocesan-aggregates --rolling-days 35 >> writable/logs/attendance_aggregates_cron.log 2>&1
 # ... full matrix in docs/CRON_SCHEDULE.md — substitute PHP binary + app root
 ```
 
 After saving, confirm the wrappers picked up 8.5: run one manually as
-`PHP_BIN=/opt/alt/php85/usr/bin/php bash build/clergy_reconcile_grants_cron.sh`
+`PHP_BIN=/opt/cpanel/ea-php85/root/usr/bin/php bash build/clergy_reconcile_grants_cron.sh`
 and check its log, then inspect `crontab -l` to see exactly what cPanel stored.
 
 Verify server timezone first (`date` via SSH) — morning jobs assume
@@ -439,11 +477,24 @@ it the import stops after recreating a table but before loading its rows.
 
 ---
 
-## Open items blocking deploy
+## Open items blocking deploy — status 2026-11-25/26
 
-1. **[OPERATOR]** §1.2–1.8 cPanel checks (extensions, SSH, MySQL, split-layout paths, SSL, cron)
-2. **[OPERATOR]** SSH credentials + confirm `php -v` on server
-3. **[OPERATOR]** Remove/isolate the Softaculous skeleton and purge the cached `/` → `/public` redirect
-4. **[AGENT+OPERATOR]** §3.1 split-layout exposure probes and §3.2 proxy/HTTPS verification — `proxyIPs` may still need HostGator-specific configuration after the first request
-5. **[OPERATOR]** `.env` secret generation (encryption keys, SMTP already rotated)
+1. ~~**[OPERATOR]** §1.2–1.8 cPanel checks~~ — **done**: SSH verified (BatchMode, stable);
+   extensions verified on ea-php85 CLI; DB `zhvdeqte_ekklesiaonline` + user
+   `zhvdeqte_ekklesia` exist with ALL PRIVILEGES; split layout deployed. **Still
+   open:** force-HTTPS toggle (app-level redirect already works), cron install.
+2. ~~**[OPERATOR]** SSH credentials + confirm `php -v` on server~~ — **done**; web SAPI
+   required the `.htaccess` lsapi handler fix (§3.7), CLI is
+   `/opt/cpanel/ea-php85/root/usr/bin/php` (§3.3)
+3. ~~**[OPERATOR]** Remove/isolate the Softaculous skeleton and purge the cached `/` → `/public` redirect~~ —
+   **done 2026-11-25**: `hostgator_sync.sh --delete-public` removed the skeleton;
+   cached redirect gone; `/composer.json` `/spark` `/env` → 404, `/.env` → 406
+4. **[AGENT+OPERATOR]** §3.2 proxy/HTTPS verification — **partially done**: no redirect
+   loop observed; `http://` → single clean 307 to `https://`; `proxyIPs` not needed
+   so far. Watch for edge cases during validation.
+5. **[OPERATOR]** `.env` secret generation — **done except SMTP**: `.env` written
+   2026-11-25 (mode 600, zero `CHANGE_ME`, independent encryption keys);
+   `email.SMTPHost/User/Pass` empty pending the operator's rotated credential
 6. **[JOINT]** D3 encryption-gate operator rows complete against this environment
+7. **[OPERATOR]** First-boot bootstrap (§4) — shield user not yet created
+8. **[AGENT]** e2e smoke + `/health/ready` as systemadmin — blocked on item 7
