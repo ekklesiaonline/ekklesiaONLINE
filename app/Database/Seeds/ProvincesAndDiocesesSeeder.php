@@ -30,18 +30,20 @@ class ProvincesAndDiocesesSeeder extends Seeder
             }
         }
 
-        $firstProvince = $this->db->table('province')
-            ->orderBy('id', 'ASC')->get()->getFirstRow('array');
+        // Seed placeholder dioceses only when the diocese table is completely empty,
+        // so routine re-runs of DatabaseSeeder never recreate removed sample rows
+        // after real dioceses have been populated.
+        if ($this->db->table('diocese')->countAllResults() === 0) {
+            $firstProvince = $this->db->table('province')
+                ->orderBy('id', 'ASC')->get()->getFirstRow('array');
 
-        if ($firstProvince) {
-            $dioceses = [
-                ['province_id' => $firstProvince['id'], 'name' => 'Sample Diocese One', 'alias_norm' => 'sample diocese one'],
-                ['province_id' => $firstProvince['id'], 'name' => 'Sample Diocese Two', 'alias_norm' => 'sample diocese two'],
-            ];
+            if ($firstProvince) {
+                $dioceses = [
+                    ['province_id' => $firstProvince['id'], 'name' => 'Sample Diocese One', 'alias_norm' => 'sample diocese one'],
+                    ['province_id' => $firstProvince['id'], 'name' => 'Sample Diocese Two', 'alias_norm' => 'sample diocese two'],
+                ];
 
-            foreach ($dioceses as $diocese) {
-                $existing = $this->db->table('diocese')->where('name', $diocese['name'])->get()->getFirstRow('array');
-                if (!$existing) {
+                foreach ($dioceses as $diocese) {
                     $this->db->table('diocese')->insert($diocese);
                 }
             }

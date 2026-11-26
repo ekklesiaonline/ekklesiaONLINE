@@ -2,9 +2,14 @@
 
 namespace Tests\Unit;
 
+use App\Commands\VerifyDirectoryReadiness;
+use App\Database\Seeds\ProvincesAndDiocesesSeeder;
 use App\Services\DirectoryReadinessService;
+use CodeIgniter\CLI\Commands;
 use CodeIgniter\Database\BaseConnection;
 use CodeIgniter\Test\CIUnitTestCase;
+use Config\Database;
+use Config\Services;
 
 final class DirectoryReadinessServiceTest extends CIUnitTestCase
 {
@@ -24,7 +29,7 @@ final class DirectoryReadinessServiceTest extends CIUnitTestCase
         $this->connection->query("DROP TABLE IF EXISTS {$province}");
 
         $this->connection->query("CREATE TABLE {$province} (id INTEGER PRIMARY KEY AUTOINCREMENT, province_number TEXT NOT NULL, name TEXT NOT NULL)");
-        $this->connection->query("CREATE TABLE {$diocese} (id INTEGER PRIMARY KEY AUTOINCREMENT, province_id INTEGER NOT NULL, name TEXT NOT NULL)");
+        $this->connection->query("CREATE TABLE {$diocese} (id INTEGER PRIMARY KEY AUTOINCREMENT, province_id INTEGER NOT NULL, name TEXT NOT NULL, alias_norm TEXT NULL)");
         $this->connection->query("CREATE TABLE {$parish} (id INTEGER PRIMARY KEY AUTOINCREMENT, diocese_id INTEGER NULL, name TEXT NOT NULL, is_active INTEGER NOT NULL DEFAULT 1, deleted_at TEXT NULL)");
     }
 
@@ -127,5 +132,32 @@ final class DirectoryReadinessServiceTest extends CIUnitTestCase
         $this->assertSame(1, $result['counts']['provinces']);
         $this->assertSame(1, $result['counts']['linked_dioceses']);
         $this->assertSame(1, $result['counts']['linked_active_parishes']);
+    }
+
+    public function testProvincesAndDiocesesSeederDoesNotRecreateSampleDiocesesWhenRealDiocesesExist(): void
+    {
+        $seeder = new ProvincesAndDiocesesSeeder(new Database(), $this->connection);
+        $seeder->run();
+
+        // Fresh empty database gets the 2 placeholder dioceses.
+        $this->assertSame(2, $this->connection->table('diocese')->countAllResults());
+
+        // Replace placeholder dioceses with a real diocese, then re-run seeder (as on routine deploys).
+        $firstProvince = $this->connection->table('province')->orderBy('id', 'ASC')->get()->getFirstRow('array');
+        $this->assertIsArray($firstProvince);
+        $this->connection->table('diocese')->truncate();
+        $this->connection->table('diocese')->insert([
+            'province_id' => $firstProvince['id'],
+            'name' => 'Diocese of the Dominican Republic',
+            'alias_norm' => 'diocese of the dominican republic',
+        ]);
+
+        $seeder->run();
+
+        $names = array_column(
+            $this->connection->table('diocese')->select('name')->get()->getResultArray(),
+            'name'
+        );
+        $this->assertSame(['Diocese of the Dominican Republic'], $names);
     }
 }
