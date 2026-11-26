@@ -204,7 +204,7 @@ final class DirectoryReadinessServiceTest extends CIUnitTestCase
         $this->assertSame(EXIT_SUCCESS, $defaultExitCode);
 
         ob_start();
-        $strictExitCode = $command->run(['strict' => true]);
+        $strictExitCode = $command->run(['strict' => null]);
         ob_end_clean();
         $this->assertSame(EXIT_ERROR, $strictExitCode);
 
@@ -212,7 +212,7 @@ final class DirectoryReadinessServiceTest extends CIUnitTestCase
         $this->connection->table('parish')->where('diocese_id', null)->delete();
 
         ob_start();
-        $cleanStrictExitCode = $command->run(['strict' => true]);
+        $cleanStrictExitCode = $command->run(['strict' => null]);
         ob_end_clean();
         $this->assertSame(EXIT_SUCCESS, $cleanStrictExitCode);
     }
