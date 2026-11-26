@@ -125,7 +125,7 @@ fi
 
 PHP_HANDLER="${HOSTGATOR_PHP_HANDLER-application/x-httpd-ea-php85___lsphp}"
 if [ -n "$PHP_HANDLER" ]; then
-    [[ "$PHP_HANDLER" =~ ^[A-Za-z0-9._-]+$ ]] || die "HOSTGATOR_PHP_HANDLER contains unsupported characters: $PHP_HANDLER"
+    [[ "$PHP_HANDLER" =~ ^[A-Za-z0-9._-]+(/[A-Za-z0-9._-]+)?$ ]] || die "HOSTGATOR_PHP_HANDLER contains unsupported characters: $PHP_HANDLER"
 fi
 
 REMOTE_HOME="$(ssh -p "$SSH_PORT" "$SSH_TARGET" 'printf %s "$HOME"')"
