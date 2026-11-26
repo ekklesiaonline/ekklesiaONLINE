@@ -146,6 +146,8 @@ never seeds, clears cache, or compiles routes after a failure:
     echo "ABORTED: seeding FAILED after migration — restore from $BACKUP_FILE if needed" >&2
     exit 1
   fi
+  "$PHP_BIN" spark directory:verify-readiness \
+    || { echo 'ABORTED: province/diocese/parish hierarchy is NOT populated — see §4.1 before going live' >&2; exit 1; }
   "$PHP_BIN" spark cache:clear
   "$PHP_BIN" spark routes > /tmp/routes_after.txt
   echo 'Database release complete.'
@@ -183,7 +185,7 @@ restore, so no backup step) — run instead of the block above:
   fi
   "$PHP_BIN" spark cache:clear
   "$PHP_BIN" spark routes > /tmp/routes_after.txt
-  echo 'Database bootstrap complete.'
+  echo 'Database bootstrap complete. NEXT REQUIRED STEP before go-live: populate province/diocese/parish (§4.1) and verify with directory:verify-readiness.'
 )
 ```
 
@@ -385,7 +387,84 @@ sync that the live `.htaccess` still ends with the cPanel markers. If the plan
 ever enables PHP-FPM for the domain, the vhost setting takes over and
 `HOSTGATOR_PHP_HANDLER=` (empty) skips injection.
 
-## 4. First-boot bootstrap (after migrate + seed)
+## 4. First-boot bootstrap & Parish Hierarchy Population (REQUIRED before go-live)
+
+### 4.1 Parish Hierarchy Population & Webhosting Migration Plan (NO-GO GATE)
+
+`DatabaseSeeder` seeds `province` (Provinces I–X) and two placeholder dioceses
+(`Sample Diocese One`, `Sample Diocese Two`), and seeds **zero `parish` rows**.
+Going live with an empty `parish` table (or missing `province` / `diocese` parent
+rows) is a **hard no-go**: registration, connect cards, parish-scoped dashboards,
+and `GET /health/ready` (`components.directory`) all fail without at least one
+active, non-deleted `parish` linked to a valid `diocese` → `province` chain.
+
+Choose **one** of the following population paths before enabling public traffic:
+
+#### Path A — Moving an already-populated local/staging system to webhosting (preferred when moving existing data)
+
+Export only the canonical hierarchy tables in strict foreign-key order
+(`province` → `diocese` → `diocese_alias` if present → `parish`) so existing
+IDs, `parish_ueid`, `public_token`, addresses, and province-to-diocese mappings
+are preserved identically on webhosting:
+
+1. **Pre-export check on source DB** (confirm clean parent chain and no placeholder dioceses):
+   ```bash
+   php spark directory:verify-readiness --strict
+   ```
+2. **Export hierarchy tables from source DB** (data-only, repeatable, no schema overwrite):
+   ```bash
+   mysqldump --single-transaction --no-create-info --skip-triggers --replace \
+     -u <src_user> -p <src_db> province diocese parish \
+     | gzip > parish_hierarchy_$(date +%Y%m%d).sql.gz
+   # Include diocese_alias after diocese if populated in source DB.
+   ```
+3. **Transfer over SSH/SFTP** to `~/ekklesia/writable/backups/` (never plain FTP, never into `public_html/`).
+4. **Take a HostGator pre-import backup** (`sh build/backup_database.sh` + `gzip -t`), then import into the HostGator DB after `php spark migrate --all` and `php spark db:seed DatabaseSeeder`:
+   ```bash
+   # Remove placeholder sample dioceses if present and unused, then import:
+   gzip -dc ~/ekklesia/writable/backups/parish_hierarchy_YYYYMMDD.sql.gz \
+     | mysql -u <hg_db_user> -p <hg_db_name>
+   ```
+5. **Verify on HostGator**:
+   ```bash
+   PHP_BIN='/opt/cpanel/ea-php85/root/usr/bin/php'
+   "$PHP_BIN" spark directory:verify-readiness --strict
+   ```
+6. **Keep populated across subsequent deploys**:
+   - `build/hostgator_sync.sh` syncs code only and never touches MySQL or `writable/backups/`.
+   - Routine deploys run `spark migrate --all`, `spark db:seed DatabaseSeeder` (idempotent — does not delete or overwrite existing `province`, `diocese`, or `parish` rows), and `spark directory:verify-readiness` (which aborts the release block if the hierarchy is ever empty).
+   - Nightly `build/backup_database.sh` backs up the populated `province`, `diocese`, and `parish` tables with the rest of the database; verify row counts during restore drills.
+
+#### Path B — Fresh webhosting install using the shipped UEID directory (`docs/UEID.json`)
+
+`docs/UEID.json` (6,752 parishes across 108 dioceses) is synced to
+`~/ekklesia/docs/UEID.json` by `build/hostgator_sync.sh`.
+
+1. Ensure the real `province` rows and target `diocese` rows (mapped to their
+   actual `province_id`) exist first — do not rely on `--default-province-id=1`
+   for production unless you intentionally reconcile province assignments
+   immediately afterward.
+2. Dry-run first and review the generated report in `writable/reports/`:
+   ```bash
+   PHP_BIN='/opt/cpanel/ea-php85/root/usr/bin/php'
+   "$PHP_BIN" spark directory:sync-ueid
+   ```
+3. Apply inside a transaction and verify:
+   ```bash
+   "$PHP_BIN" spark directory:sync-ueid --apply
+   "$PHP_BIN" spark directory:verify-readiness
+   ```
+4. Remove unused `Sample Diocese One` / `Sample Diocese Two` rows created by
+   `ProvincesAndDiocesesSeeder` once real dioceses are loaded.
+
+#### Path C — Minimal launch (manual creation via System Admin UI)
+
+After creating the first `systemadmin` account (§4.2), create or verify the
+target `province`, create the real `diocese` under that province, create each
+active `parish` under that diocese, remove placeholder sample dioceses, and run
+`"$PHP_BIN" spark directory:verify-readiness --strict`.
+
+### 4.2 First-boot account bootstrap (after migrate + seed)
 
 Per `DEPLOYMENT_RUNBOOK.md` §7 "First-boot account bootstrap":
 
@@ -439,11 +518,12 @@ Run `DEPLOYMENT_RUNBOOK.md` §5/§7, substituting `PHP_BIN='/opt/cpanel/ea-php85
 ```bash
 PHP_BIN='/opt/cpanel/ea-php85/root/usr/bin/php'
 "$PHP_BIN" spark migrate:status --all
+"$PHP_BIN" spark directory:verify-readiness
 export BASE_URL='https://ekklessia.online'
 # + PROVINCE_ADMIN_*/DIOCESAN_ADMIN_* creds created via admin UI after bootstrap
 sh build/e2e_admin_levels_smoke.sh
 curl -fsS "$BASE_URL/health"           # 200
-# sign in as systemadmin → GET /health/ready → 200, database+writable ready
+# sign in as systemadmin → GET /health/ready → 200, database+writable+directory ready
 ```
 
 Go/no-go signals specific to this host:
@@ -453,6 +533,8 @@ Go/no-go signals specific to this host:
 - `/composer.json`, `/composer.lock`, `/spark`, `/env`, `/.env`, and `/app/Config/App.php` never return 200 (§3.1)
 - `ProductionSecurityPosture` critical log absent from `writable/logs/`
 - `PHP_BIN='/opt/cpanel/ea-php85/root/usr/bin/php' && "$PHP_BIN" spark migrate:status --all` shows 0 pending
+- `PHP_BIN='/opt/cpanel/ea-php85/root/usr/bin/php' && "$PHP_BIN" spark directory:verify-readiness` exits 0 (`province`, `diocese`, and active linked `parish` all populated)
+- `GET /health/ready` as `systemadmin` returns 200 with `database`, `writable`, and `directory` all `ready`
 - First cron entries produce log output within their window
 
 ## 7. Rollback
@@ -511,5 +593,6 @@ it the import stops after recreating a table but before loading its rows.
    2026-11-25 (mode 600, zero `CHANGE_ME`, independent encryption keys);
    `email.SMTPHost/User/Pass` empty pending the operator's rotated credential
 6. **[JOINT]** D3 encryption-gate operator rows complete against this environment
-7. **[OPERATOR]** First-boot bootstrap (§4) — shield user not yet created
-8. **[AGENT]** e2e smoke + `/health/ready` as systemadmin — blocked on item 7
+7. **[OPERATOR]** First-boot bootstrap (§4.2) — shield user not yet created
+8. **[OPERATOR]** Populate `province`, `diocese`, and `parish` tables (§4.1) and pass `"$PHP_BIN" spark directory:verify-readiness` — **required before go-live** (`DatabaseSeeder` leaves `parish` empty)
+9. **[AGENT]** e2e smoke + `/health/ready` (`database`, `writable`, `directory`) as systemadmin — blocked on items 7–8

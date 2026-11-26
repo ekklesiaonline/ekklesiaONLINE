@@ -2,6 +2,7 @@
 
 namespace App\Controllers;
 
+use App\Services\DirectoryReadinessService;
 use CodeIgniter\Controller;
 use CodeIgniter\Database\BaseConnection;
 use CodeIgniter\HTTP\ResponseInterface;
@@ -45,6 +46,7 @@ class Health extends Controller
         $components = [
             'database' => $this->databaseReady() ? 'ready' : 'unavailable',
             'writable' => $this->writableReady() ? 'ready' : 'unavailable',
+            'directory' => $this->directoryReady() ? 'ready' : 'unavailable',
         ];
         $ready = !in_array('unavailable', $components, true);
 
@@ -117,5 +119,10 @@ class Health extends Controller
         }
 
         return true;
+    }
+
+    protected function directoryReady(): bool
+    {
+        return (new DirectoryReadinessService())->isReady();
     }
 }

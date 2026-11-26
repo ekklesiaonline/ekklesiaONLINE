@@ -39,12 +39,24 @@ final class HealthControllerTest extends CIUnitTestCase
 
     public function testReadinessReturnsComponentStatesForSystemAdmin(): void
     {
-        $response = $this->controller(true, true, true)->ready();
+        $response = $this->controller(true, true, true, true)->ready();
         $payload = json_decode($response->getBody(), true, 512, JSON_THROW_ON_ERROR);
 
         $this->assertSame(200, $response->getStatusCode());
         $this->assertSame('ready', $payload['status']);
-        $this->assertSame(['database' => 'ready', 'writable' => 'ready'], $payload['components']);
+        $this->assertSame(['database' => 'ready', 'writable' => 'ready', 'directory' => 'ready'], $payload['components']);
+    }
+
+    public function testReadinessReturns503WhenDirectoryHierarchyNotPopulated(): void
+    {
+        $response = $this->controller(true, true, true, false)->ready();
+        $payload = json_decode($response->getBody(), true, 512, JSON_THROW_ON_ERROR);
+
+        $this->assertSame(503, $response->getStatusCode());
+        $this->assertSame('HEALTH_READINESS_FAILED', $payload['error']['code']);
+        $this->assertSame('unavailable', $payload['error']['details']['components']['directory']);
+        $this->assertSame('ready', $payload['error']['details']['components']['database']);
+        $this->assertSame('ready', $payload['error']['details']['components']['writable']);
     }
 
     public function testReadinessReturnsGeneric503WithoutExceptionDetails(): void
@@ -71,13 +83,18 @@ final class HealthControllerTest extends CIUnitTestCase
         $this->assertStringContainsString("'health'", $maintenance);
     }
 
-    private function controller(bool $authorized, bool $databaseReady, bool $writableReady): Health
-    {
-        $controller = new class($authorized, $databaseReady, $writableReady) extends Health {
+    private function controller(
+        bool $authorized,
+        bool $databaseReady,
+        bool $writableReady,
+        bool $directoryReady = true,
+    ): Health {
+        $controller = new class($authorized, $databaseReady, $writableReady, $directoryReady) extends Health {
             public function __construct(
                 private readonly bool $authorized,
                 private readonly bool $databaseAvailable,
                 private readonly bool $writableAvailable,
+                private readonly bool $directoryAvailable,
             ) {
             }
 
@@ -94,6 +111,11 @@ final class HealthControllerTest extends CIUnitTestCase
             protected function writableReady(): bool
             {
                 return $this->writableAvailable;
+            }
+
+            protected function directoryReady(): bool
+            {
+                return $this->directoryAvailable;
             }
         };
         $controller->initController(

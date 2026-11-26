@@ -77,7 +77,7 @@ A release is **no-go** if any item fails:
 4. Composer validation, production install dry-run, audit, and PHPStan pass.
 5. PHPUnit has no failures, warnings, or risky tests.
 6. Review the JUnit/TestDox artifacts. Any unclassified skip blocks release.
-7. Migration status, backup preflight, route compilation, liveness, readiness, and role smoke checks pass.
+7. Migration status, backup preflight, route compilation, liveness, readiness, directory hierarchy readiness (`php spark directory:verify-readiness` — populated `province`, `diocese`, and active linked `parish` rows), and role smoke checks pass.
 8. The rollback owner and maintenance window are confirmed.
 
 ### Approved skip classifications
@@ -153,9 +153,10 @@ export DIOCESAN_ADMIN_PASSWORD='...'
    php spark migrate:status --all > /tmp/migrations_after.txt
    ```
 
-7. Clear caches and compile routes:
+7. Verify the ecclesiastical directory hierarchy (`province`, `diocese`, and at least one active linked `parish`) is populated, clear caches, and compile routes:
 
    ```bash
+   php spark directory:verify-readiness
    php spark cache:clear
    php spark routes > /tmp/routes_after_deploy.txt
    ```
@@ -166,7 +167,7 @@ export DIOCESAN_ADMIN_PASSWORD='...'
    sh build/e2e_admin_levels_smoke.sh
    ```
 
-9. Sign in as a system administrator and request `GET /health/ready`. It must return HTTP 200 with `database` and `writable` marked `ready`.
+9. Sign in as a system administrator and request `GET /health/ready`. It must return HTTP 200 with `database`, `writable`, and `directory` marked `ready`.
 10. Disable edge maintenance mode.
 
 ## 6. Health Endpoints
@@ -181,14 +182,15 @@ export DIOCESAN_ADMIN_PASSWORD='...'
 ### `GET /health/ready`
 
 - Requires a Shield session and `system.admin` permission.
-- Checks database connectivity and required writable runtime directories.
+- Checks database connectivity, required writable runtime directories, and directory hierarchy readiness (populated `province`, `diocese`, and at least one active, non-deleted `parish` linked to a valid `diocese` → `province` parent chain).
 - Returns HTTP 200 when ready or HTTP 503 with stable error code `HEALTH_READINESS_FAILED`.
 - Never returns raw exception or SQL text.
 
 ## 7. Post-Deployment Validation
 
 - Public liveness returns 200 through the external load balancer.
-- Protected readiness returns 200 for a system administrator.
+- `php spark directory:verify-readiness` exits 0 (`province`, `diocese`, and active linked `parish` rows populated).
+- Protected readiness returns 200 for a system administrator (`database`, `writable`, and `directory` all `ready`).
 - Province and diocesan administrator login and scope assertions pass.
 - Critical create/update/delete AJAX flows return their documented contracts.
 - Application and structured monitoring logs are written.
@@ -201,7 +203,17 @@ Retain the release SHA/tag, CI run URL, PHP/Composer/MySQL versions, migration r
 
 ### First-boot account bootstrap
 
-Run once on a freshly migrated + seeded database (`php spark migrate --all` then `php spark db:seed DatabaseSeeder` — the seeder creates the Shield groups/permissions the steps below depend on).
+Run once on a freshly migrated + seeded database (`php spark migrate --all` then `php spark db:seed DatabaseSeeder` — the seeder creates the Shield groups/permissions and baseline provinces/sample dioceses, but **does not populate `parish`**).
+
+**0. Populate the `parish` hierarchy (`province` → `diocese` → `parish`) — REQUIRED before go-live**
+
+Before enabling public traffic, populate `province`, `diocese`, and `parish` using one of the approved paths in [`docs/HOSTGATOR_DEPLOY.md` §4.1](HOSTGATOR_DEPLOY.md#41-parish-hierarchy-population--webhosting-migration-plan-no-go-gate) (source-DB hierarchy export/import in FK order `province` → `diocese` → `parish`, `php spark directory:sync-ueid --apply`, or manual System Admin UI creation), then verify:
+
+```bash
+php spark directory:verify-readiness --strict
+```
+
+Do not go live while `directory:verify-readiness` fails or `GET /health/ready` reports `directory: unavailable`.
 
 **1. First system administrator** — `shield:user create` is the only bootstrap path (there is no admin yet to use the admin-creation UI):
 
@@ -375,7 +387,8 @@ No workflow consumes the GitHub `staging` environment any more; the probe runs m
 - [ ] Confirm unauthenticated `GET /health` returns minimal HTTP 200 JSON without versions, paths, or configuration values.
 - [ ] Enable maintenance mode, confirm `/health` still returns HTTP 200, and disable maintenance mode afterward.
 - [ ] Confirm `/health/ready` rejects anonymous, normal-member, and non-`system.admin` parish-admin requests.
-- [ ] Confirm system-admin readiness returns HTTP 200 with `database` and `writable` marked `ready`.
+- [ ] Confirm `php spark directory:verify-readiness` exits 0 (`province`, `diocese`, and active linked `parish` rows populated).
+- [ ] Confirm system-admin readiness returns HTTP 200 with `database`, `writable`, and `directory` marked `ready`.
 - [ ] Export staging smoke credentials securely and run `sh build/e2e_admin_levels_smoke.sh`.
 - [ ] Confirm province- and diocesan-admin assertions pass and investigate unexpected 200, 302, 403, 404, or 500 responses.
 - [ ] Confirm application and structured monitoring logs are written and critical writes create redacted audit records.
@@ -421,4 +434,4 @@ No workflow consumes the GitHub `staging` environment any more; the probe runs m
 - [x] No deployment, migration, destructive restore, push, or production change was performed during the assessment.
 - [ ] Production release approved.
 
-The release remains **no-go** until the SMTP credential is rotated, deployment environments are reconciled, Composer 2.10.3+ and clean vendor installation are confirmed, CI/MySQL/staging evidence is reviewed, backup and isolated restore validation succeed, the pending vendor migration is applied after a verified backup, and the rollback owner and maintenance window are recorded.
+The release remains **no-go** until the SMTP credential is rotated, deployment environments are reconciled, Composer 2.10.3+ and clean vendor installation are confirmed, CI/MySQL/staging evidence is reviewed, backup and isolated restore validation succeed, the `province`/`diocese`/`parish` hierarchy is populated and passes `php spark directory:verify-readiness`, the pending vendor migration is applied after a verified backup, and the rollback owner and maintenance window are recorded.

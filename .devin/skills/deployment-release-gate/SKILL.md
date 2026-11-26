@@ -20,6 +20,7 @@ composer install --no-dev --optimize-autoloader --dry-run --no-interaction
 vendor/bin/phpstan analyse --no-progress
 vendor/bin/phpunit --no-coverage --testdox
 php spark migrate:status --all
+php spark directory:verify-readiness
 php spark routes > writable/routes_before_deploy.txt
 sh build/backup_database.sh --check
 sh build/restore_database.sh --check
@@ -45,7 +46,7 @@ Never run `php spark config:check Database`, `Encryption`, or `Email` in logs be
 
 ## No-go conditions
 
-Stop and report a no-go for any failed test, warning/risky PHPUnit result, unclassified skip, migration failure, route compilation failure, backup preflight failure, missing rollback owner/window, placeholder environment value, or unexpected secret exposure. The six documented SQLite skips are allowed only when they still match the runbook classifications.
+Stop and report a no-go for any failed test, warning/risky PHPUnit result, unclassified skip, migration failure, empty `province`/`diocese`/`parish` hierarchy (`php spark directory:verify-readiness` non-zero or `/health/ready` reporting `directory: unavailable`), route compilation failure, backup preflight failure, missing rollback owner/window, placeholder environment value, or unexpected secret exposure. The eight documented SQLite skips are allowed only when they still match the runbook classifications.
 
 ## Deployment sequence
 
@@ -55,9 +56,9 @@ Stop and report a no-go for any failed test, warning/risky PHPUnit result, uncla
 4. Create a fresh backup; verify it is non-empty and passes `gzip -t`.
 5. Install production dependencies with `--no-dev --optimize-autoloader`.
 6. Record migration status, run `php spark migrate --all` once, and record status again.
-7. Clear cache and compile routes.
+7. Confirm `province`, `diocese`, and at least one active linked `parish` are populated (`php spark directory:verify-readiness` — `DatabaseSeeder` does not seed `parish`; follow `docs/HOSTGATOR_DEPLOY.md` §4.1 when moving or bootstrapping on webhosting), then clear cache and compile routes.
 8. Run `sh build/e2e_admin_levels_smoke.sh` with staging credentials from environment variables only.
-9. Verify protected `/health/ready` as a system administrator and confirm database/writable readiness.
+9. Verify protected `/health/ready` as a system administrator and confirm `database`, `writable`, and `directory` readiness.
 10. Validate logs, audit records, SMTP staging delivery, 5xx/429/latency alerts, then disable maintenance mode.
 
 ## Rollback and restore safety
@@ -71,6 +72,7 @@ Record release SHA/tag, CI URL, tool/runtime versions, migration reports, route 
 ## References
 
 - `docs/DEPLOYMENT_RUNBOOK.md`
+- `docs/HOSTGATOR_DEPLOY.md`
 - `build/e2e_admin_levels_smoke.sh`
 - `build/e2e_module_smoke.sh`
 - `build/backup_database.sh`
