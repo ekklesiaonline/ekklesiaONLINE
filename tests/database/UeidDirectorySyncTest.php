@@ -18,7 +18,7 @@ final class UeidDirectorySyncTest extends CIUnitTestCase
     {
         parent::setUp();
 
-        $this->connection = db_connect('tests');
+        $this->connection = \Config\Database::connect('tests', false);
         $parish           = $this->connection->prefixTable('parish');
         $diocese          = $this->connection->prefixTable('diocese');
         $province         = $this->connection->prefixTable('province');
@@ -77,6 +77,7 @@ final class UeidDirectorySyncTest extends CIUnitTestCase
         $this->connection->query("DROP TABLE IF EXISTS {$parish}");
         $this->connection->query("DROP TABLE IF EXISTS {$diocese}");
         $this->connection->query("DROP TABLE IF EXISTS {$province}");
+        $this->connection->close();
 
         Services::reset(true);
         parent::tearDown();

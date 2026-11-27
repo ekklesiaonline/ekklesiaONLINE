@@ -169,6 +169,57 @@ final class RegisterParishHardStopIntegrationTest extends CIUnitTestCase
         $this->assertSame($before, $after);
     }
 
+    public function testRegisterViewListsOnlyHierarchyValidParishes(): void
+    {
+        $this->ensureHierarchyTables();
+
+        $this->db->table('parish')->whereIn('id', [101, 102])->delete();
+        $this->db->table('diocese')->where('id', 11)->delete();
+        $this->db->table('province')->where('id', 2)->delete();
+
+        $this->db->table('province')->insert([
+            'id'         => 2,
+            'name'       => 'Lookup Province',
+            'created_at' => date('Y-m-d H:i:s'),
+            'updated_at' => date('Y-m-d H:i:s'),
+        ]);
+        $this->db->table('diocese')->insert([
+            'id'          => 11,
+            'province_id' => 2,
+            'name'        => 'Lookup Diocese',
+            'created_at'  => date('Y-m-d H:i:s'),
+            'updated_at'  => date('Y-m-d H:i:s'),
+        ]);
+        $this->db->table('parish')->insert([
+            'id'          => 101,
+            'diocese_id'  => 11,
+            'name'        => 'Valid Lookup Parish',
+            'parish_ueid' => 'VALID-101',
+            'created_at'  => date('Y-m-d H:i:s'),
+            'updated_at'  => date('Y-m-d H:i:s'),
+        ]);
+        $this->db->table('parish')->insert([
+            'id'          => 102,
+            'diocese_id'  => null,
+            'name'        => 'Unlinked Lookup Parish',
+            'parish_ueid' => 'ORPHAN-102',
+            'created_at'  => date('Y-m-d H:i:s'),
+            'updated_at'  => date('Y-m-d H:i:s'),
+        ]);
+
+        $routes = Services::routes();
+        $routes->get('register', 'App\Controllers\Auth\RegisterController::registerView', ['as' => 'register']);
+        $routes->get('login', 'CodeIgniter\Shield\Controllers\LoginController::loginView', ['as' => 'login']);
+
+        $controller = new \App\Controllers\Auth\RegisterController();
+        $controller->initController(service('request'), service('response'), service('logger'));
+        $html = $controller->registerView();
+
+        $this->assertIsString($html);
+        $this->assertStringContainsString('Valid Lookup Parish', $html);
+        $this->assertStringNotContainsString('Unlinked Lookup Parish', $html);
+    }
+
     private function ensureUsersTable(): void
     {
         $table = $this->createTableName('users');
