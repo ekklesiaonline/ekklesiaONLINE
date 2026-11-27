@@ -70,7 +70,7 @@ class Health extends Controller
             ]);
         }
 
-        return $this->response->setJSON([
+        return $this->response->setStatusCode(200)->setJSON([
             'success' => true,
             'status' => 'ready',
             'message' => 'Application is ready.',

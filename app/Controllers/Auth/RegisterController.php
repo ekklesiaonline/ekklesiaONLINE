@@ -28,15 +28,7 @@ class RegisterController extends ShieldRegisterController
             return redirect()->route('auth-action-show');
         }
 
-        $parishes = db_connect()->table('parish p')
-            ->select('p.id, p.name, p.parish_ueid, d.name as diocese_name, pr.name as province_name')
-            ->join('diocese d', 'd.id = p.diocese_id', 'left')
-            ->join('province pr', 'pr.id = d.province_id', 'left')
-            ->orderBy('pr.name', 'ASC')
-            ->orderBy('d.name', 'ASC')
-            ->orderBy('p.name', 'ASC')
-            ->get()
-            ->getResultArray();
+        $parishes = $this->fetchValidParishesForRegistration();
 
         return $this->view(setting('Auth.views')['register'], [
             'parishes'          => $parishes,
@@ -100,6 +92,36 @@ class RegisterController extends ShieldRegisterController
         }
 
         return $items;
+    }
+
+    /**
+     * Fetch parishes eligible for registration using the same hierarchy rule
+     * enforced by parishHierarchyValid() on submission.
+     *
+     * @return list<array<string, mixed>>
+     */
+    private function fetchValidParishesForRegistration(): array
+    {
+        $db = db_connect();
+
+        // Fallback for minimal test fixtures where parent hierarchy tables are absent.
+        if (! $db->tableExists('diocese') || ! $db->tableExists('province')) {
+            return $db->table('parish p')
+                ->select('p.id, p.name, p.parish_ueid')
+                ->orderBy('p.name', 'ASC')
+                ->get()
+                ->getResultArray();
+        }
+
+        return $db->table('parish p')
+            ->select('p.id, p.name, p.parish_ueid, d.name as diocese_name, pr.name as province_name')
+            ->join('diocese d', 'd.id = p.diocese_id', 'inner')
+            ->join('province pr', 'pr.id = d.province_id', 'inner')
+            ->orderBy('pr.name', 'ASC')
+            ->orderBy('d.name', 'ASC')
+            ->orderBy('p.name', 'ASC')
+            ->get()
+            ->getResultArray();
     }
 
     private function parishHierarchyValid(int $parishId): bool

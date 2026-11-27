@@ -22,17 +22,19 @@ class SyncUeidDirectory extends BaseCommand
 
     public function run(array $params)
     {
-        $source = (string) (CLI::getOption('source') ?: '');
-        $apply = CLI::getOption('apply') !== null;
-        $format = strtolower(trim((string) (CLI::getOption('format') ?: '')));
-        $defaultProvinceId = (int) (CLI::getOption('default-province-id') ?: 0);
-        $deactivateMissing = CLI::getOption('deactivate-missing') !== null;
+        $source = (string) ($params['source'] ?? CLI::getOption('source') ?: '');
+        $apply = array_key_exists('apply', $params) || CLI::getOption('apply') !== null;
+        $format = strtolower(trim((string) ($params['format'] ?? CLI::getOption('format') ?: '')));
+        $defaultProvinceId = (int) ($params['default-province-id'] ?? CLI::getOption('default-province-id') ?: 0);
+        $deactivateMissing = array_key_exists('deactivate-missing', $params) || CLI::getOption('deactivate-missing') !== null;
         $preserveInactive = array_key_exists('preserve-inactive', $params) || CLI::getOption('preserve-inactive') !== null;
 
         if ($source === '') {
             $jsonDefault = ROOTPATH . 'docs/UEID.json';
             $csvDefault = ROOTPATH . 'docs/UEID.csv';
-            $source = is_file($jsonDefault) ? $jsonDefault : $csvDefault;
+            $jsonUsable = is_file($jsonDefault) && (int) @filesize($jsonDefault) > 0
+                && trim((string) @file_get_contents($jsonDefault)) !== '';
+            $source = $jsonUsable ? $jsonDefault : $csvDefault;
         }
 
         if (!is_file($source)) {
@@ -44,7 +46,7 @@ class SyncUeidDirectory extends BaseCommand
 
         if (!is_file($source)) {
             CLI::error('Source file not found: ' . $source);
-            return;
+            return 1;
         }
 
         if ($format === '') {
@@ -54,7 +56,7 @@ class SyncUeidDirectory extends BaseCommand
 
         if (!in_array($format, ['json', 'csv'], true)) {
             CLI::error('Unsupported format. Use --format json|csv');
-            return;
+            return 1;
         }
 
         CLI::write('UEID Directory Sync', 'cyan');
@@ -70,10 +72,10 @@ class SyncUeidDirectory extends BaseCommand
 
         if ($rows === []) {
             CLI::error('No rows parsed from source.');
-            return;
+            return 1;
         }
 
-        $db = db_connect();
+        $db = $this->getConnection();
 
         $summary = [
             'rows_parsed' => count($rows),
@@ -91,6 +93,11 @@ class SyncUeidDirectory extends BaseCommand
 
         $dioceseMap = $this->loadDioceseMap($db);
         $hasParishIsActive = $this->columnExists($db, 'parish', 'is_active');
+        $hasPublicToken = $this->columnExists($db, 'parish', 'public_token');
+        $hasCongregationType = $this->columnExists($db, 'parish', 'congregation_type');
+        $hasCreatedAt = $this->columnExists($db, 'parish', 'created_at');
+        $hasUpdatedAt = $this->columnExists($db, 'parish', 'updated_at');
+        $now = date('Y-m-d H:i:s');
         $pendingDioceses = [];
 
         foreach ($rows as $row) {
@@ -172,7 +179,20 @@ class SyncUeidDirectory extends BaseCommand
             if ($existing === null) {
                 $summary['parishes_created']++;
                 if ($apply) {
-                    $db->table('parish')->insert($payload);
+                    $insertPayload = $payload;
+                    if ($hasPublicToken) {
+                        $insertPayload['public_token'] = bin2hex(random_bytes(32));
+                    }
+                    if ($hasCongregationType) {
+                        $insertPayload['congregation_type'] = 'parish';
+                    }
+                    if ($hasCreatedAt) {
+                        $insertPayload['created_at'] = $now;
+                    }
+                    if ($hasUpdatedAt) {
+                        $insertPayload['updated_at'] = $now;
+                    }
+                    $db->table('parish')->insert($insertPayload);
                 }
                 continue;
             }
@@ -193,13 +213,16 @@ class SyncUeidDirectory extends BaseCommand
                 continue;
             }
 
-            if (array_key_exists('is_active', $changes) && (int) $changes['is_active'] === 1 && (int) ($existing['is_active'] ?? 1) === 0) {
+            if (array_key_exists('is_active', $changes) && (int) ($existing['is_active'] ?? 1) === 0) {
                 $summary['parishes_reactivated']++;
                 $reactivatedParishes[] = $parishUeid . ' (' . $parishName . ')';
             }
 
             $summary['parishes_updated']++;
             if ($apply) {
+                if ($hasUpdatedAt) {
+                    $changes['updated_at'] = $now;
+                }
                 $db->table('parish')->where('id', (int) $existing['id'])->update($changes);
             }
         }
@@ -225,7 +248,7 @@ class SyncUeidDirectory extends BaseCommand
             if ($db->transStatus() === false) {
                 $db->transRollback();
                 CLI::error('Transaction failed. No changes committed.');
-                return;
+                return 1;
             }
             $db->transCommit();
         }
@@ -241,6 +264,17 @@ class SyncUeidDirectory extends BaseCommand
         CLI::write('Parishes deactivated:' . str_repeat(' ', 4) . $summary['parishes_deactivated'], $summary['parishes_deactivated'] > 0 ? 'yellow' : 'light_gray');
         CLI::write('Errors:              ' . $summary['errors'], $summary['errors'] > 0 ? 'red' : 'green');
         CLI::write('Report: ' . $reportPath, 'cyan');
+
+        if ($summary['errors'] > 0) {
+            return 1;
+        }
+
+        return 0;
+    }
+
+    protected function getConnection(): \CodeIgniter\Database\BaseConnection
+    {
+        return db_connect();
     }
 
     private function parseJson(string $source): array
@@ -387,6 +421,15 @@ class SyncUeidDirectory extends BaseCommand
             }
         }
 
+        $canonicalAliases = [
+            'churches in europe' => 'convocation of episcopal churches in europe',
+        ];
+        foreach ($canonicalAliases as $alias => $canonical) {
+            if (!isset($map[$alias]) && isset($map[$canonical])) {
+                $map[$alias] = $map[$canonical];
+            }
+        }
+
         return $map;
     }
 
@@ -432,8 +475,7 @@ class SyncUeidDirectory extends BaseCommand
     private function tableExists($db, string $table): bool
     {
         try {
-            $row = $db->query('SHOW TABLES LIKE ' . $db->escape($table))->getFirstRow('array');
-            return $row !== null;
+            return $db->tableExists($table);
         } catch (\Throwable $e) {
             return false;
         }
@@ -442,8 +484,7 @@ class SyncUeidDirectory extends BaseCommand
     private function columnExists($db, string $table, string $column): bool
     {
         try {
-            $row = $db->query("SHOW COLUMNS FROM `{$table}` LIKE " . $db->escape($column))->getFirstRow('array');
-            return $row !== null;
+            return $db->fieldExists($column, $table);
         } catch (\Throwable $e) {
             return false;
         }
