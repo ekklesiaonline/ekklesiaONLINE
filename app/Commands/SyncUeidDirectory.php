@@ -541,9 +541,13 @@ class SyncUeidDirectory extends BaseCommand
 
         if ($reactivatedParishes !== []) {
             $lines[] = '';
-            $lines[] = '## Parishes Reactivated (first 100)';
+            $lines[] = '## Parishes Reactivated (' . count($reactivatedParishes) . ')';
             $lines[] = '';
-            foreach (array_slice($reactivatedParishes, 0, 100) as $item) {
+            $lines[] = 'Operators reviewing the dry run need the complete list: every one of';
+            $lines[] = 'these currently-inactive parishes will be set back to `is_active = 1`';
+            $lines[] = 'on --apply (unless --preserve-inactive is passed).';
+            $lines[] = '';
+            foreach ($reactivatedParishes as $item) {
                 $lines[] = '- ' . str_replace('|', '\\|', (string) $item);
             }
         }
