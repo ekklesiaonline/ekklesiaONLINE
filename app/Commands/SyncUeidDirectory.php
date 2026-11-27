@@ -32,7 +32,9 @@ class SyncUeidDirectory extends BaseCommand
         if ($source === '') {
             $jsonDefault = ROOTPATH . 'docs/UEID.json';
             $csvDefault = ROOTPATH . 'docs/UEID.csv';
-            $source = is_file($jsonDefault) ? $jsonDefault : $csvDefault;
+            $jsonUsable = is_file($jsonDefault) && (int) @filesize($jsonDefault) > 0
+                && trim((string) @file_get_contents($jsonDefault)) !== '';
+            $source = $jsonUsable ? $jsonDefault : $csvDefault;
         }
 
         if (!is_file($source)) {

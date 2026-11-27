@@ -148,11 +148,12 @@ export)
     # silently break the single-transaction atomicity the import relies on.
     # --set-gtid-purged=OFF avoids SUPER/SYSTEM_VARIABLES_ADMIN errors on shared hosts.
     DUMP_EXTRA_FLAGS=()
-    if mysqldump --help 2>/dev/null | grep -q -- '--set-gtid-purged'; then
-        DUMP_EXTRA_FLAGS+=(--set-gtid-purged=OFF)
-    fi
+    DUMP_HELP=$(mysqldump --help 2>/dev/null || true)
+    case "$DUMP_HELP" in
+        *--set-gtid-purged*) DUMP_EXTRA_FLAGS+=(--set-gtid-purged=OFF) ;;
+    esac
     mysqldump --defaults-extra-file="$DEFAULTS_FILE" --single-transaction --no-create-info \
-        --skip-triggers --skip-add-locks --skip-disable-keys "${DUMP_EXTRA_FLAGS[@]}" \
+        --skip-triggers --skip-add-locks --skip-disable-keys ${DUMP_EXTRA_FLAGS[@]+"${DUMP_EXTRA_FLAGS[@]}"} \
         "$SRC_DB" $HIERARCHY_TABLES | gzip > "$OUT_FILE"
     [ -s "$OUT_FILE" ] || die 'Export produced an empty archive'
     chmod 600 "$OUT_FILE"
