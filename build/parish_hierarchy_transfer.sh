@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
+# Hierarchy archives contain parish data including restricted tax IDs; never
+# leave them readable by other local accounts.
+umask 077
 
 usage() {
     cat <<'EOF'
@@ -142,6 +145,7 @@ export)
     mysqldump --defaults-extra-file="$DEFAULTS_FILE" --single-transaction --no-create-info \
         --skip-triggers "$SRC_DB" $HIERARCHY_TABLES | gzip > "$OUT_FILE"
     [ -s "$OUT_FILE" ] || die 'Export produced an empty archive'
+    chmod 600 "$OUT_FILE"
     gzip -t "$OUT_FILE"
     echo "Export complete: $OUT_FILE"
     ;;
