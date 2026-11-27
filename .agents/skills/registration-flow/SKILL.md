@@ -13,6 +13,7 @@ allowed-tools:
 Help with the user registration and approval workflow.
 
 Key rules:
+- `RegisterController::registerView()` and `RegisterController::parishHierarchyValid()` require populated `parish`, `diocese`, and `province` tables (`INNER JOIN` chain). If `/register` has no parishes or rejects all selections with `Auth.parishSelectionRequired`, run `php spark directory:verify-readiness --strict` and populate the hierarchy per `docs/HOSTGATOR_DEPLOY.md` §4.1 (`parish_hierarchy_transfer.sh` or `directory:sync-ueid --apply`).
 - `BaseController::canBypassPendingReviewGate()` allows `systemadmin`, `provinceadmin`, and `dioceseadmin` to bypass parish-level `pending_review`.
 - Higher-tier admin requests are excluded from parish/diocesan pending queues (`UserRegistrationRequestModel::getPendingByParish`, `getPendingByDiocese`, `countPendingByDiocese`).
 - `BaseController::getCurrentRegistrationRequest()` returns the most recent request (`orderBy id DESC`).

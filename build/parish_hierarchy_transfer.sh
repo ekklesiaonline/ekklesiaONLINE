@@ -98,13 +98,19 @@ DB_HOST=$(required_value 'database.default.hostname')
 DB_PORT=$(read_env_value 'database.default.port' "$ENV_FILE" || printf '3306')
 DB_NAME=$(required_value 'database.default.database')
 DB_USER=$(required_value 'database.default.username')
-DB_PASS=$(required_value 'database.default.password')
+DB_PASS=$(read_env_value 'database.default.password' "$ENV_FILE" || true)
+[ "$DB_PASS" != 'CHANGE_ME' ] || die 'Missing required setting: database.default.password in .env'
 
 # Keep credentials out of the process list.
 DEFAULTS_FILE=$(mktemp "${TMPDIR:-/tmp}/ekk-hierarchy.XXXXXX")
 trap 'rm -f "$DEFAULTS_FILE"' EXIT HUP INT TERM
 chmod 600 "$DEFAULTS_FILE"
-printf '[client]\nhost=%s\nport=%s\nuser=%s\npassword=%s\n' "$DB_HOST" "$DB_PORT" "$DB_USER" "$DB_PASS" > "$DEFAULTS_FILE"
+{
+    printf '[client]\nhost=%s\nport=%s\nuser=%s\n' "$DB_HOST" "$DB_PORT" "$DB_USER"
+    if [ -n "$DB_PASS" ]; then
+        printf 'password=%s\n' "$DB_PASS"
+    fi
+} > "$DEFAULTS_FILE"
 
 hierarchy_tables() {
     # province/diocese/parish are the only migration-backed hierarchy tables.
@@ -140,8 +146,13 @@ export)
     # --skip-add-locks / --skip-disable-keys keep the archive free of LOCK TABLES
     # and ALTER TABLE statements: both implicitly commit in MySQL, which would
     # silently break the single-transaction atomicity the import relies on.
+    # --set-gtid-purged=OFF avoids SUPER/SYSTEM_VARIABLES_ADMIN errors on shared hosts.
+    DUMP_EXTRA_FLAGS=()
+    if mysqldump --help 2>/dev/null | grep -q -- '--set-gtid-purged'; then
+        DUMP_EXTRA_FLAGS+=(--set-gtid-purged=OFF)
+    fi
     mysqldump --defaults-extra-file="$DEFAULTS_FILE" --single-transaction --no-create-info \
-        --skip-triggers --skip-add-locks --skip-disable-keys \
+        --skip-triggers --skip-add-locks --skip-disable-keys "${DUMP_EXTRA_FLAGS[@]}" \
         "$SRC_DB" $HIERARCHY_TABLES | gzip > "$OUT_FILE"
     [ -s "$OUT_FILE" ] || die 'Export produced an empty archive'
     chmod 600 "$OUT_FILE"
@@ -154,9 +165,15 @@ import)
     [ -f "$IN_FILE" ] || die "Import archive not found: $IN_FILE"
     gzip -t "$IN_FILE" || die 'Import archive failed gzip integrity check'
 
+    mysql --defaults-extra-file="$DEFAULTS_FILE" -e 'SELECT 1;' "$DB_NAME" >/dev/null \
+        || die "Unable to connect to destination database $DB_NAME"
+
     for probe in users profile parish; do
         count=$(count_rows "$DB_NAME" "$probe")
-        if [ "$count" != 'n/a' ] && [ "$count" != '0' ]; then
+        if [ "$count" = 'n/a' ]; then
+            die "Required destination table \`$probe\` is missing or unreadable in $DB_NAME. Run php spark migrate --all before importing."
+        fi
+        if [ "$count" != '0' ]; then
             die "Destination table \`$probe\` is not empty ($count rows). Path A cutover runs only on a fresh empty database before any production users/profiles/parishes exist — see docs/HOSTGATOR_DEPLOY.md §4.1. Aborting before any mutation."
         fi
     done

@@ -58,6 +58,19 @@ check_get() {
 
 # Shield's permission filter redirects (302) browser GETs it denies; it does not
 # return 403. Province admins may view /liturgical-source (read-only).
+REGISTER_HTML="$TMP_DIR/register.html"
+register_code=$(curl --silent --show-error --connect-timeout "$CURL_CONNECT_TIMEOUT" --max-time "$CURL_MAX_TIME" \
+  -o "$REGISTER_HTML" -w '%{http_code}' "$BASE_URL/register")
+echo "PUBLIC_REGISTER_HTTP=$register_code EXPECTED=200" >> "$REPORT"
+if [ "$register_code" != "200" ]; then
+  echo "ERROR: PUBLIC_REGISTER returned $register_code; expected 200" >&2
+  exit 1
+fi
+if ! grep -q '"parish_ueid":' "$REGISTER_HTML"; then
+  echo "ERROR: /register does not contain populated parishItems (parish table may be empty)" >&2
+  exit 1
+fi
+
 login_as "$PROVINCE_ADMIN_EMAIL" "$PROVINCE_ADMIN_PASSWORD"
 check_get "PROVINCE_ADMIN_PROVINCE_DASH" "/province/dashboard" "${PROVINCE_DASH_EXPECTED:-200}"
 check_get "PROVINCE_ADMIN_DIOCESAN_CHART" "/chart-accounts" "${PROVINCE_CHART_EXPECTED:-302}"
