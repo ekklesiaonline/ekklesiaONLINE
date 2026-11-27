@@ -121,6 +121,53 @@ hierarchy_tables() {
     printf 'province diocese parish'
 }
 
+has_column() {
+    local db="$1"
+    local table="$2"
+    local col="$3"
+    local cnt
+    cnt=$(mysql --defaults-extra-file="$DEFAULTS_FILE" -N -B -e \
+        "SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = '${db}' AND TABLE_NAME = '${table}' AND COLUMN_NAME = '${col}';" \
+        2>/dev/null || printf '0')
+    [ "$cnt" = '1' ]
+}
+
+check_canonical_schema() {
+    local db="$1"
+    local role="$2"
+
+    for col in province_id logo image; do
+        if has_column "$db" province "$col"; then
+            die "${role} table \`${db}.province\` still has legacy column \`${col}\`. Run php spark migrate --all first."
+        fi
+    done
+    for col in id province_number name sort_order created_at updated_at; do
+        if ! has_column "$db" province "$col"; then
+            die "${role} table \`${db}.province\` is missing canonical column \`${col}\`. Run php spark migrate --all first."
+        fi
+    done
+
+    for col in logo image; do
+        if has_column "$db" diocese "$col"; then
+            die "${role} table \`${db}.diocese\` still has legacy column \`${col}\`. Run php spark migrate --all first."
+        fi
+    done
+    for col in id province_id name alias_norm created_at updated_at; do
+        if ! has_column "$db" diocese "$col"; then
+            die "${role} table \`${db}.diocese\` is missing canonical column \`${col}\`. Run php spark migrate --all first."
+        fi
+    done
+
+    if has_column "$db" parish image; then
+        die "${role} table \`${db}.parish\` still has legacy column \`image\`. Run php spark migrate --all first."
+    fi
+    for col in id name parish_ueid is_active logo banner diocese_id public_token congregation_type created_at updated_at deleted_at; do
+        if ! has_column "$db" parish "$col"; then
+            die "${role} table \`${db}.parish\` is missing canonical column \`${col}\`. Run php spark migrate --all first."
+        fi
+    done
+}
+
 count_rows() {
     local db="$1"
     local table="$2"
@@ -141,8 +188,10 @@ export)
     OUT_FILE="${2:-}"
     [ -n "$OUT_FILE" ] || { usage >&2; die 'Pass the output .sql.gz path'; }
     SRC_DB="${3:-$DB_NAME}"
+    check_canonical_schema "$SRC_DB" 'Source'
     HIERARCHY_TABLES=$(hierarchy_tables "$SRC_DB")
     echo "Exporting $HIERARCHY_TABLES from $SRC_DB into $OUT_FILE"
+    # --complete-insert makes INSERTs immune to column-order drift.
     # --skip-add-locks / --skip-disable-keys keep the archive free of LOCK TABLES
     # and ALTER TABLE statements: both implicitly commit in MySQL, which would
     # silently break the single-transaction atomicity the import relies on.
@@ -152,7 +201,7 @@ export)
     case "$DUMP_HELP" in
         *--set-gtid-purged*) DUMP_EXTRA_FLAGS+=(--set-gtid-purged=OFF) ;;
     esac
-    mysqldump --defaults-extra-file="$DEFAULTS_FILE" --single-transaction --no-create-info \
+    mysqldump --defaults-extra-file="$DEFAULTS_FILE" --single-transaction --no-create-info --complete-insert \
         --skip-triggers --skip-add-locks --skip-disable-keys ${DUMP_EXTRA_FLAGS[@]+"${DUMP_EXTRA_FLAGS[@]}"} \
         "$SRC_DB" $HIERARCHY_TABLES | gzip > "$OUT_FILE"
     [ -s "$OUT_FILE" ] || die 'Export produced an empty archive'
@@ -179,6 +228,8 @@ import)
         fi
     done
 
+    check_canonical_schema "$DB_NAME" 'Destination'
+
     echo "Importing hierarchy from $IN_FILE into $DB_NAME (single transaction)"
     {
         printf 'SET autocommit = 0;\n'
@@ -195,10 +246,13 @@ import)
     echo 'Next: run php spark directory:verify-readiness --strict'
     ;;
 verify)
+    check_canonical_schema "$DB_NAME" 'Destination'
+    echo 'Destination schema check: canonical hierarchy columns OK'
     echo 'Destination hierarchy counts:'
     print_counts "$DB_NAME" "  destination $DB_NAME:"
     SRC_DB="${2:-}"
     if [ -n "$SRC_DB" ]; then
+        check_canonical_schema "$SRC_DB" 'Source'
         echo "Source hierarchy counts (same MySQL host, database $SRC_DB):"
         print_counts "$SRC_DB" "  source $SRC_DB:"
         mismatch=0

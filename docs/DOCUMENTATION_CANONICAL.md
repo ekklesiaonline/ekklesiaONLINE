@@ -29,6 +29,12 @@ This file is the single source of truth for which documentation should be retain
   Implemented performance work summary (kept as implementation record).
 - `docs/DEPLOYMENT_RUNBOOK.md`
   Canonical deployment, rollback, and operations runbook.
+- `docs/HOSTGATOR_DEPLOY.md`
+  Canonical HostGator split-layout deployment checklist and parish hierarchy cutover plan.
+- `docs/MIGRATIONS_AND_SEEDERS.md`
+  Canonical migration baseline, seeder responsibilities, and hierarchy schema contract.
+- `docs/CRON_SCHEDULE.md`
+  Approved production cron job matrix and wrapper commands.
 - `docs/EVENT_VISIBILITY_SERVICE_USAGE_SCAFFOLD.md`
   Canonical service usage scaffold for MemberPortal and Diocesan Events endpoints.
 - `docs/EPISCOPAL_PAROCHIAL_REPORT_FOR_REFERENCE.md`

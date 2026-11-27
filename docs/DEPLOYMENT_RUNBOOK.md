@@ -77,7 +77,7 @@ A release is **no-go** if any item fails:
 4. Composer validation, production install dry-run, audit, and PHPStan pass.
 5. PHPUnit has no failures, warnings, or risky tests.
 6. Review the JUnit/TestDox artifacts. Any unclassified skip blocks release.
-7. Migration status, backup preflight, route compilation, liveness, readiness, directory hierarchy readiness (`php spark directory:verify-readiness` — populated `province`, `diocese`, and active linked `parish` rows), and role smoke checks pass.
+7. Migration status, backup preflight, route compilation, liveness, readiness, directory hierarchy readiness (`php spark directory:verify-readiness --strict` — populated `province`, `diocese`, and active linked `parish` rows, zero orphans, zero placeholder sample dioceses), and role smoke checks pass.
 8. The rollback owner and maintenance window are confirmed.
 
 ### Approved skip classifications
@@ -156,7 +156,7 @@ export DIOCESAN_ADMIN_PASSWORD='...'
 7. Verify the ecclesiastical directory hierarchy (`province`, `diocese`, and at least one active linked `parish`) is populated, clear caches, and compile routes:
 
    ```bash
-   php spark directory:verify-readiness
+   php spark directory:verify-readiness --strict
    php spark cache:clear
    php spark routes > /tmp/routes_after_deploy.txt
    ```
@@ -189,7 +189,7 @@ export DIOCESAN_ADMIN_PASSWORD='...'
 ## 7. Post-Deployment Validation
 
 - Public liveness returns 200 through the external load balancer.
-- `php spark directory:verify-readiness` exits 0 (`province`, `diocese`, and active linked `parish` rows populated).
+- `php spark directory:verify-readiness --strict` exits 0 (`province`, `diocese`, and active linked `parish` rows populated, zero orphans, zero placeholder sample dioceses).
 - Protected readiness returns 200 for a system administrator (`database`, `writable`, and `directory` all `ready`).
 - Province and diocesan administrator login and scope assertions pass.
 - Critical create/update/delete AJAX flows return their documented contracts.

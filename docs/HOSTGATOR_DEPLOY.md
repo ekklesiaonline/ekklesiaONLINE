@@ -417,12 +417,14 @@ deactivated parishes must stay inactive).
 
 The supported implementation is `build/parish_hierarchy_transfer.sh` (synced
 to both source and destination by `build/hostgator_sync.sh`). It reads database
-credentials from `.env`, keeps passwords out of process arguments, refuses to
-import when `users`/`profile`/`parish` are non-empty, and runs the entire
-import in one atomic transaction (any error rolls the hierarchy back to the
-pre-import seeded state). Export only the canonical migration-backed hierarchy
-tables in strict foreign-key order (`province` → `diocese` → `parish`) so
-existing IDs, `parish_ueid`, `public_token`, addresses, and
+credentials from `.env`, keeps passwords out of process arguments, validates
+canonical column parity on `province`, `diocese`, and `parish`, exports with
+`--complete-insert`, refuses to import when `users`/`profile`/`parish` are
+non-empty, and runs the entire import in one atomic transaction (any error rolls
+the hierarchy back to the pre-import seeded state). Export only the canonical
+migration-backed hierarchy tables in strict foreign-key order (`province` →
+`diocese` → `parish`, with `ON DELETE RESTRICT ON UPDATE CASCADE` parent-child
+FK rules) so existing IDs, `parish_ueid`, `public_token`, addresses, and
 province-to-diocese mappings are preserved identically on webhosting. The
 optional legacy `diocese_alias` lookup table is deliberately **not**
 transferred: no migration creates it, so a fresh destination never has it.
@@ -431,8 +433,9 @@ transferred; `diocese_alias` is only a supplementary lookup on databases where
 it already exists (and `directory:sync-ueid` only writes alias rows for
 dioceses it creates itself).
 
-1. **Pre-export check on source DB** (confirm clean parent chain):
+1. **Pre-export check on source DB** (confirm 0 pending migrations and clean parent chain):
    ```bash
+   php spark migrate:status --all
    php spark directory:verify-readiness --strict
    ```
 2. **Export hierarchy tables from source DB**:
@@ -459,7 +462,7 @@ dioceses it creates itself).
 
 #### Path B — Fresh webhosting install using the shipped UEID directory (`docs/UEID.json`)
 
-`docs/UEID.json` (6,752 parishes across 108 dioceses) is synced to
+`docs/UEID.json` (6,751 parishes across 107 dioceses) is synced to
 `~/ekklesia/docs/UEID.json` by `build/hostgator_sync.sh`.
 
 1. Ensure the real `province` rows and target `diocese` rows (mapped to their
