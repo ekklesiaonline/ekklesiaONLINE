@@ -420,10 +420,13 @@ to both source and destination by `build/hostgator_sync.sh`). It reads database
 credentials from `.env`, keeps passwords out of process arguments, refuses to
 import when `users`/`profile`/`parish` are non-empty, and runs the entire
 import in one atomic transaction (any error rolls the hierarchy back to the
-pre-import seeded state). Export only the canonical hierarchy tables in strict
-foreign-key order (`province` → `diocese` → `diocese_alias` if present →
-`parish`) so existing IDs, `parish_ueid`, `public_token`, addresses, and
-province-to-diocese mappings are preserved identically on webhosting:
+pre-import seeded state). Export only the canonical migration-backed hierarchy
+tables in strict foreign-key order (`province` → `diocese` → `parish`) so
+existing IDs, `parish_ueid`, `public_token`, addresses, and
+province-to-diocese mappings are preserved identically on webhosting. The
+optional legacy `diocese_alias` lookup table is deliberately **not**
+transferred: no migration creates it, so a fresh destination never has it and
+`directory:sync-ueid` rebuilds aliases where the table exists.
 
 1. **Pre-export check on source DB** (confirm clean parent chain):
    ```bash
@@ -433,7 +436,7 @@ province-to-diocese mappings are preserved identically on webhosting:
    ```bash
    bash build/parish_hierarchy_transfer.sh export parish_hierarchy_$(date +%Y%m%d).sql.gz
    ```
-   The export includes `diocese_alias` automatically when the table exists.
+   The archive is created owner-only (mode 600) because parish rows include restricted tax IDs — keep it that way through transfer.
 3. **Transfer over SSH/SFTP** to `~/ekklesia/writable/backups/` (never plain FTP, never into `public_html/`).
 4. **Take a HostGator pre-import backup** (`sh build/backup_database.sh` + `gzip -t`), then import on HostGator inside `~/ekklesia/` (the script aborts before mutating anything if `users`, `profile`, or `parish` are non-empty):
    ```bash

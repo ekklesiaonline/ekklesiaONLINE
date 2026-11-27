@@ -14,8 +14,11 @@ Usage:
 Transfers the canonical ecclesiastical hierarchy tables (province, diocese,
 parish) in strict foreign-key order for the HostGator split-layout cutover.
 `export` reads from the given source database (or the configured .env DB);
-`import` and `verify` target the database configured in .env. Diocesan aliases
-(`diocese_alias`) are included automatically when present in the source.
+`import` and `verify` target the database configured in .env. Only the
+canonical migration-backed hierarchy tables are transferred (province,
+diocese, parish): the optional legacy `diocese_alias` lookup table is not
+created by any migration, so it never exists on a fresh destination and is
+deliberately excluded.
 
 EXPORT — run on the source system while its .env points at the populated DB
 (or pass the DB name explicitly):
@@ -101,23 +104,12 @@ trap 'rm -f "$DEFAULTS_FILE"' EXIT HUP INT TERM
 chmod 600 "$DEFAULTS_FILE"
 printf '[client]\nhost=%s\nport=%s\nuser=%s\npassword=%s\n' "$DB_HOST" "$DB_PORT" "$DB_USER" "$DB_PASS" > "$DEFAULTS_FILE"
 
-table_exists() {
-    local db="$1"
-    local table="$2"
-    local result
-    result=$(mysql --defaults-extra-file="$DEFAULTS_FILE" -N -B -e \
-        "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = '${table}';" "$db" 2>/dev/null) \
-        || result='0'
-    [ "$result" = '1' ]
-}
-
 hierarchy_tables() {
-    local db="$1"
-    local tables='province diocese'
-    if table_exists "$db" 'diocese_alias'; then
-        tables="$tables diocese_alias"
-    fi
-    printf '%s parish' "$tables"
+    # province/diocese/parish are the only migration-backed hierarchy tables.
+    # diocese_alias has no migration, so a fresh destination never has it and
+    # importing its rows would fail; the UEID sync rebuilds aliases where the
+    # optional table exists.
+    printf 'province diocese parish'
 }
 
 count_rows() {
