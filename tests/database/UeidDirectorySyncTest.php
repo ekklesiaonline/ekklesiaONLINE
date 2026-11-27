@@ -232,4 +232,55 @@ final class UeidDirectorySyncTest extends CIUnitTestCase
         ]);
         $this->assertSame(1, $exitCode);
     }
+
+    public function testShippedUeidJsonParsesAndMatchesCsv(): void
+    {
+        $jsonPath = ROOTPATH . 'docs/UEID.json';
+        $csvPath  = ROOTPATH . 'docs/UEID.csv';
+
+        $this->assertFileExists($jsonPath);
+        $this->assertFileExists($csvPath);
+        $this->assertGreaterThan(0, (int) filesize($jsonPath));
+        $this->assertGreaterThan(0, (int) filesize($csvPath));
+
+        $decoded = json_decode((string) file_get_contents($jsonPath), true, 512, JSON_THROW_ON_ERROR);
+        $this->assertIsArray($decoded);
+
+        $fields   = ['ParishUEID', 'Diocese', 'Name', 'City', 'State', 'County'];
+        $jsonRows = [];
+        foreach ($decoded as $item) {
+            $this->assertIsArray($item);
+            $row = [];
+            foreach ($fields as $field) {
+                $row[$field] = trim((string) ($item[$field] ?? ''));
+            }
+            $this->assertNotSame('2603-1393', $row['ParishUEID']);
+            $jsonRows[] = $row;
+        }
+
+        $fh = fopen($csvPath, 'rb');
+        $this->assertNotFalse($fh);
+
+        $header = fgetcsv($fh, 0, ',', '"', '');
+        $this->assertIsArray($header);
+        $indexes = array_flip(array_map(static fn ($col): string => trim((string) $col), $header));
+        foreach ($fields as $field) {
+            $this->assertArrayHasKey($field, $indexes);
+        }
+
+        $csvRows = [];
+        while (($line = fgetcsv($fh, 0, ',', '"', '')) !== false) {
+            $row = [];
+            foreach ($fields as $field) {
+                $row[$field] = trim((string) ($line[$indexes[$field]] ?? ''));
+            }
+            $this->assertNotSame('2603-1393', $row['ParishUEID']);
+            $csvRows[] = $row;
+        }
+        fclose($fh);
+
+        $this->assertGreaterThan(0, count($jsonRows));
+        $this->assertSame(count($csvRows), count($jsonRows));
+        $this->assertSame($csvRows, $jsonRows);
+    }
 }
