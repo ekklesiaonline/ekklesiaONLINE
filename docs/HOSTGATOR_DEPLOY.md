@@ -146,8 +146,8 @@ never seeds, clears cache, or compiles routes after a failure:
     echo "ABORTED: seeding FAILED after migration — restore from $BACKUP_FILE if needed" >&2
     exit 1
   fi
-  "$PHP_BIN" spark directory:verify-readiness \
-    || { echo 'ABORTED: province/diocese/parish hierarchy is NOT populated — see §4.1 before going live' >&2; exit 1; }
+  "$PHP_BIN" spark directory:verify-readiness --strict \
+    || { echo 'ABORTED: province/diocese/parish hierarchy is NOT clean — populate it and remove orphaned/placeholder rows before release (see §4.1)' >&2; exit 1; }
   "$PHP_BIN" spark cache:clear
   "$PHP_BIN" spark routes > /tmp/routes_after.txt
   echo 'Database release complete.'
@@ -552,7 +552,7 @@ Go/no-go signals specific to this host:
 - `/composer.json`, `/composer.lock`, `/spark`, `/env`, `/.env`, and `/app/Config/App.php` never return 200 (§3.1)
 - `ProductionSecurityPosture` critical log absent from `writable/logs/`
 - `PHP_BIN='/opt/cpanel/ea-php85/root/usr/bin/php' && "$PHP_BIN" spark migrate:status --all` shows 0 pending
-- `PHP_BIN='/opt/cpanel/ea-php85/root/usr/bin/php' && "$PHP_BIN" spark directory:verify-readiness` exits 0 (`province`, `diocese`, and active linked `parish` all populated)
+- `PHP_BIN='/opt/cpanel/ea-php85/root/usr/bin/php' && "$PHP_BIN" spark directory:verify-readiness --strict` exits 0 (`province`, `diocese`, and active linked `parish` all populated; zero orphaned rows and zero placeholder sample dioceses)
 - `GET /health/ready` as `systemadmin` returns 200 with `database`, `writable`, and `directory` all `ready`
 - First cron entries produce log output within their window
 
