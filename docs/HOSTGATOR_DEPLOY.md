@@ -425,8 +425,11 @@ tables in strict foreign-key order (`province` → `diocese` → `parish`) so
 existing IDs, `parish_ueid`, `public_token`, addresses, and
 province-to-diocese mappings are preserved identically on webhosting. The
 optional legacy `diocese_alias` lookup table is deliberately **not**
-transferred: no migration creates it, so a fresh destination never has it and
-`directory:sync-ueid` rebuilds aliases where the table exists.
+transferred: no migration creates it, so a fresh destination never has it.
+UEID diocese matching relies on the `diocese.alias_norm` column, which **is**
+transferred; `diocese_alias` is only a supplementary lookup on databases where
+it already exists (and `directory:sync-ueid` only writes alias rows for
+dioceses it creates itself).
 
 1. **Pre-export check on source DB** (confirm clean parent chain):
    ```bash

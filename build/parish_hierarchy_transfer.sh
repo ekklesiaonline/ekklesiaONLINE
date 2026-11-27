@@ -18,7 +18,9 @@ parish) in strict foreign-key order for the HostGator split-layout cutover.
 canonical migration-backed hierarchy tables are transferred (province,
 diocese, parish): the optional legacy `diocese_alias` lookup table is not
 created by any migration, so it never exists on a fresh destination and is
-deliberately excluded.
+deliberately excluded. UEID diocese matching on the destination uses the
+`diocese.alias_norm` column, which IS transferred; `diocese_alias` is only a
+supplementary lookup on databases where it already exists.
 
 EXPORT — run on the source system while its .env points at the populated DB
 (or pass the DB name explicitly):
@@ -107,8 +109,9 @@ printf '[client]\nhost=%s\nport=%s\nuser=%s\npassword=%s\n' "$DB_HOST" "$DB_PORT
 hierarchy_tables() {
     # province/diocese/parish are the only migration-backed hierarchy tables.
     # diocese_alias has no migration, so a fresh destination never has it and
-    # importing its rows would fail; the UEID sync rebuilds aliases where the
-    # optional table exists.
+    # importing its rows would fail. UEID matching relies on diocese.alias_norm
+    # (transferred); diocese_alias is only a supplementary lookup where the
+    # optional table already exists.
     printf 'province diocese parish'
 }
 
