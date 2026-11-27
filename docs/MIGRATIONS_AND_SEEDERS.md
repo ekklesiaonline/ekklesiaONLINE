@@ -62,6 +62,8 @@ Seeds:
 - **10 provinces** - US Episcopal Church provinces I-X
 - **2 sample dioceses** - Sample data in the first province
 
+> **Go-live requirement:** `DatabaseSeeder` does **not** seed any `parish` rows. Before going live on webhosting, `province`, `diocese`, and at least one active linked `parish` must be populated (see `docs/HOSTGATOR_DEPLOY.md` §4.1 for the webhosting migration plan and `php spark directory:sync-ueid`) and verified with `php spark directory:verify-readiness`.
+
 
 ## Follow-up workflow migrations
 
@@ -158,8 +160,9 @@ and `localhost.sql` dumps were retired for exactly that reason.)
 
 ## Deployment Checklist
 
-- [ ] Run migrations: `php spark migrate`
+- [ ] Run migrations: `php spark migrate --all`
 - [ ] Seed data: `php spark db:seed DatabaseSeeder`
+- [ ] Populate `province`, `diocese`, and `parish` per `docs/HOSTGATOR_DEPLOY.md` §4.1 and verify: `php spark directory:verify-readiness`
 - [ ] Verify table count: `php spark db:table --metadata | wc -l`
 - [ ] Test authentication: Create a test user and verify role assignment
 - [ ] Verify permissions: Check that roles have expected permissions

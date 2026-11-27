@@ -39,6 +39,7 @@
 3. **Backup/restore never drilled** — preflight currently fails locally on empty `database.default.password`; no isolated restore evidence (Session 7).
 4. **Unclassified test skips** — 8 skips vs. the runbook's documented 6; the 2 `VolunteerScheduleSchemaIntegrityTest` cases require MySQLi and no CI job runs PHPUnit against MySQL.
 5. **Pending migrations** — `AddEventRegistrationUniqueIndex`, `AddTeamMemberUniqueIndex`, `DropVolunteerScheduleLegacyDateColumns` committed but unapplied locally; `ConvertSqlsrvValueColumn` must run on prod after a verified backup.
+6. **Parish hierarchy unpopulated on fresh webhosting DB** — `DatabaseSeeder` seeds provinces and sample dioceses only (zero `parish` rows). Production must populate `province`, `diocese`, and active `parish` rows (`docs/HOSTGATOR_DEPLOY.md` §4.1) and pass `php spark directory:verify-readiness` + `GET /health/ready` (`directory: ready`) before go-live.
 
 ### Test-hygiene gaps vs. the release gate
 
@@ -217,7 +218,8 @@ Verified via GitHub public API 2026-11-21 (repo is public; secrets/workflow logs
 
 - [ ] `git status`, review every modified file, `git diff --check`, secret scan of tracked changes; `.env`/runtime/backup artifacts untracked.
 - [ ] Re-run composer validate/audit, PHPStan, PHPUnit, `php spark routes`, shell syntax checks (`fail=0; for f in build/*.sh; do sh -n "$f" || { echo "FAIL: $f"; fail=1; }; done; [ "$fail" -eq 0 ]`), workflow YAML validation.
-- [ ] In approved release window: verified backup → `php spark migrate --all` (incl. `ConvertSqlsrvValueColumn` on prod) → `php spark cache:clear` → route compile → `sh build/e2e_admin_levels_smoke.sh` → `GET /health/ready` as systemadmin → disable maintenance mode → watch logs/5xx for 2h.
+- [ ] Populate `province`, `diocese`, and `parish` on webhosting per `docs/HOSTGATOR_DEPLOY.md` §4.1 and confirm `php spark directory:verify-readiness` exits 0.
+- [ ] In approved release window: verified backup → `php spark migrate --all` (incl. `ConvertSqlsrvValueColumn` on prod) → `php spark directory:verify-readiness` → `php spark cache:clear` → route compile → `sh build/e2e_admin_levels_smoke.sh` → `GET /health/ready` as systemadmin (`database`, `writable`, `directory` ready) → disable maintenance mode → watch logs/5xx for 2h.
 - [ ] Record rollback owner + maintenance window; commit per git rules (push to `main` immediately per `AGENTS.md`); execute launch-day runbook.
 
 > **OPS prompt:** Follow `docs/DEPLOYMENT_RUNBOOK.md` §4–§9 verbatim. No-go on any failed item. Evidence to retain per runbook §5/§9.

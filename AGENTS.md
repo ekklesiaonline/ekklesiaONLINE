@@ -26,7 +26,7 @@
 ## Documentation & Bootstrapping
 
 - Canonical documentation index: `docs/DOCUMENTATION_CANONICAL.md`.
-- Fresh environment seeding: `php spark db:seed DatabaseSeeder`.
+- Fresh environment seeding: `php spark db:seed DatabaseSeeder` (seeds permissions, provinces, sample dioceses, and chart of accounts, but **no `parish` rows**). Before going live on webhosting, `province`, `diocese`, and `parish` must be populated (`docs/HOSTGATOR_DEPLOY.md` §4.1) and pass `php spark directory:verify-readiness` and `GET /health/ready` (`directory: ready`).
 - Role-to-menu permissions are enforced by `PermissionRoleSyncSeeder`; canonical policy table is `docs/ROLE_MENU_PERMISSION_POLICY.md`.
 - API/AJAX JSON contract: `docs/API_AJAX_ERROR_CONTRACT.md`.
 

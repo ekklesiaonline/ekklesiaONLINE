@@ -35,7 +35,8 @@ For a portal person, verify this chain in order:
 2. Identify the exact missing or stale link and the affected parish.
 3. Show the intended changes before manual SQL or use a safe service command.
 4. Use a transaction and prepared/query-builder operations; never log contact data or credentials.
-5. Audit and reconcile canonical identity links after changes:
+5. Audit and reconcile canonical identity links and directory hierarchy after changes:
+   - `php spark directory:verify-readiness` (required before go-live: verifies populated `province` → `diocese` → active `parish` chain)
    - `php spark person:diagnose`
    - `php spark people:audit-affiliation-drift`
    - `php spark person:link-profiles`

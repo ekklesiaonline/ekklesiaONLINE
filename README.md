@@ -75,8 +75,11 @@ mysql -u root -p -e "CREATE DATABASE ekklesiaONLINE CHARACTER SET utf8mb4 COLLAT
 php spark migrate --all
 php spark shield:setup
 
-# Seed baseline data
+# Seed baseline data (permissions, provinces, sample dioceses, chart of accounts — does NOT seed parishes)
 php spark db:seed DatabaseSeeder
+
+# Before going live on webhosting, populate province/diocese/parish (see docs/HOSTGATOR_DEPLOY.md §4.1) and verify:
+php spark directory:verify-readiness
 ```
 
 ### 4. Run Application

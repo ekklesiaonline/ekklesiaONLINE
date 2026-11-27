@@ -110,7 +110,7 @@ cleanly when the column is absent).
 One-off/backfill/audit commands run manually only:
 
 - `followup:backfill`, `followup:apply-default` — reconciliation/seed helpers
-- `directory:sync-ueid`, `MergeUeidParishes` — directory imports
+- `directory:sync-ueid`, `parish:merge-ueid`, `directory:verify-readiness` — directory imports and go-live readiness verification
 - `person:diagnose`, `people:audit-affiliation-drift`,
   `leadership:audit-eligibility`, `finance:audit-readiness`,
   `finance:audit-coa-categories` — report-only audits
