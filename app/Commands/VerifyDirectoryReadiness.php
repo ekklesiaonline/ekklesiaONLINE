@@ -13,7 +13,7 @@ class VerifyDirectoryReadiness extends BaseCommand
     protected $description = 'Verify that province, diocese, and active parish tables are populated with valid parent links before go-live.';
     protected $usage       = 'directory:verify-readiness [--strict]';
     protected $options     = [
-        '--strict' => 'Also exit non-zero when warnings exist (orphaned dioceses or unlinked active parishes).',
+        '--strict' => 'Also exit non-zero when warnings exist (orphaned dioceses, placeholder sample dioceses, or unlinked non-deleted parishes).',
     ];
 
     public function run(array $params)
