@@ -173,9 +173,9 @@ final class RegisterParishHardStopIntegrationTest extends CIUnitTestCase
     {
         $this->ensureHierarchyTables();
 
-        $this->db->table('parish')->whereIn('id', [101, 102])->delete();
-        $this->db->table('diocese')->where('id', 11)->delete();
-        $this->db->table('province')->where('id', 2)->delete();
+        $this->db->table('parish')->whereIn('id', [101, 102, 103])->delete();
+        $this->db->table('diocese')->whereIn('id', [11, 12])->delete();
+        $this->db->table('province')->whereIn('id', [2, 9999])->delete();
 
         $this->db->table('province')->insert([
             'id'         => 2,
@@ -187,6 +187,13 @@ final class RegisterParishHardStopIntegrationTest extends CIUnitTestCase
             'id'          => 11,
             'province_id' => 2,
             'name'        => 'Lookup Diocese',
+            'created_at'  => date('Y-m-d H:i:s'),
+            'updated_at'  => date('Y-m-d H:i:s'),
+        ]);
+        $this->db->table('diocese')->insert([
+            'id'          => 12,
+            'province_id' => 9999,
+            'name'        => 'Orphaned Province Diocese',
             'created_at'  => date('Y-m-d H:i:s'),
             'updated_at'  => date('Y-m-d H:i:s'),
         ]);
@@ -206,6 +213,14 @@ final class RegisterParishHardStopIntegrationTest extends CIUnitTestCase
             'created_at'  => date('Y-m-d H:i:s'),
             'updated_at'  => date('Y-m-d H:i:s'),
         ]);
+        $this->db->table('parish')->insert([
+            'id'          => 103,
+            'diocese_id'  => 12,
+            'name'        => 'Orphaned Diocese Parish',
+            'parish_ueid' => 'ORPHAN-PROV-103',
+            'created_at'  => date('Y-m-d H:i:s'),
+            'updated_at'  => date('Y-m-d H:i:s'),
+        ]);
 
         $routes = Services::routes();
         $routes->get('register', 'App\Controllers\Auth\RegisterController::registerView', ['as' => 'register']);
@@ -218,6 +233,7 @@ final class RegisterParishHardStopIntegrationTest extends CIUnitTestCase
         $this->assertIsString($html);
         $this->assertStringContainsString('Valid Lookup Parish', $html);
         $this->assertStringNotContainsString('Unlinked Lookup Parish', $html);
+        $this->assertStringNotContainsString('Orphaned Diocese Parish', $html);
     }
 
     private function ensureUsersTable(): void
