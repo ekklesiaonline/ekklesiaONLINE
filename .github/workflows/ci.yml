@@ -176,9 +176,10 @@ jobs:
       - name: Verify parish-hierarchy readiness gate on seeded baseline
         run: |
           set +e
-          php spark directory:verify-readiness --strict 2>&1 | tee build/logs/directory_verify_empty.txt
+          php spark directory:verify-readiness --strict > build/logs/directory_verify_empty.txt 2>&1
           status=$?
           set -e
+          cat build/logs/directory_verify_empty.txt
           # Baseline DatabaseSeeder leaves parish empty; the gate must exit non-zero and name the NO-GO.
           if [ "$status" -eq 0 ]; then
             echo 'directory:verify-readiness passed on an empty parish hierarchy — the go-live gate is broken' >&2
