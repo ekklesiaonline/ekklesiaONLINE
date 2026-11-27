@@ -2,7 +2,9 @@
 
 namespace Tests\Unit;
 
+use App\Database\Migrations\AlignHierarchySchemaAndRelationships;
 use CodeIgniter\Test\CIUnitTestCase;
+use Config\Database;
 
 final class CanonicalHierarchySchemaContractTest extends CIUnitTestCase
 {
@@ -50,6 +52,79 @@ final class CanonicalHierarchySchemaContractTest extends CIUnitTestCase
 
         $this->assertStringContainsString('--complete-insert', $script);
         $this->assertStringContainsString('check_canonical_schema', $script);
+    }
+
+    public function testParishImageConflictGuardDetectsDistinctPopulatedBannerAndImage(): void
+    {
+        require_once APPPATH . 'Database/Migrations/2026-11-27-213833_AlignHierarchySchemaAndRelationships.php';
+
+        $connection = Database::connect('tests', false);
+        $forge      = Database::forge($connection);
+        $parish     = $connection->prefixTable('parish');
+
+        $connection->query("DROP TABLE IF EXISTS {$parish}");
+        $connection->query("CREATE TABLE {$parish} (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL,
+            image TEXT NULL,
+            banner TEXT NULL
+        )");
+
+        $migration = new class ($forge) extends AlignHierarchySchemaAndRelationships {
+            public function checkConflicts(): void
+            {
+                $this->assertNoConflictingParishImages();
+            }
+
+            public function countUnmatched(): int
+            {
+                return $this->countUnmatchedParishImages();
+            }
+        };
+
+        try {
+            // Matching non-empty values do not conflict and require no copy.
+            $connection->table('parish')->insert([
+                'id'     => 1,
+                'name'   => 'Matched Parish',
+                'image'  => 'same.jpg',
+                'banner' => 'same.jpg',
+            ]);
+            $migration->checkConflicts();
+            $this->assertSame(0, $migration->countUnmatched());
+
+            // Empty banner with populated image does not conflict; unmatched drops to 0 after copy.
+            $connection->table('parish')->insert([
+                'id'     => 2,
+                'name'   => 'Legacy Image Parish',
+                'image'  => 'legacy.jpg',
+                'banner' => '',
+            ]);
+            $migration->checkConflicts();
+            $this->assertSame(1, $migration->countUnmatched());
+
+            $connection->query(
+                "UPDATE {$parish} SET `banner` = `image`
+                 WHERE (`banner` IS NULL OR TRIM(`banner`) = '')
+                   AND `image` IS NOT NULL AND TRIM(`image`) <> ''"
+            );
+            $this->assertSame(0, $migration->countUnmatched());
+
+            // Distinct populated image and banner must abort with the affected parish ID.
+            $connection->table('parish')->insert([
+                'id'     => 42,
+                'name'   => 'Conflicting Parish',
+                'image'  => 'old-facade.jpg',
+                'banner' => 'easter.jpg',
+            ]);
+
+            $this->expectException(\RuntimeException::class);
+            $this->expectExceptionMessage('42');
+            $migration->checkConflicts();
+        } finally {
+            $connection->query("DROP TABLE IF EXISTS {$parish}");
+            $connection->close();
+        }
     }
 
     private function extractCreateTable(string $sql, string $table): string

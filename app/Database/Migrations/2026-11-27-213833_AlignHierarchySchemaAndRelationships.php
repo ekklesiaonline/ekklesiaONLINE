@@ -16,6 +16,9 @@ class AlignHierarchySchemaAndRelationships extends Migration
             return;
         }
 
+        // Detect conflicting image/banner data before executing any DDL.
+        $this->assertNoConflictingParishImages();
+
         $this->alignProvinceTable();
         $this->alignDioceseTable();
         $this->alignParishTable();
@@ -145,19 +148,23 @@ class AlignHierarchySchemaAndRelationships extends Migration
                 'ALTER TABLE `parish` CHANGE COLUMN `image` `banner` VARCHAR(255) NULL DEFAULT NULL'
             );
         } elseif ($hasImage && $hasBanner) {
+            $this->assertNoConflictingParishImages();
+
             $this->db->query(
                 "UPDATE `parish` SET `banner` = `image`
-                 WHERE (`banner` IS NULL OR `banner` = '')
-                   AND `image` IS NOT NULL AND `image` <> ''"
+                 WHERE (`banner` IS NULL OR TRIM(`banner`) = '')
+                   AND `image` IS NOT NULL AND TRIM(`image`) <> ''"
             );
-            $remaining = $this->db->query(
-                "SELECT COUNT(*) AS c FROM `parish`
-                 WHERE `image` IS NOT NULL AND `image` <> ''
-                   AND (`banner` IS NULL OR `banner` = '')"
-            )->getRowArray();
-            if ((int) ($remaining['c'] ?? 0) === 0) {
-                $this->db->query('ALTER TABLE `parish` DROP COLUMN `image`');
+
+            $unmatched = $this->countUnmatchedParishImages();
+            if ($unmatched > 0) {
+                throw new \RuntimeException(sprintf(
+                    'Cannot drop parish.image: %d parish row(s) still have uncopied or mismatched image values.',
+                    $unmatched
+                ));
             }
+
+            $this->db->query('ALTER TABLE `parish` DROP COLUMN `image`');
         } elseif (! $hasBanner) {
             $this->db->query(
                 'ALTER TABLE `parish` ADD COLUMN `banner` VARCHAR(255) NULL DEFAULT NULL AFTER `logo`'
@@ -280,6 +287,54 @@ class AlignHierarchySchemaAndRelationships extends Migration
              FOREIGN KEY (`{$column}`) REFERENCES `{$refTable}` (`id`)
              ON DELETE {$deleteRule} ON UPDATE {$updateRule}"
         );
+    }
+
+    protected function assertNoConflictingParishImages(): void
+    {
+        if (
+            ! $this->db->tableExists('parish')
+            || ! $this->db->fieldExists('image', 'parish')
+            || ! $this->db->fieldExists('banner', 'parish')
+        ) {
+            return;
+        }
+
+        $parishTable = $this->db->prefixTable('parish');
+        $rows = $this->db->query(
+            "SELECT `id` FROM `{$parishTable}`
+             WHERE `image` IS NOT NULL AND TRIM(`image`) <> ''
+               AND `banner` IS NOT NULL AND TRIM(`banner`) <> ''
+               AND TRIM(`banner`) <> TRIM(`image`)
+             ORDER BY `id` ASC"
+        )->getResultArray();
+
+        if ($rows !== []) {
+            $ids = array_map(static fn (array $row): string => (string) (int) $row['id'], $rows);
+            throw new \RuntimeException(sprintf(
+                'Cannot drop parish.image: conflicting non-empty image and banner values on parish ID(s): %s. Reconcile these rows before re-running the migration.',
+                implode(', ', $ids)
+            ));
+        }
+    }
+
+    protected function countUnmatchedParishImages(): int
+    {
+        if (
+            ! $this->db->tableExists('parish')
+            || ! $this->db->fieldExists('image', 'parish')
+            || ! $this->db->fieldExists('banner', 'parish')
+        ) {
+            return 0;
+        }
+
+        $parishTable = $this->db->prefixTable('parish');
+        $row = $this->db->query(
+            "SELECT COUNT(*) AS c FROM `{$parishTable}`
+             WHERE `image` IS NOT NULL AND TRIM(`image`) <> ''
+               AND (`banner` IS NULL OR TRIM(`banner`) <> TRIM(`image`))"
+        )->getRowArray();
+
+        return (int) ($row['c'] ?? 0);
     }
 
     private function normalizeAlias(string $value): string
