@@ -247,6 +247,40 @@ final class DirectoryReadinessServiceTest extends CIUnitTestCase
         $this->assertStringContainsString('Sample Diocese One/Two', $result['warnings'][0]);
     }
 
+    public function testWarnsOnInactiveOrphanParishesImportedWithoutForeignKeyChecks(): void
+    {
+        $this->connection->table('province')->insert(['province_number' => '9', 'name' => 'Province IX']);
+        $provinceId = (int) $this->connection->insertID();
+        $this->connection->table('diocese')->insert([
+            'province_id' => $provinceId,
+            'name' => 'Diocese of the Dominican Republic',
+            'alias_norm' => 'diocese of the dominican republic',
+        ]);
+        $dioceseId = (int) $this->connection->insertID();
+        $this->connection->table('parish')->insert([
+            'diocese_id' => $dioceseId,
+            'name' => 'Iglesia Episcopal La Transfiguracion',
+            'is_active' => 1,
+            'deleted_at' => null,
+        ]);
+        // Inactive parish whose diocese reference is broken — the corruption a
+        // FOREIGN_KEY_CHECKS=0 hierarchy import can leave behind.
+        $this->connection->table('parish')->insert([
+            'diocese_id' => 99999,
+            'name' => 'Inactive Orphan Parish',
+            'is_active' => 0,
+            'deleted_at' => null,
+        ]);
+
+        $result = (new DirectoryReadinessService())->evaluate($this->connection);
+
+        $this->assertTrue($result['ready']);
+        $this->assertSame(1, $result['counts']['unlinked_parishes']);
+        $this->assertSame(0, $result['counts']['unlinked_active_parishes']);
+        $this->assertCount(1, $result['warnings']);
+        $this->assertStringContainsString('non-deleted parish', $result['warnings'][0]);
+    }
+
     private function makeVerifyCommand(): VerifyDirectoryReadiness
     {
         $connection = $this->connection;

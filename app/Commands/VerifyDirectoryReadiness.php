@@ -34,6 +34,7 @@ class VerifyDirectoryReadiness extends BaseCommand
             ['Parishes (active)', (string) $counts['active_parishes']],
             ['Parishes (active + linked to diocese -> province)', (string) $counts['linked_active_parishes']],
             ['Parishes (active, unlinked)', (string) $counts['unlinked_active_parishes']],
+            ['Parishes (non-deleted, unlinked)', (string) $counts['unlinked_parishes']],
         ], ['Metric', 'Count']);
 
         foreach ($result['warnings'] as $warning) {
@@ -74,7 +75,8 @@ class VerifyDirectoryReadiness extends BaseCommand
      *         parishes: int,
      *         active_parishes: int,
      *         linked_active_parishes: int,
-     *         unlinked_active_parishes: int
+     *         unlinked_active_parishes: int,
+     *         unlinked_parishes: int
      *     },
      *     blocking_issues: list<string>,
      *     warnings: list<string>
