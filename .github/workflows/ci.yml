@@ -173,6 +173,19 @@ jobs:
           php spark db:seed DatabaseSeeder 2>&1 | tee build/logs/seed.txt
           ! grep -q "Exception" build/logs/seed.txt
 
+      - name: Verify parish-hierarchy readiness gate on seeded baseline
+        run: |
+          set +e
+          php spark directory:verify-readiness --strict 2>&1 | tee build/logs/directory_verify_empty.txt
+          status=$?
+          set -e
+          # Baseline DatabaseSeeder leaves parish empty; the gate must exit non-zero and name the NO-GO.
+          if [ "$status" -eq 0 ]; then
+            echo 'directory:verify-readiness passed on an empty parish hierarchy — the go-live gate is broken' >&2
+            exit 1
+          fi
+          grep -q 'No active `parish` rows' build/logs/directory_verify_empty.txt
+
       - name: Compile routes
         run: |
           php spark routes > build/logs/routes.txt 2>&1

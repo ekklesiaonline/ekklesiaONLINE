@@ -10,13 +10,14 @@ class SyncUeidDirectory extends BaseCommand
     protected $group = 'Data';
     protected $name = 'directory:sync-ueid';
     protected $description = 'Sync dioceses and parishes from UEID JSON/CSV using ParishUEID as the stable key.';
-    protected $usage = 'directory:sync-ueid [--source <path>] [--format json|csv] [--apply] [--default-province-id <id>] [--deactivate-missing]';
+    protected $usage = 'directory:sync-ueid [--source <path>] [--format json|csv] [--apply] [--default-province-id <id>] [--deactivate-missing] [--preserve-inactive]';
     protected $options = [
         '--source' => 'Source file. Defaults to docs/UEID.json, then falls back to docs/UEID.csv.',
         '--format' => 'Input format: json or csv. Defaults to auto-detect by file extension.',
         '--apply' => 'Persist changes. Omit for dry-run.',
         '--default-province-id' => 'Required when new dioceses are detected and no existing diocese match is found.',
         '--deactivate-missing' => 'Deactivate parishes not present in source by setting parishes.is_active = 0 (only for rows with non-empty parish_ueid).',
+        '--preserve-inactive' => 'Do not reactivate existing parishes that currently have is_active = 0.',
     ];
 
     public function run(array $params)
@@ -26,6 +27,7 @@ class SyncUeidDirectory extends BaseCommand
         $format = strtolower(trim((string) (CLI::getOption('format') ?: '')));
         $defaultProvinceId = (int) (CLI::getOption('default-province-id') ?: 0);
         $deactivateMissing = CLI::getOption('deactivate-missing') !== null;
+        $preserveInactive = array_key_exists('preserve-inactive', $params) || CLI::getOption('preserve-inactive') !== null;
 
         if ($source === '') {
             $jsonDefault = ROOTPATH . 'docs/UEID.json';
@@ -61,6 +63,7 @@ class SyncUeidDirectory extends BaseCommand
         CLI::write('Source: ' . $source, 'light_gray');
         CLI::write('Format: ' . $format, 'light_gray');
         CLI::write('Deactivate missing: ' . ($deactivateMissing ? 'yes' : 'no'), $deactivateMissing ? 'yellow' : 'light_gray');
+        CLI::write('Preserve inactive: ' . ($preserveInactive ? 'yes' : 'no'), $preserveInactive ? 'green' : 'light_gray');
         CLI::newLine();
 
         $rows = $format === 'json' ? $this->parseJson($source) : $this->parseCsv($source);
@@ -77,12 +80,14 @@ class SyncUeidDirectory extends BaseCommand
             'dioceses_created' => 0,
             'parishes_created' => 0,
             'parishes_updated' => 0,
+            'parishes_reactivated' => 0,
             'parishes_unchanged' => 0,
             'parishes_deactivated' => 0,
             'errors' => 0,
         ];
 
         $errors = [];
+        $reactivatedParishes = [];
 
         $dioceseMap = $this->loadDioceseMap($db);
         $hasParishIsActive = $this->columnExists($db, 'parish', 'is_active');
@@ -174,6 +179,9 @@ class SyncUeidDirectory extends BaseCommand
 
             $changes = [];
             foreach ($payload as $field => $value) {
+                if ($field === 'is_active' && $preserveInactive && (int) ($existing['is_active'] ?? 1) === 0) {
+                    continue;
+                }
                 $current = $existing[$field] ?? null;
                 if (!$this->sameValue($current, $value)) {
                     $changes[$field] = $value;
@@ -183,6 +191,11 @@ class SyncUeidDirectory extends BaseCommand
             if ($changes === []) {
                 $summary['parishes_unchanged']++;
                 continue;
+            }
+
+            if (array_key_exists('is_active', $changes) && (int) $changes['is_active'] === 1 && (int) ($existing['is_active'] ?? 1) === 0) {
+                $summary['parishes_reactivated']++;
+                $reactivatedParishes[] = $parishUeid . ' (' . $parishName . ')';
             }
 
             $summary['parishes_updated']++;
@@ -217,12 +230,13 @@ class SyncUeidDirectory extends BaseCommand
             $db->transCommit();
         }
 
-        $reportPath = $this->writeReport($summary, $errors, $source, $apply, $defaultProvinceId, $deactivateMissing);
+        $reportPath = $this->writeReport($summary, $errors, $reactivatedParishes, $source, $apply, $defaultProvinceId, $deactivateMissing, $preserveInactive);
 
         CLI::write('Rows parsed:         ' . $summary['rows_parsed'], 'light_gray');
         CLI::write('Dioceses created:    ' . $summary['dioceses_created'], $summary['dioceses_created'] > 0 ? 'yellow' : 'light_gray');
         CLI::write('Parishes created:    ' . $summary['parishes_created'], $summary['parishes_created'] > 0 ? 'green' : 'light_gray');
         CLI::write('Parishes updated:    ' . $summary['parishes_updated'], $summary['parishes_updated'] > 0 ? 'yellow' : 'light_gray');
+        CLI::write('Parishes reactivated:' . str_repeat(' ', 1) . $summary['parishes_reactivated'], $summary['parishes_reactivated'] > 0 ? 'yellow' : 'light_gray');
         CLI::write('Parishes unchanged:  ' . $summary['parishes_unchanged'], 'light_gray');
         CLI::write('Parishes deactivated:' . str_repeat(' ', 4) . $summary['parishes_deactivated'], $summary['parishes_deactivated'] > 0 ? 'yellow' : 'light_gray');
         CLI::write('Errors:              ' . $summary['errors'], $summary['errors'] > 0 ? 'red' : 'green');
@@ -489,8 +503,16 @@ class SyncUeidDirectory extends BaseCommand
         return $affected;
     }
 
-    private function writeReport(array $summary, array $errors, string $source, bool $apply, int $defaultProvinceId, bool $deactivateMissing): string
-    {
+    private function writeReport(
+        array $summary,
+        array $errors,
+        array $reactivatedParishes,
+        string $source,
+        bool $apply,
+        int $defaultProvinceId,
+        bool $deactivateMissing,
+        bool $preserveInactive
+    ): string {
         $reportDir = WRITEPATH . 'reports';
         if (!is_dir($reportDir)) {
             mkdir($reportDir, 0775, true);
@@ -507,13 +529,24 @@ class SyncUeidDirectory extends BaseCommand
         $lines[] = '- Source: ' . $source;
         $lines[] = '- Default Province ID: ' . ($defaultProvinceId > 0 ? (string) $defaultProvinceId : 'not set');
         $lines[] = '- Deactivate Missing: ' . ($deactivateMissing ? 'yes' : 'no');
+        $lines[] = '- Preserve Inactive: ' . ($preserveInactive ? 'yes' : 'no');
         $lines[] = '- Rows Parsed: ' . $summary['rows_parsed'];
         $lines[] = '- Dioceses Created: ' . $summary['dioceses_created'];
         $lines[] = '- Parishes Created: ' . $summary['parishes_created'];
         $lines[] = '- Parishes Updated: ' . $summary['parishes_updated'];
+        $lines[] = '- Parishes Reactivated: ' . ($summary['parishes_reactivated'] ?? 0);
         $lines[] = '- Parishes Unchanged: ' . $summary['parishes_unchanged'];
         $lines[] = '- Parishes Deactivated: ' . ($summary['parishes_deactivated'] ?? 0);
         $lines[] = '- Errors: ' . $summary['errors'];
+
+        if ($reactivatedParishes !== []) {
+            $lines[] = '';
+            $lines[] = '## Parishes Reactivated (first 100)';
+            $lines[] = '';
+            foreach (array_slice($reactivatedParishes, 0, 100) as $item) {
+                $lines[] = '- ' . str_replace('|', '\\|', (string) $item);
+            }
+        }
 
         if ($errors !== []) {
             $lines[] = '';

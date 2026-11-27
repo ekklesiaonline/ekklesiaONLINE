@@ -7,6 +7,11 @@ use Throwable;
 
 class DirectoryReadinessService
 {
+    private const PLACEHOLDER_DIOCESE_NAMES = [
+        'Sample Diocese One',
+        'Sample Diocese Two',
+    ];
+
     /**
      * Evaluate whether the ecclesiastical hierarchy (province -> diocese -> active parish)
      * is populated and ready for production traffic.
@@ -18,6 +23,7 @@ class DirectoryReadinessService
      *         dioceses: int,
      *         linked_dioceses: int,
      *         orphaned_dioceses: int,
+     *         placeholder_dioceses: int,
      *         parishes: int,
      *         active_parishes: int,
      *         linked_active_parishes: int,
@@ -34,6 +40,7 @@ class DirectoryReadinessService
             'dioceses' => 0,
             'linked_dioceses' => 0,
             'orphaned_dioceses' => 0,
+            'placeholder_dioceses' => 0,
             'parishes' => 0,
             'active_parishes' => 0,
             'linked_active_parishes' => 0,
@@ -66,6 +73,9 @@ class DirectoryReadinessService
                 ->join('province', 'province.id = diocese.province_id', 'inner')
                 ->countAllResults();
             $counts['orphaned_dioceses'] = max(0, $counts['dioceses'] - $counts['linked_dioceses']);
+            $counts['placeholder_dioceses'] = (int) $connection->table('diocese')
+                ->whereIn('name', self::PLACEHOLDER_DIOCESE_NAMES)
+                ->countAllResults();
 
             $hasDeletedAt = $connection->fieldExists('deleted_at', 'parish');
             $hasIsActive = $connection->fieldExists('is_active', 'parish');
@@ -117,6 +127,12 @@ class DirectoryReadinessService
 
         if ($counts['orphaned_dioceses'] > 0) {
             $warnings[] = sprintf('%d diocese row(s) have no matching parent province.', $counts['orphaned_dioceses']);
+        }
+        if ($counts['placeholder_dioceses'] > 0) {
+            $warnings[] = sprintf(
+                '%d placeholder sample diocese row(s) (Sample Diocese One/Two) still exist; remove them before production go-live.',
+                $counts['placeholder_dioceses']
+            );
         }
         if ($counts['unlinked_active_parishes'] > 0) {
             $warnings[] = sprintf('%d active parish row(s) have no valid diocese -> province parent chain.', $counts['unlinked_active_parishes']);

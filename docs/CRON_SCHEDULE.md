@@ -110,7 +110,7 @@ cleanly when the column is absent).
 One-off/backfill/audit commands run manually only:
 
 - `followup:backfill`, `followup:apply-default` — reconciliation/seed helpers
-- `directory:sync-ueid`, `parish:merge-ueid`, `directory:verify-readiness` — directory imports and go-live readiness verification
+- `directory:sync-ueid`, `parish:merge-ueid`, `directory:verify-readiness` — directory imports and go-live readiness verification. `directory:verify-readiness` runs inside the guarded HostGator release block on every deploy; pass `--preserve-inactive` to `directory:sync-ueid` on live databases so intentionally deactivated parishes are not reactivated; use `build/parish_hierarchy_transfer.sh` for the Path A cutover (`docs/HOSTGATOR_DEPLOY.md` §4.1)
 - `person:diagnose`, `people:audit-affiliation-drift`,
   `leadership:audit-eligibility`, `finance:audit-readiness`,
   `finance:audit-coa-categories` — report-only audits

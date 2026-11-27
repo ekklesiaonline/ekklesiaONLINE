@@ -29,5 +29,10 @@ A user sees "No parish assigned". Follow this checklist from `AGENTS.md`:
    php spark person:diagnose
    php spark people:audit-affiliation-drift
    ```
+9. When every profile/affiliation link is correct but the referenced `parish`/`diocese`/`province` row is absent (typical on a fresh webhosting database), verify the hierarchy gate instead:
+   ```bash
+   php spark directory:verify-readiness --strict
+   ```
+   If it fails or warns about placeholder `Sample Diocese One/Two` rows, the `province`/`diocese`/`parish` tables were never populated — populate them per `docs/HOSTGATOR_DEPLOY.md` §4.1 (Path A `build/parish_hierarchy_transfer.sh` cutover, Path B `php spark directory:sync-ueid --apply`, or Path C manual System Admin UI creation) before going live.
 
 Cite the actual rows/status you found. Do not write changes without explicit user confirmation.
