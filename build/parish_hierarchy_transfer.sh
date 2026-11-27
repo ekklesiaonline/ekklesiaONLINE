@@ -142,8 +142,12 @@ export)
     SRC_DB="${3:-$DB_NAME}"
     HIERARCHY_TABLES=$(hierarchy_tables "$SRC_DB")
     echo "Exporting $HIERARCHY_TABLES from $SRC_DB into $OUT_FILE"
+    # --skip-add-locks / --skip-disable-keys keep the archive free of LOCK TABLES
+    # and ALTER TABLE statements: both implicitly commit in MySQL, which would
+    # silently break the single-transaction atomicity the import relies on.
     mysqldump --defaults-extra-file="$DEFAULTS_FILE" --single-transaction --no-create-info \
-        --skip-triggers "$SRC_DB" $HIERARCHY_TABLES | gzip > "$OUT_FILE"
+        --skip-triggers --skip-add-locks --skip-disable-keys \
+        "$SRC_DB" $HIERARCHY_TABLES | gzip > "$OUT_FILE"
     [ -s "$OUT_FILE" ] || die 'Export produced an empty archive'
     chmod 600 "$OUT_FILE"
     gzip -t "$OUT_FILE"
