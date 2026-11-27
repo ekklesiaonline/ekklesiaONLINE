@@ -79,3 +79,8 @@ case "$BACKUP_FILE" in
 esac
 
 echo 'Restore complete.'
+if command -v php >/dev/null 2>&1 && [ -f "$ROOT_DIR/spark" ]; then
+  echo 'Verifying province/diocese/parish hierarchy readiness after restore:'
+  (cd "$ROOT_DIR" && php spark directory:verify-readiness) \
+    || echo 'WARNING: province/diocese/parish hierarchy is not populated after restore — resolve before go-live (docs/HOSTGATOR_DEPLOY.md §4.1)' >&2
+fi

@@ -13,7 +13,7 @@ class VerifyDirectoryReadiness extends BaseCommand
     protected $description = 'Verify that province, diocese, and active parish tables are populated with valid parent links before go-live.';
     protected $usage       = 'directory:verify-readiness [--strict]';
     protected $options     = [
-        '--strict' => 'Also exit non-zero when warnings exist (orphaned dioceses or unlinked active parishes).',
+        '--strict' => 'Also exit non-zero when warnings exist (orphaned dioceses, placeholder sample dioceses, or unlinked non-deleted parishes).',
     ];
 
     public function run(array $params)
@@ -29,10 +29,12 @@ class VerifyDirectoryReadiness extends BaseCommand
             ['Dioceses (total)', (string) $counts['dioceses']],
             ['Dioceses (linked to province)', (string) $counts['linked_dioceses']],
             ['Dioceses (orphaned)', (string) $counts['orphaned_dioceses']],
+            ['Dioceses (placeholder sample)', (string) $counts['placeholder_dioceses']],
             ['Parishes (non-deleted)', (string) $counts['parishes']],
             ['Parishes (active)', (string) $counts['active_parishes']],
             ['Parishes (active + linked to diocese -> province)', (string) $counts['linked_active_parishes']],
             ['Parishes (active, unlinked)', (string) $counts['unlinked_active_parishes']],
+            ['Parishes (non-deleted, unlinked)', (string) $counts['unlinked_parishes']],
         ], ['Metric', 'Count']);
 
         foreach ($result['warnings'] as $warning) {
@@ -69,10 +71,12 @@ class VerifyDirectoryReadiness extends BaseCommand
      *         dioceses: int,
      *         linked_dioceses: int,
      *         orphaned_dioceses: int,
+     *         placeholder_dioceses: int,
      *         parishes: int,
      *         active_parishes: int,
      *         linked_active_parishes: int,
-     *         unlinked_active_parishes: int
+     *         unlinked_active_parishes: int,
+     *         unlinked_parishes: int
      *     },
      *     blocking_issues: list<string>,
      *     warnings: list<string>

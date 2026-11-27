@@ -46,7 +46,7 @@ Never run `php spark config:check Database`, `Encryption`, or `Email` in logs be
 
 ## No-go conditions
 
-Stop and report a no-go for any failed test, warning/risky PHPUnit result, unclassified skip, migration failure, empty `province`/`diocese`/`parish` hierarchy (`php spark directory:verify-readiness` non-zero or `/health/ready` reporting `directory: unavailable`), route compilation failure, backup preflight failure, missing rollback owner/window, placeholder environment value, or unexpected secret exposure. The eight documented SQLite skips are allowed only when they still match the runbook classifications.
+Stop and report a no-go for any failed test, warning/risky PHPUnit result, unclassified skip, migration failure, empty `province`/`diocese`/`parish` hierarchy (`php spark directory:verify-readiness` non-zero or `/health/ready` reporting `directory: unavailable`), route compilation failure, backup preflight failure, missing rollback owner/window, placeholder environment value, or unexpected secret exposure. The eight documented SQLite skips are allowed only when they still match the runbook classifications. Leftover placeholder `Sample Diocese One/Two` rows are a warning that fails `directory:verify-readiness --strict`; remove them before go-live.
 
 ## Deployment sequence
 
@@ -56,7 +56,7 @@ Stop and report a no-go for any failed test, warning/risky PHPUnit result, uncla
 4. Create a fresh backup; verify it is non-empty and passes `gzip -t`.
 5. Install production dependencies with `--no-dev --optimize-autoloader`.
 6. Record migration status, run `php spark migrate --all` once, and record status again.
-7. Confirm `province`, `diocese`, and at least one active linked `parish` are populated (`php spark directory:verify-readiness` — `DatabaseSeeder` does not seed `parish`; follow `docs/HOSTGATOR_DEPLOY.md` §4.1 when moving or bootstrapping on webhosting), then clear cache and compile routes.
+7. Confirm `province`, `diocese`, and at least one active linked `parish` are populated (`php spark directory:verify-readiness --strict` — `DatabaseSeeder` does not seed `parish`; strict mode also fails on orphaned rows and leftover placeholder `Sample Diocese One/Two` rows, both no-go in production; follow `docs/HOSTGATOR_DEPLOY.md` §4.1 when moving or bootstrapping on webhosting). For the initial cutover from an already-populated source database, use `bash build/parish_hierarchy_transfer.sh export|import|verify` (Path A, runs only on a fresh empty destination before any users exist); for updates to a live database use `php spark directory:sync-ueid --apply --preserve-inactive`. Then clear cache and compile routes.
 8. Run `sh build/e2e_admin_levels_smoke.sh` with staging credentials from environment variables only.
 9. Verify protected `/health/ready` as a system administrator and confirm `database`, `writable`, and `directory` readiness.
 10. Validate logs, audit records, SMTP staging delivery, 5xx/429/latency alerts, then disable maintenance mode.
@@ -77,4 +77,5 @@ Record release SHA/tag, CI URL, tool/runtime versions, migration reports, route 
 - `build/e2e_module_smoke.sh`
 - `build/backup_database.sh`
 - `build/restore_database.sh`
+- `build/parish_hierarchy_transfer.sh`
 - `AGENTS.md`
