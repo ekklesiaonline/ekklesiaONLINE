@@ -212,6 +212,7 @@ final class HierarchyAlignmentMySqlUpgradeTest extends CIUnitTestCase
                     `id` int unsigned NOT NULL AUTO_INCREMENT,
                     `province_id` int unsigned NOT NULL,
                     `name` varchar(255) NOT NULL,
+                    `alias_norm` varchar(255) DEFAULT NULL,
                     PRIMARY KEY (`id`),
                     KEY `province_id` (`province_id`),
                     CONSTRAINT `dioceses_province_id_foreign` FOREIGN KEY (`province_id`) REFERENCES `province` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
@@ -233,10 +234,10 @@ final class HierarchyAlignmentMySqlUpgradeTest extends CIUnitTestCase
             );
         };
 
-        // 1) Conflicting image/banner aborts before any DDL.
+        // 1) Conflicting image/banner aborts before any DDL or data backfill.
         $createDriftedTables($db);
         $db->query("INSERT INTO `province` (`id`, `province_number`, `province_id`, `name`) VALUES (1, NULL, 'IX', 'Province IX')");
-        $db->query("INSERT INTO `diocese` (`id`, `province_id`, `name`) VALUES (10, 1, 'Dominican Republic')");
+        $db->query("INSERT INTO `diocese` (`id`, `province_id`, `name`, `alias_norm`) VALUES (10, 1, 'Dominican Republic', NULL)");
         $db->query(
             "INSERT INTO `parish` (`id`, `name`, `diocese_id`, `image`, `banner`)
              VALUES (42, 'Conflicting Parish', 10, 'old-facade.jpg', 'easter.jpg')"
@@ -256,16 +257,20 @@ final class HierarchyAlignmentMySqlUpgradeTest extends CIUnitTestCase
         $this->assertContains('province_id', $this->columnNames($db, 'province'));
         $this->assertSingleFk($db, 'diocese', 'province_id', 'province', 'dioceses_province_id_foreign', 'CASCADE', 'CASCADE');
         $this->assertSingleFk($db, 'parish', 'diocese_id', 'diocese', 'parish_diocese_id_foreign', 'SET NULL', 'CASCADE');
+        $provinceRow = $db->table('province')->where('id', 1)->get()->getRowArray();
+        $this->assertNull($provinceRow['province_number']);
+        $dioceseRow = $db->table('diocese')->where('id', 10)->get()->getRowArray();
+        $this->assertNull($dioceseRow['alias_norm']);
         $row = $db->table('parish')->where('id', 42)->get()->getRowArray();
         $this->assertSame('old-facade.jpg', $row['image']);
         $this->assertSame('easter.jpg', $row['banner']);
 
         // 2) Imported soft-deleted parish with dangling diocese_id (simulated mysqldump
-        //    with FOREIGN_KEY_CHECKS=0) aborts preflight before any DDL.
+        //    with FOREIGN_KEY_CHECKS=0) aborts preflight before any DDL or backfill.
         $this->dropTestTables($db);
         $createDriftedTables($db);
         $db->query("INSERT INTO `province` (`id`, `province_number`, `province_id`, `name`) VALUES (1, NULL, 'IX', 'Province IX')");
-        $db->query("INSERT INTO `diocese` (`id`, `province_id`, `name`) VALUES (10, 1, 'Dominican Republic')");
+        $db->query("INSERT INTO `diocese` (`id`, `province_id`, `name`, `alias_norm`) VALUES (10, 1, 'Dominican Republic', NULL)");
         $db->query("INSERT INTO `parish` (`id`, `name`, `diocese_id`, `deleted_at`) VALUES (100, 'Active Valid Parish', 10, NULL)");
         $db->query('SET FOREIGN_KEY_CHECKS = 0');
         try {
@@ -289,6 +294,10 @@ final class HierarchyAlignmentMySqlUpgradeTest extends CIUnitTestCase
         $this->assertContains('province_id', $this->columnNames($db, 'province'));
         $this->assertSingleFk($db, 'diocese', 'province_id', 'province', 'dioceses_province_id_foreign', 'CASCADE', 'CASCADE');
         $this->assertSingleFk($db, 'parish', 'diocese_id', 'diocese', 'parish_diocese_id_foreign', 'SET NULL', 'CASCADE');
+        $provinceRowAfter = $db->table('province')->where('id', 1)->get()->getRowArray();
+        $this->assertNull($provinceRowAfter['province_number']);
+        $dioceseRowAfter = $db->table('diocese')->where('id', 10)->get()->getRowArray();
+        $this->assertNull($dioceseRowAfter['alias_norm']);
 
         // 3) Failure-path rehearsal of replaceForeignKey() itself: even when MySQL rejects
         //    the replacement constraint because of row 101, the original FK is preserved.
