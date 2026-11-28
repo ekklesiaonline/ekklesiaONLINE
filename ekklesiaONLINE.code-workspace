@@ -83,7 +83,10 @@
 		],
 		"workbench.editor.enablePreview": false,
 		"git.ignoreLimitWarning": true,
-		"git.enableSmartCommit": true
+		"git.enableSmartCommit": true,
+		"[jsonc]": {
+			"editor.defaultFormatter": "esbenp.prettier-vscode"
+		}
 	},
 	"extensions": {
 		"recommendations": [
