@@ -79,7 +79,7 @@
 
 <!-- BEGIN AWS Agent Toolkit rules -->
 
-## AWS Guidance for the new AWS experience
+# AWS Guidance for the new AWS experience
 
 This user has signed up for the new AWS experience. This experience lets you sign into AWS using a social provider and requires the following additional context.
 
@@ -87,15 +87,15 @@ Where this guidance conflicts with the project's own instructions, the project's
 
 ## Context
 
-### - Terminology
+### Terminology:
 
 - Say "project" instead of "account" — a project contains an AWS account and settings for sharing with other collaborators
 - Say "team member" instead of "IAM user" — users are invited by email, not created or federated in IAM
 - Say "AWS Settings" when referring to management tasks at [settings.aws.com](https://settings.aws.com/) (project management, billing, team members, spend limits). Users view their actual AWS resources in the AWS Management Console.
 - Say "selected Region" when referring to the user's Region — not "home Region"
-- The user has a managed IAM experience. This includes a managed service control policies (SCP) and resource control policies (RCP) that govern the use of AWS. They will still need to use IAM to create policies to let services work with each other. If there are questions about the SCPs or RCPs, go to the documentation at <https://docs.aws.amazon.com/accounts/latest/reference/scps-and-rcps-for-projects.html>
+- The user has a managed IAM experience. This includes a managed service control policies (SCP) and resource control policies (RCP) that govern the use of AWS. They will still need to use IAM to create policies to let services work with each other. If there are questions about the SCPs or RCPs, go to the documentation at https://docs.aws.amazon.com/accounts/latest/reference/scps-and-rcps-for-projects.html
 
-### - Constraints
+### Constraints:
 
 - All projects share a single AWS Region determined by the user's contact address. Resources cannot be created in other Regions
 - When developing:
@@ -123,7 +123,7 @@ Where this guidance conflicts with the project's own instructions, the project's
   3. If accountPlanType": "PAID", check the [Paid Tier supported services list](https://docs.aws.amazon.com/accounts/latest/reference/supported-services-sign-up-new.html#supported-services-paid-plan).
   4. If neither list shows the service, check the [Not supported for this experience list](https://docs.aws.amazon.com/accounts/latest/reference/supported-services-sign-up-new.html#unsupported-services). The user will need to activate advanced features to access this service.
 - Users can activate advanced AWS services and capabilities for their account.
-- Before starting a task, check whether a relevant AWS skill is available. Load the skill with retrieve_skill and prefer its guidance over general knowledge.
+- For any AWS task or question — building, configuring, migrating, debugging, or operating a service, writing SDK code, authoring CDK/CloudFormation, or answering how a service works — first call `aws___search_documentation` with topic `agent_skills` and load the matching skill with `aws___retrieve_skill`. Do this even when you believe you know the answer: skills carry current service behavior that your training may not. Prefer the skill's guidance over general knowledge. Skip it only for work that does not involve AWS.
 
 ### Help level
 
@@ -136,14 +136,14 @@ Constraints for each level:
 **LOW:**
 
 - MUST follow all constraints in this context file
-- MUST execute the user's request without modification
+- MUST execute the user’s request without modification
 - MUST NOT ask clarifying questions unless the action would create a security vulnerability
 - MUST NOT suggest alternatives or improvements
 
 **MEDIUM:**
 
 - MUST execute the user's request
-- MAY ask up to two clarifying questions per task if the request has ambiguity or a potential issue
+- MAY ask up to two clarifying questions per task if the request has an ambiguity or a potential issue
 - MUST NOT repeat a question or suggestion the user has already dismissed
 - MUST NOT explain trade-offs or alternatives unless the user asks
 
