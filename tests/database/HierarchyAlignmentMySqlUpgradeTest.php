@@ -191,45 +191,50 @@ final class HierarchyAlignmentMySqlUpgradeTest extends CIUnitTestCase
         $this->assertDeleteBlocked($db, 'DELETE FROM `diocese` WHERE `id` = 10');
     }
 
-    public function testConflictingParishImageAndBannerAbortsBeforeAnyDdlOnMySql(): void
+    public function testDanglingSoftDeletedReferencesAndConflictingImagesAbortWithoutLosingFksOnMySql(): void
     {
         $db = $this->getIsolatedMySqlConnection();
         $this->dropTestTables($db);
 
-        $db->query(
-            'CREATE TABLE `province` (
-                `id` int unsigned NOT NULL AUTO_INCREMENT,
-                `province_number` varchar(10) DEFAULT NULL,
-                `province_id` varchar(10) NOT NULL,
-                `name` varchar(150) NOT NULL,
-                PRIMARY KEY (`id`)
-            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci'
-        );
+        $createDriftedTables = static function (BaseConnection $db): void {
+            $db->query(
+                'CREATE TABLE `province` (
+                    `id` int unsigned NOT NULL AUTO_INCREMENT,
+                    `province_number` varchar(10) DEFAULT NULL,
+                    `province_id` varchar(10) NOT NULL,
+                    `name` varchar(150) NOT NULL,
+                    PRIMARY KEY (`id`)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci'
+            );
 
-        $db->query(
-            'CREATE TABLE `diocese` (
-                `id` int unsigned NOT NULL AUTO_INCREMENT,
-                `province_id` int unsigned NOT NULL,
-                `name` varchar(255) NOT NULL,
-                PRIMARY KEY (`id`),
-                KEY `province_id` (`province_id`),
-                CONSTRAINT `dioceses_province_id_foreign` FOREIGN KEY (`province_id`) REFERENCES `province` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
-            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci'
-        );
+            $db->query(
+                'CREATE TABLE `diocese` (
+                    `id` int unsigned NOT NULL AUTO_INCREMENT,
+                    `province_id` int unsigned NOT NULL,
+                    `name` varchar(255) NOT NULL,
+                    PRIMARY KEY (`id`),
+                    KEY `province_id` (`province_id`),
+                    CONSTRAINT `dioceses_province_id_foreign` FOREIGN KEY (`province_id`) REFERENCES `province` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci'
+            );
 
-        $db->query(
-            'CREATE TABLE `parish` (
-                `id` int unsigned NOT NULL AUTO_INCREMENT,
-                `name` varchar(255) NOT NULL,
-                `diocese_id` int unsigned DEFAULT NULL,
-                `image` varchar(255) DEFAULT NULL,
-                `banner` varchar(255) DEFAULT NULL,
-                PRIMARY KEY (`id`),
-                KEY `idx_parish_diocese_id` (`diocese_id`),
-                CONSTRAINT `parish_diocese_id_foreign` FOREIGN KEY (`diocese_id`) REFERENCES `diocese` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
-            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci'
-        );
+            $db->query(
+                'CREATE TABLE `parish` (
+                    `id` int unsigned NOT NULL AUTO_INCREMENT,
+                    `name` varchar(255) NOT NULL,
+                    `diocese_id` int unsigned DEFAULT NULL,
+                    `image` varchar(255) DEFAULT NULL,
+                    `banner` varchar(255) DEFAULT NULL,
+                    `deleted_at` datetime DEFAULT NULL,
+                    PRIMARY KEY (`id`),
+                    KEY `idx_parish_diocese_id` (`diocese_id`),
+                    CONSTRAINT `parish_diocese_id_foreign` FOREIGN KEY (`diocese_id`) REFERENCES `diocese` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci'
+            );
+        };
 
+        // 1) Conflicting image/banner aborts before any DDL.
+        $createDriftedTables($db);
         $db->query("INSERT INTO `province` (`id`, `province_number`, `province_id`, `name`) VALUES (1, NULL, 'IX', 'Province IX')");
         $db->query("INSERT INTO `diocese` (`id`, `province_id`, `name`) VALUES (10, 1, 'Dominican Republic')");
         $db->query(
@@ -248,14 +253,74 @@ final class HierarchyAlignmentMySqlUpgradeTest extends CIUnitTestCase
 
         $this->assertInstanceOf(\RuntimeException::class, $thrown);
         $this->assertStringContainsString('42', $thrown->getMessage());
-
-        // Zero DDL or data mutations occurred before the abort.
         $this->assertContains('province_id', $this->columnNames($db, 'province'));
         $this->assertSingleFk($db, 'diocese', 'province_id', 'province', 'dioceses_province_id_foreign', 'CASCADE', 'CASCADE');
         $this->assertSingleFk($db, 'parish', 'diocese_id', 'diocese', 'parish_diocese_id_foreign', 'SET NULL', 'CASCADE');
         $row = $db->table('parish')->where('id', 42)->get()->getRowArray();
         $this->assertSame('old-facade.jpg', $row['image']);
         $this->assertSame('easter.jpg', $row['banner']);
+
+        // 2) Imported soft-deleted parish with dangling diocese_id (simulated mysqldump
+        //    with FOREIGN_KEY_CHECKS=0) aborts preflight before any DDL.
+        $this->dropTestTables($db);
+        $createDriftedTables($db);
+        $db->query("INSERT INTO `province` (`id`, `province_number`, `province_id`, `name`) VALUES (1, NULL, 'IX', 'Province IX')");
+        $db->query("INSERT INTO `diocese` (`id`, `province_id`, `name`) VALUES (10, 1, 'Dominican Republic')");
+        $db->query("INSERT INTO `parish` (`id`, `name`, `diocese_id`, `deleted_at`) VALUES (100, 'Active Valid Parish', 10, NULL)");
+        $db->query('SET FOREIGN_KEY_CHECKS = 0');
+        try {
+            $db->query(
+                "INSERT INTO `parish` (`id`, `name`, `diocese_id`, `deleted_at`)
+                 VALUES (101, 'Soft Deleted Dangling Parish', 99, '2026-01-01 00:00:00')"
+            );
+        } finally {
+            $db->query('SET FOREIGN_KEY_CHECKS = 1');
+        }
+
+        $danglingThrown = null;
+        try {
+            $migration->up();
+        } catch (\RuntimeException $e) {
+            $danglingThrown = $e;
+        }
+
+        $this->assertInstanceOf(\RuntimeException::class, $danglingThrown);
+        $this->assertStringContainsString('101', $danglingThrown->getMessage());
+        $this->assertContains('province_id', $this->columnNames($db, 'province'));
+        $this->assertSingleFk($db, 'diocese', 'province_id', 'province', 'dioceses_province_id_foreign', 'CASCADE', 'CASCADE');
+        $this->assertSingleFk($db, 'parish', 'diocese_id', 'diocese', 'parish_diocese_id_foreign', 'SET NULL', 'CASCADE');
+
+        // 3) Failure-path rehearsal of replaceForeignKey() itself: even when MySQL rejects
+        //    the replacement constraint because of row 101, the original FK is preserved.
+        $exposedMigration = new class (Database::forge($db)) extends AlignHierarchySchemaAndRelationships {
+            public function exposeReplaceForeignKey(
+                string $table,
+                string $column,
+                string $refTable,
+                string $expectedName,
+                string $deleteRule,
+                string $updateRule
+            ): void {
+                $this->replaceForeignKey($table, $column, $refTable, $expectedName, $deleteRule, $updateRule);
+            }
+        };
+
+        $fkFailure = null;
+        try {
+            $exposedMigration->exposeReplaceForeignKey(
+                'parish',
+                'diocese_id',
+                'diocese',
+                'parish_diocese_id_foreign',
+                'RESTRICT',
+                'CASCADE'
+            );
+        } catch (\Throwable $e) {
+            $fkFailure = $e;
+        }
+
+        $this->assertInstanceOf(\Throwable::class, $fkFailure);
+        $this->assertSingleFk($db, 'parish', 'diocese_id', 'diocese', 'parish_diocese_id_foreign', 'SET NULL', 'CASCADE');
     }
 
     private function getIsolatedMySqlConnection(): BaseConnection

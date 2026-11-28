@@ -16,8 +16,9 @@ class AlignHierarchySchemaAndRelationships extends Migration
             return;
         }
 
-        // Detect conflicting image/banner data before executing any DDL.
+        // Detect conflicting image/banner data and dangling FKs before executing any DDL.
         $this->assertNoConflictingParishImages();
+        $this->assertNoDanglingHierarchyReferences();
 
         $this->alignProvinceTable();
         $this->alignDioceseTable();
@@ -224,7 +225,7 @@ class AlignHierarchySchemaAndRelationships extends Migration
         return (int) ($row['c'] ?? 0) > 0;
     }
 
-    private function replaceForeignKey(
+    protected function replaceForeignKey(
         string $table,
         string $column,
         string $refTable,
@@ -255,9 +256,42 @@ class AlignHierarchySchemaAndRelationships extends Migration
             return;
         }
 
-        foreach ($existing as $fk) {
-            $fkName = (string) $fk['CONSTRAINT_NAME'];
-            $this->db->query("ALTER TABLE `{$table}` DROP FOREIGN KEY `{$fkName}`");
+        $existingNames = array_map(
+            static fn (array $fk): string => (string) $fk['CONSTRAINT_NAME'],
+            $existing
+        );
+
+        // Add and validate the replacement constraint BEFORE dropping any old FK
+        // so a validation failure never leaves the column unconstrained.
+        if (! in_array($expectedName, $existingNames, true)) {
+            $this->db->query(
+                "ALTER TABLE `{$table}`
+                 ADD CONSTRAINT `{$expectedName}`
+                 FOREIGN KEY (`{$column}`) REFERENCES `{$refTable}` (`id`)
+                 ON DELETE {$deleteRule} ON UPDATE {$updateRule}"
+            );
+
+            foreach ($existingNames as $fkName) {
+                $this->db->query("ALTER TABLE `{$table}` DROP FOREIGN KEY `{$fkName}`");
+            }
+
+            return;
+        }
+
+        $tempName = $expectedName . '_next';
+        if (! in_array($tempName, $existingNames, true)) {
+            $this->db->query(
+                "ALTER TABLE `{$table}`
+                 ADD CONSTRAINT `{$tempName}`
+                 FOREIGN KEY (`{$column}`) REFERENCES `{$refTable}` (`id`)
+                 ON DELETE {$deleteRule} ON UPDATE {$updateRule}"
+            );
+        }
+
+        foreach ($existingNames as $fkName) {
+            if ($fkName !== $tempName) {
+                $this->db->query("ALTER TABLE `{$table}` DROP FOREIGN KEY `{$fkName}`");
+            }
         }
 
         $this->db->query(
@@ -266,6 +300,62 @@ class AlignHierarchySchemaAndRelationships extends Migration
              FOREIGN KEY (`{$column}`) REFERENCES `{$refTable}` (`id`)
              ON DELETE {$deleteRule} ON UPDATE {$updateRule}"
         );
+        $this->db->query("ALTER TABLE `{$table}` DROP FOREIGN KEY `{$tempName}`");
+    }
+
+    protected function assertNoDanglingHierarchyReferences(): void
+    {
+        if (
+            $this->db->tableExists('diocese')
+            && $this->db->tableExists('province')
+            && $this->db->fieldExists('province_id', 'diocese')
+        ) {
+            $dioceseTable  = $this->db->prefixTable('diocese');
+            $provinceTable = $this->db->prefixTable('province');
+
+            $danglingDioceses = $this->db->query(
+                "SELECT d.`id`
+                 FROM `{$dioceseTable}` d
+                 LEFT JOIN `{$provinceTable}` p ON p.`id` = d.`province_id`
+                 WHERE d.`province_id` IS NOT NULL AND p.`id` IS NULL
+                 ORDER BY d.`id` ASC"
+            )->getResultArray();
+
+            if ($danglingDioceses !== []) {
+                $ids = array_map(static fn (array $row): string => (string) (int) $row['id'], $danglingDioceses);
+                throw new \RuntimeException(sprintf(
+                    'Cannot align diocese.province_id FK: dangling province_id reference on diocese ID(s): %s. Repair these rows before re-running the migration.',
+                    implode(', ', $ids)
+                ));
+            }
+        }
+
+        if (
+            $this->db->tableExists('parish')
+            && $this->db->tableExists('diocese')
+            && $this->db->fieldExists('diocese_id', 'parish')
+        ) {
+            $parishTable  = $this->db->prefixTable('parish');
+            $dioceseTable = $this->db->prefixTable('diocese');
+
+            // Include soft-deleted rows (deleted_at IS NOT NULL) because MySQL validates
+            // all rows regardless of soft-delete status when adding a foreign key.
+            $danglingParishes = $this->db->query(
+                "SELECT pa.`id`
+                 FROM `{$parishTable}` pa
+                 LEFT JOIN `{$dioceseTable}` d ON d.`id` = pa.`diocese_id`
+                 WHERE pa.`diocese_id` IS NOT NULL AND d.`id` IS NULL
+                 ORDER BY pa.`id` ASC"
+            )->getResultArray();
+
+            if ($danglingParishes !== []) {
+                $ids = array_map(static fn (array $row): string => (string) (int) $row['id'], $danglingParishes);
+                throw new \RuntimeException(sprintf(
+                    'Cannot align parish.diocese_id FK: dangling diocese_id reference (including soft-deleted rows, which MySQL validates) on parish ID(s): %s. Repair these rows before re-running the migration.',
+                    implode(', ', $ids)
+                ));
+            }
+        }
     }
 
     protected function assertNoConflictingParishImages(): void
