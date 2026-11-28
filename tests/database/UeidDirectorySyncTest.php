@@ -29,8 +29,7 @@ final class UeidDirectorySyncTest extends CIUnitTestCase
 
         $this->connection->query("CREATE TABLE {$province} (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            province_number TEXT NULL,
-            province_id TEXT NOT NULL,
+            province_number TEXT NOT NULL,
             name TEXT NOT NULL,
             sort_order INTEGER NULL,
             created_at TEXT NULL,
@@ -87,8 +86,8 @@ final class UeidDirectorySyncTest extends CIUnitTestCase
     {
         $now = date('Y-m-d H:i:s');
         $this->connection->table('province')->insertBatch([
-            ['province_number' => 'II', 'province_id' => 'II', 'name' => 'New York & New Jersey', 'sort_order' => 2, 'created_at' => $now, 'updated_at' => $now],
-            ['province_number' => 'IV', 'province_id' => 'IV', 'name' => 'Sewanee (Southeast)', 'sort_order' => 4, 'created_at' => $now, 'updated_at' => $now],
+            ['province_number' => 'II', 'name' => 'New York & New Jersey', 'sort_order' => 2, 'created_at' => $now, 'updated_at' => $now],
+            ['province_number' => 'IV', 'name' => 'Sewanee (Southeast)', 'sort_order' => 4, 'created_at' => $now, 'updated_at' => $now],
         ]);
 
         $provII = (int) $this->connection->table('province')->where('province_number', 'II')->get()->getRowArray()['id'];

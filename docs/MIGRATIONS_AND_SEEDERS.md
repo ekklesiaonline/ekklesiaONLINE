@@ -40,18 +40,16 @@ Creates all 138 remaining application tables in correct dependency order. This m
 
 Master seeder that orchestrates all other seeders in the correct order:
 
-1. PermissionsAndRolesSeeder
-2. ProvincesAndDiocesesSeeder
+1. `PermissionsAndRolesSeeder`
+2. `ProvincesAndDiocesesSeeder`
+3. `ChartAccountCategorySeeder`
+4. `ChartOfAccountsSeeder`
 
 ### PermissionsAndRolesSeeder
 
 **Command:** `php spark db:seed PermissionsAndRolesSeeder`
 
-Seeds:
-
-- **49 permissions** - All application permissions (members._, attendance._, finance.\*, etc.)
-- **9 roles/groups** - systemadmin, provinceadmin, diocesanadmin, parishadmin, pastor, treasurer, volunteer_coordinator, followup_volunteer, member
-- **223 role-permission mappings** - Assigns appropriate permissions to each role
+Seeds Shield permissions, administrative/portal groups, and baseline role-permission mappings defined by `docs/ROLE_MENU_PERMISSION_POLICY.md`. (User-level role sync after users exist is handled separately by `PermissionRoleSyncSeeder`.)
 
 ### ProvincesAndDiocesesSeeder
 
@@ -62,7 +60,7 @@ Seeds:
 - **10 provinces** - US Episcopal Church provinces I-X
 - **2 sample dioceses** - Sample data in the first province
 
-> **Go-live requirement:** `DatabaseSeeder` does **not** seed any `parish` rows. Before going live on webhosting, `province`, `diocese`, and at least one active linked `parish` must be populated (see `docs/HOSTGATOR_DEPLOY.md` §4.1 for the webhosting migration plan and `php spark directory:sync-ueid`) and verified with `php spark directory:verify-readiness`.
+> **Go-live requirement:** `DatabaseSeeder` does **not** seed any `parish` rows. Before going live on webhosting, `province`, `diocese`, and at least one active linked `parish` must be populated (see `docs/HOSTGATOR_DEPLOY.md` §4.1 for the webhosting migration plan and `php spark directory:sync-ueid`) and verified with `php spark directory:verify-readiness --strict`.
 
 
 ## Follow-up workflow migrations
@@ -80,6 +78,15 @@ Run them with `php spark migrate`.
 
 After the migrations, use `php spark followup:apply-default` to clone the
 system default into parishes that still have no default sequence.
+
+## Ecclesiastical Hierarchy Relationships (`province` → `diocese` → `parish`)
+
+Canonical migration-backed parent-child schema and foreign-key contract:
+
+- **`province`**: `id`, `province_number` (`VARCHAR(10)` `UNIQUE NOT NULL`), `name`, `sort_order`.
+- **`diocese`**: `province_id` (`NOT NULL` FK → `province.id` `ON DELETE RESTRICT ON UPDATE CASCADE`), `UNIQUE(province_id, name)`, `alias_norm` (normalized name used for UEID directory matching).
+- **`parish`**: `diocese_id` (FK → `diocese.id` `ON DELETE RESTRICT ON UPDATE CASCADE`), `parish_ueid` (`UNIQUE`), `banner`, `public_token` (`VARCHAR(64)` `UNIQUE NULL`), `congregation_type`, `is_active`, `deleted_at`.
+- **`deanery` & `deanery_parish_membership`**: `deanery.diocese_id` → `diocese.id` (`ON DELETE RESTRICT`), `deanery_parish_membership.deanery_id` → `deanery.id` (`ON DELETE RESTRICT`), and `deanery_parish_membership.parish_id` → `parish.id` (`ON DELETE RESTRICT`).
 
 ## Usage
 
@@ -162,7 +169,7 @@ and `localhost.sql` dumps were retired for exactly that reason.)
 
 - [ ] Run migrations: `php spark migrate --all`
 - [ ] Seed data: `php spark db:seed DatabaseSeeder`
-- [ ] Populate `province`, `diocese`, and `parish` per `docs/HOSTGATOR_DEPLOY.md` §4.1 and verify: `php spark directory:verify-readiness`
+- [ ] Populate `province`, `diocese`, and `parish` per `docs/HOSTGATOR_DEPLOY.md` §4.1 and verify: `php spark directory:verify-readiness --strict`
 - [ ] Verify table count: `php spark db:table --metadata | wc -l`
 - [ ] Test authentication: Create a test user and verify role assignment
 - [ ] Verify permissions: Check that roles have expected permissions

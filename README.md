@@ -79,7 +79,7 @@ php spark shield:setup
 php spark db:seed DatabaseSeeder
 
 # Before going live on webhosting, populate province/diocese/parish (see docs/HOSTGATOR_DEPLOY.md §4.1) and verify:
-php spark directory:verify-readiness
+php spark directory:verify-readiness --strict
 ```
 
 ### 4. Run Application
@@ -115,6 +115,7 @@ Create deployment accounts through the approved seeding or administrative bootst
 ## Operations
 
 - Deployment runbook: `docs/DEPLOYMENT_RUNBOOK.md`
+- HostGator deploy & hierarchy cutover checklist: `docs/HOSTGATOR_DEPLOY.md`
 - Database backup script: `build/backup_database.sh`
 - Database restore script: `build/restore_database.sh`
 - Staging rate-limit stress test: `build/stress_rate_limit_test.sh` (see `docs/EDGE_RATE_LIMIT_AND_WAF_PLAYBOOK.md`)

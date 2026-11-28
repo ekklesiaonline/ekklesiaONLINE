@@ -46,7 +46,7 @@ Never run `php spark config:check Database`, `Encryption`, or `Email` in logs be
 
 ## No-go conditions
 
-Stop and report a no-go for any failed test, warning/risky PHPUnit result, unclassified skip, migration failure, empty `province`/`diocese`/`parish` hierarchy (`php spark directory:verify-readiness` non-zero or `/health/ready` reporting `directory: unavailable`), route compilation failure, backup preflight failure, missing rollback owner/window, placeholder environment value, or unexpected secret exposure. The eight documented SQLite skips are allowed only when they still match the runbook classifications. Leftover placeholder `Sample Diocese One/Two` rows are a warning that fails `directory:verify-readiness --strict`; remove them before go-live.
+Stop and report a no-go for any failed test, warning/risky PHPUnit result, unclassified skip, migration failure, empty `province`/`diocese`/`parish` hierarchy (`php spark directory:verify-readiness` non-zero or `/health/ready` reporting `directory: unavailable`), route compilation failure, backup preflight failure, missing rollback owner/window, placeholder environment value, or unexpected secret exposure. The ten documented SQLite skips are allowed only when they still match the runbook classifications. Leftover placeholder `Sample Diocese One/Two` rows are a warning that fails `directory:verify-readiness --strict`; remove them before go-live.
 
 ## Deployment sequence
 
