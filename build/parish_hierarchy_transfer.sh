@@ -121,51 +121,47 @@ hierarchy_tables() {
     printf 'province diocese parish'
 }
 
-has_column() {
+table_columns() {
     local db="$1"
     local table="$2"
-    local col="$3"
-    local cnt
-    cnt=$(mysql --defaults-extra-file="$DEFAULTS_FILE" -N -B -e \
-        "SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = '${db}' AND TABLE_NAME = '${table}' AND COLUMN_NAME = '${col}';" \
-        2>/dev/null || printf '0')
-    [ "$cnt" = '1' ]
+    mysql --defaults-extra-file="$DEFAULTS_FILE" -N -B -e \
+        "SELECT COLUMN_NAME FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = '${table}';" \
+        "$db" 2>/dev/null | LC_ALL=C sort
+}
+
+assert_exact_columns() {
+    local db="$1"
+    local role="$2"
+    local table="$3"
+    local expected_cols="$4"
+    local actual expected missing extra missing_fmt extra_fmt
+
+    actual=$(table_columns "$db" "$table")
+    if [ -z "$actual" ]; then
+        die "${role} table \`${db}.${table}\` is missing or unreadable. Run php spark migrate --all first."
+    fi
+
+    expected=$(printf '%s\n' $expected_cols | LC_ALL=C sort)
+    missing=$(comm -23 <(printf '%s\n' "$expected") <(printf '%s\n' "$actual"))
+    extra=$(comm -13 <(printf '%s\n' "$expected") <(printf '%s\n' "$actual"))
+
+    if [ -n "$missing" ] || [ -n "$extra" ]; then
+        missing_fmt=$(printf '%s\n' "$missing" | paste -sd ',' - | sed 's/,/, /g')
+        extra_fmt=$(printf '%s\n' "$extra" | paste -sd ',' - | sed 's/,/, /g')
+        die "${role} table \`${db}.${table}\` does not match the canonical column set (missing: ${missing_fmt:-none}; unexpected: ${extra_fmt:-none}). Run php spark migrate --all first."
+    fi
 }
 
 check_canonical_schema() {
     local db="$1"
     local role="$2"
 
-    for col in province_id logo image; do
-        if has_column "$db" province "$col"; then
-            die "${role} table \`${db}.province\` still has legacy column \`${col}\`. Run php spark migrate --all first."
-        fi
-    done
-    for col in id province_number name sort_order created_at updated_at; do
-        if ! has_column "$db" province "$col"; then
-            die "${role} table \`${db}.province\` is missing canonical column \`${col}\`. Run php spark migrate --all first."
-        fi
-    done
-
-    for col in logo image; do
-        if has_column "$db" diocese "$col"; then
-            die "${role} table \`${db}.diocese\` still has legacy column \`${col}\`. Run php spark migrate --all first."
-        fi
-    done
-    for col in id province_id name alias_norm created_at updated_at; do
-        if ! has_column "$db" diocese "$col"; then
-            die "${role} table \`${db}.diocese\` is missing canonical column \`${col}\`. Run php spark migrate --all first."
-        fi
-    done
-
-    if has_column "$db" parish image; then
-        die "${role} table \`${db}.parish\` still has legacy column \`image\`. Run php spark migrate --all first."
-    fi
-    for col in id name parish_ueid is_active logo banner diocese_id public_token congregation_type created_at updated_at deleted_at; do
-        if ! has_column "$db" parish "$col"; then
-            die "${role} table \`${db}.parish\` is missing canonical column \`${col}\`. Run php spark migrate --all first."
-        fi
-    done
+    assert_exact_columns "$db" "$role" province \
+        'id province_number name sort_order created_at updated_at'
+    assert_exact_columns "$db" "$role" diocese \
+        'id province_id name alias_norm created_at updated_at'
+    assert_exact_columns "$db" "$role" parish \
+        'id name parish_ueid is_active logo banner diocese_id street mailing_street city mailing_city state mailing_state zip mailing_zip county mailing_county country mailing_country tax_id address phone email website public_token created_at updated_at deleted_at congregation_type'
 }
 
 count_rows() {

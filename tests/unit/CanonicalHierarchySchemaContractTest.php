@@ -52,6 +52,36 @@ final class CanonicalHierarchySchemaContractTest extends CIUnitTestCase
 
         $this->assertStringContainsString('--complete-insert', $script);
         $this->assertStringContainsString('check_canonical_schema', $script);
+
+        $sqlPath = ROOTPATH . 'app/Database/canonical_schema_tables.sql';
+        $sql     = (string) file_get_contents($sqlPath);
+
+        foreach (['province', 'diocese', 'parish'] as $table) {
+            $ddl = $this->extractCreateTable($sql, $table);
+            preg_match_all('/^\s+`([^`]+)`\s+/m', $ddl, $colMatches);
+            $canonicalCols = $colMatches[1];
+            if ($table === 'parish' && ! in_array('congregation_type', $canonicalCols, true)) {
+                // Added by 2026-10-02-185843_CreateClergyDeaneryFoundation.php after baseline DDL.
+                $canonicalCols[] = 'congregation_type';
+            }
+            sort($canonicalCols);
+
+            $matched = preg_match(
+                '/assert_exact_columns\s+"\$db"\s+"\$role"\s+' . preg_quote($table, '/') . '\s+\\\\\R\s+\'([^\']+)\'/',
+                $script,
+                $scriptMatches
+            );
+            $this->assertSame(1, $matched, "Missing assert_exact_columns definition for {$table} in parish_hierarchy_transfer.sh");
+
+            $scriptCols = preg_split('/\s+/', trim($scriptMatches[1])) ?: [];
+            sort($scriptCols);
+
+            $this->assertSame(
+                $canonicalCols,
+                $scriptCols,
+                "Transfer script column parity list for {$table} must match canonical schema exactly"
+            );
+        }
     }
 
     public function testParishImageConflictGuardDetectsDistinctPopulatedBannerAndImage(): void
