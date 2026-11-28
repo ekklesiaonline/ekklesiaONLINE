@@ -39,6 +39,8 @@ This file is the single source of truth for which documentation should be retain
   Canonical service usage scaffold for MemberPortal and Diocesan Events endpoints.
 - `docs/EPISCOPAL_PAROCHIAL_REPORT_FOR_REFERENCE.md`
   Canonical field contract and implementation authority for the TEC Parochial Report screen.
+- `docs/UEID_REFERENCE.md`
+  Canonical reference for the 8-digit Unique Episcopal Identifier (UEID), General Convention diocesan mergers/creations, CPG identifier boundaries, shipped `UEID.json`/`UEID.csv` datasets, and `directory:sync-ueid` workflows.
 - `docs/CHURCH_MANAGEMENT_PERMISSIONS_2026-04-23.md`
   Canonical rules and implementation details for parish editing, Tax ID access, and staff management permission constraints across all administrative roles.
 - `docs/PROFILE_PICTURE_SECURITY_AND_DELIVERY.md`
