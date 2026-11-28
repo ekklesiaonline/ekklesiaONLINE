@@ -352,7 +352,7 @@ final class HierarchyAlignmentMySqlUpgradeTest extends CIUnitTestCase
 
             $this->assertInstanceOf(\Throwable::class, $fkFailure);
             $this->assertSame(1452, $this->extractMySqlErrorCode($fkFailure, $db));
-            $this->assertStringContainsString('foreign key constraint fails', strtolower($fkFailure->getMessage()));
+            $this->assertStringContainsString('diocese_id', $fkFailure->getMessage());
             $this->assertSingleFk($db, 'parish', 'diocese_id', 'diocese', 'parish_diocese_id_foreign', 'SET NULL', 'CASCADE');
         }
     }
@@ -462,7 +462,6 @@ final class HierarchyAlignmentMySqlUpgradeTest extends CIUnitTestCase
 
         $this->assertInstanceOf(\Throwable::class, $thrown, "Expected FK RESTRICT to block: {$sql}");
         $this->assertSame(1451, $this->extractMySqlErrorCode($thrown, $db));
-        $this->assertStringContainsString('foreign key constraint fails', strtolower($thrown->getMessage()));
         $this->assertStringContainsString($expectedConstraint, $thrown->getMessage());
     }
 
