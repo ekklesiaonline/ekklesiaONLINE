@@ -209,7 +209,11 @@ jobs:
           cp .env .env.ci.bak
           trap 'mv -f .env.ci.bak .env; php -r "mysqli_report(MYSQLI_REPORT_OFF); (new mysqli(\"127.0.0.1\", \"root\", \"root\", \"\", 3306))->query(\"DROP DATABASE IF EXISTS \`ekklesia_hierarchy_upgrade_test\`\");"' EXIT
           sed -i "s/^database\.tests\.database = .*/database.tests.database = 'ekklesia_hierarchy_upgrade_test'/" .env
-          vendor/bin/phpunit --no-coverage --fail-on-skipped tests/database/HierarchyAlignmentMySqlUpgradeTest.php
+          vendor/bin/phpunit --no-coverage --fail-on-skipped --no-logging \
+            --log-junit build/logs/hierarchy-upgrade-junit.xml \
+            --testdox-text build/logs/hierarchy-upgrade-testdox.txt \
+            --testdox-html build/logs/hierarchy-upgrade-testdox.html \
+            tests/database/HierarchyAlignmentMySqlUpgradeTest.php
 
       - name: Upload MySQL evidence
         if: always()
