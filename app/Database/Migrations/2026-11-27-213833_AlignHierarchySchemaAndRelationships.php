@@ -279,6 +279,7 @@ class AlignHierarchySchemaAndRelationships extends Migration
         }
 
         $tempName = $expectedName . '_next';
+        $validatedByTemp = false;
         if (! in_array($tempName, $existingNames, true)) {
             $this->db->query(
                 "ALTER TABLE `{$table}`
@@ -286,6 +287,7 @@ class AlignHierarchySchemaAndRelationships extends Migration
                  FOREIGN KEY (`{$column}`) REFERENCES `{$refTable}` (`id`)
                  ON DELETE {$deleteRule} ON UPDATE {$updateRule}"
             );
+            $validatedByTemp = true;
         }
 
         foreach ($existingNames as $fkName) {
@@ -294,12 +296,24 @@ class AlignHierarchySchemaAndRelationships extends Migration
             }
         }
 
-        $this->db->query(
-            "ALTER TABLE `{$table}`
-             ADD CONSTRAINT `{$expectedName}`
-             FOREIGN KEY (`{$column}`) REFERENCES `{$refTable}` (`id`)
-             ON DELETE {$deleteRule} ON UPDATE {$updateRule}"
-        );
+        // $tempName has already validated all rows under foreign_key_checks = 1 and
+        // remains active for other sessions; skipping re-validation here avoids a
+        // second full table copy when restoring the canonical constraint name.
+        if ($validatedByTemp) {
+            $this->db->query('SET SESSION foreign_key_checks = 0');
+        }
+        try {
+            $this->db->query(
+                "ALTER TABLE `{$table}`
+                 ADD CONSTRAINT `{$expectedName}`
+                 FOREIGN KEY (`{$column}`) REFERENCES `{$refTable}` (`id`)
+                 ON DELETE {$deleteRule} ON UPDATE {$updateRule}"
+            );
+        } finally {
+            if ($validatedByTemp) {
+                $this->db->query('SET SESSION foreign_key_checks = 1');
+            }
+        }
         $this->db->query("ALTER TABLE `{$table}` DROP FOREIGN KEY `{$tempName}`");
     }
 
