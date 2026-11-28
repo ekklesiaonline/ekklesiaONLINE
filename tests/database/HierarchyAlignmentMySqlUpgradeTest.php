@@ -157,7 +157,7 @@ final class HierarchyAlignmentMySqlUpgradeTest extends CIUnitTestCase
         $this->assertNull($parishRow['public_token']);
         $publicTokenSpec = $this->columnSpec($db, 'parish', 'public_token');
         $this->assertSame('YES', $publicTokenSpec['IS_NULLABLE']);
-        $this->assertSingleFk($db, 'parish', 'diocese_id', 'diocese', 'parish_diocese_id_foreign', 'RESTRICT', 'CASCADE');
+        $this->assertSingleFk($db, 'parish', 'diocese_id', 'diocese', 'fk_parish_diocese', 'RESTRICT', 'CASCADE');
 
         // Duplicate parish_affiliation FK cleaned up.
         $this->assertSingleFk(
@@ -173,7 +173,7 @@ final class HierarchyAlignmentMySqlUpgradeTest extends CIUnitTestCase
         // Re-running up() must remain idempotent.
         $migration->up();
         $this->assertSingleFk($db, 'diocese', 'province_id', 'province', 'fk_diocese_province', 'RESTRICT', 'CASCADE');
-        $this->assertSingleFk($db, 'parish', 'diocese_id', 'diocese', 'parish_diocese_id_foreign', 'RESTRICT', 'CASCADE');
+        $this->assertSingleFk($db, 'parish', 'diocese_id', 'diocese', 'fk_parish_diocese', 'RESTRICT', 'CASCADE');
 
         // Deletion rehearsal: MySQL must block parent deletes when children exist.
         $this->assertDeleteBlocked($db, 'DELETE FROM `province` WHERE `id` = 1');
@@ -186,7 +186,7 @@ final class HierarchyAlignmentMySqlUpgradeTest extends CIUnitTestCase
         // Rollback rehearsal: down() must not weaken RESTRICT/CASCADE FKs.
         $migration->down();
         $this->assertSingleFk($db, 'diocese', 'province_id', 'province', 'fk_diocese_province', 'RESTRICT', 'CASCADE');
-        $this->assertSingleFk($db, 'parish', 'diocese_id', 'diocese', 'parish_diocese_id_foreign', 'RESTRICT', 'CASCADE');
+        $this->assertSingleFk($db, 'parish', 'diocese_id', 'diocese', 'fk_parish_diocese', 'RESTRICT', 'CASCADE');
         $this->assertDeleteBlocked($db, 'DELETE FROM `province` WHERE `id` = 1');
         $this->assertDeleteBlocked($db, 'DELETE FROM `diocese` WHERE `id` = 10');
     }
@@ -299,8 +299,10 @@ final class HierarchyAlignmentMySqlUpgradeTest extends CIUnitTestCase
         $dioceseRowAfter = $db->table('diocese')->where('id', 10)->get()->getRowArray();
         $this->assertNull($dioceseRowAfter['alias_norm']);
 
-        // 3) Failure-path rehearsal of replaceForeignKey() itself: even when MySQL rejects
-        //    the replacement constraint because of row 101, the original FK is preserved.
+        // 3) Failure-path rehearsal of replaceForeignKey() itself: on both the distinct-name
+        //    single-copy path (fk_parish_diocese) and same-name fallback path
+        //    (parish_diocese_id_foreign), when MySQL rejects the replacement constraint
+        //    because of row 101, the original FK is preserved.
         $exposedMigration = new class (Database::forge($db)) extends AlignHierarchySchemaAndRelationships {
             public function exposeReplaceForeignKey(
                 string $table,
@@ -314,22 +316,24 @@ final class HierarchyAlignmentMySqlUpgradeTest extends CIUnitTestCase
             }
         };
 
-        $fkFailure = null;
-        try {
-            $exposedMigration->exposeReplaceForeignKey(
-                'parish',
-                'diocese_id',
-                'diocese',
-                'parish_diocese_id_foreign',
-                'RESTRICT',
-                'CASCADE'
-            );
-        } catch (\Throwable $e) {
-            $fkFailure = $e;
-        }
+        foreach (['fk_parish_diocese', 'parish_diocese_id_foreign'] as $candidateName) {
+            $fkFailure = null;
+            try {
+                $exposedMigration->exposeReplaceForeignKey(
+                    'parish',
+                    'diocese_id',
+                    'diocese',
+                    $candidateName,
+                    'RESTRICT',
+                    'CASCADE'
+                );
+            } catch (\Throwable $e) {
+                $fkFailure = $e;
+            }
 
-        $this->assertInstanceOf(\Throwable::class, $fkFailure);
-        $this->assertSingleFk($db, 'parish', 'diocese_id', 'diocese', 'parish_diocese_id_foreign', 'SET NULL', 'CASCADE');
+            $this->assertInstanceOf(\Throwable::class, $fkFailure);
+            $this->assertSingleFk($db, 'parish', 'diocese_id', 'diocese', 'parish_diocese_id_foreign', 'SET NULL', 'CASCADE');
+        }
     }
 
     private function getIsolatedMySqlConnection(): BaseConnection

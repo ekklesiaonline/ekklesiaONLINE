@@ -1239,7 +1239,7 @@ CREATE TABLE `parish` (
   UNIQUE KEY `uniq_parish_public_token` (`public_token`),
   KEY `idx_parish_diocese_id` (`diocese_id`),
   KEY `idx_parish_is_active` (`is_active`),
-  CONSTRAINT `parish_diocese_id_foreign` FOREIGN KEY (`diocese_id`) REFERENCES `diocese` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE
+  CONSTRAINT `fk_parish_diocese` FOREIGN KEY (`diocese_id`) REFERENCES `diocese` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=8337 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 CREATE TABLE `parish_affiliation` (
   `id` int unsigned NOT NULL AUTO_INCREMENT,
