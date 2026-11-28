@@ -176,10 +176,10 @@ final class HierarchyAlignmentMySqlUpgradeTest extends CIUnitTestCase
         $this->assertSingleFk($db, 'parish', 'diocese_id', 'diocese', 'fk_parish_diocese', 'RESTRICT', 'CASCADE');
 
         // Deletion rehearsal: MySQL must block parent deletes when children exist.
-        $this->assertDeleteBlocked($db, 'DELETE FROM `province` WHERE `id` = 1');
+        $this->assertDeleteBlocked($db, 'DELETE FROM `province` WHERE `id` = 1', 'fk_diocese_province');
         $this->assertNotNull($db->table('diocese')->where('id', 10)->get()->getRowArray());
 
-        $this->assertDeleteBlocked($db, 'DELETE FROM `diocese` WHERE `id` = 10');
+        $this->assertDeleteBlocked($db, 'DELETE FROM `diocese` WHERE `id` = 10', 'fk_parish_diocese');
         $parishAfter = $db->table('parish')->where('id', 100)->get()->getRowArray();
         $this->assertSame(10, (int) $parishAfter['diocese_id']);
 
@@ -187,8 +187,8 @@ final class HierarchyAlignmentMySqlUpgradeTest extends CIUnitTestCase
         $migration->down();
         $this->assertSingleFk($db, 'diocese', 'province_id', 'province', 'fk_diocese_province', 'RESTRICT', 'CASCADE');
         $this->assertSingleFk($db, 'parish', 'diocese_id', 'diocese', 'fk_parish_diocese', 'RESTRICT', 'CASCADE');
-        $this->assertDeleteBlocked($db, 'DELETE FROM `province` WHERE `id` = 1');
-        $this->assertDeleteBlocked($db, 'DELETE FROM `diocese` WHERE `id` = 10');
+        $this->assertDeleteBlocked($db, 'DELETE FROM `province` WHERE `id` = 1', 'fk_diocese_province');
+        $this->assertDeleteBlocked($db, 'DELETE FROM `diocese` WHERE `id` = 10', 'fk_parish_diocese');
     }
 
     public function testDanglingSoftDeletedReferencesAndConflictingImagesAbortWithoutLosingFksOnMySql(): void
@@ -332,6 +332,8 @@ final class HierarchyAlignmentMySqlUpgradeTest extends CIUnitTestCase
             }
 
             $this->assertInstanceOf(\Throwable::class, $fkFailure);
+            $this->assertSame(1452, $this->extractMySqlErrorCode($fkFailure, $db));
+            $this->assertStringContainsString('foreign key constraint fails', strtolower($fkFailure->getMessage()));
             $this->assertSingleFk($db, 'parish', 'diocese_id', 'diocese', 'parish_diocese_id_foreign', 'SET NULL', 'CASCADE');
         }
     }
@@ -430,15 +432,32 @@ final class HierarchyAlignmentMySqlUpgradeTest extends CIUnitTestCase
         $this->assertSame($expectedUpdateRule, strtoupper((string) $rows[0]['UPDATE_RULE']));
     }
 
-    private function assertDeleteBlocked(BaseConnection $db, string $sql): void
+    private function assertDeleteBlocked(BaseConnection $db, string $sql, string $expectedConstraint): void
     {
-        $blocked = false;
+        $thrown = null;
         try {
             $db->query($sql);
-        } catch (\Throwable) {
-            $blocked = true;
+        } catch (\Throwable $e) {
+            $thrown = $e;
         }
 
-        $this->assertTrue($blocked, "Expected FK RESTRICT to block: {$sql}");
+        $this->assertInstanceOf(\Throwable::class, $thrown, "Expected FK RESTRICT to block: {$sql}");
+        $this->assertSame(1451, $this->extractMySqlErrorCode($thrown, $db));
+        $this->assertStringContainsString('foreign key constraint fails', strtolower($thrown->getMessage()));
+        $this->assertStringContainsString($expectedConstraint, $thrown->getMessage());
+    }
+
+    private function extractMySqlErrorCode(\Throwable $e, BaseConnection $db): int
+    {
+        $code = (int) $e->getCode();
+        if ($code === 0 && $e->getPrevious() !== null) {
+            $code = (int) $e->getPrevious()->getCode();
+        }
+        if ($code === 0) {
+            $err  = $db->error();
+            $code = (int) ($err['code'] ?? 0);
+        }
+
+        return $code;
     }
 }
