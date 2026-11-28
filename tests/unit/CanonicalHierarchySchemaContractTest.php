@@ -157,6 +157,31 @@ final class CanonicalHierarchySchemaContractTest extends CIUnitTestCase
         }
     }
 
+    public function testHierarchyAlignmentRollbackDoesNotWeakenForeignKeys(): void
+    {
+        require_once APPPATH . 'Database/Migrations/2026-11-27-213833_AlignHierarchySchemaAndRelationships.php';
+
+        $method = new \ReflectionMethod(AlignHierarchySchemaAndRelationships::class, 'down');
+        $file   = $method->getFileName();
+        $this->assertNotFalse($file);
+
+        $lines = file($file);
+        $this->assertIsArray($lines);
+        $downSource = implode('', array_slice($lines, $method->getStartLine() - 1, $method->getEndLine() - $method->getStartLine() + 1));
+
+        $this->assertStringNotContainsString('replaceForeignKey', $downSource);
+        $this->assertStringNotContainsString('SET NULL', $downSource);
+        $this->assertStringNotContainsString('ON DELETE CASCADE', $downSource);
+        $this->assertStringNotContainsString('dioceses_province_id_foreign', $downSource);
+        $this->assertStringNotContainsString('ALTER TABLE', $downSource);
+
+        $connection = Database::connect('tests', false);
+        $forge      = Database::forge($connection);
+        $migration  = new AlignHierarchySchemaAndRelationships($forge);
+        $migration->down();
+        $connection->close();
+    }
+
     private function extractCreateTable(string $sql, string $table): string
     {
         $pattern = '/CREATE TABLE `' . preg_quote($table, '/') . '`.*?;\n/s';

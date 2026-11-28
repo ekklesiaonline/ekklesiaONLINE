@@ -29,33 +29,12 @@ class AlignHierarchySchemaAndRelationships extends Migration
 
     public function down()
     {
-        if ($this->db->DBDriver !== 'MySQLi' && $this->db->DBDriver !== 'mysql') {
-            return;
-        }
-
-        if ($this->db->tableExists('parish') && $this->db->fieldExists('diocese_id', 'parish')) {
-            $this->replaceForeignKey(
-                'parish',
-                'diocese_id',
-                'diocese',
-                'parish_diocese_id_foreign',
-                'SET NULL',
-                'CASCADE'
-            );
-        }
-
-        if ($this->db->tableExists('diocese') && $this->db->fieldExists('province_id', 'diocese')) {
-            $this->replaceForeignKey(
-                'diocese',
-                'province_id',
-                'province',
-                'dioceses_province_id_foreign',
-                'CASCADE',
-                'CASCADE'
-            );
-        }
-
-        $this->db->resetDataCache();
+        // Forward-only schema reconciliation: the target state (ON DELETE RESTRICT
+        // ON UPDATE CASCADE on fk_diocese_province and parish_diocese_id_foreign,
+        // plus canonical columns without legacy image/logo/province_id) matches
+        // the fresh-install baseline in canonical_schema_tables.sql. Rolling
+        // back must never weaken baseline FK delete rules or restore dropped
+        // legacy columns.
     }
 
     private function alignProvinceTable(): void
