@@ -189,6 +189,25 @@ final class HierarchyAlignmentMySqlUpgradeTest extends CIUnitTestCase
         $this->assertSingleFk($db, 'parish', 'diocese_id', 'diocese', 'fk_parish_diocese', 'RESTRICT', 'CASCADE');
         $this->assertDeleteBlocked($db, 'DELETE FROM `province` WHERE `id` = 1', 'fk_diocese_province');
         $this->assertDeleteBlocked($db, 'DELETE FROM `diocese` WHERE `id` = 10', 'fk_parish_diocese');
+
+        // Successful same-name replacement rehearsal: replace fk_parish_diocese with a
+        // same-named ON DELETE SET NULL FK, then re-run up() to exercise _next validation,
+        // SESSION foreign_key_checks=0/1 restore, _next cleanup, and final RESTRICT enforcement.
+        $db->query('ALTER TABLE `parish` DROP FOREIGN KEY `fk_parish_diocese`');
+        $db->query(
+            'ALTER TABLE `parish`
+             ADD CONSTRAINT `fk_parish_diocese`
+             FOREIGN KEY (`diocese_id`) REFERENCES `diocese` (`id`)
+             ON DELETE SET NULL ON UPDATE CASCADE'
+        );
+
+        $migration->up();
+
+        $this->assertSingleFk($db, 'parish', 'diocese_id', 'diocese', 'fk_parish_diocese', 'RESTRICT', 'CASCADE');
+        $fkcRow = $db->query('SELECT @@SESSION.foreign_key_checks AS fkc')->getRowArray();
+        $this->assertIsArray($fkcRow);
+        $this->assertSame('1', (string) $fkcRow['fkc']);
+        $this->assertDeleteBlocked($db, 'DELETE FROM `diocese` WHERE `id` = 10', 'fk_parish_diocese');
     }
 
     public function testDanglingSoftDeletedReferencesAndConflictingImagesAbortWithoutLosingFksOnMySql(): void
