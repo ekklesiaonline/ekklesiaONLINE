@@ -197,6 +197,20 @@ jobs:
       - name: Run MySQL-fixture PHPUnit tests
         run: vendor/bin/phpunit --no-coverage --fail-on-skipped tests/database/VolunteerScheduleSchemaIntegrityTest.php
 
+      - name: Run MySQL hierarchy upgrade, deletion, and rollback tests
+        run: |
+          php -r '
+            mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
+            $m = new mysqli("127.0.0.1", "root", "root", "", 3306);
+            $m->query("DROP DATABASE IF EXISTS `ekklesia_hierarchy_upgrade_test`");
+            $m->query("CREATE DATABASE `ekklesia_hierarchy_upgrade_test` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
+            $m->query("GRANT ALL PRIVILEGES ON `ekklesia_hierarchy_upgrade_test`.* TO '\''ekklesia_ci'\''@'\''%'\''");
+          '
+          cp .env .env.ci.bak
+          trap 'mv -f .env.ci.bak .env; php -r "mysqli_report(MYSQLI_REPORT_OFF); (new mysqli(\"127.0.0.1\", \"root\", \"root\", \"\", 3306))->query(\"DROP DATABASE IF EXISTS \`ekklesia_hierarchy_upgrade_test\`\");"' EXIT
+          sed -i "s/^database\.tests\.database = .*/database.tests.database = 'ekklesia_hierarchy_upgrade_test'/" .env
+          vendor/bin/phpunit --no-coverage --fail-on-skipped tests/database/HierarchyAlignmentMySqlUpgradeTest.php
+
       - name: Upload MySQL evidence
         if: always()
         uses: actions/upload-artifact@v4

@@ -82,12 +82,13 @@ A release is **no-go** if any item fails:
 
 ### Approved skip classifications
 
-The current SQLite suite has eight classified skips:
+The current SQLite suite has ten classified skips:
 
 - Four `ModuleCrudControllerPathsTest` cases target legacy plural-table fixtures (`parishes`) that are not part of the canonical singular-table SQLite schema. Production behavior is covered by canonical model/integration tests and the MySQL migration job.
 - `ModuleDemoDataSeederTest` targets an optional development fixture that is not shipped.
 - `ServicesLiturgicalDaysLocalizationTest` requires `liturgical_calendar_entries` (created by `CreateCanonicalSchema` on MySQL/MariaDB only), which is validated by the MySQL migration job rather than the reduced SQLite fixture.
 - Two `VolunteerScheduleSchemaIntegrityTest` cases require `DBDriver=MySQLi`; they verify the `team_member` unique index and `volunteer_schedule` service-column inserts against the migrated MySQL 8 schema and are executed by the CI MySQL job's PHPUnit step (`database.tests.*` env overrides), not by the SQLite suite.
+- Two `HierarchyAlignmentMySqlUpgradeTest` cases require `DBDriver=MySQLi` against a disposable upgrade-rehearsal database (`*upgrade_test*`); they verify `AlignHierarchySchemaAndRelationships` upgrade, `ON DELETE RESTRICT` deletion enforcement, non-destructive rollback, and pre-DDL image-conflict aborts on MySQL 8 and are executed by the CI MySQL job with `--fail-on-skipped`.
 
 Any additional skip is unclassified and blocks release. Schema/order failures and caught controller exceptions must not be converted into skips.
 
@@ -380,7 +381,7 @@ No workflow consumes the GitHub `staging` environment any more; the probe runs m
 - [ ] Download and review TestDox and JUnit artifacts; block on any skip beyond the four legacy plural-table, optional development-seeder, liturgical-calendar fixture skips, and the two MySQL-only volunteer schema skips (executed by the MySQL job's PHPUnit step).
 - [ ] Confirm the MySQL 8 service is healthy, migrations apply to an empty database, route compilation succeeds, and uploaded evidence is reviewed.
 
-**Completion:** [ ] Quality job passes; [ ] PHP job passes; [ ] MySQL job passes (incl. PHPUnit fixture step); [ ] exactly eight skips; [ ] all artifacts reviewed.
+**Completion:** [ ] Quality job passes; [ ] PHP job passes; [ ] MySQL job passes (incl. PHPUnit fixture steps); [ ] exactly ten skips; [ ] all artifacts reviewed.
 
 ### Session 6 — Validate staging application flows
 
