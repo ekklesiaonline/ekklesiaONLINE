@@ -103,7 +103,8 @@ DB_PASS=$(read_env_value 'database.default.password' "$ENV_FILE" || true)
 
 # Keep credentials out of the process list.
 DEFAULTS_FILE=$(mktemp "${TMPDIR:-/tmp}/ekk-hierarchy.XXXXXX")
-trap 'rm -f "$DEFAULTS_FILE"' EXIT HUP INT TERM
+TMP_OUT=''
+trap 'rm -f "$DEFAULTS_FILE" ${TMP_OUT:+"$TMP_OUT"}' EXIT HUP INT TERM
 chmod 600 "$DEFAULTS_FILE"
 {
     printf '[client]\nhost=%s\nport=%s\nuser=%s\n' "$DB_HOST" "$DB_PORT" "$DB_USER"
@@ -192,17 +193,30 @@ export)
     # and ALTER TABLE statements: both implicitly commit in MySQL, which would
     # silently break the single-transaction atomicity the import relies on.
     # --set-gtid-purged=OFF avoids SUPER/SYSTEM_VARIABLES_ADMIN errors on shared hosts.
+    # --skip-masking-policies and --no-tablespaces avoid privilege errors on MySQL 8/8.4+.
     DUMP_EXTRA_FLAGS=()
     DUMP_HELP=$(mysqldump --help 2>/dev/null || true)
     case "$DUMP_HELP" in
+        *masking-policies*) DUMP_EXTRA_FLAGS+=(--skip-masking-policies) ;;
+    esac
+    case "$DUMP_HELP" in
         *--set-gtid-purged*) DUMP_EXTRA_FLAGS+=(--set-gtid-purged=OFF) ;;
     esac
+    case "$DUMP_HELP" in
+        *no-tablespaces*) DUMP_EXTRA_FLAGS+=(--no-tablespaces) ;;
+    esac
+    OUT_DIR="$(dirname -- "$OUT_FILE")"
+    mkdir -p "$OUT_DIR"
+    TMP_OUT="$(mktemp "$OUT_DIR/.ekk-hierarchy-export.XXXXXX")"
+    chmod 600 "$TMP_OUT"
     mysqldump --defaults-extra-file="$DEFAULTS_FILE" --single-transaction --no-create-info --complete-insert \
         --skip-triggers --skip-add-locks --skip-disable-keys ${DUMP_EXTRA_FLAGS[@]+"${DUMP_EXTRA_FLAGS[@]}"} \
-        "$SRC_DB" $HIERARCHY_TABLES | gzip > "$OUT_FILE"
-    [ -s "$OUT_FILE" ] || die 'Export produced an empty archive'
-    chmod 600 "$OUT_FILE"
-    gzip -t "$OUT_FILE"
+        "$SRC_DB" $HIERARCHY_TABLES | gzip > "$TMP_OUT"
+    [ -s "$TMP_OUT" ] || die 'Export produced an empty archive'
+    gzip -t "$TMP_OUT"
+    [ "$(gzip -dc "$TMP_OUT" | head -c 1 | wc -c)" -gt 0 ] || die 'mysqldump produced no SQL output'
+    mv "$TMP_OUT" "$OUT_FILE"
+    TMP_OUT=''
     echo "Export complete: $OUT_FILE"
     ;;
 import)
@@ -224,6 +238,11 @@ import)
         fi
     done
 
+    deanery_count=$(count_rows "$DB_NAME" deanery)
+    if [ "$deanery_count" != 'n/a' ] && [ "$deanery_count" != '0' ]; then
+        die "Destination table \`deanery\` is not empty ($deanery_count rows), which blocks clearing baseline dioceses cleanly. Path A cutover runs only on a fresh empty database — see docs/HOSTGATOR_DEPLOY.md §4.1. Aborting before any mutation."
+    fi
+
     check_canonical_schema "$DB_NAME" 'Destination'
 
     echo "Importing hierarchy from $IN_FILE into $DB_NAME (single transaction)"
@@ -239,7 +258,7 @@ import)
 
     echo 'Import complete. Verifying hierarchy counts:'
     print_counts "$DB_NAME" "  destination $DB_NAME:"
-    echo 'Next: run php spark directory:verify-readiness --strict'
+    echo 'Next: run php spark directory:verify-readiness --strict (on HostGator: /opt/cpanel/ea-php85/root/usr/bin/php spark directory:verify-readiness --strict)'
     ;;
 verify)
     check_canonical_schema "$DB_NAME" 'Destination'

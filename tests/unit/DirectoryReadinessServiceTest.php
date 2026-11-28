@@ -161,6 +161,29 @@ final class DirectoryReadinessServiceTest extends CIUnitTestCase
         $this->assertSame(['Diocese of the Dominican Republic'], $names);
     }
 
+    public function testProvincesAndDiocesesSeederDoesNotInjectExtraProvincesWhenProvincesExist(): void
+    {
+        for ($i = 1; $i <= 9; $i++) {
+            $this->connection->table('province')->insert([
+                'province_number' => (string) $i,
+                'name' => 'Province ' . $i,
+            ]);
+        }
+        $firstProvince = $this->connection->table('province')->orderBy('id', 'ASC')->get()->getFirstRow('array');
+        $this->assertIsArray($firstProvince);
+        $this->connection->table('diocese')->insert([
+            'province_id' => $firstProvince['id'],
+            'name' => 'Diocese of the Dominican Republic',
+            'alias_norm' => 'diocese of the dominican republic',
+        ]);
+
+        $seeder = new ProvincesAndDiocesesSeeder(new Database(), $this->connection);
+        $seeder->run();
+
+        $this->assertSame(9, $this->connection->table('province')->countAllResults());
+        $this->assertSame(0, $this->connection->table('province')->where('province_number', '10')->countAllResults());
+    }
+
     public function testVerifyCommandReturnsExitErrorWhenHierarchyIsEmpty(): void
     {
         $command = $this->makeVerifyCommand();

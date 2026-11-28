@@ -21,11 +21,11 @@ class ProvincesAndDiocesesSeeder extends Seeder
             ['province_number' => 10, 'name' => 'Province X'],
         ];
 
-        foreach ($provinces as $province) {
-            $existing = $this->db->table('province')
-                ->where('province_number', $province['province_number'])
-                ->get()->getFirstRow('array');
-            if (!$existing) {
+        // Seed baseline provinces only when the province table is completely empty,
+        // so routine re-runs of DatabaseSeeder never inject Province X after a
+        // Path A cutover with a curated 9-province directory.
+        if ($this->db->table('province')->countAllResults() === 0) {
+            foreach ($provinces as $province) {
                 $this->db->table('province')->insert($province);
             }
         }

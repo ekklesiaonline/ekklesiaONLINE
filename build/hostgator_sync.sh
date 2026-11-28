@@ -25,8 +25,8 @@ Run this first from the repository root:
 
 The private sync uses --delete while protecting .env and writable runtime data.
 --delete-public removes files in the docroot that are not part of public/; use it
-only when that docroot is dedicated to this domain. .well-known/ and cgi-bin/
-are preserved even when --delete-public is used.
+only when that docroot is dedicated to this domain. .well-known/, cgi-bin/,
+and php.ini are preserved even when --delete-public is used.
 EOF
 }
 
@@ -118,6 +118,7 @@ PRIVATE_EXCLUDES=(
 PUBLIC_ARGS=(
     --exclude='.well-known/'
     --exclude='cgi-bin/'
+    --exclude='php.ini'
 )
 if [ "$DELETE_PUBLIC" -eq 1 ]; then
     PUBLIC_ARGS=(--delete "${PUBLIC_ARGS[@]}")
@@ -145,7 +146,7 @@ EOF
 # Pin the cPanel MultiPHP lsapi handler byte-identically to the block cPanel
 # itself writes (same begin/end markers), so a sync never strips the PHP 8.5
 # selection and cPanel still manages the block cleanly when the operator
-# re-selects the version in hPanel.
+# re-selects the version in cPanel.
 if [ -n "$PHP_HANDLER" ]; then
     cat >> "$PUBLIC_STAGE/.htaccess" <<EOF
 

@@ -181,6 +181,7 @@ final class DeploymentEnvironmentContractTest extends CIUnitTestCase
             $this->assertStringContainsString('--delete', $rsyncLines[1]);
             $this->assertStringContainsString('.well-known/', $rsyncLines[1]);
             $this->assertStringContainsString('cgi-bin/', $rsyncLines[1]);
+            $this->assertStringContainsString('php.ini', $rsyncLines[1]);
             $this->assertStringContainsString(
                 'SetEnv EKKLESIA_APP_ROOT /home/cptest/ekklesia',
                 (string) file_get_contents($htaccessCapture),
@@ -188,6 +189,42 @@ final class DeploymentEnvironmentContractTest extends CIUnitTestCase
         } finally {
             $this->removeDirectory($base);
         }
+    }
+
+    public function testRestoreDatabaseScriptHonorsPhpBinAndHierarchyTransferFlags(): void
+    {
+        $restoreScript = (string) file_get_contents(ROOTPATH . 'build/restore_database.sh');
+        $this->assertStringContainsString('PHP_BIN', $restoreScript);
+        $this->assertStringContainsString('/opt/cpanel/ea-php85/root/usr/bin/php', $restoreScript);
+        $this->assertStringContainsString('"$PHP_BIN" spark directory:verify-readiness', $restoreScript);
+
+        $transferScript = (string) file_get_contents(ROOTPATH . 'build/parish_hierarchy_transfer.sh');
+        $this->assertStringContainsString('--skip-masking-policies', $transferScript);
+        $this->assertStringContainsString('--no-tablespaces', $transferScript);
+        $this->assertStringContainsString('.ekk-hierarchy-export.XXXXXX', $transferScript);
+        $this->assertStringContainsString('deanery', $transferScript);
+    }
+
+    public function testPublicWebConfigsHardenWwwRedirectIniExposureAndPhp85Directives(): void
+    {
+        $htaccess = (string) file_get_contents(ROOTPATH . 'public/.htaccess');
+        $this->assertStringContainsString('RewriteRule ^ https://%1%{REQUEST_URI} [R=301,L]', $htaccess);
+        $this->assertStringContainsString('<FilesMatch "(^\.user\.ini$|^php\.ini$|\.(env|bak|sql|gz|log)$)">', $htaccess);
+        $this->assertStringContainsString('Require all denied', $htaccess);
+
+        $userIni = (string) file_get_contents(ROOTPATH . 'public/.user.ini');
+        $this->assertStringNotContainsString('E_STRICT', $userIni);
+        $this->assertStringNotContainsString('Verify via phpinfo()', $userIni);
+        $this->assertStringContainsString('ini_get()', $userIni);
+    }
+
+    public function testFixPermissionsProtectsWritableBackupsWithOwnerOnlyPermissions(): void
+    {
+        $script = (string) file_get_contents(ROOTPATH . 'fix-permissions.sh');
+        $this->assertStringContainsString('mkdir -p writable/backups', $script);
+        $this->assertStringContainsString('mkdir -p writable/reports', $script);
+        $this->assertStringContainsString('find writable/backups -type d -exec chmod 700 {} \;', $script);
+        $this->assertStringContainsString('find writable/backups -type f -exec chmod 600 {} \;', $script);
     }
 
     public function testSparkVersionGateExitsNonZeroOnUnsupportedPhp(): void
