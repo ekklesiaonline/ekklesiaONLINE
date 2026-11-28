@@ -15,7 +15,7 @@ Follow `.agents/rules/ueid.md` (or `.devin/rules/ueid.md`) and consult `docs/UEI
 ## Key Sources
 
 - **Reference & Rules**: `docs/UEID_REFERENCE.md`, `.agents/rules/ueid.md`
-- **Canonical Data**: `docs/UEID.json` (primary), `docs/UEID.csv` (fallback) — 6,751 rows, 107 dioceses (legacy `docs/UEID.md` is retired)
+- **Canonical Data**: `docs/UEID.json` (primary), `docs/UEID.csv` (fallback) — 6,751 rows, 106 dioceses (legacy `docs/UEID.md` is retired)
 - **Commands**: `app/Commands/SyncUeidDirectory.php` (`php spark directory:sync-ueid`), `app/Commands/VerifyDirectoryReadiness.php` (`php spark directory:verify-readiness`)
 - **Cutover & Model**: `build/parish_hierarchy_transfer.sh`, `app/Models/ParishModel.php`, `app/Services/HierarchyService.php`, `Diocese/Views/Parishes/edit.php`
 - **Tests**: `tests/database/UeidDirectorySyncTest.php`
@@ -62,14 +62,15 @@ Follow `.agents/rules/ueid.md` (or `.devin/rules/ueid.md`) and consult `docs/UEI
 
 When updating the shipped files from `https://generalconvention.org/ueid-lookup/` or applying a new General Convention diocesan decision:
 
-1. **Preserve GC80 & GC81 curated dioceses** (do not revert to legacy TablePress names):
+1. **Preserve GC80, GC81 & Canon I.10.6 curated dioceses** (do not revert to legacy TablePress names):
    - `Great Lakes` (merged `Eastern Michigan` + `Western Michigan`, GC81 C025)
    - `Wisconsin` (reunited `Eau Claire` + `Fond du Lac` + `Milwaukee`, GC81 D051)
    - `Navajoland` (elevated from `Navajo Missions`, GC81 C009)
    - `Hawaii` (includes Guam `1462-9869` & Saipan `9713-0538` formerly under `Micronesia`, GC81 B006)
+   - `Susquehanna` (reunited `Bethlehem` + `Central Pennsylvania`, eff. Jan 1, 2026)
    - `Texas` (reunited `North Texas`, GC80 C004; synthetic `2603-1393` must remain excluded)
    - `Churches in Europe` (mapped to `Convocation of Episcopal Churches in Europe`)
-2. **Apply newer diocesan reunions** (such as `Bethlehem` + `Central Pennsylvania` → **Susquehanna**, effective Jan 1, 2026 under Canon I.10.6):
+2. **Apply future diocesan reunions or mergers**:
    - Create or rename the canonical `diocese` row (and `alias_norm`) in the database first.
    - Update only the `Diocese` column in **both** `docs/UEID.csv` and `docs/UEID.json`; keep every `ParishUEID` immutable.
 3. **Verify file parity & format**: Confirm `docs/UEID.json` and `docs/UEID.csv` have identical columns (`ParishUEID,Diocese,Name,City,State,County`), identical row counts and values, zero duplicates, all rows matching `^\d{4}-\d{4}$`, and no `2603-1393`.

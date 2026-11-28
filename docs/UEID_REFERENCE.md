@@ -47,9 +47,9 @@ While CPG coordinates churchwide institutional data across the Episcopal ecosyst
 
 ## 4. General Convention Diocesan Decisions & Curated Dataset Lineage
 
-The raw legacy TablePress export (`docs/UEID.md`) contained **6,752 rows across 112 dioceses** (including historical diocesan names and a synthetic test entry `2603-1393`). `ekklesiaONLINE`'s canonical dataset (`docs/UEID.json` and `docs/UEID.csv`) has been curated to **6,751 rows across 107 dioceses** reflecting General Convention structural decisions:
+The raw legacy TablePress export (`docs/UEID.md`) contained **6,752 rows across 112 dioceses** (including historical diocesan names and a synthetic test entry `2603-1393`). `ekklesiaONLINE`'s canonical dataset (`docs/UEID.json` and `docs/UEID.csv`) has been curated to **6,751 rows across 106 dioceses** reflecting General Convention and diocesan union decisions:
 
-### Applied General Convention Decisions (Already Reflected in `docs/UEID.csv` & `docs/UEID.json`)
+### Applied General Convention & Diocesan Decisions (Reflected in `docs/UEID.csv` & `docs/UEID.json`)
 
 | Decision / Event | Legacy Name(s) in `docs/UEID.md` | Canonical Name in `docs/UEID.csv` & `docs/UEID.json` | Row Count | Notes |
 | --- | --- | --- | ---: | --- |
@@ -57,17 +57,16 @@ The raw legacy TablePress export (`docs/UEID.md`) contained **6,752 rows across 
 | **81st GC (2024) — Resolution D051** (Reunion) | `Eau Claire` + `Fond du Lac` + `Milwaukee` | `Wisconsin` | 99 | Reunion of the three Wisconsin dioceses into the Episcopal Diocese of Wisconsin |
 | **81st GC (2024) — Resolution C009** (Elevation) | `Navajo Missions` | `Navajoland` | 10 | Elevated from area mission to Missionary Diocese of Navajoland |
 | **81st GC (2024) — Resolution B006** (Expansion) | `Micronesia` (Guam & Saipan, 2 rows: `1462-9869`, `9713-0538`) | `Hawaii` | 37 | Dissolved separate Micronesia mission; absorbed into the Diocese of Hawaii |
+| **Canon I.10.6 Reunion (eff. Jan 1, 2026)** | `Bethlehem` (56) + `Central Pennsylvania` (61) | `Susquehanna` | 117 | Reunited as the Episcopal Diocese of the Susquehanna (Joint Convention Oct 17–18, 2025) |
 | **80th GC (2022) — Resolution C004** (Reunion) | `North Texas` (incl. bogus test row `2603-1393`) | `Texas` | 165 | Reunited into Diocese of Texas; `2603-1393` (`"Not a real parish"`) removed |
 | **Naming Alignment** | `Parishes in Europe` | `Churches in Europe` | 20 | Mapped to `Convocation of Episcopal Churches in Europe` in `SyncUeidDirectory::loadDioceseMap()` |
 
-### Post-GC81 / Upcoming Diocesan Reunions to Track
+### Applying Future Diocesan Reunions or Mergers
 
-- **Episcopal Diocese of the Susquehanna** (`Bethlehem` + `Central Pennsylvania`): Under an Agreement of Union (Canon I.10.6), the Dioceses of Bethlehem and Central Pennsylvania held a Joint Transition Convention (October 17–18, 2025) and formally reunified effective **January 1, 2026** as the **Episcopal Diocese of the Susquehanna** (1st Annual Convention October 3, 2026).
-  - *Current dataset status*: In the current 107-diocese `docs/UEID.csv` / `docs/UEID.json` snapshot, `Bethlehem` (56 rows) and `Central Pennsylvania` (61 rows) remain listed separately.
-  - *Consolidation procedure when ready to cut over*:
-    1. Ensure the target `diocese` row (`Susquehanna` or canonical full name) and its `diocese.alias_norm` exist in the database under Province III (or consolidate the two `diocese` rows).
-    2. Update the `Diocese` column for those 117 parishes in **both** `docs/UEID.csv` and `docs/UEID.json` while keeping every `ParishUEID` untouched.
-    3. Run `php spark directory:sync-ueid` (dry-run), verify `writable/reports/ueid_directory_sync_*.md` shows `parishes_updated` (only `diocese_id` changes) and zero errors, then run `php spark directory:sync-ueid --apply --preserve-inactive`.
+When future General Conventions or diocesan agreements of union merge or rename dioceses:
+1. Ensure the target `diocese` row (and `diocese.alias_norm`) exists under the proper `province_id` in the database, reparent any `parish.diocese_id` and active references inside a single transaction, and clean up dissolved zero-parish `diocese` rows (along with any orphaned `diocese_setting` rows).
+2. Update the `Diocese` column for the affected congregations in **both** `docs/UEID.csv` and `docs/UEID.json` while keeping every `ParishUEID` untouched.
+3. Run `php spark directory:sync-ueid` (dry-run), verify `writable/reports/ueid_directory_sync_*.md` shows zero errors, then apply with `php spark directory:sync-ueid --apply --preserve-inactive` and confirm `php spark directory:verify-readiness --strict`.
 
 ---
 
@@ -75,7 +74,7 @@ The raw legacy TablePress export (`docs/UEID.md`) contained **6,752 rows across 
 
 ### Shipped Repository Files
 
-- **`docs/UEID.json`** (primary) and **`docs/UEID.csv`** (fallback): Canonical 6,751-row directory (`ParishUEID`, `Diocese`, `Name`, `City`, `State`, `County`). Both files **must remain 100% row- and field-identical**, enforced by `tests/database/UeidDirectorySyncTest::testShippedUeidJsonParsesAndMatchesCsv()`.
+- **`docs/UEID.json`** (primary) and **`docs/UEID.csv`** (fallback): Canonical 6,751-row, 106-diocese directory (`ParishUEID`, `Diocese`, `Name`, `City`, `State`, `County`). Both files **must remain 100% row- and field-identical**, enforced by `tests/database/UeidDirectorySyncTest::testShippedUeidJsonParsesAndMatchesCsv()`.
 - **`docs/UEID.md`**: Legacy raw TablePress HTML snapshot (6,752 rows, 112 dioceses, contains bogus row `2603-1393`). Used only by the legacy `php spark parish:merge-ueid` command (`app/Commands/MergeUeidParishes.php`). **Do not use for production syncs or new features.**
 
 ### Database Schema (`app/Database/canonical_schema_tables.sql`)

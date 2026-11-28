@@ -15,16 +15,17 @@
 
 ## Canonical Dataset & Parity
 
-- `docs/UEID.json` (primary) and `docs/UEID.csv` (fallback) are the **only canonical shipped UEID datasets** (6,751 parishes across 107 dioceses) and **must remain 100% row- and field-identical**, verified by `tests/database/UeidDirectorySyncTest::testShippedUeidJsonParsesAndMatchesCsv()`.
+- `docs/UEID.json` (primary) and `docs/UEID.csv` (fallback) are the **only canonical shipped UEID datasets** (6,751 parishes across 106 dioceses) and **must remain 100% row- and field-identical**, verified by `tests/database/UeidDirectorySyncTest::testShippedUeidJsonParsesAndMatchesCsv()`.
 - `docs/UEID.md` and `php spark parish:merge-ueid` are **legacy**; never use them for live directory syncs, and never reintroduce the removed synthetic test row `2603-1393`.
 
 ## General Convention Diocesan Decisions
 
-- Preserve all curated General Convention updates when refreshing or validating UEID data:
+- Preserve all curated General Convention and diocesan union updates when refreshing or validating UEID data:
   - **GC81 (2024)**: `Eastern Michigan` + `Western Michigan` → `Great Lakes` (C025); `Eau Claire` + `Fond du Lac` + `Milwaukee` → `Wisconsin` (D051); `Navajo Missions` → `Navajoland` (C009); `Micronesia` (Guam & Saipan) → `Hawaii` (B006).
+  - **Canon I.10.6 Reunion (eff. Jan 1, 2026)**: `Bethlehem` + `Central Pennsylvania` → `Susquehanna`.
   - **GC80 (2022)**: `North Texas` → `Texas` (C004).
   - **Europe alias**: `Parishes in Europe` → `Churches in Europe` (mapped to `Convocation of Episcopal Churches in Europe` by `SyncUeidDirectory::loadDioceseMap()`).
-- When applying newer diocesan reunions (e.g., `Bethlehem` + `Central Pennsylvania` → **Diocese of the Susquehanna**, effective Jan 1, 2026), align target `diocese` / `alias_norm` rows first, update `Diocese` in both `docs/UEID.csv` and `docs/UEID.json` while keeping every `ParishUEID` unchanged, and sync via `directory:sync-ueid`.
+- When applying future diocesan reunions or mergers, align target `diocese` / `alias_norm` rows first, update `Diocese` in both `docs/UEID.csv` and `docs/UEID.json` while keeping every `ParishUEID` unchanged, sync via `directory:sync-ueid`, and clean up dissolved zero-parish `diocese` rows safely.
 
 ## Sync & Readiness Gates
 

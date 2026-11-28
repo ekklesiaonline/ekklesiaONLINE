@@ -609,7 +609,7 @@ dioceses it creates itself).
 
 #### Path B — Fresh webhosting install using the shipped UEID directory (`docs/UEID.json`)
 
-`docs/UEID.json` (6,751 parishes across 107 dioceses) is synced to
+`docs/UEID.json` (6,751 parishes across 106 dioceses) is synced to
 `~/ekklesia/docs/UEID.json` by `build/hostgator_sync.sh`.
 
 1. Ensure the real `province` rows and target `diocese` rows (mapped to their
