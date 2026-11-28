@@ -142,8 +142,8 @@ assert_exact_columns() {
     fi
 
     expected=$(printf '%s\n' $expected_cols | LC_ALL=C sort)
-    missing=$(comm -23 <(printf '%s\n' "$expected") <(printf '%s\n' "$actual"))
-    extra=$(comm -13 <(printf '%s\n' "$expected") <(printf '%s\n' "$actual"))
+    missing=$(LC_ALL=C comm -23 <(printf '%s\n' "$expected") <(printf '%s\n' "$actual"))
+    extra=$(LC_ALL=C comm -13 <(printf '%s\n' "$expected") <(printf '%s\n' "$actual"))
 
     if [ -n "$missing" ] || [ -n "$extra" ]; then
         missing_fmt=$(printf '%s\n' "$missing" | paste -sd ',' - | sed 's/,/, /g')

@@ -52,6 +52,8 @@ final class CanonicalHierarchySchemaContractTest extends CIUnitTestCase
 
         $this->assertStringContainsString('--complete-insert', $script);
         $this->assertStringContainsString('check_canonical_schema', $script);
+        $this->assertStringContainsString('LC_ALL=C comm -23', $script);
+        $this->assertStringContainsString('LC_ALL=C comm -13', $script);
 
         $sqlPath = ROOTPATH . 'app/Database/canonical_schema_tables.sql';
         $sql     = (string) file_get_contents($sqlPath);
