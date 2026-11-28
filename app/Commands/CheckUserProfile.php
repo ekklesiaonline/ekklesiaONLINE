@@ -2,6 +2,7 @@
 
 namespace App\Commands;
 
+use App\Models\UserRegistrationRequestModel;
 use CodeIgniter\CLI\BaseCommand;
 use CodeIgniter\CLI\CLI;
 
@@ -27,9 +28,13 @@ class CheckUserProfile extends BaseCommand
 
         $user = $db->table('users')->where('id', $userId)->get()->getRowArray();
         $profile = $db->table('profile')->where('user_id', $userId)->get()->getRowArray();
-        $request = $db->tableExists('user_registration_request')
-            ? $db->table('user_registration_request')->where('user_id', $userId)->get()->getRowArray()
-            : null;
+        $request = null;
+        if ($db->tableExists('user_registration_requests') || $db->tableExists('user_registration_request')) {
+            $request = (new UserRegistrationRequestModel())
+                ->where('user_id', $userId)
+                ->orderBy('id', 'DESC')
+                ->first();
+        }
         $groups = $db->table('auth_groups_users')->where('user_id', $userId)->get()->getResultArray();
 
         CLI::write('User: ' . json_encode($user ?? []));

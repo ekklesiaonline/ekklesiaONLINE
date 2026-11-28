@@ -51,6 +51,7 @@
 - For audit, observability, and localization questions, use `/audit-logging` or `/localization`.
 - For Sunday attendance chart rules, use `/sunday-attendance-charts`.
 - For clergy ordination, canonical status, deaneries, and scoped authorization planning, use `/episcopal-clergy-authz-planning`.
+- For 8-digit Unique Episcopal Identifier (UEID) rules, General Convention diocesan mergers/creations, and directory sync, see `.agents/rules/ueid.md` (or `.devin/rules/ueid.md`), `docs/UEID_REFERENCE.md`, and `/ueid`.
 
 ## Security & Onboarding Conventions
 

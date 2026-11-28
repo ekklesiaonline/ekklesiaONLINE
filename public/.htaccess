@@ -21,8 +21,14 @@ Options -Indexes
 	RewriteCond %{REQUEST_URI} (.+)/$
 	RewriteRule ^ %1 [L,R=301]
 
-	# Rewrite "www.example.com -> example.com"
+	# Rewrite "www.example.com -> example.com" (preserve HTTPS, including behind proxy)
+	RewriteCond %{HTTPS} =on [OR]
+	RewriteCond %{HTTP:X-Forwarded-Proto} =https [NC]
+	RewriteCond %{HTTP_HOST} ^www\.(.+)$ [NC]
+	RewriteRule ^ https://%1%{REQUEST_URI} [R=301,L]
+
 	RewriteCond %{HTTPS} !=on
+	RewriteCond %{HTTP:X-Forwarded-Proto} !=https [NC]
 	RewriteCond %{HTTP_HOST} ^www\.(.+)$ [NC]
 	RewriteRule ^ http://%1%{REQUEST_URI} [R=301,L]
 
@@ -43,6 +49,17 @@ Options -Indexes
 	# can be sent to index.php, and everything works as normal.
 	ErrorDocument 404 index.php
 </IfModule>
+
+# Block direct web access to PHP ini overrides and sensitive config/backup files.
+<FilesMatch "(^\.user\.ini$|^php\.ini$|\.(env|bak|sql|gz|log)$)">
+	<IfModule mod_authz_core.c>
+		Require all denied
+	</IfModule>
+	<IfModule !mod_authz_core.c>
+		Order allow,deny
+		Deny from all
+	</IfModule>
+</FilesMatch>
 
 # Disable server signature start
 ServerSignature Off

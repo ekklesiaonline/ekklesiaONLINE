@@ -79,8 +79,15 @@ case "$BACKUP_FILE" in
 esac
 
 echo 'Restore complete.'
-if command -v php >/dev/null 2>&1 && [ -f "$ROOT_DIR/spark" ]; then
+if [ -n "${PHP_BIN:-}" ]; then
+  :
+elif [ -x /opt/cpanel/ea-php85/root/usr/bin/php ]; then
+  PHP_BIN='/opt/cpanel/ea-php85/root/usr/bin/php'
+else
+  PHP_BIN='php'
+fi
+if { [ -x "$PHP_BIN" ] || command -v "$PHP_BIN" >/dev/null 2>&1; } && [ -f "$ROOT_DIR/spark" ]; then
   echo 'Verifying province/diocese/parish hierarchy readiness after restore:'
-  (cd "$ROOT_DIR" && php spark directory:verify-readiness) \
+  (cd "$ROOT_DIR" && "$PHP_BIN" spark directory:verify-readiness) \
     || echo 'WARNING: province/diocese/parish hierarchy is not populated after restore — resolve before go-live (docs/HOSTGATOR_DEPLOY.md §4.1)' >&2
 fi

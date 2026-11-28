@@ -3520,454 +3520,6 @@
         "County": "Muscogee"
     },
     {
-        "ParishUEID": "2777-3753",
-        "Diocese": "Bethlehem",
-        "Name": "All Saints Episcopal Church",
-        "City": "Lehighton",
-        "State": "Pennsylvania",
-        "County": "Carbon"
-    },
-    {
-        "ParishUEID": "5390-5063",
-        "Diocese": "Bethlehem",
-        "Name": "Calvary Episcopal Church",
-        "City": "Tamaqua",
-        "State": "Pennsylvania",
-        "County": "Schuylkill"
-    },
-    {
-        "ParishUEID": "5308-8753",
-        "Diocese": "Bethlehem",
-        "Name": "Cathedral Church of the Nativity",
-        "City": "Bethlehem",
-        "State": "Pennsylvania",
-        "County": "Northampton"
-    },
-    {
-        "ParishUEID": "1540-0906",
-        "Diocese": "Bethlehem",
-        "Name": "Christ Church",
-        "City": "Reading",
-        "State": "Pennsylvania",
-        "County": "Berks"
-    },
-    {
-        "ParishUEID": "3513-7330",
-        "Diocese": "Bethlehem",
-        "Name": "Christ Church",
-        "City": "Forest City",
-        "State": "Pennsylvania",
-        "County": "Susquehanna"
-    },
-    {
-        "ParishUEID": "2878-7943",
-        "Diocese": "Bethlehem",
-        "Name": "Christ Episcopal Church",
-        "City": "Towanda",
-        "State": "Pennsylvania",
-        "County": "Bradford"
-    },
-    {
-        "ParishUEID": "9083-0399",
-        "Diocese": "Bethlehem",
-        "Name": "Christ Episcopal Church",
-        "City": "Susquehanna",
-        "State": "Pennsylvania",
-        "County": "Susquehanna"
-    },
-    {
-        "ParishUEID": "7375-6389",
-        "Diocese": "Bethlehem",
-        "Name": "Christ Episcopal Church",
-        "City": "Stroudsburg",
-        "State": "Pennsylvania",
-        "County": "Monroe"
-    },
-    {
-        "ParishUEID": "2322-3837",
-        "Diocese": "Bethlehem",
-        "Name": "Church of the Epiphany",
-        "City": "Dalton",
-        "State": "Pennsylvania",
-        "County": "Lackawanna"
-    },
-    {
-        "ParishUEID": "1001-0601",
-        "Diocese": "Bethlehem",
-        "Name": "Church of the Good Shepherd",
-        "City": "Scranton",
-        "State": "Pennsylvania",
-        "County": "Lackawanna"
-    },
-    {
-        "ParishUEID": "2470-6053",
-        "Diocese": "Bethlehem",
-        "Name": "Church of the Good Shepherd and St John the Evangelist",
-        "City": "Milford",
-        "State": "Pennsylvania",
-        "County": "Pike"
-    },
-    {
-        "ParishUEID": "7407-2570",
-        "Diocese": "Bethlehem",
-        "Name": "Church of the Mediator",
-        "City": "Allentown",
-        "State": "Pennsylvania",
-        "County": "Lehigh"
-    },
-    {
-        "ParishUEID": "3193-0407",
-        "Diocese": "Bethlehem",
-        "Name": "Church of the Prince of Peace",
-        "City": "Dallas",
-        "State": "Pennsylvania",
-        "County": "Luzerne"
-    },
-    {
-        "ParishUEID": "7671-4286",
-        "Diocese": "Bethlehem",
-        "Name": "Church of the Redeemer",
-        "City": "Sayre",
-        "State": "Pennsylvania",
-        "County": "Bradford"
-    },
-    {
-        "ParishUEID": "7823-0547",
-        "Diocese": "Bethlehem",
-        "Name": "Grace Episcopal Church",
-        "City": "Kingston",
-        "State": "Pennsylvania",
-        "County": "Luzerne"
-    },
-    {
-        "ParishUEID": "4190-9417",
-        "Diocese": "Bethlehem",
-        "Name": "Grace Episcopal Church",
-        "City": "Honesdale",
-        "State": "Pennsylvania",
-        "County": "Wayne"
-    },
-    {
-        "ParishUEID": "5474-4255",
-        "Diocese": "Bethlehem",
-        "Name": "Grace Episcopal Church",
-        "City": "Allentown",
-        "State": "Pennsylvania",
-        "County": "Lehigh"
-    },
-    {
-        "ParishUEID": "2876-4777",
-        "Diocese": "Bethlehem",
-        "Name": "North Parish Episcopal Church",
-        "City": "St Clair",
-        "State": "Pennsylvania",
-        "County": "Schuylkill"
-    },
-    {
-        "ParishUEID": "8015-2770",
-        "Diocese": "Bethlehem",
-        "Name": "St Albans Episcopal Church",
-        "City": "Sinking Spring",
-        "State": "Pennsylvania",
-        "County": "Berks"
-    },
-    {
-        "ParishUEID": "7361-9470",
-        "Diocese": "Bethlehem",
-        "Name": "St Andrews Church",
-        "City": "Allentown",
-        "State": "Pennsylvania",
-        "County": "Lehigh"
-    },
-    {
-        "ParishUEID": "1153-5713",
-        "Diocese": "Bethlehem",
-        "Name": "St Andrews Church",
-        "City": "Nanticoke",
-        "State": "Pennsylvania",
-        "County": "Luzerne"
-    },
-    {
-        "ParishUEID": "5369-1507",
-        "Diocese": "Bethlehem",
-        "Name": "St Annes Episcopal Church",
-        "City": "Trexlertown",
-        "State": "Pennsylvania",
-        "County": "Lehigh"
-    },
-    {
-        "ParishUEID": "7877-3819",
-        "Diocese": "Bethlehem",
-        "Name": "St Brigids Church",
-        "City": "Nazareth",
-        "State": "Pennsylvania",
-        "County": "Northampton"
-    },
-    {
-        "ParishUEID": "9387-1663",
-        "Diocese": "Bethlehem",
-        "Name": "St Clements & St Peters Church",
-        "City": "Wilkes Barre",
-        "State": "Pennsylvania",
-        "County": "Luzerne"
-    },
-    {
-        "ParishUEID": "3667-5163",
-        "Diocese": "Bethlehem",
-        "Name": "St Gabriels Episcopal Church",
-        "City": "DOUGLASSVILLE",
-        "State": "Pennsylvania",
-        "County": "Berks"
-    },
-    {
-        "ParishUEID": "7905-9127",
-        "Diocese": "Bethlehem",
-        "Name": "St Georges Episcopal Church",
-        "City": "Hellertown",
-        "State": "Pennsylvania",
-        "County": "Northampton"
-    },
-    {
-        "ParishUEID": "2729-2937",
-        "Diocese": "Bethlehem",
-        "Name": "St James Church",
-        "City": "Drifton",
-        "State": "Pennsylvania",
-        "County": "Luzerne"
-    },
-    {
-        "ParishUEID": "4826-3255",
-        "Diocese": "Bethlehem",
-        "Name": "St James Church",
-        "City": "Clifford Township",
-        "State": "Pennsylvania",
-        "County": "Susquehanna"
-    },
-    {
-        "ParishUEID": "6899-4383",
-        "Diocese": "Bethlehem",
-        "Name": "St James Episcopal Church",
-        "City": "Schuylkill Haven",
-        "State": "Pennsylvania",
-        "County": "Schuylkill"
-    },
-    {
-        "ParishUEID": "6669-9695",
-        "Diocese": "Bethlehem",
-        "Name": "St James-St George Epis Church",
-        "City": "Jermyn",
-        "State": "Pennsylvania",
-        "County": "Lackawanna"
-    },
-    {
-        "ParishUEID": "2640-8435",
-        "Diocese": "Bethlehem",
-        "Name": "St Johns Episcopal Church",
-        "City": "Palmerton",
-        "State": "Pennsylvania",
-        "County": "Carbon"
-    },
-    {
-        "ParishUEID": "4918-9665",
-        "Diocese": "Bethlehem",
-        "Name": "St Johns Episcopal Church",
-        "City": "Hamlin",
-        "State": "Pennsylvania",
-        "County": "Wayne"
-    },
-    {
-        "ParishUEID": "9719-4476",
-        "Diocese": "Bethlehem",
-        "Name": "St Josephs Church",
-        "City": "Pen Argyl",
-        "State": "Pennsylvania",
-        "County": "Northampton"
-    },
-    {
-        "ParishUEID": "3298-4098",
-        "Diocese": "Bethlehem",
-        "Name": "St Lukes Church Episcopal",
-        "City": "Lebanon",
-        "State": "Pennsylvania",
-        "County": "Lebanon"
-    },
-    {
-        "ParishUEID": "1906-6273",
-        "Diocese": "Bethlehem",
-        "Name": "St Lukes Episcopal Church",
-        "City": "Scranton",
-        "State": "Pennsylvania",
-        "County": "Lackawanna"
-    },
-    {
-        "ParishUEID": "1227-8552",
-        "Diocese": "Bethlehem",
-        "Name": "St Margarets Church",
-        "City": "Emmaus",
-        "State": "Pennsylvania",
-        "County": "Lehigh"
-    },
-    {
-        "ParishUEID": "9778-1157",
-        "Diocese": "Bethlehem",
-        "Name": "St Marks & St Johns Church",
-        "City": "Jim Thorpe",
-        "State": "Pennsylvania",
-        "County": "Carbon"
-    },
-    {
-        "ParishUEID": "2812-4733",
-        "Diocese": "Bethlehem",
-        "Name": "St Marks Episcopal Church",
-        "City": "Moscow",
-        "State": "Pennsylvania",
-        "County": "Lackawanna"
-    },
-    {
-        "ParishUEID": "1131-4622",
-        "Diocese": "Bethlehem",
-        "Name": "St Marks Episcopal Church",
-        "City": "New Milford",
-        "State": "Pennsylvania",
-        "County": "Susquehanna"
-    },
-    {
-        "ParishUEID": "7738-6977",
-        "Diocese": "Bethlehem",
-        "Name": "St Martin in the Fields",
-        "City": "Mountain Top",
-        "State": "Pennsylvania",
-        "County": "Luzerne"
-    },
-    {
-        "ParishUEID": "8664-0026",
-        "Diocese": "Bethlehem",
-        "Name": "St Marys Episcopal Church",
-        "City": "Reading",
-        "State": "Pennsylvania",
-        "County": "Berks"
-    },
-    {
-        "ParishUEID": "8300-9704",
-        "Diocese": "Bethlehem",
-        "Name": "St Marys Episcopal Church",
-        "City": "Wind Gap",
-        "State": "Pennsylvania",
-        "County": "Northampton"
-    },
-    {
-        "ParishUEID": "6532-5367",
-        "Diocese": "Bethlehem",
-        "Name": "St Pauls Church",
-        "City": "Montrose",
-        "State": "Pennsylvania",
-        "County": "Susquehanna"
-    },
-    {
-        "ParishUEID": "9511-4641",
-        "Diocese": "Bethlehem",
-        "Name": "St Pauls Episcopal Church",
-        "City": "Troy",
-        "State": "Pennsylvania",
-        "County": "Bradford"
-    },
-    {
-        "ParishUEID": "1478-1660",
-        "Diocese": "Bethlehem",
-        "Name": "St Peters Episcopal Church",
-        "City": "Hazleton",
-        "State": "Pennsylvania",
-        "County": "Luzerne"
-    },
-    {
-        "ParishUEID": "6072-6288",
-        "Diocese": "Bethlehem",
-        "Name": "St Peters Episcopal Church",
-        "City": "Tunkhannock",
-        "State": "Pennsylvania",
-        "County": "Wyoming"
-    },
-    {
-        "ParishUEID": "3601-5519",
-        "Diocese": "Bethlehem",
-        "Name": "St Stephens Episcopal Church",
-        "City": "Whitehall",
-        "State": "Pennsylvania",
-        "County": "Lehigh"
-    },
-    {
-        "ParishUEID": "9092-8342",
-        "Diocese": "Bethlehem",
-        "Name": "St Stephens Pro-Cathedral",
-        "City": "Wilkes Barre",
-        "State": "Pennsylvania",
-        "County": "Luzerne"
-    },
-    {
-        "ParishUEID": "9936-4572",
-        "Diocese": "Bethlehem",
-        "Name": "St Thomas Episcopal Church",
-        "City": "Morgantown",
-        "State": "Pennsylvania",
-        "County": "Berks"
-    },
-    {
-        "ParishUEID": "1950-7227",
-        "Diocese": "Bethlehem",
-        "Name": "Trinity Church",
-        "City": "Bethlehem",
-        "State": "Pennsylvania",
-        "County": "Northampton"
-    },
-    {
-        "ParishUEID": "3712-3551",
-        "Diocese": "Bethlehem",
-        "Name": "Trinity Episcopal Church",
-        "City": "West Pittston",
-        "State": "Pennsylvania",
-        "County": "Luzerne"
-    },
-    {
-        "ParishUEID": "2795-1375",
-        "Diocese": "Bethlehem",
-        "Name": "Trinity Episcopal Church",
-        "City": "Carbondale",
-        "State": "Pennsylvania",
-        "County": "Lackawanna"
-    },
-    {
-        "ParishUEID": "2848-6397",
-        "Diocese": "Bethlehem",
-        "Name": "Trinity Episcopal Church",
-        "City": "Pottsville",
-        "State": "Pennsylvania",
-        "County": "Schuylkill"
-    },
-    {
-        "ParishUEID": "2840-0356",
-        "Diocese": "Bethlehem",
-        "Name": "Trinity Episcopal Church",
-        "City": "Easton",
-        "State": "Pennsylvania",
-        "County": "Northampton"
-    },
-    {
-        "ParishUEID": "6614-1672",
-        "Diocese": "Bethlehem",
-        "Name": "Trinity Episcopal Church",
-        "City": "Athens",
-        "State": "Pennsylvania",
-        "County": "Bradford"
-    },
-    {
-        "ParishUEID": "5607-9239",
-        "Diocese": "Bethlehem",
-        "Name": "Trinity Episcopal Church",
-        "City": "Mount Pocono",
-        "State": "Pennsylvania",
-        "County": "Monroe"
-    },
-    {
         "ParishUEID": "2488-7317",
         "Diocese": "California",
         "Name": "All Saints Episcopal Church",
@@ -6326,494 +5878,6 @@
         "City": "Rome",
         "State": "New York",
         "County": "Oneida"
-    },
-    {
-        "ParishUEID": "7577-1931",
-        "Diocese": "Central Pennsylvania",
-        "Name": "All Saints Church",
-        "City": "Hanover",
-        "State": "Pennsylvania",
-        "County": "York"
-    },
-    {
-        "ParishUEID": "8283-3237",
-        "Diocese": "Central Pennsylvania",
-        "Name": "All Saints Episcopal Church",
-        "City": "Hershey",
-        "State": "Pennsylvania",
-        "County": "Dauphin"
-    },
-    {
-        "ParishUEID": "1561-5339",
-        "Diocese": "Central Pennsylvania",
-        "Name": "All Saints Episcopal Church",
-        "City": "Selinsgrove",
-        "State": "Pennsylvania",
-        "County": "Snyder"
-    },
-    {
-        "ParishUEID": "6802-0098",
-        "Diocese": "Central Pennsylvania",
-        "Name": "All Saints Memorial Church",
-        "City": "Williamsport",
-        "State": "Pennsylvania",
-        "County": "Lycoming"
-    },
-    {
-        "ParishUEID": "7474-3493",
-        "Diocese": "Central Pennsylvania",
-        "Name": "Bangor Episcopal Church",
-        "City": "Narvon",
-        "State": "Pennsylvania",
-        "County": "Lancaster"
-    },
-    {
-        "ParishUEID": "3695-1937",
-        "Diocese": "Central Pennsylvania",
-        "Name": "Calvary Chapel",
-        "City": "Waynesboro",
-        "State": "Pennsylvania",
-        "County": "Franklin"
-    },
-    {
-        "ParishUEID": "4725-1749",
-        "Diocese": "Central Pennsylvania",
-        "Name": "Chapel of the Good Shepherd",
-        "City": "Hawk Run",
-        "State": "Pennsylvania",
-        "County": "Clearfield"
-    },
-    {
-        "ParishUEID": "5503-8400",
-        "Diocese": "Central Pennsylvania",
-        "Name": "Christ Episcopal Church",
-        "City": "Milton",
-        "State": "Pennsylvania",
-        "County": "Northumberland"
-    },
-    {
-        "ParishUEID": "5429-8716",
-        "Diocese": "Central Pennsylvania",
-        "Name": "Christ Episcopal Church",
-        "City": "Williamsport",
-        "State": "Pennsylvania",
-        "County": "Lycoming"
-    },
-    {
-        "ParishUEID": "5852-8720",
-        "Diocese": "Central Pennsylvania",
-        "Name": "Christ Episcopal Church",
-        "City": "Coudersport",
-        "State": "Pennsylvania",
-        "County": "Potter"
-    },
-    {
-        "ParishUEID": "5103-0203",
-        "Diocese": "Central Pennsylvania",
-        "Name": "Christ Episcopal Church",
-        "City": "Berwick",
-        "State": "Pennsylvania",
-        "County": "Columbia"
-    },
-    {
-        "ParishUEID": "8250-3814",
-        "Diocese": "Central Pennsylvania",
-        "Name": "Christ Memorial Episcopal Church",
-        "City": "Danville",
-        "State": "Pennsylvania",
-        "County": "Montour"
-    },
-    {
-        "ParishUEID": "8877-5267",
-        "Diocese": "Central Pennsylvania",
-        "Name": "Church of Our Saviour",
-        "City": "Montoursville",
-        "State": "Pennsylvania",
-        "County": "Lycoming"
-    },
-    {
-        "ParishUEID": "7832-4381",
-        "Diocese": "Central Pennsylvania",
-        "Name": "Church of the Good Shepherd",
-        "City": "Montoursville",
-        "State": "Pennsylvania",
-        "County": "Lycoming"
-    },
-    {
-        "ParishUEID": "2968-4990",
-        "Diocese": "Central Pennsylvania",
-        "Name": "Church of the Holy Trinity",
-        "City": "Hollidaysburg",
-        "State": "Pennsylvania",
-        "County": "Blair"
-    },
-    {
-        "ParishUEID": "8477-2391",
-        "Diocese": "Central Pennsylvania",
-        "Name": "Church of the Nativity-St Stephen",
-        "City": "Newport",
-        "State": "Pennsylvania",
-        "County": "Perry"
-    },
-    {
-        "ParishUEID": "1486-8665",
-        "Diocese": "Central Pennsylvania",
-        "Name": "Church of the Transfiguration",
-        "City": "Blue Ridge Summit",
-        "State": "Pennsylvania",
-        "County": "Franklin"
-    },
-    {
-        "ParishUEID": "4871-3721",
-        "Diocese": "Central Pennsylvania",
-        "Name": "Hope Episcopal Church",
-        "City": "Manheim",
-        "State": "Pennsylvania",
-        "County": "Lancaster"
-    },
-    {
-        "ParishUEID": "5381-1964",
-        "Diocese": "Central Pennsylvania",
-        "Name": "Mount Calvary Church",
-        "City": "Camp Hill",
-        "State": "Pennsylvania",
-        "County": "Cumberland"
-    },
-    {
-        "ParishUEID": "8220-9594",
-        "Diocese": "Central Pennsylvania",
-        "Name": "Prince of Peace Memorial Church",
-        "City": "Gettysburg",
-        "State": "Pennsylvania",
-        "County": "Adams"
-    },
-    {
-        "ParishUEID": "8392-6709",
-        "Diocese": "Central Pennsylvania",
-        "Name": "Saint James Episcopal Church",
-        "City": "Lancaster",
-        "State": "Pennsylvania",
-        "County": "Lancaster"
-    },
-    {
-        "ParishUEID": "6268-1275",
-        "Diocese": "Central Pennsylvania",
-        "Name": "St Andrews Church",
-        "City": "State College",
-        "State": "Pennsylvania",
-        "County": "Centre"
-    },
-    {
-        "ParishUEID": "3278-8143",
-        "Diocese": "Central Pennsylvania",
-        "Name": "St Andrews Episcopal Church",
-        "City": "Lewisburg",
-        "State": "Pennsylvania",
-        "County": "Union"
-    },
-    {
-        "ParishUEID": "3223-8859",
-        "Diocese": "Central Pennsylvania",
-        "Name": "St Andrews Episcopal Church",
-        "City": "Tioga",
-        "State": "Pennsylvania",
-        "County": "Tioga"
-    },
-    {
-        "ParishUEID": "2752-1095",
-        "Diocese": "Central Pennsylvania",
-        "Name": "St Andrews Episcopal Church",
-        "City": "Shippensburg",
-        "State": "Pennsylvania",
-        "County": "Cumberland"
-    },
-    {
-        "ParishUEID": "1289-1461",
-        "Diocese": "Central Pennsylvania",
-        "Name": "St Andrews Episcopal Church",
-        "City": "Harrisburg",
-        "State": "Pennsylvania",
-        "County": "Dauphin"
-    },
-    {
-        "ParishUEID": "2225-8594",
-        "Diocese": "Central Pennsylvania",
-        "Name": "St Andrews Episcopal Church",
-        "City": "York",
-        "State": "Pennsylvania",
-        "County": "York"
-    },
-    {
-        "ParishUEID": "4355-9327",
-        "Diocese": "Central Pennsylvania",
-        "Name": "St Andrews in the Valley Church",
-        "City": "Harrisburg",
-        "State": "Pennsylvania",
-        "County": "Dauphin"
-    },
-    {
-        "ParishUEID": "4876-6323",
-        "Diocese": "Central Pennsylvania",
-        "Name": "St Edward Episcopal Church",
-        "City": "Lancaster",
-        "State": "Pennsylvania",
-        "County": "Lancaster"
-    },
-    {
-        "ParishUEID": "6798-0441",
-        "Diocese": "Central Pennsylvania",
-        "Name": "St James Episcopal Church",
-        "City": "Turbotville",
-        "State": "Pennsylvania",
-        "County": "Montour"
-    },
-    {
-        "ParishUEID": "3232-5748",
-        "Diocese": "Central Pennsylvania",
-        "Name": "St James Episcopal Church",
-        "City": "Mansfield",
-        "State": "Pennsylvania",
-        "County": "Tioga"
-    },
-    {
-        "ParishUEID": "3766-3259",
-        "Diocese": "Central Pennsylvania",
-        "Name": "St James Episcopal Church",
-        "City": "Muncy",
-        "State": "Pennsylvania",
-        "County": "Lycoming"
-    },
-    {
-        "ParishUEID": "2474-0789",
-        "Diocese": "Central Pennsylvania",
-        "Name": "St James Episcopal Church",
-        "City": "Bedford",
-        "State": "Pennsylvania",
-        "County": "Bedford"
-    },
-    {
-        "ParishUEID": "8398-3874",
-        "Diocese": "Central Pennsylvania",
-        "Name": "St John The Baptist Episcopal Church",
-        "City": "York",
-        "State": "Pennsylvania",
-        "County": "York"
-    },
-    {
-        "ParishUEID": "4537-5219",
-        "Diocese": "Central Pennsylvania",
-        "Name": "St Johns Church",
-        "City": "Westfield",
-        "State": "Pennsylvania",
-        "County": "Tioga"
-    },
-    {
-        "ParishUEID": "3107-4123",
-        "Diocese": "Central Pennsylvania",
-        "Name": "St Johns Church",
-        "City": "Huntingdon",
-        "State": "Pennsylvania",
-        "County": "Huntingdon"
-    },
-    {
-        "ParishUEID": "5745-2559",
-        "Diocese": "Central Pennsylvania",
-        "Name": "St Johns Church",
-        "City": "Marietta",
-        "State": "Pennsylvania",
-        "County": "Lancaster"
-    },
-    {
-        "ParishUEID": "4998-0774",
-        "Diocese": "Central Pennsylvania",
-        "Name": "St Johns Episcopal Church",
-        "City": "Lancaster",
-        "State": "Pennsylvania",
-        "County": "Lancaster"
-    },
-    {
-        "ParishUEID": "4785-3411",
-        "Diocese": "Central Pennsylvania",
-        "Name": "St Johns Episcopal Church",
-        "City": "Bellefonte",
-        "State": "Pennsylvania",
-        "County": "Centre"
-    },
-    {
-        "ParishUEID": "1834-2006",
-        "Diocese": "Central Pennsylvania",
-        "Name": "St Johns Episcopal Church",
-        "City": "Carlisle",
-        "State": "Pennsylvania",
-        "County": "Cumberland"
-    },
-    {
-        "ParishUEID": "4594-8973",
-        "Diocese": "Central Pennsylvania",
-        "Name": "St Luke Episcopal Church",
-        "City": "Altoona",
-        "State": "Pennsylvania",
-        "County": "Blair"
-    },
-    {
-        "ParishUEID": "9068-5116",
-        "Diocese": "Central Pennsylvania",
-        "Name": "St Lukes Episcopal Church",
-        "City": "Mount Joy",
-        "State": "Pennsylvania",
-        "County": "Lancaster"
-    },
-    {
-        "ParishUEID": "5221-8328",
-        "Diocese": "Central Pennsylvania",
-        "Name": "St Lukes Episcopal Church",
-        "City": "Mechanicsburg",
-        "State": "Pennsylvania",
-        "County": "Cumberland"
-    },
-    {
-        "ParishUEID": "4078-9042",
-        "Diocese": "Central Pennsylvania",
-        "Name": "St Mark Episcopal Church",
-        "City": "Northumberland",
-        "State": "Pennsylvania",
-        "County": "Northumberland"
-    },
-    {
-        "ParishUEID": "6904-8189",
-        "Diocese": "Central Pennsylvania",
-        "Name": "St Marks Episcopal Church",
-        "City": "Lewistown",
-        "State": "Pennsylvania",
-        "County": "Mifflin"
-    },
-    {
-        "ParishUEID": "8594-2803",
-        "Diocese": "Central Pennsylvania",
-        "Name": "St Marys Episcopal Church",
-        "City": "Waynesboro",
-        "State": "Pennsylvania",
-        "County": "Franklin"
-    },
-    {
-        "ParishUEID": "5946-3547",
-        "Diocese": "Central Pennsylvania",
-        "Name": "St Matthews Episcopal Church",
-        "City": "Sunbury",
-        "State": "Pennsylvania",
-        "County": "Northumberland"
-    },
-    {
-        "ParishUEID": "5704-5932",
-        "Diocese": "Central Pennsylvania",
-        "Name": "St Pauls Church",
-        "City": "Philipsburg",
-        "State": "Pennsylvania",
-        "County": "Centre"
-    },
-    {
-        "ParishUEID": "2795-9170",
-        "Diocese": "Central Pennsylvania",
-        "Name": "St Pauls Church",
-        "City": "Lock Haven",
-        "State": "Pennsylvania",
-        "County": "Clinton"
-    },
-    {
-        "ParishUEID": "3872-8291",
-        "Diocese": "Central Pennsylvania",
-        "Name": "St Pauls Episcopal Church",
-        "City": "Harrisburg",
-        "State": "Pennsylvania",
-        "County": "Dauphin"
-    },
-    {
-        "ParishUEID": "6922-8161",
-        "Diocese": "Central Pennsylvania",
-        "Name": "St Pauls Episcopal Church",
-        "City": "Wellsboro",
-        "State": "Pennsylvania",
-        "County": "Tioga"
-    },
-    {
-        "ParishUEID": "7306-0592",
-        "Diocese": "Central Pennsylvania",
-        "Name": "St Pauls Episcopal Church",
-        "City": "Manheim",
-        "State": "Pennsylvania",
-        "County": "Lancaster"
-    },
-    {
-        "ParishUEID": "8486-3208",
-        "Diocese": "Central Pennsylvania",
-        "Name": "St Pauls Episcopal Church",
-        "City": "Bloomsburg",
-        "State": "Pennsylvania",
-        "County": "Columbia"
-    },
-    {
-        "ParishUEID": "7705-2058",
-        "Diocese": "Central Pennsylvania",
-        "Name": "St Pauls Episcopal Church",
-        "City": "Columbia",
-        "State": "Pennsylvania",
-        "County": "Lancaster"
-    },
-    {
-        "ParishUEID": "8336-6781",
-        "Diocese": "Central Pennsylvania",
-        "Name": "St Stephens Cathedral",
-        "City": "Harrisburg",
-        "State": "Pennsylvania",
-        "County": "Dauphin"
-    },
-    {
-        "ParishUEID": "2698-4161",
-        "Diocese": "Central Pennsylvania",
-        "Name": "St Thomas Episcopal Church",
-        "City": "Lancaster",
-        "State": "Pennsylvania",
-        "County": "Lancaster"
-    },
-    {
-        "ParishUEID": "3766-0347",
-        "Diocese": "Central Pennsylvania",
-        "Name": "The Resurrection Mission",
-        "City": "Mount Carmel",
-        "State": "Pennsylvania",
-        "County": "Northumberland"
-    },
-    {
-        "ParishUEID": "2061-4665",
-        "Diocese": "Central Pennsylvania",
-        "Name": "Trinity Episcopal Church",
-        "City": "Tyrone",
-        "State": "Pennsylvania",
-        "County": "Blair"
-    },
-    {
-        "ParishUEID": "8560-6051",
-        "Diocese": "Central Pennsylvania",
-        "Name": "Trinity Episcopal Church",
-        "City": "Williamsport",
-        "State": "Pennsylvania",
-        "County": "Lycoming"
-    },
-    {
-        "ParishUEID": "3630-4277",
-        "Diocese": "Central Pennsylvania",
-        "Name": "Trinity Episcopal Church",
-        "City": "Jersey Shore",
-        "State": "Pennsylvania",
-        "County": "Lycoming"
-    },
-    {
-        "ParishUEID": "6630-6580",
-        "Diocese": "Central Pennsylvania",
-        "Name": "Trinity Episcopal Church",
-        "City": "Chambersburg",
-        "State": "Pennsylvania",
-        "County": "Franklin"
     },
     {
         "ParishUEID": "4972-3158",
@@ -13454,6 +12518,942 @@
         "City": "Wye Mills",
         "State": "Maryland",
         "County": "Talbot"
+    },
+    {
+        "ParishUEID": "7577-1931",
+        "Diocese": "Susquehanna",
+        "Name": "All Saints Church",
+        "City": "Hanover",
+        "State": "Pennsylvania",
+        "County": "York"
+    },
+    {
+        "ParishUEID": "8283-3237",
+        "Diocese": "Susquehanna",
+        "Name": "All Saints Episcopal Church",
+        "City": "Hershey",
+        "State": "Pennsylvania",
+        "County": "Dauphin"
+    },
+    {
+        "ParishUEID": "2777-3753",
+        "Diocese": "Susquehanna",
+        "Name": "All Saints Episcopal Church",
+        "City": "Lehighton",
+        "State": "Pennsylvania",
+        "County": "Carbon"
+    },
+    {
+        "ParishUEID": "1561-5339",
+        "Diocese": "Susquehanna",
+        "Name": "All Saints Episcopal Church",
+        "City": "Selinsgrove",
+        "State": "Pennsylvania",
+        "County": "Snyder"
+    },
+    {
+        "ParishUEID": "6802-0098",
+        "Diocese": "Susquehanna",
+        "Name": "All Saints Memorial Church",
+        "City": "Williamsport",
+        "State": "Pennsylvania",
+        "County": "Lycoming"
+    },
+    {
+        "ParishUEID": "7474-3493",
+        "Diocese": "Susquehanna",
+        "Name": "Bangor Episcopal Church",
+        "City": "Narvon",
+        "State": "Pennsylvania",
+        "County": "Lancaster"
+    },
+    {
+        "ParishUEID": "3695-1937",
+        "Diocese": "Susquehanna",
+        "Name": "Calvary Chapel",
+        "City": "Waynesboro",
+        "State": "Pennsylvania",
+        "County": "Franklin"
+    },
+    {
+        "ParishUEID": "5390-5063",
+        "Diocese": "Susquehanna",
+        "Name": "Calvary Episcopal Church",
+        "City": "Tamaqua",
+        "State": "Pennsylvania",
+        "County": "Schuylkill"
+    },
+    {
+        "ParishUEID": "5308-8753",
+        "Diocese": "Susquehanna",
+        "Name": "Cathedral Church of the Nativity",
+        "City": "Bethlehem",
+        "State": "Pennsylvania",
+        "County": "Northampton"
+    },
+    {
+        "ParishUEID": "4725-1749",
+        "Diocese": "Susquehanna",
+        "Name": "Chapel of the Good Shepherd",
+        "City": "Hawk Run",
+        "State": "Pennsylvania",
+        "County": "Clearfield"
+    },
+    {
+        "ParishUEID": "3513-7330",
+        "Diocese": "Susquehanna",
+        "Name": "Christ Church",
+        "City": "Forest City",
+        "State": "Pennsylvania",
+        "County": "Susquehanna"
+    },
+    {
+        "ParishUEID": "1540-0906",
+        "Diocese": "Susquehanna",
+        "Name": "Christ Church",
+        "City": "Reading",
+        "State": "Pennsylvania",
+        "County": "Berks"
+    },
+    {
+        "ParishUEID": "5103-0203",
+        "Diocese": "Susquehanna",
+        "Name": "Christ Episcopal Church",
+        "City": "Berwick",
+        "State": "Pennsylvania",
+        "County": "Columbia"
+    },
+    {
+        "ParishUEID": "5852-8720",
+        "Diocese": "Susquehanna",
+        "Name": "Christ Episcopal Church",
+        "City": "Coudersport",
+        "State": "Pennsylvania",
+        "County": "Potter"
+    },
+    {
+        "ParishUEID": "5503-8400",
+        "Diocese": "Susquehanna",
+        "Name": "Christ Episcopal Church",
+        "City": "Milton",
+        "State": "Pennsylvania",
+        "County": "Northumberland"
+    },
+    {
+        "ParishUEID": "7375-6389",
+        "Diocese": "Susquehanna",
+        "Name": "Christ Episcopal Church",
+        "City": "Stroudsburg",
+        "State": "Pennsylvania",
+        "County": "Monroe"
+    },
+    {
+        "ParishUEID": "9083-0399",
+        "Diocese": "Susquehanna",
+        "Name": "Christ Episcopal Church",
+        "City": "Susquehanna",
+        "State": "Pennsylvania",
+        "County": "Susquehanna"
+    },
+    {
+        "ParishUEID": "2878-7943",
+        "Diocese": "Susquehanna",
+        "Name": "Christ Episcopal Church",
+        "City": "Towanda",
+        "State": "Pennsylvania",
+        "County": "Bradford"
+    },
+    {
+        "ParishUEID": "5429-8716",
+        "Diocese": "Susquehanna",
+        "Name": "Christ Episcopal Church",
+        "City": "Williamsport",
+        "State": "Pennsylvania",
+        "County": "Lycoming"
+    },
+    {
+        "ParishUEID": "8250-3814",
+        "Diocese": "Susquehanna",
+        "Name": "Christ Memorial Episcopal Church",
+        "City": "Danville",
+        "State": "Pennsylvania",
+        "County": "Montour"
+    },
+    {
+        "ParishUEID": "8877-5267",
+        "Diocese": "Susquehanna",
+        "Name": "Church of Our Saviour",
+        "City": "Montoursville",
+        "State": "Pennsylvania",
+        "County": "Lycoming"
+    },
+    {
+        "ParishUEID": "2322-3837",
+        "Diocese": "Susquehanna",
+        "Name": "Church of the Epiphany",
+        "City": "Dalton",
+        "State": "Pennsylvania",
+        "County": "Lackawanna"
+    },
+    {
+        "ParishUEID": "7832-4381",
+        "Diocese": "Susquehanna",
+        "Name": "Church of the Good Shepherd",
+        "City": "Montoursville",
+        "State": "Pennsylvania",
+        "County": "Lycoming"
+    },
+    {
+        "ParishUEID": "1001-0601",
+        "Diocese": "Susquehanna",
+        "Name": "Church of the Good Shepherd",
+        "City": "Scranton",
+        "State": "Pennsylvania",
+        "County": "Lackawanna"
+    },
+    {
+        "ParishUEID": "2470-6053",
+        "Diocese": "Susquehanna",
+        "Name": "Church of the Good Shepherd and St John the Evangelist",
+        "City": "Milford",
+        "State": "Pennsylvania",
+        "County": "Pike"
+    },
+    {
+        "ParishUEID": "2968-4990",
+        "Diocese": "Susquehanna",
+        "Name": "Church of the Holy Trinity",
+        "City": "Hollidaysburg",
+        "State": "Pennsylvania",
+        "County": "Blair"
+    },
+    {
+        "ParishUEID": "7407-2570",
+        "Diocese": "Susquehanna",
+        "Name": "Church of the Mediator",
+        "City": "Allentown",
+        "State": "Pennsylvania",
+        "County": "Lehigh"
+    },
+    {
+        "ParishUEID": "8477-2391",
+        "Diocese": "Susquehanna",
+        "Name": "Church of the Nativity-St Stephen",
+        "City": "Newport",
+        "State": "Pennsylvania",
+        "County": "Perry"
+    },
+    {
+        "ParishUEID": "3193-0407",
+        "Diocese": "Susquehanna",
+        "Name": "Church of the Prince of Peace",
+        "City": "Dallas",
+        "State": "Pennsylvania",
+        "County": "Luzerne"
+    },
+    {
+        "ParishUEID": "7671-4286",
+        "Diocese": "Susquehanna",
+        "Name": "Church of the Redeemer",
+        "City": "Sayre",
+        "State": "Pennsylvania",
+        "County": "Bradford"
+    },
+    {
+        "ParishUEID": "1486-8665",
+        "Diocese": "Susquehanna",
+        "Name": "Church of the Transfiguration",
+        "City": "Blue Ridge Summit",
+        "State": "Pennsylvania",
+        "County": "Franklin"
+    },
+    {
+        "ParishUEID": "5474-4255",
+        "Diocese": "Susquehanna",
+        "Name": "Grace Episcopal Church",
+        "City": "Allentown",
+        "State": "Pennsylvania",
+        "County": "Lehigh"
+    },
+    {
+        "ParishUEID": "4190-9417",
+        "Diocese": "Susquehanna",
+        "Name": "Grace Episcopal Church",
+        "City": "Honesdale",
+        "State": "Pennsylvania",
+        "County": "Wayne"
+    },
+    {
+        "ParishUEID": "7823-0547",
+        "Diocese": "Susquehanna",
+        "Name": "Grace Episcopal Church",
+        "City": "Kingston",
+        "State": "Pennsylvania",
+        "County": "Luzerne"
+    },
+    {
+        "ParishUEID": "4871-3721",
+        "Diocese": "Susquehanna",
+        "Name": "Hope Episcopal Church",
+        "City": "Manheim",
+        "State": "Pennsylvania",
+        "County": "Lancaster"
+    },
+    {
+        "ParishUEID": "5381-1964",
+        "Diocese": "Susquehanna",
+        "Name": "Mount Calvary Church",
+        "City": "Camp Hill",
+        "State": "Pennsylvania",
+        "County": "Cumberland"
+    },
+    {
+        "ParishUEID": "2876-4777",
+        "Diocese": "Susquehanna",
+        "Name": "North Parish Episcopal Church",
+        "City": "St Clair",
+        "State": "Pennsylvania",
+        "County": "Schuylkill"
+    },
+    {
+        "ParishUEID": "8220-9594",
+        "Diocese": "Susquehanna",
+        "Name": "Prince of Peace Memorial Church",
+        "City": "Gettysburg",
+        "State": "Pennsylvania",
+        "County": "Adams"
+    },
+    {
+        "ParishUEID": "8392-6709",
+        "Diocese": "Susquehanna",
+        "Name": "Saint James Episcopal Church",
+        "City": "Lancaster",
+        "State": "Pennsylvania",
+        "County": "Lancaster"
+    },
+    {
+        "ParishUEID": "8015-2770",
+        "Diocese": "Susquehanna",
+        "Name": "St Albans Episcopal Church",
+        "City": "Sinking Spring",
+        "State": "Pennsylvania",
+        "County": "Berks"
+    },
+    {
+        "ParishUEID": "7361-9470",
+        "Diocese": "Susquehanna",
+        "Name": "St Andrews Church",
+        "City": "Allentown",
+        "State": "Pennsylvania",
+        "County": "Lehigh"
+    },
+    {
+        "ParishUEID": "1153-5713",
+        "Diocese": "Susquehanna",
+        "Name": "St Andrews Church",
+        "City": "Nanticoke",
+        "State": "Pennsylvania",
+        "County": "Luzerne"
+    },
+    {
+        "ParishUEID": "6268-1275",
+        "Diocese": "Susquehanna",
+        "Name": "St Andrews Church",
+        "City": "State College",
+        "State": "Pennsylvania",
+        "County": "Centre"
+    },
+    {
+        "ParishUEID": "1289-1461",
+        "Diocese": "Susquehanna",
+        "Name": "St Andrews Episcopal Church",
+        "City": "Harrisburg",
+        "State": "Pennsylvania",
+        "County": "Dauphin"
+    },
+    {
+        "ParishUEID": "3278-8143",
+        "Diocese": "Susquehanna",
+        "Name": "St Andrews Episcopal Church",
+        "City": "Lewisburg",
+        "State": "Pennsylvania",
+        "County": "Union"
+    },
+    {
+        "ParishUEID": "2752-1095",
+        "Diocese": "Susquehanna",
+        "Name": "St Andrews Episcopal Church",
+        "City": "Shippensburg",
+        "State": "Pennsylvania",
+        "County": "Cumberland"
+    },
+    {
+        "ParishUEID": "3223-8859",
+        "Diocese": "Susquehanna",
+        "Name": "St Andrews Episcopal Church",
+        "City": "Tioga",
+        "State": "Pennsylvania",
+        "County": "Tioga"
+    },
+    {
+        "ParishUEID": "2225-8594",
+        "Diocese": "Susquehanna",
+        "Name": "St Andrews Episcopal Church",
+        "City": "York",
+        "State": "Pennsylvania",
+        "County": "York"
+    },
+    {
+        "ParishUEID": "4355-9327",
+        "Diocese": "Susquehanna",
+        "Name": "St Andrews in the Valley Church",
+        "City": "Harrisburg",
+        "State": "Pennsylvania",
+        "County": "Dauphin"
+    },
+    {
+        "ParishUEID": "5369-1507",
+        "Diocese": "Susquehanna",
+        "Name": "St Annes Episcopal Church",
+        "City": "Trexlertown",
+        "State": "Pennsylvania",
+        "County": "Lehigh"
+    },
+    {
+        "ParishUEID": "7877-3819",
+        "Diocese": "Susquehanna",
+        "Name": "St Brigids Church",
+        "City": "Nazareth",
+        "State": "Pennsylvania",
+        "County": "Northampton"
+    },
+    {
+        "ParishUEID": "9387-1663",
+        "Diocese": "Susquehanna",
+        "Name": "St Clements & St Peters Church",
+        "City": "Wilkes Barre",
+        "State": "Pennsylvania",
+        "County": "Luzerne"
+    },
+    {
+        "ParishUEID": "4876-6323",
+        "Diocese": "Susquehanna",
+        "Name": "St Edward Episcopal Church",
+        "City": "Lancaster",
+        "State": "Pennsylvania",
+        "County": "Lancaster"
+    },
+    {
+        "ParishUEID": "3667-5163",
+        "Diocese": "Susquehanna",
+        "Name": "St Gabriels Episcopal Church",
+        "City": "DOUGLASSVILLE",
+        "State": "Pennsylvania",
+        "County": "Berks"
+    },
+    {
+        "ParishUEID": "7905-9127",
+        "Diocese": "Susquehanna",
+        "Name": "St Georges Episcopal Church",
+        "City": "Hellertown",
+        "State": "Pennsylvania",
+        "County": "Northampton"
+    },
+    {
+        "ParishUEID": "4826-3255",
+        "Diocese": "Susquehanna",
+        "Name": "St James Church",
+        "City": "Clifford Township",
+        "State": "Pennsylvania",
+        "County": "Susquehanna"
+    },
+    {
+        "ParishUEID": "2729-2937",
+        "Diocese": "Susquehanna",
+        "Name": "St James Church",
+        "City": "Drifton",
+        "State": "Pennsylvania",
+        "County": "Luzerne"
+    },
+    {
+        "ParishUEID": "2474-0789",
+        "Diocese": "Susquehanna",
+        "Name": "St James Episcopal Church",
+        "City": "Bedford",
+        "State": "Pennsylvania",
+        "County": "Bedford"
+    },
+    {
+        "ParishUEID": "3232-5748",
+        "Diocese": "Susquehanna",
+        "Name": "St James Episcopal Church",
+        "City": "Mansfield",
+        "State": "Pennsylvania",
+        "County": "Tioga"
+    },
+    {
+        "ParishUEID": "3766-3259",
+        "Diocese": "Susquehanna",
+        "Name": "St James Episcopal Church",
+        "City": "Muncy",
+        "State": "Pennsylvania",
+        "County": "Lycoming"
+    },
+    {
+        "ParishUEID": "6899-4383",
+        "Diocese": "Susquehanna",
+        "Name": "St James Episcopal Church",
+        "City": "Schuylkill Haven",
+        "State": "Pennsylvania",
+        "County": "Schuylkill"
+    },
+    {
+        "ParishUEID": "6798-0441",
+        "Diocese": "Susquehanna",
+        "Name": "St James Episcopal Church",
+        "City": "Turbotville",
+        "State": "Pennsylvania",
+        "County": "Montour"
+    },
+    {
+        "ParishUEID": "6669-9695",
+        "Diocese": "Susquehanna",
+        "Name": "St James-St George Epis Church",
+        "City": "Jermyn",
+        "State": "Pennsylvania",
+        "County": "Lackawanna"
+    },
+    {
+        "ParishUEID": "8398-3874",
+        "Diocese": "Susquehanna",
+        "Name": "St John The Baptist Episcopal Church",
+        "City": "York",
+        "State": "Pennsylvania",
+        "County": "York"
+    },
+    {
+        "ParishUEID": "3107-4123",
+        "Diocese": "Susquehanna",
+        "Name": "St Johns Church",
+        "City": "Huntingdon",
+        "State": "Pennsylvania",
+        "County": "Huntingdon"
+    },
+    {
+        "ParishUEID": "5745-2559",
+        "Diocese": "Susquehanna",
+        "Name": "St Johns Church",
+        "City": "Marietta",
+        "State": "Pennsylvania",
+        "County": "Lancaster"
+    },
+    {
+        "ParishUEID": "4537-5219",
+        "Diocese": "Susquehanna",
+        "Name": "St Johns Church",
+        "City": "Westfield",
+        "State": "Pennsylvania",
+        "County": "Tioga"
+    },
+    {
+        "ParishUEID": "4785-3411",
+        "Diocese": "Susquehanna",
+        "Name": "St Johns Episcopal Church",
+        "City": "Bellefonte",
+        "State": "Pennsylvania",
+        "County": "Centre"
+    },
+    {
+        "ParishUEID": "1834-2006",
+        "Diocese": "Susquehanna",
+        "Name": "St Johns Episcopal Church",
+        "City": "Carlisle",
+        "State": "Pennsylvania",
+        "County": "Cumberland"
+    },
+    {
+        "ParishUEID": "4918-9665",
+        "Diocese": "Susquehanna",
+        "Name": "St Johns Episcopal Church",
+        "City": "Hamlin",
+        "State": "Pennsylvania",
+        "County": "Wayne"
+    },
+    {
+        "ParishUEID": "4998-0774",
+        "Diocese": "Susquehanna",
+        "Name": "St Johns Episcopal Church",
+        "City": "Lancaster",
+        "State": "Pennsylvania",
+        "County": "Lancaster"
+    },
+    {
+        "ParishUEID": "2640-8435",
+        "Diocese": "Susquehanna",
+        "Name": "St Johns Episcopal Church",
+        "City": "Palmerton",
+        "State": "Pennsylvania",
+        "County": "Carbon"
+    },
+    {
+        "ParishUEID": "9719-4476",
+        "Diocese": "Susquehanna",
+        "Name": "St Josephs Church",
+        "City": "Pen Argyl",
+        "State": "Pennsylvania",
+        "County": "Northampton"
+    },
+    {
+        "ParishUEID": "4594-8973",
+        "Diocese": "Susquehanna",
+        "Name": "St Luke Episcopal Church",
+        "City": "Altoona",
+        "State": "Pennsylvania",
+        "County": "Blair"
+    },
+    {
+        "ParishUEID": "3298-4098",
+        "Diocese": "Susquehanna",
+        "Name": "St Lukes Church Episcopal",
+        "City": "Lebanon",
+        "State": "Pennsylvania",
+        "County": "Lebanon"
+    },
+    {
+        "ParishUEID": "5221-8328",
+        "Diocese": "Susquehanna",
+        "Name": "St Lukes Episcopal Church",
+        "City": "Mechanicsburg",
+        "State": "Pennsylvania",
+        "County": "Cumberland"
+    },
+    {
+        "ParishUEID": "9068-5116",
+        "Diocese": "Susquehanna",
+        "Name": "St Lukes Episcopal Church",
+        "City": "Mount Joy",
+        "State": "Pennsylvania",
+        "County": "Lancaster"
+    },
+    {
+        "ParishUEID": "1906-6273",
+        "Diocese": "Susquehanna",
+        "Name": "St Lukes Episcopal Church",
+        "City": "Scranton",
+        "State": "Pennsylvania",
+        "County": "Lackawanna"
+    },
+    {
+        "ParishUEID": "1227-8552",
+        "Diocese": "Susquehanna",
+        "Name": "St Margarets Church",
+        "City": "Emmaus",
+        "State": "Pennsylvania",
+        "County": "Lehigh"
+    },
+    {
+        "ParishUEID": "4078-9042",
+        "Diocese": "Susquehanna",
+        "Name": "St Mark Episcopal Church",
+        "City": "Northumberland",
+        "State": "Pennsylvania",
+        "County": "Northumberland"
+    },
+    {
+        "ParishUEID": "9778-1157",
+        "Diocese": "Susquehanna",
+        "Name": "St Marks & St Johns Church",
+        "City": "Jim Thorpe",
+        "State": "Pennsylvania",
+        "County": "Carbon"
+    },
+    {
+        "ParishUEID": "6904-8189",
+        "Diocese": "Susquehanna",
+        "Name": "St Marks Episcopal Church",
+        "City": "Lewistown",
+        "State": "Pennsylvania",
+        "County": "Mifflin"
+    },
+    {
+        "ParishUEID": "2812-4733",
+        "Diocese": "Susquehanna",
+        "Name": "St Marks Episcopal Church",
+        "City": "Moscow",
+        "State": "Pennsylvania",
+        "County": "Lackawanna"
+    },
+    {
+        "ParishUEID": "1131-4622",
+        "Diocese": "Susquehanna",
+        "Name": "St Marks Episcopal Church",
+        "City": "New Milford",
+        "State": "Pennsylvania",
+        "County": "Susquehanna"
+    },
+    {
+        "ParishUEID": "7738-6977",
+        "Diocese": "Susquehanna",
+        "Name": "St Martin in the Fields",
+        "City": "Mountain Top",
+        "State": "Pennsylvania",
+        "County": "Luzerne"
+    },
+    {
+        "ParishUEID": "8664-0026",
+        "Diocese": "Susquehanna",
+        "Name": "St Marys Episcopal Church",
+        "City": "Reading",
+        "State": "Pennsylvania",
+        "County": "Berks"
+    },
+    {
+        "ParishUEID": "8594-2803",
+        "Diocese": "Susquehanna",
+        "Name": "St Marys Episcopal Church",
+        "City": "Waynesboro",
+        "State": "Pennsylvania",
+        "County": "Franklin"
+    },
+    {
+        "ParishUEID": "8300-9704",
+        "Diocese": "Susquehanna",
+        "Name": "St Marys Episcopal Church",
+        "City": "Wind Gap",
+        "State": "Pennsylvania",
+        "County": "Northampton"
+    },
+    {
+        "ParishUEID": "5946-3547",
+        "Diocese": "Susquehanna",
+        "Name": "St Matthews Episcopal Church",
+        "City": "Sunbury",
+        "State": "Pennsylvania",
+        "County": "Northumberland"
+    },
+    {
+        "ParishUEID": "2795-9170",
+        "Diocese": "Susquehanna",
+        "Name": "St Pauls Church",
+        "City": "Lock Haven",
+        "State": "Pennsylvania",
+        "County": "Clinton"
+    },
+    {
+        "ParishUEID": "6532-5367",
+        "Diocese": "Susquehanna",
+        "Name": "St Pauls Church",
+        "City": "Montrose",
+        "State": "Pennsylvania",
+        "County": "Susquehanna"
+    },
+    {
+        "ParishUEID": "5704-5932",
+        "Diocese": "Susquehanna",
+        "Name": "St Pauls Church",
+        "City": "Philipsburg",
+        "State": "Pennsylvania",
+        "County": "Centre"
+    },
+    {
+        "ParishUEID": "8486-3208",
+        "Diocese": "Susquehanna",
+        "Name": "St Pauls Episcopal Church",
+        "City": "Bloomsburg",
+        "State": "Pennsylvania",
+        "County": "Columbia"
+    },
+    {
+        "ParishUEID": "7705-2058",
+        "Diocese": "Susquehanna",
+        "Name": "St Pauls Episcopal Church",
+        "City": "Columbia",
+        "State": "Pennsylvania",
+        "County": "Lancaster"
+    },
+    {
+        "ParishUEID": "3872-8291",
+        "Diocese": "Susquehanna",
+        "Name": "St Pauls Episcopal Church",
+        "City": "Harrisburg",
+        "State": "Pennsylvania",
+        "County": "Dauphin"
+    },
+    {
+        "ParishUEID": "7306-0592",
+        "Diocese": "Susquehanna",
+        "Name": "St Pauls Episcopal Church",
+        "City": "Manheim",
+        "State": "Pennsylvania",
+        "County": "Lancaster"
+    },
+    {
+        "ParishUEID": "9511-4641",
+        "Diocese": "Susquehanna",
+        "Name": "St Pauls Episcopal Church",
+        "City": "Troy",
+        "State": "Pennsylvania",
+        "County": "Bradford"
+    },
+    {
+        "ParishUEID": "6922-8161",
+        "Diocese": "Susquehanna",
+        "Name": "St Pauls Episcopal Church",
+        "City": "Wellsboro",
+        "State": "Pennsylvania",
+        "County": "Tioga"
+    },
+    {
+        "ParishUEID": "1478-1660",
+        "Diocese": "Susquehanna",
+        "Name": "St Peters Episcopal Church",
+        "City": "Hazleton",
+        "State": "Pennsylvania",
+        "County": "Luzerne"
+    },
+    {
+        "ParishUEID": "6072-6288",
+        "Diocese": "Susquehanna",
+        "Name": "St Peters Episcopal Church",
+        "City": "Tunkhannock",
+        "State": "Pennsylvania",
+        "County": "Wyoming"
+    },
+    {
+        "ParishUEID": "8336-6781",
+        "Diocese": "Susquehanna",
+        "Name": "St Stephens Cathedral",
+        "City": "Harrisburg",
+        "State": "Pennsylvania",
+        "County": "Dauphin"
+    },
+    {
+        "ParishUEID": "3601-5519",
+        "Diocese": "Susquehanna",
+        "Name": "St Stephens Episcopal Church",
+        "City": "Whitehall",
+        "State": "Pennsylvania",
+        "County": "Lehigh"
+    },
+    {
+        "ParishUEID": "9092-8342",
+        "Diocese": "Susquehanna",
+        "Name": "St Stephens Pro-Cathedral",
+        "City": "Wilkes Barre",
+        "State": "Pennsylvania",
+        "County": "Luzerne"
+    },
+    {
+        "ParishUEID": "2698-4161",
+        "Diocese": "Susquehanna",
+        "Name": "St Thomas Episcopal Church",
+        "City": "Lancaster",
+        "State": "Pennsylvania",
+        "County": "Lancaster"
+    },
+    {
+        "ParishUEID": "9936-4572",
+        "Diocese": "Susquehanna",
+        "Name": "St Thomas Episcopal Church",
+        "City": "Morgantown",
+        "State": "Pennsylvania",
+        "County": "Berks"
+    },
+    {
+        "ParishUEID": "3766-0347",
+        "Diocese": "Susquehanna",
+        "Name": "The Resurrection Mission",
+        "City": "Mount Carmel",
+        "State": "Pennsylvania",
+        "County": "Northumberland"
+    },
+    {
+        "ParishUEID": "1950-7227",
+        "Diocese": "Susquehanna",
+        "Name": "Trinity Church",
+        "City": "Bethlehem",
+        "State": "Pennsylvania",
+        "County": "Northampton"
+    },
+    {
+        "ParishUEID": "6614-1672",
+        "Diocese": "Susquehanna",
+        "Name": "Trinity Episcopal Church",
+        "City": "Athens",
+        "State": "Pennsylvania",
+        "County": "Bradford"
+    },
+    {
+        "ParishUEID": "2795-1375",
+        "Diocese": "Susquehanna",
+        "Name": "Trinity Episcopal Church",
+        "City": "Carbondale",
+        "State": "Pennsylvania",
+        "County": "Lackawanna"
+    },
+    {
+        "ParishUEID": "6630-6580",
+        "Diocese": "Susquehanna",
+        "Name": "Trinity Episcopal Church",
+        "City": "Chambersburg",
+        "State": "Pennsylvania",
+        "County": "Franklin"
+    },
+    {
+        "ParishUEID": "2840-0356",
+        "Diocese": "Susquehanna",
+        "Name": "Trinity Episcopal Church",
+        "City": "Easton",
+        "State": "Pennsylvania",
+        "County": "Northampton"
+    },
+    {
+        "ParishUEID": "3630-4277",
+        "Diocese": "Susquehanna",
+        "Name": "Trinity Episcopal Church",
+        "City": "Jersey Shore",
+        "State": "Pennsylvania",
+        "County": "Lycoming"
+    },
+    {
+        "ParishUEID": "5607-9239",
+        "Diocese": "Susquehanna",
+        "Name": "Trinity Episcopal Church",
+        "City": "Mount Pocono",
+        "State": "Pennsylvania",
+        "County": "Monroe"
+    },
+    {
+        "ParishUEID": "2848-6397",
+        "Diocese": "Susquehanna",
+        "Name": "Trinity Episcopal Church",
+        "City": "Pottsville",
+        "State": "Pennsylvania",
+        "County": "Schuylkill"
+    },
+    {
+        "ParishUEID": "2061-4665",
+        "Diocese": "Susquehanna",
+        "Name": "Trinity Episcopal Church",
+        "City": "Tyrone",
+        "State": "Pennsylvania",
+        "County": "Blair"
+    },
+    {
+        "ParishUEID": "3712-3551",
+        "Diocese": "Susquehanna",
+        "Name": "Trinity Episcopal Church",
+        "City": "West Pittston",
+        "State": "Pennsylvania",
+        "County": "Luzerne"
+    },
+    {
+        "ParishUEID": "8560-6051",
+        "Diocese": "Susquehanna",
+        "Name": "Trinity Episcopal Church",
+        "City": "Williamsport",
+        "State": "Pennsylvania",
+        "County": "Lycoming"
     },
     {
         "ParishUEID": "4546-8741",
